@@ -1,0 +1,35 @@
+<section class="page">
+    <div class="hero">
+        <h2>Welcome to SocialSez</h2>
+        <p class="sub" *ngIf="mode === 'login'">Sign in with your email and password.</p>
+        <p class="sub" *ngIf="mode === 'register'">Create your account to start posting and following.</p>
+    </div>
+
+    <div class="mode-switch" role="tablist" aria-label="Authentication mode">
+        <button type="button" class="mode-btn" [class.active]="mode === 'login'" (click)="setMode('login')">Sign in</button>
+        <button type="button" class="mode-btn" [class.active]="mode === 'register'" (click)="setMode('register')">Create account</button>
+    </div>
+
+    <div class="grid">
+        <label>Email <input [(ngModel)]="email" placeholder="you@example.com" /></label>
+        <label>Password <input [(ngModel)]="password" type="password" placeholder="••••••••" /></label>
+        <label *ngIf="mode === 'register'">Handle <input [(ngModel)]="handle" placeholder="sez" /></label>
+        <label *ngIf="mode === 'register'">Display Name <input [(ngModel)]="displayName" placeholder="Sez" /></label>
+        <label class="full" *ngIf="mode === 'register'">Bio <input [(ngModel)]="bio" placeholder="Builder" /></label>
+    </div>
+
+    <div class="actions">
+        <button class="auth-submit" (click)="submit()">{{ mode === 'login' ? 'Sign in' : 'Create account' }}</button>
+    </div>
+
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <p class="switch-cta" *ngIf="mode === 'login'">
+        New here?
+        <button type="button" class="link-btn" (click)="setMode('register')">Create an account</button>
+    </p>
+    <p class="switch-cta" *ngIf="mode === 'register'">
+        Already have an account?
+        <button type="button" class="link-btn" (click)="setMode('login')">Sign in</button>
+    </p>
+</section>

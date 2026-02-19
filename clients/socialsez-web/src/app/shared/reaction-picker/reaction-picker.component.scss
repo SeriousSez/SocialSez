@@ -1,0 +1,89 @@
+.reaction-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.reaction-zone {
+    position: relative;
+    width: fit-content;
+}
+
+.reaction-btn {
+    width: fit-content;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #0f172a;
+    padding: 8px 12px;
+    box-shadow: none;
+    transform: none;
+}
+
+.reaction-btn:hover {
+    background: #e2e8f0;
+    box-shadow: none;
+    transform: none;
+}
+
+.reaction-btn.active {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.reaction-popover {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 10px);
+    z-index: 30;
+    display: flex;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid #dbe4f0;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 12px 30px -20px #0f172a;
+}
+
+.reaction-pop-btn {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border: 1px solid #dbe4f0;
+    border-radius: 50%;
+    background: #f8fafc;
+    color: #0f172a;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    font-size: 1.05rem;
+    box-shadow: none;
+    transform: none;
+}
+
+.reaction-pop-btn:hover {
+    background: #eef2f7;
+    transform: translateY(-1px) scale(1.08);
+    box-shadow: none;
+}
+
+.reaction-pop-btn.active {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.reaction-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.reaction-chip {
+    font-size: 0.78rem;
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 2px 8px;
+}

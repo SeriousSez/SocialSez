@@ -1,0 +1,170 @@
+button {
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0f172a, #1f2937);
+    color: #ffffff;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: 140ms ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px -20px #0f172a;
+}
+
+button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+button:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
+}
+
+button.is-loading {
+    position: relative;
+    pointer-events: none;
+    color: transparent !important;
+}
+
+button.is-loading::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    animation: button-spin 0.7s linear infinite;
+}
+
+button.ghost.is-loading::after {
+    border: 2px solid rgba(15, 23, 42, 0.25);
+    border-top-color: #0f172a;
+}
+
+button.is-success {
+    background: #166534;
+    color: #ffffff;
+}
+
+button.is-failure {
+    background: #991b1b;
+    color: #ffffff;
+}
+
+@keyframes button-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+button.ghost {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+button.danger {
+    background: linear-gradient(135deg, #991b1b, #b91c1c);
+}
+
+button.retry {
+    width: fit-content;
+}
+
+.top-actions button {
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.hero-actions button {
+    padding: 10px 14px;
+}
+
+.post-actions button {
+    padding: 8px 12px;
+}
+
+.search-row .search-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    min-width: 42px;
+    width: 42px;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+    border-left: 1px solid #dbe4f0;
+    background: transparent;
+    color: #64748b;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    font-size: 0.95rem;
+    box-shadow: none;
+    transform: none;
+}
+
+.search-row .search-btn:hover {
+    background: #f8fafc;
+    color: #334155;
+    box-shadow: none;
+    transform: none;
+}
+
+.search-row .search-btn:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: -2px;
+}
+
+.mode-btn {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: transparent;
+    color: #334155;
+    font-weight: 700;
+    box-shadow: none;
+    transform: none;
+}
+
+.mode-btn:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.mode-btn.active {
+    background: #0f172a;
+    color: #fff;
+    border-color: #0f172a;
+}
+
+button.auth-submit {
+    background: #2563eb;
+}
+
+button.auth-submit:hover {
+    box-shadow: none;
+}
+
+button.link-btn {
+    border: 0;
+    padding: 0;
+    margin-left: 6px;
+    background: transparent;
+    color: #0b4ab8;
+    font-weight: 700;
+    box-shadow: none;
+    transform: none;
+}
+
+button.link-btn:hover {
+    box-shadow: none;
+    transform: none;
+}

@@ -1,0 +1,90 @@
+export interface ProfileDto {
+    id: string;
+    handle: string;
+    displayName: string;
+    bio: string;
+    imageUrl?: string;
+    createdAtUtc: string;
+}
+
+export interface CreateProfileRequest {
+    handle: string;
+    displayName: string;
+    bio?: string;
+}
+
+export interface RegisterRequest {
+    email: string;
+    password: string;
+    handle: string;
+    displayName: string;
+    bio?: string;
+}
+
+export interface LoginRequest {
+    email: string;
+    password: string;
+}
+
+export interface AuthResponse {
+    token: string;
+    expiresAtUtc: string;
+    refreshToken: string;
+    refreshTokenExpiresAtUtc: string;
+    profile: ProfileDto;
+}
+
+export interface UpdateProfileRequest {
+    displayName: string;
+    bio?: string;
+    imageUrl?: string;
+}
+
+export interface UpdatePostRequest {
+    content?: string;
+}
+
+export interface SetReactionRequest {
+    type: string;
+}
+
+export interface CommentDto {
+    id: string;
+    postId: string;
+    authorId: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    content: string;
+    createdAtUtc: string;
+    myReactionType?: string;
+    reactions: ReactionSummaryDto[];
+}
+
+export interface ReactionSummaryDto {
+    type: string;
+    count: number;
+}
+
+export interface HashtagSearchResultDto {
+    tag: string;
+    count: number;
+}
+
+export interface PostDto {
+    id: string;
+    authorId: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    content: string;
+    imageUrl?: string;
+    createdAtUtc: string;
+    likeCount: number;
+    likedByMe: boolean;
+    myReactionType?: string;
+    reactions: ReactionSummaryDto[];
+    comments: CommentDto[];
+}
+
+export interface UploadImageResponse {
+    url: string;
+}

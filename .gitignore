@@ -1,0 +1,23 @@
+# Visual Studio
+.vs/
+
+# .NET build outputs
+**/bin/
+**/obj/
+
+# Logs
+*.log
+
+# OS/editor
+.DS_Store
+Thumbs.db
+
+# Flutter/Dart
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/build/
+
+# Node
+**/node_modules/

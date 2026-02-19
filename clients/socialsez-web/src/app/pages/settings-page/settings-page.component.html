@@ -1,0 +1,53 @@
+<section class="page" *ngIf="session.profile as profile">
+    <header class="page-head">
+        <div>
+            <h2>Settings</h2>
+            <p>Manage your account, profile and app preferences.</p>
+        </div>
+        <div class="chip">@{{ profile.handle }}</div>
+    </header>
+
+    <section class="card">
+        <h3>Profile</h3>
+        <label>Display Name <input [(ngModel)]="displayName" /></label>
+        <label>Bio <textarea rows="4" [(ngModel)]="bio"></textarea></label>
+        <label>Profile Image <input type="file" accept="image/*" (change)="onProfileImageSelected($event)" [disabled]="uploadingProfileImage" /></label>
+        <p class="meta" *ngIf="uploadingProfileImage">Uploading image...</p>
+        <img class="preview" *ngIf="imageUrl.trim()" [src]="imageUrl" alt="Profile image preview" />
+        <div class="actions">
+            <button (click)="saveProfile()">Save Profile</button>
+            <button class="ghost" (click)="reloadProfile()">Reload</button>
+            <button class="ghost" type="button" (click)="removeProfileImage()" [disabled]="!imageUrl.trim()">Remove Image</button>
+        </div>
+    </section>
+
+    <section class="card">
+        <h3>Account</h3>
+        <p class="meta"><strong>Profile Id:</strong> {{ profile.id }}</p>
+        <p class="meta"><strong>Handle:</strong> @{{ profile.handle }}</p>
+        <p class="meta"><strong>Joined:</strong> {{ profile.createdAtUtc | date:'mediumDate' }}</p>
+    </section>
+
+    <section class="card">
+        <h3>Session</h3>
+        <p class="meta">Use these controls for your current login session.</p>
+        <div class="actions">
+            <button (click)="refreshSession()">Refresh Session</button>
+            <button class="danger" (click)="logout()">Logout</button>
+        </div>
+    </section>
+
+    <section class="card">
+        <h3>Preferences</h3>
+        <label class="toggle">
+            <input type="checkbox" [(ngModel)]="prefs.compactFeed" (change)="savePrefs()" />
+            Compact feed layout
+        </label>
+        <label class="toggle">
+            <input type="checkbox" [(ngModel)]="prefs.showDebugTimes" (change)="savePrefs()" />
+            Show debug timing hints
+        </label>
+    </section>
+
+    <p class="status" *ngIf="status">{{ status }}</p>
+</section>

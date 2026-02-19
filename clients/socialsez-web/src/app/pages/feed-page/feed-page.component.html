@@ -1,0 +1,33 @@
+<section class="page">
+    <header class="page-head">
+        <h2>Home Feed</h2>
+        <div class="actions">
+            <button type="button" (click)="openComposer()">New Post</button>
+        </div>
+    </header>
+
+    <app-post-composer *ngIf="showComposer" [showCancel]="true" (posted)="onComposerPosted()" (canceled)="onComposerCanceled()"></app-post-composer>
+
+    <p class="status" *ngIf="loading">Loading feed...</p>
+    <p class="error" *ngIf="!loading && error">{{ error }}</p>
+    <button class="retry" *ngIf="!loading && error" (click)="load()">Retry</button>
+
+    <div class="list" *ngIf="!loading && !error && feed.length; else emptyState">
+        <app-post-card *ngFor="let post of feed" [post]="post" [content]="displayPostContent(post)" [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id" [viewerProfileId]="currentProfileId" [showActions]="canManagePost(post)"
+            [isEditing]="editingPostId === post.id" [editValue]="editContent" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()"
+            (deletePost)="deletePost(post.id)" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)"
+            (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)">
+            <div post-header class="author">
+                <img class="avatar" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
+                <ng-template #authorInitial>
+                    <div class="avatar">{{ post.authorHandle[0] }}</div>
+                </ng-template>
+                <div class="meta"><a class="author-link" [routerLink]="['/users', post.authorHandle]">@{{ post.authorHandle }}</a> · {{ post.createdAtUtc | date:'short' }}</div>
+            </div>
+        </app-post-card>
+    </div>
+
+    <ng-template #emptyState>
+        <p class="empty" *ngIf="!loading && !error">No posts yet. Follow people or create your first post to kick off your timeline.</p>
+    </ng-template>
+</section>

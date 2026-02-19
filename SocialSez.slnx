@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SocialSez.API/SocialSez.API.csproj" />
+  <Project Path="SocialSez.ApplicationService/SocialSez.ApplicationService.csproj" />
+  <Project Path="SocialSez.Domain/SocialSez.Domain.csproj" />
+  <Project Path="SocialSez.Infrastructure/SocialSez.Infrastructure.csproj" />
+</Solution>

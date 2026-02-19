@@ -1,0 +1,77 @@
+<main class="shell">
+    <aside class="left-rail">
+        <div class="brand">
+            <div class="brand-mark">S</div>
+            <div>
+                <h1>SocialSez</h1>
+                <p class="brand-sub">Community Platform</p>
+            </div>
+        </div>
+
+        <nav class="tabs">
+            <a class="tab-feed" routerLink="/feed" routerLinkActive="active"><i class="fa-duotone fa-light fa-house" aria-hidden="true"></i><span>Feed</span></a>
+            <a class="tab-compose" routerLink="/compose" routerLinkActive="active"><i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i><span>Compose</span></a>
+            <a class="tab-discover" routerLink="/discover" routerLinkActive="active"><i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i><span>Discover</span></a>
+            <a class="tab-profile" routerLink="/profile" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-user" aria-hidden="true"></i><span>Profile</span></a>
+            <a class="tab-settings" routerLink="/settings" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i><span>Settings</span></a>
+            <a class="tab-auth" routerLink="/auth" routerLinkActive="active" *ngIf="!session.isAuthenticated()"><i class="fa-duotone fa-light fa-right-to-bracket" aria-hidden="true"></i><span>Auth</span></a>
+        </nav>
+
+        <div class="profile-chip" *ngIf="session.profile as profile">
+            <img class="avatar" *ngIf="profile.imageUrl; else profileInitial" [src]="profile.imageUrl" alt="Profile image" />
+            <ng-template #profileInitial>
+                <div class="avatar">{{ profile.displayName[0] || profile.handle[0] }}</div>
+            </ng-template>
+            <div>
+                <strong>{{ profile.displayName }}</strong>
+                <p>@{{ profile.handle }}</p>
+            </div>
+        </div>
+    </aside>
+
+    <section class="main-column">
+        <header class="topbar">
+            <label class="search-box">
+                <span>Search</span>
+                <div class="search-row">
+                    <input placeholder="Search users, posts, hashtags" [(ngModel)]="searchText" (keydown.enter)="searchNow()" />
+                    <button class="search-btn" type="button" (click)="searchNow()" aria-label="Search">
+                        <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </label>
+
+            <div class="top-actions" *ngIf="session.isAuthenticated(); else guestTopActions">
+                <button class="ghost" (click)="logout()" [disabled]="working">Logout</button>
+            </div>
+
+            <ng-template #guestTopActions>
+                <div class="top-actions">
+                    <a class="signin-link" routerLink="/auth">Sign in</a>
+                </div>
+            </ng-template>
+        </header>
+
+        <section class="content">
+            <router-outlet></router-outlet>
+        </section>
+    </section>
+
+    <aside class="right-rail">
+        <div class="side-card">
+            <h3>Now</h3>
+            <p>Build, post, discover and follow in one flow.</p>
+        </div>
+        <div class="side-card">
+            <h3>Trending</h3>
+            <ul>
+                <li>#socialsez</li>
+                <li>#buildinpublic</li>
+                <li>#dotnet</li>
+            </ul>
+        </div>
+        <p class="hint" *ngIf="showDebug && session.nextSilentRefreshAt">
+            [debug] Next silent refresh: {{ session.nextSilentRefreshAt | date:'mediumTime' }}
+        </p>
+    </aside>
+</main>

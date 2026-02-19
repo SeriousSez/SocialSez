@@ -1,0 +1,62 @@
+<section class="page">
+    <h2>Discover</h2>
+    <label>Search
+        <input [(ngModel)]="query" placeholder="Search users, posts, hashtags" (keydown.enter)="search()" />
+    </label>
+
+    <div class="actions">
+        <button type="button" (click)="search()">Search</button>
+    </div>
+
+    <div class="scope-tabs" *ngIf="query.trim()">
+        <button *ngFor="let scope of scopes" type="button" [class.active]="selectedScope === scope.value" (click)="changeScope(scope.value)">{{ scope.label }}</button>
+    </div>
+
+    <p class="status" *ngIf="loading">Searching...</p>
+
+    <section class="results" *ngIf="!loading && hasAnyResults">
+        <section class="section" *ngIf="showUsersSection && profileResults.length">
+            <h3>Users</h3>
+            <article class="card" *ngFor="let profile of profileResults">
+                <div class="identity">
+                    <a class="avatar-link" [routerLink]="['/users', profile.handle]" [attr.aria-label]="'View @' + profile.handle + ' profile'">
+                        <div class="avatar">{{ profile.displayName[0] || profile.handle[0] }}</div>
+                    </a>
+                    <h4>
+                        <a class="user-link" [routerLink]="['/users', profile.handle]">{{ profile.displayName }}</a>
+                        <span class="user-handle-wrap"><a class="user-link handle-link" [routerLink]="['/users', profile.handle]">@{{ profile.handle }}</a></span>
+                    </h4>
+                </div>
+                <p>{{ profile.bio || 'No bio yet.' }}</p>
+                <button type="button" (click)="follow(profile)">Follow User</button>
+            </article>
+        </section>
+
+        <section class="section" *ngIf="showHashtagsSection && hashtagResults.length">
+            <h3>Hashtags</h3>
+            <div class="hashtags">
+                <a *ngFor="let hashtag of hashtagResults" [routerLink]="['/hashtags', hashtag.tag]" class="hashtag-pill">#{{ hashtag.tag }} <span>{{ hashtag.count }}</span></a>
+            </div>
+        </section>
+
+        <section class="section" *ngIf="showPostsSection && postResults.length">
+            <h3>Posts</h3>
+            <div class="post-list">
+                <app-post-card *ngFor="let post of postResults" [post]="post" [content]="displayPostContent(post)" [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id" [viewerProfileId]="currentProfileId"
+                    [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)"
+                    (cancelEdit)="cancelEdit()" (deletePost)="deletePost(post.id)" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)"
+                    (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)">
+                    <div post-header class="author">
+                        <img class="avatar" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
+                        <ng-template #authorInitial>
+                            <div class="avatar">{{ post.authorHandle[0] }}</div>
+                        </ng-template>
+                        <div class="meta"><a class="author-link" [routerLink]="['/users', post.authorHandle]">@{{ post.authorHandle }}</a> · {{ post.createdAtUtc | date:'short' }}</div>
+                    </div>
+                </app-post-card>
+            </div>
+        </section>
+    </section>
+
+    <p class="status" *ngIf="status">{{ status }}</p>
+</section>

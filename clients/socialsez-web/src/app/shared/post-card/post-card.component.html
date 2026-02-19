@@ -1,0 +1,95 @@
+<article class="post" [class.has-icon-actions]="showActions && !isEditing">
+    <div class="post-icon-actions" *ngIf="showActions && !isEditing">
+        <button class="icon-btn" type="button" (click)="startEdit.emit()" aria-label="Edit post" title="Edit post">
+            <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+        </button>
+        <button class="icon-btn danger" type="button" (click)="deletePost.emit()" [disabled]="deleting" aria-label="Delete post" title="Delete post">
+            <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <ng-content select="[post-header]"></ng-content>
+
+    <textarea class="edit-input" *ngIf="isEditing" rows="4" [ngModel]="editValue" (ngModelChange)="editValueChange.emit($event)"></textarea>
+
+    <ng-container *ngIf="!isEditing">
+        <div class="content" *ngIf="content">
+            <ng-container *ngFor="let line of contentLines; let isLastLine = last">
+                <ng-container *ngFor="let part of line">
+                    <a *ngIf="part.hashtag; else plainText" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="navigateToHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                    <ng-template #plainText>{{ part.text }}</ng-template>
+                </ng-container>
+                <br *ngIf="!isLastLine" />
+            </ng-container>
+        </div>
+        <ng-container *ngIf="post.imageUrl as mediaUrl">
+            <video class="post-media" *ngIf="isVideoMedia(mediaUrl); else imageMedia" [src]="mediaUrl" controls playsinline preload="metadata"></video>
+            <ng-template #imageMedia>
+                <img class="post-image" [src]="mediaUrl" alt="Post media" />
+            </ng-template>
+        </ng-container>
+
+        <div class="engagement">
+            <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="post.reactions" [myReactionType]="post.myReactionType" [busy]="reacting" [primaryCount]="post.likeCount" [showCountWhenIdle]="true" [idleLabel]="'👍'" (primaryClick)="onPostPrimaryReaction()"
+                (reactionSelected)="onPostReactionSelected($event)">
+            </app-reaction-picker>
+        </div>
+
+        <div class="comments">
+            <div class="comment" *ngFor="let comment of post.comments">
+                <div class="comment-head">
+                    <div class="comment-author">
+                        <img class="comment-avatar" *ngIf="comment.authorImageUrl; else commentInitial" [src]="comment.authorImageUrl" alt="Comment author image" />
+                        <ng-template #commentInitial>
+                            <div class="comment-avatar">{{ comment.authorHandle[0] }}</div>
+                        </ng-template>
+                        <div class="comment-meta">{{ comment.authorHandle }} · {{ comment.createdAtUtc | date:'short' }}</div>
+                    </div>
+
+                    <div class="comment-actions" *ngIf="canEditComment(comment) || canDeleteComment(comment)">
+                        <button class="icon-btn" type="button" *ngIf="canEditComment(comment)" (click)="startEditComment(comment)" [disabled]="busy" aria-label="Edit comment" title="Edit comment">
+                            <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+                        </button>
+                        <button class="icon-btn danger" type="button" *ngIf="canDeleteComment(comment)" (click)="removeComment(comment.id)" [disabled]="busy" aria-label="Delete comment" title="Delete comment">
+                            <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <textarea class="comment-edit-input" *ngIf="editingCommentId === comment.id" rows="2" [ngModel]="editCommentContent" (ngModelChange)="editCommentContent = $event"></textarea>
+                <p class="comment-content" *ngIf="editingCommentId !== comment.id">{{ comment.content }}</p>
+
+                <div class="comment-edit-actions" *ngIf="editingCommentId === comment.id">
+                    <button type="button" (click)="saveCommentEdit(comment.id)" [disabled]="busy">Save</button>
+                    <button type="button" class="ghost" (click)="cancelEditComment()" [disabled]="busy">Cancel</button>
+                </div>
+
+                <div class="comment-engagement" *ngIf="editingCommentId !== comment.id">
+                    <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="comment.reactions" [myReactionType]="comment.myReactionType" [busy]="busy" [showCountWhenIdle]="false" [idleLabel]="'🙂 React'" (primaryClick)="onCommentPrimaryReaction(comment)"
+                        (reactionSelected)="onCommentReactionSelected(comment, $event)">
+                    </app-reaction-picker>
+                </div>
+            </div>
+
+            <div class="comment-compose">
+                <textarea rows="2" placeholder="Write a comment..." [ngModel]="commentInput" (ngModelChange)="commentInput = $event" [disabled]="busy"></textarea>
+                <button type="button" (click)="submitComment()" [disabled]="busy || !commentInput.trim()">Comment</button>
+            </div>
+        </div>
+    </ng-container>
+
+    <div class="post-actions" *ngIf="showActions && isEditing">
+        <button (click)="saveEdit.emit()" [disabled]="savingEdit">Save</button>
+        <button class="ghost" (click)="cancelEdit.emit()" [disabled]="savingEdit">Cancel</button>
+    </div>
+
+    <p class="meta" *ngIf="showBottomMeta">
+        <span>{{ post.createdAtUtc | date:'short' }}</span>
+        <ng-container *ngIf="showCommentsCount">
+            <span>·</span>
+            <span>{{ post.comments.length }} comments</span>
+        </ng-container>
+    </p>
+
+    <ng-content select="[post-footer]"></ng-content>
+</article>

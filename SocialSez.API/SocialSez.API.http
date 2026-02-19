@@ -1,0 +1,61 @@
+@SocialSez_HostAddress = http://localhost:5100
+@token = REPLACE_WITH_JWT
+@refreshToken = REPLACE_WITH_REFRESH_TOKEN
+
+### Register
+POST {{SocialSez_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+	"email": "sez@example.com",
+	"password": "Passw0rd!",
+	"handle": "sez",
+	"displayName": "Sez",
+	"bio": "Building SocialSez"
+}
+
+### Login
+POST {{SocialSez_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+	"email": "sez@example.com",
+	"password": "Passw0rd!"
+}
+
+### Refresh access token
+POST {{SocialSez_HostAddress}}/api/auth/refresh
+Content-Type: application/json
+
+{
+	"refreshToken": "{{refreshToken}}"
+}
+
+### Revoke refresh token
+POST {{SocialSez_HostAddress}}/api/auth/revoke
+Content-Type: application/json
+
+{
+	"refreshToken": "{{refreshToken}}"
+}
+
+### Get my profile
+GET {{SocialSez_HostAddress}}/api/profiles/me
+Authorization: Bearer {{token}}
+
+### Get public profile
+GET {{SocialSez_HostAddress}}/api/profiles/sez
+
+### Create post
+POST {{SocialSez_HostAddress}}/api/posts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+	"content": "Hello world from SocialSez"
+}
+
+### Get feed
+GET {{SocialSez_HostAddress}}/api/posts/feed
+Authorization: Bearer {{token}}
+

@@ -1,0 +1,36 @@
+.tabs a i {
+    width: 16px;
+    text-align: center;
+}
+
+.tabs a.tab-feed i {
+    color: #2563eb;
+}
+
+.tabs a.tab-compose i {
+    color: #7c3aed;
+}
+
+.tabs a.tab-discover i {
+    color: #0f766e;
+}
+
+.tabs a.tab-profile i {
+    color: #c2410c;
+}
+
+.tabs a.tab-settings i {
+    color: #4f46e5;
+}
+
+.tabs a.tab-auth i {
+    color: #9333ea;
+}
+
+.tabs a.active i {
+    color: #bfdbfe;
+}
+
+.search-row .search-btn i {
+    color: inherit;
+}

@@ -1,0 +1,76 @@
+<section class="page">
+    <ng-container *ngIf="profile as profile; else noProfileState">
+        <header class="profile-hero">
+            <img class="hero-image" [src]="avatarImageUrl" [alt]="profile.displayName + ' avatar'" />
+
+            <div class="hero-copy">
+                <h2>{{ profile.displayName }}</h2>
+                <p class="handle">@{{ profile.handle }}</p>
+                <p class="bio">{{ profile.bio || 'No bio yet.' }}</p>
+                <p class="joined">Joined {{ profile.createdAtUtc | date:'mediumDate' }}</p>
+            </div>
+
+            <div class="hero-actions">
+                <ng-container *ngIf="isOwnProfile; else followActions">
+                    <button type="button" (click)="openComposer()">New Post</button>
+                    <a class="ghost-link" routerLink="/settings">Settings</a>
+                </ng-container>
+                <ng-template #followActions>
+                    <button type="button" (click)="toggleFollow()" [disabled]="followState === 'loading'" [class.ghost]="isFollowing && followState === 'idle'" [class.is-loading]="followState === 'loading'" [class.is-success]="followState === 'success'"
+                        [class.is-failure]="followState === 'failure'">{{ followButtonLabel }}</button>
+                </ng-template>
+            </div>
+        </header>
+
+        <section class="activities">
+            <article class="activity-card">
+                <h3>Posts</h3>
+                <p>{{ totalPosts }}</p>
+            </article>
+            <article class="activity-card">
+                <h3>Comments on your posts</h3>
+                <p>{{ totalCommentsOnPosts }}</p>
+            </article>
+            <article class="activity-card">
+                <h3>Active last 7 days</h3>
+                <p>{{ activeLast7Days }}</p>
+            </article>
+        </section>
+
+        <app-post-composer *ngIf="showComposer" [showCancel]="true" (posted)="onComposerPosted()" (canceled)="onComposerCanceled()"></app-post-composer>
+
+        <p class="status" *ngIf="loading">Loading your posts...</p>
+
+        <div class="post-list" *ngIf="!loading && posts.length; else noPostsYet">
+            <app-post-card *ngFor="let post of posts" [post]="post" [content]="displayPostContent(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [showActions]="isOwnProfile" [showBottomMeta]="true" [showCommentsCount]="true" [reacting]="reactingPostId === post.id"
+                [busy]="reactingPostId === post.id" [viewerProfileId]="currentProfileId" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)"
+                (clearReaction)="clearReaction(post)" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)"
+                (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)">
+                <div post-header class="author">
+                    <img class="avatar" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
+                    <ng-template #authorInitial>
+                        <div class="avatar">{{ post.authorHandle[0] }}</div>
+                    </ng-template>
+                    <div class="author-meta"><a class="author-link" [routerLink]="['/users', post.authorHandle]">@{{ post.authorHandle }}</a> · {{ post.createdAtUtc | date:'short' }}</div>
+                </div>
+            </app-post-card>
+        </div>
+
+    </ng-container>
+
+    <ng-template #noProfileState>
+        <p class="status" *ngIf="loading">Loading profile...</p>
+        <p class="error" *ngIf="!loading">Could not load profile data. Try refreshing.</p>
+        <button class="retry" *ngIf="!loading" (click)="load()">Retry</button>
+    </ng-template>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+</section>
+
+<ng-template #noPostsYet>
+    <p class="status" *ngIf="!loading && isOwnProfile">You have no posts yet. Start sharing from Compose.</p>
+    <p class="status" *ngIf="!loading && !isOwnProfile">No posts yet.</p>
+</ng-template>
+
+<app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
+</app-confirm-modal>

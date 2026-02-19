@@ -1,0 +1,27 @@
+<section class="composer">
+    <h3>{{ title }}</h3>
+    <p class="sub">{{ subtitle }}</p>
+
+    <textarea rows="7" [(ngModel)]="content" placeholder="What’s new today?" [disabled]="uploadingMedia"></textarea>
+    <label class="upload">Post Media <input type="file" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onPostMediaSelected($event)" [disabled]="uploadingMedia" /></label>
+    <p class="meta" *ngIf="uploadingMedia">Uploading media and publishing...</p>
+
+    <section class="crop-panel" *ngIf="mediaPreviewUrl">
+        <image-cropper *ngIf="mediaKind === 'image-croppable'" [imageFile]="selectedMediaFile || undefined" [maintainAspectRatio]="false" [resizeToWidth]="1200" [onlyScaleDown]="true" [format]="cropOutputFormat" (imageCropped)="onImageCropped($event)" (imageLoaded)="onImageLoaded($event)"
+            (loadImageFailed)="onLoadImageFailed()"></image-cropper>
+
+        <img class="preview" *ngIf="mediaKind === 'image-static'" [src]="mediaPreviewUrl" alt="Selected image preview" />
+        <video class="preview" *ngIf="mediaKind === 'video'" [src]="mediaPreviewUrl" controls playsinline preload="metadata"></video>
+    </section>
+
+    <div class="actions">
+        <span class="meta">{{ content.length }}/500</span>
+        <div class="action-buttons">
+            <button *ngIf="showCancel" class="ghost" type="button" (click)="cancel()" [disabled]="uploadingMedia">Cancel</button>
+            <button class="ghost" type="button" (click)="removePostMedia()" [disabled]="!mediaPreviewUrl || uploadingMedia">Remove Media</button>
+            <button type="button" (click)="publish()" [disabled]="(!content.trim() && !mediaPreviewUrl) || uploadingMedia">Publish</button>
+        </div>
+    </div>
+
+    <p class="status" *ngIf="status">{{ status }}</p>
+</section>

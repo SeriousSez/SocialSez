@@ -1,0 +1,17 @@
+<div class="reaction-row">
+    <div class="reaction-zone" (mouseenter)="onHoverStart()" (mouseleave)="onHoverEnd()">
+        <button class="reaction-btn" type="button" (click)="primaryClick.emit()" [disabled]="busy" [class.active]="!!myReactionType">
+            {{ buttonLabel }}
+        </button>
+
+        <div class="reaction-popover" *ngIf="open" (mouseenter)="onPopoverHoverStart()" (mouseleave)="onPopoverHoverEnd()">
+            <button type="button" class="reaction-pop-btn" *ngFor="let reaction of reactionOptions" (click)="pickReaction(reaction.type)" [disabled]="busy" [class.active]="myReactionType === reaction.type" [attr.aria-label]="reaction.type">
+                {{ reaction.emoji }}
+            </button>
+        </div>
+    </div>
+
+    <div class="reaction-summary" *ngIf="reactions.length">
+        <span class="reaction-chip" *ngFor="let reaction of reactions">{{ emojiFor(reaction.type) }} {{ reaction.count }}</span>
+    </div>
+</div>

@@ -1,0 +1,22 @@
+.page {
+    display: grid;
+    gap: 12px;
+}
+
+.status {
+    margin: 0;
+    color: #0f766e;
+    background: #ccfbf1;
+    border: 1px solid #99f6e4;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+.error {
+    margin: 0;
+    color: #991b1b;
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
