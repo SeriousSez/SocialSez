@@ -10,6 +10,20 @@
     width: fit-content;
 }
 
+.reaction-zone:has(.reaction-popover)::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    right: -6px;
+    bottom: 100%;
+    height: 14px;
+}
+
+.reaction-zone:has(.reaction-popover.place-below)::before {
+    bottom: auto;
+    top: 100%;
+}
+
 .reaction-btn {
     width: fit-content;
     border: 1px solid #cbd5e1;
@@ -35,8 +49,9 @@
 .reaction-popover {
     position: absolute;
     left: 0;
-    bottom: calc(100% + 10px);
-    z-index: 30;
+    top: 0;
+    right: auto;
+    z-index: 120;
     display: flex;
     gap: 6px;
     padding: 8px;
@@ -44,6 +59,35 @@
     border-radius: 999px;
     background: #fff;
     box-shadow: 0 12px 30px -20px #0f172a;
+    width: max-content;
+    max-width: none;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(3px);
+    transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.reaction-popover.ready {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.reaction-popover.closing {
+    visibility: visible;
+    opacity: 0;
+    transform: translateY(3px);
+}
+
+.reaction-popover.align-end {
+    right: auto;
+    left: 0;
+}
+
+.reaction-popover.place-below {
+    bottom: auto;
 }
 
 .reaction-pop-btn {

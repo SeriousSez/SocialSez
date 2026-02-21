@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ImageCroppedEvent, ImageCropperComponent, LoadedImage } from 'ngx-image-cropper';
+import { ProfileDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 
 @Component({
@@ -27,14 +28,65 @@ export class PostComposerComponent implements OnDestroy {
     cropOutputFormat: 'jpeg' | 'png' = 'jpeg';
 
     selectedMediaFile: File | null = null;
+    mentionResults: ProfileDto[] = [];
+    mentionOpen = false;
+    mentionLoading = false;
     private previewObjectUrl = '';
     private croppedImageBlob: Blob | null = null;
     private croppedObjectUrl = '';
+    private mentionRangeStart = -1;
+    private mentionRangeEnd = -1;
+    private mentionSearchDebounceId: number | null = null;
+    private mentionSearchToken = 0;
+
+    @ViewChild('composerTextarea')
+    private composerTextareaRef?: ElementRef<HTMLTextAreaElement>;
 
     constructor(private readonly session: SessionService) { }
 
     ngOnDestroy(): void {
+        if (this.mentionSearchDebounceId !== null) {
+            window.clearTimeout(this.mentionSearchDebounceId);
+            this.mentionSearchDebounceId = null;
+        }
+
         this.clearSelectedMedia();
+    }
+
+    onContentInput(value: string, textarea: HTMLTextAreaElement): void {
+        this.content = value;
+        this.updateMentionSuggestions(value, textarea.selectionStart ?? value.length);
+    }
+
+    onContentCursor(textarea: HTMLTextAreaElement): void {
+        this.updateMentionSuggestions(this.content, textarea.selectionStart ?? this.content.length);
+    }
+
+    onContentBlur(): void {
+        window.setTimeout(() => {
+            this.closeMentionSuggestions();
+        }, 120);
+    }
+
+    async selectMention(profile: ProfileDto): Promise<void> {
+        if (!this.mentionOpen || this.mentionRangeStart < 0 || this.mentionRangeEnd < this.mentionRangeStart) {
+            return;
+        }
+
+        const replacement = `@${profile.handle} `;
+        this.content = `${this.content.slice(0, this.mentionRangeStart)}${replacement}${this.content.slice(this.mentionRangeEnd)}`;
+
+        const nextCaret = this.mentionRangeStart + replacement.length;
+        this.closeMentionSuggestions();
+
+        await Promise.resolve();
+        const textarea = this.composerTextareaRef?.nativeElement;
+        if (!textarea) {
+            return;
+        }
+
+        textarea.focus();
+        textarea.setSelectionRange(nextCaret, nextCaret);
     }
 
     async publish(): Promise<void> {
@@ -129,6 +181,82 @@ export class PostComposerComponent implements OnDestroy {
     removePostMedia(): void {
         this.clearSelectedMedia();
         this.status = 'Media removed.';
+    }
+
+    private updateMentionSuggestions(value: string, caret: number): void {
+        const context = this.extractMentionContext(value, caret);
+        if (!context || !context.query) {
+            this.closeMentionSuggestions();
+            return;
+        }
+
+        this.mentionRangeStart = context.start;
+        this.mentionRangeEnd = caret;
+
+        if (this.mentionSearchDebounceId !== null) {
+            window.clearTimeout(this.mentionSearchDebounceId);
+            this.mentionSearchDebounceId = null;
+        }
+
+        this.mentionLoading = true;
+        const token = ++this.mentionSearchToken;
+        this.mentionSearchDebounceId = window.setTimeout(async () => {
+            this.mentionSearchDebounceId = null;
+
+            try {
+                const profiles = await this.session.searchProfilesAsync(context.query);
+                if (token !== this.mentionSearchToken) {
+                    return;
+                }
+
+                const currentHandle = this.session.profile?.handle.toLowerCase() ?? '';
+                this.mentionResults = profiles.filter(profile => profile.handle.toLowerCase() !== currentHandle).slice(0, 6);
+                this.mentionOpen = this.mentionResults.length > 0;
+            } catch {
+                if (token !== this.mentionSearchToken) {
+                    return;
+                }
+
+                this.mentionResults = [];
+                this.mentionOpen = false;
+            } finally {
+                if (token === this.mentionSearchToken) {
+                    this.mentionLoading = false;
+                }
+            }
+        }, 200);
+    }
+
+    private closeMentionSuggestions(): void {
+        this.mentionOpen = false;
+        this.mentionResults = [];
+        this.mentionLoading = false;
+        this.mentionRangeStart = -1;
+        this.mentionRangeEnd = -1;
+        this.mentionSearchToken += 1;
+
+        if (this.mentionSearchDebounceId !== null) {
+            window.clearTimeout(this.mentionSearchDebounceId);
+            this.mentionSearchDebounceId = null;
+        }
+    }
+
+    private extractMentionContext(value: string, caret: number): { query: string; start: number } | null {
+        const prefix = value.slice(0, caret);
+        const match = prefix.match(/(^|\s)@([\p{L}\p{N}_]{1,30})$/u);
+        if (!match) {
+            return null;
+        }
+
+        const query = match[2] ?? '';
+        if (!query) {
+            return null;
+        }
+
+        return {
+            query,
+            start: caret - query.length - 1
+        };
     }
 
     private clearSelectedMedia(): void {

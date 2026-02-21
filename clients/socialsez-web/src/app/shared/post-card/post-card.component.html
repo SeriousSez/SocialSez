@@ -10,18 +10,55 @@
 
     <ng-content select="[post-header]"></ng-content>
 
-    <textarea class="edit-input" *ngIf="isEditing" rows="4" [ngModel]="editValue" (ngModelChange)="editValueChange.emit($event)"></textarea>
+    <ng-container *ngIf="isEditing">
+        <textarea #postEditArea class="edit-input" rows="4" [ngModel]="editValue" (ngModelChange)="onPostEditInput($event, postEditArea)" (keyup)="onPostEditCursor(postEditArea)" (click)="onPostEditCursor(postEditArea)" (blur)="onTextAreaBlur()"></textarea>
+        <div class="mention-suggestions" *ngIf="(mentionOpen || mentionLoading) && mentionTarget === 'post-edit'">
+            <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
+            <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
+                <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
+                <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+                <span class="mention-meta">
+                    <span class="mention-name">{{ profile.displayName }}</span>
+                    <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
+                </span>
+            </button>
+        </div>
+    </ng-container>
 
     <ng-container *ngIf="!isEditing">
         <div class="content" *ngIf="content">
             <ng-container *ngFor="let line of contentLines; let isLastLine = last">
                 <ng-container *ngFor="let part of line">
-                    <a *ngIf="part.hashtag; else plainText" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="navigateToHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                    <a *ngIf="part.hashtag; else maybeMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="navigateToHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                    <ng-template #maybeMention>
+                        <a *ngIf="part.mentionHandle; else plainText" class="mention" [href]="'/users/' + part.mentionHandle" (click)="navigateToMention(part.mentionHandle, $event)">{{ part.text }}</a>
+                    </ng-template>
                     <ng-template #plainText>{{ part.text }}</ng-template>
                 </ng-container>
                 <br *ngIf="!isLastLine" />
             </ng-container>
         </div>
+
+        <article class="shared-post-preview" *ngIf="sharedPost as shared" [attr.role]="'button'" tabindex="0" (click)="openSharedPost(shared, $event)" (keydown.enter)="openSharedPost(shared, $event)" (keydown.space)="openSharedPost(shared, $event)">
+            <header class="shared-post-head">
+                <span>Shared post from</span>
+                <strong>@{{ shared.authorHandle }}</strong>
+            </header>
+            <div class="shared-post-content" *ngIf="shared.content">
+                <ng-container *ngFor="let line of sharedPostContentLines(shared.content); let isLastLine = last">
+                    <ng-container *ngFor="let part of line">
+                        <a *ngIf="part.hashtag; else maybeSharedMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="navigateToHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                        <ng-template #maybeSharedMention>
+                            <a *ngIf="part.mentionHandle; else plainSharedText" class="mention" [href]="'/users/' + part.mentionHandle" (click)="navigateToMention(part.mentionHandle, $event)">{{ part.text }}</a>
+                        </ng-template>
+                        <ng-template #plainSharedText>{{ part.text }}</ng-template>
+                    </ng-container>
+                    <br *ngIf="!isLastLine" />
+                </ng-container>
+            </div>
+            <img class="shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" alt="Shared post media" />
+        </article>
+
         <ng-container *ngIf="post.imageUrl as mediaUrl">
             <video class="post-media" *ngIf="isVideoMedia(mediaUrl); else imageMedia" [src]="mediaUrl" controls playsinline preload="metadata"></video>
             <ng-template #imageMedia>
@@ -33,9 +70,25 @@
             <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="post.reactions" [myReactionType]="post.myReactionType" [busy]="reacting" [primaryCount]="post.likeCount" [showCountWhenIdle]="true" [idleLabel]="'👍'" (primaryClick)="onPostPrimaryReaction()"
                 (reactionSelected)="onPostReactionSelected($event)">
             </app-reaction-picker>
+
+            <button class="comments-toggle" type="button" (click)="toggleComments()" [attr.aria-expanded]="commentsOpen">
+                <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
+                <span>Comments</span>
+                <span>{{ post.comments.length }}</span>
+            </button>
+
+            <button class="comments-toggle" type="button" (click)="triggerShareToFeed()" [disabled]="busy" aria-label="Share to feed" title="Share to feed">
+                <i class="fa-duotone fa-light fa-repeat" aria-hidden="true"></i>
+                <span>Share</span>
+            </button>
+
+            <button class="comments-toggle" type="button" (click)="triggerShareToChat()" [disabled]="busy" aria-label="Send to chat" title="Send to chat">
+                <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
+                <span>Send</span>
+            </button>
         </div>
 
-        <div class="comments">
+        <div class="comments" *ngIf="commentsOpen">
             <div class="comment" *ngFor="let comment of post.comments">
                 <div class="comment-head">
                     <div class="comment-author">
@@ -56,8 +109,33 @@
                     </div>
                 </div>
 
-                <textarea class="comment-edit-input" *ngIf="editingCommentId === comment.id" rows="2" [ngModel]="editCommentContent" (ngModelChange)="editCommentContent = $event"></textarea>
-                <p class="comment-content" *ngIf="editingCommentId !== comment.id">{{ comment.content }}</p>
+                <ng-container *ngIf="editingCommentId === comment.id">
+                    <textarea #commentEditArea class="comment-edit-input" [attr.data-comment-edit-id]="comment.id" rows="2" [ngModel]="editCommentContent" (ngModelChange)="onCommentEditInput(comment.id, $event, commentEditArea)" (keyup)="onCommentEditCursor(comment.id, commentEditArea)"
+                        (click)="onCommentEditCursor(comment.id, commentEditArea)" (blur)="onTextAreaBlur()"></textarea>
+                    <div class="mention-suggestions" *ngIf="(mentionOpen || mentionLoading) && mentionTarget === 'comment-edit' && mentionTargetCommentId === comment.id">
+                        <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
+                        <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
+                            <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
+                            <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+                            <span class="mention-meta">
+                                <span class="mention-name">{{ profile.displayName }}</span>
+                                <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
+                            </span>
+                        </button>
+                    </div>
+                </ng-container>
+                <div class="comment-content" *ngIf="editingCommentId !== comment.id">
+                    <ng-container *ngFor="let line of commentContentLines(comment.content); let isLastLine = last">
+                        <ng-container *ngFor="let part of line">
+                            <a *ngIf="part.hashtag; else maybeCommentMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="navigateToHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                            <ng-template #maybeCommentMention>
+                                <a *ngIf="part.mentionHandle; else plainCommentText" class="mention" [href]="'/users/' + part.mentionHandle" (click)="navigateToMention(part.mentionHandle, $event)">{{ part.text }}</a>
+                            </ng-template>
+                            <ng-template #plainCommentText>{{ part.text }}</ng-template>
+                        </ng-container>
+                        <br *ngIf="!isLastLine" />
+                    </ng-container>
+                </div>
 
                 <div class="comment-edit-actions" *ngIf="editingCommentId === comment.id">
                     <button type="button" (click)="saveCommentEdit(comment.id)" [disabled]="busy">Save</button>
@@ -72,7 +150,19 @@
             </div>
 
             <div class="comment-compose">
-                <textarea rows="2" placeholder="Write a comment..." [ngModel]="commentInput" (ngModelChange)="commentInput = $event" [disabled]="busy"></textarea>
+                <textarea #newCommentArea rows="2" placeholder="Write a comment..." [ngModel]="commentInput" (ngModelChange)="onCommentInput($event, newCommentArea)" (keyup)="onCommentCursor(newCommentArea)" (click)="onCommentCursor(newCommentArea)" (blur)="onTextAreaBlur()"
+                    [disabled]="busy"></textarea>
+                <div class="mention-suggestions" *ngIf="(mentionOpen || mentionLoading) && mentionTarget === 'comment-new'">
+                    <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
+                    <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
+                        <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
+                        <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+                        <span class="mention-meta">
+                            <span class="mention-name">{{ profile.displayName }}</span>
+                            <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
+                        </span>
+                    </button>
+                </div>
                 <button type="button" (click)="submitComment()" [disabled]="busy || !commentInput.trim()">Comment</button>
             </div>
         </div>

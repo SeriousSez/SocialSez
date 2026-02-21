@@ -2,7 +2,22 @@
     <h3>{{ title }}</h3>
     <p class="sub">{{ subtitle }}</p>
 
-    <textarea rows="7" [(ngModel)]="content" placeholder="What’s new today?" [disabled]="uploadingMedia"></textarea>
+    <div class="composer-textarea-wrap">
+        <textarea #composerTextarea rows="7" [ngModel]="content" (ngModelChange)="onContentInput($event, composerTextarea)" (keyup)="onContentCursor(composerTextarea)" (click)="onContentCursor(composerTextarea)" (blur)="onContentBlur()" placeholder="What’s new today?"
+            [disabled]="uploadingMedia"></textarea>
+
+        <div class="mention-suggestions" *ngIf="mentionOpen || mentionLoading">
+            <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
+            <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
+                <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
+                <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+                <span class="mention-meta">
+                    <span class="mention-name">{{ profile.displayName }}</span>
+                    <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
+                </span>
+            </button>
+        </div>
+    </div>
     <label class="upload">Post Media <input type="file" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onPostMediaSelected($event)" [disabled]="uploadingMedia" /></label>
     <p class="meta" *ngIf="uploadingMedia">Uploading media and publishing...</p>
 

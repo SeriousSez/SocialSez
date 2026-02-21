@@ -1,0 +1,270 @@
+<section class="page chat-page">
+    <header class="page-head">
+        <h2>Messages</h2>
+    </header>
+
+    <section class="chat-layout">
+        <aside class="chat-sidebar">
+            <section class="chat-tools">
+                <div class="chat-search-row">
+                    <label class="field">
+                        <span>Search chats</span>
+                        <div class="chat-search-input-wrap">
+                            <input [(ngModel)]="searchUsersQuery" (ngModelChange)="onSearchUsersInput($event)" placeholder=" " />
+                            <span class="chat-search-marquee" aria-hidden="true"><span class="chat-search-marquee-track">Find chats by name, handle, or message</span></span>
+                        </div>
+                    </label>
+
+                    <button type="button" class="chat-new-chat-icon" (click)="openChatSearchModal()" aria-label="Start a new chat" title="Start a new chat">
+                        <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </section>
+
+            <section class="conversation-list-wrap">
+                <h3>Chats</h3>
+                <div class="chat-conversation-skeleton" *ngIf="loadingConversations" aria-label="Loading conversations">
+                    <div class="chat-conversation-skeleton-row" *ngFor="let _ of [1, 2, 3, 4]">
+                        <app-skeleton width="42px" height="42px" radius="999px"></app-skeleton>
+                        <div class="chat-conversation-skeleton-copy">
+                            <app-skeleton width="120px" height="12px"></app-skeleton>
+                            <app-skeleton width="160px" height="10px"></app-skeleton>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="conversation-list" *ngIf="!loadingConversations">
+                    <button type="button" class="conversation" *ngFor="let conversation of filteredConversations; trackBy: trackByConversationId" [class.active]="selectedConversationId === conversation.id" (click)="selectConversation(conversation)">
+                        <div class="conversation-row">
+                            <span class="avatar" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
+                            <img class="avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+
+                            <div class="conversation-content">
+                                <div class="conversation-head">
+                                    <strong class="title">{{ conversationTitle(conversation) }}</strong>
+                                    <span class="time" *ngIf="conversation.lastMessage as last">{{ formatTime(last.createdAtUtc) }}</span>
+                                </div>
+                                <div class="conversation-meta" *ngIf="conversation.lastMessage as last">{{ last.authorHandle }}: {{ conversationPreview(last.content) }}</div>
+                            </div>
+                        </div>
+                    </button>
+
+                    <p class="chat-empty-hint" *ngIf="!filteredConversations.length">{{ searchUsersQuery.trim() ? 'No chats found.' : 'No active chats yet.' }}</p>
+
+                </div>
+            </section>
+        </aside>
+
+        <section class="message-panel" *ngIf="selectedConversation as conversation; else noConversation">
+            <header class="message-panel-head">
+                <a class="thread-person thread-person-link" *ngIf="chatHeaderProfileHandle(conversation) as profileHandle; else threadPersonStatic" [attr.href]="'/users/' + profileHandle" (click)="openUserProfile(profileHandle, $event)" [attr.aria-label]="'View @' + profileHandle + ' profile'">
+                    <span class="thread-avatar" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
+                    <img class="thread-avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+
+                    <div class="thread-identity">
+                        <h3>{{ chatHeaderName(conversation) }}</h3>
+                        <p>{{ chatHeaderHandle(conversation) }}</p>
+                    </div>
+                </a>
+
+                <ng-template #threadPersonStatic>
+                    <div class="thread-person">
+                        <span class="thread-avatar" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
+                        <img class="thread-avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+
+                        <div class="thread-identity">
+                            <h3>{{ chatHeaderName(conversation) }}</h3>
+                            <p>{{ chatHeaderHandle(conversation) }}</p>
+                        </div>
+                    </div>
+                </ng-template>
+
+                <div class="thread-search">
+                    <input [(ngModel)]="messageSearchQuery" placeholder="Search messages" />
+                </div>
+            </header>
+
+            <section class="chat-thread-skeleton" *ngIf="loadingMessages" aria-label="Loading messages">
+                <div class="chat-thread-skeleton-row" [class.own]="i % 2 === 1" *ngFor="let _ of [1, 2, 3, 4, 5, 6, 7, 8]; let i = index">
+                    <app-skeleton width="28px" height="28px" radius="999px"></app-skeleton>
+                    <div class="chat-thread-skeleton-bubble" [class.hero]="i === 2 || i === 7">
+                        <app-skeleton [width]="i % 2 === 1 ? '200px' : '220px'" height="13px"></app-skeleton>
+                        <app-skeleton [width]="i % 2 === 1 ? '150px' : '180px'" height="13px"></app-skeleton>
+                        <app-skeleton *ngIf="i === 2 || i === 7" [width]="i % 2 === 1 ? '220px' : '260px'" height="130px" radius="12px"></app-skeleton>
+                    </div>
+                </div>
+            </section>
+
+            <section class="message-empty" *ngIf="!loadingMessages && !visibleMessages.length">
+                <div class="empty-art" aria-hidden="true">
+                    <span class="dot dot-a"></span>
+                    <span class="dot dot-b"></span>
+                    <span class="dot dot-c"></span>
+                </div>
+
+                <h4 *ngIf="!messageSearchQuery.trim()">This chat is waiting for its first message</h4>
+                <p *ngIf="!messageSearchQuery.trim()">Break the silence and send a quick hello 👋</p>
+
+                <div class="suggested-messages" *ngIf="!messageSearchQuery.trim()">
+                    <button type="button" *ngFor="let suggestion of suggestedStarterMessages" (click)="sendSuggestedMessage(suggestion)" [disabled]="sendingMessage">
+                        {{ suggestion }}
+                    </button>
+                </div>
+
+                <h4 *ngIf="messageSearchQuery.trim()">No messages found</h4>
+                <p *ngIf="messageSearchQuery.trim()">Try another keyword in search.</p>
+            </section>
+
+            <div #messageList class="message-list" *ngIf="!loadingMessages && visibleMessages.length">
+                <ng-container *ngFor="let message of visibleMessages; trackBy: trackByMessageId; let i = index">
+                    <div class="message-time-break" *ngIf="shouldShowMessageTimeBreak(i)">{{ formatMessageBreak(message.createdAtUtc) }}</div>
+
+                    <article class="message" [class.own]="currentProfileId === message.authorProfileId" [class.compact]="isCompactMessage(i)" [class.linked-text]="isLinkedTextToNextShared(i)" [class.linked-shared]="isLinkedSharedFromPreviousText(i)">
+                        <div class="message-row">
+                            <ng-container *ngIf="currentProfileId !== message.authorProfileId">
+                                <span class="message-avatar" *ngIf="!messageAvatarUrl(message)">{{ messageAvatarText(message) }}</span>
+                                <img class="message-avatar" *ngIf="messageAvatarUrl(message) as avatar" [src]="avatar" alt="Message sender avatar" />
+                            </ng-container>
+
+                            <div class="bubble-wrap" *ngIf="parsedMessage(message) as parsed">
+                                <div class="bubble" [class.media-only]="parsed.gifUrl || parsed.imageUrl" [class.shared-only]="parsed.sharedPost && !parsed.text && !parsed.gifUrl && !parsed.imageUrl" [class.shared-with-text]="parsed.sharedPost && !!parsed.text"
+                                    [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
+                                    <p *ngIf="parsed.text">{{ parsed.text }}</p>
+                                    <article class="shared-post-preview" *ngIf="parsed.sharedPost as shared">
+                                        <header class="shared-post-head">
+                                            <img class="shared-post-author-avatar" *ngIf="shared.authorImageUrl" [src]="shared.authorImageUrl" alt="Shared post author avatar" />
+                                            <span class="shared-post-author-fallback" *ngIf="!shared.authorImageUrl">{{ shared.authorHandle[0].toUpperCase() }}</span>
+                                            <div class="shared-post-author-meta">
+                                                <span>Shared post from</span>
+                                                <strong>@{{ shared.authorHandle }}</strong>
+                                            </div>
+                                        </header>
+                                        <img class="shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" alt="Shared post media" />
+                                        <div class="shared-post-content" *ngIf="shared.content">
+                                            <ng-container *ngFor="let line of richTextLines(sharedPreviewContent(shared.content)); let isLastLine = last">
+                                                <ng-container *ngFor="let part of line">
+                                                    <a *ngIf="part.hashtag; else maybeSharedMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="openHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                                                    <ng-template #maybeSharedMention>
+                                                        <a *ngIf="part.mentionHandle; else plainSharedText" class="mention" [href]="'/users/' + part.mentionHandle" (click)="openUserProfile(part.mentionHandle, $event)">{{ part.text }}</a>
+                                                    </ng-template>
+                                                    <ng-template #plainSharedText>{{ part.text }}</ng-template>
+                                                </ng-container>
+                                                <br *ngIf="!isLastLine" />
+                                            </ng-container>
+                                        </div>
+                                        <div class="shared-post-actions" *ngIf="isSharedPreviewTruncated(shared.content) || shared.imageUrl">
+                                            <a class="shared-post-expand" [href]="'/users/' + shared.authorHandle" (click)="openSharedPost(shared, $event)">View full post</a>
+                                        </div>
+                                    </article>
+                                    <img class="chat-message-media" *ngIf="parsed.imageUrl" [src]="parsed.imageUrl" alt="Sent image" />
+                                    <img class="chat-message-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" alt="Sent GIF" />
+                                </div>
+
+                                <div class="reaction-summary corner" *ngIf="message.reactions.length">
+                                    <span *ngFor="let reaction of message.reactions">{{ reactionEmoji(reaction.type) }} {{ reaction.count }}</span>
+                                </div>
+                            </div>
+
+                            <div class="message-reaction-picker">
+                                <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="noReactions" [myReactionType]="message.myReactionType" [busy]="reactingMessageId === message.id" [popoverAlign]="currentProfileId === message.authorProfileId ? 'end' : 'start'"
+                                    (primaryClick)="onMessagePrimaryReaction(message)" (reactionSelected)="onMessageReactionSelected(message, $event)">
+                                </app-reaction-picker>
+                                <span class="message-time-side">{{ formatTime(message.createdAtUtc) }}</span>
+                            </div>
+                        </div>
+                    </article>
+                </ng-container>
+            </div>
+
+            <footer class="chat-composer">
+                <div class="chat-composer-main">
+                    <div class="chat-composer-input-shell">
+                        <button #emojiToggleBtn type="button" class="chat-composer-icon" aria-label="Add emoji" title="Add emoji" (click)="toggleEmojiPicker()">
+                            <i class="fa-duotone fa-light fa-face-smile" aria-hidden="true"></i>
+                        </button>
+
+                        <textarea #composerInput [(ngModel)]="newMessage" placeholder="Message..." rows="1" (input)="onComposerInputChange()" (keydown)="onComposerKeydown($event)"></textarea>
+
+                        <button #gifToggleBtn type="button" class="chat-composer-icon" aria-label="Add GIF" title="Add GIF" (click)="toggleGifInput()">
+                            <i class="fa-duotone fa-light fa-gif" aria-hidden="true"></i>
+                        </button>
+
+                        <button type="button" class="chat-composer-icon" aria-label="Add image" title="Add image" (click)="openImagePicker()" [disabled]="uploadingImage">
+                            <i class="fa-duotone fa-light fa-image" aria-hidden="true"></i>
+                        </button>
+
+                        <input #chatImageInput type="file" accept="image/*" (change)="onImageSelected($event)" hidden />
+                    </div>
+
+                    <div #emojiPickerWrap class="chat-emoji-picker-wrap" *ngIf="emojiPickerOpen">
+                        <emoji-picker class="chat-emoji-picker" (emoji-click)="onEmojiPicked($event)" search-placeholder="Search emoji"></emoji-picker>
+                    </div>
+
+                    <div #gifOverlayWrap class="chat-gif-input-row" *ngIf="gifInputOpen">
+                        <div class="chat-gif-search-row">
+                            <input [(ngModel)]="gifSearchQuery" placeholder="Search Giphy GIFs" (keydown.enter)="searchGifs()" />
+                            <button type="button" class="ghost" (click)="searchGifs()" [disabled]="searchingGifs || !gifSearchQuery.trim()">Search</button>
+                        </div>
+
+                        <p class="chat-gif-hint" *ngIf="!searchingGifs && !gifSearchQuery.trim()">Trending now</p>
+
+                        <div class="chat-gif-results" *ngIf="gifResults.length">
+                            <button type="button" class="chat-gif-result" *ngFor="let gif of gifResults" (click)="selectGif(gif)" [disabled]="sendingMessage">
+                                <img [src]="gif.previewUrl" [alt]="gif.title || 'GIF'" loading="lazy" />
+                            </button>
+                        </div>
+
+                        <p class="chat-gif-hint" *ngIf="!searchingGifs && !gifSearchQuery.trim() && !gifResults.length">No trending GIFs right now.</p>
+                        <p class="chat-gif-hint" *ngIf="!searchingGifs && gifSearchQuery.trim() && !gifResults.length">No GIFs found.</p>
+                    </div>
+
+                    <div class="chat-composer-media-preview" *ngIf="hasComposerMedia()">
+                        <div class="chat-media-preview-item shared" *ngIf="composerSharedPost() as shared">
+                            <div class="shared-post-head">
+                                <span>Sharing</span>
+                                <strong>@{{ shared.authorHandle }}</strong>
+                            </div>
+                            <div class="shared-post-content" *ngIf="shared.content">
+                                <ng-container *ngFor="let line of richTextLines(sharedPreviewContent(shared.content)); let isLastLine = last">
+                                    <ng-container *ngFor="let part of line">
+                                        <a *ngIf="part.hashtag; else maybeComposerMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="openHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                                        <ng-template #maybeComposerMention>
+                                            <a *ngIf="part.mentionHandle; else plainComposerText" class="mention" [href]="'/users/' + part.mentionHandle" (click)="openUserProfile(part.mentionHandle, $event)">{{ part.text }}</a>
+                                        </ng-template>
+                                        <ng-template #plainComposerText>{{ part.text }}</ng-template>
+                                    </ng-container>
+                                    <br *ngIf="!isLastLine" />
+                                </ng-container>
+                            </div>
+                            <img class="shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" alt="Shared post media preview" />
+                            <button type="button" (click)="clearComposerSharedPost()" aria-label="Remove shared post">×</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" (click)="sendMessage()" [disabled]="sendingMessage || uploadingImage || (!newMessage.trim() && !hasComposerMedia())">Send</button>
+            </footer>
+        </section>
+
+        <ng-template #noConversation>
+            <section class="message-panel empty-state">
+                <section class="message-empty no-chat-empty">
+                    <div class="empty-art" aria-hidden="true">
+                        <span class="dot dot-a"></span>
+                        <span class="dot dot-b"></span>
+                        <span class="dot dot-c"></span>
+                    </div>
+
+                    <h4>Pick a chat to start messaging</h4>
+                    <p>Choose any conversation from the left to open your thread.</p>
+                    <p>Don’t see the person yet? Start a new chat.</p>
+                    <button type="button" class="ghost" (click)="openChatSearchModal()">Start new chat</button>
+                </section>
+            </section>
+        </ng-template>
+    </section>
+
+    <app-chat-search-modal [open]="chatSearchModalOpen" [query]="modalSearchUsersQuery" [searching]="searchingProfiles" [loadingSuggestions]="loadingProfileSuggestions" [error]="searchUsersError" [profiles]="filteredProfiles" [followingSuggestions]="suggestedFollowingProfiles"
+        [relevantSuggestions]="suggestedRelevantProfiles" [busy]="startingDirectChat" (close)="closeChatSearchModal()" (queryChange)="onModalSearchUsersInput($event)" (selectProfile)="selectProfileForChat($event)">
+    </app-chat-search-modal>
+</section>

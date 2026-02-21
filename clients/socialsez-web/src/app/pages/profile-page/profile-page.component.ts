@@ -1,18 +1,22 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
 import { PostDto, ProfileDto } from '../../core/api.types';
+import { buildSharedPostMarker, buildSharedPostPreview } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { PostComposerComponent } from '../../shared/post-composer/post-composer.component';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
+import { SharePostMessageModalComponent, SharePostMessageSubmit } from '../../shared/share-post-message-modal/share-post-message-modal.component';
+import { SharePostModalComponent } from '../../shared/share-post-modal/share-post-modal.component';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 @Component({
     selector: 'app-profile-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent],
+    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, SkeletonComponent],
     templateUrl: './profile-page.component.html',
     styleUrl: './profile-page.component.scss'
 })
@@ -28,6 +32,10 @@ export class ProfilePageComponent {
     pendingDeletePostId: string | null = null;
     reactingPostId: string | null = null;
     showComposer = false;
+    sharingPostId: string | null = null;
+    pendingSharePost: PostDto | null = null;
+    pendingShareTarget: 'feed' | 'chat' | null = null;
+    shareNote = '';
     viewedProfile: ProfileDto | null = null;
     viewedHandle: string | null = null;
     followState: 'idle' | 'loading' | 'success' | 'failure' = 'idle';
@@ -37,7 +45,7 @@ export class ProfilePageComponent {
     private followStateResetTimerId: number | null = null;
     private readonly destroyRef = inject(DestroyRef);
 
-    constructor(public readonly session: SessionService, private readonly route: ActivatedRoute) {
+    constructor(public readonly session: SessionService, private readonly route: ActivatedRoute, private readonly router: Router) {
         this.session.appChanges$
             .pipe(
                 filter(change => change === 'posts' || change === 'profile' || change === 'session'),
@@ -320,6 +328,128 @@ export class ProfilePageComponent {
 
     async clearCommentReaction(post: PostDto, commentId: string): Promise<void> {
         await this.runPostMutation(post.id, () => this.session.clearCommentReactionAsync(post.id, commentId), 'Could not clear comment reaction right now.');
+    }
+
+    async sharePostToFeed(post: PostDto): Promise<void> {
+        this.openShareModal(post, 'feed');
+    }
+
+    async sharePostToChat(post: PostDto): Promise<void> {
+        this.openShareModal(post, 'chat');
+    }
+
+    cancelShareModal(): void {
+        if (this.sharingPostId) {
+            return;
+        }
+
+        this.pendingSharePost = null;
+        this.pendingShareTarget = null;
+        this.shareNote = '';
+    }
+
+    async submitShare(note: string): Promise<void> {
+        const post = this.pendingSharePost;
+        const target = this.pendingShareTarget;
+        if (!post || target !== 'feed') {
+            return;
+        }
+
+        const trimmedNote = note.trim();
+        this.shareNote = trimmedNote;
+
+        const succeeded = await this.executeShareToFeed(post, trimmedNote);
+
+        if (succeeded) {
+            this.cancelShareModal();
+        }
+    }
+
+    async submitShareAsMessage(request: SharePostMessageSubmit): Promise<void> {
+        const post = this.pendingSharePost;
+        const target = this.pendingShareTarget;
+        if (!post || target !== 'chat') {
+            return;
+        }
+
+        const succeeded = await this.executeShareToChat(post, request);
+
+        if (succeeded) {
+            this.cancelShareModal();
+        }
+    }
+
+    private openShareModal(post: PostDto, target: 'feed' | 'chat'): void {
+        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
+            return;
+        }
+
+        this.pendingSharePost = post;
+        this.pendingShareTarget = target;
+        this.shareNote = '';
+    }
+
+    private async executeShareToFeed(post: PostDto, shareText: string): Promise<boolean> {
+        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
+            return false;
+        }
+
+        this.sharingPostId = post.id;
+        this.error = '';
+
+        try {
+            const marker = buildSharedPostMarker(buildSharedPostPreview(post));
+            const message = shareText ? `${shareText}\n${marker}` : marker;
+            await this.session.createPostAsync(message);
+            await this.load();
+            return true;
+        } catch {
+            this.error = 'Could not share this post right now.';
+            return false;
+        } finally {
+            this.sharingPostId = null;
+        }
+    }
+
+    private async executeShareToChat(post: PostDto, request: SharePostMessageSubmit): Promise<boolean> {
+        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
+            return false;
+        }
+
+        const recipientIds = request.recipientIds;
+        if (!recipientIds.length) {
+            return false;
+        }
+
+        this.sharingPostId = post.id;
+        this.error = '';
+
+        try {
+            const marker = buildSharedPostMarker(buildSharedPostPreview(post));
+            const shareText = request.note.trim();
+            const sendToConversation = async (conversationId: string): Promise<void> => {
+                if (shareText) {
+                    await this.session.sendChatMessageAsync(conversationId, shareText);
+                }
+                await this.session.sendChatMessageAsync(conversationId, marker);
+            };
+
+            if (request.mode === 'group' && recipientIds.length > 1) {
+                const group = await this.session.createGroupConversationAsync('', recipientIds);
+                await sendToConversation(group.id);
+            } else {
+                await Promise.all(recipientIds.map(async (recipientId) => {
+                    const conversation = await this.session.createDirectConversationAsync(recipientId);
+                    await sendToConversation(conversation.id);
+                }));
+            }
+            return true;
+        } catch {
+            this.error = 'Could not send this post to chat right now.';
+            return false;
+        } finally {
+            this.sharingPostId = null;
+        }
     }
 
     async toggleFollow(): Promise<void> {

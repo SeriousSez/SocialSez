@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 using SocialSez.Domain.Entities;
@@ -10,7 +11,7 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
 {
     public async Task<ProfileDto> CreateAsync(CreateProfileRequest request, CancellationToken cancellationToken = default)
     {
-        var handle = request.Handle.Trim().ToLowerInvariant();
+        var handle = NormalizeHandle(request.Handle);
 
         if (string.IsNullOrWhiteSpace(handle))
         {
@@ -90,4 +91,10 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
 
     private static ProfileDto ToDto(UserProfile profile) =>
         new(profile.Id, profile.Handle, profile.DisplayName, profile.Bio, profile.ImageUrl, profile.CreatedAtUtc);
+
+    private static string NormalizeHandle(string handle)
+    {
+        var normalized = (handle ?? string.Empty).Trim().ToLowerInvariant();
+        return Regex.Replace(normalized, "\\s+", "-");
+    }
 }

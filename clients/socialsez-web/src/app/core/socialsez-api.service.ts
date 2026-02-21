@@ -1,7 +1,25 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, of, switchMap, tap, throwError, timeout } from 'rxjs';
-import { AuthResponse, HashtagSearchResultDto, LoginRequest, PostDto, ProfileDto, RegisterRequest, SetReactionRequest, UpdatePostRequest, UpdateProfileRequest, UploadImageResponse } from './api.types';
+import {
+    AuthResponse,
+    ChatConversationDto,
+    ChatMessageDto,
+    CreateChatMessageRequest,
+    CreateDirectConversationRequest,
+    CreateGroupConversationRequest,
+    FollowSuggestionsDto,
+    HashtagSearchResultDto,
+    LoginRequest,
+    PostDto,
+    ProfileDto,
+    RegisterRequest,
+    SetMessageReactionRequest,
+    SetReactionRequest,
+    UpdatePostRequest,
+    UpdateProfileRequest,
+    UploadImageResponse
+} from './api.types';
 
 @Injectable({ providedIn: 'root' })
 export class SocialSezApiService {
@@ -161,6 +179,10 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.get<HashtagSearchResultDto[]>(`${this.baseUrl}/posts/hashtags/search?q=${encodeURIComponent(query)}&take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
+    getTrendingHashtags(take = 10): Observable<HashtagSearchResultDto[]> {
+        return this.withAutoRefresh(() => this.http.get<HashtagSearchResultDto[]>(`${this.baseUrl}/posts/hashtags/trending?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
     follow(followedId: string): Observable<void> {
         return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/follows`, { followedId }, { headers: this.authHeaders() }));
     }
@@ -173,8 +195,44 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.get<{ isFollowing: boolean }>(`${this.baseUrl}/follows/status?followedId=${followedId}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
+    getFollowing(take = 100): Observable<ProfileDto[]> {
+        return this.withAutoRefresh(() => this.http.get<ProfileDto[]>(`${this.baseUrl}/follows/following?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getFollowSuggestions(takePerGroup = 10): Observable<FollowSuggestionsDto> {
+        return this.withAutoRefresh(() => this.http.get<FollowSuggestionsDto>(`${this.baseUrl}/follows/suggestions?takePerGroup=${takePerGroup}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
     updateMyProfile(request: UpdateProfileRequest): Observable<ProfileDto> {
         return this.withAutoRefresh(() => this.http.put<ProfileDto>(`${this.baseUrl}/profiles/me`, request, { headers: this.authHeaders() }));
+    }
+
+    getChatConversations(): Observable<ChatConversationDto[]> {
+        return this.withAutoRefresh(() => this.http.get<ChatConversationDto[]>(`${this.baseUrl}/chat/conversations`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    createOrGetDirectConversation(request: CreateDirectConversationRequest): Observable<ChatConversationDto> {
+        return this.withAutoRefresh(() => this.http.post<ChatConversationDto>(`${this.baseUrl}/chat/conversations/direct`, request, { headers: this.authHeaders() }));
+    }
+
+    createGroupConversation(request: CreateGroupConversationRequest): Observable<ChatConversationDto> {
+        return this.withAutoRefresh(() => this.http.post<ChatConversationDto>(`${this.baseUrl}/chat/conversations/group`, request, { headers: this.authHeaders() }));
+    }
+
+    getChatMessages(conversationId: string, take = 50): Observable<ChatMessageDto[]> {
+        return this.withAutoRefresh(() => this.http.get<ChatMessageDto[]>(`${this.baseUrl}/chat/conversations/${conversationId}/messages?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    sendChatMessage(conversationId: string, request: CreateChatMessageRequest): Observable<ChatMessageDto> {
+        return this.withAutoRefresh(() => this.http.post<ChatMessageDto>(`${this.baseUrl}/chat/conversations/${conversationId}/messages`, request, { headers: this.authHeaders() }));
+    }
+
+    setMessageReaction(messageId: string, request: SetMessageReactionRequest): Observable<ChatMessageDto> {
+        return this.withAutoRefresh(() => this.http.post<ChatMessageDto>(`${this.baseUrl}/chat/messages/${messageId}/reaction`, request, { headers: this.authHeaders() }));
+    }
+
+    clearMessageReaction(messageId: string): Observable<ChatMessageDto> {
+        return this.withAutoRefresh(() => this.http.delete<ChatMessageDto>(`${this.baseUrl}/chat/messages/${messageId}/reaction`, { headers: this.authHeaders() }));
     }
 
     isAuthenticated(): boolean {

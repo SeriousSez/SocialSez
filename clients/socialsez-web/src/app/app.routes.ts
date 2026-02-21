@@ -6,6 +6,7 @@ import { AuthPageComponent } from './pages/auth-page/auth-page.component';
 import { FeedPageComponent } from './pages/feed-page/feed-page.component';
 import { ComposePageComponent } from './pages/compose-page/compose-page.component';
 import { DiscoverPageComponent } from './pages/discover-page/discover-page.component';
+import { ChatPageComponent } from './pages/chat-page/chat-page.component';
 import { SettingsPageComponent } from './pages/settings-page/settings-page.component';
 import { ProfilePageComponent } from './pages/profile-page/profile-page.component';
 import { HashtagPageComponent } from './pages/hashtag-page/hashtag-page.component';
@@ -32,6 +33,7 @@ export const routes: Routes = [
     { path: 'feed', component: FeedPageComponent, canActivate: [authGuard] },
     { path: 'compose', component: ComposePageComponent, canActivate: [authGuard] },
     { path: 'discover', component: DiscoverPageComponent, canActivate: [authGuard] },
+    { path: 'chat', component: ChatPageComponent, canActivate: [authGuard] },
     { path: 'hashtags/:tag', component: HashtagPageComponent, canActivate: [authGuard] },
     { path: 'profile', component: ProfilePageComponent, canActivate: [authGuard] },
     { path: 'users/:handle', component: ProfilePageComponent, canActivate: [authGuard] },

@@ -4,15 +4,17 @@
         <a class="back-link" routerLink="/feed">Back to Feed</a>
     </header>
 
-    <p class="status" *ngIf="loading">Loading hashtag posts...</p>
+    <section class="hashtag-skeleton" *ngIf="loading" aria-label="Loading hashtag posts">
+        <app-skeleton *ngFor="let _ of [1, 2, 3]" width="100%" height="155px" radius="12px"></app-skeleton>
+    </section>
     <p class="error" *ngIf="!loading && error">{{ error }}</p>
     <button class="retry" *ngIf="!loading && error" (click)="load()">Retry</button>
 
     <div class="list" *ngIf="!loading && !error && posts.length; else emptyState">
-        <app-post-card *ngFor="let post of posts" [post]="post" [content]="displayPostContent(post)" [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id" [viewerProfileId]="currentProfileId" [showActions]="canManagePost(post)"
-            [isEditing]="editingPostId === post.id" [editValue]="editContent" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()"
-            (deletePost)="deletePost(post.id)" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)"
-            (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)">
+        <app-post-card *ngFor="let post of posts" [post]="post" [content]="displayPostContent(post)" [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId"
+            [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)"
+            (cancelEdit)="cancelEdit()" (deletePost)="deletePost(post.id)" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)"
+            (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
             <div post-header class="author">
                 <img class="avatar" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
                 <ng-template #authorInitial>
@@ -27,3 +29,9 @@
         <p class="empty" *ngIf="!loading && !error">No posts found for #{{ hashtag }} yet.</p>
     </ng-template>
 </section>
+
+<app-share-post-modal [open]="!!pendingSharePost && pendingShareTarget === 'feed'" [post]="pendingSharePost" [target]="'feed'" [busy]="!!sharingPostId" [initialText]="shareNote" (cancel)="cancelShareModal()" (confirm)="submitShare($event)">
+</app-share-post-modal>
+
+<app-share-post-message-modal [open]="!!pendingSharePost && pendingShareTarget === 'chat'" [post]="pendingSharePost" [busy]="!!sharingPostId" (cancel)="cancelShareModal()" (confirm)="submitShareAsMessage($event)">
+</app-share-post-message-modal>

@@ -1,10 +1,11 @@
 <div class="reaction-row">
-    <div class="reaction-zone" (mouseenter)="onHoverStart()" (mouseleave)="onHoverEnd()">
+    <div class="reaction-zone" #zone (mouseenter)="onHoverStart()" (mouseleave)="onHoverEnd()">
         <button class="reaction-btn" type="button" (click)="primaryClick.emit()" [disabled]="busy" [class.active]="!!myReactionType">
             {{ buttonLabel }}
         </button>
 
-        <div class="reaction-popover" *ngIf="open" (mouseenter)="onPopoverHoverStart()" (mouseleave)="onPopoverHoverEnd()">
+        <div class="reaction-popover" [class.align-end]="resolvedPopoverAlign === 'end'" [class.place-below]="resolvedPopoverVertical === 'bottom'" [class.ready]="popoverReady" [class.closing]="popoverClosing" [style.left.px]="popoverLeft" [style.top.px]="popoverTop" *ngIf="open" #popover
+            (mouseenter)="onPopoverHoverStart()" (mouseleave)="onPopoverHoverEnd()">
             <button type="button" class="reaction-pop-btn" *ngFor="let reaction of reactionOptions" (click)="pickReaction(reaction.type)" [disabled]="busy" [class.active]="myReactionType === reaction.type" [attr.aria-label]="reaction.type">
                 {{ reaction.emoji }}
             </button>

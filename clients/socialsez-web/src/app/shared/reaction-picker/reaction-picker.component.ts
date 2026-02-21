@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { ReactionSummaryDto } from '../../core/api.types';
 
 interface ReactionOption {
@@ -22,34 +22,60 @@ export class ReactionPickerComponent implements OnDestroy {
     @Input() primaryCount = 0;
     @Input() showCountWhenIdle = false;
     @Input() idleLabel = '🙂';
+    @Input() popoverAlign: 'start' | 'end' = 'start';
 
     @Output() primaryClick = new EventEmitter<void>();
     @Output() reactionSelected = new EventEmitter<string>();
 
+    @ViewChild('zone') zoneRef?: ElementRef<HTMLDivElement>;
+    @ViewChild('popover') popoverRef?: ElementRef<HTMLDivElement>;
+
     open = false;
+    popoverReady = false;
+    popoverClosing = false;
+    resolvedPopoverAlign: 'start' | 'end' = 'start';
+    resolvedPopoverVertical: 'top' | 'bottom' = 'top';
+    popoverLeft = 0;
+    popoverTop = 0;
     private openTimerId: number | null = null;
     private closeTimerId: number | null = null;
+    private closeAnimationTimerId: number | null = null;
 
     ngOnDestroy(): void {
         this.clearTimers();
+        this.clearCloseAnimationTimer();
     }
 
     onHoverStart(): void {
         this.clearCloseTimer();
+        this.clearCloseAnimationTimer();
+
         if (this.open) {
+            this.popoverClosing = false;
+            this.popoverReady = true;
+            this.adjustPopoverAlignment();
             return;
         }
 
         this.clearOpenTimer();
         this.openTimerId = window.setTimeout(() => {
             this.open = true;
+            this.popoverReady = false;
+            this.popoverClosing = false;
+            this.resolvedPopoverAlign = this.popoverAlign;
+            this.resolvedPopoverVertical = 'top';
             this.openTimerId = null;
+            window.setTimeout(() => {
+                this.adjustPopoverAlignment();
+                this.popoverReady = true;
+                this.syncHoverStateAfterReady();
+            }, 0);
         }, 500);
     }
 
     onHoverEnd(): void {
         this.clearOpenTimer();
-        this.scheduleClose();
+        this.scheduleClose(420);
     }
 
     onPopoverHoverStart(): void {
@@ -57,7 +83,7 @@ export class ReactionPickerComponent implements OnDestroy {
     }
 
     onPopoverHoverEnd(): void {
-        this.scheduleClose();
+        this.scheduleClose(240);
     }
 
     pickReaction(type: string): void {
@@ -67,7 +93,19 @@ export class ReactionPickerComponent implements OnDestroy {
 
     closePopoverNow(): void {
         this.clearTimers();
+        this.clearCloseAnimationTimer();
         this.open = false;
+        this.popoverReady = false;
+        this.popoverClosing = false;
+    }
+
+    @HostListener('window:resize')
+    onWindowResize(): void {
+        if (!this.open) {
+            return;
+        }
+
+        this.adjustPopoverAlignment();
     }
 
     emojiFor(type: string): string {
@@ -79,15 +117,15 @@ export class ReactionPickerComponent implements OnDestroy {
             return this.emojiFor(this.myReactionType);
         }
 
-        return this.emojiFor('Like');
+        return this.emojiFor('Love');
     }
 
-    private scheduleClose(): void {
+    private scheduleClose(delayMs = 180): void {
         this.clearCloseTimer();
         this.closeTimerId = window.setTimeout(() => {
-            this.open = false;
+            this.startCloseAnimation();
             this.closeTimerId = null;
-        }, 180);
+        }, delayMs);
     }
 
     private clearOpenTimer(): void {
@@ -107,5 +145,130 @@ export class ReactionPickerComponent implements OnDestroy {
     private clearTimers(): void {
         this.clearOpenTimer();
         this.clearCloseTimer();
+    }
+
+    private startCloseAnimation(): void {
+        if (!this.open || this.popoverClosing) {
+            return;
+        }
+
+        this.popoverClosing = true;
+        this.clearCloseAnimationTimer();
+        this.closeAnimationTimerId = window.setTimeout(() => {
+            this.open = false;
+            this.popoverReady = false;
+            this.popoverClosing = false;
+            this.closeAnimationTimerId = null;
+        }, 120);
+    }
+
+    private clearCloseAnimationTimer(): void {
+        if (this.closeAnimationTimerId !== null) {
+            window.clearTimeout(this.closeAnimationTimerId);
+            this.closeAnimationTimerId = null;
+        }
+    }
+
+    private adjustPopoverAlignment(): void {
+        const popover = this.popoverRef?.nativeElement;
+        const zone = this.zoneRef?.nativeElement;
+        if (!popover || !zone) {
+            return;
+        }
+
+        const viewportPadding = 8;
+        const boundaryElement = popover.closest('.message-list, .thread-list, .thread-scroll, .messages-panel, .message-panel') as HTMLElement | null;
+        const boundaryRect = boundaryElement?.getBoundingClientRect();
+
+        const rectLeft = Math.max(boundaryRect?.left ?? 0, 0);
+        const rectRight = Math.min(boundaryRect?.right ?? window.innerWidth, window.innerWidth);
+        const rectTop = Math.max(boundaryRect?.top ?? 0, 0);
+        const rectBottom = Math.min(boundaryRect?.bottom ?? window.innerHeight, window.innerHeight);
+
+        const minLeft = rectLeft + viewportPadding;
+        const maxRight = rectRight - viewportPadding;
+        const minTop = rectTop + viewportPadding;
+        const maxBottom = rectBottom - viewportPadding;
+
+        const zoneRect = zone.getBoundingClientRect();
+        const popoverWidth = popover.offsetWidth;
+        const popoverHeight = popover.offsetHeight;
+        const verticalGap = 10;
+
+        const startLeft = zoneRect.left;
+        const startRight = startLeft + popoverWidth;
+        const endLeft = zoneRect.right - popoverWidth;
+        const endRight = zoneRect.right;
+
+        const startFits = startLeft >= minLeft && startRight <= maxRight;
+        const endFits = endLeft >= minLeft && endRight <= maxRight;
+
+        const startOverflow = Math.max(0, minLeft - startLeft) + Math.max(0, startRight - maxRight);
+        const endOverflow = Math.max(0, minLeft - endLeft) + Math.max(0, endRight - maxRight);
+
+        let nextAlign: 'start' | 'end';
+        if (this.popoverAlign === 'start') {
+            if (startFits || !endFits) {
+                nextAlign = 'start';
+            } else {
+                nextAlign = 'end';
+            }
+        } else if (endFits || !startFits) {
+            nextAlign = 'end';
+        } else {
+            nextAlign = 'start';
+        }
+
+        if (!startFits && !endFits) {
+            nextAlign = startOverflow <= endOverflow ? 'start' : 'end';
+        }
+
+        let nextVertical: 'top' | 'bottom' = 'top';
+
+        const fitsAbove = (zoneRect.top - verticalGap - popoverHeight) >= minTop;
+        const fitsBelow = (zoneRect.bottom + verticalGap + popoverHeight) <= maxBottom;
+
+        if (!fitsAbove && fitsBelow) {
+            nextVertical = 'bottom';
+        }
+
+        if (this.resolvedPopoverAlign !== nextAlign) {
+            this.resolvedPopoverAlign = nextAlign;
+        }
+
+        if (this.resolvedPopoverVertical !== nextVertical) {
+            this.resolvedPopoverVertical = nextVertical;
+        }
+
+        const maxPopoverLeft = Math.max(minLeft, maxRight - popoverWidth);
+        const preferredLeft = nextAlign === 'start' ? zoneRect.left : (zoneRect.right - popoverWidth);
+        const clampedLeft = Math.min(Math.max(preferredLeft, minLeft), maxPopoverLeft);
+
+        const maxPopoverTop = Math.max(minTop, maxBottom - popoverHeight);
+        const preferredTop = nextVertical === 'top'
+            ? (zoneRect.top - verticalGap - popoverHeight)
+            : (zoneRect.bottom + verticalGap);
+        const clampedTop = Math.min(Math.max(preferredTop, minTop), maxPopoverTop);
+
+        this.popoverLeft = Math.round(clampedLeft - zoneRect.left);
+        this.popoverTop = Math.round(clampedTop - zoneRect.top);
+    }
+
+    private syncHoverStateAfterReady(): void {
+        const zone = this.zoneRef?.nativeElement;
+        const popover = this.popoverRef?.nativeElement;
+        if (!zone || !popover) {
+            return;
+        }
+
+        const hoveringZone = zone.matches(':hover');
+        const hoveringPopover = popover.matches(':hover');
+
+        if (hoveringZone || hoveringPopover) {
+            this.clearCloseTimer();
+            return;
+        }
+
+        this.scheduleClose(260);
     }
 }

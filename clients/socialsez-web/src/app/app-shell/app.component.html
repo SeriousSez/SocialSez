@@ -1,4 +1,4 @@
-<main class="shell">
+<main class="shell" [class.chat-mode]="isChatRoute">
     <aside class="left-rail">
         <div class="brand">
             <div class="brand-mark">S</div>
@@ -12,6 +12,7 @@
             <a class="tab-feed" routerLink="/feed" routerLinkActive="active"><i class="fa-duotone fa-light fa-house" aria-hidden="true"></i><span>Feed</span></a>
             <a class="tab-compose" routerLink="/compose" routerLinkActive="active"><i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i><span>Compose</span></a>
             <a class="tab-discover" routerLink="/discover" routerLinkActive="active"><i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i><span>Discover</span></a>
+            <a class="tab-chat" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i><span>Chat</span></a>
             <a class="tab-profile" routerLink="/profile" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-user" aria-hidden="true"></i><span>Profile</span></a>
             <a class="tab-settings" routerLink="/settings" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i><span>Settings</span></a>
             <a class="tab-auth" routerLink="/auth" routerLinkActive="active" *ngIf="!session.isAuthenticated()"><i class="fa-duotone fa-light fa-right-to-bracket" aria-hidden="true"></i><span>Auth</span></a>
@@ -64,14 +65,19 @@
         </div>
         <div class="side-card">
             <h3>Trending</h3>
-            <ul>
-                <li>#socialsez</li>
-                <li>#buildinpublic</li>
-                <li>#dotnet</li>
+            <p class="hint" *ngIf="loadingTrending">Loading hashtags...</p>
+            <ul *ngIf="!loadingTrending && trendingHashtags.length">
+                <li *ngFor="let hashtag of trendingHashtags">
+                    <a [routerLink]="['/hashtags', hashtag.tag]">#{{ hashtag.tag }}</a>
+                    <span class="trend-count">{{ hashtag.count }}</span>
+                </li>
             </ul>
+            <p class="hint" *ngIf="!loadingTrending && !trendingHashtags.length">No trending hashtags yet.</p>
         </div>
         <p class="hint" *ngIf="showDebug && session.nextSilentRefreshAt">
             [debug] Next silent refresh: {{ session.nextSilentRefreshAt | date:'mediumTime' }}
         </p>
     </aside>
 </main>
+
+<app-messages-dock [visible]="showMessagesDock"></app-messages-dock>

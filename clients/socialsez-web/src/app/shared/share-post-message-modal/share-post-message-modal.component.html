@@ -1,0 +1,61 @@
+<section class="modal-overlay" *ngIf="open" (click)="onBackdropClick($event)">
+    <article class="modal-card" role="dialog" aria-modal="true" aria-label="Send post as message">
+        <header class="modal-head">
+            <h3>{{ title }}</h3>
+            <button type="button" class="close-btn" (click)="cancel.emit()" [disabled]="busy" aria-label="Close">×</button>
+        </header>
+
+        <section class="post-preview" *ngIf="post as currentPost" aria-label="Post preview" role="button" tabindex="0" (click)="openPreviewPost($event)" (keydown.enter)="openPreviewPost($event)" (keydown.space)="openPreviewPost($event)">
+            <header class="post-preview-head">
+                <img class="post-preview-avatar" *ngIf="currentPost.authorImageUrl as avatar" [src]="avatar" alt="Post author avatar" />
+                <span class="post-preview-avatar fallback" *ngIf="!currentPost.authorImageUrl">{{ currentPost.authorHandle.charAt(0).toUpperCase() }}</span>
+                <div class="post-preview-meta">
+                    <span>Sharing post from</span>
+                    <strong>@{{ currentPost.authorHandle }}</strong>
+                </div>
+            </header>
+
+            <p class="post-preview-content" *ngIf="previewContent">
+                {{ previewContent }}
+                <span class="post-preview-more" *ngIf="isPreviewTruncated"> View full post after send.</span>
+            </p>
+
+            <img class="post-preview-image" *ngIf="currentPost.imageUrl as imageUrl" [src]="imageUrl" alt="Post media preview" />
+        </section>
+
+        <div class="search-wrap">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input type="search" [ngModel]="query" (ngModelChange)="onQueryChange($event)" placeholder="Search" [disabled]="busy" />
+        </div>
+
+        <section class="recipients-list" aria-label="Recipients">
+            <p class="state" *ngIf="loading">Loading people...</p>
+            <p class="state" *ngIf="!loading && !visibleRecipients.length">No people found.</p>
+
+            <button type="button" class="recipient" *ngFor="let recipient of visibleRecipients" (click)="toggleRecipient(recipient.id)" [disabled]="busy">
+                <div class="avatar fallback" *ngIf="!recipient.imageUrl">{{ (recipient.displayName || recipient.handle).charAt(0).toUpperCase() }}</div>
+                <img class="avatar" *ngIf="recipient.imageUrl as avatar" [src]="avatar" alt="Recipient avatar" />
+
+                <div class="meta">
+                    <h4>{{ recipient.displayName }}</h4>
+                    <p>{{ recipient.bio || ('@' + recipient.handle) }}</p>
+                </div>
+
+                <span class="checkbox" [class.checked]="isSelected(recipient.id)"></span>
+            </button>
+        </section>
+
+        <div class="message-wrap">
+            <textarea rows="3" [ngModel]="note" (ngModelChange)="note = $event" placeholder="Write a message" [disabled]="busy"></textarea>
+        </div>
+
+        <footer class="modal-foot">
+            <button type="button" class="copy-link" (click)="copyPostLink()" [disabled]="busy">Copy link to post</button>
+            <span class="copy-feedback" *ngIf="copyFeedback">{{ copyFeedback }}</span>
+            <div class="send-actions">
+                <button type="button" class="send-btn ghost" (click)="submitGroup()" *ngIf="selectedCount > 1" [disabled]="!canSendGroup">Send as group</button>
+                <button type="button" class="send-btn" (click)="submitSeparate()" [disabled]="!canSend">{{ selectedCount > 1 ? 'Send separately' : 'Send' }}</button>
+            </div>
+        </footer>
+    </article>
+</section>

@@ -6,21 +6,23 @@
     </div>
 
     <div class="mode-switch" role="tablist" aria-label="Authentication mode">
-        <button type="button" class="mode-btn" [class.active]="mode === 'login'" (click)="setMode('login')">Sign in</button>
-        <button type="button" class="mode-btn" [class.active]="mode === 'register'" (click)="setMode('register')">Create account</button>
+        <button type="button" class="mode-btn" role="tab" [attr.aria-selected]="mode === 'login'" [class.active]="mode === 'login'" [disabled]="mode === 'login'" (click)="setMode('login')">Sign in</button>
+        <button type="button" class="mode-btn" role="tab" [attr.aria-selected]="mode === 'register'" [class.active]="mode === 'register'" [disabled]="mode === 'register'" (click)="setMode('register')">Create account</button>
     </div>
 
-    <div class="grid">
-        <label>Email <input [(ngModel)]="email" placeholder="you@example.com" /></label>
-        <label>Password <input [(ngModel)]="password" type="password" placeholder="••••••••" /></label>
-        <label *ngIf="mode === 'register'">Handle <input [(ngModel)]="handle" placeholder="sez" /></label>
-        <label *ngIf="mode === 'register'">Display Name <input [(ngModel)]="displayName" placeholder="Sez" /></label>
-        <label class="full" *ngIf="mode === 'register'">Bio <input [(ngModel)]="bio" placeholder="Builder" /></label>
-    </div>
+    <form class="auth-form" (ngSubmit)="submit()">
+        <div class="grid">
+            <label>Email <input [(ngModel)]="email" name="email" placeholder="you@example.com" /></label>
+            <label>Password <input [(ngModel)]="password" name="password" type="password" placeholder="••••••••" /></label>
+            <label *ngIf="mode === 'register'">Handle <input [(ngModel)]="handle" name="handle" (ngModelChange)="onHandleInput($event)" placeholder="sez" /></label>
+            <label *ngIf="mode === 'register'">Display Name <input [(ngModel)]="displayName" name="displayName" placeholder="Sez" /></label>
+            <label class="full" *ngIf="mode === 'register'">Bio <input [(ngModel)]="bio" name="bio" placeholder="Builder" /></label>
+        </div>
 
-    <div class="actions">
-        <button class="auth-submit" (click)="submit()">{{ mode === 'login' ? 'Sign in' : 'Create account' }}</button>
-    </div>
+        <div class="actions">
+            <button class="auth-submit" type="submit">{{ mode === 'login' ? 'Sign in' : 'Create account' }}</button>
+        </div>
+    </form>
 
     <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
 

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 using SocialSez.Domain.Entities;
@@ -19,7 +20,7 @@ public class AuthService(
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
     {
         var email = request.Email.Trim().ToLowerInvariant();
-        var handle = request.Handle.Trim().ToLowerInvariant();
+        var handle = NormalizeHandle(request.Handle);
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(request.Password))
         {
@@ -166,5 +167,11 @@ public class AuthService(
     {
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(token));
         return Convert.ToHexString(hash);
+    }
+
+    private static string NormalizeHandle(string handle)
+    {
+        var normalized = (handle ?? string.Empty).Trim().ToLowerInvariant();
+        return Regex.Replace(normalized, "\\s+", "-");
     }
 }

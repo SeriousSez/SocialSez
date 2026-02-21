@@ -31,6 +31,18 @@ h2 {
 
 .mode-btn {
     padding: 10px 12px;
+    width: 100%;
+    min-height: 42px;
+}
+
+.mode-btn:disabled {
+    opacity: 1;
+    cursor: default;
+}
+
+.auth-form {
+    display: grid;
+    gap: 14px;
 }
 
 .grid {

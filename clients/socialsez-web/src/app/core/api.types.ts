@@ -65,6 +65,11 @@ export interface ReactionSummaryDto {
     count: number;
 }
 
+export interface FollowSuggestionsDto {
+    following: ProfileDto[];
+    relevant: ProfileDto[];
+}
+
 export interface HashtagSearchResultDto {
     tag: string;
     count: number;
@@ -87,4 +92,58 @@ export interface PostDto {
 
 export interface UploadImageResponse {
     url: string;
+}
+
+export interface CreateDirectConversationRequest {
+    otherProfileId: string;
+}
+
+export interface CreateGroupConversationRequest {
+    title?: string;
+    memberProfileIds: string[];
+}
+
+export interface CreateChatMessageRequest {
+    content: string;
+}
+
+export interface SetMessageReactionRequest {
+    type: string;
+}
+
+export interface ChatParticipantDto {
+    profileId: string;
+    handle: string;
+    displayName: string;
+    imageUrl?: string;
+    joinedAtUtc: string;
+}
+
+export interface ChatMessagePreviewDto {
+    id: string;
+    authorProfileId: string;
+    authorHandle: string;
+    content: string;
+    createdAtUtc: string;
+}
+
+export interface ChatConversationDto {
+    id: string;
+    isGroup: boolean;
+    title?: string;
+    createdAtUtc: string;
+    participants: ChatParticipantDto[];
+    lastMessage?: ChatMessagePreviewDto;
+}
+
+export interface ChatMessageDto {
+    id: string;
+    conversationId: string;
+    authorProfileId: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    content: string;
+    createdAtUtc: string;
+    myReactionType?: string;
+    reactions: ReactionSummaryDto[];
 }

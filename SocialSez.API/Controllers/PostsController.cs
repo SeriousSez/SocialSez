@@ -262,6 +262,14 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
     }
 
     [Authorize]
+    [HttpGet("hashtags/trending")]
+    public async Task<ActionResult<IReadOnlyCollection<HashtagSearchResultDto>>> GetTrendingHashtags([FromQuery] int take = 10, CancellationToken cancellationToken = default)
+    {
+        var hashtags = await postService.GetTrendingHashtagsAsync(take, cancellationToken);
+        return Ok(hashtags);
+    }
+
+    [Authorize]
     [HttpGet("hashtags/search")]
     public async Task<ActionResult<IReadOnlyCollection<HashtagSearchResultDto>>> SearchHashtags([FromQuery] string q, [FromQuery] int take = 20, CancellationToken cancellationToken = default)
     {

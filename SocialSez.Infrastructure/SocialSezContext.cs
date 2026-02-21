@@ -12,6 +12,10 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<PostReaction> PostReactions => Set<PostReaction>();
     public DbSet<CommentReaction> CommentReactions => Set<CommentReaction>();
+    public DbSet<ChatConversation> ChatConversations => Set<ChatConversation>();
+    public DbSet<ChatConversationMember> ChatConversationMembers => Set<ChatConversationMember>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<ChatMessageReaction> ChatMessageReactions => Set<ChatMessageReaction>();
     public DbSet<Follow> Follows => Set<Follow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -142,6 +146,76 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
                 .WithMany(x => x.Followers)
                 .HasForeignKey(x => x.FollowedId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ChatConversation>(entity =>
+        {
+            entity.ToTable("ChatConversations");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Title).HasMaxLength(120);
+
+            entity.HasOne(x => x.CreatedByProfile)
+                .WithMany(x => x.CreatedConversations)
+                .HasForeignKey(x => x.CreatedByProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.CreatedAtUtc);
+        });
+
+        modelBuilder.Entity<ChatConversationMember>(entity =>
+        {
+            entity.ToTable("ChatConversationMembers");
+            entity.HasKey(x => new { x.ConversationId, x.ProfileId });
+
+            entity.HasOne(x => x.Conversation)
+                .WithMany(x => x.Members)
+                .HasForeignKey(x => x.ConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.ChatConversations)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.ProfileId);
+        });
+
+        modelBuilder.Entity<ChatMessage>(entity =>
+        {
+            entity.ToTable("ChatMessages");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Content).HasMaxLength(4000).IsRequired();
+
+            entity.HasOne(x => x.Conversation)
+                .WithMany(x => x.Messages)
+                .HasForeignKey(x => x.ConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.AuthorProfile)
+                .WithMany(x => x.ChatMessages)
+                .HasForeignKey(x => x.AuthorProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => new { x.ConversationId, x.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<ChatMessageReaction>(entity =>
+        {
+            entity.ToTable("ChatMessageReactions");
+            entity.HasKey(x => new { x.MessageId, x.ProfileId });
+            entity.Property(x => x.Type).HasMaxLength(24).IsRequired();
+
+            entity.HasOne(x => x.Message)
+                .WithMany(x => x.Reactions)
+                .HasForeignKey(x => x.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.ChatMessageReactions)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.MessageId, x.Type });
         });
     }
 }

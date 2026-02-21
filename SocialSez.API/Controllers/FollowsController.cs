@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SocialSez.ApplicationService.Interfaces;
+using SocialSez.ApplicationService.Models;
 
 namespace SocialSez.API.Controllers;
 
@@ -46,6 +47,32 @@ public class FollowsController(IFollowService followService) : ControllerBase
 
         var isFollowing = await followService.IsFollowingAsync(followerId, followedId, cancellationToken);
         return Ok(new FollowStatusResponse(isFollowing));
+    }
+
+    [Authorize]
+    [HttpGet("following")]
+    public async Task<ActionResult<IReadOnlyCollection<ProfileDto>>> GetFollowing([FromQuery] int take = 100, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var followerId))
+        {
+            return Unauthorized();
+        }
+
+        var profiles = await followService.GetFollowingAsync(followerId, take, cancellationToken);
+        return Ok(profiles);
+    }
+
+    [Authorize]
+    [HttpGet("suggestions")]
+    public async Task<ActionResult<FollowSuggestionsDto>> GetSuggestions([FromQuery] int takePerGroup = 10, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var followerId))
+        {
+            return Unauthorized();
+        }
+
+        var suggestions = await followService.GetSuggestionsAsync(followerId, takePerGroup, cancellationToken);
+        return Ok(suggestions);
     }
 
     public sealed record FollowRequest(Guid FollowedId);

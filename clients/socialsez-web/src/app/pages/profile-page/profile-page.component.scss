@@ -118,6 +118,46 @@ h2 {
     gap: 10px;
 }
 
+.profile-skeleton,
+.profile-posts-skeleton {
+    display: grid;
+    gap: 10px;
+}
+
+.profile-overview-skeleton {
+    display: grid;
+    gap: 10px;
+}
+
+.profile-skeleton-hero {
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    background: #fff;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 14px;
+}
+
+.profile-skeleton-copy {
+    display: grid;
+    align-content: center;
+    gap: 8px;
+}
+
+.profile-skeleton-actions {
+    display: grid;
+    gap: 8px;
+    align-content: center;
+    justify-items: end;
+}
+
+.profile-skeleton-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
 .author {
     display: flex;
     align-items: center;
@@ -161,5 +201,14 @@ h2 {
 
     .activities {
         grid-template-columns: 1fr
+    }
+
+    .profile-skeleton-hero,
+    .profile-skeleton-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-skeleton-actions {
+        justify-items: start;
     }
 }

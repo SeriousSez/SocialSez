@@ -17,6 +17,7 @@ public interface IPostService
     Task<PostDto?> ClearReactionAsync(Guid postId, Guid profileId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<PostDto>> GetFeedAsync(Guid profileId, int take = 25, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<PostDto>> SearchPostsAsync(Guid profileId, string query, int take = 25, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<HashtagSearchResultDto>> GetTrendingHashtagsAsync(int take = 10, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<HashtagSearchResultDto>> SearchHashtagsAsync(string query, int take = 20, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<PostDto>> GetByHashtagAsync(Guid profileId, string hashtag, int take = 25, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<PostDto>> GetByAuthorHandleAsync(Guid profileId, string handle, int take = 25, CancellationToken cancellationToken = default);

@@ -12,7 +12,31 @@
         <button *ngFor="let scope of scopes" type="button" [class.active]="selectedScope === scope.value" (click)="changeScope(scope.value)">{{ scope.label }}</button>
     </div>
 
-    <p class="status" *ngIf="loading">Searching...</p>
+    <section class="discover-skeleton" *ngIf="loading" aria-label="Searching">
+        <div class="section">
+            <app-skeleton width="70px" height="16px"></app-skeleton>
+            <article class="card" *ngFor="let _ of [1, 2]">
+                <div class="identity">
+                    <app-skeleton width="34px" height="34px" radius="999px"></app-skeleton>
+                    <app-skeleton width="180px" height="14px"></app-skeleton>
+                </div>
+                <app-skeleton width="90%" height="12px"></app-skeleton>
+                <app-skeleton width="110px" height="32px" radius="10px"></app-skeleton>
+            </article>
+        </div>
+
+        <div class="section">
+            <app-skeleton width="90px" height="16px"></app-skeleton>
+            <div class="hashtags">
+                <app-skeleton *ngFor="let _ of [1, 2, 3, 4]" width="92px" height="30px" radius="999px"></app-skeleton>
+            </div>
+        </div>
+
+        <div class="section">
+            <app-skeleton width="56px" height="16px"></app-skeleton>
+            <app-skeleton *ngFor="let _ of [1, 2]" width="100%" height="150px" radius="12px"></app-skeleton>
+        </div>
+    </section>
 
     <section class="results" *ngIf="!loading && hasAnyResults">
         <section class="section" *ngIf="showUsersSection && profileResults.length">
@@ -42,10 +66,11 @@
         <section class="section" *ngIf="showPostsSection && postResults.length">
             <h3>Posts</h3>
             <div class="post-list">
-                <app-post-card *ngFor="let post of postResults" [post]="post" [content]="displayPostContent(post)" [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id" [viewerProfileId]="currentProfileId"
+                <app-post-card *ngFor="let post of postResults" [post]="post" [content]="displayPostContent(post)" [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId"
                     [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)"
                     (cancelEdit)="cancelEdit()" (deletePost)="deletePost(post.id)" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)"
-                    (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)">
+                    (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)"
+                    (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
                     <div post-header class="author">
                         <img class="avatar" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
                         <ng-template #authorInitial>
@@ -60,3 +85,9 @@
 
     <p class="status" *ngIf="status">{{ status }}</p>
 </section>
+
+<app-share-post-modal [open]="!!pendingSharePost && pendingShareTarget === 'feed'" [post]="pendingSharePost" [target]="'feed'" [busy]="!!sharingPostId" [initialText]="shareNote" (cancel)="cancelShareModal()" (confirm)="submitShare($event)">
+</app-share-post-modal>
+
+<app-share-post-message-modal [open]="!!pendingSharePost && pendingShareTarget === 'chat'" [post]="pendingSharePost" [busy]="!!sharingPostId" (cancel)="cancelShareModal()" (confirm)="submitShareAsMessage($event)">
+</app-share-post-message-modal>

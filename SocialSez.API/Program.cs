@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SocialSez.API.Hubs;
 using SocialSez.ApplicationService.Extensions;
 using SocialSez.Infrastructure.Extensions;
 using SocialSez.Infrastructure;
@@ -24,6 +25,7 @@ builder.Services.Configure<FormOptions>(options =>
 
 builder.Services.AddSocialSezInfrastructure(builder.Configuration);
 builder.Services.AddSocialSezApplication();
+builder.Services.AddSignalR();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -57,6 +59,21 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtIssuer,
         ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrWhiteSpace(accessToken) && path.StartsWithSegments("/hubs/chat"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -138,6 +155,67 @@ using (var scope = app.Services.CreateScope())
             CREATE INDEX IF NOT EXISTS IX_CommentReactions_CommentId_Type
             ON CommentReactions (CommentId, Type);
             """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS ChatConversations (
+                Id TEXT NOT NULL PRIMARY KEY,
+                CreatedByProfileId TEXT NOT NULL,
+                IsGroup INTEGER NOT NULL,
+                Title TEXT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                FOREIGN KEY (CreatedByProfileId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+            );
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS ChatConversationMembers (
+                ConversationId TEXT NOT NULL,
+                ProfileId TEXT NOT NULL,
+                JoinedAtUtc TEXT NOT NULL,
+                PRIMARY KEY (ConversationId, ProfileId),
+                FOREIGN KEY (ConversationId) REFERENCES ChatConversations (Id) ON DELETE CASCADE,
+                FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+            );
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_ChatConversationMembers_ProfileId
+            ON ChatConversationMembers (ProfileId);
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS ChatMessages (
+                Id TEXT NOT NULL PRIMARY KEY,
+                ConversationId TEXT NOT NULL,
+                AuthorProfileId TEXT NOT NULL,
+                Content TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                FOREIGN KEY (ConversationId) REFERENCES ChatConversations (Id) ON DELETE CASCADE,
+                FOREIGN KEY (AuthorProfileId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+            );
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_ChatMessages_ConversationId_CreatedAtUtc
+            ON ChatMessages (ConversationId, CreatedAtUtc);
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS ChatMessageReactions (
+                MessageId TEXT NOT NULL,
+                ProfileId TEXT NOT NULL,
+                Type TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                PRIMARY KEY (MessageId, ProfileId),
+                FOREIGN KEY (MessageId) REFERENCES ChatMessages (Id) ON DELETE CASCADE,
+                FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+            );
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_ChatMessageReactions_MessageId_Type
+            ON ChatMessageReactions (MessageId, Type);
+            """);
     }
 }
 
@@ -155,4 +233,5 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat");
 app.Run();

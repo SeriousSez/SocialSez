@@ -1,0 +1,45 @@
+<section class="modal-overlay" *ngIf="open" (click)="onBackdropClick($event)">
+    <article class="modal-card" role="dialog" aria-modal="true" [attr.aria-label]="title">
+        <h3>{{ title }}</h3>
+        <p>{{ message }}</p>
+
+        <section class="post-preview" *ngIf="post as currentPost" aria-label="Post preview" role="button" tabindex="0" (click)="openPreviewPost($event)" (keydown.enter)="openPreviewPost($event)" (keydown.space)="openPreviewPost($event)">
+            <header class="post-preview-head">
+                <img class="post-preview-avatar" *ngIf="currentPost.authorImageUrl as avatar" [src]="avatar" alt="Post author avatar" />
+                <span class="post-preview-avatar fallback" *ngIf="!currentPost.authorImageUrl">{{ currentPost.authorHandle.charAt(0).toUpperCase() }}</span>
+                <div class="post-preview-meta">
+                    <span>Sharing post from</span>
+                    <strong>@{{ currentPost.authorHandle }}</strong>
+                </div>
+            </header>
+
+            <p class="post-preview-content" *ngIf="previewContent">
+                {{ previewContent }}
+                <span class="post-preview-more" *ngIf="isPreviewTruncated"> View full post after share.</span>
+            </p>
+
+            <img class="post-preview-image" *ngIf="currentPost.imageUrl as imageUrl" [src]="imageUrl" alt="Post media preview" />
+        </section>
+
+        <div class="modal-textarea-wrap">
+            <textarea #shareTextarea rows="4" [ngModel]="draft" (ngModelChange)="onDraftInput($event, shareTextarea)" (keyup)="onDraftCursor(shareTextarea)" (click)="onDraftCursor(shareTextarea)" (blur)="onDraftBlur()" placeholder="Add a message..." [disabled]="busy"></textarea>
+
+            <div class="mention-suggestions" *ngIf="mentionOpen || mentionLoading">
+                <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
+                <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
+                    <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
+                    <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+                    <span class="mention-meta">
+                        <span class="mention-name">{{ profile.displayName }}</span>
+                        <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="ghost" (click)="cancel.emit()" [disabled]="busy">Cancel</button>
+            <button type="button" (click)="submit()" [disabled]="busy">{{ confirmText }}</button>
+        </div>
+    </article>
+</section>

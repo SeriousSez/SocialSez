@@ -1,7 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { ReplaySubject, firstValueFrom } from 'rxjs';
-import { AuthResponse, HashtagSearchResultDto, LoginRequest, PostDto, ProfileDto, RegisterRequest, UpdateProfileRequest } from './api.types';
+import {
+    AuthResponse,
+    ChatConversationDto,
+    ChatMessageDto,
+    FollowSuggestionsDto,
+    HashtagSearchResultDto,
+    LoginRequest,
+    PostDto,
+    ProfileDto,
+    RegisterRequest,
+    UpdateProfileRequest
+} from './api.types';
 import { SocialSezApiService } from './socialsez-api.service';
 
 @Injectable({ providedIn: 'root' })
@@ -116,6 +127,10 @@ export class SessionService {
         return firstValueFrom(this.api.searchHashtags(query));
     }
 
+    async loadTrendingHashtagsAsync(take = 10): Promise<HashtagSearchResultDto[]> {
+        return firstValueFrom(this.api.getTrendingHashtags(take));
+    }
+
     async searchProfilesAsync(query: string): Promise<ProfileDto[]> {
         return firstValueFrom(this.api.searchProfiles(query));
     }
@@ -199,11 +214,47 @@ export class SessionService {
         return response.isFollowing;
     }
 
+    async loadFollowingAsync(take = 100): Promise<ProfileDto[]> {
+        return firstValueFrom(this.api.getFollowing(take));
+    }
+
+    async loadFollowSuggestionsAsync(takePerGroup = 10): Promise<FollowSuggestionsDto> {
+        return firstValueFrom(this.api.getFollowSuggestions(takePerGroup));
+    }
+
     async updateProfileAsync(request: UpdateProfileRequest): Promise<void> {
         const updated = await firstValueFrom(this.api.updateMyProfile(request));
         this.profile = updated;
         this.message = 'Profile updated.';
         this.appChanges.next('profile');
+    }
+
+    async loadChatConversationsAsync(): Promise<ChatConversationDto[]> {
+        return firstValueFrom(this.api.getChatConversations());
+    }
+
+    async createDirectConversationAsync(otherProfileId: string): Promise<ChatConversationDto> {
+        return firstValueFrom(this.api.createOrGetDirectConversation({ otherProfileId }));
+    }
+
+    async createGroupConversationAsync(title: string, memberProfileIds: string[]): Promise<ChatConversationDto> {
+        return firstValueFrom(this.api.createGroupConversation({ title, memberProfileIds }));
+    }
+
+    async loadChatMessagesAsync(conversationId: string, take = 50): Promise<ChatMessageDto[]> {
+        return firstValueFrom(this.api.getChatMessages(conversationId, take));
+    }
+
+    async sendChatMessageAsync(conversationId: string, content: string): Promise<ChatMessageDto> {
+        return firstValueFrom(this.api.sendChatMessage(conversationId, { content }));
+    }
+
+    async setMessageReactionAsync(messageId: string, reactionType: string): Promise<ChatMessageDto> {
+        return firstValueFrom(this.api.setMessageReaction(messageId, { type: reactionType }));
+    }
+
+    async clearMessageReactionAsync(messageId: string): Promise<ChatMessageDto> {
+        return firstValueFrom(this.api.clearMessageReaction(messageId));
     }
 
     async refreshMeAsync(): Promise<void> {

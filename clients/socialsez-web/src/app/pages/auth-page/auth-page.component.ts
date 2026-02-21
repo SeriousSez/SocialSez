@@ -22,6 +22,10 @@ export class AuthPageComponent {
 
     constructor(public readonly session: SessionService) { }
 
+    onHandleInput(value: string): void {
+        this.handle = this.normalizeHandle(value);
+    }
+
     setMode(nextMode: 'login' | 'register'): void {
         this.mode = nextMode;
         this.errorMessage = '';
@@ -30,10 +34,13 @@ export class AuthPageComponent {
     async register(): Promise<void> {
         this.errorMessage = '';
         try {
+            const normalizedHandle = this.normalizeHandle(this.handle);
+            this.handle = normalizedHandle;
+
             await this.session.registerAsync({
                 email: this.email,
                 password: this.password,
-                handle: this.handle,
+                handle: normalizedHandle,
                 displayName: this.displayName,
                 bio: this.bio
             });
@@ -61,5 +68,12 @@ export class AuthPageComponent {
         }
 
         await this.register();
+    }
+
+    private normalizeHandle(value: string): string {
+        return value
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '-');
     }
 }

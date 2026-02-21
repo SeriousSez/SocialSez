@@ -475,6 +475,58 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .ToArray();
     }
 
+    public async Task<IReadOnlyCollection<HashtagSearchResultDto>> GetTrendingHashtagsAsync(int take = 10, CancellationToken cancellationToken = default)
+    {
+        take = Math.Clamp(take, 1, 100);
+        var sinceUtc = DateTime.UtcNow.AddDays(-7);
+
+        var recentCandidates = await dbContext.Posts
+            .AsNoTracking()
+            .Where(x => !string.IsNullOrWhiteSpace(x.Content) && x.Content.Contains('#') && x.CreatedAtUtc >= sinceUtc)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(2000)
+            .Select(x => x.Content)
+            .ToArrayAsync(cancellationToken);
+
+        var candidates = recentCandidates.Length > 0
+            ? recentCandidates
+            : await dbContext.Posts
+                .AsNoTracking()
+                .Where(x => !string.IsNullOrWhiteSpace(x.Content) && x.Content.Contains('#'))
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .Take(2000)
+                .Select(x => x.Content)
+                .ToArrayAsync(cancellationToken);
+
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var content in candidates)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                continue;
+            }
+
+            var distinctTagsInPost = HashtagRegex.Matches(content)
+                .Select(x => x.Groups["tag"].Value)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            foreach (var tag in distinctTagsInPost)
+            {
+                counts[tag] = counts.TryGetValue(tag, out var current) ? current + 1 : 1;
+            }
+        }
+
+        return counts
+            .Select(x => new HashtagSearchResultDto(x.Key, x.Value))
+            .OrderByDescending(x => x.Count)
+            .ThenBy(x => x.Tag)
+            .Take(take)
+            .ToArray();
+    }
+
     public async Task<IReadOnlyCollection<HashtagSearchResultDto>> SearchHashtagsAsync(string query, int take = 20, CancellationToken cancellationToken = default)
     {
         var normalizedQuery = NormalizeHashtag(query);

@@ -1,0 +1,144 @@
+<ng-container *ngIf="visible">
+    <button type="button" class="messages-dock" (click)="toggle($event)" aria-label="Open messages">
+        <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
+        <span>Messages</span>
+    </button>
+
+    <div class="messages-panel-backdrop" *ngIf="open" (click)="close()"></div>
+
+    <section class="messages-panel" *ngIf="open" [class.thread-open]="!!activeConversation" (click)="$event.stopPropagation()">
+        <header>
+            <div class="header-left">
+                <button type="button" class="icon-btn" *ngIf="activeConversation" aria-label="Back to conversations" (click)="backToList($event)">
+                    <i class="fa-duotone fa-light fa-arrow-left" aria-hidden="true"></i>
+                </button>
+                <span class="thread-header-avatar fallback" *ngIf="activeConversation && !avatarUrl(activeConversation)">{{ avatarText(activeConversation) }}</span>
+                <img class="thread-header-avatar" *ngIf="activeConversation && avatarUrl(activeConversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+                <h3>{{ activeConversation ? displayName(activeConversation) : 'Messages' }}</h3>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="icon-btn" aria-label="Open chat" (click)="openFullChat(activeConversation?.id, $event)">
+                    <i class="fa-duotone fa-light fa-up-right-and-down-left-from-center" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="icon-btn" aria-label="Close messages" (click)="close($event)">
+                    <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </header>
+
+        <ng-container *ngIf="!activeConversation; else threadView">
+            <div class="dock-skeleton-list" *ngIf="loading" aria-label="Loading messages">
+                <div class="dock-skeleton-row" *ngFor="let _ of [1, 2, 3]">
+                    <app-skeleton width="54px" height="54px" radius="999px"></app-skeleton>
+                    <div class="dock-skeleton-copy">
+                        <app-skeleton width="140px" height="12px"></app-skeleton>
+                        <app-skeleton width="170px" height="10px"></app-skeleton>
+                    </div>
+                </div>
+            </div>
+            <p class="status" *ngIf="!loading && status">{{ status }}</p>
+
+            <div class="list" *ngIf="!loading && !status && conversations.length; else emptyState">
+                <button type="button" class="row" *ngFor="let conversation of conversations; trackBy: trackByConversationId" (click)="openConversation(conversation, $event)">
+                    <span class="avatar" *ngIf="!avatarUrl(conversation)">{{ avatarText(conversation) }}</span>
+                    <img class="avatar" *ngIf="avatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+                    <span class="meta">
+                        <strong>{{ displayName(conversation) }}</strong>
+                        <small>{{ preview(conversation) }}</small>
+                    </span>
+                    <small class="time" *ngIf="conversation.lastMessage as last">{{ last.createdAtUtc | date:'short' }}</small>
+                </button>
+            </div>
+
+            <ng-template #emptyState>
+                <p class="status" *ngIf="!loading && !status">No conversations yet.</p>
+            </ng-template>
+        </ng-container>
+
+        <ng-template #threadView>
+            <div class="dock-thread-skeleton" *ngIf="loadingMessages" aria-label="Loading thread">
+                <app-skeleton *ngFor="let _ of [1, 2, 3]" width="75%" height="52px" radius="14px"></app-skeleton>
+            </div>
+            <p class="status" *ngIf="!loadingMessages && status">{{ status }}</p>
+
+            <div #threadList class="thread-list" *ngIf="!loadingMessages && !status">
+                <article class="thread-message" [class.own]="isOwnMessage(message)" [class.shared-only]="messageVariant(message.content) === 'shared-only'" [class.media-only]="messageVariant(message.content) === 'media-only'" *ngFor="let message of messages; trackBy: trackByMessageId">
+                    <div class="thread-row">
+                        <div class="thread-bubble-wrap" *ngIf="parsedMessage(message.content) as parsed">
+                            <div class="thread-body">
+                                <p *ngIf="parsed.text">{{ parsed.text }}</p>
+                                <article class="dock-shared-post-preview" *ngIf="parsed.sharedPost as shared" role="button" tabindex="0" (click)="openSharedPost(shared, $event)" (keydown.enter)="openSharedPost(shared, $event)" (keydown.space)="openSharedPost(shared, $event)">
+                                    <header class="dock-shared-post-head">
+                                        <span>Shared post from</span>
+                                        <strong>@{{ shared.authorHandle }}</strong>
+                                    </header>
+                                    <p class="dock-shared-post-content" *ngIf="shared.content">{{ sharedPreviewContent(shared.content) }}</p>
+                                    <img class="dock-shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" alt="Shared post media" />
+                                </article>
+                                <img class="dock-media" *ngIf="parsed.imageUrl" [src]="parsed.imageUrl" alt="Sent image" />
+                                <img class="dock-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" alt="Sent GIF" />
+                            </div>
+
+                            <div class="dock-reaction-summary corner" *ngIf="message.reactions.length">
+                                <span *ngFor="let reaction of message.reactions">{{ reactionEmoji(reaction.type) }} {{ reaction.count }}</span>
+                            </div>
+                        </div>
+
+                        <div class="dock-message-actions">
+                            <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="noReactions" [myReactionType]="message.myReactionType" [busy]="reactingMessageId === message.id" [popoverAlign]="isOwnMessage(message) ? 'end' : 'start'"
+                                (primaryClick)="onMessagePrimaryReaction(message)" (reactionSelected)="onMessageReactionSelected(message, $event)">
+                            </app-reaction-picker>
+                        </div>
+                    </div>
+                    <small>{{ messageAuthorLabel(message) }} · {{ message.createdAtUtc | date:'shortTime' }}</small>
+                </article>
+            </div>
+
+            <footer class="thread-composer" *ngIf="activeConversation">
+                <div class="thread-composer-main">
+                    <div class="thread-composer-input-shell">
+                        <button #emojiToggleBtn type="button" class="thread-composer-icon" aria-label="Add emoji" title="Add emoji" (click)="toggleEmojiPicker()">
+                            <i class="fa-duotone fa-light fa-face-smile" aria-hidden="true"></i>
+                        </button>
+
+                        <input type="text" [(ngModel)]="draftMessage" (keydown.enter)="sendMessage($event)" placeholder="Message..." />
+
+                        <button #gifToggleBtn type="button" class="thread-composer-icon" aria-label="Add GIF" title="Add GIF" (click)="toggleGifInput()">
+                            <i class="fa-duotone fa-light fa-gif" aria-hidden="true"></i>
+                        </button>
+
+                        <button type="button" class="thread-composer-icon" aria-label="Add image" title="Add image" (click)="openImagePicker()" [disabled]="uploadingImage">
+                            <i class="fa-duotone fa-light fa-image" aria-hidden="true"></i>
+                        </button>
+
+                        <input #dockImageInput type="file" accept="image/*" (change)="onImageSelected($event)" hidden />
+                    </div>
+
+                    <div #emojiPickerWrap class="thread-emoji-picker-wrap" *ngIf="emojiPickerOpen">
+                        <emoji-picker class="thread-emoji-picker" (emoji-click)="onEmojiPicked($event)" search-placeholder="Search emoji"></emoji-picker>
+                    </div>
+
+                    <div #gifOverlayWrap class="thread-gif-input-row" *ngIf="gifInputOpen">
+                        <div class="thread-gif-search-row">
+                            <input [(ngModel)]="gifSearchQuery" placeholder="Search Giphy GIFs" (keydown.enter)="searchGifs()" />
+                            <button type="button" class="ghost" (click)="searchGifs()" [disabled]="searchingGifs || !gifSearchQuery.trim()">Search</button>
+                        </div>
+
+                        <p class="thread-gif-hint" *ngIf="!searchingGifs && !gifSearchQuery.trim()">Trending now</p>
+
+                        <div class="thread-gif-results" *ngIf="gifResults.length">
+                            <button type="button" class="thread-gif-result" *ngFor="let gif of gifResults" (click)="selectGif(gif)" [disabled]="sendingMessage || uploadingImage">
+                                <img [src]="gif.previewUrl" [alt]="gif.title || 'GIF'" loading="lazy" />
+                            </button>
+                        </div>
+
+                        <p class="thread-gif-hint" *ngIf="!searchingGifs && !gifSearchQuery.trim() && !gifResults.length">No trending GIFs right now.</p>
+                        <p class="thread-gif-hint" *ngIf="!searchingGifs && gifSearchQuery.trim() && !gifResults.length">No GIFs found.</p>
+                    </div>
+                </div>
+
+                <button type="button" (click)="sendMessage($event)" [disabled]="sendingMessage || uploadingImage || (!draftMessage.trim() && !hasComposerMedia())">Send</button>
+            </footer>
+        </ng-template>
+    </section>
+</ng-container>

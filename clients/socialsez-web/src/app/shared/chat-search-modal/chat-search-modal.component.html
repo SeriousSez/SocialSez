@@ -1,0 +1,66 @@
+<section class="chat-search-modal-overlay" *ngIf="open" (click)="onBackdropClick($event)">
+    <article class="chat-search-modal" role="dialog" aria-modal="true" aria-label="Search users for chat">
+        <header class="chat-search-modal-head">
+            <h3>Start a chat</h3>
+            <button type="button" class="chat-search-close" aria-label="Close" (click)="close.emit()">×</button>
+        </header>
+
+        <div class="chat-search-modal-body">
+            <div class="chat-search-input-row">
+                <input [ngModel]="query" (ngModelChange)="onQueryInput($event)" placeholder="Search by name or @handle" aria-label="Search users" />
+            </div>
+
+            <p class="chat-search-hint" *ngIf="!showingSearchResults && loadingSuggestions">Loading suggestions...</p>
+            <p class="chat-search-hint" *ngIf="showingSearchResults && searching">Searching users...</p>
+            <p class="chat-search-hint" *ngIf="!searching && !loadingSuggestions && error">{{ error }}</p>
+
+            <div class="chat-search-results" *ngIf="showingSearchResults && !searching && !error && profiles.length">
+                <button type="button" class="chat-search-result" *ngFor="let profile of profiles" (click)="selectProfile.emit(profile)" [disabled]="busy">
+                    <span class="chat-search-avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
+                    <img class="chat-search-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+
+                    <span class="chat-search-meta">
+                        <strong>{{ profile.displayName }}</strong>
+                        <small>@{{ profile.handle }}</small>
+                    </span>
+                </button>
+            </div>
+
+            <p class="chat-search-hint" *ngIf="showingSearchResults && !searching && !error && !profiles.length">No users found.</p>
+
+            <div class="chat-suggestion-groups" *ngIf="!showingSearchResults && !loadingSuggestions && !error">
+                <section class="chat-suggestion-group" *ngIf="followingSuggestions.length">
+                    <h4>Following</h4>
+                    <div class="chat-search-results">
+                        <button type="button" class="chat-search-result" *ngFor="let profile of followingSuggestions" (click)="selectProfile.emit(profile)" [disabled]="busy">
+                            <span class="chat-search-avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
+                            <img class="chat-search-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+
+                            <span class="chat-search-meta">
+                                <strong>{{ profile.displayName }}</strong>
+                                <small>@{{ profile.handle }}</small>
+                            </span>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="chat-suggestion-group" *ngIf="relevantSuggestions.length">
+                    <h4>Relevant from your network</h4>
+                    <div class="chat-search-results">
+                        <button type="button" class="chat-search-result" *ngFor="let profile of relevantSuggestions" (click)="selectProfile.emit(profile)" [disabled]="busy">
+                            <span class="chat-search-avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
+                            <img class="chat-search-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+
+                            <span class="chat-search-meta">
+                                <strong>{{ profile.displayName }}</strong>
+                                <small>@{{ profile.handle }}</small>
+                            </span>
+                        </button>
+                    </div>
+                </section>
+
+                <p class="chat-search-hint" *ngIf="!hasSuggestions">Type a name or handle to find users.</p>
+            </div>
+        </div>
+    </article>
+</section>

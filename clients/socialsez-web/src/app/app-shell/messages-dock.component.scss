@@ -1,0 +1,462 @@
+.messages-dock {
+    position: fixed;
+    right: 18px;
+    bottom: 14px;
+    z-index: 70;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #dbe4f0;
+    border-radius: 999px;
+    background: #fff;
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 12px 18px;
+    box-shadow: 0 10px 26px -20px #0f172a;
+}
+
+.messages-dock i {
+    font-size: 1rem;
+}
+
+.messages-dock:hover {
+    border-color: #bfdbfe;
+    background: #f8fafc;
+}
+
+.messages-panel-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 71;
+}
+
+.messages-panel {
+    position: fixed;
+    right: 18px;
+    bottom: 62px;
+    z-index: 72;
+    width: min(420px, calc(100vw - 24px));
+    max-height: min(560px, calc(100vh - 100px));
+    border: 1px solid #dbe4f0;
+    border-radius: 14px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 18px 44px -24px #0f172a;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+.messages-panel header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.messages-panel h3 {
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.thread-header-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.thread-header-avatar.fallback {
+    display: grid;
+    place-items: center;
+    background: #dbeafe;
+    color: #1e3a8a;
+    font-weight: 700;
+    font-size: 0.82rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.icon-btn {
+    border: none;
+    background: transparent;
+    padding: 4px;
+    color: #1e293b;
+}
+
+.list {
+    overflow: auto;
+    display: grid;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fff;
+    text-align: left;
+    padding: 10px 14px;
+}
+
+.row:hover {
+    background: #f8fafc;
+}
+
+.avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    object-fit: cover;
+    background: #dbeafe;
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+.meta {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.meta strong {
+    color: #0f172a;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.meta small {
+    color: #64748b;
+    font-size: 0.84rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.time {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.status {
+    margin: 0;
+    padding: 14px;
+}
+
+.dock-skeleton-list {
+    display: grid;
+}
+
+.dock-skeleton-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 10px 14px;
+}
+
+.dock-skeleton-copy {
+    display: grid;
+    gap: 6px;
+}
+
+.dock-thread-skeleton {
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+}
+
+.messages-panel.thread-open {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.thread-list {
+    overflow: auto;
+    padding: 12px;
+    display: grid;
+    align-content: start;
+    gap: 10px;
+}
+
+.thread-message {
+    width: 100%;
+    display: grid;
+    gap: 5px;
+    position: relative;
+    justify-items: start;
+}
+
+.thread-row {
+    width: fit-content;
+    max-width: 82%;
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.thread-bubble-wrap {
+    position: relative;
+}
+
+.thread-body {
+    width: fit-content;
+    max-width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f1f5f9;
+    padding: 10px 12px;
+}
+
+.thread-message.own {
+    justify-items: end;
+}
+
+.thread-message.own .thread-row {
+    flex-direction: row-reverse;
+}
+
+.thread-message.own .thread-body {
+    background: #dbeafe;
+    border-color: #bfdbfe;
+}
+
+.thread-message.shared-only,
+.thread-message.own.shared-only {
+    background: transparent;
+    border: none;
+    padding: 0 0 12px;
+}
+
+.thread-message.shared-only .thread-body,
+.thread-message.own.shared-only .thread-body {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.thread-message.media-only,
+.thread-message.own.media-only {
+    background: transparent;
+    border: none;
+    padding: 0 0 12px;
+}
+
+.thread-message.media-only .thread-body,
+.thread-message.own.media-only .thread-body {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.thread-message.shared-only .dock-shared-post-preview {
+    margin-top: 0;
+}
+
+.thread-message.shared-only small {
+    padding: 0 2px;
+}
+
+.thread-message.media-only .dock-media {
+    margin-top: 0;
+}
+
+.thread-message.media-only small {
+    padding: 0 2px;
+}
+
+.thread-message p {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.dock-shared-post-preview {
+    margin-top: 8px;
+    border: 1px solid #dbe4f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 8px;
+    display: grid;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.dock-shared-post-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #475569;
+    font-size: 0.76rem;
+}
+
+.dock-shared-post-head strong {
+    color: #0f172a;
+}
+
+.dock-shared-post-content {
+    margin: 0;
+    color: #0f172a;
+    font-size: 0.86rem;
+    line-height: 1.3;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.dock-shared-post-image,
+.dock-media {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #dbe4f0;
+    display: block;
+    margin-top: 8px;
+}
+
+.thread-message small {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.thread-message.own small {
+    text-align: right;
+    justify-self: end;
+}
+
+.dock-message-actions {
+    display: inline-flex;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(3px);
+    transition: opacity 140ms ease, transform 140ms ease;
+    position: relative;
+    z-index: 4;
+}
+
+.dock-message-actions .reaction-popover {
+    z-index: 50;
+}
+
+.thread-message:hover .dock-message-actions,
+.thread-message:focus-within .dock-message-actions {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.dock-message-actions:has(.reaction-popover),
+.dock-message-actions:hover,
+.dock-message-actions:focus-within {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.thread-message.own .dock-message-actions {
+    flex-direction: row-reverse;
+}
+
+.dock-reaction-summary {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    color: #475569;
+    font-size: 12px;
+}
+
+.dock-reaction-summary.corner {
+    position: absolute;
+    bottom: -12px;
+    left: -5px;
+    z-index: 2;
+    flex-wrap: nowrap;
+}
+
+.thread-message.own .dock-reaction-summary.corner {
+    left: auto;
+    right: -5px;
+}
+
+.dock-reaction-summary span {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 2px 7px;
+    font-size: 12px;
+    color: #475569;
+}
+
+.dock-message-actions .reaction-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 50%;
+    padding: 0;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 0.92rem;
+    line-height: 1;
+}
+
+.dock-message-actions .reaction-btn:hover {
+    background: #f8fafc;
+}
+
+.dock-message-actions .reaction-btn.active {
+    background: #dbeafe;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.thread-composer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid #e2e8f0;
+    background: #fff;
+    position: relative;
+    z-index: 10;
+}
+
+.thread-composer button {
+    height: 40px;
+    padding: 0 14px;
+}
+
+@media (max-width: 780px) {
+    .messages-dock {
+        right: 12px;
+        bottom: 10px;
+    }
+
+    .messages-panel {
+        right: 12px;
+        bottom: 56px;
+    }
+}

@@ -23,6 +23,97 @@ textarea {
     resize: vertical;
 }
 
+.composer-textarea-wrap {
+    position: relative;
+}
+
+.mention-suggestions {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 20;
+    border: 1px solid #dbe4f0;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 26px -20px #0f172a;
+    display: grid;
+    max-height: 220px;
+    overflow: auto;
+}
+
+.mention-suggestions button {
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    border-radius: 0;
+    background: #fff;
+    color: #0f172a;
+    text-align: left;
+    padding: 9px 10px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    box-shadow: none;
+    transform: none;
+}
+
+.mention-suggestions button:last-child {
+    border-bottom: none;
+}
+
+.mention-suggestions button:hover {
+    background: #f8fafc;
+    box-shadow: none;
+    transform: none;
+}
+
+.mention-name {
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.mention-meta {
+    display: grid;
+    min-width: 0;
+    gap: 1px;
+}
+
+.mention-subline,
+.mention-hint {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.mention-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: grid;
+    place-items: center;
+}
+
+.mention-avatar.fallback {
+    background: #dbeafe;
+    color: #1e3a8a;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.mention-name,
+.mention-subline {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mention-hint {
+    margin: 0;
+    padding: 10px;
+}
+
 .upload {
     display: grid;
     gap: 6px;
