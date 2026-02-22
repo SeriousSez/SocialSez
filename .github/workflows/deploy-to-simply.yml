@@ -176,7 +176,10 @@ jobs:
         run: |
           $webConfig = Join-Path "${{ env.PUBLISH_PATH }}" "web.config"
           if (Test-Path $webConfig) {
-            (Get-Content $webConfig -Raw) -replace 'stdoutLogEnabled="true"', 'stdoutLogEnabled="false"' | Set-Content $webConfig -Encoding UTF8
+            $content = Get-Content $webConfig -Raw
+            $content = $content -replace 'stdoutLogEnabled="true"', 'stdoutLogEnabled="false"'
+            $content = $content -replace 'hostingModel="inprocess"', 'hostingModel="outofprocess"'
+            Set-Content $webConfig -Value $content -Encoding UTF8
           }
 
           $logsDir = Join-Path "${{ env.PUBLISH_PATH }}" "logs"
