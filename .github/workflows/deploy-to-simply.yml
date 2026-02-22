@@ -8,7 +8,7 @@ on:
 
 env:
   DOTNET_VERSION: "8.0.x"
-  PROJECT_PATH: "SeriousSez.Api/SeriousSez.Api.csproj"
+  PROJECT_PATH: "SocialSez.Api/SocialSez.Api.csproj"
   PUBLISH_PATH: "./publish"
   RUNTIME_IDENTIFIER: "win-x64"
   NODE_VERSION: "20.x"
@@ -33,11 +33,11 @@ jobs:
         with:
           filters: |
             api:
-              - 'SeriousSez.Api/**'
+              - 'SocialSez.Api/**'
               - '.github/workflows/deploy-to-simply.yml'
             web:
               - 'clients/socialsez-web/**'
-              - '!SeriousSez.Api/**'
+              - '!SocialSez.Api/**'
 
   build-api:
     needs: detect-changes
@@ -55,7 +55,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Generate production appsettings from secrets
-        working-directory: ./SeriousSez.Api
+        working-directory: ./SocialSez.Api
         shell: pwsh
         env:
           MYSQL_CONNECTION_STRING: ${{ secrets.MYSQL_CONNECTION_STRING }}
@@ -76,8 +76,8 @@ jobs:
               MySql = $env:MYSQL_CONNECTION_STRING
             }
             JWTSettings = @{
-              securityKey = "SeriousSezSecretKey 85738a5f-871a-4cd1-a03c-bfdfa352d3d2"
-              validIssuer = "SeriousSez"
+              securityKey = "SocialSezSecretKey 85738a5f-871a-4cd1-a03c-bfdfa352d3d2"
+              validIssuer = "SocialSez"
               validAudience = "https://venli.api.sezginsahin.dk/"
               expiryInMinutes = 60
             }
@@ -301,7 +301,7 @@ jobs:
       #     username: ${{ secrets.FTP_USERNAME }}
       #     password: ${{ secrets.FTP_PASSWORD }}
       #     local-dir: ./rollback-api/
-      #     server-dir: /serioussez.api/
+      #     server-dir: /venli.api/
       #     dangerous-clean-slate: false
 
   deploy-web:
