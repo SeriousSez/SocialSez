@@ -1,9 +1,9 @@
 <main class="shell" [class.chat-mode]="isChatRoute">
     <aside class="left-rail">
         <div class="brand">
-            <div class="brand-mark">S</div>
+            <div class="brand-mark">V</div>
             <div>
-                <h1>SocialSez</h1>
+                <h1>Venli</h1>
                 <p class="brand-sub">Community Platform</p>
             </div>
         </div>
@@ -13,6 +13,13 @@
             <a class="tab-compose" routerLink="/compose" routerLinkActive="active"><i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i><span>Compose</span></a>
             <a class="tab-discover" routerLink="/discover" routerLinkActive="active"><i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i><span>Discover</span></a>
             <a class="tab-chat" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i><span>Chat</span></a>
+            <a class="tab-notifications" routerLink="/notifications" routerLinkActive="active" *ngIf="session.isAuthenticated()">
+                <i class="fa-duotone fa-light fa-bell" aria-hidden="true"></i>
+                <span class="tab-label">
+                    <span>Notifications</span>
+                    <span class="tab-badge" *ngIf="unreadNotificationsCount > 0">{{ unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount }}</span>
+                </span>
+            </a>
             <a class="tab-profile" routerLink="/profile" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-user" aria-hidden="true"></i><span>Profile</span></a>
             <a class="tab-settings" routerLink="/settings" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i><span>Settings</span></a>
             <a class="tab-auth" routerLink="/auth" routerLinkActive="active" *ngIf="!session.isAuthenticated()"><i class="fa-duotone fa-light fa-right-to-bracket" aria-hidden="true"></i><span>Auth</span></a>

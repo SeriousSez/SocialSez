@@ -8,15 +8,22 @@ import {
     CreateChatMessageRequest,
     CreateDirectConversationRequest,
     CreateGroupConversationRequest,
+    FollowActionResultDto,
+    FollowRequestDto,
+    FollowStatusDto,
     FollowSuggestionsDto,
     HashtagSearchResultDto,
     LoginRequest,
+    MarkAllReadResponse,
+    NotificationDto,
     PostDto,
+    ProfileActivitySummaryDto,
     ProfileDto,
     RegisterRequest,
     SetMessageReactionRequest,
     SetReactionRequest,
     UpdatePostRequest,
+    UpdateProfilePrivacyRequest,
     UpdateProfileRequest,
     UploadImageResponse
 } from './api.types';
@@ -90,6 +97,10 @@ export class SocialSezApiService {
 
     getProfile(handle: string): Observable<ProfileDto> {
         return this.http.get<ProfileDto>(`${this.baseUrl}/profiles/${handle}`);
+    }
+
+    getProfileActivitySummary(handle: string): Observable<ProfileActivitySummaryDto> {
+        return this.http.get<ProfileActivitySummaryDto>(`${this.baseUrl}/profiles/${encodeURIComponent(handle)}/activity`);
     }
 
     searchProfiles(query: string, take = 20): Observable<ProfileDto[]> {
@@ -183,16 +194,28 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.get<HashtagSearchResultDto[]>(`${this.baseUrl}/posts/hashtags/trending?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
-    follow(followedId: string): Observable<void> {
-        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/follows`, { followedId }, { headers: this.authHeaders() }));
+    follow(followedId: string): Observable<FollowActionResultDto> {
+        return this.withAutoRefresh(() => this.http.post<FollowActionResultDto>(`${this.baseUrl}/follows`, { followedId }, { headers: this.authHeaders() }));
     }
 
     unfollow(followedId: string): Observable<void> {
         return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/follows?followedId=${followedId}`, { headers: this.authHeaders() }));
     }
 
-    isFollowing(followedId: string): Observable<{ isFollowing: boolean }> {
-        return this.withAutoRefresh(() => this.http.get<{ isFollowing: boolean }>(`${this.baseUrl}/follows/status?followedId=${followedId}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    isFollowing(followedId: string): Observable<FollowStatusDto> {
+        return this.withAutoRefresh(() => this.http.get<FollowStatusDto>(`${this.baseUrl}/follows/status?followedId=${followedId}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getIncomingFollowRequests(take = 50): Observable<FollowRequestDto[]> {
+        return this.withAutoRefresh(() => this.http.get<FollowRequestDto[]>(`${this.baseUrl}/follows/requests/incoming?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    approveFollowRequest(followerId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/follows/requests/${followerId}/approve`, {}, { headers: this.authHeaders() }));
+    }
+
+    declineFollowRequest(followerId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/follows/requests/${followerId}/decline`, {}, { headers: this.authHeaders() }));
     }
 
     getFollowing(take = 100): Observable<ProfileDto[]> {
@@ -205,6 +228,22 @@ export class SocialSezApiService {
 
     updateMyProfile(request: UpdateProfileRequest): Observable<ProfileDto> {
         return this.withAutoRefresh(() => this.http.put<ProfileDto>(`${this.baseUrl}/profiles/me`, request, { headers: this.authHeaders() }));
+    }
+
+    updateMyPrivacy(request: UpdateProfilePrivacyRequest): Observable<ProfileDto> {
+        return this.withAutoRefresh(() => this.http.put<ProfileDto>(`${this.baseUrl}/profiles/me/privacy`, request, { headers: this.authHeaders() }));
+    }
+
+    getNotifications(take = 50): Observable<NotificationDto[]> {
+        return this.withAutoRefresh(() => this.http.get<NotificationDto[]>(`${this.baseUrl}/notifications?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    markNotificationRead(notificationId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/notifications/${notificationId}/read`, {}, { headers: this.authHeaders() }));
+    }
+
+    markAllNotificationsRead(): Observable<MarkAllReadResponse> {
+        return this.withAutoRefresh(() => this.http.post<MarkAllReadResponse>(`${this.baseUrl}/notifications/read-all`, {}, { headers: this.authHeaders() }));
     }
 
     getChatConversations(): Observable<ChatConversationDto[]> {

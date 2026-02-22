@@ -1,0 +1,33 @@
+<section class="page">
+    <header class="page-head">
+        <div>
+            <h2>Notifications</h2>
+            <p>See activity updates and mark them as read.</p>
+        </div>
+        <div class="actions">
+            <a class="ghost-link" routerLink="/notifications/requests">Requests</a>
+            <button class="ghost" type="button" (click)="loadNotifications()">Refresh</button>
+            <button class="ghost" type="button" (click)="markAllRead()" [disabled]="!notifications.length">Mark all read</button>
+        </div>
+    </header>
+
+    <section class="card">
+        <p class="meta" *ngIf="loading">Loading notifications...</p>
+        <p class="meta" *ngIf="!loading && !notifications.length">No notifications yet.</p>
+
+        <article class="notification" *ngFor="let notification of notifications" [class.request-row]="isFollowRequest(notification)" (click)="openRequest(notification)">
+            <div>
+                <a class="profile-link" *ngIf="isFollowRequest(notification) && notification.actorHandle" [routerLink]="['/users', notification.actorHandle]" (click)="$event.stopPropagation()">@{{ notification.actorHandle }}</a>
+                <strong [style.opacity]="notification.isRead ? 0.65 : 1">{{ notification.message }}</strong>
+                <p class="meta">{{ notification.createdAtUtc | date:'medium' }}</p>
+            </div>
+            <div class="actions">
+                <button *ngIf="isFollowRequest(notification)" type="button" (click)="approveRequest(notification, $event)">Approve</button>
+                <button *ngIf="isFollowRequest(notification)" class="ghost" type="button" (click)="declineRequest(notification, $event)">Decline</button>
+                <button class="ghost" type="button" (click)="markRead(notification.id); $event.stopPropagation()" [disabled]="notification.isRead">Mark read</button>
+            </div>
+        </article>
+    </section>
+
+    <p class="status" *ngIf="status">{{ status }}</p>
+</section>

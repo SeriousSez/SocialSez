@@ -30,12 +30,14 @@ class ProfileDto {
   final String handle;
   final String displayName;
   final String bio;
+  final bool isPrivate;
 
   const ProfileDto({
     required this.id,
     required this.handle,
     required this.displayName,
     required this.bio,
+    required this.isPrivate,
   });
 
   factory ProfileDto.fromJson(Map<String, dynamic> json) {
@@ -44,6 +46,7 @@ class ProfileDto {
       handle: json['handle'] as String,
       displayName: json['displayName'] as String,
       bio: json['bio'] as String? ?? '',
+      isPrivate: json['isPrivate'] as bool? ?? false,
     );
   }
 }
@@ -53,6 +56,12 @@ class UpdateProfileRequest {
   final String bio;
 
   const UpdateProfileRequest({required this.displayName, required this.bio});
+}
+
+class UpdateProfilePrivacyRequest {
+  final bool isPrivate;
+
+  const UpdateProfilePrivacyRequest({required this.isPrivate});
 }
 
 class PostDto {
@@ -71,6 +80,82 @@ class PostDto {
       authorHandle: json['authorHandle'] as String,
       content: json['content'] as String,
       createdAtUtc: json['createdAtUtc'] as String,
+    );
+  }
+}
+
+class FollowActionResult {
+  final String status;
+
+  const FollowActionResult({required this.status});
+
+  factory FollowActionResult.fromJson(Map<String, dynamic> json) {
+    return FollowActionResult(status: json['status'] as String? ?? 'Invalid');
+  }
+}
+
+class FollowStatusDto {
+  final bool isFollowing;
+  final bool isRequested;
+  final bool requiresApproval;
+
+  const FollowStatusDto({
+    required this.isFollowing,
+    required this.isRequested,
+    required this.requiresApproval,
+  });
+
+  factory FollowStatusDto.fromJson(Map<String, dynamic> json) {
+    return FollowStatusDto(
+      isFollowing: json['isFollowing'] as bool? ?? false,
+      isRequested: json['isRequested'] as bool? ?? false,
+      requiresApproval: json['requiresApproval'] as bool? ?? false,
+    );
+  }
+}
+
+class FollowRequestDto {
+  final String followerId;
+  final String followerHandle;
+  final String status;
+  final DateTime createdAtUtc;
+
+  const FollowRequestDto({
+    required this.followerId,
+    required this.followerHandle,
+    required this.status,
+    required this.createdAtUtc,
+  });
+
+  factory FollowRequestDto.fromJson(Map<String, dynamic> json) {
+    return FollowRequestDto(
+      followerId: json['followerId'] as String,
+      followerHandle: json['followerHandle'] as String? ?? '',
+      status: json['status'] as String? ?? 'Pending',
+      createdAtUtc: DateTime.tryParse(json['createdAtUtc'] as String? ?? '')?.toUtc() ?? DateTime.now().toUtc(),
+    );
+  }
+}
+
+class NotificationDto {
+  final String id;
+  final String message;
+  final bool isRead;
+  final DateTime createdAtUtc;
+
+  const NotificationDto({
+    required this.id,
+    required this.message,
+    required this.isRead,
+    required this.createdAtUtc,
+  });
+
+  factory NotificationDto.fromJson(Map<String, dynamic> json) {
+    return NotificationDto(
+      id: json['id'] as String,
+      message: json['message'] as String? ?? '',
+      isRead: json['isRead'] as bool? ?? false,
+      createdAtUtc: DateTime.tryParse(json['createdAtUtc'] as String? ?? '')?.toUtc() ?? DateTime.now().toUtc(),
     );
   }
 }
@@ -194,6 +279,22 @@ class SocialSezApi {
     return ProfileDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
+  Future<ProfileDto> updateMyPrivacy(UpdateProfilePrivacyRequest request) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/profiles/me/privacy'),
+      headers: _authHeaders(),
+      body: jsonEncode({
+        'isPrivate': request.isPrivate,
+      }),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to update privacy (${response.statusCode})');
+    }
+
+    return ProfileDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
   Future<void> createPost({required String content}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/posts'),
@@ -220,7 +321,7 @@ class SocialSezApi {
     return list.map((item) => PostDto.fromJson(item as Map<String, dynamic>)).toList();
   }
 
-  Future<void> follow(String followedId) async {
+  Future<FollowActionResult> follow(String followedId) async {
     final response = await http.post(
       Uri.parse('$baseUrl/follows'),
       headers: _authHeaders(),
@@ -230,6 +331,111 @@ class SocialSezApi {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Failed to follow user (${response.statusCode})');
     }
+
+    return FollowActionResult.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<void> unfollow(String followedId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/follows?followedId=$followedId'),
+      headers: _authHeaders(),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to unfollow user (${response.statusCode})');
+    }
+  }
+
+  Future<FollowStatusDto> getFollowStatus(String followedId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/follows/status?followedId=$followedId'),
+      headers: _authHeaders(),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to get follow status (${response.statusCode})');
+    }
+
+    return FollowStatusDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<List<FollowRequestDto>> getIncomingFollowRequests({int take = 50}) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/follows/requests/incoming?take=$take'),
+      headers: _authHeaders(),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to load follow requests (${response.statusCode})');
+    }
+
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list.map((item) => FollowRequestDto.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> approveFollowRequest(String followerId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/follows/requests/$followerId/approve'),
+      headers: _authHeaders(),
+      body: jsonEncode({}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to approve follow request (${response.statusCode})');
+    }
+  }
+
+  Future<void> declineFollowRequest(String followerId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/follows/requests/$followerId/decline'),
+      headers: _authHeaders(),
+      body: jsonEncode({}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to decline follow request (${response.statusCode})');
+    }
+  }
+
+  Future<List<NotificationDto>> getNotifications({int take = 50}) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/notifications?take=$take'),
+      headers: _authHeaders(),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to load notifications (${response.statusCode})');
+    }
+
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list.map((item) => NotificationDto.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> markNotificationRead(String notificationId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/notifications/$notificationId/read'),
+      headers: _authHeaders(),
+      body: jsonEncode({}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to mark notification read (${response.statusCode})');
+    }
+  }
+
+  Future<int> markAllNotificationsRead() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/notifications/read-all'),
+      headers: _authHeaders(),
+      body: jsonEncode({}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to mark all notifications read (${response.statusCode})');
+    }
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    return body['updatedCount'] as int? ?? 0;
   }
 
   Map<String, String> _authHeaders() {

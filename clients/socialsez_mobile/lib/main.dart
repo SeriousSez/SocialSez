@@ -31,7 +31,7 @@ class _SocialSezAppState extends State<SocialSezApp> {
       animation: _session,
       builder: (context, _) {
         return MaterialApp(
-          title: 'SocialSez Mobile',
+          title: 'Venli Mobile',
           theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo)),
           home: _session.isAuthenticated ? MainShell(session: _session) : AuthScreen(session: _session),
         );
@@ -44,6 +44,8 @@ class SessionController extends ChangeNotifier {
   SocialSezApi _api = const SocialSezApi();
   ProfileDto? profile;
   List<PostDto> feed = const [];
+  List<FollowRequestDto> incomingFollowRequests = const [];
+  List<NotificationDto> notifications = const [];
   String status = '';
   DateTime? nextRefreshAtUtc;
   Timer? _silentRefreshTimer;
@@ -134,9 +136,19 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<void> follow(String followedId) async {
-    await _api.follow(followedId);
-    status = 'Now following user';
+    final result = await _api.follow(followedId);
+    status = result.status == 'RequestPending' ? 'Follow request sent' : 'Now following user';
     notifyListeners();
+  }
+
+  Future<void> unfollow(String followedId) async {
+    await _api.unfollow(followedId);
+    status = 'Unfollowed';
+    notifyListeners();
+  }
+
+  Future<FollowStatusDto> getFollowStatus(String followedId) {
+    return _api.getFollowStatus(followedId);
   }
 
   Future<void> refreshMe() async {
@@ -147,6 +159,48 @@ class SessionController extends ChangeNotifier {
   Future<void> updateMyProfile(String displayName, String bio) async {
     profile = await _api.updateMe(UpdateProfileRequest(displayName: displayName, bio: bio));
     status = 'Profile updated';
+    notifyListeners();
+  }
+
+  Future<void> updateMyPrivacy(bool isPrivate) async {
+    profile = await _api.updateMyPrivacy(UpdateProfilePrivacyRequest(isPrivate: isPrivate));
+    status = 'Profile privacy updated';
+    notifyListeners();
+  }
+
+  Future<void> loadInbox() async {
+    incomingFollowRequests = await _api.getIncomingFollowRequests();
+    notifications = await _api.getNotifications();
+    notifyListeners();
+  }
+
+  Future<void> approveFollowRequest(String followerId) async {
+    await _api.approveFollowRequest(followerId);
+    incomingFollowRequests = incomingFollowRequests.where((x) => x.followerId != followerId).toList();
+    status = 'Follow request approved';
+    notifyListeners();
+  }
+
+  Future<void> declineFollowRequest(String followerId) async {
+    await _api.declineFollowRequest(followerId);
+    incomingFollowRequests = incomingFollowRequests.where((x) => x.followerId != followerId).toList();
+    status = 'Follow request declined';
+    notifyListeners();
+  }
+
+  Future<void> markNotificationRead(String notificationId) async {
+    await _api.markNotificationRead(notificationId);
+    notifications = notifications
+        .map((n) => n.id == notificationId ? NotificationDto(id: n.id, message: n.message, isRead: true, createdAtUtc: n.createdAtUtc) : n)
+        .toList();
+    notifyListeners();
+  }
+
+  Future<void> markAllNotificationsRead() async {
+    await _api.markAllNotificationsRead();
+    notifications = notifications
+        .map((n) => NotificationDto(id: n.id, message: n.message, isRead: true, createdAtUtc: n.createdAtUtc))
+        .toList();
     notifyListeners();
   }
 
@@ -418,6 +472,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   final handleController = TextEditingController();
   ProfileDto? result;
   String status = '';
+  bool isFollowing = false;
+  bool isRequested = false;
+  bool followRequiresApproval = false;
 
   @override
   void dispose() {
@@ -430,22 +487,48 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     setState(() => result = null);
     try {
       final profile = await widget.session.loadPublicProfile(handleController.text.trim());
-      setState(() => result = profile);
+      FollowStatusDto? followStatus;
+      final me = widget.session.profile;
+      if (me != null && me.id != profile.id) {
+        followStatus = await widget.session.getFollowStatus(profile.id);
+      }
+
+      setState(() {
+        result = profile;
+        isFollowing = followStatus?.isFollowing ?? false;
+        isRequested = followStatus?.isRequested ?? false;
+        followRequiresApproval = followStatus?.requiresApproval ?? profile.isPrivate;
+      });
     } catch (_) {
       setState(() => status = 'Profile not found.');
     }
   }
 
-  Future<void> follow() async {
+  Future<void> toggleFollow() async {
     if (result == null) {
       return;
     }
 
     try {
-      await widget.session.follow(result!.id);
-      setState(() => status = 'Followed.');
+      if (isFollowing || isRequested) {
+        await widget.session.unfollow(result!.id);
+        setState(() {
+          isFollowing = false;
+          isRequested = false;
+          status = 'Unfollowed.';
+        });
+      } else {
+        await widget.session.follow(result!.id);
+        final followStatus = await widget.session.getFollowStatus(result!.id);
+        setState(() {
+          isFollowing = followStatus.isFollowing;
+          isRequested = followStatus.isRequested;
+          followRequiresApproval = followStatus.requiresApproval;
+          status = isRequested ? 'Follow request sent.' : 'Followed.';
+        });
+      }
     } catch (_) {
-      setState(() => status = 'Could not follow user.');
+      setState(() => status = 'Could not update follow state.');
     }
   }
 
@@ -464,8 +547,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           Card(
             child: ListTile(
               title: Text('${result!.displayName} (@${result!.handle})'),
-              subtitle: Text(result!.bio),
-              trailing: ElevatedButton(onPressed: follow, child: const Text('Follow')),
+              subtitle: Text(result!.bio.isEmpty ? (result!.isPrivate ? 'Private profile' : '') : result!.bio),
+              trailing: ElevatedButton(onPressed: toggleFollow, child: Text(isRequested ? 'Requested' : (isFollowing ? 'Unfollow' : 'Follow'))),
             ),
           ),
         if (status.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(status)),
@@ -486,6 +569,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final displayNameController = TextEditingController();
   final bioController = TextEditingController();
+  bool isPrivate = false;
   String status = '';
 
   @override
@@ -499,6 +583,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (profile != null) {
       displayNameController.text = profile.displayName;
       bioController.text = profile.bio;
+      isPrivate = profile.isPrivate;
     }
   }
 
@@ -524,10 +609,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> reload() async {
     try {
       await widget.session.refreshMe();
+      await widget.session.loadInbox();
       _syncFromSession();
       setState(() => status = 'Reloaded.');
     } catch (_) {
       setState(() => status = 'Could not reload profile.');
+    }
+  }
+
+  Future<void> savePrivacy(bool value) async {
+    setState(() {
+      isPrivate = value;
+    });
+
+    try {
+      await widget.session.updateMyPrivacy(value);
+      _syncFromSession();
+      setState(() => status = 'Privacy saved.');
+    } catch (_) {
+      setState(() => status = 'Could not save privacy setting.');
     }
   }
 
@@ -551,6 +651,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: const InputDecoration(labelText: 'Bio', border: OutlineInputBorder()),
           ),
           const SizedBox(height: 10),
+          SwitchListTile(
+            value: isPrivate,
+            onChanged: savePrivacy,
+            title: const Text('Private profile'),
+            contentPadding: EdgeInsets.zero,
+          ),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 10,
             children: [
@@ -558,6 +665,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ElevatedButton(onPressed: reload, child: const Text('Reload')),
             ],
           ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              ElevatedButton(onPressed: widget.session.loadInbox, child: const Text('Load Inbox')),
+              const SizedBox(width: 8),
+              ElevatedButton(onPressed: widget.session.markAllNotificationsRead, child: const Text('Mark all read')),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text('Follow requests (${widget.session.incomingFollowRequests.length})', style: Theme.of(context).textTheme.titleSmall),
+          ...widget.session.incomingFollowRequests.map((request) => ListTile(
+                title: Text('@${request.followerHandle}'),
+                subtitle: Text('Requested ${request.createdAtUtc.toLocal()}'),
+                trailing: Wrap(
+                  spacing: 6,
+                  children: [
+                    TextButton(onPressed: () => widget.session.approveFollowRequest(request.followerId), child: const Text('Approve')),
+                    TextButton(onPressed: () => widget.session.declineFollowRequest(request.followerId), child: const Text('Decline')),
+                  ],
+                ),
+              )),
+          const SizedBox(height: 10),
+          Text('Notifications (${widget.session.notifications.length})', style: Theme.of(context).textTheme.titleSmall),
+          ...widget.session.notifications.map((notification) => ListTile(
+                title: Text(notification.message, style: TextStyle(fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w600)),
+                subtitle: Text(notification.createdAtUtc.toLocal().toString()),
+                trailing: notification.isRead
+                    ? const Text('Read')
+                    : TextButton(onPressed: () => widget.session.markNotificationRead(notification.id), child: const Text('Read')),
+              )),
         ],
         if (status.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(status)),
       ],

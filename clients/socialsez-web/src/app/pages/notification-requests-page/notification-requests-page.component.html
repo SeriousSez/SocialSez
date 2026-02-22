@@ -1,0 +1,30 @@
+<section class="page">
+    <header class="page-head">
+        <div>
+            <h2>Follow Requests</h2>
+            <p>Review and respond to incoming follow requests.</p>
+        </div>
+        <div class="actions">
+            <a class="ghost-link" routerLink="/notifications">Back to notifications</a>
+            <button class="ghost" type="button" (click)="loadRequests()">Refresh</button>
+        </div>
+    </header>
+
+    <section class="card">
+        <p class="meta" *ngIf="loading">Loading follow requests...</p>
+        <p class="meta" *ngIf="!loading && !requests.length">No pending follow requests.</p>
+
+        <article class="request" *ngFor="let request of requests">
+            <div>
+                <a class="profile-link" [routerLink]="['/users', request.followerHandle]">@{{ request.followerHandle }}</a>
+                <p class="meta">{{ request.createdAtUtc | date:'medium' }}</p>
+            </div>
+            <div class="actions">
+                <button type="button" (click)="approveRequest(request.followerId)">Approve</button>
+                <button class="ghost" type="button" (click)="declineRequest(request.followerId)">Decline</button>
+            </div>
+        </article>
+    </section>
+
+    <p class="status" *ngIf="status">{{ status }}</p>
+</section>

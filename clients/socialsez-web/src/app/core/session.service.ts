@@ -5,10 +5,15 @@ import {
     AuthResponse,
     ChatConversationDto,
     ChatMessageDto,
+    FollowActionResultDto,
+    FollowRequestDto,
+    FollowStatusDto,
     FollowSuggestionsDto,
     HashtagSearchResultDto,
     LoginRequest,
+    NotificationDto,
     PostDto,
+    ProfileActivitySummaryDto,
     ProfileDto,
     RegisterRequest,
     UpdateProfileRequest
@@ -21,7 +26,7 @@ export class SessionService {
     message = '';
     nextSilentRefreshAt: Date | null = null;
 
-    private readonly appChanges = new ReplaySubject<'profile' | 'posts' | 'session'>(1);
+    private readonly appChanges = new ReplaySubject<'profile' | 'posts' | 'session' | 'notifications'>(1);
     readonly appChanges$ = this.appChanges.asObservable();
 
     private silentRefreshTimerId: number | undefined;
@@ -197,10 +202,15 @@ export class SessionService {
         return firstValueFrom(this.api.getProfile(handle));
     }
 
-    async followAsync(followedId: string): Promise<void> {
-        await firstValueFrom(this.api.follow(followedId));
-        this.message = 'Now following user.';
+    async loadProfileActivitySummaryAsync(handle: string): Promise<ProfileActivitySummaryDto> {
+        return firstValueFrom(this.api.getProfileActivitySummary(handle));
+    }
+
+    async followAsync(followedId: string): Promise<FollowActionResultDto> {
+        const result = await firstValueFrom(this.api.follow(followedId));
+        this.message = result.status === 'RequestPending' ? 'Follow request sent.' : 'Now following user.';
         this.appChanges.next('posts');
+        return result;
     }
 
     async unfollowAsync(followedId: string): Promise<void> {
@@ -209,8 +219,12 @@ export class SessionService {
         this.appChanges.next('posts');
     }
 
+    async getFollowStatusAsync(followedId: string): Promise<FollowStatusDto> {
+        return firstValueFrom(this.api.isFollowing(followedId));
+    }
+
     async isFollowingAsync(followedId: string): Promise<boolean> {
-        const response = await firstValueFrom(this.api.isFollowing(followedId));
+        const response = await this.getFollowStatusAsync(followedId);
         return response.isFollowing;
     }
 
@@ -222,10 +236,46 @@ export class SessionService {
         return firstValueFrom(this.api.getFollowSuggestions(takePerGroup));
     }
 
+    async loadIncomingFollowRequestsAsync(take = 50): Promise<FollowRequestDto[]> {
+        return firstValueFrom(this.api.getIncomingFollowRequests(take));
+    }
+
+    async approveFollowRequestAsync(followerId: string): Promise<void> {
+        await firstValueFrom(this.api.approveFollowRequest(followerId));
+        this.appChanges.next('notifications');
+    }
+
+    async declineFollowRequestAsync(followerId: string): Promise<void> {
+        await firstValueFrom(this.api.declineFollowRequest(followerId));
+        this.appChanges.next('notifications');
+    }
+
+    async loadNotificationsAsync(take = 50): Promise<NotificationDto[]> {
+        return firstValueFrom(this.api.getNotifications(take));
+    }
+
+    async markNotificationReadAsync(notificationId: string): Promise<void> {
+        await firstValueFrom(this.api.markNotificationRead(notificationId));
+        this.appChanges.next('notifications');
+    }
+
+    async markAllNotificationsReadAsync(): Promise<number> {
+        const response = await firstValueFrom(this.api.markAllNotificationsRead());
+        this.appChanges.next('notifications');
+        return response.updatedCount;
+    }
+
     async updateProfileAsync(request: UpdateProfileRequest): Promise<void> {
         const updated = await firstValueFrom(this.api.updateMyProfile(request));
         this.profile = updated;
         this.message = 'Profile updated.';
+        this.appChanges.next('profile');
+    }
+
+    async updateProfilePrivacyAsync(isPrivate: boolean): Promise<void> {
+        const updated = await firstValueFrom(this.api.updateMyPrivacy({ isPrivate }));
+        this.profile = updated;
+        this.message = 'Profile privacy updated.';
         this.appChanges.next('profile');
     }
 

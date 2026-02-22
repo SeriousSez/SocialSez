@@ -216,6 +216,131 @@ using (var scope = app.Services.CreateScope())
             CREATE INDEX IF NOT EXISTS IX_ChatMessageReactions_MessageId_Type
             ON ChatMessageReactions (MessageId, Type);
             """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS Stories (
+                Id TEXT NOT NULL PRIMARY KEY,
+                AuthorId TEXT NOT NULL,
+                Caption TEXT NULL,
+                MediaUrl TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                ExpiresAtUtc TEXT NOT NULL,
+                FOREIGN KEY (AuthorId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+            );
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_Stories_AuthorId_CreatedAtUtc
+            ON Stories (AuthorId, CreatedAtUtc);
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_Stories_ExpiresAtUtc
+            ON Stories (ExpiresAtUtc);
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS StoryViews (
+                StoryId TEXT NOT NULL,
+                ViewerId TEXT NOT NULL,
+                ViewedAtUtc TEXT NOT NULL,
+                PRIMARY KEY (StoryId, ViewerId),
+                FOREIGN KEY (StoryId) REFERENCES Stories (Id) ON DELETE CASCADE,
+                FOREIGN KEY (ViewerId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+            );
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_StoryViews_ViewerId
+            ON StoryViews (ViewerId);
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS Reels (
+                Id TEXT NOT NULL PRIMARY KEY,
+                AuthorId TEXT NOT NULL,
+                Caption TEXT NULL,
+                VideoUrl TEXT NOT NULL,
+                ThumbnailUrl TEXT NULL,
+                DurationSeconds INTEGER NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                FOREIGN KEY (AuthorId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+            );
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_Reels_CreatedAtUtc
+            ON Reels (CreatedAtUtc);
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_Reels_AuthorId
+            ON Reels (AuthorId);
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS ReelLikes (
+                ReelId TEXT NOT NULL,
+                ProfileId TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                PRIMARY KEY (ReelId, ProfileId),
+                FOREIGN KEY (ReelId) REFERENCES Reels (Id) ON DELETE CASCADE,
+                FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+            );
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_ReelLikes_ProfileId
+            ON ReelLikes (ProfileId);
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS ProfileFollowRequests (
+                FollowerId TEXT NOT NULL,
+                FollowedId TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                RespondedAtUtc TEXT NULL,
+                Status TEXT NOT NULL,
+                PRIMARY KEY (FollowerId, FollowedId),
+                FOREIGN KEY (FollowerId) REFERENCES UserProfiles (Id) ON DELETE CASCADE,
+                FOREIGN KEY (FollowedId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+            );
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_ProfileFollowRequests_FollowedId_Status_CreatedAtUtc
+            ON ProfileFollowRequests (FollowedId, Status, CreatedAtUtc);
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS Notifications (
+                Id TEXT NOT NULL PRIMARY KEY,
+                RecipientId TEXT NOT NULL,
+                ActorId TEXT NULL,
+                Type TEXT NOT NULL,
+                Message TEXT NOT NULL,
+                ReferenceId TEXT NULL,
+                IsRead INTEGER NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                FOREIGN KEY (RecipientId) REFERENCES UserProfiles (Id) ON DELETE CASCADE,
+                FOREIGN KEY (ActorId) REFERENCES UserProfiles (Id) ON DELETE SET NULL
+            );
+            """);
+
+        dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_Notifications_RecipientId_IsRead_CreatedAtUtc
+            ON Notifications (RecipientId, IsRead, CreatedAtUtc);
+            """);
+
+        var columnExists = dbContext.Database
+            .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('UserProfiles') WHERE name = 'IsPrivate'")
+            .ToList()
+            .Count > 0;
+
+        if (!columnExists)
+        {
+            dbContext.Database.ExecuteSqlRaw("ALTER TABLE UserProfiles ADD COLUMN IsPrivate INTEGER NOT NULL DEFAULT 0;");
+        }
     }
 }
 

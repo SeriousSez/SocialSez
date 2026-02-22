@@ -25,6 +25,10 @@
         <h3>Account</h3>
         <p class="meta"><strong>Profile Id:</strong> {{ profile.id }}</p>
         <p class="meta"><strong>Handle:</strong> @{{ profile.handle }}</p>
+        <label class="toggle">
+            <input type="checkbox" [(ngModel)]="isPrivate" (change)="savePrivacy()" />
+            Private profile
+        </label>
         <p class="meta"><strong>Joined:</strong> {{ profile.createdAtUtc | date:'mediumDate' }}</p>
     </section>
 

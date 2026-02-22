@@ -7,6 +7,7 @@ public class UserProfile
     public string DisplayName { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
+    public bool IsPrivate { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public ICollection<Post> Posts { get; set; } = new List<Post>();
@@ -18,4 +19,11 @@ public class UserProfile
     public ICollection<ChatMessageReaction> ChatMessageReactions { get; set; } = new List<ChatMessageReaction>();
     public ICollection<Follow> Followers { get; set; } = new List<Follow>();
     public ICollection<Follow> Following { get; set; } = new List<Follow>();
+    public ICollection<Story> Stories { get; set; } = new List<Story>();
+    public ICollection<StoryView> StoryViews { get; set; } = new List<StoryView>();
+    public ICollection<Reel> Reels { get; set; } = new List<Reel>();
+    public ICollection<ReelLike> ReelLikes { get; set; } = new List<ReelLike>();
+    public ICollection<ProfileFollowRequest> ReceivedFollowRequests { get; set; } = new List<ProfileFollowRequest>();
+    public ICollection<ProfileFollowRequest> SentFollowRequests { get; set; } = new List<ProfileFollowRequest>();
+    public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 }

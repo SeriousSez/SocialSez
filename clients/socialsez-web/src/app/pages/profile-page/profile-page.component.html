@@ -19,9 +19,12 @@
                     <ng-template #followActions>
                         <button type="button" (click)="toggleFollow()" [disabled]="followState === 'loading'" [class.ghost]="isFollowing && followState === 'idle'" [class.is-loading]="followState === 'loading'" [class.is-success]="followState === 'success'"
                             [class.is-failure]="followState === 'failure'">{{ followButtonLabel }}</button>
+                        <p class="status" *ngIf="followRequiresApproval && !isFollowing">Private profile</p>
                     </ng-template>
                 </div>
             </header>
+
+            <p class="status" *ngIf="isPrivateLockedView"><i class="fa-duotone fa-light fa-lock" aria-hidden="true"></i>This profile is private. Follow and wait for approval to see posts.</p>
 
             <section class="activities">
                 <article class="activity-card">
@@ -29,7 +32,7 @@
                     <p>{{ totalPosts }}</p>
                 </article>
                 <article class="activity-card">
-                    <h3>Comments on your posts</h3>
+                    <h3>{{ isOwnProfile ? 'Comments on your posts' : 'Comments on their posts' }}</h3>
                     <p>{{ totalCommentsOnPosts }}</p>
                 </article>
                 <article class="activity-card">
@@ -107,8 +110,9 @@
 </section>
 
 <ng-template #noPostsYet>
+    <p class="status" *ngIf="!loading && isPrivateLockedView"><i class="fa-duotone fa-light fa-hourglass-clock" aria-hidden="true"></i>No posts visible until this private profile approves your follow request.</p>
     <p class="status" *ngIf="!loading && isOwnProfile">You have no posts yet. Start sharing from Compose.</p>
-    <p class="status" *ngIf="!loading && !isOwnProfile">No posts yet.</p>
+    <p class="status" *ngIf="!loading && !isOwnProfile && !isPrivateLockedView">No posts yet.</p>
 </ng-template>
 
 <app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">

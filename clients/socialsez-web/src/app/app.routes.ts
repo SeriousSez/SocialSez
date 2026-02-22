@@ -10,6 +10,8 @@ import { ChatPageComponent } from './pages/chat-page/chat-page.component';
 import { SettingsPageComponent } from './pages/settings-page/settings-page.component';
 import { ProfilePageComponent } from './pages/profile-page/profile-page.component';
 import { HashtagPageComponent } from './pages/hashtag-page/hashtag-page.component';
+import { NotificationsPageComponent } from './pages/notifications-page/notifications-page.component';
+import { NotificationRequestsPageComponent } from './pages/notification-requests-page/notification-requests-page.component';
 
 const authGuard = async () => {
     const session = inject(SessionService);
@@ -37,6 +39,8 @@ export const routes: Routes = [
     { path: 'hashtags/:tag', component: HashtagPageComponent, canActivate: [authGuard] },
     { path: 'profile', component: ProfilePageComponent, canActivate: [authGuard] },
     { path: 'users/:handle', component: ProfilePageComponent, canActivate: [authGuard] },
+    { path: 'notifications', component: NotificationsPageComponent, canActivate: [authGuard] },
+    { path: 'notifications/requests', component: NotificationRequestsPageComponent, canActivate: [authGuard] },
     { path: 'settings', component: SettingsPageComponent, canActivate: [authGuard] },
     { path: '**', redirectTo: 'feed' }
 ];

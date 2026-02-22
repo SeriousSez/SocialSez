@@ -8,11 +8,11 @@ namespace SocialSez.ApplicationService.Services;
 
 public class FollowService(SocialSezContext dbContext) : IFollowService
 {
-    public async Task<bool> FollowAsync(Guid followerId, Guid followedId, CancellationToken cancellationToken = default)
+    public async Task<FollowActionResultDto> FollowAsync(Guid followerId, Guid followedId, CancellationToken cancellationToken = default)
     {
         if (followerId == followedId)
         {
-            return false;
+            return new FollowActionResultDto(FollowActionStatuses.Invalid);
         }
 
         var exists = await dbContext.Follows.AnyAsync(
@@ -21,15 +21,66 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
 
         if (exists)
         {
-            return true;
+            return new FollowActionResultDto(FollowActionStatuses.AlreadyFollowing);
         }
 
-        var profilesExist = await dbContext.UserProfiles.AnyAsync(x => x.Id == followerId, cancellationToken)
-            && await dbContext.UserProfiles.AnyAsync(x => x.Id == followedId, cancellationToken);
+        var follower = await dbContext.UserProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == followerId, cancellationToken);
 
-        if (!profilesExist)
+        var followed = await dbContext.UserProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == followedId, cancellationToken);
+
+        if (follower is null || followed is null)
         {
-            return false;
+            return new FollowActionResultDto(FollowActionStatuses.Invalid);
+        }
+
+        var existingRequest = await dbContext.ProfileFollowRequests
+            .FirstOrDefaultAsync(x => x.FollowerId == followerId && x.FollowedId == followedId, cancellationToken);
+
+        if (followed.IsPrivate)
+        {
+            if (existingRequest is not null && string.Equals(existingRequest.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+            {
+                return new FollowActionResultDto(FollowActionStatuses.AlreadyRequested);
+            }
+
+            await RemoveFollowRequestNotificationsAsync(followerId, followedId, cancellationToken);
+
+            if (existingRequest is null)
+            {
+                dbContext.ProfileFollowRequests.Add(new ProfileFollowRequest
+                {
+                    FollowerId = followerId,
+                    FollowedId = followedId,
+                    CreatedAtUtc = DateTime.UtcNow,
+                    Status = "Pending",
+                    RespondedAtUtc = null
+                });
+            }
+            else
+            {
+                existingRequest.Status = "Pending";
+                existingRequest.CreatedAtUtc = DateTime.UtcNow;
+                existingRequest.RespondedAtUtc = null;
+            }
+
+            dbContext.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = followedId,
+                ActorId = followerId,
+                Type = "FollowRequest",
+                Message = $"@{follower.Handle} requested to follow you.",
+                ReferenceId = followerId.ToString(),
+                IsRead = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return new FollowActionResultDto(FollowActionStatuses.RequestPending);
         }
 
         dbContext.Follows.Add(new Follow
@@ -39,8 +90,25 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
             CreatedAtUtc = DateTime.UtcNow
         });
 
+        if (existingRequest is not null)
+        {
+            dbContext.ProfileFollowRequests.Remove(existingRequest);
+        }
+
+        dbContext.Notifications.Add(new Notification
+        {
+            Id = Guid.NewGuid(),
+            RecipientId = followedId,
+            ActorId = followerId,
+            Type = "Follow",
+            Message = $"@{follower.Handle} started following you.",
+            ReferenceId = followerId.ToString(),
+            IsRead = false,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+
         await dbContext.SaveChangesAsync(cancellationToken);
-        return true;
+        return new FollowActionResultDto(FollowActionStatuses.Followed);
     }
 
     public async Task<bool> UnfollowAsync(Guid followerId, Guid followedId, CancellationToken cancellationToken = default)
@@ -49,12 +117,26 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
             x => x.FollowerId == followerId && x.FollowedId == followedId,
             cancellationToken);
 
-        if (follow is null)
+        var request = await dbContext.ProfileFollowRequests.FirstOrDefaultAsync(
+            x => x.FollowerId == followerId && x.FollowedId == followedId && x.Status == "Pending",
+            cancellationToken);
+
+        if (follow is null && request is null)
         {
             return false;
         }
 
-        dbContext.Follows.Remove(follow);
+        if (follow is not null)
+        {
+            dbContext.Follows.Remove(follow);
+        }
+
+        if (request is not null)
+        {
+            dbContext.ProfileFollowRequests.Remove(request);
+            await RemoveFollowRequestNotificationsAsync(followerId, followedId, cancellationToken);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
@@ -64,6 +146,138 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
         return await dbContext.Follows.AnyAsync(
             x => x.FollowerId == followerId && x.FollowedId == followedId,
             cancellationToken);
+    }
+
+    public async Task<FollowStatusDto> GetStatusAsync(Guid followerId, Guid followedId, CancellationToken cancellationToken = default)
+    {
+        var isFollowing = await IsFollowingAsync(followerId, followedId, cancellationToken);
+        var isRequested = await dbContext.ProfileFollowRequests.AnyAsync(
+            x => x.FollowerId == followerId && x.FollowedId == followedId && x.Status == "Pending",
+            cancellationToken);
+
+        var requiresApproval = await dbContext.UserProfiles
+            .Where(x => x.Id == followedId)
+            .Select(x => x.IsPrivate)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return new FollowStatusDto(isFollowing, isRequested, requiresApproval);
+    }
+
+    public async Task<IReadOnlyCollection<FollowRequestDto>> GetIncomingRequestsAsync(Guid profileId, int take = 50, CancellationToken cancellationToken = default)
+    {
+        var normalizedTake = Math.Clamp(take, 1, 200);
+
+        return await dbContext.ProfileFollowRequests
+            .AsNoTracking()
+            .Where(x => x.FollowedId == profileId && x.Status == "Pending")
+            .Include(x => x.Follower)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(normalizedTake)
+            .Select(x => new FollowRequestDto(
+                x.FollowerId,
+                x.Follower.Handle,
+                x.Follower.ImageUrl,
+                x.CreatedAtUtc,
+                x.Status))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> ApproveRequestAsync(Guid profileId, Guid followerId, CancellationToken cancellationToken = default)
+    {
+        var request = await dbContext.ProfileFollowRequests
+            .Include(x => x.Follower)
+            .FirstOrDefaultAsync(x => x.FollowerId == followerId && x.FollowedId == profileId && x.Status == "Pending", cancellationToken);
+
+        if (request is null)
+        {
+            return false;
+        }
+
+        var alreadyFollowing = await dbContext.Follows.AnyAsync(x => x.FollowerId == followerId && x.FollowedId == profileId, cancellationToken);
+        if (!alreadyFollowing)
+        {
+            dbContext.Follows.Add(new Follow
+            {
+                FollowerId = followerId,
+                FollowedId = profileId,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        request.Status = "Approved";
+        request.RespondedAtUtc = DateTime.UtcNow;
+
+        await RemoveFollowRequestNotificationsAsync(followerId, profileId, cancellationToken);
+
+        dbContext.Notifications.Add(new Notification
+        {
+            Id = Guid.NewGuid(),
+            RecipientId = profileId,
+            ActorId = followerId,
+            Type = "Follow",
+            Message = $"@{request.Follower.Handle} is now following you.",
+            ReferenceId = followerId.ToString(),
+            IsRead = false,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+
+        dbContext.Notifications.Add(new Notification
+        {
+            Id = Guid.NewGuid(),
+            RecipientId = followerId,
+            ActorId = profileId,
+            Type = "FollowRequestApproved",
+            Message = "Your follow request was approved.",
+            ReferenceId = profileId.ToString(),
+            IsRead = false,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> DeclineRequestAsync(Guid profileId, Guid followerId, CancellationToken cancellationToken = default)
+    {
+        var request = await dbContext.ProfileFollowRequests
+            .FirstOrDefaultAsync(x => x.FollowerId == followerId && x.FollowedId == profileId && x.Status == "Pending", cancellationToken);
+
+        if (request is null)
+        {
+            return false;
+        }
+
+        request.Status = "Declined";
+        request.RespondedAtUtc = DateTime.UtcNow;
+
+        await RemoveFollowRequestNotificationsAsync(followerId, profileId, cancellationToken);
+
+        dbContext.Notifications.Add(new Notification
+        {
+            Id = Guid.NewGuid(),
+            RecipientId = followerId,
+            ActorId = profileId,
+            Type = "FollowRequestDeclined",
+            Message = "Your follow request was declined.",
+            ReferenceId = profileId.ToString(),
+            IsRead = false,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    private async Task RemoveFollowRequestNotificationsAsync(Guid followerId, Guid followedId, CancellationToken cancellationToken)
+    {
+        var notifications = await dbContext.Notifications
+            .Where(x => x.Type == "FollowRequest" && x.RecipientId == followedId && x.ActorId == followerId)
+            .ToListAsync(cancellationToken);
+
+        if (notifications.Count > 0)
+        {
+            dbContext.Notifications.RemoveRange(notifications);
+        }
     }
 
     public async Task<IReadOnlyCollection<ProfileDto>> GetFollowingAsync(Guid followerId, int take = 100, CancellationToken cancellationToken = default)
@@ -82,6 +296,7 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
                 x.Followed.DisplayName,
                 x.Followed.Bio,
                 x.Followed.ImageUrl,
+                x.Followed.IsPrivate,
                 x.Followed.CreatedAtUtc))
             .ToListAsync(cancellationToken);
     }
@@ -102,6 +317,7 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
                 x.Followed.DisplayName,
                 x.Followed.Bio,
                 x.Followed.ImageUrl,
+                x.Followed.IsPrivate,
                 x.Followed.CreatedAtUtc))
             .ToListAsync(cancellationToken);
 
@@ -148,6 +364,7 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
                 x.DisplayName,
                 x.Bio,
                 x.ImageUrl,
+                x.IsPrivate,
                 x.CreatedAtUtc))
             .ToListAsync(cancellationToken);
 

@@ -118,6 +118,12 @@ h2 {
     gap: 10px;
 }
 
+.status i {
+    margin-right: 8px;
+    opacity: 0.8;
+    font-size: 0.95rem;
+}
+
 .profile-skeleton,
 .profile-posts-skeleton {
     display: grid;

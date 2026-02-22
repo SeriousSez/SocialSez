@@ -15,8 +15,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IPostService, PostService>();
+        services.AddScoped<IStoryService, StoryService>();
+        services.AddScoped<IReelService, ReelService>();
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IFollowService, FollowService>();
+        services.AddScoped<INotificationService, NotificationService>();
         return services;
     }
 }

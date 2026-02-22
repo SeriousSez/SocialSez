@@ -30,29 +30,70 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
             DisplayName = request.DisplayName.Trim(),
             Bio = request.Bio?.Trim() ?? string.Empty,
             ImageUrl = null,
+            IsPrivate = false,
             CreatedAtUtc = DateTime.UtcNow
         };
 
         dbContext.UserProfiles.Add(profile);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return ToDto(profile);
+        return ToDto(profile, true);
     }
 
-    public async Task<ProfileDto?> GetByHandleAsync(string handle, CancellationToken cancellationToken = default)
+    public async Task<ProfileDto?> GetByHandleAsync(string handle, Guid? viewerId = null, CancellationToken cancellationToken = default)
     {
         var normalized = handle.Trim().ToLowerInvariant();
         var profile = await dbContext.UserProfiles.FirstOrDefaultAsync(x => x.Handle == normalized, cancellationToken);
-        return profile is null ? null : ToDto(profile);
+        if (profile is null)
+        {
+            return null;
+        }
+
+        var canViewPrivateInfo = await CanViewPrivateInfoAsync(viewerId, profile.Id, cancellationToken);
+        return ToDto(profile, canViewPrivateInfo);
     }
 
     public async Task<ProfileDto?> GetByIdAsync(Guid profileId, CancellationToken cancellationToken = default)
     {
         var profile = await dbContext.UserProfiles.FirstOrDefaultAsync(x => x.Id == profileId, cancellationToken);
-        return profile is null ? null : ToDto(profile);
+        return profile is null ? null : ToDto(profile, true);
     }
 
-    public async Task<IReadOnlyCollection<ProfileDto>> SearchAsync(string query, int take = 20, CancellationToken cancellationToken = default)
+    public async Task<ProfileActivitySummaryDto?> GetActivitySummaryByHandleAsync(string handle, CancellationToken cancellationToken = default)
+    {
+        var normalized = handle.Trim().ToLowerInvariant();
+        var profile = await dbContext.UserProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Handle == normalized, cancellationToken);
+
+        if (profile is null)
+        {
+            return null;
+        }
+
+        var sevenDaysAgoUtc = DateTime.UtcNow.AddDays(-7);
+
+        var postCountTask = dbContext.Posts
+            .AsNoTracking()
+            .CountAsync(x => x.AuthorId == profile.Id, cancellationToken);
+
+        var commentCountOnPostsTask = dbContext.Comments
+            .AsNoTracking()
+            .CountAsync(x => x.Post.AuthorId == profile.Id, cancellationToken);
+
+        var activeLast7DaysTask = dbContext.Posts
+            .AsNoTracking()
+            .CountAsync(x => x.AuthorId == profile.Id && x.CreatedAtUtc >= sevenDaysAgoUtc, cancellationToken);
+
+        await Task.WhenAll(postCountTask, commentCountOnPostsTask, activeLast7DaysTask);
+
+        return new ProfileActivitySummaryDto(
+            postCountTask.Result,
+            commentCountOnPostsTask.Result,
+            activeLast7DaysTask.Result);
+    }
+
+    public async Task<IReadOnlyCollection<ProfileDto>> SearchAsync(string query, Guid? viewerId = null, int take = 20, CancellationToken cancellationToken = default)
     {
         var normalizedQuery = query.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalizedQuery))
@@ -69,7 +110,27 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
             .Take(take)
             .ToArrayAsync(cancellationToken);
 
-        return profiles.Select(ToDto).ToArray();
+        HashSet<Guid>? followedIds = null;
+        if (viewerId.HasValue)
+        {
+            var followedList = await dbContext.Follows
+                .AsNoTracking()
+                .Where(x => x.FollowerId == viewerId.Value)
+                .Select(x => x.FollowedId)
+                .ToListAsync(cancellationToken);
+
+            followedIds = followedList.ToHashSet();
+        }
+
+        return profiles
+            .Select(profile =>
+            {
+                var canViewPrivateInfo = !profile.IsPrivate
+                    || (viewerId.HasValue && (viewerId.Value == profile.Id || (followedIds?.Contains(profile.Id) ?? false)));
+
+                return ToDto(profile, canViewPrivateInfo);
+            })
+            .ToArray();
     }
 
     public async Task<ProfileDto?> UpdateAsync(Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
@@ -86,11 +147,43 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return ToDto(profile);
+        return ToDto(profile, true);
     }
 
-    private static ProfileDto ToDto(UserProfile profile) =>
-        new(profile.Id, profile.Handle, profile.DisplayName, profile.Bio, profile.ImageUrl, profile.CreatedAtUtc);
+    public async Task<ProfileDto?> UpdatePrivacyAsync(Guid profileId, UpdateProfilePrivacyRequest request, CancellationToken cancellationToken = default)
+    {
+        var profile = await dbContext.UserProfiles.FirstOrDefaultAsync(x => x.Id == profileId, cancellationToken);
+        if (profile is null)
+        {
+            return null;
+        }
+
+        profile.IsPrivate = request.IsPrivate;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ToDto(profile, true);
+    }
+
+    private async Task<bool> CanViewPrivateInfoAsync(Guid? viewerId, Guid targetProfileId, CancellationToken cancellationToken)
+    {
+        if (!viewerId.HasValue || viewerId.Value == targetProfileId)
+        {
+            return viewerId.HasValue && viewerId.Value == targetProfileId;
+        }
+
+        return await dbContext.Follows.AnyAsync(
+            x => x.FollowerId == viewerId.Value && x.FollowedId == targetProfileId,
+            cancellationToken);
+    }
+
+    private static ProfileDto ToDto(UserProfile profile, bool canViewPrivateInfo)
+    {
+        if (!profile.IsPrivate || canViewPrivateInfo)
+        {
+            return new ProfileDto(profile.Id, profile.Handle, profile.DisplayName, profile.Bio, profile.ImageUrl, profile.IsPrivate, profile.CreatedAtUtc);
+        }
+
+        return new ProfileDto(profile.Id, profile.Handle, profile.DisplayName, string.Empty, profile.ImageUrl, profile.IsPrivate, profile.CreatedAtUtc);
+    }
 
     private static string NormalizeHandle(string handle)
     {

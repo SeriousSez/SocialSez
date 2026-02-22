@@ -11,18 +11,12 @@
     background: #fff;
     color: #0f172a;
     font-weight: 700;
-    font-size: 1rem;
     padding: 12px 18px;
     box-shadow: 0 10px 26px -20px #0f172a;
 }
 
 .messages-dock i {
     font-size: 1rem;
-}
-
-.messages-dock:hover {
-    border-color: #bfdbfe;
-    background: #f8fafc;
 }
 
 .messages-panel-backdrop {
@@ -37,14 +31,14 @@
     bottom: 62px;
     z-index: 72;
     width: min(420px, calc(100vw - 24px));
-    max-height: min(560px, calc(100vh - 100px));
+    height: 620px;
     border: 1px solid #dbe4f0;
     border-radius: 14px;
     background: #fff;
     overflow: hidden;
     box-shadow: 0 18px 44px -24px #0f172a;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
 }
 
 .messages-panel header {
@@ -54,6 +48,50 @@
     gap: 10px;
     padding: 14px 16px;
     border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.dock-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    margin: 6px 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.dock-search-bar i {
+    font-size: 0.75rem;
+    opacity: 0.5;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.dock-search-input {
+    border: none;
+    background: transparent;
+    color: #0f172a;
+    font-size: 0.85rem;
+    flex: 1;
+    min-width: 0;
+    padding: 4px 8px;
+    height: 18px;
+    line-height: 18px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border-radius: 2px;
+}
+
+.dock-search-input::placeholder {
+    color: #94a3b8;
 }
 
 .messages-panel h3 {
@@ -102,6 +140,14 @@
 .list {
     overflow: auto;
     display: grid;
+    grid-template-columns: 1fr;
+    grid-auto-rows: max-content;
+    flex: 1;
+    min-height: 0;
+}
+
+.list .button {
+    border-radius: 0;
 }
 
 .row {
@@ -113,7 +159,9 @@
     border-bottom: 1px solid #f1f5f9;
     background: #fff;
     text-align: left;
-    padding: 10px 14px;
+    padding: 12px 14px;
+    transition: background-color 120ms ease;
+    cursor: pointer;
 }
 
 .row:hover {
@@ -161,8 +209,14 @@
 }
 
 .status {
-    margin: 0;
-    padding: 14px;
+    margin: 8px;
+    padding: 12px 14px;
+    color: #94a3b8;
+    text-align: center;
+    font-size: 0.9rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
 }
 
 .dock-skeleton-list {
@@ -187,6 +241,8 @@
     padding: 12px;
     display: grid;
     gap: 10px;
+    flex: 1;
+    min-height: 0;
 }
 
 .messages-panel.thread-open {
@@ -199,6 +255,8 @@
     display: grid;
     align-content: start;
     gap: 10px;
+    flex: 1;
+    min-height: 0;
 }
 
 .thread-message {
@@ -447,6 +505,54 @@
 .thread-composer button {
     height: 40px;
     padding: 0 14px;
+}
+
+.new-chat-search-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.new-chat-suggestion-groups {
+    overflow: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.new-chat-suggestion-group {
+    padding: 12px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.new-chat-suggestion-group:last-child {
+    border-bottom: 0;
+}
+
+.new-chat-suggestion-group h4 {
+    margin: 0 0 4px;
+    padding: 0 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+}
+
+.new-chat-results {
+    display: grid;
+    grid-auto-rows: max-content;
+}
+
+.new-chat-results .row {
+    padding: 10px 12px;
+}
+
+.chat-search-hint {
+    margin: 0;
+    padding: 12px 14px;
+    color: #94a3b8;
+    text-align: center;
 }
 
 @media (max-width: 780px) {

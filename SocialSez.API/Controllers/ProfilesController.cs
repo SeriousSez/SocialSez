@@ -26,15 +26,28 @@ public class ProfilesController(IProfileService profileService) : ControllerBase
     [HttpGet("{handle}")]
     public async Task<ActionResult<ProfileDto>> GetByHandle(string handle, CancellationToken cancellationToken)
     {
-        var profile = await profileService.GetByHandleAsync(handle, cancellationToken);
+        var viewerId = TryGetOptionalProfileId();
+        var profile = await profileService.GetByHandleAsync(handle, viewerId, cancellationToken);
         return profile is null ? NotFound() : Ok(profile);
+    }
+
+    [HttpGet("{handle}/activity")]
+    public async Task<ActionResult<ProfileActivitySummaryDto>> GetActivitySummary(string handle, CancellationToken cancellationToken)
+    {
+        var summary = await profileService.GetActivitySummaryByHandleAsync(handle, cancellationToken);
+        return summary is null ? NotFound() : Ok(summary);
     }
 
     [Authorize]
     [HttpGet("search")]
     public async Task<ActionResult<IReadOnlyCollection<ProfileDto>>> Search([FromQuery] string q, [FromQuery] int take = 20, CancellationToken cancellationToken = default)
     {
-        var results = await profileService.SearchAsync(q, take, cancellationToken);
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var results = await profileService.SearchAsync(q, profileId, take, cancellationToken);
         return Ok(results);
     }
 
@@ -51,11 +64,29 @@ public class ProfilesController(IProfileService profileService) : ControllerBase
         return profile is null ? NotFound() : Ok(profile);
     }
 
+    [Authorize]
+    [HttpPut("me/privacy")]
+    public async Task<ActionResult<ProfileDto>> UpdatePrivacy([FromBody] UpdateProfilePrivacyRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var profile = await profileService.UpdatePrivacyAsync(profileId, request, cancellationToken);
+        return profile is null ? NotFound() : Ok(profile);
+    }
+
     private bool TryGetProfileId(out Guid profileId)
     {
         var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? User.FindFirstValue("sub");
 
         return Guid.TryParse(raw, out profileId);
+    }
+
+    private Guid? TryGetOptionalProfileId()
+    {
+        return TryGetProfileId(out var profileId) ? profileId : null;
     }
 }

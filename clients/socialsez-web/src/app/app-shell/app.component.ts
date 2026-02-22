@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject, isDevMode } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 import { HashtagSearchResultDto } from '../core/api.types';
 import { SessionService } from '../core/session.service';
 import { MessagesDockComponent } from './messages-dock.component';
@@ -19,6 +20,7 @@ export class AppComponent implements OnInit {
     searchText = '';
     trendingHashtags: HashtagSearchResultDto[] = [];
     loadingTrending = false;
+    unreadNotificationsCount = 0;
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -39,6 +41,24 @@ export class AppComponent implements OnInit {
                 if (change === 'posts' || change === 'session') {
                     void this.loadTrendingHashtags();
                 }
+
+                if (change === 'session' || change === 'notifications') {
+                    void this.loadUnreadNotificationsCountAsync();
+                }
+            });
+
+        this.router.events
+            .pipe(
+                filter(event => event instanceof NavigationEnd),
+                takeUntilDestroyed(this.destroyRef)
+            )
+            .subscribe(() => {
+                if (!this.session.isAuthenticated()) {
+                    this.unreadNotificationsCount = 0;
+                    return;
+                }
+
+                void this.loadUnreadNotificationsCountAsync();
             });
 
         void this.initializeAsync();
@@ -47,6 +67,7 @@ export class AppComponent implements OnInit {
     private async initializeAsync(): Promise<void> {
         await this.session.bootstrapAsync();
         await this.loadTrendingHashtags();
+        await this.loadUnreadNotificationsCountAsync();
     }
 
     async logout(): Promise<void> {
@@ -81,6 +102,20 @@ export class AppComponent implements OnInit {
             this.trendingHashtags = [];
         } finally {
             this.loadingTrending = false;
+        }
+    }
+
+    private async loadUnreadNotificationsCountAsync(): Promise<void> {
+        if (!this.session.isAuthenticated()) {
+            this.unreadNotificationsCount = 0;
+            return;
+        }
+
+        try {
+            const notifications = await this.session.loadNotificationsAsync(100);
+            this.unreadNotificationsCount = notifications.filter(notification => !notification.isRead).length;
+        } catch {
+            this.unreadNotificationsCount = 0;
         }
     }
 }

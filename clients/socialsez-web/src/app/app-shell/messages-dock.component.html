@@ -12,11 +12,17 @@
                 <button type="button" class="icon-btn" *ngIf="activeConversation" aria-label="Back to conversations" (click)="backToList($event)">
                     <i class="fa-duotone fa-light fa-arrow-left" aria-hidden="true"></i>
                 </button>
+                <button type="button" class="icon-btn" *ngIf="!activeConversation && newChatSearchOpen" aria-label="Back to chats" (click)="closeNewChatSearch($event)">
+                    <i class="fa-duotone fa-light fa-arrow-left" aria-hidden="true"></i>
+                </button>
                 <span class="thread-header-avatar fallback" *ngIf="activeConversation && !avatarUrl(activeConversation)">{{ avatarText(activeConversation) }}</span>
                 <img class="thread-header-avatar" *ngIf="activeConversation && avatarUrl(activeConversation) as avatar" [src]="avatar" alt="Conversation avatar" />
-                <h3>{{ activeConversation ? displayName(activeConversation) : 'Messages' }}</h3>
+                <h3>{{ activeConversation ? displayName(activeConversation) : (newChatSearchOpen ? 'New chat' : 'Messages') }}</h3>
             </div>
             <div class="header-actions">
+                <button type="button" class="icon-btn new-chat-btn" (click)="openNewChatSearch()" aria-label="Start new chat">
+                    <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+                </button>
                 <button type="button" class="icon-btn" aria-label="Open chat" (click)="openFullChat(activeConversation?.id, $event)">
                     <i class="fa-duotone fa-light fa-up-right-and-down-left-from-center" aria-hidden="true"></i>
                 </button>
@@ -26,34 +32,105 @@
             </div>
         </header>
 
-        <ng-container *ngIf="!activeConversation; else threadView">
-            <div class="dock-skeleton-list" *ngIf="loading" aria-label="Loading messages">
-                <div class="dock-skeleton-row" *ngFor="let _ of [1, 2, 3]">
-                    <app-skeleton width="54px" height="54px" radius="999px"></app-skeleton>
-                    <div class="dock-skeleton-copy">
-                        <app-skeleton width="140px" height="12px"></app-skeleton>
-                        <app-skeleton width="170px" height="10px"></app-skeleton>
+        <ng-container *ngIf="newChatSearchOpen; then newChatSearchView else mainContent"></ng-container>
+
+        <ng-template #mainContent>
+            <ng-container *ngIf="!activeConversation; else threadView">
+                <div class="dock-search-bar" *ngIf="!loading && conversations.length">
+                    <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
+                    <input type="text" placeholder="Search chats..." [(ngModel)]="searchConversationsQuery" class="dock-search-input" />
+                </div>
+
+                <div class="dock-skeleton-list" *ngIf="loading" aria-label="Loading messages">
+                    <div class="dock-skeleton-row" *ngFor="let _ of [1, 2, 3]">
+                        <app-skeleton width="54px" height="54px" radius="999px"></app-skeleton>
+                        <div class="dock-skeleton-copy">
+                            <app-skeleton width="140px" height="12px"></app-skeleton>
+                            <app-skeleton width="170px" height="10px"></app-skeleton>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <p class="status" *ngIf="!loading && status">{{ status }}</p>
+                <p class="status" *ngIf="!loading && status">{{ status }}</p>
 
-            <div class="list" *ngIf="!loading && !status && conversations.length; else emptyState">
-                <button type="button" class="row" *ngFor="let conversation of conversations; trackBy: trackByConversationId" (click)="openConversation(conversation, $event)">
-                    <span class="avatar" *ngIf="!avatarUrl(conversation)">{{ avatarText(conversation) }}</span>
-                    <img class="avatar" *ngIf="avatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
-                    <span class="meta">
-                        <strong>{{ displayName(conversation) }}</strong>
-                        <small>{{ preview(conversation) }}</small>
-                    </span>
-                    <small class="time" *ngIf="conversation.lastMessage as last">{{ last.createdAtUtc | date:'short' }}</small>
-                </button>
-            </div>
+                <div class="list" *ngIf="!loading && !status && filteredConversations.length; else emptyState">
+                    <button type="button" class="row" *ngFor="let conversation of filteredConversations; trackBy: trackByConversationId" (click)="openConversation(conversation, $event)">
+                        <span class="avatar" *ngIf="!avatarUrl(conversation)">{{ avatarText(conversation) }}</span>
+                        <img class="avatar" *ngIf="avatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+                        <span class="meta">
+                            <strong>{{ displayName(conversation) }}</strong>
+                            <small>{{ preview(conversation) }}</small>
+                        </span>
+                        <small class="time" *ngIf="conversation.lastMessage as last">{{ last.createdAtUtc | date:'short' }}</small>
+                    </button>
+                </div>
 
-            <ng-template #emptyState>
-                <p class="status" *ngIf="!loading && !status">No conversations yet.</p>
-            </ng-template>
-        </ng-container>
+                <ng-template #emptyState>
+                    <p class="status" *ngIf="!loading && !status && searchConversationsQuery.trim()"><i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>No chats match your search.</p>
+                    <p class="status" *ngIf="!loading && !status && !searchConversationsQuery.trim()"><i class="fa-duotone fa-light fa-inbox" aria-hidden="true"></i>No conversations yet.</p>
+                </ng-template>
+            </ng-container>
+        </ng-template>
+
+        <ng-template #newChatSearchView>
+            <div class="new-chat-search-container">
+                <div class="dock-search-bar">
+                    <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
+                    <input type="text" placeholder="Search by name or @handle" [ngModel]="newChatSearchQuery" (ngModelChange)="onNewChatQueryInput($event)" class="dock-search-input" />
+                </div>
+
+                <p class="chat-search-hint" *ngIf="!newChatShowingSearchResults && newChatLoadingProfileSuggestions">Loading suggestions...</p>
+                <p class="chat-search-hint" *ngIf="newChatShowingSearchResults && newChatSearchingProfiles">Searching users...</p>
+                <p class="chat-search-hint" *ngIf="!newChatSearchingProfiles && !newChatLoadingProfileSuggestions && newChatError">{{ newChatError }}</p>
+
+                <div class="new-chat-results" *ngIf="newChatShowingSearchResults && !newChatSearchingProfiles && !newChatError && newChatFilteredProfiles.length">
+                    <button type="button" class="row" *ngFor="let profile of newChatFilteredProfiles" (click)="onNewChatSelectProfile(profile)">
+                        <span class="avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
+                        <img class="avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+
+                        <span class="meta">
+                            <strong>{{ profile.displayName }}</strong>
+                            <small>@{{ profile.handle }}</small>
+                        </span>
+                    </button>
+                </div>
+
+                <p class="chat-search-hint" *ngIf="newChatShowingSearchResults && !newChatSearchingProfiles && !newChatError && !newChatFilteredProfiles.length">No users found.</p>
+
+                <div class="new-chat-suggestion-groups" *ngIf="!newChatShowingSearchResults && !newChatLoadingProfileSuggestions && !newChatError">
+                    <section class="new-chat-suggestion-group" *ngIf="newChatSuggestedFollowingProfiles.length">
+                        <h4>Following</h4>
+                        <div class="new-chat-results">
+                            <button type="button" class="row" *ngFor="let profile of newChatSuggestedFollowingProfiles" (click)="onNewChatSelectProfile(profile)">
+                                <span class="avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
+                                <img class="avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+
+                                <span class="meta">
+                                    <strong>{{ profile.displayName }}</strong>
+                                    <small>@{{ profile.handle }}</small>
+                                </span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="new-chat-suggestion-group" *ngIf="newChatSuggestedRelevantProfiles.length">
+                        <h4>Relevant from your network</h4>
+                        <div class="new-chat-results">
+                            <button type="button" class="row" *ngFor="let profile of newChatSuggestedRelevantProfiles" (click)="onNewChatSelectProfile(profile)">
+                                <span class="avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
+                                <img class="avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+
+                                <span class="meta">
+                                    <strong>{{ profile.displayName }}</strong>
+                                    <small>@{{ profile.handle }}</small>
+                                </span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <p class="chat-search-hint" *ngIf="!newChatHasSuggestions">Type a name or handle to find users.</p>
+                </div>
+            </div>
+        </ng-template>
 
         <ng-template #threadView>
             <div class="dock-thread-skeleton" *ngIf="loadingMessages" aria-label="Loading thread">

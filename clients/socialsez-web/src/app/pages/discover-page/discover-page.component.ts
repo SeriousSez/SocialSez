@@ -318,8 +318,10 @@ export class DiscoverPageComponent {
 
     async follow(profile: ProfileDto): Promise<void> {
         try {
-            await this.session.followAsync(profile.id);
-            this.status = `Followed @${profile.handle}.`;
+            const result = await this.session.followAsync(profile.id);
+            this.status = result.status === 'RequestPending'
+                ? `Follow request sent to @${profile.handle}.`
+                : `Followed @${profile.handle}.`;
         } catch {
             this.status = 'Could not follow user.';
         }

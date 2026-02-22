@@ -12,15 +12,17 @@ public class FollowsController(IFollowService followService) : ControllerBase
 {
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult> Follow([FromBody] FollowRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<FollowActionResultDto>> Follow([FromBody] FollowRequest request, CancellationToken cancellationToken)
     {
         if (!TryGetProfileId(out var followerId))
         {
             return Unauthorized();
         }
 
-        var success = await followService.FollowAsync(followerId, request.FollowedId, cancellationToken);
-        return success ? Ok() : BadRequest(new { message = "Unable to follow user." });
+        var result = await followService.FollowAsync(followerId, request.FollowedId, cancellationToken);
+        return string.Equals(result.Status, FollowActionStatuses.Invalid, StringComparison.Ordinal)
+            ? BadRequest(new { message = "Unable to follow user." })
+            : Ok(result);
     }
 
     [Authorize]
@@ -38,15 +40,54 @@ public class FollowsController(IFollowService followService) : ControllerBase
 
     [Authorize]
     [HttpGet("status")]
-    public async Task<ActionResult<FollowStatusResponse>> GetStatus([FromQuery] Guid followedId, CancellationToken cancellationToken)
+    public async Task<ActionResult<FollowStatusDto>> GetStatus([FromQuery] Guid followedId, CancellationToken cancellationToken)
     {
         if (!TryGetProfileId(out var followerId))
         {
             return Unauthorized();
         }
 
-        var isFollowing = await followService.IsFollowingAsync(followerId, followedId, cancellationToken);
-        return Ok(new FollowStatusResponse(isFollowing));
+        var status = await followService.GetStatusAsync(followerId, followedId, cancellationToken);
+        return Ok(status);
+    }
+
+    [Authorize]
+    [HttpGet("requests/incoming")]
+    public async Task<ActionResult<IReadOnlyCollection<FollowRequestDto>>> GetIncomingRequests([FromQuery] int take = 50, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var requests = await followService.GetIncomingRequestsAsync(profileId, take, cancellationToken);
+        return Ok(requests);
+    }
+
+    [Authorize]
+    [HttpPost("requests/{followerId:guid}/approve")]
+    public async Task<ActionResult> ApproveRequest(Guid followerId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var success = await followService.ApproveRequestAsync(profileId, followerId, cancellationToken);
+        return success ? NoContent() : NotFound();
+    }
+
+    [Authorize]
+    [HttpPost("requests/{followerId:guid}/decline")]
+    public async Task<ActionResult> DeclineRequest(Guid followerId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var success = await followService.DeclineRequestAsync(profileId, followerId, cancellationToken);
+        return success ? NoContent() : NotFound();
     }
 
     [Authorize]
@@ -76,7 +117,6 @@ public class FollowsController(IFollowService followService) : ControllerBase
     }
 
     public sealed record FollowRequest(Guid FollowedId);
-    public sealed record FollowStatusResponse(bool IsFollowing);
 
     private bool TryGetProfileId(out Guid profileId)
     {

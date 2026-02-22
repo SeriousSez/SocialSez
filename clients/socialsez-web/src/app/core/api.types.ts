@@ -4,7 +4,14 @@ export interface ProfileDto {
     displayName: string;
     bio: string;
     imageUrl?: string;
+    isPrivate: boolean;
     createdAtUtc: string;
+}
+
+export interface ProfileActivitySummaryDto {
+    postCount: number;
+    commentCountOnPosts: number;
+    activeLast7Days: number;
 }
 
 export interface CreateProfileRequest {
@@ -40,6 +47,10 @@ export interface UpdateProfileRequest {
     imageUrl?: string;
 }
 
+export interface UpdateProfilePrivacyRequest {
+    isPrivate: boolean;
+}
+
 export interface UpdatePostRequest {
     content?: string;
 }
@@ -68,6 +79,42 @@ export interface ReactionSummaryDto {
 export interface FollowSuggestionsDto {
     following: ProfileDto[];
     relevant: ProfileDto[];
+}
+
+export type FollowActionStatus = 'Followed' | 'RequestPending' | 'AlreadyFollowing' | 'AlreadyRequested' | 'Invalid';
+
+export interface FollowActionResultDto {
+    status: FollowActionStatus;
+}
+
+export interface FollowStatusDto {
+    isFollowing: boolean;
+    isRequested: boolean;
+    requiresApproval: boolean;
+}
+
+export interface FollowRequestDto {
+    followerId: string;
+    followerHandle: string;
+    followerImageUrl?: string;
+    createdAtUtc: string;
+    status: string;
+}
+
+export interface NotificationDto {
+    id: string;
+    recipientId: string;
+    actorId?: string;
+    actorHandle?: string;
+    type: string;
+    message: string;
+    referenceId?: string;
+    isRead: boolean;
+    createdAtUtc: string;
+}
+
+export interface MarkAllReadResponse {
+    updatedCount: number;
 }
 
 export interface HashtagSearchResultDto {

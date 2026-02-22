@@ -435,7 +435,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
-            .Where(x => followedIds.Contains(x.AuthorId))
+            .Where(x => followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
             .ToArrayAsync(cancellationToken);
@@ -455,6 +455,13 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         take = Math.Clamp(take, 1, 100);
 
+        var followedIds = await dbContext.Follows
+            .Where(x => x.FollowerId == profileId)
+            .Select(x => x.FollowedId)
+            .ToListAsync(cancellationToken);
+
+        followedIds.Add(profileId);
+
         var posts = await dbContext.Posts
             .AsNoTracking()
             .Include(x => x.Author)
@@ -464,8 +471,10 @@ public class PostService(SocialSezContext dbContext) : IPostService
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
             .Where(x =>
-                (!string.IsNullOrWhiteSpace(x.Content) && x.Content.ToLower().Contains(normalizedQuery)) ||
-                x.Author.Handle.Contains(normalizedQuery))
+                (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
+                &&
+                ((!string.IsNullOrWhiteSpace(x.Content) && x.Content.ToLower().Contains(normalizedQuery)) ||
+                x.Author.Handle.Contains(normalizedQuery)))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
             .ToArrayAsync(cancellationToken);
@@ -590,6 +599,13 @@ public class PostService(SocialSezContext dbContext) : IPostService
         take = Math.Clamp(take, 1, 100);
         var needle = $"#{normalizedHashtag.ToLowerInvariant()}";
 
+        var followedIds = await dbContext.Follows
+            .Where(x => x.FollowerId == profileId)
+            .Select(x => x.FollowedId)
+            .ToListAsync(cancellationToken);
+
+        followedIds.Add(profileId);
+
         var candidates = await dbContext.Posts
             .AsNoTracking()
             .Include(x => x.Author)
@@ -598,7 +614,9 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
-            .Where(x => !string.IsNullOrWhiteSpace(x.Content) && x.Content.ToLower().Contains(needle))
+            .Where(x => (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
+                && !string.IsNullOrWhiteSpace(x.Content)
+                && x.Content.ToLower().Contains(needle))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take * 5)
             .ToArrayAsync(cancellationToken);
@@ -622,6 +640,13 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         take = Math.Clamp(take, 1, 100);
 
+        var followedIds = await dbContext.Follows
+            .Where(x => x.FollowerId == profileId)
+            .Select(x => x.FollowedId)
+            .ToListAsync(cancellationToken);
+
+        followedIds.Add(profileId);
+
         var posts = await dbContext.Posts
             .AsNoTracking()
             .Include(x => x.Author)
@@ -630,7 +655,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
-            .Where(x => x.Author.Handle == normalizedHandle)
+            .Where(x => x.Author.Handle == normalizedHandle && (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
             .ToArrayAsync(cancellationToken);

@@ -17,6 +17,12 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<ChatMessageReaction> ChatMessageReactions => Set<ChatMessageReaction>();
     public DbSet<Follow> Follows => Set<Follow>();
+    public DbSet<Story> Stories => Set<Story>();
+    public DbSet<StoryView> StoryViews => Set<StoryView>();
+    public DbSet<Reel> Reels => Set<Reel>();
+    public DbSet<ReelLike> ReelLikes => Set<ReelLike>();
+    public DbSet<ProfileFollowRequest> ProfileFollowRequests => Set<ProfileFollowRequest>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,6 +64,7 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
             entity.Property(x => x.DisplayName).HasMaxLength(120).IsRequired();
             entity.Property(x => x.Bio).HasMaxLength(500);
             entity.Property(x => x.ImageUrl).HasMaxLength(1024);
+            entity.Property(x => x.IsPrivate).HasDefaultValue(false);
             entity.HasIndex(x => x.Handle).IsUnique();
         });
 
@@ -216,6 +223,115 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(x => new { x.MessageId, x.Type });
+        });
+
+        modelBuilder.Entity<Story>(entity =>
+        {
+            entity.ToTable("Stories");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Caption).HasMaxLength(300);
+            entity.Property(x => x.MediaUrl).HasMaxLength(1024).IsRequired();
+
+            entity.HasOne(x => x.Author)
+                .WithMany(x => x.Stories)
+                .HasForeignKey(x => x.AuthorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.AuthorId, x.CreatedAtUtc });
+            entity.HasIndex(x => x.ExpiresAtUtc);
+        });
+
+        modelBuilder.Entity<StoryView>(entity =>
+        {
+            entity.ToTable("StoryViews");
+            entity.HasKey(x => new { x.StoryId, x.ViewerId });
+
+            entity.HasOne(x => x.Story)
+                .WithMany(x => x.Views)
+                .HasForeignKey(x => x.StoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Viewer)
+                .WithMany(x => x.StoryViews)
+                .HasForeignKey(x => x.ViewerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.ViewerId);
+        });
+
+        modelBuilder.Entity<Reel>(entity =>
+        {
+            entity.ToTable("Reels");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Caption).HasMaxLength(500);
+            entity.Property(x => x.VideoUrl).HasMaxLength(1024).IsRequired();
+            entity.Property(x => x.ThumbnailUrl).HasMaxLength(1024);
+
+            entity.HasOne(x => x.Author)
+                .WithMany(x => x.Reels)
+                .HasForeignKey(x => x.AuthorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.CreatedAtUtc);
+            entity.HasIndex(x => x.AuthorId);
+        });
+
+        modelBuilder.Entity<ReelLike>(entity =>
+        {
+            entity.ToTable("ReelLikes");
+            entity.HasKey(x => new { x.ReelId, x.ProfileId });
+
+            entity.HasOne(x => x.Reel)
+                .WithMany(x => x.Likes)
+                .HasForeignKey(x => x.ReelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.ReelLikes)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.ProfileId);
+        });
+
+        modelBuilder.Entity<ProfileFollowRequest>(entity =>
+        {
+            entity.ToTable("ProfileFollowRequests");
+            entity.HasKey(x => new { x.FollowerId, x.FollowedId });
+            entity.Property(x => x.Status).HasMaxLength(16).IsRequired();
+
+            entity.HasOne(x => x.Follower)
+                .WithMany(x => x.SentFollowRequests)
+                .HasForeignKey(x => x.FollowerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Followed)
+                .WithMany(x => x.ReceivedFollowRequests)
+                .HasForeignKey(x => x.FollowedId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.FollowedId, x.Status, x.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.ToTable("Notifications");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Type).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.Message).HasMaxLength(500).IsRequired();
+            entity.Property(x => x.ReferenceId).HasMaxLength(128);
+
+            entity.HasOne(x => x.Recipient)
+                .WithMany(x => x.Notifications)
+                .HasForeignKey(x => x.RecipientId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Actor)
+                .WithMany()
+                .HasForeignKey(x => x.ActorId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(x => new { x.RecipientId, x.IsRead, x.CreatedAtUtc });
         });
     }
 }

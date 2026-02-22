@@ -5,18 +5,22 @@
 
 .status {
     margin: 0;
-    color: #0f766e;
-    background: #ccfbf1;
-    border: 1px solid #99f6e4;
-    padding: 8px 10px;
-    border-radius: 8px;
+    color: #334155;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    border: 1px solid #dbe4f0;
+    border-left: 4px solid #94a3b8;
+    padding: 10px 12px;
+    border-radius: 12px;
+    box-shadow: 0 10px 24px -22px #0f172a;
 }
 
 .error {
     margin: 0;
-    color: #991b1b;
-    background: #fee2e2;
+    color: #7f1d1d;
+    background: linear-gradient(180deg, #fff7f7, #fff1f2);
     border: 1px solid #fecaca;
-    padding: 8px 10px;
-    border-radius: 8px;
+    border-left: 4px solid #ef4444;
+    padding: 10px 12px;
+    border-radius: 12px;
+    box-shadow: 0 10px 24px -22px #7f1d1d;
 }

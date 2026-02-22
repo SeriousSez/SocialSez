@@ -132,7 +132,7 @@ public class AuthService(
             expiresAtUtc,
             refreshTokenRaw,
             refreshTokenExpiresAtUtc,
-            new ProfileDto(profile.Id, profile.Handle, profile.DisplayName, profile.Bio, profile.ImageUrl, profile.CreatedAtUtc));
+            new ProfileDto(profile.Id, profile.Handle, profile.DisplayName, profile.Bio, profile.ImageUrl, profile.IsPrivate, profile.CreatedAtUtc));
     }
 
     private async Task<(string RefreshToken, DateTime ExpiresAtUtc)> CreateRefreshTokenAsync(Guid userId, CancellationToken cancellationToken)

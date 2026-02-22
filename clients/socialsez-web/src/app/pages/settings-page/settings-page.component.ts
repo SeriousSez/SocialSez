@@ -14,6 +14,7 @@ export class SettingsPageComponent {
     displayName = '';
     bio = '';
     imageUrl = '';
+    isPrivate = false;
     status = '';
     uploadingProfileImage = false;
 
@@ -29,6 +30,7 @@ export class SettingsPageComponent {
             this.displayName = session.profile.displayName;
             this.bio = session.profile.bio;
             this.imageUrl = session.profile.imageUrl ?? '';
+            this.isPrivate = session.profile.isPrivate;
         }
 
         this.loadPrefs();
@@ -54,10 +56,20 @@ export class SettingsPageComponent {
                 this.displayName = this.session.profile.displayName;
                 this.bio = this.session.profile.bio;
                 this.imageUrl = this.session.profile.imageUrl ?? '';
+                this.isPrivate = this.session.profile.isPrivate;
             }
             this.status = 'Profile settings reloaded.';
         } catch {
             this.status = 'Could not reload profile settings.';
+        }
+    }
+
+    async savePrivacy(): Promise<void> {
+        try {
+            await this.session.updateProfilePrivacyAsync(this.isPrivate);
+            this.status = 'Privacy setting saved.';
+        } catch {
+            this.status = 'Could not save privacy setting.';
         }
     }
 

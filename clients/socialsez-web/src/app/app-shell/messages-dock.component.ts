@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, ElementRef, HostListener, Input, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ChatConversationDto, ChatMessageDto, ChatParticipantDto } from '../core/api.types';
+import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, ProfileDto } from '../core/api.types';
 import { SharedPostPreview, decodeSharedPostPayload, extractSharedPostFromContent } from '../core/shared-post.utils';
 import { SessionService } from '../core/session.service';
 import { ReactionPickerComponent } from '../shared/reaction-picker/reaction-picker.component';
@@ -56,6 +56,24 @@ export class MessagesDockComponent {
         { type: 'Fire', emoji: '🔥' },
         { type: 'Party', emoji: '🎉' }
     ] as const;
+    private readonly dockStartedConversationIds = new Set<string>();
+
+    get filteredConversations(): ChatConversationDto[] {
+        const visibleConversations = this.conversations.filter(
+            (conversation) => !!conversation.lastMessage || this.dockStartedConversationIds.has(conversation.id)
+        );
+
+        if (!this.searchConversationsQuery.trim()) {
+            return visibleConversations;
+        }
+
+        const query = this.searchConversationsQuery.trim().toLowerCase();
+        return visibleConversations.filter(
+            (conv) =>
+                this.displayName(conv).toLowerCase().includes(query) ||
+                this.preview(conv).toLowerCase().includes(query)
+        );
+    }
 
     open = false;
     loading = false;
@@ -69,12 +87,22 @@ export class MessagesDockComponent {
     messages: ChatMessageDto[] = [];
     draftMessage = '';
     gifSearchQuery = '';
+    searchConversationsQuery = '';
     gifResults: GiphyGifResult[] = [];
     searchingGifs = false;
     imageUrlInput: string | null = null;
     gifUrlInput = '';
     emojiPickerOpen = false;
     gifInputOpen = false;
+    newChatSearchOpen = false;
+    newChatSearchQuery = '';
+    newChatSearchingProfiles = false;
+    newChatLoadingProfileSuggestions = false;
+    newChatError = '';
+    newChatFilteredProfiles: ProfileDto[] = [];
+    newChatSuggestedFollowingProfiles: ProfileDto[] = [];
+    newChatSuggestedRelevantProfiles: ProfileDto[] = [];
+    private newChatSearchProfilesDebounceId: number | null = null;
 
     @ViewChild('dockImageInput')
     private imageInputRef?: ElementRef<HTMLInputElement>;
@@ -102,7 +130,12 @@ export class MessagesDockComponent {
             return;
         }
 
-        this.open = !this.open;
+        if (this.open) {
+            this.close(event);
+            return;
+        }
+
+        this.open = true;
         if (this.open) {
             void this.loadConversations();
         }
@@ -111,13 +144,41 @@ export class MessagesDockComponent {
     close(event?: Event): void {
         event?.stopPropagation();
         this.open = false;
+        this.resetDockState();
+    }
+
+    private resetDockState(): void {
         this.activeConversation = null;
         this.messages = [];
+        this.conversations = [];
+        this.dockStartedConversationIds.clear();
+        this.loading = false;
+        this.loadingMessages = false;
+        this.sendingMessage = false;
+        this.uploadingImage = false;
+        this.reactingMessageId = null;
         this.draftMessage = '';
+        this.searchConversationsQuery = '';
         this.imageUrlInput = null;
         this.gifUrlInput = '';
+        this.gifSearchQuery = '';
+        this.gifResults = [];
+        this.searchingGifs = false;
         this.gifInputOpen = false;
         this.emojiPickerOpen = false;
+        this.newChatSearchOpen = false;
+        this.newChatSearchQuery = '';
+        this.newChatSearchingProfiles = false;
+        this.newChatLoadingProfileSuggestions = false;
+        this.newChatError = '';
+        this.newChatFilteredProfiles = [];
+        this.newChatSuggestedFollowingProfiles = [];
+        this.newChatSuggestedRelevantProfiles = [];
+        if (this.newChatSearchProfilesDebounceId !== null) {
+            window.clearTimeout(this.newChatSearchProfilesDebounceId);
+            this.newChatSearchProfilesDebounceId = null;
+        }
+        this.status = '';
     }
 
     async openFullChat(conversationId?: string, event?: Event): Promise<void> {
@@ -148,14 +209,14 @@ export class MessagesDockComponent {
         try {
             const loaded = await this.session.loadChatMessagesAsync(conversation.id);
             this.messages = [...loaded].sort((left, right) => left.createdAtUtc.localeCompare(right.createdAtUtc));
-            if (this.messages.length) {
-                this.scrollThreadToBottomOnNextRender();
-            }
         } catch {
             this.messages = [];
             this.status = 'Could not load messages.';
         } finally {
             this.loadingMessages = false;
+            if (this.messages.length && !this.status) {
+                this.scrollThreadToBottomOnNextRender();
+            }
         }
     }
 
@@ -510,9 +571,18 @@ export class MessagesDockComponent {
         return this.primaryParticipant(conversation)?.handle ?? '';
     }
 
-    avatarText(conversation: ChatConversationDto): string {
-        const title = this.displayName(conversation).trim();
-        return title ? title[0].toUpperCase() : 'C';
+    avatarText(source: ChatConversationDto | ProfileDto): string {
+        if ('lastMessage' in source) {
+            // It's a ChatConversationDto
+            const conversation = source as ChatConversationDto;
+            const title = this.displayName(conversation).trim();
+            return title ? title[0].toUpperCase() : 'C';
+        } else {
+            // It's a ProfileDto
+            const profile = source as ProfileDto;
+            const profileSource = profile.displayName?.trim() || profile.handle?.trim();
+            return profileSource ? profileSource[0].toUpperCase() : 'U';
+        }
     }
 
     avatarUrl(conversation: ChatConversationDto): string | undefined {
@@ -565,13 +635,18 @@ export class MessagesDockComponent {
         this.status = '';
 
         try {
-            this.conversations = await this.session.loadChatConversationsAsync();
+            this.conversations = (await this.session.loadChatConversationsAsync())
+                .sort((left, right) => this.conversationActivityAt(right).localeCompare(this.conversationActivityAt(left)));
         } catch {
             this.conversations = [];
             this.status = 'Could not load messages.';
         } finally {
             this.loading = false;
         }
+    }
+
+    private conversationActivityAt(conversation: ChatConversationDto): string {
+        return conversation.lastMessage?.createdAtUtc ?? conversation.createdAtUtc;
     }
 
     private primaryParticipant(conversation: ChatConversationDto): ChatParticipantDto | undefined {
@@ -804,5 +879,156 @@ export class MessagesDockComponent {
     private isGifUrl(url: string): boolean {
         const lower = url.toLowerCase();
         return /\.gif($|\?)/.test(lower) || lower.includes('giphy.com') || lower.includes('tenor.com');
+    }
+
+    openNewChatSearch(): void {
+        this.newChatSearchOpen = true;
+        this.newChatSearchQuery = '';
+        this.newChatFilteredProfiles = [];
+        this.newChatSuggestedFollowingProfiles = [];
+        this.newChatSuggestedRelevantProfiles = [];
+        this.newChatError = '';
+        void this.newChatLoadProfileSuggestions();
+    }
+
+    closeNewChatSearch(event?: Event): void {
+        event?.stopPropagation();
+        this.newChatSearchOpen = false;
+        if (this.newChatSearchProfilesDebounceId !== null) {
+            window.clearTimeout(this.newChatSearchProfilesDebounceId);
+            this.newChatSearchProfilesDebounceId = null;
+        }
+    }
+
+    onNewChatQueryInput(query: string): void {
+        this.newChatSearchQuery = query;
+        if (this.newChatSearchProfilesDebounceId !== null) {
+            window.clearTimeout(this.newChatSearchProfilesDebounceId);
+            this.newChatSearchProfilesDebounceId = null;
+        }
+
+        this.newChatSearchingProfiles = true;
+        this.newChatSearchProfilesDebounceId = window.setTimeout(() => {
+            this.newChatSearchProfilesDebounceId = null;
+            void this.newChatSearchProfiles(query);
+        }, 250);
+    }
+
+    private async newChatSearchProfiles(query: string): Promise<void> {
+        const currentQuery = query.trim();
+        if (!currentQuery) {
+            this.newChatSearchingProfiles = false;
+            this.newChatFilteredProfiles = [];
+            return;
+        }
+
+        try {
+            const profiles = await this.session.searchProfilesAsync(currentQuery);
+            if (this.newChatSearchQuery.trim() !== currentQuery) {
+                return;
+            }
+
+            const myProfile = this.session.profile;
+            const myId = myProfile?.id ?? null;
+            const myHandle = myProfile?.handle?.toLowerCase() ?? null;
+
+            this.newChatFilteredProfiles = profiles.filter(profile => {
+                if (myId && profile.id === myId) {
+                    return false;
+                }
+
+                if (myHandle && profile.handle.toLowerCase() === myHandle) {
+                    return false;
+                }
+
+                return true;
+            });
+            this.newChatError = '';
+        } catch {
+            if (this.newChatSearchQuery.trim() !== currentQuery) {
+                return;
+            }
+
+            this.newChatFilteredProfiles = [];
+            this.newChatError = 'Could not search users right now.';
+        } finally {
+            if (this.newChatSearchQuery.trim() === currentQuery) {
+                this.newChatSearchingProfiles = false;
+            }
+        }
+    }
+
+    private async newChatLoadProfileSuggestions(): Promise<void> {
+        if (!this.newChatSearchOpen) {
+            return;
+        }
+
+        this.newChatLoadingProfileSuggestions = true;
+
+        try {
+            const suggestions = await this.session.loadFollowSuggestionsAsync(10);
+            if (!this.newChatSearchOpen || this.newChatSearchQuery.trim()) {
+                return;
+            }
+
+            this.newChatSuggestedFollowingProfiles = suggestions.following;
+            this.newChatSuggestedRelevantProfiles = suggestions.relevant;
+            this.newChatError = '';
+        } catch {
+            if (!this.newChatSearchOpen || this.newChatSearchQuery.trim()) {
+                return;
+            }
+
+            this.newChatSuggestedFollowingProfiles = [];
+            this.newChatSuggestedRelevantProfiles = [];
+            this.newChatError = 'Could not load suggestions right now.';
+        } finally {
+            if (this.newChatSearchOpen && !this.newChatSearchQuery.trim()) {
+                this.newChatLoadingProfileSuggestions = false;
+            }
+        }
+    }
+
+    onNewChatSelectProfile(profile: ProfileDto): void {
+        const myProfile = this.session.profile;
+        const isCurrentUser = (myProfile?.id && profile.id === myProfile.id)
+            || (!!myProfile?.handle && profile.handle.toLowerCase() === myProfile.handle.toLowerCase());
+        if (isCurrentUser) {
+            return;
+        }
+
+        this.closeNewChatSearch();
+        void this.newChatStartDirectChat(profile.id);
+    }
+
+    private async newChatStartDirectChat(profileId: string): Promise<void> {
+        this.status = '';
+
+        try {
+            const conversation = await this.session.createDirectConversationAsync(profileId);
+            this.dockStartedConversationIds.add(conversation.id);
+            const existingIndex = this.conversations.findIndex(x => x.id === conversation.id);
+            if (existingIndex >= 0) {
+                const next = [...this.conversations];
+                next[existingIndex] = conversation;
+                this.conversations = next;
+            } else {
+                this.conversations = [conversation, ...this.conversations];
+            }
+
+            this.activeConversation = conversation;
+            this.messages = [];
+            void this.openConversation(conversation);
+        } catch {
+            this.status = 'Could not start chat.';
+        }
+    }
+
+    get newChatShowingSearchResults(): boolean {
+        return !!this.newChatSearchQuery.trim();
+    }
+
+    get newChatHasSuggestions(): boolean {
+        return this.newChatSuggestedFollowingProfiles.length > 0 || this.newChatSuggestedRelevantProfiles.length > 0;
     }
 }

@@ -3,7 +3,7 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
-import { PostDto, ProfileDto } from '../../core/api.types';
+import { PostDto, ProfileActivitySummaryDto, ProfileDto } from '../../core/api.types';
 import { buildSharedPostMarker, buildSharedPostPreview } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
@@ -40,6 +40,9 @@ export class ProfilePageComponent {
     viewedHandle: string | null = null;
     followState: 'idle' | 'loading' | 'success' | 'failure' = 'idle';
     isFollowing = false;
+    isRequested = false;
+    followRequiresApproval = false;
+    activitySummary: ProfileActivitySummaryDto | null = null;
     private loadInFlight = false;
     private reloadQueued = false;
     private followStateResetTimerId: number | null = null;
@@ -88,6 +91,10 @@ export class ProfilePageComponent {
         }
 
         if (this.followState === 'success') {
+            if (this.isRequested) {
+                return 'Request Sent';
+            }
+
             return this.isFollowing ? 'Following' : 'Unfollowed';
         }
 
@@ -95,18 +102,34 @@ export class ProfilePageComponent {
             return 'Try again';
         }
 
+        if (this.isRequested) {
+            return 'Cancel Request';
+        }
+
         return this.isFollowing ? 'Unfollow' : 'Follow';
     }
 
+    get isPrivateLockedView(): boolean {
+        return !!this.viewedProfile
+            && !this.isOwnProfile
+            && this.viewedProfile.isPrivate
+            && !this.isFollowing;
+    }
+
     get totalPosts(): number {
-        return this.posts.length;
+        return this.activitySummary?.postCount ?? this.posts.length;
     }
 
     get totalCommentsOnPosts(): number {
-        return this.posts.reduce((sum, post) => sum + post.comments.length, 0);
+        return this.activitySummary?.commentCountOnPosts
+            ?? this.posts.reduce((sum, post) => sum + post.comments.length, 0);
     }
 
     get activeLast7Days(): number {
+        if (this.activitySummary) {
+            return this.activitySummary.activeLast7Days;
+        }
+
         const weekAgoMs = Date.now() - (7 * 24 * 60 * 60 * 1000);
         return this.posts.filter(post => Date.parse(post.createdAtUtc) >= weekAgoMs).length;
     }
@@ -161,6 +184,7 @@ export class ProfilePageComponent {
                         this.error = this.viewedHandle ? 'Could not load this profile.' : 'Could not load your profile.';
                         this.viewedProfile = null;
                         this.posts = [];
+                        this.activitySummary = null;
                         continue;
                     }
 
@@ -179,8 +203,16 @@ export class ProfilePageComponent {
                         this.error = 'Could not load posts for this profile right now.';
                     }
 
+                    try {
+                        this.activitySummary = await this.session.loadProfileActivitySummaryAsync(profile.handle);
+                    } catch {
+                        this.activitySummary = null;
+                    }
+
                     if (this.isOwnProfile) {
                         this.isFollowing = false;
+                        this.isRequested = false;
+                        this.followRequiresApproval = false;
                         this.clearFollowStateTimer();
                         this.followState = 'idle';
                     } else {
@@ -192,6 +224,7 @@ export class ProfilePageComponent {
                         : 'Could not load your profile details right now.';
                     this.viewedProfile = null;
                     this.posts = [];
+                    this.activitySummary = null;
                 } finally {
                     this.loading = false;
                 }
@@ -463,9 +496,16 @@ export class ProfilePageComponent {
             if (this.isFollowing) {
                 await this.session.unfollowAsync(this.viewedProfile.id);
                 this.isFollowing = false;
+                this.isRequested = false;
             } else {
-                await this.session.followAsync(this.viewedProfile.id);
-                this.isFollowing = true;
+                if (this.isRequested) {
+                    await this.session.unfollowAsync(this.viewedProfile.id);
+                    this.isRequested = false;
+                } else {
+                    const result = await this.session.followAsync(this.viewedProfile.id);
+                    this.isFollowing = result.status !== 'RequestPending';
+                    this.isRequested = result.status === 'RequestPending';
+                }
             }
 
             this.setFollowState('success', 1100);
@@ -496,9 +536,14 @@ export class ProfilePageComponent {
 
     private async refreshFollowStateAsync(followedId: string): Promise<void> {
         try {
-            this.isFollowing = await this.session.isFollowingAsync(followedId);
+            const status = await this.session.getFollowStatusAsync(followedId);
+            this.isFollowing = status.isFollowing;
+            this.isRequested = status.isRequested;
+            this.followRequiresApproval = status.requiresApproval;
         } catch {
             this.isFollowing = false;
+            this.isRequested = false;
+            this.followRequiresApproval = false;
         }
     }
 

@@ -15,3 +15,19 @@ dotnet run --project SocialSez.API
 ```
 
 In `DEBUG`, the app uses SQLite (`ConnectionStrings:Sqlite`) so data persists across restarts without extra setup. In non-debug builds, it uses MySQL from `ConnectionStrings:MySql`.
+
+## Stories and Reels API (MVP)
+
+All endpoints require JWT auth.
+
+- Stories
+  - `POST /api/stories` (`multipart/form-data`: `media`, optional `caption`, optional `expiresInHours`)
+  - `GET /api/stories/feed?takeAuthors=25`
+  - `POST /api/stories/{storyId}/view`
+  - `DELETE /api/stories/{storyId}`
+
+- Reels
+  - `POST /api/reels` (`multipart/form-data`: `video`, optional `thumbnail`, optional `caption`, required `durationSeconds`)
+  - `GET /api/reels/feed?take=25`
+  - `POST /api/reels/{reelId}/like`
+  - `DELETE /api/reels/{reelId}`
