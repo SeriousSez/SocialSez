@@ -8,12 +8,12 @@ on:
 
 env:
   DOTNET_VERSION: "8.0.x"
-  PROJECT_PATH: "SocialSez.Api/SocialSez.Api.csproj"
+  PROJECT_PATH: "SocialSez.API/SocialSez.API.csproj"
   PUBLISH_PATH: "./publish"
   RUNTIME_IDENTIFIER: "win-x64"
   NODE_VERSION: "20.x"
   ANGULAR_WORKING_DIR: "./clients/socialsez-web"
-  ANGULAR_DIST_PATH: "./clients/socialsez-web/dist/socialsez-web/browser"
+  ANGULAR_DIST_PATH: "./clients/socialsez-web/dist/socialsez-web"
   API_HEALTH_URL: "https://venli.api.sezginsahin.dk/api/health/ping"
   WEB_HEALTH_URL: "https://venli.sezginsahin.dk/"
 
@@ -33,11 +33,11 @@ jobs:
         with:
           filters: |
             api:
-              - 'SocialSez.Api/**'
+              - 'SocialSez.API/**'
               - '.github/workflows/deploy-to-simply.yml'
             web:
               - 'clients/socialsez-web/**'
-              - '!SocialSez.Api/**'
+              - '!SocialSez.API/**'
 
   build-api:
     needs: detect-changes
@@ -55,7 +55,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Generate production appsettings from secrets
-        working-directory: ./SocialSez.Api
+        working-directory: ./SocialSez.API
         shell: pwsh
         env:
           MYSQL_CONNECTION_STRING: ${{ secrets.MYSQL_CONNECTION_STRING }}
@@ -143,7 +143,7 @@ jobs:
         working-directory: ${{ env.ANGULAR_WORKING_DIR }}
         shell: pwsh
         run: |
-          $dist = Join-Path "dist/socialsez-web/browser" "web.config"
+          $dist = Join-Path "dist/socialsez-web" "web.config"
           $source = "src/web.config"
           if ((-not (Test-Path $dist)) -and (Test-Path $source)) {
             Copy-Item $source $dist -Force

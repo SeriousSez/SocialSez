@@ -11,6 +11,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
     {
+        Console.WriteLine("test");
         try
         {
             var response = await authService.RegisterAsync(request, cancellationToken);
