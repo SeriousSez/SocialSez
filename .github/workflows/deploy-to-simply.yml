@@ -347,17 +347,24 @@ jobs:
           name: web-dist
           path: ${{ env.WEB_DEPLOY_PATH }}/
 
-      - name: Validate downloaded web artifact
+      - name: Resolve web artifact root
+        id: resolve_web_root
         shell: pwsh
         run: |
-          $index = Join-Path "${{ env.WEB_DEPLOY_PATH }}" "index.html"
-          if (-not (Test-Path $index)) {
-            Write-Error "index.html not found in downloaded artifact at $index"
+          $root = "${{ env.WEB_DEPLOY_PATH }}"
+          $indexFile = Get-ChildItem -Path $root -Filter index.html -Recurse -File | Select-Object -First 1
+
+          if (-not $indexFile) {
+            Write-Error "index.html not found under $root"
+            Write-Host "Directory snapshot for debugging:"
+            Get-ChildItem -Path $root -Recurse | Select-Object FullName
             exit 1
           }
 
-          Write-Host "✅ Web artifact looks valid"
-          Get-ChildItem "${{ env.WEB_DEPLOY_PATH }}" | Select-Object Name, Length
+          $deployDir = $indexFile.DirectoryName
+          Write-Host "✅ Resolved deploy directory: $deployDir"
+          Get-ChildItem $deployDir | Select-Object Name, Length
+          "deploy_dir=$deployDir" >> $env:GITHUB_OUTPUT
 
       - name: Deploy Angular using FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -365,7 +372,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ${{ env.WEB_DEPLOY_PATH }}/
+          local-dir: ${{ steps.resolve_web_root.outputs.deploy_dir }}/
           server-dir: ${{ env.WEB_SERVER_DIR }}
           dangerous-clean-slate: true
 
