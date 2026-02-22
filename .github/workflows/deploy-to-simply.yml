@@ -3,7 +3,7 @@
 on:
   push:
     branches:
-      - master
+      - main
   workflow_dispatch:
 
 env:
@@ -14,6 +14,8 @@ env:
   NODE_VERSION: "20.x"
   ANGULAR_WORKING_DIR: "./clients/socialsez-web"
   ANGULAR_DIST_PATH: "./clients/socialsez-web/dist/socialsez-web"
+  WEB_DEPLOY_PATH: "./web-dist"
+  WEB_SERVER_DIR: "/venli/"
   API_HEALTH_URL: "https://venli.api.sezginsahin.dk/api/health/ping"
   WEB_HEALTH_URL: "https://venli.sezginsahin.dk/"
 
@@ -340,7 +342,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-dist
-          path: ${{ env.ANGULAR_DIST_PATH }}/
+          path: ${{ env.WEB_DEPLOY_PATH }}/
+
+      - name: Validate downloaded web artifact
+        shell: pwsh
+        run: |
+          $index = Join-Path "${{ env.WEB_DEPLOY_PATH }}" "index.html"
+          if (-not (Test-Path $index)) {
+            Write-Error "index.html not found in downloaded artifact at $index"
+            exit 1
+          }
+
+          Write-Host "✅ Web artifact looks valid"
+          Get-ChildItem "${{ env.WEB_DEPLOY_PATH }}" | Select-Object Name, Length
 
       - name: Deploy Angular using FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -348,9 +362,9 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ${{ env.ANGULAR_DIST_PATH }}/
-          server-dir: /venli/
-          dangerous-clean-slate: false
+          local-dir: ${{ env.WEB_DEPLOY_PATH }}/
+          server-dir: ${{ env.WEB_SERVER_DIR }}
+          dangerous-clean-slate: true
 
       - name: Health check Web
         shell: pwsh
