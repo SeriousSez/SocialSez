@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { Subject } from 'rxjs';
 import { ChatMessageDto } from './api.types';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ChatRealtimeService {
-    private readonly hubUrl = 'http://localhost:5100/hubs/chat';
+    private readonly hubUrl = `${environment.apiBaseUrl.replace(/\/api\/?$/, '')}/hubs/chat`;
     private readonly messageUpsertedSubject = new Subject<ChatMessageDto>();
     private hubConnection: HubConnection | null = null;
     private activeConversationId: string | null = null;
