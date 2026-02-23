@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, of, switchMap, tap, throwError, timeout } from 'rxjs';
+import { environment } from '../../environments/environment';
 import {
     AuthResponse,
     ChatConversationDto,
@@ -30,7 +31,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class SocialSezApiService {
-    private readonly baseUrl = 'http://localhost:5100/api';
+    private readonly baseUrl = environment.apiBaseUrl;
     private token = '';
     private refreshToken = '';
 
