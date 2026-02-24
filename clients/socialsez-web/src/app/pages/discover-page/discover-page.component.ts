@@ -112,6 +112,10 @@ export class DiscoverPageComponent {
         return this.session.profile?.id ?? null;
     }
 
+    get isAuthenticated(): boolean {
+        return this.session.isAuthenticated();
+    }
+
     get activeStoryAuthorHandles(): string[] {
         return this.activeStoryGroups.map(group => group.authorHandle.trim().toLowerCase());
     }
@@ -375,6 +379,11 @@ export class DiscoverPageComponent {
     }
 
     async follow(profile: ProfileDto): Promise<void> {
+        if (!this.isAuthenticated) {
+            await this.router.navigate(['/auth']);
+            return;
+        }
+
         try {
             const result = await this.session.followAsync(profile.id);
             this.status = result.status === 'RequestPending'
@@ -398,6 +407,10 @@ export class DiscoverPageComponent {
     }
 
     async addComment(post: PostDto, payload: string | { content: string; parentCommentId?: string | null }): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         const content = typeof payload === 'string' ? payload : payload.content;
         const parentCommentId = typeof payload === 'string' ? null : (payload.parentCommentId ?? null);
         await this.runPostMutation(post.id, () => this.session.addCommentAsync(post.id, content, parentCommentId), 'Could not add comment right now.');
@@ -437,6 +450,10 @@ export class DiscoverPageComponent {
     }
 
     async addReelComment(event: ReelCommentCreateEvent): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         const { reel, content, parentCommentId } = event;
         if (this.commentingReelId === reel.id) {
             return;

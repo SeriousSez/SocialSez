@@ -273,18 +273,15 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
         return Ok(hashtags);
     }
 
-    [Authorize]
+    [AllowAnonymous]
     [HttpGet("hashtags/{hashtag}")]
     public async Task<ActionResult<IReadOnlyCollection<PostDto>>> GetByHashtag(string hashtag, [FromQuery] int take = 25, CancellationToken cancellationToken = default)
     {
-        if (!TryGetProfileId(out var profileId))
-        {
-            return Unauthorized();
-        }
+        var viewerId = TryGetOptionalProfileId();
 
         try
         {
-            var posts = await postService.GetByHashtagAsync(profileId, hashtag, take, cancellationToken);
+            var posts = await postService.GetByHashtagAsync(viewerId, hashtag, take, cancellationToken);
             return Ok(posts);
         }
         catch (ArgumentException ex)

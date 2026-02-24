@@ -762,7 +762,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .ToArray();
     }
 
-    public async Task<IReadOnlyCollection<PostDto>> GetByHashtagAsync(Guid profileId, string hashtag, int take = 25, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<PostDto>> GetByHashtagAsync(Guid? viewerId, string hashtag, int take = 25, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
 
@@ -774,13 +774,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         take = Math.Clamp(take, 1, 100);
         var needle = $"#{normalizedHashtag.ToLowerInvariant()}";
-
-        var followedIds = await dbContext.Follows
-            .Where(x => x.FollowerId == profileId)
-            .Select(x => x.FollowedId)
-            .ToListAsync(cancellationToken);
-
-        followedIds.Add(profileId);
+        var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
 
         var candidates = await dbContext.Posts
             .AsNoTracking()
@@ -790,7 +784,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
-            .Where(x => (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
+            .Where(x => (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                 && !string.IsNullOrWhiteSpace(x.Content)
                 && x.Content.ToLower().Contains(needle))
             .OrderByDescending(x => x.CreatedAtUtc)
@@ -798,11 +792,12 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .ToArrayAsync(cancellationToken);
 
         var hashtagRegex = BuildHashtagRegex(normalizedHashtag);
+        var mapProfileId = viewerId ?? Guid.Empty;
 
         return candidates
             .Where(post => hashtagRegex.IsMatch(post.Content))
             .Take(take)
-            .Select(post => MapToPostDto(post, profileId))
+            .Select(post => MapToPostDto(post, mapProfileId))
             .ToArray();
     }
 

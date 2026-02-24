@@ -61,6 +61,10 @@ export class HashtagPageComponent {
         return this.session.profile?.id ?? null;
     }
 
+    get isAuthenticated(): boolean {
+        return this.session.isAuthenticated();
+    }
+
     hasActiveStoryForHandle(handle: string): boolean {
         const normalized = handle.trim().toLowerCase();
         return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
@@ -163,10 +167,18 @@ export class HashtagPageComponent {
     }
 
     async sharePostToFeed(post: PostDto): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         this.openShareModal(post, 'feed');
     }
 
     async sharePostToChat(post: PostDto): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         this.openShareModal(post, 'chat');
     }
 
@@ -181,6 +193,10 @@ export class HashtagPageComponent {
     }
 
     async submitShare(note: string): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         const post = this.pendingSharePost;
         const target = this.pendingShareTarget;
         if (!post || target !== 'feed') {
@@ -198,6 +214,10 @@ export class HashtagPageComponent {
     }
 
     async submitShareAsMessage(request: SharePostMessageSubmit): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         const post = this.pendingSharePost;
         const target = this.pendingShareTarget;
         if (!post || target !== 'chat') {
@@ -284,18 +304,34 @@ export class HashtagPageComponent {
     }
 
     async toggleLike(post: PostDto): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         await this.runPostMutation(post.id, () => this.session.togglePostLikeAsync(post.id), 'Could not update like right now.');
     }
 
     async setReaction(post: PostDto, reactionType: string): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         await this.runPostMutation(post.id, () => this.session.setPostReactionAsync(post.id, reactionType), 'Could not set reaction right now.');
     }
 
     async clearReaction(post: PostDto): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         await this.runPostMutation(post.id, () => this.session.clearPostReactionAsync(post.id), 'Could not clear reaction right now.');
     }
 
     async addComment(post: PostDto, payload: string | { content: string; parentCommentId?: string | null }): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         const content = typeof payload === 'string' ? payload : payload.content;
         const parentCommentId = typeof payload === 'string' ? null : (payload.parentCommentId ?? null);
         await this.runPostMutation(post.id, () => this.session.addCommentAsync(post.id, content, parentCommentId), 'Could not add comment right now.');
@@ -310,10 +346,18 @@ export class HashtagPageComponent {
     }
 
     async setCommentReaction(post: PostDto, commentId: string, reactionType: string): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         await this.runPostMutation(post.id, () => this.session.setCommentReactionAsync(post.id, commentId, reactionType), 'Could not react to comment right now.');
     }
 
     async clearCommentReaction(post: PostDto, commentId: string): Promise<void> {
+        if (!this.isAuthenticated) {
+            return;
+        }
+
         await this.runPostMutation(post.id, () => this.session.clearCommentReactionAsync(post.id, commentId), 'Could not clear comment reaction right now.');
     }
 
