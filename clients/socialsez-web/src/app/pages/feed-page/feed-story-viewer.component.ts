@@ -41,6 +41,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     storyMuted = false;
     currentStoryProgress = 0;
     isClosing = false;
+    copyLinkCopied = false;
 
     private imageProgressFrameId = 0;
     private videoProgressFrameId = 0;
@@ -48,6 +49,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     private imageProgressElapsedBeforePause = 0;
     private readonly imageStoryDurationMs = 8000;
     private closeTimeoutId: number | null = null;
+    private copyLinkResetTimerId: number | null = null;
 
     ngAfterViewInit(): void {
         this.resetPlaybackState();
@@ -57,6 +59,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         if (changes['activeStory']) {
             this.replyDraft = '';
             this.isClosing = false;
+            this.copyLinkCopied = false;
             this.clearCloseTimeout();
             this.resetPlaybackState();
         }
@@ -66,6 +69,10 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         this.stopImageProgressLoop();
         this.stopVideoProgressLoop();
         this.clearCloseTimeout();
+        if (this.copyLinkResetTimerId !== null) {
+            window.clearTimeout(this.copyLinkResetTimerId);
+            this.copyLinkResetTimerId = null;
+        }
     }
 
     close(): void {
@@ -219,6 +226,28 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         }
 
         this.shareRequested.emit(this.activeStory);
+    }
+
+    async onCopyLinkClick(): Promise<void> {
+        const storyId = this.activeStory?.id;
+        if (!storyId) {
+            return;
+        }
+
+        const link = `${window.location.origin}/shared/story/${storyId}`;
+        try {
+            await navigator.clipboard.writeText(link);
+            this.copyLinkCopied = true;
+            if (this.copyLinkResetTimerId !== null) {
+                window.clearTimeout(this.copyLinkResetTimerId);
+            }
+            this.copyLinkResetTimerId = window.setTimeout(() => {
+                this.copyLinkCopied = false;
+                this.copyLinkResetTimerId = null;
+            }, 2000);
+        } catch {
+            return;
+        }
     }
 
     onDeleteClick(): void {

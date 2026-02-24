@@ -311,12 +311,34 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
         return Ok(posts);
     }
 
+    [AllowAnonymous]
+    [HttpGet("{postId:guid}/public")]
+    public async Task<ActionResult<PostDto>> GetPublicById(Guid postId, CancellationToken cancellationToken)
+    {
+        var post = await postService.GetPublicByIdAsync(postId, cancellationToken);
+        return post is null ? NotFound() : Ok(post);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("by-author/{handle}/public")]
+    public async Task<ActionResult<IReadOnlyCollection<PostDto>>> GetPublicByAuthor(string handle, [FromQuery] int take = 25, CancellationToken cancellationToken = default)
+    {
+        var viewerId = TryGetOptionalProfileId();
+        var posts = await postService.GetPublicByAuthorHandleAsync(handle, viewerId, take, cancellationToken);
+        return Ok(posts);
+    }
+
     private bool TryGetProfileId(out Guid profileId)
     {
         var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? User.FindFirstValue("sub");
 
         return Guid.TryParse(raw, out profileId);
+    }
+
+    private Guid? TryGetOptionalProfileId()
+    {
+        return TryGetProfileId(out var profileId) ? profileId : null;
     }
 
     private static FeedMode ParseFeedMode(string? mode)

@@ -203,4 +203,99 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
         return grouped;
     }
+
+    public async Task<StoryDto?> GetPublicByIdAsync(Guid storyId, CancellationToken cancellationToken = default)
+    {
+        var nowUtc = DateTime.UtcNow;
+
+        var story = await dbContext.Stories
+            .AsNoTracking()
+            .Include(x => x.Author)
+            .Include(x => x.Views)
+            .FirstOrDefaultAsync(x => x.Id == storyId && x.ExpiresAtUtc > nowUtc, cancellationToken);
+
+        if (story is null)
+        {
+            return null;
+        }
+
+        return new StoryDto(
+            story.Id,
+            story.AuthorId,
+            story.Author.Handle,
+            story.Author.ImageUrl,
+            story.Caption,
+            story.MediaUrl,
+            story.CreatedAtUtc,
+            story.ExpiresAtUtc,
+            false,
+            story.Views.Count);
+    }
+
+    public async Task<StoryGroupDto?> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, CancellationToken cancellationToken = default)
+    {
+        var normalizedHandle = handle.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(normalizedHandle))
+        {
+            return null;
+        }
+
+        var author = await dbContext.UserProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Handle == normalizedHandle, cancellationToken);
+
+        if (author is null)
+        {
+            return null;
+        }
+
+        var canViewPrivate = false;
+        if (viewerId.HasValue)
+        {
+            canViewPrivate = viewerId.Value == author.Id
+                || await dbContext.Follows
+                    .AsNoTracking()
+                    .AnyAsync(x => x.FollowerId == viewerId.Value && x.FollowedId == author.Id, cancellationToken);
+        }
+
+        if (author.IsPrivate && !canViewPrivate)
+        {
+            return null;
+        }
+
+        var nowUtc = DateTime.UtcNow;
+        var stories = await dbContext.Stories
+            .AsNoTracking()
+            .Include(x => x.Views)
+            .Where(x => x.AuthorId == author.Id && x.ExpiresAtUtc > nowUtc)
+            .OrderBy(x => x.CreatedAtUtc)
+            .ToArrayAsync(cancellationToken);
+
+        if (!stories.Any())
+        {
+            return null;
+        }
+
+        var viewer = viewerId ?? Guid.Empty;
+        var storyDtos = stories
+            .Select(story => new StoryDto(
+                story.Id,
+                story.AuthorId,
+                author.Handle,
+                author.ImageUrl,
+                story.Caption,
+                story.MediaUrl,
+                story.CreatedAtUtc,
+                story.ExpiresAtUtc,
+                viewerId.HasValue && story.Views.Any(view => view.ViewerId == viewer),
+                story.Views.Count))
+            .ToArray();
+
+        return new StoryGroupDto(
+            author.Id,
+            author.Handle,
+            author.ImageUrl,
+            storyDtos.Any(x => !x.ViewedByMe),
+            storyDtos);
+    }
 }

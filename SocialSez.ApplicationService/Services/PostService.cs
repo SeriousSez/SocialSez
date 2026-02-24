@@ -835,6 +835,77 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .ToArray();
     }
 
+    public async Task<PostDto?> GetPublicByIdAsync(Guid postId, CancellationToken cancellationToken = default)
+    {
+        await EnsurePostSchemaAsync(cancellationToken);
+
+        var post = await dbContext.Posts
+            .AsNoTracking()
+            .Include(x => x.Author)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Reactions)
+            .Include(x => x.Reactions)
+            .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
+
+        return post is null ? null : MapToPostDto(post, Guid.Empty);
+    }
+
+    public async Task<IReadOnlyCollection<PostDto>> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, int take = 25, CancellationToken cancellationToken = default)
+    {
+        await EnsurePostSchemaAsync(cancellationToken);
+
+        var normalizedHandle = handle.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(normalizedHandle))
+        {
+            return Array.Empty<PostDto>();
+        }
+
+        take = Math.Clamp(take, 1, 100);
+
+        var author = await dbContext.UserProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Handle == normalizedHandle, cancellationToken);
+
+        if (author is null)
+        {
+            return Array.Empty<PostDto>();
+        }
+
+        var canViewPrivate = false;
+        if (viewerId.HasValue)
+        {
+            canViewPrivate = viewerId.Value == author.Id
+                || await dbContext.Follows
+                    .AsNoTracking()
+                    .AnyAsync(x => x.FollowerId == viewerId.Value && x.FollowedId == author.Id, cancellationToken);
+        }
+
+        if (author.IsPrivate && !canViewPrivate)
+        {
+            return Array.Empty<PostDto>();
+        }
+
+        var posts = await dbContext.Posts
+            .AsNoTracking()
+            .Include(x => x.Author)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Reactions)
+            .Include(x => x.Reactions)
+            .Where(x => x.AuthorId == author.Id)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(take)
+            .ToArrayAsync(cancellationToken);
+
+        var mapProfileId = viewerId ?? Guid.Empty;
+        return posts
+            .Select(post => MapToPostDto(post, mapProfileId))
+            .ToArray();
+    }
+
     private static PostDto MapToPostDto(Post post, Guid profileId)
     {
         var comments = post.Comments

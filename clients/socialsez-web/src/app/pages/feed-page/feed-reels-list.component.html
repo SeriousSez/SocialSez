@@ -36,7 +36,7 @@
         <footer class="reel-engagement">
             <div class="engagement-actions">
                 <div class="action-group">
-                    <button type="button" class="icon-button like-button" [class.active]="reel.likedByMe" [disabled]="reactingReelId === reel.id" (click)="onToggleLike(reel)" aria-label="Like reel">
+                    <button type="button" class="icon-button like-button" [class.active]="reel.likedByMe" [disabled]="reactingReelId === reel.id || !canInteract" (click)="onToggleLike(reel)" aria-label="Like reel">
                         <i class="fa-duotone fa-heart" [class.fa-solid]="reel.likedByMe" [class.fa-light]="!reel.likedByMe" aria-hidden="true"></i>
                     </button>
                     <span class="engagement-count">{{ reel.likeCount }}</span>
@@ -47,8 +47,11 @@
                     </button>
                     <span class="comment-count" aria-label="Reel comment count">{{ reel.comments.length }}</span>
                 </div>
-                <button type="button" class="icon-button" [disabled]="sharingReelId === reel.id" (click)="onShareReel(reel)" aria-label="Share reel in direct messages">
+                <button type="button" class="icon-button" [disabled]="sharingReelId === reel.id || !canInteract" (click)="onShareReel(reel)" aria-label="Share reel in direct messages">
                     <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="icon-button" [disabled]="sharingReelId === reel.id" (click)="onCopyReelLink(reel)" aria-label="Copy reel link">
+                    <i class="fa-duotone" [class.fa-light]="copiedReelLinkId !== reel.id" [class.fa-solid]="copiedReelLinkId === reel.id" [class.fa-link]="copiedReelLinkId !== reel.id" [class.fa-check]="copiedReelLinkId === reel.id" aria-hidden="true"></i>
                 </button>
             </div>
         </footer>
@@ -94,12 +97,12 @@
                     </div>
 
                     <div class="reel-comment-actions" *ngIf="editingReelCommentId !== comment.id">
-                        <button type="button" class="reel-comment-like" [class.active]="comment.likedByMe" [disabled]="reactingReelId === reel.id" (mousedown)="onReelCommentLikeMouseDown(reel, comment, $event)" (click)="onReelCommentLikeClick(reel, comment, $event)"
+                        <button type="button" class="reel-comment-like" *ngIf="canInteract" [class.active]="comment.likedByMe" [disabled]="reactingReelId === reel.id" (mousedown)="onReelCommentLikeMouseDown(reel, comment, $event)" (click)="onReelCommentLikeClick(reel, comment, $event)"
                             [attr.aria-label]="comment.likedByMe ? 'Unlike comment' : 'Like comment'">
                             <i class="fa-duotone fa-heart" [class.fa-solid]="comment.likedByMe" [class.fa-light]="!comment.likedByMe" aria-hidden="true"></i>
                         </button>
                         <span class="comment-like-count" *ngIf="comment.likeCount > 0">{{ comment.likeCount }}</span>
-                        <button type="button" class="reel-comment-reply" (mousedown)="onReelCommentReplyMouseDown(reel.id, comment, $event)" (click)="onReelCommentReplyClick(reel.id, comment, $event)">Reply</button>
+                        <button type="button" class="reel-comment-reply" *ngIf="canInteract" (mousedown)="onReelCommentReplyMouseDown(reel.id, comment, $event)" (click)="onReelCommentReplyClick(reel.id, comment, $event)">Reply</button>
                         <!-- <button type="button" class="reel-comment-action" *ngIf="canEditReelComment(comment)" (mousedown)="onReelCommentEditMouseDown(comment, $event)" (click)="onReelCommentEditClick(comment, $event)" aria-label="Edit comment">
                             <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
                         </button> -->
@@ -111,7 +114,7 @@
             </article>
         </section>
 
-        <div class="reel-comment-form" *ngIf="isCommentsOpen(reel.id)">
+        <div class="reel-comment-form" *ngIf="isCommentsOpen(reel.id) && canInteract">
             <input type="text" [attr.data-reel-comment-id]="reel.id" [value]="getReelCommentDraft(reel.id)" (input)="onReelCommentDraftChange(reel.id, $any($event.target).value)" placeholder="Add a comment..." [disabled]="commentingReelId === reel.id" />
             <button type="button" (click)="onSubmitReelComment(reel)" [disabled]="commentingReelId === reel.id || !getReelCommentDraft(reel.id).trim()">
                 {{ commentingReelId === reel.id ? 'Posting...' : 'Post' }}

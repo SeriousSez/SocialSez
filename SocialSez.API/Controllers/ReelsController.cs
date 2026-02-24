@@ -218,12 +218,34 @@ public class ReelsController(IReelService reelService, IWebHostEnvironment envir
         return Ok(reels);
     }
 
+    [AllowAnonymous]
+    [HttpGet("{reelId:guid}/public")]
+    public async Task<ActionResult<ReelDto>> GetPublicById(Guid reelId, CancellationToken cancellationToken)
+    {
+        var reel = await reelService.GetPublicByIdAsync(reelId, cancellationToken);
+        return reel is null ? NotFound() : Ok(reel);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("by-author/{handle}/public")]
+    public async Task<ActionResult<IReadOnlyCollection<ReelDto>>> GetPublicByAuthor([FromRoute] string handle, [FromQuery] int take = 25, CancellationToken cancellationToken = default)
+    {
+        var viewerId = TryGetOptionalProfileId();
+        var reels = await reelService.GetPublicByAuthorHandleAsync(handle, viewerId, take, cancellationToken);
+        return Ok(reels);
+    }
+
     private bool TryGetProfileId(out Guid profileId)
     {
         var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? User.FindFirstValue("sub");
 
         return Guid.TryParse(raw, out profileId);
+    }
+
+    private Guid? TryGetOptionalProfileId()
+    {
+        return TryGetProfileId(out var profileId) ? profileId : null;
     }
 
     private static FeedMode ParseFeedMode(string? mode)

@@ -50,7 +50,6 @@
         </div>
 
         <footer class="modal-foot">
-            <button type="button" class="copy-link" (click)="copyPostLink()" [disabled]="busy">Copy link to post</button>
             <span class="copy-feedback" *ngIf="copyFeedback">{{ copyFeedback }}</span>
             <div class="send-actions">
                 <button type="button" class="send-btn ghost" (click)="submitGroup()" *ngIf="selectedCount > 1" [disabled]="!canSendGroup">Send as group</button>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, HostListener, OnDestroy, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
@@ -16,6 +16,10 @@ import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent,
 import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
 import { ReelComposerModalComponent } from '../../shared/reel-composer-modal/reel-composer-modal.component';
 
+interface StoryTrimPreviewOption {
+    previewUrl: string;
+}
+
 @Component({
     selector: 'app-profile-page',
     standalone: true,
@@ -24,6 +28,13 @@ import { ReelComposerModalComponent } from '../../shared/reel-composer-modal/ree
     styleUrl: './profile-page.component.scss'
 })
 export class ProfilePageComponent implements OnDestroy {
+    private static readonly StoryFrameOffsetLimit = 50;
+    private static readonly StoryCropFrameHeightPercent = 100;
+    private static readonly StoryOutputAspect = 9 / 16;
+    private static readonly StoryMaxTrimDurationSeconds = 60;
+
+    @ViewChild('storyPreviewVideo') private readonly storyPreviewVideoRef?: ElementRef<HTMLVideoElement>;
+
     activeTab: 'posts' | 'reels' = 'posts';
     posts: PostDto[] = [];
     reels: ReelDto[] = [];
@@ -45,16 +56,30 @@ export class ProfilePageComponent implements OnDestroy {
     pendingDeleteReelComment: { reelId: string; commentId: string } | null = null;
     showComposer = false;
     showStoryComposer = false;
+    storyComposerStep: 1 | 2 = 1;
     showReelComposer = false;
     createMenuOpen = false;
     storyMediaFile: File | null = null;
     storyMediaPreviewUrl = '';
+    storyMediaIsVideo = false;
+    storyMediaDurationSeconds = 0;
+    storyTrimStartSeconds = 0;
+    storyTrimEndSeconds = 0;
+    storyTrimPreviewOptions: StoryTrimPreviewOption[] = [];
+    generatingStoryTrimPreviews = false;
+    storyPreviewReady = false;
+    storySourceMediaWidth = 0;
+    storySourceMediaHeight = 0;
+    storyFrameZoom = 1;
+    storyFrameOffsetX = 0;
+    storyFrameOffsetY = 0;
     storyComposerError = '';
     postingStory = false;
     sharingPostId: string | null = null;
     pendingSharePost: PostDto | null = null;
     pendingShareTarget: 'feed' | 'chat' | null = null;
     shareNote = '';
+    profileLinkCopied = false;
     viewedProfile: ProfileDto | null = null;
     viewedHandle: string | null = null;
     followState: 'idle' | 'loading' | 'success' | 'failure' = 'idle';
@@ -68,13 +93,41 @@ export class ProfilePageComponent implements OnDestroy {
     storyViewerError = '';
     sendingStoryReply = false;
     sharingStoryMessage = false;
+    deletingStory = false;
+    pendingDeleteStoryId: string | null = null;
     activitySummary: ProfileActivitySummaryDto | null = null;
     private loadInFlight = false;
     private reloadQueued = false;
     private followStateResetTimerId: number | null = null;
     private readonly likedStoryIds = new Set<string>();
+    private profileLinkCopiedResetTimerId: number | null = null;
     private storyMediaObjectUrl = '';
     private markingStoryId: string | null = null;
+    private draggingStoryFrame = false;
+    private storyFrameDragOriginClientX = 0;
+    private storyFrameDragOriginClientY = 0;
+    private storyFrameDragOriginOffsetX = 0;
+    private storyFrameDragOriginOffsetY = 0;
+    private storyFrameDragViewportWidth = 1;
+    private storyFrameDragViewportHeight = 1;
+    private draggingStoryTrimPart: 'start' | 'end' | 'range' | null = null;
+    private storyTrimDragOriginClientX = 0;
+    private storyTrimDragOriginStartSeconds = 0;
+    private storyTrimDragOriginEndSeconds = 0;
+    private storyTrimDragTrackWidth = 1;
+    private storyTrimPreviewRefreshToken = 0;
+    private readonly onGlobalStoryTrimPointerMove = (event: PointerEvent) => {
+        this.handleStoryTrimPointerMove(event);
+    };
+    private readonly onGlobalStoryTrimPointerUp = () => {
+        this.stopStoryTrimDragging();
+    };
+    private readonly onStoryFramePointerMove = (event: PointerEvent) => {
+        this.handleStoryFramePointerMove(event);
+    };
+    private readonly onStoryFramePointerUp = () => {
+        this.stopStoryFrameDragging();
+    };
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(public readonly session: SessionService, private readonly route: ActivatedRoute, private readonly router: Router) {
@@ -205,6 +258,35 @@ export class ProfilePageComponent implements OnDestroy {
         return !!this.activeStoryGroup && this.activeStoryIndex < this.activeStoryGroup.stories.length - 1;
     }
 
+    get canDeleteActiveStory(): boolean {
+        const story = this.activeStory;
+        return !!story && !!this.currentProfileId && story.authorId === this.currentProfileId;
+    }
+
+    async copyProfileLinkAsync(): Promise<void> {
+        const handle = this.viewedProfile?.handle?.trim().toLowerCase();
+        if (!handle) {
+            return;
+        }
+
+        const link = `${window.location.origin}/users/${handle}`;
+
+        try {
+            await navigator.clipboard.writeText(link);
+            this.profileLinkCopied = true;
+            if (this.profileLinkCopiedResetTimerId !== null) {
+                window.clearTimeout(this.profileLinkCopiedResetTimerId);
+            }
+
+            this.profileLinkCopiedResetTimerId = window.setTimeout(() => {
+                this.profileLinkCopied = false;
+                this.profileLinkCopiedResetTimerId = null;
+            }, 2000);
+        } catch {
+            this.error = 'Could not copy profile link right now.';
+        }
+    }
+
     setActiveTab(tab: 'posts' | 'reels'): void {
         this.activeTab = tab;
     }
@@ -256,6 +338,7 @@ export class ProfilePageComponent implements OnDestroy {
         this.showComposer = false;
         this.showReelComposer = false;
         this.showStoryComposer = true;
+        this.storyComposerStep = 1;
         this.storyComposerError = '';
     }
 
@@ -310,8 +393,24 @@ export class ProfilePageComponent implements OnDestroy {
         }
 
         this.showStoryComposer = false;
+        this.storyComposerStep = 1;
         this.storyComposerError = '';
         this.clearStoryMediaSelection();
+    }
+
+    goToStoryComposerStep(step: 1 | 2): void {
+        if (step === 2 && !this.storyMediaFile) {
+            this.storyComposerError = 'Choose media first to continue.';
+            return;
+        }
+
+        if (step === 2 && this.storyMediaIsVideo && !this.storyPreviewReady) {
+            this.storyComposerError = 'Preparing preview controls. Please wait a moment.';
+            return;
+        }
+
+        this.storyComposerError = '';
+        this.storyComposerStep = step;
     }
 
     async onStoryMediaSelected(event: Event): Promise<void> {
@@ -324,10 +423,194 @@ export class ProfilePageComponent implements OnDestroy {
             this.storyMediaFile = file;
             this.storyMediaPreviewUrl = URL.createObjectURL(file);
             this.storyMediaObjectUrl = this.storyMediaPreviewUrl;
+            this.storyMediaIsVideo = file.type.startsWith('video/');
+            this.storyPreviewReady = !this.storyMediaIsVideo;
             this.storyComposerError = '';
+
+            if (this.storyMediaIsVideo) {
+                try {
+                    this.storyMediaDurationSeconds = await this.readVideoDurationSeconds(file);
+                    this.storyTrimStartSeconds = 0;
+                    this.storyTrimEndSeconds = Math.min(this.storyMediaDurationSeconds, ProfilePageComponent.StoryMaxTrimDurationSeconds);
+                    void this.generateStoryTrimPreviewOptions(file, this.storyMediaDurationSeconds);
+                } catch {
+                    this.storyComposerError = 'Could not process this video. Please choose a different file.';
+                    this.clearStoryMediaSelection();
+                }
+            }
+
+            if (this.storyMediaFile) {
+                this.storyComposerStep = 2;
+            }
         }
 
         input.value = '';
+    }
+
+    onStoryPreviewLoadedMetadata(): void {
+        const preview = this.storyPreviewVideoRef?.nativeElement;
+        if (!preview) {
+            return;
+        }
+
+        const parsedDuration = Number.isFinite(preview.duration) ? Math.round(preview.duration) : 0;
+        if (parsedDuration > 0) {
+            this.storyMediaDurationSeconds = parsedDuration;
+            this.storyTrimStartSeconds = Math.max(0, Math.min(this.storyTrimStartSeconds, parsedDuration - 1));
+            const defaultEnd = this.storyTrimEndSeconds || parsedDuration;
+            const maxEnd = Math.min(parsedDuration, this.storyTrimStartSeconds + ProfilePageComponent.StoryMaxTrimDurationSeconds);
+            this.storyTrimEndSeconds = Math.max(this.storyTrimStartSeconds + 1, Math.min(defaultEnd, maxEnd));
+            if (this.storyTrimEndSeconds - this.storyTrimStartSeconds > ProfilePageComponent.StoryMaxTrimDurationSeconds) {
+                this.storyTrimEndSeconds = Math.min(parsedDuration, this.storyTrimStartSeconds + ProfilePageComponent.StoryMaxTrimDurationSeconds);
+            }
+        }
+
+        this.storySourceMediaWidth = preview.videoWidth || 0;
+        this.storySourceMediaHeight = preview.videoHeight || 0;
+
+        this.storyPreviewReady = true;
+        this.syncStoryPreviewToTrimRange(true);
+    }
+
+    onStoryPreviewTimeUpdate(): void {
+        const preview = this.storyPreviewVideoRef?.nativeElement;
+        if (!preview || !this.storyMediaIsVideo) {
+            return;
+        }
+
+        if (preview.currentTime >= this.storyTrimEndSeconds) {
+            preview.currentTime = this.storyTrimStartSeconds;
+            if (!preview.paused) {
+                void preview.play().catch(() => {
+                    // ignored: user gesture may be required
+                });
+            }
+        }
+    }
+
+    onStoryTrimStartChanged(rawValue: string): void {
+        const next = Number(rawValue);
+        if (Number.isNaN(next) || !this.storyMediaIsVideo) {
+            return;
+        }
+
+        const minStart = Math.max(0, this.storyTrimEndSeconds - ProfilePageComponent.StoryMaxTrimDurationSeconds);
+        this.storyTrimStartSeconds = Math.max(minStart, Math.min(next, this.storyTrimEndSeconds - 1));
+        this.syncStoryPreviewToTrimRange();
+    }
+
+    onStoryTrimEndChanged(rawValue: string): void {
+        const next = Number(rawValue);
+        if (Number.isNaN(next) || !this.storyMediaIsVideo) {
+            return;
+        }
+
+        const maxEnd = Math.min(this.storyMediaDurationSeconds, this.storyTrimStartSeconds + ProfilePageComponent.StoryMaxTrimDurationSeconds);
+        this.storyTrimEndSeconds = Math.max(this.storyTrimStartSeconds + 1, Math.min(next, maxEnd));
+        this.syncStoryPreviewToTrimRange();
+    }
+
+    get storyTrimmedDurationLabel(): string {
+        return `${Math.max(1, Math.round(this.storyTrimEndSeconds - this.storyTrimStartSeconds))}s`;
+    }
+
+    get storyFrameTransform(): string {
+        return `translate(${this.storyFrameOffsetX}%, ${this.storyFrameOffsetY}%) scale(${this.storyFrameZoom})`;
+    }
+
+    get storyCropFrameStyle(): Record<string, string> {
+        const frameHeightPercent = ProfilePageComponent.StoryCropFrameHeightPercent;
+        const frameWidthPercent = frameHeightPercent * (9 / 16) * (9 / 16);
+        const maxCenterShiftX = Math.max(0, (100 - frameWidthPercent) / 2);
+        const maxCenterShiftY = Math.max(0, (100 - frameHeightPercent) / 2);
+        const offsetLimit = ProfilePageComponent.StoryFrameOffsetLimit;
+        const shiftX = (this.storyFrameOffsetX / offsetLimit) * maxCenterShiftX;
+        const shiftY = (this.storyFrameOffsetY / offsetLimit) * maxCenterShiftY;
+
+        return {
+            height: `${frameHeightPercent}%`,
+            width: `${frameWidthPercent}%`,
+            left: `${50 + shiftX}%`,
+            top: `${50 + shiftY}%`
+        };
+    }
+
+    get isStoryFrameDragging(): boolean {
+        return this.draggingStoryFrame;
+    }
+
+    get storyTrimStartPercent(): number {
+        if (this.storyMediaDurationSeconds <= 0) {
+            return 0;
+        }
+
+        return (this.storyTrimStartSeconds / this.storyMediaDurationSeconds) * 100;
+    }
+
+    get storyTrimEndPercent(): number {
+        if (this.storyMediaDurationSeconds <= 0) {
+            return 100;
+        }
+
+        return (this.storyTrimEndSeconds / this.storyMediaDurationSeconds) * 100;
+    }
+
+    resetStoryFramePosition(): void {
+        this.storyFrameZoom = 1;
+        this.storyFrameOffsetX = 0;
+        this.storyFrameOffsetY = 0;
+    }
+
+    onStoryFramePointerDown(event: PointerEvent, viewport: HTMLElement): void {
+        if (!this.storyMediaFile) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.draggingStoryFrame = true;
+        this.storyFrameDragOriginClientX = event.clientX;
+        this.storyFrameDragOriginClientY = event.clientY;
+        this.storyFrameDragOriginOffsetX = this.storyFrameOffsetX;
+        this.storyFrameDragOriginOffsetY = this.storyFrameOffsetY;
+        const bounds = viewport.getBoundingClientRect();
+        this.storyFrameDragViewportWidth = Math.max(1, bounds.width);
+        this.storyFrameDragViewportHeight = Math.max(1, bounds.height);
+        this.attachStoryFrameDragListeners();
+    }
+
+    onStoryImageLoaded(event: Event): void {
+        const image = event.target as HTMLImageElement;
+        const width = image.naturalWidth || image.width;
+        const height = image.naturalHeight || image.height;
+
+        if (!width || !height) {
+            return;
+        }
+
+        this.storySourceMediaWidth = width;
+        this.storySourceMediaHeight = height;
+    }
+
+    onStoryTrimHandlePointerDown(event: PointerEvent, part: 'start' | 'end', track: HTMLElement): void {
+        if (this.storyMediaDurationSeconds <= 1 || this.postingStory) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        this.beginStoryTrimDragging(part, event.clientX, track);
+    }
+
+    onStoryTrimRangePointerDown(event: PointerEvent, track: HTMLElement): void {
+        if (this.storyMediaDurationSeconds <= 1 || this.postingStory) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        this.beginStoryTrimDragging('range', event.clientX, track);
     }
 
     async publishStory(): Promise<void> {
@@ -339,17 +622,31 @@ export class ProfilePageComponent implements OnDestroy {
         this.storyComposerError = '';
 
         try {
-            await this.session.createStoryAsync(this.storyMediaFile);
+            const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile);
             this.cancelStoryComposer();
-            await this.load();
+
+            void (async () => {
+                try {
+                    await this.session.createStoryAsync(uploadStoryMedia);
+                    await this.load();
+                } catch {
+                    this.error = 'Could not publish story right now.';
+                } finally {
+                    this.postingStory = false;
+                }
+            })();
         } catch {
             this.storyComposerError = 'Could not publish story right now.';
-        } finally {
             this.postingStory = false;
         }
     }
 
     ngOnDestroy(): void {
+        if (this.profileLinkCopiedResetTimerId !== null) {
+            window.clearTimeout(this.profileLinkCopiedResetTimerId);
+            this.profileLinkCopiedResetTimerId = null;
+        }
+
         this.clearStoryMediaSelection();
     }
 
@@ -757,9 +1054,11 @@ export class ProfilePageComponent implements OnDestroy {
         event?.stopPropagation();
 
         const normalized = handle.trim().toLowerCase();
-        if (this.viewedProfileHasActiveStory && this.currentProfileHandle === normalized) {
-            await this.openStoryForHandle(handle);
-            return;
+        if (this.currentProfileHandle === normalized) {
+            const openedStory = await this.openStoryForHandle(handle);
+            if (openedStory) {
+                return;
+            }
         }
 
         await this.router.navigate(['/users', handle]);
@@ -771,6 +1070,8 @@ export class ProfilePageComponent implements OnDestroy {
         this.storyViewerError = '';
         this.sendingStoryReply = false;
         this.sharingStoryMessage = false;
+        this.deletingStory = false;
+        this.pendingDeleteStoryId = null;
     }
 
     showPreviousStory(): void {
@@ -804,6 +1105,42 @@ export class ProfilePageComponent implements OnDestroy {
         }
 
         this.likedStoryIds.add(story.id);
+    }
+
+    requestDeleteStory(story: StoryDto): void {
+        if (!this.canDeleteActiveStory || this.deletingStory) {
+            return;
+        }
+
+        this.pendingDeleteStoryId = story.id;
+    }
+
+    cancelDeleteStory(): void {
+        if (this.deletingStory) {
+            return;
+        }
+
+        this.pendingDeleteStoryId = null;
+    }
+
+    async confirmDeleteStory(): Promise<void> {
+        const story = this.activeStory;
+        if (!story || this.pendingDeleteStoryId !== story.id || !this.canDeleteActiveStory || this.deletingStory) {
+            return;
+        }
+
+        this.deletingStory = true;
+        this.storyViewerError = '';
+
+        try {
+            await this.session.deleteStoryAsync(story.id);
+            this.removeStoryFromActiveGroup(story.id);
+        } catch {
+            this.storyViewerError = 'Could not delete this story right now.';
+        } finally {
+            this.pendingDeleteStoryId = null;
+            this.deletingStory = false;
+        }
     }
 
     async sendStoryReply(event: { story: StoryDto; message: string }): Promise<void> {
@@ -1019,6 +1356,10 @@ export class ProfilePageComponent implements OnDestroy {
     }
 
     private async loadPostsForProfileAsync(handle: string): Promise<PostDto[]> {
+        if (!this.session.isAuthenticated()) {
+            return this.session.loadPublicPostsByAuthorHandleAsync(handle);
+        }
+
         try {
             return await this.session.loadPostsByAuthorHandleAsync(handle);
         } catch {
@@ -1029,6 +1370,10 @@ export class ProfilePageComponent implements OnDestroy {
     }
 
     private async loadReelsForProfileAsync(handle: string): Promise<ReelDto[]> {
+        if (!this.session.isAuthenticated()) {
+            return this.session.loadPublicReelsByAuthorHandleAsync(handle, 80);
+        }
+
         try {
             return await this.session.loadReelsByAuthorHandleAsync(handle);
         } catch {
@@ -1049,6 +1394,14 @@ export class ProfilePageComponent implements OnDestroy {
 
     private async loadStoryStateForHandleAsync(handle: string): Promise<{ hasActive: boolean; hasUnseen: boolean }> {
         const normalized = handle.trim().toLowerCase();
+
+        if (!this.session.isAuthenticated()) {
+            const group = await this.session.loadPublicStoriesByAuthorHandleAsync(normalized);
+            return {
+                hasActive: !!group,
+                hasUnseen: !!group?.hasUnseenStories
+            };
+        }
 
         try {
             const [forYou, following] = await Promise.allSettled([
@@ -1071,11 +1424,10 @@ export class ProfilePageComponent implements OnDestroy {
         }
     }
 
-    private async openStoryForHandle(handle: string): Promise<void> {
+    private async openStoryForHandle(handle: string): Promise<boolean> {
         const group = await this.loadStoryGroupForHandleAsync(handle);
         if (!group || !group.stories.length) {
-            await this.router.navigate(['/users', handle]);
-            return;
+            return false;
         }
 
         this.activeStoryGroup = group;
@@ -1084,10 +1436,15 @@ export class ProfilePageComponent implements OnDestroy {
         this.activeStoryIndex = this.getNewestUnseenStoryIndex(group.stories);
         this.storyViewerError = '';
         void this.markActiveStoryViewed();
+        return true;
     }
 
     private async loadStoryGroupForHandleAsync(handle: string): Promise<StoryGroupDto | null> {
         const normalized = handle.trim().toLowerCase();
+
+        if (!this.session.isAuthenticated()) {
+            return this.session.loadPublicStoriesByAuthorHandleAsync(normalized);
+        }
 
         try {
             const [forYou, following] = await Promise.allSettled([
@@ -1153,7 +1510,524 @@ export class ProfilePageComponent implements OnDestroy {
         return selectedIndex >= 0 ? selectedIndex : 0;
     }
 
+    private removeStoryFromActiveGroup(storyId: string): void {
+        const activeGroup = this.activeStoryGroup;
+        if (!activeGroup) {
+            return;
+        }
+
+        const nextStories = activeGroup.stories.filter(item => item.id !== storyId);
+        if (!nextStories.length) {
+            this.viewedProfileHasActiveStory = false;
+            this.viewedProfileHasUnseenStory = false;
+            this.closeStoryViewer();
+            return;
+        }
+
+        this.activeStoryGroup = {
+            ...activeGroup,
+            stories: nextStories,
+            hasUnseenStories: nextStories.some(item => !item.viewedByMe)
+        };
+        this.viewedProfileHasUnseenStory = this.activeStoryGroup.hasUnseenStories;
+        this.activeStoryIndex = Math.min(this.activeStoryIndex, nextStories.length - 1);
+    }
+
+    private syncStoryPreviewToTrimRange(forceSeekToStart = false): void {
+        const preview = this.storyPreviewVideoRef?.nativeElement;
+        if (!preview || !this.storyMediaIsVideo) {
+            return;
+        }
+
+        const trimStart = Math.max(0, this.storyTrimStartSeconds);
+        const trimEnd = Math.max(trimStart + 1, this.storyTrimEndSeconds);
+        const outOfRange = preview.currentTime < trimStart || preview.currentTime >= trimEnd;
+
+        if (forceSeekToStart || outOfRange) {
+            preview.currentTime = trimStart;
+        }
+    }
+
+    private async generateStoryTrimPreviewOptions(file: File, durationSeconds: number): Promise<void> {
+        if (!this.storyMediaIsVideo || durationSeconds <= 0) {
+            this.clearStoryTrimPreviewOptions();
+            return;
+        }
+
+        const requestToken = ++this.storyTrimPreviewRefreshToken;
+        this.generatingStoryTrimPreviews = true;
+        this.clearStoryTrimPreviewOptions();
+
+        const sampleCount = 12;
+        const lastSecond = Math.max(0, durationSeconds - 1);
+        const segment = sampleCount > 1 ? lastSecond / (sampleCount - 1) : 0;
+        const times = Array.from({ length: sampleCount }, (_, index) => Math.max(0, Math.min(lastSecond, Math.round(index * segment))));
+
+        try {
+            const previews = await Promise.all(times.map(timeSeconds => this.captureStoryVideoFrame(file, timeSeconds)));
+            if (requestToken !== this.storyTrimPreviewRefreshToken) {
+                previews.forEach(preview => URL.revokeObjectURL(preview.previewUrl));
+                return;
+            }
+
+            this.storyTrimPreviewOptions = previews;
+        } catch {
+            if (requestToken === this.storyTrimPreviewRefreshToken) {
+                this.clearStoryTrimPreviewOptions();
+            }
+        } finally {
+            if (requestToken === this.storyTrimPreviewRefreshToken) {
+                this.generatingStoryTrimPreviews = false;
+            }
+        }
+    }
+
+    private clearStoryTrimPreviewOptions(): void {
+        for (const option of this.storyTrimPreviewOptions) {
+            URL.revokeObjectURL(option.previewUrl);
+        }
+
+        this.storyTrimPreviewOptions = [];
+    }
+
+    private beginStoryTrimDragging(part: 'start' | 'end' | 'range', clientX: number, track: HTMLElement): void {
+        this.draggingStoryTrimPart = part;
+        this.storyTrimDragOriginClientX = clientX;
+        this.storyTrimDragOriginStartSeconds = this.storyTrimStartSeconds;
+        this.storyTrimDragOriginEndSeconds = this.storyTrimEndSeconds;
+        this.storyTrimDragTrackWidth = Math.max(1, track.getBoundingClientRect().width);
+        this.attachStoryTrimDragListeners();
+    }
+
+    private handleStoryTrimPointerMove(event: PointerEvent): void {
+        if (!this.draggingStoryTrimPart || this.storyMediaDurationSeconds <= 1) {
+            return;
+        }
+
+        const deltaX = event.clientX - this.storyTrimDragOriginClientX;
+        const deltaSeconds = (deltaX / this.storyTrimDragTrackWidth) * this.storyMediaDurationSeconds;
+        const roundedDelta = Math.round(deltaSeconds);
+
+        if (this.draggingStoryTrimPart === 'start') {
+            const minStart = Math.max(0, this.storyTrimEndSeconds - ProfilePageComponent.StoryMaxTrimDurationSeconds);
+            const nextStart = Math.max(minStart, Math.min(this.storyTrimDragOriginStartSeconds + roundedDelta, this.storyTrimEndSeconds - 1));
+            this.storyTrimStartSeconds = nextStart;
+            this.syncStoryPreviewToTrimRange();
+            return;
+        }
+
+        if (this.draggingStoryTrimPart === 'end') {
+            const maxEnd = Math.min(this.storyMediaDurationSeconds, this.storyTrimStartSeconds + ProfilePageComponent.StoryMaxTrimDurationSeconds);
+            const nextEnd = Math.max(this.storyTrimStartSeconds + 1, Math.min(this.storyTrimDragOriginEndSeconds + roundedDelta, maxEnd));
+            this.storyTrimEndSeconds = nextEnd;
+            this.syncStoryPreviewToTrimRange();
+            return;
+        }
+
+        const span = Math.max(1, Math.min(ProfilePageComponent.StoryMaxTrimDurationSeconds, this.storyTrimDragOriginEndSeconds - this.storyTrimDragOriginStartSeconds));
+        const nextStart = Math.max(0, Math.min(this.storyTrimDragOriginStartSeconds + roundedDelta, this.storyMediaDurationSeconds - span));
+        this.storyTrimStartSeconds = nextStart;
+        this.storyTrimEndSeconds = Math.min(this.storyMediaDurationSeconds, nextStart + span);
+        this.syncStoryPreviewToTrimRange();
+    }
+
+    private stopStoryTrimDragging(): void {
+        this.draggingStoryTrimPart = null;
+        this.detachStoryTrimDragListeners();
+    }
+
+    private attachStoryTrimDragListeners(): void {
+        window.addEventListener('pointermove', this.onGlobalStoryTrimPointerMove);
+        window.addEventListener('pointerup', this.onGlobalStoryTrimPointerUp);
+    }
+
+    private detachStoryTrimDragListeners(): void {
+        window.removeEventListener('pointermove', this.onGlobalStoryTrimPointerMove);
+        window.removeEventListener('pointerup', this.onGlobalStoryTrimPointerUp);
+    }
+
+    private handleStoryFramePointerMove(event: PointerEvent): void {
+        if (!this.draggingStoryFrame) {
+            return;
+        }
+
+        const deltaX = event.clientX - this.storyFrameDragOriginClientX;
+        const deltaY = event.clientY - this.storyFrameDragOriginClientY;
+        const offsetDeltaX = (deltaX / this.storyFrameDragViewportWidth) * 100;
+        const offsetDeltaY = (deltaY / this.storyFrameDragViewportHeight) * 100;
+
+        this.storyFrameOffsetX = this.clampStoryFrameOffset(this.storyFrameDragOriginOffsetX + offsetDeltaX);
+        this.storyFrameOffsetY = this.clampStoryFrameOffset(this.storyFrameDragOriginOffsetY + offsetDeltaY);
+    }
+
+    private stopStoryFrameDragging(): void {
+        this.draggingStoryFrame = false;
+        this.detachStoryFrameDragListeners();
+    }
+
+    private attachStoryFrameDragListeners(): void {
+        window.addEventListener('pointermove', this.onStoryFramePointerMove);
+        window.addEventListener('pointerup', this.onStoryFramePointerUp);
+        window.addEventListener('pointercancel', this.onStoryFramePointerUp);
+    }
+
+    private detachStoryFrameDragListeners(): void {
+        window.removeEventListener('pointermove', this.onStoryFramePointerMove);
+        window.removeEventListener('pointerup', this.onStoryFramePointerUp);
+        window.removeEventListener('pointercancel', this.onStoryFramePointerUp);
+    }
+
+    private clampStoryFrameOffset(value: number): number {
+        const limit = ProfilePageComponent.StoryFrameOffsetLimit;
+        return Math.max(-limit, Math.min(limit, value));
+    }
+
+    private hasStoryFrameCropShift(): boolean {
+        return Math.abs(this.storyFrameOffsetX) > 0.5 || Math.abs(this.storyFrameOffsetY) > 0.5;
+    }
+
+    private async buildProcessedStoryMedia(file: File): Promise<File> {
+        if (this.storyMediaIsVideo) {
+            return this.buildTrimmedStoryVideoOrOriginal(file);
+        }
+
+        return this.buildCroppedStoryImageOrOriginal(file);
+    }
+
+    private async readVideoDurationSeconds(file: File): Promise<number> {
+        return new Promise<number>((resolve, reject) => {
+            const url = URL.createObjectURL(file);
+            const video = document.createElement('video');
+            video.src = url;
+            video.preload = 'metadata';
+
+            const cleanup = () => {
+                URL.revokeObjectURL(url);
+                video.removeAttribute('src');
+                video.load();
+            };
+
+            video.onloadedmetadata = () => {
+                const duration = Number.isFinite(video.duration) ? Math.round(video.duration) : 0;
+                cleanup();
+                if (duration <= 0) {
+                    reject(new Error('Invalid video duration.'));
+                    return;
+                }
+
+                resolve(duration);
+            };
+
+            video.onerror = () => {
+                cleanup();
+                reject(new Error('Could not read video metadata.'));
+            };
+        });
+    }
+
+    private async buildCroppedStoryImageOrOriginal(file: File): Promise<File> {
+        if (!file.type.startsWith('image/')) {
+            return file;
+        }
+
+        if (!this.hasStoryFrameCropShift()) {
+            return file;
+        }
+
+        try {
+            const image = await this.loadImageFromFile(file);
+            const sourceWidth = image.naturalWidth || image.width;
+            const sourceHeight = image.naturalHeight || image.height;
+            if (!sourceWidth || !sourceHeight) {
+                return file;
+            }
+
+            const crop = this.getStoryFrameCropForSource(sourceWidth, sourceHeight);
+            const canvas = document.createElement('canvas');
+            canvas.width = crop.width;
+            canvas.height = crop.height;
+
+            const context = canvas.getContext('2d');
+            if (!context) {
+                return file;
+            }
+
+            context.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+            const blob = await this.canvasToBlob(canvas, 'image/jpeg', 0.9);
+            return new File([blob], `${file.name.replace(/\.[^.]+$/, '')}-9x16.jpg`, { type: 'image/jpeg' });
+        } catch {
+            this.storyComposerError = 'Could not apply framing to selected image. Uploaded original instead.';
+            return file;
+        }
+    }
+
+    private async buildTrimmedStoryVideoOrOriginal(file: File): Promise<File> {
+        if (!this.storyMediaIsVideo) {
+            return file;
+        }
+
+        const trimStart = Math.max(0, Math.floor(this.storyTrimStartSeconds));
+        const trimEnd = Math.max(trimStart + 1, Math.ceil(this.storyTrimEndSeconds));
+        const fullDuration = Math.max(1, Math.round(this.storyMediaDurationSeconds));
+        const hasFrameCrop = this.hasStoryFrameCropShift();
+
+        if (trimStart <= 0 && trimEnd >= fullDuration && !hasFrameCrop) {
+            return file;
+        }
+
+        if (!('MediaRecorder' in window)) {
+            this.storyComposerError = 'Trim preview saved, but your browser uploaded the full video because MediaRecorder is not available.';
+            return file;
+        }
+
+        return new Promise<File>((resolve) => {
+            const url = URL.createObjectURL(file);
+            const video = document.createElement('video');
+            video.src = url;
+            video.muted = false;
+            video.volume = 0;
+            video.playsInline = true;
+
+            let mediaStream: MediaStream | null = null;
+            let monitorStopId = 0;
+            let drawFrameId = 0;
+
+            const cleanup = () => {
+                window.cancelAnimationFrame(drawFrameId);
+                window.cancelAnimationFrame(monitorStopId);
+                URL.revokeObjectURL(url);
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
+                mediaStream?.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            };
+
+            video.onloadedmetadata = async () => {
+                try {
+                    const sourceWidth = video.videoWidth || 720;
+                    const sourceHeight = video.videoHeight || 1280;
+                    const crop = this.getStoryFrameCropForSource(sourceWidth, sourceHeight);
+                    const outputWidth = 720;
+                    const outputHeight = Math.max(1, Math.round(outputWidth / ProfilePageComponent.StoryOutputAspect));
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = outputWidth;
+                    canvas.height = outputHeight;
+
+                    const context = canvas.getContext('2d');
+                    if (!context) {
+                        this.storyComposerError = 'Could not apply framing to trimmed story. Uploaded original instead.';
+                        cleanup();
+                        resolve(file);
+                        return;
+                    }
+
+                    mediaStream = (canvas as HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }).captureStream?.(30) ?? null;
+
+                    if (!mediaStream) {
+                        this.storyComposerError = 'Trim preview saved, but this browser does not support video trimming upload.';
+                        cleanup();
+                        resolve(file);
+                        return;
+                    }
+
+                    const sourceStream = (video as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream }).captureStream?.()
+                        ?? (video as HTMLVideoElement & { mozCaptureStream?: () => MediaStream }).mozCaptureStream?.();
+                    const sourceAudioTracks = sourceStream?.getAudioTracks() ?? [];
+                    for (const track of sourceAudioTracks) {
+                        mediaStream.addTrack(track);
+                    }
+
+                    const chunks: BlobPart[] = [];
+                    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+                        ? 'video/webm;codecs=vp9'
+                        : 'video/webm';
+                    const recorder = new MediaRecorder(mediaStream, { mimeType });
+
+                    const drawFrame = () => {
+                        context.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, outputWidth, outputHeight);
+                        if (!video.paused && !video.ended) {
+                            drawFrameId = window.requestAnimationFrame(drawFrame);
+                        }
+                    };
+
+                    const monitorStop = () => {
+                        if (video.currentTime >= trimEnd || video.ended) {
+                            window.cancelAnimationFrame(drawFrameId);
+                            video.pause();
+                            recorder.stop();
+                            return;
+                        }
+
+                        monitorStopId = window.requestAnimationFrame(monitorStop);
+                    };
+
+                    recorder.ondataavailable = event => {
+                        if (event.data && event.data.size > 0) {
+                            chunks.push(event.data);
+                        }
+                    };
+
+                    recorder.onstop = () => {
+                        cleanup();
+                        if (!chunks.length) {
+                            resolve(file);
+                            return;
+                        }
+
+                        const blob = new Blob(chunks, { type: mimeType });
+                        resolve(new File([blob], `${file.name.replace(/\.[^.]+$/, '')}-trim.webm`, { type: mimeType }));
+                    };
+
+                    video.onseeked = async () => {
+                        recorder.start(250);
+                        await video.play();
+                        drawFrame();
+                        monitorStop();
+                    };
+
+                    video.currentTime = trimStart;
+                } catch {
+                    cleanup();
+                    this.storyComposerError = 'Trim preview saved, but upload used original video due to processing limits.';
+                    resolve(file);
+                }
+            };
+
+            video.onerror = () => {
+                cleanup();
+                resolve(file);
+            };
+        });
+    }
+
+    private async captureStoryVideoFrame(file: File, timeSeconds: number): Promise<StoryTrimPreviewOption> {
+        return new Promise<StoryTrimPreviewOption>((resolve, reject) => {
+            const url = URL.createObjectURL(file);
+            const video = document.createElement('video');
+            video.src = url;
+            video.preload = 'auto';
+            video.muted = true;
+            video.playsInline = true;
+
+            const cleanup = () => {
+                URL.revokeObjectURL(url);
+                video.removeAttribute('src');
+                video.load();
+            };
+
+            video.onloadedmetadata = () => {
+                video.currentTime = Math.max(0, Math.min(timeSeconds, Math.max(0, video.duration - 0.05)));
+            };
+
+            video.onseeked = async () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.max(1, video.videoWidth || 320);
+                    canvas.height = Math.max(1, video.videoHeight || 180);
+                    const context = canvas.getContext('2d');
+                    if (!context) {
+                        cleanup();
+                        reject(new Error('Could not capture frame context.'));
+                        return;
+                    }
+
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const blob = await this.canvasToBlob(canvas, 'image/jpeg', 0.85);
+                    cleanup();
+                    resolve({ previewUrl: URL.createObjectURL(blob) });
+                } catch (error) {
+                    cleanup();
+                    reject(error);
+                }
+            };
+
+            video.onerror = () => {
+                cleanup();
+                reject(new Error('Could not load video for frame capture.'));
+            };
+        });
+    }
+
+    private getStoryAspectCrop(width: number, height: number): { x: number; y: number; width: number; height: number } {
+        const targetAspect = ProfilePageComponent.StoryOutputAspect;
+        const sourceAspect = width / height;
+
+        if (sourceAspect > targetAspect) {
+            const cropWidth = Math.max(1, Math.round(height * targetAspect));
+            const x = Math.max(0, Math.floor((width - cropWidth) / 2));
+            return { x, y: 0, width: cropWidth, height };
+        }
+
+        const cropHeight = Math.max(1, Math.round(width / targetAspect));
+        const y = Math.max(0, Math.floor((height - cropHeight) / 2));
+        return { x: 0, y, width, height: cropHeight };
+    }
+
+    private getStoryFrameCropForSource(width: number, height: number): { x: number; y: number; width: number; height: number } {
+        const maxAspectCrop = this.getStoryAspectCrop(width, height);
+        const frameScale = Math.max(0.4, Math.min(1, ProfilePageComponent.StoryCropFrameHeightPercent / 100));
+        const cropWidth = Math.max(1, Math.round(maxAspectCrop.width * frameScale));
+        const cropHeight = Math.max(1, Math.round(maxAspectCrop.height * frameScale));
+
+        const availableShiftX = Math.max(0, (width - cropWidth) / 2);
+        const availableShiftY = Math.max(0, (height - cropHeight) / 2);
+        const normalizedX = this.storyFrameOffsetX / ProfilePageComponent.StoryFrameOffsetLimit;
+        const normalizedY = this.storyFrameOffsetY / ProfilePageComponent.StoryFrameOffsetLimit;
+
+        const centerX = (width / 2) + (normalizedX * availableShiftX);
+        const centerY = (height / 2) + (normalizedY * availableShiftY);
+        const shiftedX = Math.max(0, Math.min(width - cropWidth, Math.round(centerX - (cropWidth / 2))));
+        const shiftedY = Math.max(0, Math.min(height - cropHeight, Math.round(centerY - (cropHeight / 2))));
+
+        return {
+            x: shiftedX,
+            y: shiftedY,
+            width: cropWidth,
+            height: cropHeight
+        };
+    }
+
+    private loadImageFromFile(file: File): Promise<HTMLImageElement> {
+        return new Promise<HTMLImageElement>((resolve, reject) => {
+            const url = URL.createObjectURL(file);
+            const image = new Image();
+
+            image.onload = () => {
+                URL.revokeObjectURL(url);
+                resolve(image);
+            };
+
+            image.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error('Could not load image.'));
+            };
+
+            image.src = url;
+        });
+    }
+
+    private canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
+        return new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(blob => {
+                if (!blob) {
+                    reject(new Error('Could not create image blob.'));
+                    return;
+                }
+
+                resolve(blob);
+            }, type, quality);
+        });
+    }
+
     private clearStoryMediaSelection(): void {
+        this.stopStoryFrameDragging();
+        this.stopStoryTrimDragging();
+        this.clearStoryTrimPreviewOptions();
+        this.storyTrimPreviewRefreshToken += 1;
+        this.generatingStoryTrimPreviews = false;
+
         if (this.storyMediaObjectUrl) {
             URL.revokeObjectURL(this.storyMediaObjectUrl);
         }
@@ -1161,6 +2035,16 @@ export class ProfilePageComponent implements OnDestroy {
         this.storyMediaObjectUrl = '';
         this.storyMediaFile = null;
         this.storyMediaPreviewUrl = '';
+        this.storyMediaIsVideo = false;
+        this.storyMediaDurationSeconds = 0;
+        this.storyTrimStartSeconds = 0;
+        this.storyTrimEndSeconds = 0;
+        this.storyPreviewReady = false;
+        this.storySourceMediaWidth = 0;
+        this.storySourceMediaHeight = 0;
+        this.storyFrameZoom = 1;
+        this.storyFrameOffsetX = 0;
+        this.storyFrameOffsetY = 0;
     }
 
     private setFollowState(state: 'idle' | 'loading' | 'success' | 'failure', autoResetMs = 0): void {

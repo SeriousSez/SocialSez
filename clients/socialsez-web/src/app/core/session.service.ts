@@ -145,6 +145,18 @@ export class SessionService {
         return firstValueFrom(this.api.getReelsByAuthorHandle(handle, take));
     }
 
+    async loadPublicReelsByAuthorHandleAsync(handle: string, take = 25): Promise<ReelDto[]> {
+        return firstValueFrom(this.api.getPublicReelsByAuthorHandle(handle, take));
+    }
+
+    async loadPublicStoriesByAuthorHandleAsync(handle: string): Promise<StoryGroupDto | null> {
+        try {
+            return await firstValueFrom(this.api.getPublicStoriesByAuthorHandle(handle));
+        } catch {
+            return null;
+        }
+    }
+
     async toggleReelLikeAsync(reelId: string): Promise<ReelDto> {
         return firstValueFrom(this.api.toggleReelLike(reelId));
     }
@@ -167,6 +179,10 @@ export class SessionService {
 
     async loadPostsByAuthorHandleAsync(handle: string): Promise<PostDto[]> {
         return firstValueFrom(this.api.getPostsByAuthorHandle(handle));
+    }
+
+    async loadPublicPostsByAuthorHandleAsync(handle: string): Promise<PostDto[]> {
+        return firstValueFrom(this.api.getPublicPostsByAuthorHandle(handle));
     }
 
     async searchPostsAsync(query: string): Promise<PostDto[]> {

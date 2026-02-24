@@ -539,6 +539,77 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             .ToArray();
     }
 
+    public async Task<ReelDto?> GetPublicByIdAsync(Guid reelId, CancellationToken cancellationToken = default)
+    {
+        await EnsureReelSchemaAsync(cancellationToken);
+
+        var reel = await dbContext.Reels
+            .AsNoTracking()
+            .Include(x => x.Author)
+            .Include(x => x.Likes)
+            .Include(x => x.Comments)
+                .ThenInclude(comment => comment.Author)
+            .Include(x => x.Comments)
+                .ThenInclude(comment => comment.Likes)
+            .FirstOrDefaultAsync(x => x.Id == reelId, cancellationToken);
+
+        return reel is null ? null : MapToReelDto(reel, Guid.Empty);
+    }
+
+    public async Task<IReadOnlyCollection<ReelDto>> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, int take = 25, CancellationToken cancellationToken = default)
+    {
+        await EnsureReelSchemaAsync(cancellationToken);
+
+        var normalizedHandle = handle.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(normalizedHandle))
+        {
+            return Array.Empty<ReelDto>();
+        }
+
+        take = Math.Clamp(take, 1, 100);
+
+        var author = await dbContext.UserProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Handle == normalizedHandle, cancellationToken);
+
+        if (author is null)
+        {
+            return Array.Empty<ReelDto>();
+        }
+
+        var canViewPrivate = false;
+        if (viewerId.HasValue)
+        {
+            canViewPrivate = viewerId.Value == author.Id
+                || await dbContext.Follows
+                    .AsNoTracking()
+                    .AnyAsync(x => x.FollowerId == viewerId.Value && x.FollowedId == author.Id, cancellationToken);
+        }
+
+        if (author.IsPrivate && !canViewPrivate)
+        {
+            return Array.Empty<ReelDto>();
+        }
+
+        var reels = await dbContext.Reels
+            .AsNoTracking()
+            .Include(x => x.Author)
+            .Include(x => x.Likes)
+            .Include(x => x.Comments)
+                .ThenInclude(comment => comment.Author)
+            .Include(x => x.Comments)
+                .ThenInclude(comment => comment.Likes)
+            .Where(x => x.AuthorId == author.Id)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(take)
+            .ToArrayAsync(cancellationToken);
+
+        var mapProfileId = viewerId ?? Guid.Empty;
+        return reels
+            .Select(reel => MapToReelDto(reel, mapProfileId))
+            .ToArray();
+    }
+
     private static ReelDto MapToReelDto(Reel reel, Guid profileId)
     {
         return new ReelDto(

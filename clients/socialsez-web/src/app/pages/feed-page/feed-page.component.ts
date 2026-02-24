@@ -528,12 +528,20 @@ export class FeedPageComponent implements OnDestroy {
 
         try {
             const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile);
-            await this.session.createStoryAsync(uploadStoryMedia);
             this.cancelStoryComposer();
-            await this.load();
+
+            void (async () => {
+                try {
+                    await this.session.createStoryAsync(uploadStoryMedia);
+                    await this.load();
+                } catch {
+                    this.error = 'Could not publish story right now.';
+                } finally {
+                    this.postingStory = false;
+                }
+            })();
         } catch {
             this.storyComposerError = 'Could not publish story right now.';
-        } finally {
             this.postingStory = false;
         }
     }

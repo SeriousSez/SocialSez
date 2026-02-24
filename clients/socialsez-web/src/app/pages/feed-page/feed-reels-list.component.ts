@@ -35,6 +35,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     @Input() commentingReelId: string | null = null;
     @Input() sharingReelId: string | null = null;
     @Input() viewerProfileId: string | null = null;
+    @Input() canInteract = true;
     @Input() showOwnerActions = false;
     @Input() updatingReelId: string | null = null;
     @Input() deletingReelId: string | null = null;
@@ -56,6 +57,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     editingReelCaption = '';
     editingReelCommentId: string | null = null;
     editingReelCommentDraft = '';
+    copiedReelLinkId: string | null = null;
     private intersectionObserver: IntersectionObserver | null = null;
     private readonly reelVisibility = new Map<string, number>();
     private readonly mutedReelIds = new Set<string>();
@@ -67,6 +69,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     private readonly replyingToReelCommentByReelId = new Map<string, string | null>();
     private readonly reelMetadataCache = new Map<string, { source: string; location: string; collaborators: string[]; caption: string; frameZoom: number; frameOffsetX: number; frameOffsetY: number }>();
     private readonly pointerHandledActionKeys = new Map<string, number>();
+    private copyLinkResetTimerId: number | null = null;
     private readonly preciseDateFormatter = new Intl.DateTimeFormat(undefined, {
         month: 'short',
         day: 'numeric',
@@ -129,14 +132,44 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
             const video = videoRef.nativeElement;
             video.pause();
         }
+
+        if (this.copyLinkResetTimerId !== null) {
+            window.clearTimeout(this.copyLinkResetTimerId);
+            this.copyLinkResetTimerId = null;
+        }
     }
 
     onToggleLike(reel: ReelDto): void {
+        if (!this.canInteract) {
+            return;
+        }
+
         this.likeToggled.emit(reel);
     }
 
     onShareReel(reel: ReelDto): void {
+        if (!this.canInteract) {
+            return;
+        }
+
         this.shareRequested.emit(reel);
+    }
+
+    async onCopyReelLink(reel: ReelDto): Promise<void> {
+        const link = `${window.location.origin}/shared/reel/${reel.id}`;
+        try {
+            await navigator.clipboard.writeText(link);
+            this.copiedReelLinkId = reel.id;
+            if (this.copyLinkResetTimerId !== null) {
+                window.clearTimeout(this.copyLinkResetTimerId);
+            }
+            this.copyLinkResetTimerId = window.setTimeout(() => {
+                this.copiedReelLinkId = null;
+                this.copyLinkResetTimerId = null;
+            }, 2000);
+        } catch {
+            return;
+        }
     }
 
     startReelEdit(reel: ReelDto): void {
@@ -233,6 +266,10 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         event.preventDefault();
         event.stopPropagation();
 
+        if (!this.canInteract) {
+            return;
+        }
+
         const mentionPrefix = `@${comment.authorHandle} `;
         const existing = this.getReelCommentDraft(reelId);
         const trimmed = existing.trim();
@@ -258,6 +295,10 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     onSubmitReelComment(reel: ReelDto): void {
+        if (!this.canInteract) {
+            return;
+        }
+
         const draft = this.getReelCommentDraft(reel.id).trim();
         if (!draft || this.commentingReelId === reel.id) {
             return;
@@ -272,6 +313,11 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     toggleReelCommentLike(reel: ReelDto, comment: ReelCommentDto, event: MouseEvent): void {
         event.preventDefault();
         event.stopPropagation();
+
+        if (!this.canInteract) {
+            return;
+        }
+
         this.reelCommentLikeToggled.emit({ reel, commentId: comment.id });
     }
 

@@ -28,14 +28,30 @@
                                 </div>
                             </div>
 
+                            <button type="button" class="hero-icon-link" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? 'Profile link copied' : 'Copy profile link'" [attr.title]="profileLinkCopied ? 'Copied' : 'Copy profile link'">
+                                <i class="fa-duotone" [class.fa-light]="!profileLinkCopied" [class.fa-solid]="profileLinkCopied" [class.fa-share-nodes]="!profileLinkCopied" [class.fa-check]="profileLinkCopied" aria-hidden="true"></i>
+                            </button>
+
                             <a class="hero-icon-link" routerLink="/settings" aria-label="Settings" (click)="closeCreateMenu()">
                                 <i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i>
                             </a>
                         </div>
                     </ng-container>
                     <ng-template #followActions>
-                        <button type="button" (click)="toggleFollow()" [disabled]="followState === 'loading'" [class.ghost]="isFollowing && followState === 'idle'" [class.is-loading]="followState === 'loading'" [class.is-success]="followState === 'success'"
-                            [class.is-failure]="followState === 'failure'">{{ followButtonLabel }}</button>
+                        <div class="hero-actions-follow">
+                            <ng-container *ngIf="session.isAuthenticated(); else guestFollowActions">
+                                <button type="button" (click)="toggleFollow()" [disabled]="followState === 'loading'" [class.ghost]="isFollowing && followState === 'idle'" [class.is-loading]="followState === 'loading'" [class.is-success]="followState === 'success'"
+                                    [class.is-failure]="followState === 'failure'">{{ followButtonLabel }}</button>
+                            </ng-container>
+                            <ng-template #guestFollowActions>
+                                <a class="ghost" routerLink="/auth">Sign in to follow</a>
+                            </ng-template>
+
+                            <button type="button" class="hero-icon-link" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? 'Profile link copied' : 'Copy profile link'" [attr.title]="profileLinkCopied ? 'Copied' : 'Copy profile link'">
+                                <i class="fa-duotone" [class.fa-light]="!profileLinkCopied" [class.fa-solid]="profileLinkCopied" [class.fa-share-nodes]="!profileLinkCopied" [class.fa-check]="profileLinkCopied" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
                         <p class="status" *ngIf="followRequiresApproval && !isFollowing">Private profile</p>
                     </ng-template>
                 </div>
@@ -107,28 +123,84 @@
                     <button type="button" class="close" (click)="cancelStoryComposer()" [disabled]="postingStory" aria-label="Close story composer">✕</button>
                 </header>
 
-                <input #storyMediaInput type="file" class="visually-hidden" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onStoryMediaSelected($event)" [disabled]="postingStory" />
-
-                <section class="upload-picker" aria-label="Story media upload" *ngIf="!storyMediaPreviewUrl">
-                    <span class="upload-icon" aria-hidden="true">📸</span>
-                    <p class="upload-title">Start by selecting your story media</p>
-                    <p class="upload-subtitle">Images, MP4, WebM, MOV and similar formats are supported.</p>
-                    <button type="button" class="upload-button" (click)="storyMediaInput.click()" [disabled]="postingStory">Select Story Media</button>
-                </section>
-
-                <div class="story-preview-panel" *ngIf="storyMediaPreviewUrl">
-                    <video *ngIf="storyMediaFile?.type?.startsWith('video/')" [src]="storyMediaPreviewUrl" controls playsinline preload="metadata"></video>
-                    <img *ngIf="!storyMediaFile?.type?.startsWith('video/')" [src]="storyMediaPreviewUrl" alt="Story media preview" />
-                    <p class="media-file" *ngIf="storyMediaFile as file">Selected: {{ file.name }}</p>
+                <div class="composer-steps" aria-label="Story creation steps">
+                    <span [class.active]="storyComposerStep === 1">1. Media</span>
+                    <span [class.active]="storyComposerStep === 2">2. Crop, Trim & Publish</span>
                 </div>
 
-                <p class="media-file">Stories expire automatically after 24 hours.</p>
-                <p class="error" *ngIf="storyComposerError">{{ storyComposerError }}</p>
+                <ng-container *ngIf="storyComposerStep === 1">
+                    <input #storyMediaInput type="file" class="visually-hidden" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onStoryMediaSelected($event)" [disabled]="postingStory" />
+                    <section class="upload-picker" aria-label="Story media upload">
+                        <span class="upload-icon" aria-hidden="true">📸</span>
+                        <p class="upload-title">Start by selecting your story media</p>
+                        <p class="upload-subtitle">Images, MP4, WebM, MOV and similar formats are supported.</p>
+                        <button type="button" class="upload-button" (click)="storyMediaInput.click()" [disabled]="postingStory">Select Story Media</button>
+                    </section>
 
+                    <p class="media-file" *ngIf="storyMediaFile">Selected: {{ storyMediaFile.name }}</p>
+                    <p class="media-file">Stories expire automatically after 24 hours.</p>
+                </ng-container>
+
+                <ng-container *ngIf="storyComposerStep === 2">
+                    <p class="media-file" *ngIf="storyMediaFile as file">Editing: {{ file.name }}</p>
+
+                    <div class="story-preview-panel" *ngIf="storyMediaPreviewUrl && storyMediaIsVideo">
+                        <div #storyFrameViewport class="story-media-frame" [class.dragging]="isStoryFrameDragging">
+                            <video #storyPreviewVideo class="story-media-preview" [src]="storyMediaPreviewUrl" playsinline preload="metadata" (loadedmetadata)="onStoryPreviewLoadedMetadata()" (timeupdate)="onStoryPreviewTimeUpdate()"></video>
+                            <div class="story-crop-frame" [class.dragging]="isStoryFrameDragging" [ngStyle]="storyCropFrameStyle" (pointerdown)="onStoryFramePointerDown($event, storyFrameViewport)" role="button" aria-label="Drag to set story framing"></div>
+                        </div>
+
+                        <div class="story-frame-controls" *ngIf="storySourceMediaWidth > 0 && storySourceMediaHeight > 0">
+                            <span class="story-frame-controls-hint">Drag the 9:16 frame to set your crop.</span>
+                            <button type="button" class="ghost" (click)="resetStoryFramePosition()" [disabled]="postingStory">Reset framing</button>
+                        </div>
+
+                        <div class="story-trim-panel" *ngIf="storyPreviewReady && storyMediaDurationSeconds > 1">
+                            <p class="media-file">Original length: {{ storyMediaDurationSeconds }}s · Trimmed: {{ storyTrimmedDurationLabel }}</p>
+                            <div class="story-trim-track" #storyTrimTrack>
+                                <div class="story-trim-thumbs" *ngIf="storyTrimPreviewOptions.length">
+                                    <img *ngFor="let option of storyTrimPreviewOptions" [src]="option.previewUrl" alt="Story trim thumbnail" />
+                                </div>
+
+                                <div class="story-trim-mask left" [style.width.%]="storyTrimStartPercent"></div>
+                                <div class="story-trim-mask right" [style.left.%]="storyTrimEndPercent"></div>
+
+                                <div class="story-trim-selection" [style.left.%]="storyTrimStartPercent" [style.width.%]="storyTrimEndPercent - storyTrimStartPercent" (pointerdown)="onStoryTrimRangePointerDown($event, storyTrimTrack)">
+                                    <button type="button" class="story-trim-handle start" (pointerdown)="onStoryTrimHandlePointerDown($event, 'start', storyTrimTrack)" aria-label="Trim story start"></button>
+                                    <button type="button" class="story-trim-handle end" (pointerdown)="onStoryTrimHandlePointerDown($event, 'end', storyTrimTrack)" aria-label="Trim story end"></button>
+                                </div>
+                            </div>
+
+                            <div class="story-trim-scale">
+                                <span>0s</span>
+                                <span>{{ storyMediaDurationSeconds >= 2 ? (storyMediaDurationSeconds / 2 | number:'1.0-0') : 1 }}s</span>
+                                <span>{{ storyMediaDurationSeconds }}s</span>
+                            </div>
+                            <p class="media-file" *ngIf="generatingStoryTrimPreviews">Generating trim preview images...</p>
+                            <p class="media-file">Range: {{ storyTrimStartSeconds }}s to {{ storyTrimEndSeconds }}s</p>
+                        </div>
+                    </div>
+
+                    <div class="story-preview-panel" *ngIf="storyMediaPreviewUrl && !storyMediaIsVideo">
+                        <div #storyFrameViewport class="story-media-frame" [class.dragging]="isStoryFrameDragging">
+                            <img class="story-media-preview" [src]="storyMediaPreviewUrl" alt="Story media preview" (load)="onStoryImageLoaded($event)" />
+                            <div class="story-crop-frame" [class.dragging]="isStoryFrameDragging" [ngStyle]="storyCropFrameStyle" (pointerdown)="onStoryFramePointerDown($event, storyFrameViewport)" role="button" aria-label="Drag to set story framing"></div>
+                        </div>
+
+                        <div class="story-frame-controls" *ngIf="storySourceMediaWidth > 0 && storySourceMediaHeight > 0">
+                            <span class="story-frame-controls-hint">Drag the 9:16 frame to set your crop.</span>
+                            <button type="button" class="ghost" (click)="resetStoryFramePosition()" [disabled]="postingStory">Reset framing</button>
+                        </div>
+                    </div>
+
+                    <p class="media-file">Stories expire automatically after 24 hours.</p>
+                </ng-container>
+
+                <p class="error" *ngIf="storyComposerError">{{ storyComposerError }}</p>
                 <div class="media-actions">
                     <button type="button" class="ghost" (click)="cancelStoryComposer()" [disabled]="postingStory">Cancel</button>
-                    <button type="button" class="ghost" (click)="storyMediaInput.click()" [disabled]="postingStory">Change Media</button>
-                    <button type="button" (click)="publishStory()" [disabled]="!storyMediaFile || postingStory">{{ postingStory ? 'Publishing...' : 'Publish Story' }}</button>
+                    <button type="button" class="ghost" *ngIf="storyComposerStep === 2" (click)="goToStoryComposerStep(1)" [disabled]="postingStory">Back</button>
+                    <button type="button" *ngIf="storyComposerStep === 2" (click)="publishStory()" [disabled]="!storyMediaFile || (storyMediaIsVideo && !storyPreviewReady) || postingStory">{{ postingStory ? 'Publishing...' : 'Publish Story' }}</button>
                 </div>
             </section>
         </div>
@@ -145,9 +217,10 @@
 
         <div class="post-list" *ngIf="activeTab === 'posts' && !loading && posts.length; else noPostsYet">
             <app-post-card *ngFor="let post of posts" [post]="post" [content]="displayPostContent(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [showActions]="isOwnProfile" [showBottomMeta]="true" [showCommentsCount]="true" [reacting]="reactingPostId === post.id"
-                [busy]="reactingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)"
-                (clearReaction)="clearReaction(post)" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)"
-                (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
+                [busy]="reactingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" [canInteract]="session.isAuthenticated()" (editValueChange)="editContent = $event" (toggleLike)="toggleLike(post)"
+                (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (addComment)="addComment(post, $event)"
+                (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)"
+                (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
                 <div post-header class="author">
                     <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)">
                         <img class="avatar" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
@@ -163,7 +236,7 @@
 
         <section class="profile-reels" *ngIf="activeTab === 'reels' && !loading && reels.length; else noReelsYet">
             <app-feed-reels-list [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="activeUnseenStoryAuthorHandles" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId" [viewerProfileId]="currentProfileId"
-                [showOwnerActions]="isOwnProfile" [updatingReelId]="updatingReelId" [deletingReelId]="deletingReelId" (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)"
+                [canInteract]="session.isAuthenticated()" [showOwnerActions]="isOwnProfile" [updatingReelId]="updatingReelId" [deletingReelId]="deletingReelId" (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)"
                 (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelUpdated)="updateReelCaption($event.reel, $event.caption)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (reelDeleted)="deleteReel($event)">
             </app-feed-reels-list>
         </section>
@@ -226,8 +299,8 @@
 </ng-template>
 
 <app-feed-story-viewer [activeStory]="activeStory" [activeStoryGroup]="activeStoryGroup" [activeStoryIndex]="activeStoryIndex" [storyCount]="activeStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousStory" [hasNextStory]="hasNextStory"
-    [liked]="activeStory ? isStoryLiked(activeStory.id) : false" [sendingReply]="sendingStoryReply" [sharingStory]="sharingStoryMessage" [canDelete]="false" [deletingStory]="false" [errorMessage]="storyViewerError" (closed)="closeStoryViewer()" (previous)="showPreviousStory()"
-    (next)="showNextStory()" (replySubmitted)="sendStoryReply($event)" (likeToggled)="toggleStoryLike($event)" (shareRequested)="shareStoryAsMessage($event)">
+    [liked]="activeStory ? isStoryLiked(activeStory.id) : false" [sendingReply]="sendingStoryReply" [sharingStory]="sharingStoryMessage" [canDelete]="canDeleteActiveStory" [deletingStory]="deletingStory" [errorMessage]="storyViewerError" (closed)="closeStoryViewer()" (previous)="showPreviousStory()"
+    (next)="showNextStory()" (replySubmitted)="sendStoryReply($event)" (likeToggled)="toggleStoryLike($event)" (shareRequested)="shareStoryAsMessage($event)" (deleteRequested)="requestDeleteStory($event)">
 </app-feed-story-viewer>
 
 <app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
@@ -238,6 +311,9 @@
 
 <app-confirm-modal [open]="!!pendingDeleteReelComment" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingReelCommentId" (cancel)="cancelDeleteReelComment()"
     (confirm)="confirmDeleteReelComment()">
+</app-confirm-modal>
+
+<app-confirm-modal [open]="!!pendingDeleteStoryId" title="Delete story" message="Delete this story? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingStory" (cancel)="cancelDeleteStory()" (confirm)="confirmDeleteStory()">
 </app-confirm-modal>
 
 <app-share-post-modal [open]="!!pendingSharePost && pendingShareTarget === 'feed'" [post]="pendingSharePost" [target]="'feed'" [busy]="!!sharingPostId" [initialText]="shareNote" (cancel)="cancelShareModal()" (confirm)="submitShare($event)">

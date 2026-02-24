@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -16,5 +16,9 @@
     <ProjectReference Include="..\SocialSez.ApplicationService\SocialSez.ApplicationService.csproj" />
     <ProjectReference Include="..\SocialSez.Domain\SocialSez.Domain.csproj" />
     <ProjectReference Include="..\SocialSez.Infrastructure\SocialSez.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 </Project>

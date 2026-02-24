@@ -93,12 +93,34 @@ public class StoriesController(IStoryService storyService, IWebHostEnvironment e
         return Ok(feed);
     }
 
+    [AllowAnonymous]
+    [HttpGet("{storyId:guid}/public")]
+    public async Task<ActionResult<StoryDto>> GetPublicById(Guid storyId, CancellationToken cancellationToken)
+    {
+        var story = await storyService.GetPublicByIdAsync(storyId, cancellationToken);
+        return story is null ? NotFound() : Ok(story);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("by-author/{handle}/public")]
+    public async Task<ActionResult<StoryGroupDto>> GetPublicByAuthor([FromRoute] string handle, CancellationToken cancellationToken)
+    {
+        var viewerId = TryGetOptionalProfileId();
+        var group = await storyService.GetPublicByAuthorHandleAsync(handle, viewerId, cancellationToken);
+        return group is null ? NotFound() : Ok(group);
+    }
+
     private bool TryGetProfileId(out Guid profileId)
     {
         var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? User.FindFirstValue("sub");
 
         return Guid.TryParse(raw, out profileId);
+    }
+
+    private Guid? TryGetOptionalProfileId()
+    {
+        return TryGetProfileId(out var profileId) ? profileId : null;
     }
 
     private static FeedMode ParseFeedMode(string? mode)

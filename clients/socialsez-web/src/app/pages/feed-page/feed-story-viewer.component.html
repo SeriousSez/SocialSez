@@ -42,6 +42,8 @@
             <div class="story-quick-actions">
                 <button type="button" class="like-action" [class.active]="liked" (click)="onLikeClick()" aria-label="Like story">{{ liked ? '♥' : '♡' }}</button>
                 <button type="button" class="share-action" (click)="onShareClick()" [disabled]="sharingStory" aria-label="Share story in message"><i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i></button>
+                <button type="button" class="share-action" (click)="onCopyLinkClick()" aria-label="Copy story link"><i class="fa-duotone" [class.fa-light]="!copyLinkCopied" [class.fa-solid]="copyLinkCopied" [class.fa-link]="!copyLinkCopied" [class.fa-check]="copyLinkCopied"
+                        aria-hidden="true"></i></button>
                 <button type="button" *ngIf="replyDraft.trim()" (click)="onReplySubmit()" [disabled]="sendingReply" aria-label="Send reply">➤</button>
             </div>
         </footer>

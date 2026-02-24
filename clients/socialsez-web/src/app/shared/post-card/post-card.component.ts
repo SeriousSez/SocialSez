@@ -60,6 +60,7 @@ export class PostCardComponent implements OnDestroy {
     @Input() deleting = false;
     @Input() viewerProfileId: string | null = null;
     @Input() busy = false;
+    @Input() canInteract = true;
 
     @Output() editValueChange = new EventEmitter<string>();
     @Output() toggleLike = new EventEmitter<void>();
@@ -76,6 +77,7 @@ export class PostCardComponent implements OnDestroy {
     @Output() clearCommentReaction = new EventEmitter<string>();
     @Output() shareToFeed = new EventEmitter<void>();
     @Output() shareToChat = new EventEmitter<void>();
+    @Output() copyLink = new EventEmitter<void>();
 
     readonly reactionOptions = [
         { type: 'Like', emoji: '👍' },
@@ -103,10 +105,12 @@ export class PostCardComponent implements OnDestroy {
     private currentPostId: string | null = null;
     mentionTarget: 'post-edit' | 'comment-new' | 'comment-edit' | null = null;
     mentionTargetCommentId: string | null = null;
+    copyLinkCopied = false;
     private readonly expandedCommentReplyRootIds = new Set<string>();
     private mentionRangeStart = -1;
     private mentionRangeEnd = -1;
     private mentionSearchDebounceId: number | null = null;
+    private copyLinkResetTimerId: number | null = null;
     private mentionSearchToken = 0;
     private readonly pointerHandledActionKeys = new Map<string, number>();
 
@@ -114,6 +118,11 @@ export class PostCardComponent implements OnDestroy {
         if (this.mentionSearchDebounceId !== null) {
             window.clearTimeout(this.mentionSearchDebounceId);
             this.mentionSearchDebounceId = null;
+        }
+
+        if (this.copyLinkResetTimerId !== null) {
+            window.clearTimeout(this.copyLinkResetTimerId);
+            this.copyLinkResetTimerId = null;
         }
 
         if (this.currentPostId && !this.commentsOpen) {
@@ -138,6 +147,10 @@ export class PostCardComponent implements OnDestroy {
     }
 
     onPostPrimaryReaction(): void {
+        if (!this.canInteract) {
+            return;
+        }
+
         if (this.post.myReactionType) {
             this.clearReaction.emit();
             return;
@@ -147,6 +160,10 @@ export class PostCardComponent implements OnDestroy {
     }
 
     onPostReactionSelected(reactionType: string): void {
+        if (!this.canInteract) {
+            return;
+        }
+
         if (reactionType === 'Love') {
             this.onPostPrimaryReaction();
             return;
@@ -170,6 +187,10 @@ export class PostCardComponent implements OnDestroy {
     }
 
     submitComment(): void {
+        if (!this.canInteract) {
+            return;
+        }
+
         const content = this.commentInput.trim();
         if (!content) {
             return;
@@ -208,6 +229,10 @@ export class PostCardComponent implements OnDestroy {
     }
 
     async replyToComment(comment: CommentDto): Promise<void> {
+        if (!this.canInteract) {
+            return;
+        }
+
         this.commentsOpen = true;
         const postId = this.post?.id;
         if (postId) {
@@ -456,6 +481,10 @@ export class PostCardComponent implements OnDestroy {
     }
 
     onCommentPrimaryReaction(comment: CommentDto): void {
+        if (!this.canInteract) {
+            return;
+        }
+
         if (comment.myReactionType) {
             this.clearCommentReaction.emit(comment.id);
             return;
@@ -499,6 +528,10 @@ export class PostCardComponent implements OnDestroy {
     }
 
     onCommentReactionSelected(comment: CommentDto, reactionType: string): void {
+        if (!this.canInteract) {
+            return;
+        }
+
         if (reactionType === 'Love') {
             this.onCommentPrimaryReaction(comment);
             return;
@@ -552,7 +585,7 @@ export class PostCardComponent implements OnDestroy {
     }
 
     triggerShareToFeed(): void {
-        if (this.busy) {
+        if (this.busy || !this.canInteract) {
             return;
         }
 
@@ -560,11 +593,33 @@ export class PostCardComponent implements OnDestroy {
     }
 
     triggerShareToChat(): void {
-        if (this.busy) {
+        if (this.busy || !this.canInteract) {
             return;
         }
 
         this.shareToChat.emit();
+    }
+
+    async triggerCopyLink(): Promise<void> {
+        const postId = this.post?.id;
+        if (!postId) {
+            return;
+        }
+
+        const link = `${window.location.origin}/shared/post/${postId}`;
+        try {
+            await navigator.clipboard.writeText(link);
+            this.copyLinkCopied = true;
+            if (this.copyLinkResetTimerId !== null) {
+                window.clearTimeout(this.copyLinkResetTimerId);
+            }
+            this.copyLinkResetTimerId = window.setTimeout(() => {
+                this.copyLinkCopied = false;
+                this.copyLinkResetTimerId = null;
+            }, 2000);
+        } catch {
+            this.copyLink.emit();
+        }
     }
 
     onTextAreaBlur(): void {

@@ -12,6 +12,9 @@ import { ProfilePageComponent } from './pages/profile-page/profile-page.componen
 import { HashtagPageComponent } from './pages/hashtag-page/hashtag-page.component';
 import { NotificationsPageComponent } from './pages/notifications-page/notifications-page.component';
 import { NotificationRequestsPageComponent } from './pages/notification-requests-page/notification-requests-page.component';
+import { SharedPostPageComponent } from './pages/shared-post-page/shared-post-page.component';
+import { SharedReelPageComponent } from './pages/shared-reel-page/shared-reel-page.component';
+import { SharedStoryPageComponent } from './pages/shared-story-page/shared-story-page.component';
 
 const authGuard = async () => {
     const session = inject(SessionService);
@@ -38,9 +41,12 @@ export const routes: Routes = [
     { path: 'chat', component: ChatPageComponent, canActivate: [authGuard] },
     { path: 'hashtags/:tag', component: HashtagPageComponent, canActivate: [authGuard] },
     { path: 'profile', component: ProfilePageComponent, canActivate: [authGuard] },
-    { path: 'users/:handle', component: ProfilePageComponent, canActivate: [authGuard] },
+    { path: 'users/:handle', component: ProfilePageComponent },
     { path: 'notifications', component: NotificationsPageComponent, canActivate: [authGuard] },
     { path: 'notifications/requests', component: NotificationRequestsPageComponent, canActivate: [authGuard] },
     { path: 'settings', component: SettingsPageComponent, canActivate: [authGuard] },
+    { path: 'shared/post/:id', component: SharedPostPageComponent },
+    { path: 'shared/reel/:id', component: SharedReelPageComponent },
+    { path: 'shared/story/:id', component: SharedStoryPageComponent },
     { path: '**', redirectTo: 'feed' }
 ];

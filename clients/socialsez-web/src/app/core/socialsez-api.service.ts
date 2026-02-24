@@ -226,6 +226,15 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.get<PostDto[]>(`${this.baseUrl}/posts/by-author/${encodeURIComponent(normalized)}?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
+    getPublicPostsByAuthorHandle(handle: string, take = 25): Observable<PostDto[]> {
+        const normalized = handle.trim().toLowerCase();
+        return this.http.get<PostDto[]>(`${this.baseUrl}/posts/by-author/${encodeURIComponent(normalized)}/public?take=${take}`).pipe(timeout(15000));
+    }
+
+    getPublicPost(postId: string): Observable<PostDto> {
+        return this.http.get<PostDto>(`${this.baseUrl}/posts/${encodeURIComponent(postId)}/public`).pipe(timeout(15000));
+    }
+
     searchPosts(query: string, take = 25): Observable<PostDto[]> {
         return this.withAutoRefresh(() => this.http.get<PostDto[]>(`${this.baseUrl}/posts/search?q=${encodeURIComponent(query)}&take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
@@ -253,6 +262,24 @@ export class SocialSezApiService {
     getReelsByAuthorHandle(handle: string, take = 25): Observable<ReelDto[]> {
         const normalized = handle.trim().toLowerCase();
         return this.withAutoRefresh(() => this.http.get<ReelDto[]>(`${this.baseUrl}/reels/by-author/${encodeURIComponent(normalized)}?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getPublicReelsByAuthorHandle(handle: string, take = 25): Observable<ReelDto[]> {
+        const normalized = handle.trim().toLowerCase();
+        return this.http.get<ReelDto[]>(`${this.baseUrl}/reels/by-author/${encodeURIComponent(normalized)}/public?take=${take}`).pipe(timeout(15000));
+    }
+
+    getPublicStoriesByAuthorHandle(handle: string): Observable<StoryGroupDto> {
+        const normalized = handle.trim().toLowerCase();
+        return this.http.get<StoryGroupDto>(`${this.baseUrl}/stories/by-author/${encodeURIComponent(normalized)}/public`).pipe(timeout(15000));
+    }
+
+    getPublicReel(reelId: string): Observable<ReelDto> {
+        return this.http.get<ReelDto>(`${this.baseUrl}/reels/${encodeURIComponent(reelId)}/public`).pipe(timeout(15000));
+    }
+
+    getPublicStory(storyId: string): Observable<StoryDto> {
+        return this.http.get<StoryDto>(`${this.baseUrl}/stories/${encodeURIComponent(storyId)}/public`).pipe(timeout(15000));
     }
 
     toggleReelLike(reelId: string): Observable<ReelDto> {

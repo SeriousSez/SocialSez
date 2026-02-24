@@ -1,0 +1,45 @@
+<section class="shared-page">
+    <header class="shared-head">
+        <h2>Shared Story</h2>
+        <a routerLink="/auth">Sign in</a>
+    </header>
+
+    <article class="shared-card" *ngIf="loading">
+        <p>Loading story...</p>
+    </article>
+
+    <article class="shared-card" *ngIf="notFound && !loading">
+        <h3>Story unavailable</h3>
+        <p>This story is expired, removed, or the link is invalid.</p>
+    </article>
+
+    <article class="shared-card" *ngIf="error && !loading && !notFound">
+        <h3>Something went wrong</h3>
+        <p>{{ error }}</p>
+    </article>
+
+    <article class="shared-card" *ngIf="story as item">
+        <header class="meta-row">
+            <div class="author-meta">
+                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
+                <ng-template #authorInitial>
+                    <div class="author-avatar">{{ (item.authorHandle[0] || '?') | uppercase }}</div>
+                </ng-template>
+                <div>
+                    <strong>@{{ item.authorHandle }}</strong>
+                    <p>{{ item.createdAtUtc | date:'medium' }}</p>
+                </div>
+            </div>
+            <button type="button" class="ghost" (click)="copyLinkAsync()">Copy link</button>
+        </header>
+
+        <p class="content" *ngIf="item.caption">{{ item.caption }}</p>
+
+        <ng-container *ngIf="isVideoMedia(item.mediaUrl); else imageStory">
+            <video class="media" [src]="item.mediaUrl" controls playsinline preload="metadata"></video>
+        </ng-container>
+        <ng-template #imageStory>
+            <img class="media" [src]="item.mediaUrl" alt="Shared story media" />
+        </ng-template>
+    </article>
+</section>
