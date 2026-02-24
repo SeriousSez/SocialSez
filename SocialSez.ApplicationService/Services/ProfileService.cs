@@ -103,9 +103,16 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
 
         take = Math.Clamp(take, 1, 100);
 
-        var profiles = await dbContext.UserProfiles
+        var profilesQuery = dbContext.UserProfiles
             .AsNoTracking()
-            .Where(x => x.Handle.Contains(normalizedQuery) || x.DisplayName.ToLower().Contains(normalizedQuery))
+            .Where(x => x.Handle.Contains(normalizedQuery) || x.DisplayName.ToLower().Contains(normalizedQuery));
+
+        if (!viewerId.HasValue)
+        {
+            profilesQuery = profilesQuery.Where(x => !x.IsPrivate);
+        }
+
+        var profiles = await profilesQuery
             .OrderBy(x => x.Handle)
             .Take(take)
             .ToArrayAsync(cancellationToken);

@@ -609,7 +609,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .ToArray();
     }
 
-    public async Task<IReadOnlyCollection<PostDto>> SearchPostsAsync(Guid profileId, string query, int take = 25, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<PostDto>> SearchPostsAsync(Guid? viewerId, string query, int take = 25, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
 
@@ -621,12 +621,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         take = Math.Clamp(take, 1, 100);
 
-        var followedIds = await dbContext.Follows
-            .Where(x => x.FollowerId == profileId)
-            .Select(x => x.FollowedId)
-            .ToListAsync(cancellationToken);
-
-        followedIds.Add(profileId);
+        var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
 
         var posts = await dbContext.Posts
             .AsNoTracking()
@@ -637,7 +632,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
             .Where(x =>
-                (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
+                (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                 &&
                 ((!string.IsNullOrWhiteSpace(x.Content) && x.Content.ToLower().Contains(normalizedQuery)) ||
                 x.Author.Handle.Contains(normalizedQuery)))
@@ -645,19 +640,25 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Take(take)
             .ToArrayAsync(cancellationToken);
 
+        var mapProfileId = viewerId ?? Guid.Empty;
         return posts
-            .Select(post => MapToPostDto(post, profileId))
+            .Select(post => MapToPostDto(post, mapProfileId))
             .ToArray();
     }
 
-    public async Task<IReadOnlyCollection<HashtagSearchResultDto>> GetTrendingHashtagsAsync(int take = 10, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<HashtagSearchResultDto>> GetTrendingHashtagsAsync(int take = 10, Guid? viewerId = null, CancellationToken cancellationToken = default)
     {
         take = Math.Clamp(take, 1, 100);
         var sinceUtc = DateTime.UtcNow.AddDays(-7);
+        var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
 
         var recentCandidates = await dbContext.Posts
             .AsNoTracking()
-            .Where(x => !string.IsNullOrWhiteSpace(x.Content) && x.Content.Contains('#') && x.CreatedAtUtc >= sinceUtc)
+            .Where(x =>
+                !string.IsNullOrWhiteSpace(x.Content)
+                && x.Content.Contains('#')
+                && x.CreatedAtUtc >= sinceUtc
+                && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId))))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(2000)
             .Select(x => x.Content)
@@ -667,7 +668,10 @@ public class PostService(SocialSezContext dbContext) : IPostService
             ? recentCandidates
             : await dbContext.Posts
                 .AsNoTracking()
-                .Where(x => !string.IsNullOrWhiteSpace(x.Content) && x.Content.Contains('#'))
+                .Where(x =>
+                    !string.IsNullOrWhiteSpace(x.Content)
+                    && x.Content.Contains('#')
+                    && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId))))
                 .OrderByDescending(x => x.CreatedAtUtc)
                 .Take(2000)
                 .Select(x => x.Content)
@@ -702,7 +706,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .ToArray();
     }
 
-    public async Task<IReadOnlyCollection<HashtagSearchResultDto>> SearchHashtagsAsync(string query, int take = 20, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<HashtagSearchResultDto>> SearchHashtagsAsync(string query, int take = 20, Guid? viewerId = null, CancellationToken cancellationToken = default)
     {
         var normalizedQuery = NormalizeHashtag(query);
         if (string.IsNullOrWhiteSpace(normalizedQuery))
@@ -711,10 +715,14 @@ public class PostService(SocialSezContext dbContext) : IPostService
         }
 
         take = Math.Clamp(take, 1, 100);
+        var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
 
         var candidates = await dbContext.Posts
             .AsNoTracking()
-            .Where(x => !string.IsNullOrWhiteSpace(x.Content) && x.Content.Contains('#'))
+            .Where(x =>
+                !string.IsNullOrWhiteSpace(x.Content)
+                && x.Content.Contains('#')
+                && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId))))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(1000)
             .Select(x => x.Content)
@@ -954,6 +962,23 @@ public class PostService(SocialSezContext dbContext) : IPostService
             myReactionType,
             reactions,
             comments);
+    }
+
+    private async Task<HashSet<Guid>?> GetAllowedPrivateAuthorIdsAsync(Guid? viewerId, CancellationToken cancellationToken)
+    {
+        if (!viewerId.HasValue)
+        {
+            return null;
+        }
+
+        var followedIds = await dbContext.Follows
+            .AsNoTracking()
+            .Where(x => x.FollowerId == viewerId.Value)
+            .Select(x => x.FollowedId)
+            .ToListAsync(cancellationToken);
+
+        followedIds.Add(viewerId.Value);
+        return followedIds.ToHashSet();
     }
 
     private static string NormalizeReactionType(string? rawType)

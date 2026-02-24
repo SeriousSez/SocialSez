@@ -37,7 +37,7 @@ export const routes: Routes = [
     { path: 'auth', component: AuthPageComponent, canActivate: [guestGuard] },
     { path: 'feed', component: FeedPageComponent, canActivate: [authGuard] },
     { path: 'compose', component: ComposePageComponent, canActivate: [authGuard] },
-    { path: 'discover', component: DiscoverPageComponent, canActivate: [authGuard] },
+    { path: 'discover', component: DiscoverPageComponent },
     { path: 'chat', component: ChatPageComponent, canActivate: [authGuard] },
     { path: 'hashtags/:tag', component: HashtagPageComponent, canActivate: [authGuard] },
     { path: 'profile', component: ProfilePageComponent, canActivate: [authGuard] },

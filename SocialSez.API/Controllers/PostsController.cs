@@ -249,32 +249,27 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
         return Ok(feed);
     }
 
-    [Authorize]
     [HttpGet("search")]
     public async Task<ActionResult<IReadOnlyCollection<PostDto>>> SearchPosts([FromQuery] string q, [FromQuery] int take = 25, CancellationToken cancellationToken = default)
     {
-        if (!TryGetProfileId(out var profileId))
-        {
-            return Unauthorized();
-        }
-
-        var posts = await postService.SearchPostsAsync(profileId, q, take, cancellationToken);
+        var viewerId = TryGetOptionalProfileId();
+        var posts = await postService.SearchPostsAsync(viewerId, q, take, cancellationToken);
         return Ok(posts);
     }
 
-    [Authorize]
     [HttpGet("hashtags/trending")]
     public async Task<ActionResult<IReadOnlyCollection<HashtagSearchResultDto>>> GetTrendingHashtags([FromQuery] int take = 10, CancellationToken cancellationToken = default)
     {
-        var hashtags = await postService.GetTrendingHashtagsAsync(take, cancellationToken);
+        var viewerId = TryGetOptionalProfileId();
+        var hashtags = await postService.GetTrendingHashtagsAsync(take, viewerId, cancellationToken);
         return Ok(hashtags);
     }
 
-    [Authorize]
     [HttpGet("hashtags/search")]
     public async Task<ActionResult<IReadOnlyCollection<HashtagSearchResultDto>>> SearchHashtags([FromQuery] string q, [FromQuery] int take = 20, CancellationToken cancellationToken = default)
     {
-        var hashtags = await postService.SearchHashtagsAsync(q, take, cancellationToken);
+        var viewerId = TryGetOptionalProfileId();
+        var hashtags = await postService.SearchHashtagsAsync(q, take, viewerId, cancellationToken);
         return Ok(hashtags);
     }
 

@@ -38,16 +38,11 @@ public class ProfilesController(IProfileService profileService) : ControllerBase
         return summary is null ? NotFound() : Ok(summary);
     }
 
-    [Authorize]
     [HttpGet("search")]
     public async Task<ActionResult<IReadOnlyCollection<ProfileDto>>> Search([FromQuery] string q, [FromQuery] int take = 20, CancellationToken cancellationToken = default)
     {
-        if (!TryGetProfileId(out var profileId))
-        {
-            return Unauthorized();
-        }
-
-        var results = await profileService.SearchAsync(q, profileId, take, cancellationToken);
+        var viewerId = TryGetOptionalProfileId();
+        var results = await profileService.SearchAsync(q, viewerId, take, cancellationToken);
         return Ok(results);
     }
 
