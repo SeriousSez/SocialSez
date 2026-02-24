@@ -11,6 +11,11 @@
                     <p class="handle">@{{ profile.handle }}</p>
                     <p class="bio">{{ profile.bio || 'No bio yet.' }}</p>
                     <p class="joined">Joined {{ profile.createdAtUtc | date:'mediumDate' }}</p>
+                    <div class="hero-stats" aria-label="Profile stats">
+                        <span><strong>{{ totalPosts }}</strong> posts</span>
+                        <span><strong>{{ totalFollowers }}</strong> followers</span>
+                        <span><strong>{{ totalFollowing }}</strong> following</span>
+                    </div>
                 </div>
 
                 <div class="hero-actions">
@@ -58,25 +63,6 @@
             </header>
 
             <p class="status" *ngIf="isPrivateLockedView"><i class="fa-duotone fa-light fa-lock" aria-hidden="true"></i>This profile is private. Follow and wait for approval to see posts.</p>
-
-            <section class="activities">
-                <article class="activity-card">
-                    <h3>Posts</h3>
-                    <p>{{ totalPosts }}</p>
-                </article>
-                <article class="activity-card">
-                    <h3>Reels</h3>
-                    <p>{{ totalReels }}</p>
-                </article>
-                <article class="activity-card">
-                    <h3>{{ isOwnProfile ? 'Comments on your posts' : 'Comments on their posts' }}</h3>
-                    <p>{{ totalCommentsOnPosts }}</p>
-                </article>
-                <article class="activity-card">
-                    <h3>Active last 7 days</h3>
-                    <p>{{ activeLast7Days }}</p>
-                </article>
-            </section>
 
             <section class="profile-tabs" aria-label="Profile content tabs">
                 <button type="button" [class.active]="activeTab === 'posts'" (click)="setActiveTab('posts')">Posts</button>

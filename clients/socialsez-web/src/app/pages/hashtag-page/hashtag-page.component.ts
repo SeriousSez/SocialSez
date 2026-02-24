@@ -4,8 +4,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
 import { PostDto, StoryGroupDto } from '../../core/api.types';
+import { executePostShareAction, executePostShareToChat } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
+import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
 import { SessionService } from '../../core/session.service';
+import { StoryPresenceService } from '../../core/story-presence.service';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
 import { SharePostMessageModalComponent, SharePostMessageSubmit } from '../../shared/share-post-message-modal/share-post-message-modal.component';
@@ -44,6 +47,7 @@ export class HashtagPageComponent {
     constructor(
         private readonly session: SessionService,
         private readonly postInteractions: PostInteractionsService,
+        private readonly storyPresence: StoryPresenceService,
         private readonly route: ActivatedRoute,
         private readonly router: Router
     ) {
@@ -73,13 +77,11 @@ export class HashtagPageComponent {
     }
 
     hasActiveStoryForHandle(handle: string): boolean {
-        const normalized = handle.trim().toLowerCase();
-        return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
+        return this.storyPresence.hasActiveStoryForHandle(this.activeStoryGroups, handle);
     }
 
     hasUnseenStoryForHandle(handle: string): boolean {
-        const normalized = handle.trim().toLowerCase();
-        return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized && group.hasUnseenStories);
+        return this.storyPresence.hasUnseenStoryForHandle(this.activeStoryGroups, handle);
     }
 
     async openProfileOrStory(handle: string, event: MouseEvent): Promise<void> {
@@ -208,13 +210,7 @@ export class HashtagPageComponent {
     }
 
     cancelShareModal(): void {
-        if (this.sharingPostId) {
-            return;
-        }
-
-        this.pendingSharePost = null;
-        this.pendingShareTarget = null;
-        this.shareNote = '';
+        cancelPostShareModal(this);
     }
 
     async submitShare(note: string): Promise<void> {
@@ -257,56 +253,48 @@ export class HashtagPageComponent {
     }
 
     private openShareModal(post: PostDto, target: 'feed' | 'chat'): void {
-        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
-            return;
-        }
-
-        this.pendingSharePost = post;
-        this.pendingShareTarget = target;
-        this.shareNote = '';
+        openPostShareModal(this, post, target, this.savingPost, !!this.deletingPostId);
     }
 
     private async executeShareToFeed(post: PostDto, shareText: string): Promise<boolean> {
-        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
-            return false;
-        }
+        const state = {
+            sharingPostId: this.sharingPostId,
+            errorMessage: this.error
+        };
 
-        this.sharingPostId = post.id;
-        this.error = '';
+        const succeeded = await executePostShareAction(
+            state,
+            post.id,
+            () => this.postInteractions.shareToFeed(post, shareText),
+            'Could not share this post right now.',
+            this.savingPost,
+            !!this.deletingPostId
+        );
 
-        try {
-            await this.postInteractions.shareToFeed(post, shareText);
-            return true;
-        } catch {
-            this.error = 'Could not share this post right now.';
-            return false;
-        } finally {
-            this.sharingPostId = null;
-        }
+        this.sharingPostId = state.sharingPostId;
+        this.error = state.errorMessage;
+        return succeeded;
     }
 
     private async executeShareToChat(post: PostDto, request: SharePostMessageSubmit): Promise<boolean> {
-        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
-            return false;
-        }
+        const state = {
+            sharingPostId: this.sharingPostId,
+            errorMessage: this.error
+        };
 
-        const recipientIds = request.recipientIds;
-        if (!recipientIds.length) {
-            return false;
-        }
+        const succeeded = await executePostShareToChat(
+            state,
+            post.id,
+            request.recipientIds,
+            () => this.postInteractions.shareToChat(post, request),
+            'Could not send this post to chat right now.',
+            this.savingPost,
+            !!this.deletingPostId
+        );
 
-        this.sharingPostId = post.id;
-        this.error = '';
-
-        try {
-            await this.postInteractions.shareToChat(post, request);
-            return true;
-        } catch {
-            this.error = 'Could not send this post to chat right now.';
-            return false;
-        } finally {
-            this.sharingPostId = null;
-        }
+        this.sharingPostId = state.sharingPostId;
+        this.error = state.errorMessage;
+        return succeeded;
     }
 
     async toggleLike(post: PostDto): Promise<void> {
@@ -410,25 +398,7 @@ export class HashtagPageComponent {
 
         this.refreshingStoryPresence = true;
         try {
-            const [forYou, following] = await Promise.allSettled([
-                this.session.loadStoryFeedAsync(80, 'for-you'),
-                this.session.loadStoryFeedAsync(80, 'following')
-            ]);
-
-            const merged = [
-                ...(forYou.status === 'fulfilled' ? forYou.value : []),
-                ...(following.status === 'fulfilled' ? following.value : [])
-            ];
-
-            const deduped = new Map<string, StoryGroupDto>();
-            for (const group of merged) {
-                const key = group.authorId || group.authorHandle.trim().toLowerCase();
-                if (!deduped.has(key)) {
-                    deduped.set(key, group);
-                }
-            }
-
-            this.activeStoryGroups = Array.from(deduped.values());
+            this.activeStoryGroups = await this.storyPresence.loadActiveStoryGroups();
         } catch {
             this.activeStoryGroups = [];
         } finally {

@@ -5,8 +5,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, ProfileDto, ReactionSummaryDto, ReelCommentDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
 import { ChatRealtimeService } from '../../core/chat-realtime.service';
-import { SharedReelCommentPreview, SharedReelPreview, buildSharedReelMarker, buildSharedReelPreview, decodeSharedReelPayload } from '../../core/shared-reel.utils';
+import { ReelInteractionsService } from '../../core/reel-interactions.service';
+import { executeReelShareToChat } from '../../core/reel-share-to-chat.utils';
+import { SharedReelCommentPreview, SharedReelPreview, decodeSharedReelPayload } from '../../core/shared-reel.utils';
 import { SharedPostPreview, buildSharedPostMarker, decodeSharedPostPayload } from '../../core/shared-post.utils';
+import { cancelStoryShareModal, openStoryShareModal } from '../../core/story-share-modal-state.utils';
+import { executeStoryShareToChat as executeStoryShareToChatCore } from '../../core/story-share-to-chat.utils';
 import { SessionService } from '../../core/session.service';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
@@ -181,7 +185,13 @@ export class ChatPageComponent implements OnDestroy {
     private readonly ngZone = inject(NgZone);
     private searchProfilesDebounceId: number | null = null;
 
-    constructor(private readonly session: SessionService, private readonly chatRealtime: ChatRealtimeService, private readonly route: ActivatedRoute, private readonly router: Router) {
+    constructor(
+        private readonly session: SessionService,
+        private readonly chatRealtime: ChatRealtimeService,
+        private readonly reelInteractions: ReelInteractionsService,
+        private readonly route: ActivatedRoute,
+        private readonly router: Router
+    ) {
         this.chatRealtime.messageUpserted$
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((message) => {
@@ -1193,20 +1203,30 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     openSharedStoryShareModal(story: StoryDto): void {
-        if (this.sharingSharedStoryId) {
+        const state = {
+            sharingStoryId: this.sharingSharedStoryId,
+            pendingShareStory: this.pendingShareStoryFromViewer
+        };
+
+        if (!openStoryShareModal(state, story, this.sharingSharedStoryMessage)) {
             return;
         }
 
-        this.pendingShareStoryFromViewer = story;
+        this.pendingShareStoryFromViewer = state.pendingShareStory;
         this.sharedStoryViewerError = '';
     }
 
     cancelSharedStoryShareModal(): void {
-        if (this.sharingSharedStoryId) {
+        const state = {
+            sharingStoryId: this.sharingSharedStoryId,
+            pendingShareStory: this.pendingShareStoryFromViewer
+        };
+
+        if (!cancelStoryShareModal(state)) {
             return;
         }
 
-        this.pendingShareStoryFromViewer = null;
+        this.pendingShareStoryFromViewer = state.pendingShareStory;
     }
 
     async submitSharedStoryShareAsMessage(request: ShareReelMessageSubmit): Promise<void> {
@@ -2394,90 +2414,44 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     private async executeReelShareToChat(reel: ReelDto, request: ShareReelMessageSubmit): Promise<boolean> {
-        if (this.sharingSharedReelId) {
-            return false;
-        }
+        const state = {
+            sharingReelId: this.sharingSharedReelId,
+            errorMessage: this.status
+        };
 
-        const recipientIds = request.recipientIds;
-        if (!recipientIds.length) {
-            return false;
-        }
+        const succeeded = await executeReelShareToChat(
+            state,
+            reel,
+            request,
+            () => this.reelInteractions.shareToChat(reel, request),
+            'Could not send this reel to direct messages right now.'
+        );
 
-        this.sharingSharedReelId = reel.id;
-
-        try {
-            const shareText = request.note.trim();
-            const reelMessage = buildSharedReelMarker(buildSharedReelPreview(reel));
-            const sendToConversation = async (conversationId: string): Promise<void> => {
-                if (shareText) {
-                    await this.session.sendChatMessageAsync(conversationId, shareText);
-                }
-
-                await this.session.sendChatMessageAsync(conversationId, reelMessage);
-            };
-
-            if (request.mode === 'group' && recipientIds.length > 1) {
-                const group = await this.session.createGroupConversationAsync('', recipientIds);
-                await sendToConversation(group.id);
-            } else {
-                await Promise.all(recipientIds.map(async recipientId => {
-                    const conversation = await this.session.createDirectConversationAsync(recipientId);
-                    await sendToConversation(conversation.id);
-                }));
-            }
-
-            return true;
-        } catch {
-            this.status = 'Could not send this reel to direct messages right now.';
-            return false;
-        } finally {
-            this.sharingSharedReelId = null;
-        }
+        this.sharingSharedReelId = state.sharingReelId;
+        this.status = state.errorMessage;
+        return succeeded;
     }
 
     private async executeStoryShareToChat(story: StoryDto, request: ShareReelMessageSubmit): Promise<boolean> {
-        if (this.sharingSharedStoryId) {
-            return false;
-        }
+        const state = {
+            sharingStoryId: this.sharingSharedStoryId,
+            sharingStoryMessage: this.sharingSharedStoryMessage,
+            errorMessage: this.sharedStoryViewerError
+        };
 
-        const recipientIds = request.recipientIds;
-        if (!recipientIds.length) {
-            return false;
-        }
+        const succeeded = await executeStoryShareToChatCore(
+            state,
+            this.session,
+            story,
+            request,
+            this.buildSharedStoryMarker(story),
+            'Could not share this story as a message right now.'
+        );
 
-        this.sharingSharedStoryId = story.id;
-        this.sharingSharedStoryMessage = true;
-        this.sharedStoryViewerError = '';
-
-        try {
-            const shareText = request.note.trim();
-            const storyMessage = this.buildSharedStoryMarker(story);
-            const sendToConversation = async (conversationId: string): Promise<void> => {
-                if (shareText) {
-                    await this.session.sendChatMessageAsync(conversationId, shareText);
-                }
-
-                await this.session.sendChatMessageAsync(conversationId, storyMessage);
-            };
-
-            if (request.mode === 'group' && recipientIds.length > 1) {
-                const group = await this.session.createGroupConversationAsync('', recipientIds);
-                await sendToConversation(group.id);
-            } else {
-                await Promise.all(recipientIds.map(async recipientId => {
-                    const conversation = await this.session.createDirectConversationAsync(recipientId);
-                    await sendToConversation(conversation.id);
-                }));
-            }
-
-            return true;
-        } catch {
-            this.sharedStoryViewerError = 'Could not share this story as a message right now.';
-            return false;
-        } finally {
-            this.sharingSharedStoryId = null;
-            this.sharingSharedStoryMessage = false;
-        }
+        this.sharingSharedStoryId = state.sharingStoryId;
+        this.sharingSharedStoryMessage = state.sharingStoryMessage;
+        this.sharedStoryViewerError = state.errorMessage;
+        return succeeded;
     }
 
     private parseMessageContent(content: string): ParsedChatMessage {

@@ -4,7 +4,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
 import { FeedMode, PostDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
-import { buildSharedPostMarker, buildSharedPostPreview } from '../../core/shared-post.utils';
+import { executePostShareAction, executePostShareToChat, executePostShareToFeedAndReload } from '../../core/post-share-execution.utils';
+import { PostInteractionsService } from '../../core/post-interactions.service';
+import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
+import { executeReelShareToChat } from '../../core/reel-share-to-chat.utils';
+import { ReelInteractionsService } from '../../core/reel-interactions.service';
+import { cancelReelShareModal, openReelShareModal } from '../../core/reel-share-modal-state.utils';
+import { cancelStoryShareModal as cancelStoryShareModalState, openStoryShareModal } from '../../core/story-share-modal-state.utils';
+import { executeStoryShareToChat as executeStoryShareToChatCore } from '../../core/story-share-to-chat.utils';
+import { StoryPresenceService } from '../../core/story-presence.service';
 import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from './feed-reels-list.component';
 import { FeedStoryViewerComponent } from './feed-story-viewer.component';
 import { ReelComposerModalComponent, ReelUploadStatusEvent } from '../../shared/reel-composer-modal/reel-composer-modal.component';
@@ -16,7 +24,6 @@ import { ShareReelMessageModalComponent, ShareReelMessageSubmit } from '../../sh
 import { SharePostModalComponent } from '../../shared/share-post-modal/share-post-modal.component';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
-import { buildSharedReelMarker, buildSharedReelPreview } from '../../core/shared-reel.utils';
 
 interface StoryTrimPreviewOption {
     previewUrl: string;
@@ -136,7 +143,14 @@ export class FeedPageComponent implements OnDestroy {
     private readonly ngZone = inject(NgZone);
     private pendingStoryHandleFromRoute: string | null = null;
 
-    constructor(private readonly session: SessionService, private readonly router: Router, private readonly route: ActivatedRoute) {
+    constructor(
+        private readonly session: SessionService,
+        private readonly postInteractions: PostInteractionsService,
+        private readonly reelInteractions: ReelInteractionsService,
+        private readonly storyPresence: StoryPresenceService,
+        private readonly router: Router,
+        private readonly route: ActivatedRoute
+    ) {
         this.session.appChanges$
             .pipe(
                 filter(change => change === 'posts' || change === 'profile' || change === 'session'),
@@ -178,13 +192,11 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     get activeStoryAuthorHandles(): string[] {
-        return this.storyGroups.map(group => group.authorHandle.trim().toLowerCase());
+        return this.storyPresence.getActiveStoryAuthorHandles(this.storyGroups);
     }
 
     get activeUnseenStoryAuthorHandles(): string[] {
-        return this.storyGroups
-            .filter(group => group.hasUnseenStories)
-            .map(group => group.authorHandle.trim().toLowerCase());
+        return this.storyPresence.getUnseenStoryAuthorHandles(this.storyGroups);
     }
 
     get activeStory(): StoryDto | null {
@@ -621,13 +633,11 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     hasActiveStoryForHandle(handle: string): boolean {
-        const normalized = handle.trim().toLowerCase();
-        return this.storyGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
+        return this.storyPresence.hasActiveStoryForHandle(this.storyGroups, handle);
     }
 
     hasUnseenStoryForHandle(handle: string): boolean {
-        const normalized = handle.trim().toLowerCase();
-        return this.storyGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized && group.hasUnseenStories);
+        return this.storyPresence.hasUnseenStoryForHandle(this.storyGroups, handle);
     }
 
     openProfileOrStory(handle: string, event?: MouseEvent): void {
@@ -754,20 +764,15 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     async shareStoryAsMessage(story: StoryDto): Promise<void> {
-        if (this.sharingStoryMessage || this.sharingStoryId) {
+        if (!openStoryShareModal(this, story, this.sharingStoryMessage)) {
             return;
         }
 
         this.storyViewerError = '';
-        this.pendingShareStory = story;
     }
 
     cancelStoryShareModal(): void {
-        if (this.sharingStoryId) {
-            return;
-        }
-
-        this.pendingShareStory = null;
+        cancelStoryShareModalState(this);
     }
 
     async submitStoryShareAsMessage(request: ShareReelMessageSubmit): Promise<void> {
@@ -805,48 +810,25 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     private async executeStoryShareToChat(story: StoryDto, request: ShareReelMessageSubmit): Promise<boolean> {
-        if (this.sharingStoryId) {
-            return false;
-        }
+        const state = {
+            sharingStoryId: this.sharingStoryId,
+            sharingStoryMessage: this.sharingStoryMessage,
+            errorMessage: this.storyViewerError
+        };
 
-        const recipientIds = request.recipientIds;
-        if (!recipientIds.length) {
-            return false;
-        }
+        const succeeded = await executeStoryShareToChatCore(
+            state,
+            this.session,
+            story,
+            request,
+            this.buildSharedStoryMarker(story),
+            'Could not share this story as a message right now.'
+        );
 
-        this.sharingStoryId = story.id;
-        this.sharingStoryMessage = true;
-        this.storyViewerError = '';
-
-        try {
-            const shareText = request.note.trim();
-            const storyMessage = this.buildSharedStoryMarker(story);
-            const sendToConversation = async (conversationId: string): Promise<void> => {
-                if (shareText) {
-                    await this.session.sendChatMessageAsync(conversationId, shareText);
-                }
-
-                await this.session.sendChatMessageAsync(conversationId, storyMessage);
-            };
-
-            if (request.mode === 'group' && recipientIds.length > 1) {
-                const group = await this.session.createGroupConversationAsync('', recipientIds);
-                await sendToConversation(group.id);
-            } else {
-                await Promise.all(recipientIds.map(async (recipientId) => {
-                    const conversation = await this.session.createDirectConversationAsync(recipientId);
-                    await sendToConversation(conversation.id);
-                }));
-            }
-
-            return true;
-        } catch {
-            this.storyViewerError = 'Could not share this story as a message right now.';
-            return false;
-        } finally {
-            this.sharingStoryId = null;
-            this.sharingStoryMessage = false;
-        }
+        this.sharingStoryId = state.sharingStoryId;
+        this.sharingStoryMessage = state.sharingStoryMessage;
+        this.storyViewerError = state.errorMessage;
+        return succeeded;
     }
 
     displayPostContent(post: PostDto): string {
@@ -865,37 +847,37 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     async toggleLike(post: PostDto): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.togglePostLikeAsync(post.id), 'Could not update like right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.toggleLike(post.id), 'Could not update like right now.');
     }
 
     async setReaction(post: PostDto, reactionType: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.setPostReactionAsync(post.id, reactionType), 'Could not set reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.setReaction(post.id, reactionType), 'Could not set reaction right now.');
     }
 
     async clearReaction(post: PostDto): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.clearPostReactionAsync(post.id), 'Could not clear reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.clearReaction(post.id), 'Could not clear reaction right now.');
     }
 
     async addComment(post: PostDto, payload: string | { content: string; parentCommentId?: string | null }): Promise<void> {
         const content = typeof payload === 'string' ? payload : payload.content;
         const parentCommentId = typeof payload === 'string' ? null : (payload.parentCommentId ?? null);
-        await this.runPostMutation(post.id, () => this.session.addCommentAsync(post.id, content, parentCommentId), 'Could not add comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.addComment(post.id, content, parentCommentId), 'Could not add comment right now.');
     }
 
     async updateComment(post: PostDto, commentId: string, content: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.updateCommentAsync(post.id, commentId, content), 'Could not update comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.updateComment(post.id, commentId, content), 'Could not update comment right now.');
     }
 
     async deleteComment(post: PostDto, commentId: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.deleteCommentAsync(post.id, commentId), 'Could not delete comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.deleteComment(post.id, commentId), 'Could not delete comment right now.');
     }
 
     async setCommentReaction(post: PostDto, commentId: string, reactionType: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.setCommentReactionAsync(post.id, commentId, reactionType), 'Could not react to comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.setCommentReaction(post.id, commentId, reactionType), 'Could not react to comment right now.');
     }
 
     async clearCommentReaction(post: PostDto, commentId: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.clearCommentReactionAsync(post.id, commentId), 'Could not clear comment reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.clearCommentReaction(post.id, commentId), 'Could not clear comment reaction right now.');
     }
 
     async toggleReelLike(reel: ReelDto): Promise<void> {
@@ -905,7 +887,7 @@ export class FeedPageComponent implements OnDestroy {
 
         this.reactingReelId = reel.id;
         try {
-            const updated = await this.session.toggleReelLikeAsync(reel.id);
+            const updated = await this.reelInteractions.toggleLike(reel.id);
             this.reels = this.reels.map(item => item.id === updated.id ? updated : item);
         } catch {
             this.reelsError = 'Could not update reel like right now.';
@@ -923,7 +905,7 @@ export class FeedPageComponent implements OnDestroy {
         this.commentingReelId = reel.id;
         this.reelsError = '';
         try {
-            const updated = await this.session.addReelCommentAsync(reel.id, content, parentCommentId ?? null);
+            const updated = await this.reelInteractions.addComment(reel.id, content, parentCommentId ?? null);
             this.pendingDeleteReelComment = null;
             this.reels = this.reels.map(item => item.id === updated.id ? updated : item);
         } catch {
@@ -942,7 +924,7 @@ export class FeedPageComponent implements OnDestroy {
         this.commentingReelId = reel.id;
         this.reelsError = '';
         try {
-            const updated = await this.session.updateReelCommentAsync(reel.id, commentId, content);
+            const updated = await this.reelInteractions.updateComment(reel.id, commentId, content);
             this.reels = this.reels.map(item => item.id === updated.id ? updated : item);
         } catch {
             this.reelsError = 'Could not update reel comment right now.';
@@ -975,7 +957,7 @@ export class FeedPageComponent implements OnDestroy {
         this.commentingReelId = pending.reelId;
         this.reelsError = '';
         try {
-            const updated = await this.session.deleteReelCommentAsync(pending.reelId, pending.commentId);
+            const updated = await this.reelInteractions.deleteComment(pending.reelId, pending.commentId);
             this.reels = this.reels.map(item => item.id === updated.id ? updated : item);
         } catch {
             this.reelsError = 'Could not delete reel comment right now.';
@@ -995,7 +977,7 @@ export class FeedPageComponent implements OnDestroy {
         this.reactingReelId = reel.id;
         this.reelsError = '';
         try {
-            const updated = await this.session.toggleReelCommentLikeAsync(reel.id, commentId);
+            const updated = await this.reelInteractions.toggleCommentLike(reel.id, commentId);
             this.reels = this.reels.map(item => item.id === updated.id ? updated : item);
         } catch {
             this.reelsError = 'Could not update reel comment like right now.';
@@ -1047,19 +1029,11 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     shareReelToChat(reel: ReelDto): void {
-        if (this.sharingReelId) {
-            return;
-        }
-
-        this.pendingShareReel = reel;
+        openReelShareModal(this, reel);
     }
 
     cancelReelShareModal(): void {
-        if (this.sharingReelId) {
-            return;
-        }
-
-        this.pendingShareReel = null;
+        cancelReelShareModal(this);
     }
 
     async submitReelShareAsMessage(request: ShareReelMessageSubmit): Promise<void> {
@@ -1257,13 +1231,7 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     cancelShareModal(): void {
-        if (this.sharingPostId) {
-            return;
-        }
-
-        this.pendingSharePost = null;
-        this.pendingShareTarget = null;
-        this.shareNote = '';
+        cancelPostShareModal(this);
     }
 
     async submitShare(note: string): Promise<void> {
@@ -1298,118 +1266,68 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     private openShareModal(post: PostDto, target: 'feed' | 'chat'): void {
-        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
-            return;
-        }
-
-        this.pendingSharePost = post;
-        this.pendingShareTarget = target;
-        this.shareNote = '';
+        openPostShareModal(this, post, target, this.savingPost, !!this.deletingPostId);
     }
 
     private async executeShareToFeed(post: PostDto, shareText: string): Promise<boolean> {
-        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
-            return false;
-        }
+        const state = {
+            sharingPostId: this.sharingPostId,
+            errorMessage: this.error
+        };
 
-        this.sharingPostId = post.id;
-        this.error = '';
+        const succeeded = await executePostShareToFeedAndReload(
+            state,
+            post.id,
+            () => this.postInteractions.shareToFeed(post, shareText),
+            () => this.load(),
+            'Could not share this post right now.',
+            this.savingPost,
+            !!this.deletingPostId
+        );
 
-        try {
-            const marker = buildSharedPostMarker(buildSharedPostPreview(post));
-            const message = shareText ? `${shareText}\n${marker}` : marker;
-            await this.session.createPostAsync(message);
-            await this.load();
-            return true;
-        } catch {
-            this.error = 'Could not share this post right now.';
-            return false;
-        } finally {
-            this.sharingPostId = null;
-        }
+        this.sharingPostId = state.sharingPostId;
+        this.error = state.errorMessage;
+        return succeeded;
     }
 
     private async executeShareToChat(post: PostDto, request: SharePostMessageSubmit): Promise<boolean> {
-        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
-            return false;
-        }
+        const state = {
+            sharingPostId: this.sharingPostId,
+            errorMessage: this.error
+        };
 
-        const recipientIds = request.recipientIds;
-        if (!recipientIds.length) {
-            return false;
-        }
+        const succeeded = await executePostShareToChat(
+            state,
+            post.id,
+            request.recipientIds,
+            () => this.postInteractions.shareToChat(post, request),
+            'Could not send this post to chat right now.',
+            this.savingPost,
+            !!this.deletingPostId
+        );
 
-        this.sharingPostId = post.id;
-        this.error = '';
-
-        try {
-            const marker = buildSharedPostMarker(buildSharedPostPreview(post));
-            const shareText = request.note.trim();
-            const sendToConversation = async (conversationId: string): Promise<void> => {
-                if (shareText) {
-                    await this.session.sendChatMessageAsync(conversationId, shareText);
-                }
-                await this.session.sendChatMessageAsync(conversationId, marker);
-            };
-
-            if (request.mode === 'group' && recipientIds.length > 1) {
-                const group = await this.session.createGroupConversationAsync('', recipientIds);
-                await sendToConversation(group.id);
-            } else {
-                await Promise.all(recipientIds.map(async (recipientId) => {
-                    const conversation = await this.session.createDirectConversationAsync(recipientId);
-                    await sendToConversation(conversation.id);
-                }));
-            }
-            return true;
-        } catch {
-            this.error = 'Could not send this post to chat right now.';
-            return false;
-        } finally {
-            this.sharingPostId = null;
-        }
+        this.sharingPostId = state.sharingPostId;
+        this.error = state.errorMessage;
+        return succeeded;
     }
 
     private async executeReelShareToChat(reel: ReelDto, request: ShareReelMessageSubmit): Promise<boolean> {
-        if (this.sharingReelId) {
-            return false;
-        }
+        const state = {
+            sharingReelId: this.sharingReelId,
+            errorMessage: this.reelsError
+        };
 
-        const recipientIds = request.recipientIds;
-        if (!recipientIds.length) {
-            return false;
-        }
+        const succeeded = await executeReelShareToChat(
+            state,
+            reel,
+            request,
+            () => this.reelInteractions.shareToChat(reel, request),
+            'Could not send this reel to direct messages right now.'
+        );
 
-        this.sharingReelId = reel.id;
-        this.reelsError = '';
-
-        try {
-            const shareText = request.note.trim();
-            const reelMessage = buildSharedReelMarker(buildSharedReelPreview(reel));
-            const sendToConversation = async (conversationId: string): Promise<void> => {
-                if (shareText) {
-                    await this.session.sendChatMessageAsync(conversationId, shareText);
-                }
-                await this.session.sendChatMessageAsync(conversationId, reelMessage);
-            };
-
-            if (request.mode === 'group' && recipientIds.length > 1) {
-                const group = await this.session.createGroupConversationAsync('', recipientIds);
-                await sendToConversation(group.id);
-            } else {
-                await Promise.all(recipientIds.map(async (recipientId) => {
-                    const conversation = await this.session.createDirectConversationAsync(recipientId);
-                    await sendToConversation(conversation.id);
-                }));
-            }
-
-            return true;
-        } catch {
-            this.reelsError = 'Could not send this reel to direct messages right now.';
-            return false;
-        } finally {
-            this.sharingReelId = null;
-        }
+        this.sharingReelId = state.sharingReelId;
+        this.reelsError = state.errorMessage;
+        return succeeded;
     }
 
     private applyPostUpdate(updated: PostDto): void {

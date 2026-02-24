@@ -10,8 +10,8 @@ export interface ProfileDto {
 
 export interface ProfileActivitySummaryDto {
     postCount: number;
-    commentCountOnPosts: number;
-    activeLast7Days: number;
+    followerCount: number;
+    followingCount: number;
 }
 
 export interface CreateProfileRequest {

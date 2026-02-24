@@ -4,7 +4,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryGroupDto } from '../../core/api.types';
+import { executePostShareAction, executePostShareToChat } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
+import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
+import { ReelInteractionsService } from '../../core/reel-interactions.service';
+import { StoryPresenceService } from '../../core/story-presence.service';
 import { SessionService } from '../../core/session.service';
 import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from '../feed-page/feed-reels-list.component';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
@@ -67,6 +71,8 @@ export class DiscoverPageComponent {
     constructor(
         private readonly session: SessionService,
         private readonly postInteractions: PostInteractionsService,
+        private readonly reelInteractions: ReelInteractionsService,
+        private readonly storyPresence: StoryPresenceService,
         private readonly route: ActivatedRoute,
         private readonly router: Router
     ) {
@@ -123,23 +129,19 @@ export class DiscoverPageComponent {
     }
 
     get activeStoryAuthorHandles(): string[] {
-        return this.activeStoryGroups.map(group => group.authorHandle.trim().toLowerCase());
+        return this.storyPresence.getActiveStoryAuthorHandles(this.activeStoryGroups);
     }
 
     get unseenStoryAuthorHandles(): string[] {
-        return this.activeStoryGroups
-            .filter(group => group.hasUnseenStories)
-            .map(group => group.authorHandle.trim().toLowerCase());
+        return this.storyPresence.getUnseenStoryAuthorHandles(this.activeStoryGroups);
     }
 
     hasActiveStoryForHandle(handle: string): boolean {
-        const normalized = handle.trim().toLowerCase();
-        return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
+        return this.storyPresence.hasActiveStoryForHandle(this.activeStoryGroups, handle);
     }
 
     hasUnseenStoryForHandle(handle: string): boolean {
-        const normalized = handle.trim().toLowerCase();
-        return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized && group.hasUnseenStories);
+        return this.storyPresence.hasUnseenStoryForHandle(this.activeStoryGroups, handle);
     }
 
     async openProfileOrStory(handle: string, event: MouseEvent): Promise<void> {
@@ -288,13 +290,7 @@ export class DiscoverPageComponent {
     }
 
     cancelShareModal(): void {
-        if (this.sharingPostId) {
-            return;
-        }
-
-        this.pendingSharePost = null;
-        this.pendingShareTarget = null;
-        this.shareNote = '';
+        cancelPostShareModal(this);
     }
 
     async submitShare(note: string): Promise<void> {
@@ -329,58 +325,56 @@ export class DiscoverPageComponent {
     }
 
     private openShareModal(post: PostDto, target: 'feed' | 'chat'): void {
-        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
-            return;
-        }
-
-        this.pendingSharePost = post;
-        this.pendingShareTarget = target;
-        this.shareNote = '';
+        openPostShareModal(this, post, target, this.savingPost, !!this.deletingPostId);
     }
 
     private async executeShareToFeed(post: PostDto, shareText: string): Promise<boolean> {
-        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
-            return false;
-        }
+        const state = {
+            sharingPostId: this.sharingPostId,
+            errorMessage: this.status
+        };
 
-        this.sharingPostId = post.id;
-        this.status = '';
+        const succeeded = await executePostShareAction(
+            state,
+            post.id,
+            () => this.postInteractions.shareToFeed(post, shareText),
+            'Could not share this post right now.',
+            this.savingPost,
+            !!this.deletingPostId
+        );
 
-        try {
-            await this.postInteractions.shareToFeed(post, shareText);
+        this.sharingPostId = state.sharingPostId;
+        this.status = state.errorMessage;
+        if (succeeded) {
             this.status = 'Post shared.';
-            return true;
-        } catch {
-            this.status = 'Could not share this post right now.';
-            return false;
-        } finally {
-            this.sharingPostId = null;
         }
+
+        return succeeded;
     }
 
     private async executeShareToChat(post: PostDto, request: SharePostMessageSubmit): Promise<boolean> {
-        if (this.sharingPostId || this.savingPost || this.deletingPostId) {
-            return false;
-        }
+        const state = {
+            sharingPostId: this.sharingPostId,
+            errorMessage: this.status
+        };
 
-        const recipientIds = request.recipientIds;
-        if (!recipientIds.length) {
-            return false;
-        }
+        const succeeded = await executePostShareToChat(
+            state,
+            post.id,
+            request.recipientIds,
+            () => this.postInteractions.shareToChat(post, request),
+            'Could not send this post to chat right now.',
+            this.savingPost,
+            !!this.deletingPostId
+        );
 
-        this.sharingPostId = post.id;
-        this.status = '';
-
-        try {
-            await this.postInteractions.shareToChat(post, request);
+        this.sharingPostId = state.sharingPostId;
+        this.status = state.errorMessage;
+        if (succeeded) {
             this.status = 'Post sent as message.';
-            return true;
-        } catch {
-            this.status = 'Could not send this post to chat right now.';
-            return false;
-        } finally {
-            this.sharingPostId = null;
         }
+
+        return succeeded;
     }
 
     async follow(profile: ProfileDto): Promise<void> {
@@ -445,7 +439,7 @@ export class DiscoverPageComponent {
         this.reactingReelId = reel.id;
         this.status = '';
         try {
-            const updated = await this.session.toggleReelLikeAsync(reel.id);
+            const updated = await this.reelInteractions.toggleLike(reel.id);
             this.applyReelUpdate(updated);
         } catch {
             this.status = 'Could not update reel like right now.';
@@ -467,7 +461,7 @@ export class DiscoverPageComponent {
         this.commentingReelId = reel.id;
         this.status = '';
         try {
-            const updated = await this.session.addReelCommentAsync(reel.id, content, parentCommentId ?? null);
+            const updated = await this.reelInteractions.addComment(reel.id, content, parentCommentId ?? null);
             this.pendingDeleteReelComment = null;
             this.applyReelUpdate(updated);
         } catch {
@@ -486,7 +480,7 @@ export class DiscoverPageComponent {
         this.commentingReelId = reel.id;
         this.status = '';
         try {
-            const updated = await this.session.updateReelCommentAsync(reel.id, commentId, content);
+            const updated = await this.reelInteractions.updateComment(reel.id, commentId, content);
             this.applyReelUpdate(updated);
         } catch {
             this.status = 'Could not update reel comment right now.';
@@ -513,7 +507,7 @@ export class DiscoverPageComponent {
         this.commentingReelId = pending.reelId;
         this.status = '';
         try {
-            const updated = await this.session.deleteReelCommentAsync(pending.reelId, pending.commentId);
+            const updated = await this.reelInteractions.deleteComment(pending.reelId, pending.commentId);
             this.applyReelUpdate(updated);
         } catch {
             this.status = 'Could not delete reel comment right now.';
@@ -533,7 +527,7 @@ export class DiscoverPageComponent {
         this.reactingReelId = reel.id;
         this.status = '';
         try {
-            const updated = await this.session.toggleReelCommentLikeAsync(reel.id, commentId);
+            const updated = await this.reelInteractions.toggleCommentLike(reel.id, commentId);
             this.applyReelUpdate(updated);
         } catch {
             this.status = 'Could not update reel comment like right now.';
@@ -623,25 +617,7 @@ export class DiscoverPageComponent {
 
         this.refreshingStoryPresence = true;
         try {
-            const [forYou, following] = await Promise.allSettled([
-                this.session.loadStoryFeedAsync(80, 'for-you'),
-                this.session.loadStoryFeedAsync(80, 'following')
-            ]);
-
-            const merged = [
-                ...(forYou.status === 'fulfilled' ? forYou.value : []),
-                ...(following.status === 'fulfilled' ? following.value : [])
-            ];
-
-            const deduped = new Map<string, StoryGroupDto>();
-            for (const group of merged) {
-                const key = group.authorId || group.authorHandle.trim().toLowerCase();
-                if (!deduped.has(key)) {
-                    deduped.set(key, group);
-                }
-            }
-
-            this.activeStoryGroups = Array.from(deduped.values());
+            this.activeStoryGroups = await this.storyPresence.loadActiveStoryGroups();
         } catch {
             this.activeStoryGroups = [];
         } finally {

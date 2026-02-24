@@ -35,6 +35,8 @@ button.is-loading {
 button.is-loading::after {
     content: '';
     position: absolute;
+    inset: 0;
+    margin: auto;
     width: 14px;
     height: 14px;
     border-radius: 50%;

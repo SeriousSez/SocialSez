@@ -71,26 +71,48 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
             return null;
         }
 
-        var sevenDaysAgoUtc = DateTime.UtcNow.AddDays(-7);
-
-        var postCountTask = dbContext.Posts
+        var postCount = await dbContext.Posts
             .AsNoTracking()
             .CountAsync(x => x.AuthorId == profile.Id, cancellationToken);
 
-        var commentCountOnPostsTask = dbContext.Comments
+        var followerIdsFromFollows = await dbContext.Follows
             .AsNoTracking()
-            .CountAsync(x => x.Post.AuthorId == profile.Id, cancellationToken);
+            .Where(x => x.FollowedId == profile.Id)
+            .Select(x => x.FollowerId)
+            .ToListAsync(cancellationToken);
 
-        var activeLast7DaysTask = dbContext.Posts
+        var followerIdsFromApprovedRequests = await dbContext.ProfileFollowRequests
             .AsNoTracking()
-            .CountAsync(x => x.AuthorId == profile.Id && x.CreatedAtUtc >= sevenDaysAgoUtc, cancellationToken);
+            .Where(x => x.FollowedId == profile.Id && x.Status == "Approved")
+            .Select(x => x.FollowerId)
+            .ToListAsync(cancellationToken);
 
-        await Task.WhenAll(postCountTask, commentCountOnPostsTask, activeLast7DaysTask);
+        var followingIdsFromFollows = await dbContext.Follows
+            .AsNoTracking()
+            .Where(x => x.FollowerId == profile.Id)
+            .Select(x => x.FollowedId)
+            .ToListAsync(cancellationToken);
+
+        var followingIdsFromApprovedRequests = await dbContext.ProfileFollowRequests
+            .AsNoTracking()
+            .Where(x => x.FollowerId == profile.Id && x.Status == "Approved")
+            .Select(x => x.FollowedId)
+            .ToListAsync(cancellationToken);
+
+        var followerCount = followerIdsFromFollows
+            .Concat(followerIdsFromApprovedRequests)
+            .Distinct()
+            .Count();
+
+        var followingCount = followingIdsFromFollows
+            .Concat(followingIdsFromApprovedRequests)
+            .Distinct()
+            .Count();
 
         return new ProfileActivitySummaryDto(
-            postCountTask.Result,
-            commentCountOnPostsTask.Result,
-            activeLast7DaysTask.Result);
+            postCount,
+            followerCount,
+            followingCount);
     }
 
     public async Task<IReadOnlyCollection<ProfileDto>> SearchAsync(string query, Guid? viewerId = null, int take = 20, CancellationToken cancellationToken = default)

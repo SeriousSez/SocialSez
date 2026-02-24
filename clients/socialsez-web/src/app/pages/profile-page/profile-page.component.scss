@@ -56,6 +56,23 @@ h2 {
     color: #334155
 }
 
+.hero-stats {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: 4px;
+    font-size: 0.95rem;
+    color: #334155;
+}
+
+.hero-stats span {
+    white-space: nowrap;
+}
+
+.hero-stats strong {
+    color: #0f172a;
+}
+
 .hero-actions {
     display: grid;
     gap: 8px
@@ -166,12 +183,6 @@ h2 {
     transform: none;
 }
 
-.activities {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px
-}
-
 .profile-tabs {
     display: flex;
     align-items: center;
@@ -203,29 +214,6 @@ h2 {
 
 .profile-reels {
     display: grid;
-}
-
-.activity-card {
-    border: 1px solid #dbe4f0;
-    border-radius: 12px;
-    padding: 12px;
-    background: #fff;
-    display: grid;
-    gap: 8px
-}
-
-.activity-card h3 {
-    margin: 0;
-    color: #334155;
-    font-size: 0.9rem;
-    font-weight: 700
-}
-
-.activity-card p {
-    margin: 0;
-    color: #0f172a;
-    font-size: 1.4rem;
-    font-weight: 800
 }
 
 .post-list {
@@ -677,27 +665,10 @@ h2 {
         justify-items: start
     }
 
-    .activities {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 4px;
-    }
-
-    .activity-card {
-        padding: 6px;
-        gap: 2px;
-    }
-
-    .activity-card h3 {
-        font-size: 0.66rem;
-        line-height: 1.05;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .activity-card p {
-        font-size: 1rem;
-        line-height: 1;
+    .hero-stats {
+        gap: 12px;
+        font-size: 0.88rem;
+        flex-wrap: wrap;
     }
 
     .profile-skeleton-hero,
@@ -732,7 +703,8 @@ h2 {
         text-align: center;
     }
 
-    .activities {
-        gap: 4px;
+    .hero-stats {
+        gap: 10px;
+        font-size: 0.84rem;
     }
 }

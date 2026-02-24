@@ -8,6 +8,17 @@
             </div>
         </div>
 
+        <div class="profile-chip" *ngIf="session.profile as profile">
+            <img class="avatar" *ngIf="shouldRenderProfileChipImage(profile.imageUrl); else profileInitial" [src]="profile.imageUrl" (error)="onProfileChipImageError(profile.imageUrl)" alt="Profile image" />
+            <ng-template #profileInitial>
+                <div class="avatar">{{ profile.displayName[0] || profile.handle[0] }}</div>
+            </ng-template>
+            <div>
+                <strong>{{ profile.displayName }}</strong>
+                <p>@{{ profile.handle }}</p>
+            </div>
+        </div>
+
         <nav class="tabs">
             <a class="tab-feed" routerLink="/feed" routerLinkActive="active"><i class="fa-duotone fa-light fa-house" aria-hidden="true"></i><span>Feed</span></a>
             <a class="tab-compose" routerLink="/compose" routerLinkActive="active"><i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i><span>Compose</span></a>
@@ -24,17 +35,6 @@
             <a class="tab-settings" routerLink="/settings" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i><span>Settings</span></a>
             <a class="tab-auth" routerLink="/auth" routerLinkActive="active" *ngIf="!session.isAuthenticated()"><i class="fa-duotone fa-light fa-right-to-bracket" aria-hidden="true"></i><span>Auth</span></a>
         </nav>
-
-        <div class="profile-chip" *ngIf="session.profile as profile">
-            <img class="avatar" *ngIf="shouldRenderProfileChipImage(profile.imageUrl); else profileInitial" [src]="profile.imageUrl" (error)="onProfileChipImageError(profile.imageUrl)" alt="Profile image" />
-            <ng-template #profileInitial>
-                <div class="avatar">{{ profile.displayName[0] || profile.handle[0] }}</div>
-            </ng-template>
-            <div>
-                <strong>{{ profile.displayName }}</strong>
-                <p>@{{ profile.handle }}</p>
-            </div>
-        </div>
     </aside>
 
     <section class="main-column">
