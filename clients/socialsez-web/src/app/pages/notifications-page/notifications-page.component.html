@@ -6,8 +6,10 @@
         </div>
         <div class="actions">
             <a class="ghost-link" routerLink="/notifications/requests">Requests</a>
-            <button class="ghost" type="button" (click)="loadNotifications()">Refresh</button>
             <button class="ghost" type="button" (click)="markAllRead()" [disabled]="!notifications.length">Mark all read</button>
+            <button class="ghost refresh-icon-btn" type="button" (click)="loadNotifications()" aria-label="Refresh notifications" title="Refresh notifications">
+                <i class="fa-duotone fa-light fa-arrows-rotate" aria-hidden="true"></i>
+            </button>
         </div>
     </header>
 

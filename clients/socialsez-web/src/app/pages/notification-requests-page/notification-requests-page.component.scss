@@ -26,12 +26,30 @@ h2 {
     align-items: center;
     justify-content: center;
     height: 34px;
-    padding: 0 12px;
+    padding: 0 14px;
     border-radius: 10px;
-    border: 1px solid #dbe4f0;
-    color: #1d4ed8;
+    border: none;
+    background: #e2e8f0;
+    color: #0f172a;
     text-decoration: none;
-    font-weight: 600
+    font-weight: 700;
+    box-shadow: none;
+    transform: none;
+}
+
+.ghost-link:hover {
+    box-shadow: none;
+    transform: none;
+}
+
+.page-head .actions .refresh-icon-btn {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .card {

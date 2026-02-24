@@ -6,7 +6,9 @@
         </div>
         <div class="actions">
             <a class="ghost-link" routerLink="/notifications">Back to notifications</a>
-            <button class="ghost" type="button" (click)="loadRequests()">Refresh</button>
+            <button class="ghost refresh-icon-btn" type="button" (click)="loadRequests()" aria-label="Refresh requests" title="Refresh requests">
+                <i class="fa-duotone fa-light fa-arrows-rotate" aria-hidden="true"></i>
+            </button>
         </div>
     </header>
 
