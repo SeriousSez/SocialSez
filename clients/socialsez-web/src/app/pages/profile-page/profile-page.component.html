@@ -236,8 +236,9 @@
 
         <section class="profile-reels" *ngIf="activeTab === 'reels' && !loading && reels.length; else noReelsYet">
             <app-feed-reels-list [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="activeUnseenStoryAuthorHandles" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId" [viewerProfileId]="currentProfileId"
-                [canInteract]="session.isAuthenticated()" [showOwnerActions]="isOwnProfile" [updatingReelId]="updatingReelId" [deletingReelId]="deletingReelId" (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)"
-                (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelUpdated)="updateReelCaption($event.reel, $event.caption)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (reelDeleted)="deleteReel($event)">
+                [sharingReelId]="sharingReelId" [canInteract]="session.isAuthenticated()" [showOwnerActions]="isOwnProfile" [updatingReelId]="updatingReelId" [deletingReelId]="deletingReelId" (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)"
+                (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelUpdated)="updateReelCaption($event.reel, $event.caption)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)"
+                (shareRequested)="shareReelToChat($event)" (reelDeleted)="deleteReel($event)">
             </app-feed-reels-list>
         </section>
 
@@ -321,3 +322,6 @@
 
 <app-share-post-message-modal [open]="!!pendingSharePost && pendingShareTarget === 'chat'" [post]="pendingSharePost" [busy]="!!sharingPostId" (cancel)="cancelShareModal()" (confirm)="submitShareAsMessage($event)">
 </app-share-post-message-modal>
+
+<app-share-reel-message-modal [open]="!!pendingShareReel" [reel]="pendingShareReel" [busy]="!!sharingReelId" (cancel)="cancelReelShareModal()" (confirm)="submitReelShareAsMessage($event)">
+</app-share-reel-message-modal>

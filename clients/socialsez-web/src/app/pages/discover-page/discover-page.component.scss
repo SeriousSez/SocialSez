@@ -256,3 +256,27 @@ label {
 .author-link:hover {
     text-decoration: underline;
 }
+
+@media (max-width:680px) {
+    .scope-tabs {
+        gap: 6px;
+    }
+
+    .scope-tabs button {
+        flex: 1 1 calc(50% - 6px);
+        min-width: 0;
+    }
+
+    .identity,
+    .author {
+        align-items: flex-start;
+    }
+
+    .author {
+        padding-right: 0;
+    }
+
+    .user-handle-wrap {
+        margin-left: 0;
+    }
+}

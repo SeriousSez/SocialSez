@@ -37,7 +37,6 @@
         <p class="meta">Use these controls for your current login session.</p>
         <div class="actions">
             <button (click)="refreshSession()">Refresh Session</button>
-            <button class="danger" (click)="logout()">Logout</button>
         </div>
     </section>
 
@@ -51,6 +50,14 @@
             <input type="checkbox" [(ngModel)]="prefs.showDebugTimes" (change)="savePrefs()" />
             Show debug timing hints
         </label>
+    </section>
+
+    <section class="card logout-card">
+        <h3>Sign out</h3>
+        <p class="meta">Sign out of your current account on this device.</p>
+        <div class="actions">
+            <button class="danger" (click)="logout()">Logout</button>
+        </div>
     </section>
 
     <p class="status" *ngIf="status">{{ status }}</p>

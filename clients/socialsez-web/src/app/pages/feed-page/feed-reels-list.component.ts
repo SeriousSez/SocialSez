@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReelCommentDto, ReelDto } from '../../core/api.types';
 
@@ -70,6 +70,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     private readonly reelMetadataCache = new Map<string, { source: string; location: string; collaborators: string[]; caption: string; frameZoom: number; frameOffsetX: number; frameOffsetY: number }>();
     private readonly pointerHandledActionKeys = new Map<string, number>();
     private copyLinkResetTimerId: number | null = null;
+    private readonly ngZone = inject(NgZone);
     private readonly preciseDateFormatter = new Intl.DateTimeFormat(undefined, {
         month: 'short',
         day: 'numeric',
@@ -159,14 +160,18 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         const link = `${window.location.origin}/shared/reel/${reel.id}`;
         try {
             await navigator.clipboard.writeText(link);
-            this.copiedReelLinkId = reel.id;
-            if (this.copyLinkResetTimerId !== null) {
-                window.clearTimeout(this.copyLinkResetTimerId);
-            }
-            this.copyLinkResetTimerId = window.setTimeout(() => {
-                this.copiedReelLinkId = null;
-                this.copyLinkResetTimerId = null;
-            }, 2000);
+            this.ngZone.run(() => {
+                this.copiedReelLinkId = reel.id;
+                if (this.copyLinkResetTimerId !== null) {
+                    window.clearTimeout(this.copyLinkResetTimerId);
+                }
+                this.copyLinkResetTimerId = window.setTimeout(() => {
+                    this.ngZone.run(() => {
+                        this.copiedReelLinkId = null;
+                        this.copyLinkResetTimerId = null;
+                    });
+                }, 2000);
+            });
         } catch {
             return;
         }

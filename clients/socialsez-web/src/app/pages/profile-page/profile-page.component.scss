@@ -678,7 +678,26 @@ h2 {
     }
 
     .activities {
-        grid-template-columns: 1fr
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 4px;
+    }
+
+    .activity-card {
+        padding: 6px;
+        gap: 2px;
+    }
+
+    .activity-card h3 {
+        font-size: 0.66rem;
+        line-height: 1.05;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .activity-card p {
+        font-size: 1rem;
+        line-height: 1;
     }
 
     .profile-skeleton-hero,
@@ -688,5 +707,32 @@ h2 {
 
     .profile-skeleton-actions {
         justify-items: start;
+    }
+}
+
+@media (max-width:680px) {
+
+    .hero-actions-own,
+    .hero-actions-follow {
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+    }
+
+    .hero-actions-follow>button,
+    .hero-actions-follow>a.ghost {
+        width: auto;
+    }
+
+    .profile-tabs {
+        width: 100%;
+    }
+
+    .profile-tabs button {
+        flex: 1 1 0;
+        text-align: center;
+    }
+
+    .activities {
+        gap: 4px;
     }
 }

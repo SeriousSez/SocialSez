@@ -65,3 +65,21 @@
     max-height: 70dvh;
     object-fit: contain;
 }
+
+@media (max-width:680px) {
+
+    .shared-head,
+    .meta-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .shared-card,
+    .shared-head {
+        padding: 12px;
+    }
+
+    .media {
+        max-height: 56dvh;
+    }
+}

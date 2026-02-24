@@ -63,6 +63,7 @@
     color: #64748b;
     font-size: 0.85rem;
     flex-shrink: 0;
+    min-width: 0;
 }
 
 .dock-search-bar i {
@@ -80,6 +81,7 @@
     font-size: 0.85rem;
     flex: 1;
     min-width: 0;
+    width: 100%;
     padding: 4px 8px;
     height: 18px;
     line-height: 18px;
@@ -562,7 +564,9 @@
     }
 
     .messages-panel {
-        right: 12px;
+        right: 8px;
         bottom: 56px;
+        width: min(420px, calc(100vw - 16px));
+        height: min(620px, calc(100dvh - 72px));
     }
 }

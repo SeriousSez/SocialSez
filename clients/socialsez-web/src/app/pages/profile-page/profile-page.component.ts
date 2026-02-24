@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, HostListener, OnDestroy, ViewChild, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
@@ -10,11 +10,13 @@ import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.
 import { PostComposerComponent } from '../../shared/post-composer/post-composer.component';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
 import { SharePostMessageModalComponent, SharePostMessageSubmit } from '../../shared/share-post-message-modal/share-post-message-modal.component';
+import { ShareReelMessageModalComponent, ShareReelMessageSubmit } from '../../shared/share-reel-message-modal/share-reel-message-modal.component';
 import { SharePostModalComponent } from '../../shared/share-post-modal/share-post-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from '../feed-page/feed-reels-list.component';
 import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
 import { ReelComposerModalComponent } from '../../shared/reel-composer-modal/reel-composer-modal.component';
+import { buildSharedReelMarker, buildSharedReelPreview } from '../../core/shared-reel.utils';
 
 interface StoryTrimPreviewOption {
     previewUrl: string;
@@ -23,7 +25,7 @@ interface StoryTrimPreviewOption {
 @Component({
     selector: 'app-profile-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent],
+    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent],
     templateUrl: './profile-page.component.html',
     styleUrl: './profile-page.component.scss'
 })
@@ -76,7 +78,9 @@ export class ProfilePageComponent implements OnDestroy {
     storyComposerError = '';
     postingStory = false;
     sharingPostId: string | null = null;
+    sharingReelId: string | null = null;
     pendingSharePost: PostDto | null = null;
+    pendingShareReel: ReelDto | null = null;
     pendingShareTarget: 'feed' | 'chat' | null = null;
     shareNote = '';
     profileLinkCopied = false;
@@ -128,6 +132,7 @@ export class ProfilePageComponent implements OnDestroy {
     private readonly onStoryFramePointerUp = () => {
         this.stopStoryFrameDragging();
     };
+    private readonly ngZone = inject(NgZone);
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(public readonly session: SessionService, private readonly route: ActivatedRoute, private readonly router: Router) {
@@ -273,17 +278,23 @@ export class ProfilePageComponent implements OnDestroy {
 
         try {
             await navigator.clipboard.writeText(link);
-            this.profileLinkCopied = true;
-            if (this.profileLinkCopiedResetTimerId !== null) {
-                window.clearTimeout(this.profileLinkCopiedResetTimerId);
-            }
+            this.ngZone.run(() => {
+                this.profileLinkCopied = true;
+                if (this.profileLinkCopiedResetTimerId !== null) {
+                    window.clearTimeout(this.profileLinkCopiedResetTimerId);
+                }
 
-            this.profileLinkCopiedResetTimerId = window.setTimeout(() => {
-                this.profileLinkCopied = false;
-                this.profileLinkCopiedResetTimerId = null;
-            }, 2000);
+                this.profileLinkCopiedResetTimerId = window.setTimeout(() => {
+                    this.ngZone.run(() => {
+                        this.profileLinkCopied = false;
+                        this.profileLinkCopiedResetTimerId = null;
+                    });
+                }, 2000);
+            });
         } catch {
-            this.error = 'Could not copy profile link right now.';
+            this.ngZone.run(() => {
+                this.error = 'Could not copy profile link right now.';
+            });
         }
     }
 
@@ -1049,6 +1060,34 @@ export class ProfilePageComponent implements OnDestroy {
         }
     }
 
+    shareReelToChat(reel: ReelDto): void {
+        if (this.sharingReelId) {
+            return;
+        }
+
+        this.pendingShareReel = reel;
+    }
+
+    cancelReelShareModal(): void {
+        if (this.sharingReelId) {
+            return;
+        }
+
+        this.pendingShareReel = null;
+    }
+
+    async submitReelShareAsMessage(request: ShareReelMessageSubmit): Promise<void> {
+        const reel = this.pendingShareReel;
+        if (!reel) {
+            return;
+        }
+
+        const succeeded = await this.executeReelShareToChat(reel, request);
+        if (succeeded) {
+            this.cancelReelShareModal();
+        }
+    }
+
     async openProfileOrStory(handle: string, event?: MouseEvent): Promise<void> {
         event?.preventDefault();
         event?.stopPropagation();
@@ -1286,6 +1325,48 @@ export class ProfilePageComponent implements OnDestroy {
             return false;
         } finally {
             this.sharingPostId = null;
+        }
+    }
+
+    private async executeReelShareToChat(reel: ReelDto, request: ShareReelMessageSubmit): Promise<boolean> {
+        if (this.sharingReelId) {
+            return false;
+        }
+
+        const recipientIds = request.recipientIds;
+        if (!recipientIds.length) {
+            return false;
+        }
+
+        this.sharingReelId = reel.id;
+        this.error = '';
+
+        try {
+            const shareText = request.note.trim();
+            const reelMessage = buildSharedReelMarker(buildSharedReelPreview(reel));
+            const sendToConversation = async (conversationId: string): Promise<void> => {
+                if (shareText) {
+                    await this.session.sendChatMessageAsync(conversationId, shareText);
+                }
+                await this.session.sendChatMessageAsync(conversationId, reelMessage);
+            };
+
+            if (request.mode === 'group' && recipientIds.length > 1) {
+                const group = await this.session.createGroupConversationAsync('', recipientIds);
+                await sendToConversation(group.id);
+            } else {
+                await Promise.all(recipientIds.map(async (recipientId) => {
+                    const conversation = await this.session.createDirectConversationAsync(recipientId);
+                    await sendToConversation(conversation.id);
+                }));
+            }
+
+            return true;
+        } catch {
+            this.error = 'Could not send this reel to direct messages right now.';
+            return false;
+        } finally {
+            this.sharingReelId = null;
         }
     }
 

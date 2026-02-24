@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { StoryDto, StoryGroupDto } from '../../core/api.types';
 
@@ -11,7 +11,7 @@ import { StoryDto, StoryGroupDto } from '../../core/api.types';
     styleUrl: './feed-story-viewer.component.scss'
 })
 export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
-    constructor(private readonly router: Router) { }
+    constructor(private readonly router: Router, private readonly ngZone: NgZone) { }
 
     @Input() activeStory: StoryDto | null = null;
     @Input() activeStoryGroup: StoryGroupDto | null = null;
@@ -237,14 +237,18 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         const link = `${window.location.origin}/shared/story/${storyId}`;
         try {
             await navigator.clipboard.writeText(link);
-            this.copyLinkCopied = true;
-            if (this.copyLinkResetTimerId !== null) {
-                window.clearTimeout(this.copyLinkResetTimerId);
-            }
-            this.copyLinkResetTimerId = window.setTimeout(() => {
-                this.copyLinkCopied = false;
-                this.copyLinkResetTimerId = null;
-            }, 2000);
+            this.ngZone.run(() => {
+                this.copyLinkCopied = true;
+                if (this.copyLinkResetTimerId !== null) {
+                    window.clearTimeout(this.copyLinkResetTimerId);
+                }
+                this.copyLinkResetTimerId = window.setTimeout(() => {
+                    this.ngZone.run(() => {
+                        this.copyLinkCopied = false;
+                        this.copyLinkResetTimerId = null;
+                    });
+                }, 2000);
+            });
         } catch {
             return;
         }

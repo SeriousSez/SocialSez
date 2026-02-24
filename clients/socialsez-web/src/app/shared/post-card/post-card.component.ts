@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommentDto, PostDto, ProfileDto } from '../../core/api.types';
@@ -102,6 +102,7 @@ export class PostCardComponent implements OnDestroy {
     private _content = '';
     private readonly router = inject(Router);
     private readonly session = inject(SessionService);
+    private readonly ngZone = inject(NgZone);
     private currentPostId: string | null = null;
     mentionTarget: 'post-edit' | 'comment-new' | 'comment-edit' | null = null;
     mentionTargetCommentId: string | null = null;
@@ -609,16 +610,22 @@ export class PostCardComponent implements OnDestroy {
         const link = `${window.location.origin}/shared/post/${postId}`;
         try {
             await navigator.clipboard.writeText(link);
-            this.copyLinkCopied = true;
-            if (this.copyLinkResetTimerId !== null) {
-                window.clearTimeout(this.copyLinkResetTimerId);
-            }
-            this.copyLinkResetTimerId = window.setTimeout(() => {
-                this.copyLinkCopied = false;
-                this.copyLinkResetTimerId = null;
-            }, 2000);
+            this.ngZone.run(() => {
+                this.copyLinkCopied = true;
+                if (this.copyLinkResetTimerId !== null) {
+                    window.clearTimeout(this.copyLinkResetTimerId);
+                }
+                this.copyLinkResetTimerId = window.setTimeout(() => {
+                    this.ngZone.run(() => {
+                        this.copyLinkCopied = false;
+                        this.copyLinkResetTimerId = null;
+                    });
+                }, 2000);
+            });
         } catch {
-            this.copyLink.emit();
+            this.ngZone.run(() => {
+                this.copyLink.emit();
+            });
         }
     }
 
