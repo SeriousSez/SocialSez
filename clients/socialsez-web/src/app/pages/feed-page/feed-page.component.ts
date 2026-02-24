@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
@@ -24,6 +24,7 @@ import { ShareReelMessageModalComponent, ShareReelMessageSubmit } from '../../sh
 import { SharePostModalComponent } from '../../shared/share-post-modal/share-post-modal.component';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
+import { SegmentedTabItem, SegmentedTabsComponent } from '../../shared/segmented-tabs/segmented-tabs.component';
 
 interface StoryTrimPreviewOption {
     previewUrl: string;
@@ -32,7 +33,7 @@ interface StoryTrimPreviewOption {
 @Component({
     selector: 'app-feed-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, PostCardComponent, PostComposerComponent, ReelComposerModalComponent, FeedReelsListComponent, FeedStoryViewerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, ConfirmModalComponent, SkeletonComponent],
+    imports: [CommonModule, RouterLink, PostCardComponent, PostComposerComponent, ReelComposerModalComponent, FeedReelsListComponent, FeedStoryViewerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, ConfirmModalComponent, SkeletonComponent, SegmentedTabsComponent],
     templateUrl: './feed-page.component.html',
     styleUrl: './feed-page.component.scss'
 })
@@ -52,6 +53,10 @@ export class FeedPageComponent implements OnDestroy {
     storiesError = '';
     selectedFeedMode: FeedMode = 'for-you';
     selectedContentTab: 'posts' | 'reels' = 'posts';
+    readonly contentTabs: readonly SegmentedTabItem[] = [
+        { id: 'posts', label: 'Posts' },
+        { id: 'reels', label: 'Reels' }
+    ];
     activeStoryGroup: StoryGroupDto | null = null;
     activeStoryIndex = 0;
     loading = true;
@@ -103,6 +108,7 @@ export class FeedPageComponent implements OnDestroy {
     sendingStoryReply = false;
     sharingStoryMessage = false;
     showReelComposer = false;
+    createMenuOpen = false;
     compactFeedEnabled = false;
     reelUploadStatus: ReelUploadStatusEvent | null = null;
     private reelUploadStatusHideTimeoutId: number | null = null;
@@ -225,12 +231,44 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     openComposer(): void {
+        this.createMenuOpen = false;
         this.showStoryComposer = false;
         this.showReelComposer = false;
         this.showComposer = true;
     }
 
+    toggleCreateMenu(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.createMenuOpen = !this.createMenuOpen;
+    }
+
+    closeCreateMenu(): void {
+        this.createMenuOpen = false;
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent): void {
+        if (!this.createMenuOpen) {
+            return;
+        }
+
+        const clickedInsideMenu = event.composedPath().some((node) => {
+            return node instanceof HTMLElement && node.classList.contains('hero-create-menu');
+        });
+
+        if (!clickedInsideMenu) {
+            this.createMenuOpen = false;
+        }
+    }
+
+    @HostListener('document:keydown.escape')
+    onEscapePressed(): void {
+        this.createMenuOpen = false;
+    }
+
     openStoryComposer(): void {
+        this.createMenuOpen = false;
         this.showComposer = false;
         this.showReelComposer = false;
         this.showStoryComposer = true;
@@ -239,6 +277,7 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     openReelComposer(): void {
+        this.createMenuOpen = false;
         this.showComposer = false;
         this.showStoryComposer = false;
         this.showReelComposer = true;
@@ -626,6 +665,14 @@ export class FeedPageComponent implements OnDestroy {
 
     selectContentTab(tab: 'posts' | 'reels'): void {
         this.selectedContentTab = tab;
+    }
+
+    onContentTabChanged(tabId: string): void {
+        if (tabId !== 'posts' && tabId !== 'reels') {
+            return;
+        }
+
+        this.selectContentTab(tabId);
     }
 
     openStoryGroup(group: StoryGroupDto): void {

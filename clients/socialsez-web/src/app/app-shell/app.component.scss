@@ -336,7 +336,7 @@ label {
     color: #6b7280;
 }
 
-.mobile-tabs {
+.mobile-footer-tabs {
     display: none;
 }
 
@@ -375,12 +375,12 @@ label {
     }
 
     .topbar {
-        flex-direction: column;
-        align-items: stretch;
+        display: none;
     }
 
     .search-box {
         max-width: none;
+        display: none;
     }
 
     .top-actions {
@@ -408,7 +408,7 @@ label {
         padding-bottom: 16px;
     }
 
-    .mobile-tabs {
+    .mobile-footer-tabs {
         position: fixed;
         left: 0;
         right: 0;
@@ -424,7 +424,7 @@ label {
         overflow-x: auto;
     }
 
-    .mobile-tab {
+    .mobile-footer-tab {
         min-width: 64px;
         flex: 1 0 64px;
         display: grid;
@@ -432,32 +432,48 @@ label {
         align-content: center;
         gap: 3px;
         padding: 4px 6px;
-        color: #475569;
+        color: #64748b;
         text-decoration: none;
         border-radius: 10px;
         border: 1px solid transparent;
+        background: transparent;
         box-shadow: none;
         transform: none;
+        opacity: 0.82;
+        position: relative;
     }
 
-    .mobile-tab i {
+    .mobile-footer-tab i {
         font-size: 0.95rem;
         line-height: 1;
     }
 
-    .mobile-tab span {
+    .mobile-footer-tab span {
         font-size: 0.66rem;
         line-height: 1;
         font-weight: 700;
     }
 
-    .mobile-tab.active {
+    .mobile-footer-tab.active {
         color: #0f172a;
-        background: #eff6ff;
-        border-color: #bfdbfe;
+        background: transparent;
+        border-color: transparent;
+        opacity: 1;
     }
 
-    .mobile-tab:hover {
+    .mobile-footer-tab.active::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 3px;
+        border-radius: 999px;
+        background: #0f172a;
+    }
+
+    .mobile-footer-tab:hover {
         box-shadow: none;
         transform: none;
     }
@@ -508,7 +524,7 @@ label {
     .side-card,
     .content,
     .panel,
-    .mobile-tabs {
+    .mobile-footer-tabs {
         background: var(--color-surface);
         border-color: var(--color-border);
         color: var(--color-text);
@@ -569,16 +585,26 @@ label {
         box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.2);
     }
 
-    .signin-link,
-    .mobile-tab {
+    .signin-link {
         border-color: var(--color-border);
         color: var(--color-text);
         background: var(--color-surface-muted);
     }
 
-    .mobile-tab.active {
-        color: var(--color-text-on-dark);
-        background: var(--gradient-primary);
-        border-color: var(--color-border);
+    .mobile-footer-tab {
+        color: var(--color-text-muted);
+        border-color: transparent;
+        background: transparent;
+        opacity: 0.88;
+    }
+
+    .mobile-footer-tab.active {
+        color: var(--color-text);
+        background: transparent;
+        border-color: transparent;
+    }
+
+    .mobile-footer-tab.active::after {
+        background: var(--color-text);
     }
 }

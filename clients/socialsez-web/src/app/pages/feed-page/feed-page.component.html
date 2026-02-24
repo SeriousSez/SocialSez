@@ -1,10 +1,16 @@
 <section class="page" [class.compact-layout]="compactFeedEnabled">
     <header class="page-head">
         <h2>Home Feed</h2>
-        <div class="actions">
-            <button type="button" (click)="openComposer()">New Post</button>
-            <button type="button" (click)="openStoryComposer()">New Story</button>
-            <button type="button" (click)="openReelComposer()">New Reel</button>
+        <div class="hero-create-menu" (click)="$event.stopPropagation()">
+            <button type="button" class="hero-icon-button" (click)="toggleCreateMenu($event)" aria-label="Create content">
+                <i class="fa-duotone fa-light fa-plus" aria-hidden="true"></i>
+            </button>
+
+            <div class="hero-create-dropdown" *ngIf="createMenuOpen">
+                <button type="button" (click)="openComposer()">New Post</button>
+                <button type="button" (click)="openStoryComposer()">New Story</button>
+                <button type="button" (click)="openReelComposer()">New Reel</button>
+            </div>
         </div>
     </header>
 
@@ -146,10 +152,7 @@
         </p>
     </section>
 
-    <section class="content-tabs" aria-label="Feed content type">
-        <button type="button" [class.active]="selectedContentTab === 'posts'" (click)="selectContentTab('posts')">Posts</button>
-        <button type="button" [class.active]="selectedContentTab === 'reels'" (click)="selectContentTab('reels')">Reels</button>
-    </section>
+    <app-segmented-tabs class="content-tabs" [tabs]="contentTabs" [activeTab]="selectedContentTab" ariaLabel="Feed content type" [fullWidthOnMobile]="true" (activeTabChange)="onContentTabChanged($event)"></app-segmented-tabs>
 
     <section class="feed-skeleton" *ngIf="selectedContentTab === 'posts' && loading" aria-label="Loading feed">
         <article class="feed-skeleton-card" *ngFor="let _ of [1, 2, 3]">

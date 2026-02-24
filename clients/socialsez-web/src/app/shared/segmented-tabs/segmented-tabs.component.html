@@ -1,0 +1,5 @@
+<section class="segmented-tabs" [class.full-width-mobile]="fullWidthOnMobile" [attr.aria-label]="ariaLabel">
+    <button type="button" *ngFor="let tab of tabs" [class.active]="activeTab === tab.id" (click)="onTabSelected(tab.id)">
+        {{ tab.label }}
+    </button>
+</section>

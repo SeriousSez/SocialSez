@@ -305,23 +305,26 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
             return '';
         }
 
-        const elapsedSeconds = Math.max(1, Math.floor((Date.now() - createdAt) / 1000));
-        if (elapsedSeconds < 60) {
-            return `${elapsedSeconds}s`;
+        const storyLifetimeSeconds = 24 * 60 * 60;
+        const elapsedSeconds = Math.max(0, Math.floor((Date.now() - createdAt) / 1000));
+        const remainingSeconds = Math.max(0, storyLifetimeSeconds - elapsedSeconds);
+
+        if (remainingSeconds < 60) {
+            return `${remainingSeconds}s left`;
         }
 
-        const elapsedMinutes = Math.floor(elapsedSeconds / 60);
-        if (elapsedMinutes < 60) {
-            return `${elapsedMinutes}m`;
+        const remainingMinutes = Math.floor(remainingSeconds / 60);
+        if (remainingMinutes < 60) {
+            return `${remainingMinutes}m left`;
         }
 
-        const elapsedHours = Math.floor(elapsedMinutes / 60);
-        if (elapsedHours < 24) {
-            return `${elapsedHours}h`;
+        const remainingHours = Math.floor(remainingMinutes / 60);
+        if (remainingHours < 24) {
+            return `${remainingHours}h left`;
         }
 
-        const elapsedDays = Math.floor(elapsedHours / 24);
-        return `${elapsedDays}d`;
+        const remainingDays = Math.floor(remainingHours / 24);
+        return `${remainingDays}d left`;
     }
 
     private parseUtcDate(value: string): Date {

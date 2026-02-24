@@ -22,6 +22,7 @@ import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from '../feed-page/feed-reels-list.component';
 import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
 import { ReelComposerModalComponent } from '../../shared/reel-composer-modal/reel-composer-modal.component';
+import { SegmentedTabItem, SegmentedTabsComponent } from '../../shared/segmented-tabs/segmented-tabs.component';
 
 interface StoryTrimPreviewOption {
     previewUrl: string;
@@ -30,7 +31,7 @@ interface StoryTrimPreviewOption {
 @Component({
     selector: 'app-profile-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent],
+    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent, SegmentedTabsComponent],
     templateUrl: './profile-page.component.html',
     styleUrl: './profile-page.component.scss'
 })
@@ -43,6 +44,10 @@ export class ProfilePageComponent implements OnDestroy {
     @ViewChild('storyPreviewVideo') private readonly storyPreviewVideoRef?: ElementRef<HTMLVideoElement>;
 
     activeTab: 'posts' | 'reels' = 'posts';
+    readonly contentTabs: readonly SegmentedTabItem[] = [
+        { id: 'posts', label: 'Posts' },
+        { id: 'reels', label: 'Reels' }
+    ];
     posts: PostDto[] = [];
     reels: ReelDto[] = [];
     loading = true;
@@ -297,6 +302,14 @@ export class ProfilePageComponent implements OnDestroy {
         this.activeTab = tab;
     }
 
+    onActiveTabChanged(tabId: string): void {
+        if (tabId !== 'posts' && tabId !== 'reels') {
+            return;
+        }
+
+        this.setActiveTab(tabId);
+    }
+
     openComposer(): void {
         if (!this.isOwnProfile) {
             return;
@@ -312,6 +325,7 @@ export class ProfilePageComponent implements OnDestroy {
         event.preventDefault();
         event.stopPropagation();
         this.createMenuOpen = !this.createMenuOpen;
+        this.cdr.detectChanges();
     }
 
     closeCreateMenu(): void {
@@ -324,8 +338,11 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
-        const target = event.target as HTMLElement | null;
-        if (!target?.closest('.hero-actions-own')) {
+        const clickedInsideMenu = event.composedPath().some((node) => {
+            return node instanceof HTMLElement && node.classList.contains('hero-create-menu');
+        });
+
+        if (!clickedInsideMenu) {
             this.createMenuOpen = false;
         }
     }

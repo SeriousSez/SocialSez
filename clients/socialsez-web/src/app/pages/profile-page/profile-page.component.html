@@ -64,10 +64,7 @@
 
             <p class="status" *ngIf="isPrivateLockedView"><i class="fa-duotone fa-light fa-lock" aria-hidden="true"></i>This profile is private. Follow and wait for approval to see posts.</p>
 
-            <section class="profile-tabs" aria-label="Profile content tabs">
-                <button type="button" [class.active]="activeTab === 'posts'" (click)="setActiveTab('posts')">Posts</button>
-                <button type="button" [class.active]="activeTab === 'reels'" (click)="setActiveTab('reels')">Reels</button>
-            </section>
+            <app-segmented-tabs class="profile-tabs" [tabs]="contentTabs" [activeTab]="activeTab" ariaLabel="Profile content tabs" [fullWidthOnMobile]="true" (activeTabChange)="onActiveTabChanged($event)"></app-segmented-tabs>
         </ng-container>
 
         <ng-template #profileOverviewSkeleton>

@@ -81,32 +81,32 @@
     </aside>
 </main>
 
-<nav class="mobile-tabs" aria-label="Primary mobile navigation">
-    <a class="mobile-tab" routerLink="/feed" routerLinkActive="active">
+<nav class="mobile-footer-tabs" aria-label="Primary mobile navigation">
+    <a class="mobile-footer-tab" routerLink="/feed" routerLinkActive="active">
         <i class="fa-duotone fa-light fa-house" aria-hidden="true"></i>
         <span>Feed</span>
     </a>
-    <a class="mobile-tab" routerLink="/discover" routerLinkActive="active">
+    <a class="mobile-footer-tab" routerLink="/discover" routerLinkActive="active">
         <i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i>
         <span>Discover</span>
     </a>
-    <a class="mobile-tab" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()">
+    <a class="mobile-footer-tab" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()">
         <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
         <span>Chat</span>
     </a>
-    <a class="mobile-tab" routerLink="/notifications" routerLinkActive="active" *ngIf="session.isAuthenticated()">
+    <a class="mobile-footer-tab" routerLink="/notifications" routerLinkActive="active" *ngIf="session.isAuthenticated()">
         <i class="fa-duotone fa-light fa-bell" aria-hidden="true"></i>
         <span>Alerts</span>
     </a>
-    <a class="mobile-tab" routerLink="/profile" routerLinkActive="active" *ngIf="session.isAuthenticated()">
+    <a class="mobile-footer-tab" routerLink="/profile" routerLinkActive="active" *ngIf="session.isAuthenticated()">
         <i class="fa-duotone fa-light fa-user" aria-hidden="true"></i>
         <span>Profile</span>
     </a>
-    <a class="mobile-tab" routerLink="/settings" routerLinkActive="active" *ngIf="session.isAuthenticated()">
+    <a class="mobile-footer-tab" routerLink="/settings" routerLinkActive="active" *ngIf="session.isAuthenticated()">
         <i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i>
         <span>Settings</span>
     </a>
-    <a class="mobile-tab" routerLink="/auth" routerLinkActive="active" *ngIf="!session.isAuthenticated()">
+    <a class="mobile-footer-tab" routerLink="/auth" routerLinkActive="active" *ngIf="!session.isAuthenticated()">
         <i class="fa-duotone fa-light fa-right-to-bracket" aria-hidden="true"></i>
         <span>Auth</span>
     </a>

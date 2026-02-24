@@ -163,10 +163,12 @@ h2 {
     border-radius: 12px;
     background: #fff;
     box-shadow: 0 18px 34px -24px #0f172a;
-    z-index: 20;
+    z-index: 40;
 }
 
 .hero-create-dropdown button {
+    display: block;
+    width: 100%;
     border: none;
     border-radius: 8px;
     background: transparent;
@@ -184,53 +186,18 @@ h2 {
     transform: none;
 }
 
-.profile-tabs {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.profile-tabs button {
-    border: 1px solid #cbd5e1;
-    border-radius: 999px;
-    background: #fff;
-    color: #334155;
-    padding: 7px 14px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    box-shadow: none;
-    transform: none;
-}
-
-.profile-tabs button.active {
-    background: #0f172a;
-    color: #fff;
-    border-color: #0f172a;
-}
-
-.profile-tabs button:hover {
-    box-shadow: none;
-    transform: none;
-}
-
 :host-context(.theme-dark) {
-    .profile-tabs button {
-        background: var(--color-surface-muted);
-        color: var(--color-text-muted);
+    .hero-create-dropdown {
+        background: var(--color-surface);
         border-color: var(--color-border);
-        opacity: 0.86;
+        box-shadow: 0 18px 34px -24px rgba(2, 6, 23, 0.9);
     }
 
-    .profile-tabs button.active {
-        background: var(--gradient-primary);
-        color: var(--color-text-on-dark);
-        border-color: var(--color-border);
-        opacity: 1;
-        box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 55%, transparent) inset;
+    .hero-create-dropdown button {
+        color: var(--color-text);
     }
 
-    .profile-tabs button:not(.active):hover {
-        opacity: 1;
+    .hero-create-dropdown button:hover {
         background: var(--color-surface-alt);
     }
 }
@@ -715,15 +682,6 @@ h2 {
     .hero-actions-follow {
         justify-content: flex-start;
         flex-wrap: nowrap;
-    }
-
-    .profile-tabs {
-        width: 100%;
-    }
-
-    .profile-tabs button {
-        flex: 1 1 0;
-        text-align: center;
     }
 
     .hero-stats {
