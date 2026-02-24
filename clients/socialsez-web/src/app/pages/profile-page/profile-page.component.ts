@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
@@ -46,6 +46,7 @@ export class ProfilePageComponent implements OnDestroy {
     showComposer = false;
     showStoryComposer = false;
     showReelComposer = false;
+    createMenuOpen = false;
     storyMediaFile: File | null = null;
     storyMediaPreviewUrl = '';
     storyComposerError = '';
@@ -213,9 +214,37 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
+        this.createMenuOpen = false;
         this.showStoryComposer = false;
         this.showReelComposer = false;
         this.showComposer = true;
+    }
+
+    toggleCreateMenu(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.createMenuOpen = !this.createMenuOpen;
+    }
+
+    closeCreateMenu(): void {
+        this.createMenuOpen = false;
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent): void {
+        if (!this.createMenuOpen) {
+            return;
+        }
+
+        const target = event.target as HTMLElement | null;
+        if (!target?.closest('.hero-actions-own')) {
+            this.createMenuOpen = false;
+        }
+    }
+
+    @HostListener('document:keydown.escape')
+    onEscapePressed(): void {
+        this.createMenuOpen = false;
     }
 
     openStoryComposer(): void {
@@ -223,6 +252,7 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
+        this.createMenuOpen = false;
         this.showComposer = false;
         this.showReelComposer = false;
         this.showStoryComposer = true;
@@ -234,6 +264,7 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
+        this.createMenuOpen = false;
         this.showComposer = false;
         this.showStoryComposer = false;
         this.showReelComposer = true;

@@ -61,7 +61,7 @@ h2 {
     gap: 8px
 }
 
-.hero-actions button {
+.hero-actions>button {
     border: none;
     border-radius: 10px;
     background: linear-gradient(135deg, #0f172a, #1f2937);
@@ -72,32 +72,91 @@ h2 {
     transition: 140ms ease;
 }
 
-.hero-actions button:hover {
+.hero-actions>button:hover {
     transform: translateY(-1px);
     box-shadow: 0 14px 26px -20px #0f172a;
 }
 
-.hero-actions button:disabled {
+.hero-actions>button:disabled {
     opacity: 0.65;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
 }
 
-.hero-actions a {
-    text-decoration: none;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-weight: 700;
-    color: #1e293b;
-    background: #fff;
-    text-align: center
+.hero-actions-own {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 8px;
 }
 
-.hero-actions .ghost-link {
-    background: #e2e8f0;
-    color: #0f172a
+.hero-create-menu {
+    position: relative;
+}
+
+.hero-icon-button,
+.hero-icon-link {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #fff;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: none;
+    transform: none;
+    line-height: 1;
+}
+
+.hero-icon-button {
+    background: linear-gradient(135deg, #0f172a, #1f2937);
+    border-color: #0f172a;
+    color: #ffffff;
+}
+
+.hero-icon-button i,
+.hero-icon-link i {
+    display: block;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.hero-create-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: 140px;
+    display: grid;
+    gap: 4px;
+    padding: 6px;
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 18px 34px -24px #0f172a;
+    z-index: 20;
+}
+
+.hero-create-dropdown button {
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #0f172a;
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 700;
+    box-shadow: none;
+    transform: none;
+}
+
+.hero-create-dropdown button:hover {
+    background: #f8fafc;
+    box-shadow: none;
+    transform: none;
 }
 
 .activities {
@@ -171,6 +230,65 @@ h2 {
     margin-right: 8px;
     opacity: 0.8;
     font-size: 0.95rem;
+}
+
+.profile-empty-state {
+    min-height: 0;
+    align-self: stretch;
+    margin: 0;
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    text-align: center;
+    gap: 6px;
+    padding: 18px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.profile-empty-state h4 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1rem;
+}
+
+.profile-empty-state p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.empty-art {
+    width: 52px;
+    height: 34px;
+    border-radius: 11px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    align-items: center;
+    justify-items: center;
+    padding: 0 6px;
+    margin-bottom: 4px;
+}
+
+.empty-art .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3b82f6;
+}
+
+.empty-art .dot-b {
+    opacity: 0.75;
+}
+
+.empty-art .dot-c {
+    opacity: 0.5;
 }
 
 .profile-skeleton,

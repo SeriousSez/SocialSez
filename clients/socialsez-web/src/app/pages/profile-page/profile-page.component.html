@@ -15,10 +15,23 @@
 
                 <div class="hero-actions">
                     <ng-container *ngIf="isOwnProfile; else followActions">
-                        <button type="button" (click)="openComposer()">New Post</button>
-                        <button type="button" (click)="openStoryComposer()">New Story</button>
-                        <button type="button" (click)="openReelComposer()">New Reel</button>
-                        <a class="ghost-link" routerLink="/settings">Settings</a>
+                        <div class="hero-actions-own">
+                            <div class="hero-create-menu" (click)="$event.stopPropagation()">
+                                <button type="button" class="hero-icon-button" (click)="toggleCreateMenu($event)" aria-label="Create content">
+                                    <i class="fa-duotone fa-light fa-plus" aria-hidden="true"></i>
+                                </button>
+
+                                <div class="hero-create-dropdown" *ngIf="createMenuOpen">
+                                    <button type="button" (click)="openComposer()">New Post</button>
+                                    <button type="button" (click)="openStoryComposer()">New Story</button>
+                                    <button type="button" (click)="openReelComposer()">New Reel</button>
+                                </div>
+                            </div>
+
+                            <a class="hero-icon-link" routerLink="/settings" aria-label="Settings" (click)="closeCreateMenu()">
+                                <i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i>
+                            </a>
+                        </div>
                     </ng-container>
                     <ng-template #followActions>
                         <button type="button" (click)="toggleFollow()" [disabled]="followState === 'loading'" [class.ghost]="isFollowing && followState === 'idle'" [class.is-loading]="followState === 'loading'" [class.is-success]="followState === 'success'"
@@ -181,15 +194,35 @@
 </section>
 
 <ng-template #noPostsYet>
-    <p class="status" *ngIf="activeTab === 'posts' && !loading && isPrivateLockedView"><i class="fa-duotone fa-light fa-hourglass-clock" aria-hidden="true"></i>No posts visible until this private profile approves your follow request.</p>
-    <p class="status" *ngIf="activeTab === 'posts' && !loading && isOwnProfile">You have no posts yet. Start sharing from Compose.</p>
-    <p class="status" *ngIf="activeTab === 'posts' && !loading && !isOwnProfile && !isPrivateLockedView">No posts yet.</p>
+    <section class="profile-empty-state" *ngIf="activeTab === 'posts' && !loading">
+        <div class="empty-art" aria-hidden="true">
+            <span class="dot dot-a"></span>
+            <span class="dot dot-b"></span>
+            <span class="dot dot-c"></span>
+        </div>
+        <h4 *ngIf="isPrivateLockedView">Private profile</h4>
+        <p *ngIf="isPrivateLockedView">No posts visible until this private profile approves your follow request.</p>
+        <h4 *ngIf="isOwnProfile && !isPrivateLockedView">No posts yet</h4>
+        <p *ngIf="isOwnProfile && !isPrivateLockedView">Start sharing from Compose.</p>
+        <h4 *ngIf="!isOwnProfile && !isPrivateLockedView">No posts yet</h4>
+        <p *ngIf="!isOwnProfile && !isPrivateLockedView">This profile has not posted anything yet.</p>
+    </section>
 </ng-template>
 
 <ng-template #noReelsYet>
-    <p class="status" *ngIf="activeTab === 'reels' && !loading && isPrivateLockedView"><i class="fa-duotone fa-light fa-hourglass-clock" aria-hidden="true"></i>No reels visible until this private profile approves your follow request.</p>
-    <p class="status" *ngIf="activeTab === 'reels' && !loading && isOwnProfile">You have no reels yet. Create one from your profile.</p>
-    <p class="status" *ngIf="activeTab === 'reels' && !loading && !isOwnProfile && !isPrivateLockedView">No reels yet.</p>
+    <section class="profile-empty-state" *ngIf="activeTab === 'reels' && !loading">
+        <div class="empty-art" aria-hidden="true">
+            <span class="dot dot-a"></span>
+            <span class="dot dot-b"></span>
+            <span class="dot dot-c"></span>
+        </div>
+        <h4 *ngIf="isPrivateLockedView">Private profile</h4>
+        <p *ngIf="isPrivateLockedView">No reels visible until this private profile approves your follow request.</p>
+        <h4 *ngIf="isOwnProfile && !isPrivateLockedView">No reels yet</h4>
+        <p *ngIf="isOwnProfile && !isPrivateLockedView">Create one from your profile.</p>
+        <h4 *ngIf="!isOwnProfile && !isPrivateLockedView">No reels yet</h4>
+        <p *ngIf="!isOwnProfile && !isPrivateLockedView">This profile has not shared any reels yet.</p>
+    </section>
 </ng-template>
 
 <app-feed-story-viewer [activeStory]="activeStory" [activeStoryGroup]="activeStoryGroup" [activeStoryIndex]="activeStoryIndex" [storyCount]="activeStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousStory" [hasNextStory]="hasNextStory"
