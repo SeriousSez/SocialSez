@@ -16,7 +16,7 @@
                     <i class="fa-duotone fa-light fa-arrow-left" aria-hidden="true"></i>
                 </button>
                 <span class="thread-header-avatar fallback" *ngIf="activeConversation && !avatarUrl(activeConversation)">{{ avatarText(activeConversation) }}</span>
-                <img class="thread-header-avatar" *ngIf="activeConversation && avatarUrl(activeConversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+                <img class="thread-header-avatar" *ngIf="activeConversation && avatarUrl(activeConversation) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
                 <h3>{{ activeConversation ? displayName(activeConversation) : (newChatSearchOpen ? 'New chat' : 'Messages') }}</h3>
             </div>
             <div class="header-actions">
@@ -55,7 +55,7 @@
                 <div class="list" *ngIf="!loading && !status && filteredConversations.length; else emptyState">
                     <button type="button" class="row" *ngFor="let conversation of filteredConversations; trackBy: trackByConversationId" (click)="openConversation(conversation, $event)">
                         <span class="avatar" *ngIf="!avatarUrl(conversation)">{{ avatarText(conversation) }}</span>
-                        <img class="avatar" *ngIf="avatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+                        <img class="avatar" *ngIf="avatarUrl(conversation) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
                         <span class="meta">
                             <strong>{{ displayName(conversation) }}</strong>
                             <small>{{ preview(conversation) }}</small>
@@ -85,7 +85,7 @@
                 <div class="new-chat-results" *ngIf="newChatShowingSearchResults && !newChatSearchingProfiles && !newChatError && newChatFilteredProfiles.length">
                     <button type="button" class="row" *ngFor="let profile of newChatFilteredProfiles" (click)="onNewChatSelectProfile(profile)">
                         <span class="avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
-                        <img class="avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+                        <img class="avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
 
                         <span class="meta">
                             <strong>{{ profile.displayName }}</strong>
@@ -102,7 +102,7 @@
                         <div class="new-chat-results">
                             <button type="button" class="row" *ngFor="let profile of newChatSuggestedFollowingProfiles" (click)="onNewChatSelectProfile(profile)">
                                 <span class="avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
-                                <img class="avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+                                <img class="avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
 
                                 <span class="meta">
                                     <strong>{{ profile.displayName }}</strong>
@@ -117,7 +117,7 @@
                         <div class="new-chat-results">
                             <button type="button" class="row" *ngFor="let profile of newChatSuggestedRelevantProfiles" (click)="onNewChatSelectProfile(profile)">
                                 <span class="avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
-                                <img class="avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+                                <img class="avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
 
                                 <span class="meta">
                                     <strong>{{ profile.displayName }}</strong>

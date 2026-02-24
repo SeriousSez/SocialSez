@@ -13,7 +13,7 @@
         <label>Bio <textarea rows="4" [(ngModel)]="bio"></textarea></label>
         <label>Profile Image <input type="file" accept="image/*" (change)="onProfileImageSelected($event)" [disabled]="uploadingProfileImage" /></label>
         <p class="meta" *ngIf="uploadingProfileImage">Uploading image...</p>
-        <img class="preview" *ngIf="imageUrl.trim()" [src]="imageUrl" alt="Profile image preview" />
+        <img class="preview" *ngIf="imageUrl.trim()" [src]="imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile image preview" />
         <div class="actions">
             <button (click)="saveProfile()">Save Profile</button>
             <button class="ghost" (click)="reloadProfile()">Reload</button>

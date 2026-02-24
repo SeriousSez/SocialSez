@@ -16,7 +16,7 @@
             <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
             <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
                 <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
-                <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+                <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
                 <span class="mention-meta">
                     <span class="mention-name">{{ profile.displayName }}</span>
                     <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
@@ -91,7 +91,7 @@
         <div class="comments" *ngIf="commentsOpen">
             <div class="comment" *ngFor="let item of orderedComments" [class.reply-comment]="item.depth > 0">
                 <ng-container *ngIf="item.comment as comment">
-                    <img class="comment-avatar" *ngIf="comment.authorImageUrl; else commentInitial" [src]="comment.authorImageUrl" alt="Comment author image" />
+                    <img class="comment-avatar" *ngIf="comment.authorImageUrl; else commentInitial" [src]="comment.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
                     <ng-template #commentInitial>
                         <div class="comment-avatar">{{ comment.authorHandle[0] }}</div>
                     </ng-template>
@@ -139,7 +139,7 @@
                     <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
                     <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
                         <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
-                        <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
+                        <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
                         <span class="mention-meta">
                             <span class="mention-name">{{ profile.displayName }}</span>
                             <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>

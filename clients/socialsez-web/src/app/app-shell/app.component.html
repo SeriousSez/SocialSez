@@ -26,7 +26,7 @@
         </nav>
 
         <div class="profile-chip" *ngIf="session.profile as profile">
-            <img class="avatar" *ngIf="profile.imageUrl; else profileInitial" [src]="profile.imageUrl" alt="Profile image" />
+            <img class="avatar" *ngIf="shouldRenderProfileChipImage(profile.imageUrl); else profileInitial" [src]="profile.imageUrl" (error)="onProfileChipImageError(profile.imageUrl)" alt="Profile image" />
             <ng-template #profileInitial>
                 <div class="avatar">{{ profile.displayName[0] || profile.handle[0] }}</div>
             </ng-template>

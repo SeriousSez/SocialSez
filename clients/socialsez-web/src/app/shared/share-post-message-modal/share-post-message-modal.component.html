@@ -7,7 +7,7 @@
 
         <section class="post-preview" *ngIf="post as currentPost" aria-label="Post preview" role="button" tabindex="0" (click)="openPreviewPost($event)" (keydown.enter)="openPreviewPost($event)" (keydown.space)="openPreviewPost($event)">
             <header class="post-preview-head">
-                <img class="post-preview-avatar" *ngIf="currentPost.authorImageUrl as avatar" [src]="avatar" alt="Post author avatar" />
+                <img class="post-preview-avatar" *ngIf="currentPost.authorImageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Post author avatar" />
                 <span class="post-preview-avatar fallback" *ngIf="!currentPost.authorImageUrl">{{ currentPost.authorHandle.charAt(0).toUpperCase() }}</span>
                 <div class="post-preview-meta">
                     <span>Sharing post from</span>
@@ -34,7 +34,7 @@
 
             <button type="button" class="recipient" *ngFor="let recipient of visibleRecipients" (click)="toggleRecipient(recipient.id)" [disabled]="busy">
                 <div class="avatar fallback" *ngIf="!recipient.imageUrl">{{ (recipient.displayName || recipient.handle).charAt(0).toUpperCase() }}</div>
-                <img class="avatar" *ngIf="recipient.imageUrl as avatar" [src]="avatar" alt="Recipient avatar" />
+                <img class="avatar" *ngIf="recipient.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Recipient avatar" />
 
                 <div class="meta">
                     <h4>{{ recipient.displayName }}</h4>

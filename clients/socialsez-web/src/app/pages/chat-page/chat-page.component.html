@@ -37,7 +37,7 @@
                     <button type="button" class="conversation" *ngFor="let conversation of filteredConversations; trackBy: trackByConversationId" [class.active]="selectedConversationId === conversation.id" (click)="selectConversation(conversation)">
                         <div class="conversation-row">
                             <span class="avatar" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
-                            <img class="avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+                            <img class="avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
 
                             <div class="conversation-content">
                                 <div class="conversation-head">
@@ -62,7 +62,7 @@
                     <span class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation)
                         }}</span>
                     <img class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar"
-                        alt="Conversation avatar" />
+                        onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
 
                     <div class="thread-identity">
                         <h3>{{ chatHeaderName(conversation) }}</h3>
@@ -73,7 +73,7 @@
                 <ng-template #threadPersonStatic>
                     <div class="thread-person">
                         <span class="thread-avatar" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
-                        <img class="thread-avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+                        <img class="thread-avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
 
                         <div class="thread-identity">
                             <h3>{{ chatHeaderName(conversation) }}</h3>
@@ -130,7 +130,7 @@
                                     <span class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(message.authorHandle) && !hasUnseenStoryForHandle(message.authorHandle)" *ngIf="!messageAvatarUrl(message)">{{
                                         messageAvatarText(message) }}</span>
                                     <img class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(message.authorHandle) && !hasUnseenStoryForHandle(message.authorHandle)" *ngIf="messageAvatarUrl(message) as avatar"
-                                        [src]="avatar" alt="Message sender avatar" />
+                                        [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Message sender avatar" />
                                 </button>
                             </ng-container>
 
@@ -140,7 +140,7 @@
                                     <p *ngIf="parsed.text">{{ parsed.text }}</p>
                                     <article class="shared-post-preview" *ngIf="parsed.sharedPost as shared">
                                         <header class="shared-post-head">
-                                            <img class="shared-post-author-avatar" *ngIf="shared.authorImageUrl" [src]="shared.authorImageUrl" alt="Shared post author avatar" />
+                                            <img class="shared-post-author-avatar" *ngIf="shared.authorImageUrl" [src]="shared.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared post author avatar" />
                                             <span class="shared-post-author-fallback" *ngIf="!shared.authorImageUrl">{{ shared.authorHandle[0].toUpperCase() }}</span>
                                             <div class="shared-post-author-meta">
                                                 <span>Shared post from</span>
@@ -176,7 +176,7 @@
                                                 </ng-template>
 
                                                 <header class="shared-reel-overlay-top">
-                                                    <img class="shared-reel-author-avatar" *ngIf="(message.authorImageUrl) as avatar" [src]="avatar" alt="Shared story author avatar" />
+                                                    <img class="shared-reel-author-avatar" *ngIf="(message.authorImageUrl) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared story author avatar" />
                                                     <span class="shared-reel-author-fallback" *ngIf="!message.authorImageUrl">{{ (sharedStory.authorHandle || message.authorHandle || 'S')[0].toUpperCase() }}</span>
                                                     <strong class="shared-reel-author-handle">{{ sharedStory.authorHandle || message.authorHandle || 'story' }}</strong>
                                                 </header>
@@ -200,7 +200,7 @@
                                                 </ng-template>
 
                                                 <header class="shared-reel-overlay-top">
-                                                    <img class="shared-reel-author-avatar" *ngIf="(sharedReel.authorImageUrl || message.authorImageUrl) as avatar" [src]="avatar" alt="Shared reel author avatar" />
+                                                    <img class="shared-reel-author-avatar" *ngIf="(sharedReel.authorImageUrl || message.authorImageUrl) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared reel author avatar" />
                                                     <span class="shared-reel-author-fallback" *ngIf="!(sharedReel.authorImageUrl || message.authorImageUrl)">{{ (sharedReel.authorHandle || message.authorHandle || 'R')[0].toUpperCase() }}</span>
                                                     <strong class="shared-reel-author-handle" *ngIf="sharedReel.authorHandle as authorHandle">{{ authorHandle }}</strong>
                                                     <strong class="shared-reel-author-handle" *ngIf="!sharedReel.authorHandle">shared reel</strong>
@@ -348,7 +348,7 @@
             <aside class="shared-reel-viewer-meta">
                 <div class="shared-reel-viewer-meta-scroll">
                     <header>
-                        <img class="shared-reel-viewer-avatar" *ngIf="reel.authorImageUrl" [src]="reel.authorImageUrl" alt="Reel author avatar" />
+                        <img class="shared-reel-viewer-avatar" *ngIf="reel.authorImageUrl" [src]="reel.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reel author avatar" />
                         <span class="shared-reel-viewer-avatar-fallback" *ngIf="!reel.authorImageUrl">{{ (reel.authorHandle || 'R')[0].toUpperCase() }}</span>
                         <div class="shared-reel-viewer-author">
                             <strong *ngIf="activeSharedReelAuthorHandle as handle">
@@ -393,7 +393,7 @@
                         <section class="shared-reel-viewer-comments" *ngIf="activeSharedReelComments.length">
                             <article class="viewer-comment" *ngFor="let item of orderedActiveSharedReelComments" [class.reply-comment]="item.depth > 0">
                                 <ng-container *ngIf="item.comment as comment">
-                                    <img class="viewer-comment-avatar" *ngIf="comment.authorImageUrl; else viewerCommentInitial" [src]="comment.authorImageUrl" alt="Comment author image" />
+                                    <img class="viewer-comment-avatar" *ngIf="comment.authorImageUrl; else viewerCommentInitial" [src]="comment.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
                                     <ng-template #viewerCommentInitial>
                                         <div class="viewer-comment-avatar">{{ comment.authorHandle[0] }}</div>
                                     </ng-template>

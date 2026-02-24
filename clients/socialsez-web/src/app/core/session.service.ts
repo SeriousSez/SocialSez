@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { ReplaySubject, firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
 import {
     AuthResponse,
     ChatConversationDto,
@@ -29,6 +30,7 @@ export class SessionService {
     profile: ProfileDto | null = null;
     message = '';
     nextSilentRefreshAt: Date | null = null;
+    private readonly apiOrigin = this.resolveApiOrigin();
 
     private readonly appChanges = new ReplaySubject<'profile' | 'posts' | 'session' | 'notifications'>(1);
     readonly appChanges$ = this.appChanges.asObservable();
@@ -40,6 +42,7 @@ export class SessionService {
     constructor(
         private readonly api: SocialSezApiService,
         private readonly router: Router,
+        private readonly ngZone: NgZone,
     ) { }
 
     isAuthenticated(): boolean {
@@ -71,7 +74,7 @@ export class SessionService {
             const auth = await firstValueFrom(this.api.refreshSession());
             this.applyAuth(auth);
             this.message = 'Session restored.';
-            this.appChanges.next('session');
+            this.emitAppChange('session');
         } catch {
             this.clearSession();
         } finally {
@@ -84,7 +87,7 @@ export class SessionService {
         const auth = await firstValueFrom(this.api.register(request));
         this.applyAuth(auth);
         this.message = `Registered as ${auth.profile.handle}.`;
-        this.appChanges.next('session');
+        this.emitAppChange('session');
         await this.router.navigateByUrl('/feed');
     }
 
@@ -92,7 +95,7 @@ export class SessionService {
         const auth = await firstValueFrom(this.api.login(request));
         this.applyAuth(auth);
         this.message = 'Logged in.';
-        this.appChanges.next('session');
+        this.emitAppChange('session');
         await this.router.navigateByUrl('/feed');
     }
 
@@ -102,7 +105,7 @@ export class SessionService {
         } finally {
             this.clearSession();
             this.message = 'Logged out.';
-            this.appChanges.next('session');
+            this.emitAppChange('session');
             await this.router.navigateByUrl('/auth');
         }
     }
@@ -112,7 +115,7 @@ export class SessionService {
         this.applyAuth(auth);
         if (!silent) {
             this.message = 'Session refreshed.';
-            this.appChanges.next('session');
+            this.emitAppChange('session');
         }
     }
 
@@ -131,7 +134,7 @@ export class SessionService {
     async deleteStoryAsync(storyId: string): Promise<void> {
         await firstValueFrom(this.api.deleteStory(storyId));
         this.message = 'Story deleted.';
-        this.appChanges.next('posts');
+        this.emitAppChange('posts');
     }
 
     async loadReelFeedAsync(take = 20, mode: FeedMode = 'for-you'): Promise<ReelDto[]> {
@@ -179,52 +182,53 @@ export class SessionService {
     }
 
     async searchProfilesAsync(query: string): Promise<ProfileDto[]> {
-        return firstValueFrom(this.api.searchProfiles(query));
+        const profiles = await firstValueFrom(this.api.searchProfiles(query));
+        return profiles.map(profile => this.normalizeProfile(profile));
     }
 
     async createPostAsync(content: string, imageFile?: File): Promise<void> {
         await firstValueFrom(this.api.createPost(content, imageFile));
         this.message = 'Post created.';
-        this.appChanges.next('posts');
+        this.emitAppChange('posts');
     }
 
     async createStoryAsync(mediaFile: File, caption?: string): Promise<StoryDto> {
         const story = await firstValueFrom(this.api.createStory(mediaFile, caption));
         this.message = 'Story created.';
-        this.appChanges.next('posts');
+        this.emitAppChange('posts');
         return story;
     }
 
     async createReelAsync(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File): Promise<ReelDto> {
         const reel = await firstValueFrom(this.api.createReel(videoFile, durationSeconds, caption, thumbnailFile));
         this.message = 'Reel created.';
-        this.appChanges.next('posts');
+        this.emitAppChange('posts');
         return reel;
     }
 
     async updateReelAsync(reelId: string, caption?: string): Promise<ReelDto> {
         const reel = await firstValueFrom(this.api.updateReel(reelId, caption));
         this.message = 'Reel updated.';
-        this.appChanges.next('posts');
+        this.emitAppChange('posts');
         return reel;
     }
 
     async deleteReelAsync(reelId: string): Promise<void> {
         await firstValueFrom(this.api.deleteReel(reelId));
         this.message = 'Reel deleted.';
-        this.appChanges.next('posts');
+        this.emitAppChange('posts');
     }
 
     async updatePostAsync(postId: string, content: string): Promise<void> {
         await firstValueFrom(this.api.updatePost(postId, { content }));
         this.message = 'Post updated.';
-        this.appChanges.next('posts');
+        this.emitAppChange('posts');
     }
 
     async deletePostAsync(postId: string): Promise<void> {
         await firstValueFrom(this.api.deletePost(postId));
         this.message = 'Post deleted.';
-        this.appChanges.next('posts');
+        this.emitAppChange('posts');
     }
 
     async togglePostLikeAsync(postId: string): Promise<PostDto> {
@@ -268,11 +272,12 @@ export class SessionService {
 
     async uploadImageAsync(file: File): Promise<string> {
         const response = await firstValueFrom(this.api.uploadImage(file));
-        return response.url;
+        return this.normalizeMediaUrl(response.url) ?? response.url;
     }
 
     async loadPublicProfileAsync(handle: string): Promise<ProfileDto> {
-        return firstValueFrom(this.api.getProfile(handle));
+        const profile = await firstValueFrom(this.api.getProfile(handle));
+        return this.normalizeProfile(profile);
     }
 
     async loadProfileActivitySummaryAsync(handle: string): Promise<ProfileActivitySummaryDto> {
@@ -282,14 +287,14 @@ export class SessionService {
     async followAsync(followedId: string): Promise<FollowActionResultDto> {
         const result = await firstValueFrom(this.api.follow(followedId));
         this.message = result.status === 'RequestPending' ? 'Follow request sent.' : 'Now following user.';
-        this.appChanges.next('posts');
+        this.emitAppChange('posts');
         return result;
     }
 
     async unfollowAsync(followedId: string): Promise<void> {
         await firstValueFrom(this.api.unfollow(followedId));
         this.message = 'Unfollowed user.';
-        this.appChanges.next('posts');
+        this.emitAppChange('posts');
     }
 
     async getFollowStatusAsync(followedId: string): Promise<FollowStatusDto> {
@@ -302,11 +307,16 @@ export class SessionService {
     }
 
     async loadFollowingAsync(take = 100): Promise<ProfileDto[]> {
-        return firstValueFrom(this.api.getFollowing(take));
+        const profiles = await firstValueFrom(this.api.getFollowing(take));
+        return profiles.map(profile => this.normalizeProfile(profile));
     }
 
     async loadFollowSuggestionsAsync(takePerGroup = 10): Promise<FollowSuggestionsDto> {
-        return firstValueFrom(this.api.getFollowSuggestions(takePerGroup));
+        const suggestions = await firstValueFrom(this.api.getFollowSuggestions(takePerGroup));
+        return {
+            following: suggestions.following.map(profile => this.normalizeProfile(profile)),
+            relevant: suggestions.relevant.map(profile => this.normalizeProfile(profile))
+        };
     }
 
     async loadIncomingFollowRequestsAsync(take = 50): Promise<FollowRequestDto[]> {
@@ -315,12 +325,12 @@ export class SessionService {
 
     async approveFollowRequestAsync(followerId: string): Promise<void> {
         await firstValueFrom(this.api.approveFollowRequest(followerId));
-        this.appChanges.next('notifications');
+        this.emitAppChange('notifications');
     }
 
     async declineFollowRequestAsync(followerId: string): Promise<void> {
         await firstValueFrom(this.api.declineFollowRequest(followerId));
-        this.appChanges.next('notifications');
+        this.emitAppChange('notifications');
     }
 
     async loadNotificationsAsync(take = 50): Promise<NotificationDto[]> {
@@ -329,27 +339,27 @@ export class SessionService {
 
     async markNotificationReadAsync(notificationId: string): Promise<void> {
         await firstValueFrom(this.api.markNotificationRead(notificationId));
-        this.appChanges.next('notifications');
+        this.emitAppChange('notifications');
     }
 
     async markAllNotificationsReadAsync(): Promise<number> {
         const response = await firstValueFrom(this.api.markAllNotificationsRead());
-        this.appChanges.next('notifications');
+        this.emitAppChange('notifications');
         return response.updatedCount;
     }
 
     async updateProfileAsync(request: UpdateProfileRequest): Promise<void> {
         const updated = await firstValueFrom(this.api.updateMyProfile(request));
-        this.profile = updated;
+        this.profile = this.normalizeProfile(updated);
         this.message = 'Profile updated.';
-        this.appChanges.next('profile');
+        this.emitAppChange('profile');
     }
 
     async updateProfilePrivacyAsync(isPrivate: boolean): Promise<void> {
         const updated = await firstValueFrom(this.api.updateMyPrivacy({ isPrivate }));
-        this.profile = updated;
+        this.profile = this.normalizeProfile(updated);
         this.message = 'Profile privacy updated.';
-        this.appChanges.next('profile');
+        this.emitAppChange('profile');
     }
 
     async loadChatConversationsAsync(): Promise<ChatConversationDto[]> {
@@ -382,13 +392,67 @@ export class SessionService {
 
     async refreshMeAsync(): Promise<void> {
         const me = await firstValueFrom(this.api.getMe());
-        this.profile = me;
-        this.appChanges.next('profile');
+        this.profile = this.normalizeProfile(me);
+        this.emitAppChange('profile');
     }
 
     private applyAuth(auth: AuthResponse): void {
-        this.profile = auth.profile;
+        this.profile = this.normalizeProfile(auth.profile);
         this.scheduleSilentRefresh(auth.expiresAtUtc);
+    }
+
+    private normalizeProfile(profile: ProfileDto): ProfileDto {
+        const normalizedImageUrl = this.normalizeMediaUrl(profile.imageUrl);
+        return {
+            ...profile,
+            imageUrl: normalizedImageUrl
+        };
+    }
+
+    private emitAppChange(change: 'profile' | 'posts' | 'session' | 'notifications'): void {
+        this.ngZone.run(() => this.appChanges.next(change));
+    }
+
+    private resolveApiOrigin(): string {
+        try {
+            return new URL(environment.apiBaseUrl).origin;
+        } catch {
+            return '';
+        }
+    }
+
+    private normalizeMediaUrl(value?: string | null): string | undefined {
+        const trimmed = value?.trim();
+        if (!trimmed) {
+            return undefined;
+        }
+
+        if (trimmed.startsWith('data:')) {
+            return trimmed;
+        }
+
+        if (trimmed.startsWith('/')) {
+            return this.apiOrigin ? `${this.apiOrigin}${trimmed}` : trimmed;
+        }
+
+        try {
+            const parsed = new URL(trimmed);
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+                return undefined;
+            }
+
+            const isLocalHost = parsed.hostname === 'localhost'
+                || parsed.hostname === '127.0.0.1'
+                || parsed.hostname === '0.0.0.0';
+
+            if (this.apiOrigin && isLocalHost) {
+                return `${this.apiOrigin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+            }
+
+            return parsed.toString();
+        } catch {
+            return undefined;
+        }
     }
 
     private clearSession(): void {

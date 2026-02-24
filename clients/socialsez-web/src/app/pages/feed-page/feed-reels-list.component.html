@@ -4,7 +4,7 @@
             <div class="author">
                 <button type="button" class="avatar-button" (click)="onAuthorAvatarClick(reel.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForAuthor(reel.authorHandle) ? ('Open @' + reel.authorHandle + ' stories') : ('View @' + reel.authorHandle + ' profile')">
                     <img class="avatar" [class.story-active]="hasActiveStoryForAuthor(reel.authorHandle)" [class.story-seen]="hasActiveStoryForAuthor(reel.authorHandle) && !hasUnseenStoryForAuthor(reel.authorHandle)" *ngIf="reel.authorImageUrl; else reelAuthorInitial" [src]="reel.authorImageUrl"
-                        alt="Author image" />
+                        onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Author image" />
                     <ng-template #reelAuthorInitial>
                         <div class="avatar" [class.story-active]="hasActiveStoryForAuthor(reel.authorHandle)" [class.story-seen]="hasActiveStoryForAuthor(reel.authorHandle) && !hasUnseenStoryForAuthor(reel.authorHandle)">{{ reel.authorHandle[0] }}</div>
                     </ng-template>
@@ -73,7 +73,7 @@
         <section class="reel-comments" *ngIf="isCommentsOpen(reel.id) && reel.comments.length">
             <article class="reel-comment" *ngFor="let item of getOrderedReelComments(reel)" [class.reply-comment]="item.depth > 0">
                 <ng-container *ngIf="item.comment as comment">
-                    <img class="reel-comment-avatar" *ngIf="comment.authorImageUrl; else reelCommentInitial" [src]="comment.authorImageUrl" alt="Comment author image" />
+                    <img class="reel-comment-avatar" *ngIf="comment.authorImageUrl; else reelCommentInitial" [src]="comment.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
                     <ng-template #reelCommentInitial>
                         <div class="reel-comment-avatar">{{ comment.authorHandle[0] }}</div>
                     </ng-template>

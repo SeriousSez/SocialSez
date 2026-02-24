@@ -3,7 +3,7 @@
         <ng-container *ngIf="!loading; else profileOverviewSkeleton">
             <header class="profile-hero">
                 <a class="hero-image-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)" [attr.aria-label]="viewedProfileHasActiveStory ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
-                    <img class="hero-image" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" [src]="avatarImageUrl" [alt]="profile.displayName + ' avatar'" />
+                    <img class="hero-image" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" [src]="avatarImageUrl" (error)="onHeroImageError()" [alt]="profile.displayName + ' avatar'" />
                 </a>
 
                 <div class="hero-copy">
@@ -137,7 +137,8 @@
                 (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
                 <div post-header class="author">
                     <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)">
-                        <img class="avatar" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
+                        <img class="avatar" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
+                            onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Author image" />
                     </a>
                     <ng-template #authorInitial>
                         <div class="avatar" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory">{{ post.authorHandle[0] }}</div>

@@ -1156,4 +1156,13 @@ export class ProfilePageComponent implements OnDestroy {
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1d4ed8" offset="0"/><stop stop-color="#0f172a" offset="1"/></linearGradient></defs><rect width="160" height="160" fill="url(#g)"/><text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" font-size="68" font-family="Arial, sans-serif" fill="#ffffff" font-weight="700">${initial}</text></svg>`;
         return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
     }
+
+    onHeroImageError(): void {
+        const profile = this.viewedProfile;
+        if (!profile) {
+            return;
+        }
+
+        this.avatarImageUrl = this.buildAvatarImage(profile.displayName, profile.handle);
+    }
 }

@@ -10,7 +10,7 @@
             <div class="story-author-meta">
                 <a class="story-author-link" href="" (click)="openAuthorProfile($event)" aria-label="View author profile">
                     <div class="story-author">
-                        <img *ngIf="activeStoryGroup?.authorImageUrl" [src]="activeStoryGroup?.authorImageUrl" alt="Story author" />
+                        <img *ngIf="activeStoryGroup?.authorImageUrl" [src]="activeStoryGroup?.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Story author" />
                         <span>@{{ activeStoryGroup?.authorHandle }}</span>
                     </div>
                 </a>

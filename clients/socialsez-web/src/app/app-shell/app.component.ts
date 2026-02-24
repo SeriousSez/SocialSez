@@ -21,6 +21,7 @@ export class AppComponent implements OnInit {
     trendingHashtags: HashtagSearchResultDto[] = [];
     loadingTrending = false;
     unreadNotificationsCount = 0;
+    private failedProfileChipImageUrl: string | null = null;
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -86,6 +87,24 @@ export class AppComponent implements OnInit {
         }
 
         await this.router.navigate(['/discover'], { queryParams: { q: query, type: 'all' } });
+    }
+
+    shouldRenderProfileChipImage(imageUrl?: string | null): boolean {
+        const normalized = imageUrl?.trim();
+        if (!normalized) {
+            return false;
+        }
+
+        return normalized !== this.failedProfileChipImageUrl;
+    }
+
+    onProfileChipImageError(imageUrl?: string | null): void {
+        const normalized = imageUrl?.trim();
+        if (!normalized) {
+            return;
+        }
+
+        this.failedProfileChipImageUrl = normalized;
     }
 
     private async loadTrendingHashtags(): Promise<void> {
