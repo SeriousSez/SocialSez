@@ -712,6 +712,11 @@ h2 {
 
 @media (max-width:680px) {
 
+    .hero-create-dropdown {
+        left: 0;
+        right: auto;
+    }
+
     .hero-actions-own,
     .hero-actions-follow {
         justify-content: flex-start;

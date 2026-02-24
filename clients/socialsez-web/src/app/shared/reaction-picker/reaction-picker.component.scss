@@ -8,6 +8,7 @@
 .reaction-zone {
     position: relative;
     width: fit-content;
+    touch-action: manipulation;
 }
 
 .reaction-zone:has(.reaction-popover)::before {
@@ -107,6 +108,12 @@
 }
 
 .reaction-pop-btn:hover {
+    background: #eef2f7;
+    transform: translateY(-1px) scale(1.08);
+    box-shadow: none;
+}
+
+.reaction-pop-btn.touch-hover {
     background: #eef2f7;
     transform: translateY(-1px) scale(1.08);
     box-shadow: none;

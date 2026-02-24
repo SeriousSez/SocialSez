@@ -40,10 +40,25 @@ export class ReactionPickerComponent implements OnDestroy {
     private openTimerId: number | null = null;
     private closeTimerId: number | null = null;
     private closeAnimationTimerId: number | null = null;
+    private touchOpenTimerId: number | null = null;
+    private activeTouchId: number | null = null;
+    private touchLongPressTriggered = false;
+    highlightedReactionType: string | null = null;
 
     ngOnDestroy(): void {
         this.clearTimers();
         this.clearCloseAnimationTimer();
+        this.clearTouchOpenTimer();
+    }
+
+    onPrimaryButtonClick(event: MouseEvent): void {
+        if (this.touchLongPressTriggered) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+
+        this.primaryClick.emit();
     }
 
     onHoverStart(): void {
@@ -87,16 +102,107 @@ export class ReactionPickerComponent implements OnDestroy {
     }
 
     pickReaction(type: string): void {
+        this.highlightedReactionType = null;
         this.closePopoverNow();
         this.reactionSelected.emit(type);
     }
 
     closePopoverNow(): void {
         this.clearTimers();
+        this.clearTouchOpenTimer();
         this.clearCloseAnimationTimer();
+        this.highlightedReactionType = null;
         this.open = false;
         this.popoverReady = false;
         this.popoverClosing = false;
+    }
+
+    onTouchStart(event: TouchEvent): void {
+        if (this.busy || event.touches.length === 0) {
+            return;
+        }
+
+        this.clearTouchOpenTimer();
+        const firstTouch = event.touches[0];
+        this.activeTouchId = firstTouch.identifier;
+        this.touchLongPressTriggered = false;
+        this.highlightedReactionType = null;
+
+        this.touchOpenTimerId = window.setTimeout(() => {
+            this.touchLongPressTriggered = true;
+            this.open = true;
+            this.popoverReady = false;
+            this.popoverClosing = false;
+            this.resolvedPopoverAlign = this.popoverAlign;
+            this.resolvedPopoverVertical = 'top';
+            this.touchOpenTimerId = null;
+
+            window.setTimeout(() => {
+                this.adjustPopoverAlignment();
+                this.popoverReady = true;
+                this.updateHighlightedReactionFromTouchPoint(firstTouch.clientX, firstTouch.clientY);
+            }, 0);
+        }, 420);
+    }
+
+    @HostListener('document:touchmove', ['$event'])
+    onDocumentTouchMove(event: TouchEvent): void {
+        if (this.activeTouchId === null) {
+            return;
+        }
+
+        const touch = this.findActiveTouch(event.touches);
+        if (!touch) {
+            return;
+        }
+
+        if (this.touchLongPressTriggered) {
+            event.preventDefault();
+            this.updateHighlightedReactionFromTouchPoint(touch.clientX, touch.clientY);
+        }
+    }
+
+    @HostListener('document:touchend', ['$event'])
+    onDocumentTouchEnd(event: TouchEvent): void {
+        if (this.activeTouchId === null) {
+            return;
+        }
+
+        const endedTouch = this.findActiveTouch(event.changedTouches);
+        if (!endedTouch) {
+            return;
+        }
+
+        const selectedReaction = this.highlightedReactionType;
+        const hadLongPress = this.touchLongPressTriggered;
+
+        this.clearTouchState();
+
+        if (!hadLongPress) {
+            this.primaryClick.emit();
+            return;
+        }
+
+        if (selectedReaction) {
+            this.pickReaction(selectedReaction);
+            return;
+        }
+
+        this.closePopoverNow();
+    }
+
+    @HostListener('document:touchcancel')
+    onDocumentTouchCancel(): void {
+        if (this.activeTouchId === null) {
+            return;
+        }
+
+        const hadLongPress = this.touchLongPressTriggered;
+        this.clearTouchState();
+
+        if (hadLongPress) {
+            this.closePopoverNow();
+        }
     }
 
     @HostListener('window:resize')
@@ -145,6 +251,46 @@ export class ReactionPickerComponent implements OnDestroy {
     private clearTimers(): void {
         this.clearOpenTimer();
         this.clearCloseTimer();
+    }
+
+    private clearTouchOpenTimer(): void {
+        if (this.touchOpenTimerId !== null) {
+            window.clearTimeout(this.touchOpenTimerId);
+            this.touchOpenTimerId = null;
+        }
+    }
+
+    private clearTouchState(): void {
+        this.clearTouchOpenTimer();
+        this.activeTouchId = null;
+        this.touchLongPressTriggered = false;
+    }
+
+    private findActiveTouch(touchList: TouchList): Touch | null {
+        if (this.activeTouchId === null) {
+            return null;
+        }
+
+        for (let index = 0; index < touchList.length; index++) {
+            const touch = touchList.item(index);
+            if (touch && touch.identifier === this.activeTouchId) {
+                return touch;
+            }
+        }
+
+        return null;
+    }
+
+    private updateHighlightedReactionFromTouchPoint(clientX: number, clientY: number): void {
+        if (!this.open) {
+            this.highlightedReactionType = null;
+            return;
+        }
+
+        const element = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
+        const reactionButton = element?.closest('.reaction-pop-btn') as HTMLElement | null;
+        const nextReactionType = reactionButton?.dataset['reactionType'] ?? null;
+        this.highlightedReactionType = nextReactionType;
     }
 
     private startCloseAnimation(): void {
