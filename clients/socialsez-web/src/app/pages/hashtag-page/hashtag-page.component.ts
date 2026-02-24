@@ -66,6 +66,11 @@ export class HashtagPageComponent {
         return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
     }
 
+    hasUnseenStoryForHandle(handle: string): boolean {
+        const normalized = handle.trim().toLowerCase();
+        return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized && group.hasUnseenStories);
+    }
+
     async openProfileOrStory(handle: string, event: MouseEvent): Promise<void> {
         event.preventDefault();
         event.stopPropagation();

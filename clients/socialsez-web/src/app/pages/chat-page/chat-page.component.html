@@ -59,8 +59,10 @@
             <header class="message-panel-head">
                 <a class="thread-person thread-person-link" *ngIf="chatHeaderProfileHandle(conversation) as profileHandle; else threadPersonStatic" [attr.href]="'/users/' + profileHandle" (click)="openAvatarProfileOrStory(profileHandle, $event)"
                     [attr.aria-label]="hasActiveStoryForHandle(profileHandle) ? ('Open @' + profileHandle + ' stories') : ('View @' + profileHandle + ' profile')">
-                    <span class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
-                    <img class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+                    <span class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation)
+                        }}</span>
+                    <img class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar"
+                        alt="Conversation avatar" />
 
                     <div class="thread-identity">
                         <h3>{{ chatHeaderName(conversation) }}</h3>
@@ -125,8 +127,10 @@
                             <ng-container *ngIf="currentProfileId !== message.authorProfileId">
                                 <button type="button" class="message-avatar-trigger" (click)="openAvatarProfileOrStory(message.authorHandle, $event)"
                                     [attr.aria-label]="hasActiveStoryForHandle(message.authorHandle) ? ('Open @' + message.authorHandle + ' stories') : ('View @' + message.authorHandle + ' profile')">
-                                    <span class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" *ngIf="!messageAvatarUrl(message)">{{ messageAvatarText(message) }}</span>
-                                    <img class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" *ngIf="messageAvatarUrl(message) as avatar" [src]="avatar" alt="Message sender avatar" />
+                                    <span class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(message.authorHandle) && !hasUnseenStoryForHandle(message.authorHandle)" *ngIf="!messageAvatarUrl(message)">{{
+                                        messageAvatarText(message) }}</span>
+                                    <img class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(message.authorHandle) && !hasUnseenStoryForHandle(message.authorHandle)" *ngIf="messageAvatarUrl(message) as avatar"
+                                        [src]="avatar" alt="Message sender avatar" />
                                 </button>
                             </ng-container>
 

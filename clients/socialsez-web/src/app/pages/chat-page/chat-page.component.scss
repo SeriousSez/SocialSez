@@ -358,6 +358,11 @@
     box-shadow: 0 0 0 2px #fff, 0 0 0 4px #ec4899;
 }
 
+.thread-avatar.story-seen,
+.message-avatar.story-seen {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #94a3b8;
+}
+
 .message-avatar-trigger {
     border: 0;
     background: transparent;

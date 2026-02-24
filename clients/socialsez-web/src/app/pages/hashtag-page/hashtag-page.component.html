@@ -17,10 +17,11 @@
             (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
             <div post-header class="author">
                 <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? ('Open @' + post.authorHandle + ' stories') : ('View @' + post.authorHandle + ' profile')">
-                    <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
+                    <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
+                        alt="Author image" />
                 </a>
                 <ng-template #authorInitial>
-                    <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
+                    <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
                 </ng-template>
                 <div class="meta"><a class="author-link" [routerLink]="['/users', post.authorHandle]">@{{ post.authorHandle }}</a> · {{ post.createdAtUtc | date:'short' }}</div>
             </div>

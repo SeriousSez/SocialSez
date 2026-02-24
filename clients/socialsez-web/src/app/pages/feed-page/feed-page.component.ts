@@ -181,6 +181,12 @@ export class FeedPageComponent implements OnDestroy {
         return this.storyGroups.map(group => group.authorHandle.trim().toLowerCase());
     }
 
+    get activeUnseenStoryAuthorHandles(): string[] {
+        return this.storyGroups
+            .filter(group => group.hasUnseenStories)
+            .map(group => group.authorHandle.trim().toLowerCase());
+    }
+
     get activeStory(): StoryDto | null {
         if (!this.activeStoryGroup) {
             return null;
@@ -602,14 +608,18 @@ export class FeedPageComponent implements OnDestroy {
         }
 
         this.activeStoryGroup = group;
-        const firstUnseenIndex = group.stories.findIndex(story => !story.viewedByMe);
-        this.activeStoryIndex = firstUnseenIndex >= 0 ? firstUnseenIndex : 0;
+        this.activeStoryIndex = this.getNewestUnseenStoryIndex(group.stories);
         void this.markActiveStoryViewed();
     }
 
     hasActiveStoryForHandle(handle: string): boolean {
         const normalized = handle.trim().toLowerCase();
         return this.storyGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
+    }
+
+    hasUnseenStoryForHandle(handle: string): boolean {
+        const normalized = handle.trim().toLowerCase();
+        return this.storyGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized && group.hasUnseenStories);
     }
 
     openProfileOrStory(handle: string, event?: MouseEvent): void {
@@ -1463,6 +1473,27 @@ export class FeedPageComponent implements OnDestroy {
         if (this.activeStoryGroup) {
             this.activeStoryGroup = this.storyGroups.find(group => group.authorId === this.activeStoryGroup?.authorId) ?? this.activeStoryGroup;
         }
+    }
+
+    private getNewestUnseenStoryIndex(stories: Array<{ viewedByMe: boolean; createdAtUtc: string }>): number {
+        let selectedIndex = -1;
+        let selectedTimestamp = Number.NEGATIVE_INFINITY;
+
+        for (let index = 0; index < stories.length; index += 1) {
+            const story = stories[index];
+            if (story.viewedByMe) {
+                continue;
+            }
+
+            const parsedTimestamp = Date.parse(story.createdAtUtc);
+            const timestamp = Number.isNaN(parsedTimestamp) ? Number.NEGATIVE_INFINITY : parsedTimestamp;
+            if (selectedIndex < 0 || timestamp > selectedTimestamp) {
+                selectedIndex = index;
+                selectedTimestamp = timestamp;
+            }
+        }
+
+        return selectedIndex >= 0 ? selectedIndex : 0;
     }
 
     private tryOpenPendingStoryHandle(): void {

@@ -3,7 +3,7 @@
         <ng-container *ngIf="!loading; else profileOverviewSkeleton">
             <header class="profile-hero">
                 <a class="hero-image-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)" [attr.aria-label]="viewedProfileHasActiveStory ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
-                    <img class="hero-image" [class.story-active]="viewedProfileHasActiveStory" [src]="avatarImageUrl" [alt]="profile.displayName + ' avatar'" />
+                    <img class="hero-image" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" [src]="avatarImageUrl" [alt]="profile.displayName + ' avatar'" />
                 </a>
 
                 <div class="hero-copy">
@@ -137,10 +137,10 @@
                 (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
                 <div post-header class="author">
                     <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)">
-                        <img class="avatar" [class.story-active]="viewedProfileHasActiveStory" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
+                        <img class="avatar" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
                     </a>
                     <ng-template #authorInitial>
-                        <div class="avatar" [class.story-active]="viewedProfileHasActiveStory">{{ post.authorHandle[0] }}</div>
+                        <div class="avatar" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory">{{ post.authorHandle[0] }}</div>
                     </ng-template>
                     <div class="author-meta"><a class="author-link" [routerLink]="['/users', post.authorHandle]">@{{ post.authorHandle }}</a> · {{ post.createdAtUtc | date:'short' }}</div>
                 </div>
@@ -148,9 +148,9 @@
         </div>
 
         <section class="profile-reels" *ngIf="activeTab === 'reels' && !loading && reels.length; else noReelsYet">
-            <app-feed-reels-list [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId" [viewerProfileId]="currentProfileId" [showOwnerActions]="isOwnProfile" [updatingReelId]="updatingReelId"
-                [deletingReelId]="deletingReelId" (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelUpdated)="updateReelCaption($event.reel, $event.caption)"
-                (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (reelDeleted)="deleteReel($event)">
+            <app-feed-reels-list [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="activeUnseenStoryAuthorHandles" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId" [viewerProfileId]="currentProfileId"
+                [showOwnerActions]="isOwnProfile" [updatingReelId]="updatingReelId" [deletingReelId]="deletingReelId" (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)"
+                (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelUpdated)="updateReelCaption($event.reel, $event.caption)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (reelDeleted)="deleteReel($event)">
             </app-feed-reels-list>
         </section>
 

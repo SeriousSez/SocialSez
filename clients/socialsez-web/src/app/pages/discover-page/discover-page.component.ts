@@ -112,9 +112,24 @@ export class DiscoverPageComponent {
         return this.session.profile?.id ?? null;
     }
 
+    get activeStoryAuthorHandles(): string[] {
+        return this.activeStoryGroups.map(group => group.authorHandle.trim().toLowerCase());
+    }
+
+    get unseenStoryAuthorHandles(): string[] {
+        return this.activeStoryGroups
+            .filter(group => group.hasUnseenStories)
+            .map(group => group.authorHandle.trim().toLowerCase());
+    }
+
     hasActiveStoryForHandle(handle: string): boolean {
         const normalized = handle.trim().toLowerCase();
         return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
+    }
+
+    hasUnseenStoryForHandle(handle: string): boolean {
+        const normalized = handle.trim().toLowerCase();
+        return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized && group.hasUnseenStories);
     }
 
     async openProfileOrStory(handle: string, event: MouseEvent): Promise<void> {

@@ -3,9 +3,10 @@
         <header class="reel-head">
             <div class="author">
                 <button type="button" class="avatar-button" (click)="onAuthorAvatarClick(reel.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForAuthor(reel.authorHandle) ? ('Open @' + reel.authorHandle + ' stories') : ('View @' + reel.authorHandle + ' profile')">
-                    <img class="avatar" [class.story-active]="hasActiveStoryForAuthor(reel.authorHandle)" *ngIf="reel.authorImageUrl; else reelAuthorInitial" [src]="reel.authorImageUrl" alt="Author image" />
+                    <img class="avatar" [class.story-active]="hasActiveStoryForAuthor(reel.authorHandle)" [class.story-seen]="hasActiveStoryForAuthor(reel.authorHandle) && !hasUnseenStoryForAuthor(reel.authorHandle)" *ngIf="reel.authorImageUrl; else reelAuthorInitial" [src]="reel.authorImageUrl"
+                        alt="Author image" />
                     <ng-template #reelAuthorInitial>
-                        <div class="avatar" [class.story-active]="hasActiveStoryForAuthor(reel.authorHandle)">{{ reel.authorHandle[0] }}</div>
+                        <div class="avatar" [class.story-active]="hasActiveStoryForAuthor(reel.authorHandle)" [class.story-seen]="hasActiveStoryForAuthor(reel.authorHandle) && !hasUnseenStoryForAuthor(reel.authorHandle)">{{ reel.authorHandle[0] }}</div>
                     </ng-template>
                 </button>
                 <div class="meta">

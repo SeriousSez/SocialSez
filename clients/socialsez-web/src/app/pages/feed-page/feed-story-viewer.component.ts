@@ -267,7 +267,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     }
 
     formatStoryAge(createdAtUtc: string): string {
-        const createdAt = new Date(createdAtUtc).getTime();
+        const createdAt = this.parseUtcDate(createdAtUtc).getTime();
         if (!Number.isFinite(createdAt)) {
             return '';
         }
@@ -289,6 +289,12 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
 
         const elapsedDays = Math.floor(elapsedHours / 24);
         return `${elapsedDays}d`;
+    }
+
+    private parseUtcDate(value: string): Date {
+        const hasExplicitTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
+        const normalized = hasExplicitTimezone ? value : `${value}Z`;
+        return new Date(normalized);
     }
 
     private resetPlaybackState(): void {

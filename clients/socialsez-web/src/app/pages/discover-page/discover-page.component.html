@@ -61,7 +61,7 @@
             <article class="card" *ngFor="let profile of profileResults">
                 <div class="identity">
                     <a class="avatar-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)" [attr.aria-label]="hasActiveStoryForHandle(profile.handle) ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
-                        <div class="avatar" [class.story-active]="hasActiveStoryForHandle(profile.handle)">{{ profile.displayName[0] || profile.handle[0] }}</div>
+                        <div class="avatar" [class.story-active]="hasActiveStoryForHandle(profile.handle)" [class.story-seen]="hasActiveStoryForHandle(profile.handle) && !hasUnseenStoryForHandle(profile.handle)">{{ profile.displayName[0] || profile.handle[0] }}</div>
                     </a>
                     <h4>
                         <a class="user-link" [routerLink]="['/users', profile.handle]">{{ profile.displayName }}</a>
@@ -94,10 +94,11 @@
                     (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
                     <div post-header class="author">
                         <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? ('Open @' + post.authorHandle + ' stories') : ('View @' + post.authorHandle + ' profile')">
-                            <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
+                            <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
+                                alt="Author image" />
                         </a>
                         <ng-template #authorInitial>
-                            <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
+                            <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
                         </ng-template>
                         <div class="meta"><a class="author-link" [routerLink]="['/users', post.authorHandle]">@{{ post.authorHandle }}</a> · {{ post.createdAtUtc | date:'short' }}</div>
                     </div>
@@ -112,8 +113,8 @@
 <ng-template #reelsSectionTemplate let-title="title" let-reels="reels">
     <section class="section" *ngIf="reels.length">
         <h3>{{ title }}</h3>
-        <app-feed-reels-list [reels]="reels" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId" [viewerProfileId]="currentProfileId" (likeToggled)="toggleReelLike($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (commentAdded)="addReelComment($event)"
-            (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (authorAvatarClicked)="openProfileByHandle($event)">
+        <app-feed-reels-list [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="unseenStoryAuthorHandles" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId" [viewerProfileId]="currentProfileId" (likeToggled)="toggleReelLike($event)"
+            (reelCommentLikeToggled)="toggleReelCommentLike($event)" (commentAdded)="addReelComment($event)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (authorAvatarClicked)="openProfileByHandle($event)">
         </app-feed-reels-list>
     </section>
 </ng-template>

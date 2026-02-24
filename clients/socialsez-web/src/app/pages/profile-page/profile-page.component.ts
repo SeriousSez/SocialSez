@@ -61,6 +61,7 @@ export class ProfilePageComponent implements OnDestroy {
     isRequested = false;
     followRequiresApproval = false;
     viewedProfileHasActiveStory = false;
+    viewedProfileHasUnseenStory = false;
     activeStoryGroup: StoryGroupDto | null = null;
     activeStoryIndex = 0;
     storyViewerError = '';
@@ -168,6 +169,15 @@ export class ProfilePageComponent implements OnDestroy {
     get activeStoryAuthorHandles(): string[] {
         const handle = this.viewedProfile?.handle?.trim().toLowerCase();
         if (!handle || !this.viewedProfileHasActiveStory) {
+            return [];
+        }
+
+        return [handle];
+    }
+
+    get activeUnseenStoryAuthorHandles(): string[] {
+        const handle = this.viewedProfile?.handle?.trim().toLowerCase();
+        if (!handle || !this.viewedProfileHasActiveStory || !this.viewedProfileHasUnseenStory) {
             return [];
         }
 
@@ -359,7 +369,9 @@ export class ProfilePageComponent implements OnDestroy {
                         ? profile.imageUrl
                         : this.buildAvatarImage(profile.displayName, profile.handle);
 
-                    this.viewedProfileHasActiveStory = await this.hasActiveStoryForHandleAsync(profile.handle);
+                    const storyState = await this.loadStoryStateForHandleAsync(profile.handle);
+                    this.viewedProfileHasActiveStory = storyState.hasActive;
+                    this.viewedProfileHasUnseenStory = storyState.hasUnseen;
 
                     try {
                         this.posts = await this.loadPostsForProfileAsync(profile.handle);
@@ -398,6 +410,7 @@ export class ProfilePageComponent implements OnDestroy {
                         : 'Could not load your profile details right now.';
                     this.viewedProfile = null;
                     this.viewedProfileHasActiveStory = false;
+                    this.viewedProfileHasUnseenStory = false;
                     this.posts = [];
                     this.activitySummary = null;
                 } finally {
@@ -1003,7 +1016,7 @@ export class ProfilePageComponent implements OnDestroy {
         }
     }
 
-    private async hasActiveStoryForHandleAsync(handle: string): Promise<boolean> {
+    private async loadStoryStateForHandleAsync(handle: string): Promise<{ hasActive: boolean; hasUnseen: boolean }> {
         const normalized = handle.trim().toLowerCase();
 
         try {
@@ -1017,9 +1030,13 @@ export class ProfilePageComponent implements OnDestroy {
                 ...(following.status === 'fulfilled' ? following.value : [])
             ];
 
-            return merged.some((group: StoryGroupDto) => group.authorHandle.trim().toLowerCase() === normalized);
+            const group = merged.find((item: StoryGroupDto) => item.authorHandle.trim().toLowerCase() === normalized);
+            return {
+                hasActive: !!group,
+                hasUnseen: !!group?.hasUnseenStories
+            };
         } catch {
-            return false;
+            return { hasActive: false, hasUnseen: false };
         }
     }
 
@@ -1031,8 +1048,9 @@ export class ProfilePageComponent implements OnDestroy {
         }
 
         this.activeStoryGroup = group;
-        const firstUnseenIndex = group.stories.findIndex(story => !story.viewedByMe);
-        this.activeStoryIndex = firstUnseenIndex >= 0 ? firstUnseenIndex : 0;
+        this.viewedProfileHasActiveStory = true;
+        this.viewedProfileHasUnseenStory = group.hasUnseenStories;
+        this.activeStoryIndex = this.getNewestUnseenStoryIndex(group.stories);
         this.storyViewerError = '';
         void this.markActiveStoryViewed();
     }
@@ -1075,11 +1093,33 @@ export class ProfilePageComponent implements OnDestroy {
                 stories: this.activeStoryGroup.stories.map(item => item.id === story.id ? { ...item, viewedByMe: true } : item),
                 hasUnseenStories: this.activeStoryGroup.stories.some(item => item.id !== story.id && !item.viewedByMe)
             };
+            this.viewedProfileHasUnseenStory = this.activeStoryGroup.hasUnseenStories;
         } catch {
             return;
         } finally {
             this.markingStoryId = null;
         }
+    }
+
+    private getNewestUnseenStoryIndex(stories: Array<{ viewedByMe: boolean; createdAtUtc: string }>): number {
+        let selectedIndex = -1;
+        let selectedTimestamp = Number.NEGATIVE_INFINITY;
+
+        for (let index = 0; index < stories.length; index += 1) {
+            const story = stories[index];
+            if (story.viewedByMe) {
+                continue;
+            }
+
+            const parsedTimestamp = Date.parse(story.createdAtUtc);
+            const timestamp = Number.isNaN(parsedTimestamp) ? Number.NEGATIVE_INFINITY : parsedTimestamp;
+            if (selectedIndex < 0 || timestamp > selectedTimestamp) {
+                selectedIndex = index;
+                selectedTimestamp = timestamp;
+            }
+        }
+
+        return selectedIndex >= 0 ? selectedIndex : 0;
     }
 
     private clearStoryMediaSelection(): void {

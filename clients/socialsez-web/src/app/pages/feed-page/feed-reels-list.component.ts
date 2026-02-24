@@ -30,6 +30,7 @@ export interface ReelCommentDeleteEvent {
 export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestroy {
     @Input() reels: ReelDto[] = [];
     @Input() activeStoryAuthorHandles: string[] = [];
+    @Input() unseenStoryAuthorHandles: string[] = [];
     @Input() reactingReelId: string | null = null;
     @Input() commentingReelId: string | null = null;
     @Input() sharingReelId: string | null = null;
@@ -182,6 +183,11 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     hasActiveStoryForAuthor(handle: string): boolean {
         const normalized = handle.trim().toLowerCase();
         return this.activeStoryAuthorHandles.some(item => item.trim().toLowerCase() === normalized);
+    }
+
+    hasUnseenStoryForAuthor(handle: string): boolean {
+        const normalized = handle.trim().toLowerCase();
+        return this.unseenStoryAuthorHandles.some(item => item.trim().toLowerCase() === normalized);
     }
 
     canManageReel(reel: ReelDto): boolean {

@@ -192,9 +192,10 @@
             (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
             <div post-header class="author">
                 <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? ('Open @' + post.authorHandle + ' stories') : 'View author profile'">
-                    <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
+                    <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
+                        alt="Author image" />
                     <ng-template #authorInitial>
-                        <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
+                        <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
                     </ng-template>
                 </a>
                 <div class="meta"><a class="author-link" [routerLink]="['/users', post.authorHandle]">@{{ post.authorHandle }}</a> · {{ formatFeedTimestamp(post.createdAtUtc) }}</div>
@@ -202,9 +203,10 @@
         </app-post-card>
     </div>
 
-    <app-feed-reels-list *ngIf="selectedContentTab === 'reels' && !reelsLoading && !reelsError && reels.length; else reelsEmptyState" [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId"
-        [sharingReelId]="sharingReelId" [showOwnerActions]="true" [viewerProfileId]="currentProfileId" [deletingReelId]="deletingReelId" (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)"
-        (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)" (reelDeleted)="deleteReel($event)"></app-feed-reels-list>
+    <app-feed-reels-list *ngIf="selectedContentTab === 'reels' && !reelsLoading && !reelsError && reels.length; else reelsEmptyState" [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="activeUnseenStoryAuthorHandles" [reactingReelId]="reactingReelId"
+        [commentingReelId]="commentingReelId" [sharingReelId]="sharingReelId" [showOwnerActions]="true" [viewerProfileId]="currentProfileId" [deletingReelId]="deletingReelId" (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)"
+        (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)"
+        (reelDeleted)="deleteReel($event)"></app-feed-reels-list>
 
     <ng-template #postsEmptyState>
         <p class="empty" *ngIf="selectedContentTab === 'posts' && !loading && !error">No posts yet. Follow people or create your first post to kick off your timeline.</p>

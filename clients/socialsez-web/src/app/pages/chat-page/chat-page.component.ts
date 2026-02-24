@@ -947,6 +947,11 @@ export class ChatPageComponent implements OnDestroy {
         return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
     }
 
+    hasUnseenStoryForHandle(handle: string): boolean {
+        const normalized = handle.trim().toLowerCase();
+        return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized && group.hasUnseenStories);
+    }
+
     openAvatarProfileOrStory(handle: string, event: MouseEvent): void {
         event.preventDefault();
         event.stopPropagation();
@@ -2714,8 +2719,7 @@ export class ChatPageComponent implements OnDestroy {
 
             let matchedIndex = matchedGroup.stories.findIndex(story => this.normalizeComparableUrl(story.mediaUrl) === normalizedMediaUrl);
             if (matchedIndex < 0) {
-                const firstUnseenIndex = matchedGroup.stories.findIndex(story => !story.viewedByMe);
-                matchedIndex = firstUnseenIndex >= 0 ? firstUnseenIndex : 0;
+                matchedIndex = this.getNewestUnseenStoryIndex(matchedGroup.stories);
             }
 
             this.activeSharedStoryGroup = matchedGroup;
@@ -2740,8 +2744,7 @@ export class ChatPageComponent implements OnDestroy {
         }
 
         this.activeSharedStoryGroup = group;
-        const firstUnseenIndex = group.stories.findIndex(story => !story.viewedByMe);
-        this.activeSharedStoryIndex = firstUnseenIndex >= 0 ? firstUnseenIndex : 0;
+        this.activeSharedStoryIndex = this.getNewestUnseenStoryIndex(group.stories);
         this.sharedStoryViewerError = '';
         this.sendingSharedStoryReply = false;
         this.sharingSharedStoryMessage = false;
@@ -2749,6 +2752,27 @@ export class ChatPageComponent implements OnDestroy {
         this.pendingDeleteSharedStoryId = null;
         this.pendingShareStoryFromViewer = null;
         this.sharingSharedStoryId = null;
+    }
+
+    private getNewestUnseenStoryIndex(stories: Array<{ viewedByMe: boolean; createdAtUtc: string }>): number {
+        let selectedIndex = -1;
+        let selectedTimestamp = Number.NEGATIVE_INFINITY;
+
+        for (let index = 0; index < stories.length; index += 1) {
+            const story = stories[index];
+            if (story.viewedByMe) {
+                continue;
+            }
+
+            const parsedTimestamp = Date.parse(story.createdAtUtc);
+            const timestamp = Number.isNaN(parsedTimestamp) ? Number.NEGATIVE_INFINITY : parsedTimestamp;
+            if (selectedIndex < 0 || timestamp > selectedTimestamp) {
+                selectedIndex = index;
+                selectedTimestamp = timestamp;
+            }
+        }
+
+        return selectedIndex >= 0 ? selectedIndex : 0;
     }
 
     private async refreshActiveStoryPresence(): Promise<void> {
