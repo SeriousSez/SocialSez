@@ -103,6 +103,7 @@ export class FeedPageComponent implements OnDestroy {
     sendingStoryReply = false;
     sharingStoryMessage = false;
     showReelComposer = false;
+    compactFeedEnabled = false;
     reelUploadStatus: ReelUploadStatusEvent | null = null;
     private reelUploadStatusHideTimeoutId: number | null = null;
     private readonly preciseDateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -110,6 +111,7 @@ export class FeedPageComponent implements OnDestroy {
         day: 'numeric',
         year: 'numeric'
     });
+    private readonly prefsStorageKey = 'socialsez-web-prefs';
     private markingStoryId: string | null = null;
     private loadInFlight = false;
     private reloadQueued = false;
@@ -179,6 +181,8 @@ export class FeedPageComponent implements OnDestroy {
                 this.pendingStoryHandleFromRoute = handle || null;
                 this.tryOpenPendingStoryHandle();
             });
+
+        this.syncCompactFeedPreference();
 
         void this.load();
     }
@@ -559,6 +563,8 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     async load(): Promise<void> {
+        this.syncCompactFeedPreference();
+
         if (this.loadInFlight) {
             this.reloadQueued = true;
             return;
@@ -688,6 +694,21 @@ export class FeedPageComponent implements OnDestroy {
 
     isStoryLiked(storyId: string): boolean {
         return this.likedStoryIds.has(storyId);
+    }
+
+    private syncCompactFeedPreference(): void {
+        const stored = localStorage.getItem(this.prefsStorageKey);
+        if (!stored) {
+            this.compactFeedEnabled = false;
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(stored) as { compactFeed?: boolean };
+            this.compactFeedEnabled = !!parsed.compactFeed;
+        } catch {
+            this.compactFeedEnabled = false;
+        }
     }
 
     toggleStoryLike(story: StoryDto): void {

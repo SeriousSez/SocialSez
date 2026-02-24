@@ -602,6 +602,105 @@ h2 {
     color: #475569
 }
 
+.page.compact-layout {
+    .page-head {
+        gap: 8px;
+    }
+
+    h2 {
+        font-size: 1.7rem;
+    }
+
+    .actions {
+        gap: 6px;
+    }
+
+    .actions a,
+    .actions button {
+        border-radius: 9px;
+        padding: 6px 10px;
+        font-size: 0.88rem;
+    }
+
+    .stories {
+        gap: 6px;
+        padding: 4px 0 2px;
+    }
+
+    .stories-tabs {
+        gap: 12px;
+        padding-bottom: 6px;
+    }
+
+    .stories-rail {
+        gap: 8px;
+        padding: 1px 1px 3px;
+    }
+
+    .story-item,
+    .story-button {
+        width: 62px;
+        min-width: 62px;
+        gap: 6px;
+    }
+
+    .story-ring {
+        width: 58px;
+        height: 58px;
+        min-width: 58px;
+        min-height: 58px;
+    }
+
+    .story-handle {
+        max-width: 62px;
+        font-size: 11px;
+    }
+
+    .content-tabs {
+        margin: 0 0 6px;
+        gap: 6px;
+    }
+
+    .content-tabs button {
+        padding: 4px 12px;
+        font-size: 0.9rem;
+    }
+
+    .list {
+        gap: 4px;
+    }
+
+    .feed-skeleton {
+        gap: 4px;
+    }
+
+    .feed-skeleton-card {
+        border-radius: 9px;
+        padding: 9px;
+        gap: 6px;
+    }
+
+    ::ng-deep app-post-card .post {
+        border-radius: 9px;
+        padding: 9px;
+        gap: 6px;
+    }
+
+    ::ng-deep app-post-card .post-icon-actions {
+        top: 9px;
+        right: 9px;
+        gap: 6px;
+    }
+
+    ::ng-deep app-post-card .engagement {
+        gap: 6px;
+    }
+
+    .empty {
+        padding: 10px;
+    }
+}
+
 @media (max-width:680px) {
     .page-head {
         flex-direction: column;
