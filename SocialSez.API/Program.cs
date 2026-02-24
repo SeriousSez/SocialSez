@@ -56,7 +56,11 @@ builder.Services.AddCors(options =>
 
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "SocialSez";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "SocialSez.Clients";
-var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Missing Jwt:Key configuration.");
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    jwtKey = "SocialSez-Super-Secret-Key-Replace-In-Production-2026";
+}
 
 builder.Services.AddAuthentication(options =>
 {
