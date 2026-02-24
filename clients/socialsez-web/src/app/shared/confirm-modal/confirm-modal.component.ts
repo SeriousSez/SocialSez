@@ -16,6 +16,7 @@ export class ConfirmModalComponent {
     @Input() cancelText = 'Cancel';
     @Input() confirmClass = '';
     @Input() busy = false;
+    @Input() busyText = 'Working...';
 
     @Output() confirm = new EventEmitter<void>();
     @Output() cancel = new EventEmitter<void>();

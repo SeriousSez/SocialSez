@@ -35,3 +35,28 @@ p {
     justify-content: flex-end;
     gap: 8px;
 }
+
+.modal-actions button.is-loading {
+    position: relative;
+    padding-left: 30px;
+}
+
+.modal-actions button.is-loading::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    transform: translateY(-50%);
+    animation: confirm-modal-spin 0.75s linear infinite;
+}
+
+@keyframes confirm-modal-spin {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}

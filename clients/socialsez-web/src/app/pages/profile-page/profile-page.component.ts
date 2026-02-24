@@ -511,10 +511,10 @@ export class ProfilePageComponent implements OnDestroy {
             }
 
             await this.load();
-            this.pendingDeletePostId = null;
         } catch {
             this.error = 'Could not delete post.';
         } finally {
+            this.pendingDeletePostId = null;
             this.deletingPostId = null;
         }
     }
@@ -639,10 +639,10 @@ export class ProfilePageComponent implements OnDestroy {
         try {
             const updated = await this.session.deleteReelCommentAsync(pending.reelId, pending.commentId);
             this.applyReelUpdate(updated);
-            this.pendingDeleteReelComment = null;
         } catch {
             this.error = 'Could not delete reel comment right now.';
         } finally {
+            this.pendingDeleteReelComment = null;
             this.commentingReelId = null;
             this.deletingReelCommentId = null;
         }
@@ -713,10 +713,10 @@ export class ProfilePageComponent implements OnDestroy {
         try {
             await this.session.deleteReelAsync(reelId);
             this.reels = this.reels.filter(existing => existing.id !== reelId);
-            this.pendingDeleteReelId = null;
         } catch {
             this.error = 'Could not delete reel right now.';
         } finally {
+            this.pendingDeleteReelId = null;
             this.deletingReelId = null;
         }
     }

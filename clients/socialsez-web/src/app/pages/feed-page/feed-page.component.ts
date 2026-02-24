@@ -709,10 +709,10 @@ export class FeedPageComponent implements OnDestroy {
         try {
             await this.session.deleteStoryAsync(story.id);
             this.removeStoryFromCollections(story.id);
-            this.pendingDeleteStoryId = null;
         } catch {
             this.storyViewerError = 'Could not delete this story right now.';
         } finally {
+            this.pendingDeleteStoryId = null;
             this.deletingStory = false;
         }
     }
@@ -969,10 +969,10 @@ export class FeedPageComponent implements OnDestroy {
         try {
             const updated = await this.session.deleteReelCommentAsync(pending.reelId, pending.commentId);
             this.reels = this.reels.map(item => item.id === updated.id ? updated : item);
-            this.pendingDeleteReelComment = null;
         } catch {
             this.reelsError = 'Could not delete reel comment right now.';
         } finally {
+            this.pendingDeleteReelComment = null;
             this.commentingReelId = null;
             this.deletingReelCommentId = null;
         }
@@ -1030,10 +1030,10 @@ export class FeedPageComponent implements OnDestroy {
         try {
             await this.session.deleteReelAsync(reelId);
             this.reels = this.reels.filter(item => item.id !== reelId);
-            this.pendingDeleteReelId = null;
         } catch {
             this.reelsError = 'Could not delete reel right now.';
         } finally {
+            this.pendingDeleteReelId = null;
             this.deletingReelId = null;
         }
     }
@@ -1232,11 +1232,10 @@ export class FeedPageComponent implements OnDestroy {
             if (this.editingPostId === postId) {
                 this.cancelEdit();
             }
-
-            this.pendingDeletePostId = null;
         } catch {
             this.error = 'Could not delete post.';
         } finally {
+            this.pendingDeletePostId = null;
             this.deletingPostId = null;
         }
     }

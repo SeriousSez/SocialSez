@@ -493,10 +493,10 @@ export class DiscoverPageComponent {
         try {
             const updated = await this.session.deleteReelCommentAsync(pending.reelId, pending.commentId);
             this.applyReelUpdate(updated);
-            this.pendingDeleteReelComment = null;
         } catch {
             this.status = 'Could not delete reel comment right now.';
         } finally {
+            this.pendingDeleteReelComment = null;
             this.commentingReelId = null;
             this.deletingReelCommentId = null;
         }

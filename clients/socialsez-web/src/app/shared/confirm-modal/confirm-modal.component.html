@@ -5,7 +5,9 @@
 
         <div class="modal-actions">
             <button type="button" class="ghost" (click)="cancel.emit()" [disabled]="busy">{{ cancelText }}</button>
-            <button type="button" [class]="confirmClass" (click)="confirm.emit()" [disabled]="busy">{{ confirmText }}</button>
+            <button type="button" [class]="confirmClass" [class.is-loading]="busy" [attr.aria-busy]="busy" (click)="confirm.emit()" [disabled]="busy">
+                {{ busy ? busyText : confirmText }}
+            </button>
         </div>
     </article>
 </section>

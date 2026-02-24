@@ -1183,11 +1183,11 @@ export class ChatPageComponent implements OnDestroy {
                 stories: nextStories
             };
             this.activeSharedStoryIndex = nextIndex;
-            this.pendingDeleteSharedStoryId = null;
             this.pendingShareStoryFromViewer = null;
         } catch {
             this.sharedStoryViewerError = 'Could not delete this story right now.';
         } finally {
+            this.pendingDeleteSharedStoryId = null;
             this.deletingSharedStory = false;
         }
     }
@@ -1384,6 +1384,7 @@ export class ChatPageComponent implements OnDestroy {
         } catch {
             this.status = 'Could not delete this reel right now.';
         } finally {
+            this.pendingDeleteSharedReelId = null;
             this.deletingSharedReel = false;
         }
     }
@@ -1694,10 +1695,10 @@ export class ChatPageComponent implements OnDestroy {
         try {
             const updated = await this.session.deleteReelCommentAsync(reel.id, commentId);
             this.applyActiveSharedReelUpdate(updated);
-            this.pendingDeleteSharedReelCommentId = null;
         } catch {
             this.status = 'Could not delete reel comment right now.';
         } finally {
+            this.pendingDeleteSharedReelCommentId = null;
             this.commentingSharedReel = false;
             this.deletingSharedReelCommentId = null;
         }

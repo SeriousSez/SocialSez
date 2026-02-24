@@ -19,9 +19,15 @@
 
         <div class="reel-video-frame" (click)="onReelFrameClick(reel.id)">
             <video #reelVideoEl class="reel-video" [attr.data-reel-id]="reel.id" [style.transform]="getReelFrameTransform(reel)" [poster]="reel.thumbnailUrl || null" [src]="reel.videoUrl" [muted]="isReelMuted(reel.id)" [loop]="activeReelId === reel.id" playsinline preload="metadata"></video>
-            <button type="button" class="reel-hover-delete" *ngIf="canShowOwnerActions(reel) && !isEditingReel(reel.id)" (click)="requestReelDelete(reel); $event.stopPropagation()" [disabled]="!!updatingReelId || !!deletingReelId" aria-label="Delete reel">
-                {{ deletingReelId === reel.id ? 'Deleting…' : 'Delete' }}
-            </button>
+            <div class="reel-frame-actions" *ngIf="canShowOwnerActions(reel) && !isEditingReel(reel.id)">
+                <button type="button" class="reel-frame-action" (click)="startReelEdit(reel); $event.stopPropagation()" [disabled]="!!updatingReelId || !!deletingReelId" aria-label="Edit reel">
+                    <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="reel-frame-action danger" (click)="requestReelDelete(reel); $event.stopPropagation()" [disabled]="!!updatingReelId || !!deletingReelId" aria-label="Delete reel">
+                    <i class="fa-duotone" [class.fa-light]="deletingReelId !== reel.id" [class.fa-solid]="deletingReelId === reel.id" [class.fa-trash]="deletingReelId !== reel.id" [class.fa-spinner-third]="deletingReelId === reel.id" [class.fa-spin]="deletingReelId === reel.id"
+                        aria-hidden="true"></i>
+                </button>
+            </div>
             <button type="button" class="reel-volume" (click)="toggleMute($event, reel.id)" [attr.aria-label]="isReelMuted(reel.id) ? 'Unmute reel' : 'Mute reel'">
                 {{ isReelMuted(reel.id) ? '🔇' : '🔊' }}
             </button>
@@ -44,10 +50,6 @@
                 <button type="button" class="icon-button" [disabled]="sharingReelId === reel.id" (click)="onShareReel(reel)" aria-label="Share reel in direct messages">
                     <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
                 </button>
-            </div>
-
-            <div class="owner-reel-actions" *ngIf="canShowOwnerActions(reel)">
-                <button type="button" class="text-action" (click)="startReelEdit(reel)" [disabled]="!!updatingReelId || !!deletingReelId" *ngIf="!isEditingReel(reel.id)">Edit</button>
             </div>
         </footer>
 
