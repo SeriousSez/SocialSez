@@ -8,20 +8,35 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddSocialSezInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var provider = (configuration["Database:Provider"] ?? "Sqlite").Trim();
+        var provider = configuration["Database:Provider"]?.Trim();
+        var mysqlConnectionString = configuration.GetConnectionString("MySql");
+        var sqliteConnectionString = configuration.GetConnectionString("Sqlite");
+
+        if (string.IsNullOrWhiteSpace(provider))
+        {
+            provider = !string.IsNullOrWhiteSpace(mysqlConnectionString)
+                ? "MySql"
+                : !string.IsNullOrWhiteSpace(sqliteConnectionString)
+                    ? "Sqlite"
+                    : "MySql";
+        }
 
         if (provider.Equals("MySql", StringComparison.OrdinalIgnoreCase))
         {
-            var connectionString = configuration.GetConnectionString("MySql")
-                ?? throw new InvalidOperationException("Connection string 'MySql' was not found.");
+            if (string.IsNullOrWhiteSpace(mysqlConnectionString))
+            {
+                throw new InvalidOperationException("Connection string 'MySql' was not found or is empty.");
+            }
 
             services.AddDbContext<SocialSezContext>(options =>
-                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+                options.UseMySql(mysqlConnectionString, ServerVersion.AutoDetect(mysqlConnectionString)));
         }
         else
         {
-            var sqliteConnectionString = configuration.GetConnectionString("Sqlite")
-                ?? "Data Source=socialsez.dev.db";
+            if (string.IsNullOrWhiteSpace(sqliteConnectionString))
+            {
+                throw new InvalidOperationException("Connection string 'Sqlite' was not found or is empty.");
+            }
 
             services.AddDbContext<SocialSezContext>(options => options.UseSqlite(sqliteConnectionString));
         }

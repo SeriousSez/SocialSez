@@ -131,12 +131,14 @@ if (app.Environment.IsDevelopment())
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<SocialSezContext>();
-    dbContext.Database.EnsureCreated();
-
-    if (dbContext.Database.IsSqlite())
+    try
     {
-        dbContext.Database.ExecuteSqlRaw("""
+        var dbContext = scope.ServiceProvider.GetRequiredService<SocialSezContext>();
+        dbContext.Database.EnsureCreated();
+
+        if (dbContext.Database.IsSqlite())
+        {
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS PostReactions (
                 PostId TEXT NOT NULL,
                 ProfileId TEXT NOT NULL,
@@ -148,12 +150,12 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_PostReactions_PostId_Type
             ON PostReactions (PostId, Type);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS CommentReactions (
                 CommentId TEXT NOT NULL,
                 ProfileId TEXT NOT NULL,
@@ -165,12 +167,12 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_CommentReactions_CommentId_Type
             ON CommentReactions (CommentId, Type);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS ChatConversations (
                 Id TEXT NOT NULL PRIMARY KEY,
                 CreatedByProfileId TEXT NOT NULL,
@@ -181,7 +183,7 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS ChatConversationMembers (
                 ConversationId TEXT NOT NULL,
                 ProfileId TEXT NOT NULL,
@@ -192,12 +194,12 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_ChatConversationMembers_ProfileId
             ON ChatConversationMembers (ProfileId);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS ChatMessages (
                 Id TEXT NOT NULL PRIMARY KEY,
                 ConversationId TEXT NOT NULL,
@@ -209,12 +211,12 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_ChatMessages_ConversationId_CreatedAtUtc
             ON ChatMessages (ConversationId, CreatedAtUtc);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS ChatMessageReactions (
                 MessageId TEXT NOT NULL,
                 ProfileId TEXT NOT NULL,
@@ -226,12 +228,12 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_ChatMessageReactions_MessageId_Type
             ON ChatMessageReactions (MessageId, Type);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS Stories (
                 Id TEXT NOT NULL PRIMARY KEY,
                 AuthorId TEXT NOT NULL,
@@ -243,17 +245,17 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_Stories_AuthorId_CreatedAtUtc
             ON Stories (AuthorId, CreatedAtUtc);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_Stories_ExpiresAtUtc
             ON Stories (ExpiresAtUtc);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS StoryViews (
                 StoryId TEXT NOT NULL,
                 ViewerId TEXT NOT NULL,
@@ -264,12 +266,12 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_StoryViews_ViewerId
             ON StoryViews (ViewerId);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS Reels (
                 Id TEXT NOT NULL PRIMARY KEY,
                 AuthorId TEXT NOT NULL,
@@ -282,17 +284,17 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_Reels_CreatedAtUtc
             ON Reels (CreatedAtUtc);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_Reels_AuthorId
             ON Reels (AuthorId);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS ReelLikes (
                 ReelId TEXT NOT NULL,
                 ProfileId TEXT NOT NULL,
@@ -303,12 +305,12 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_ReelLikes_ProfileId
             ON ReelLikes (ProfileId);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS ReelComments (
                 Id TEXT NOT NULL PRIMARY KEY,
                 ReelId TEXT NOT NULL,
@@ -322,7 +324,7 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS ReelCommentLikes (
                 ReelCommentId TEXT NOT NULL,
                 ProfileId TEXT NOT NULL,
@@ -333,22 +335,22 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_ReelCommentLikes_ProfileId
             ON ReelCommentLikes (ProfileId);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_ReelComments_ReelId_CreatedAtUtc
             ON ReelComments (ReelId, CreatedAtUtc);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_ReelComments_AuthorId
             ON ReelComments (AuthorId);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS ProfileFollowRequests (
                 FollowerId TEXT NOT NULL,
                 FollowedId TEXT NOT NULL,
@@ -361,12 +363,12 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_ProfileFollowRequests_FollowedId_Status_CreatedAtUtc
             ON ProfileFollowRequests (FollowedId, Status, CreatedAtUtc);
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS Notifications (
                 Id TEXT NOT NULL PRIMARY KEY,
                 RecipientId TEXT NOT NULL,
@@ -381,44 +383,53 @@ using (var scope = app.Services.CreateScope())
             );
             """);
 
-        dbContext.Database.ExecuteSqlRaw("""
+            dbContext.Database.ExecuteSqlRaw("""
             CREATE INDEX IF NOT EXISTS IX_Notifications_RecipientId_IsRead_CreatedAtUtc
             ON Notifications (RecipientId, IsRead, CreatedAtUtc);
             """);
 
-        var columnExists = dbContext.Database
-            .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('UserProfiles') WHERE name = 'IsPrivate'")
-            .ToList()
-            .Count > 0;
+            var columnExists = dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('UserProfiles') WHERE name = 'IsPrivate'")
+                .ToList()
+                .Count > 0;
 
-        if (!columnExists)
-        {
-            dbContext.Database.ExecuteSqlRaw("ALTER TABLE UserProfiles ADD COLUMN IsPrivate INTEGER NOT NULL DEFAULT 0;");
+            if (!columnExists)
+            {
+                dbContext.Database.ExecuteSqlRaw("ALTER TABLE UserProfiles ADD COLUMN IsPrivate INTEGER NOT NULL DEFAULT 0;");
+            }
+
+            var parentCommentColumnExists = dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('Comments') WHERE name = 'ParentCommentId'")
+                .ToList()
+                .Count > 0;
+
+            if (!parentCommentColumnExists)
+            {
+                dbContext.Database.ExecuteSqlRaw("ALTER TABLE Comments ADD COLUMN ParentCommentId TEXT NULL;");
+            }
+
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_Comments_ParentCommentId ON Comments (ParentCommentId);");
+
+            var parentReelCommentColumnExists = dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('ReelComments') WHERE name = 'ParentCommentId'")
+                .ToList()
+                .Count > 0;
+
+            if (!parentReelCommentColumnExists)
+            {
+                dbContext.Database.ExecuteSqlRaw("ALTER TABLE ReelComments ADD COLUMN ParentCommentId TEXT NULL;");
+            }
+
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_ReelComments_ParentCommentId ON ReelComments (ParentCommentId);");
         }
-
-        var parentCommentColumnExists = dbContext.Database
-            .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('Comments') WHERE name = 'ParentCommentId'")
-            .ToList()
-            .Count > 0;
-
-        if (!parentCommentColumnExists)
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Database bootstrap failed during application startup.");
+        if (app.Environment.IsDevelopment())
         {
-            dbContext.Database.ExecuteSqlRaw("ALTER TABLE Comments ADD COLUMN ParentCommentId TEXT NULL;");
+            throw;
         }
-
-        dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_Comments_ParentCommentId ON Comments (ParentCommentId);");
-
-        var parentReelCommentColumnExists = dbContext.Database
-            .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('ReelComments') WHERE name = 'ParentCommentId'")
-            .ToList()
-            .Count > 0;
-
-        if (!parentReelCommentColumnExists)
-        {
-            dbContext.Database.ExecuteSqlRaw("ALTER TABLE ReelComments ADD COLUMN ParentCommentId TEXT NULL;");
-        }
-
-        dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_ReelComments_ParentCommentId ON ReelComments (ParentCommentId);");
     }
 }
 
