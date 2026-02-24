@@ -30,24 +30,24 @@
 
 .reaction-btn {
     width: fit-content;
-    border: 1px solid #cbd5e1;
-    background: #f8fafc;
-    color: #0f172a;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-muted);
+    color: var(--color-text);
     padding: 8px 12px;
     box-shadow: none;
     transform: none;
 }
 
 .reaction-btn:hover {
-    background: #e2e8f0;
+    background: var(--color-surface-alt);
     box-shadow: none;
     transform: none;
 }
 
 .reaction-btn.active {
-    background: #dbeafe;
-    color: #1d4ed8;
-    border-color: #bfdbfe;
+    background: color-mix(in srgb, var(--color-secondary) 20%, var(--color-surface-muted));
+    color: var(--color-text);
+    border-color: color-mix(in srgb, var(--color-secondary) 45%, var(--color-border));
 }
 
 .reaction-popover {
@@ -59,10 +59,10 @@
     display: flex;
     gap: 6px;
     padding: 8px;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 999px;
-    background: #fff;
-    box-shadow: 0 12px 30px -20px #0f172a;
+    background: var(--color-surface);
+    box-shadow: 0 12px 30px -20px var(--color-primary);
     width: max-content;
     max-width: none;
     flex-wrap: nowrap;
@@ -100,10 +100,10 @@
     width: 34px;
     height: 34px;
     min-width: 34px;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 50%;
-    background: #f8fafc;
-    color: #0f172a;
+    background: var(--color-surface-muted);
+    color: var(--color-text);
     padding: 0;
     display: grid;
     place-items: center;
@@ -114,20 +114,20 @@
 }
 
 .reaction-pop-btn:hover {
-    background: #eef2f7;
+    background: var(--color-surface-alt);
     transform: translateY(-1px) scale(1.08);
     box-shadow: none;
 }
 
 .reaction-pop-btn.touch-hover {
-    background: #eef2f7;
+    background: var(--color-surface-alt);
     transform: translateY(-1px) scale(1.08);
     box-shadow: none;
 }
 
 .reaction-pop-btn.active {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: color-mix(in srgb, var(--color-secondary) 20%, var(--color-surface-muted));
+    color: var(--color-text);
 }
 
 .reaction-summary {
@@ -138,9 +138,9 @@
 
 .reaction-chip {
     font-size: 0.78rem;
-    color: #475569;
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
+    color: var(--color-text-muted);
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border);
     border-radius: 999px;
     padding: 2px 8px;
 }

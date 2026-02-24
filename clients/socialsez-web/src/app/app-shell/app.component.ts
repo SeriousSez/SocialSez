@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject, isDevMode } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnInit, inject, isDevMode } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -22,6 +22,7 @@ export class AppComponent implements OnInit {
     loadingTrending = false;
     unreadNotificationsCount = 0;
     private failedProfileChipImageUrl: string | null = null;
+    private readonly prefsStorageKey = 'socialsez-web-prefs';
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -36,6 +37,8 @@ export class AppComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.applyThemePreference();
+
         this.session.appChanges$
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(change => {
@@ -65,10 +68,34 @@ export class AppComponent implements OnInit {
         void this.initializeAsync();
     }
 
+    @HostListener('window:storage', ['$event'])
+    onStorageChanged(event: StorageEvent): void {
+        if (event.key !== this.prefsStorageKey) {
+            return;
+        }
+
+        this.applyThemePreference();
+    }
+
     private async initializeAsync(): Promise<void> {
         await this.session.bootstrapAsync();
         await this.loadTrendingHashtags();
         await this.loadUnreadNotificationsCountAsync();
+    }
+
+    private applyThemePreference(): void {
+        const stored = localStorage.getItem(this.prefsStorageKey);
+        if (!stored) {
+            document.documentElement.classList.remove('theme-dark');
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(stored) as { darkMode?: boolean };
+            document.documentElement.classList.toggle('theme-dark', !!parsed.darkMode);
+        } catch {
+            document.documentElement.classList.remove('theme-dark');
+        }
     }
 
     async logout(): Promise<void> {

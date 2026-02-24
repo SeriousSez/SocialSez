@@ -48,6 +48,10 @@
             <input type="checkbox" [(ngModel)]="prefs.compactFeed" (change)="savePrefs()" />
             Compact feed layout
         </label>
+        <label class="toggle">
+            <input type="checkbox" [(ngModel)]="prefs.darkMode" (change)="savePrefs()" />
+            Dark mode
+        </label>
     </section>
 
     <section class="card logout-card">

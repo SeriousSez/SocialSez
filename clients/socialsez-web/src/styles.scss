@@ -13,10 +13,24 @@ body {
     overflow-x: hidden;
 }
 
+body {
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+}
+
 *,
 *::before,
 *::after {
     box-sizing: border-box;
+}
+
+app-confirm-modal,
+app-share-post-modal,
+app-share-post-message-modal,
+app-share-reel-message-modal,
+app-chat-search-modal,
+app-reel-composer-modal {
+    display: contents;
 }
 
 .post .mention-suggestions {
@@ -99,4 +113,200 @@ body {
 .post .mention-hint {
     margin: 0;
     padding: 10px;
+}
+
+:root.theme-dark body {
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+}
+
+:root.theme-dark a {
+    color: var(--color-link);
+}
+
+:root.theme-dark input,
+:root.theme-dark textarea,
+:root.theme-dark select {
+    color: var(--color-text);
+}
+
+:root.theme-dark ::placeholder {
+    color: var(--color-text-muted);
+}
+
+:root.theme-dark .card,
+:root.theme-dark .panel,
+:root.theme-dark .post,
+:root.theme-dark .composer,
+:root.theme-dark .upload-picker,
+:root.theme-dark .crop-panel,
+:root.theme-dark .side-card,
+:root.theme-dark .profile-card,
+:root.theme-dark .settings-card,
+:root.theme-dark .profile-hero,
+:root.theme-dark .profile-skeleton-hero,
+:root.theme-dark .hero-create-dropdown,
+:root.theme-dark .compose-modal-card,
+:root.theme-dark .media-composer,
+:root.theme-dark .story-preview-panel,
+:root.theme-dark .chat-layout,
+:root.theme-dark .chat-sidebar,
+:root.theme-dark .message-panel,
+:root.theme-dark .conversation,
+:root.theme-dark .message-empty,
+:root.theme-dark .profile-empty-state,
+:root.theme-dark .feed-skeleton-card,
+:root.theme-dark .chat-window,
+:root.theme-dark .chat-panel,
+:root.theme-dark .chat-composer,
+:root.theme-dark .chat-list,
+:root.theme-dark .chat-thread,
+:root.theme-dark .suggestions,
+:root.theme-dark .results,
+:root.theme-dark .content,
+:root.theme-dark .topbar,
+:root.theme-dark .tabs,
+:root.theme-dark .brand,
+:root.theme-dark .profile-chip,
+:root.theme-dark .mobile-tabs,
+:root.theme-dark .search-row,
+:root.theme-dark .story-ring,
+:root.theme-dark .empty,
+:root.theme-dark .upload-status,
+:root.theme-dark .shared-post-preview,
+:root.theme-dark .chat-gif-result,
+:root.theme-dark .chat-gif-input-row,
+:root.theme-dark .chat-emoji-picker,
+:root.theme-dark .shared-reel-viewer-card,
+:root.theme-dark .shared-reel-viewer-close,
+:root.theme-dark .shared-reel-viewer-menu,
+:root.theme-dark .shared-reel-viewer-meta {
+    background: var(--color-surface) !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text) !important;
+}
+
+:root.theme-dark .hint,
+:root.theme-dark .meta,
+:root.theme-dark .media-file,
+:root.theme-dark .upload-subtitle,
+:root.theme-dark .sub,
+:root.theme-dark .bio,
+:root.theme-dark .handle,
+:root.theme-dark .joined,
+:root.theme-dark .hero-stats,
+:root.theme-dark .story-handle,
+:root.theme-dark .trend-count,
+:root.theme-dark .brand-sub,
+:root.theme-dark .side-card p,
+:root.theme-dark .side-card li,
+:root.theme-dark .tab-label,
+:root.theme-dark .search-box,
+:root.theme-dark .stories-empty,
+:root.theme-dark .stories-error,
+:root.theme-dark .message-empty p,
+:root.theme-dark .profile-empty-state p,
+:root.theme-dark .composer-steps,
+:root.theme-dark .field span,
+:root.theme-dark .message-panel-head p,
+:root.theme-dark .conversation .conversation-meta,
+:root.theme-dark .conversation .time {
+    color: var(--color-text-muted) !important;
+}
+
+:root.theme-dark .message-empty h4,
+:root.theme-dark .profile-empty-state h4,
+:root.theme-dark .upload-title,
+:root.theme-dark .shared-reel-viewer-meta strong,
+:root.theme-dark .conversation .title,
+:root.theme-dark .hero-stats strong {
+    color: var(--color-text) !important;
+}
+
+:root.theme-dark .tabs a,
+:root.theme-dark .mobile-tab,
+:root.theme-dark .signin-link,
+:root.theme-dark .ghost-link,
+:root.theme-dark .actions a,
+:root.theme-dark .actions button,
+:root.theme-dark .content-tabs button,
+:root.theme-dark .scope-tabs button,
+:root.theme-dark .stories-tabs button,
+:root.theme-dark .icon-btn,
+:root.theme-dark button.ghost {
+    background: var(--color-surface-muted) !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text) !important;
+}
+
+:root.theme-dark .tabs a.active,
+:root.theme-dark .mode-btn.active,
+:root.theme-dark .actions button:not(.ghost):not(.danger),
+:root.theme-dark .content-tabs button.active,
+:root.theme-dark .scope-tabs button.active,
+:root.theme-dark .stories-tabs button.active,
+:root.theme-dark .mobile-tab.active {
+    background: var(--gradient-primary) !important;
+    color: var(--color-text-on-dark) !important;
+    border-color: var(--color-border) !important;
+}
+
+:root.theme-dark .conversation.active,
+:root.theme-dark .chat-empty-hint,
+:root.theme-dark .shared-reel-viewer-menu button:hover,
+:root.theme-dark .message-empty,
+:root.theme-dark .profile-empty-state {
+    background: var(--color-surface-muted) !important;
+    border-color: var(--color-border) !important;
+}
+
+:root.theme-dark .thread-avatar.story-active,
+:root.theme-dark .message-avatar.story-active,
+:root.theme-dark .hero-image.story-active,
+:root.theme-dark .avatar.story-active {
+    box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px #ec4899 !important;
+}
+
+:root.theme-dark .thread-avatar.story-seen,
+:root.theme-dark .message-avatar.story-seen,
+:root.theme-dark .hero-image.story-seen,
+:root.theme-dark .avatar.story-seen {
+    box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px #94a3b8 !important;
+}
+
+:root.theme-dark .avatar,
+:root.theme-dark .story-initial,
+:root.theme-dark .comment-avatar,
+:root.theme-dark .shared-post-author-fallback,
+:root.theme-dark .mention-avatar.fallback {
+    background: #1e293b !important;
+    color: var(--color-text) !important;
+}
+
+:root.theme-dark .post-actions button,
+:root.theme-dark .comments-toggle,
+:root.theme-dark .hero-icon-link,
+:root.theme-dark .hero-icon-button,
+:root.theme-dark .media-actions .ghost,
+:root.theme-dark .upload-button,
+:root.theme-dark .send-btn,
+:root.theme-dark .copy-link {
+    border-color: var(--color-border) !important;
+}
+
+:root.theme-dark .post-actions button,
+:root.theme-dark .hero-icon-button,
+:root.theme-dark .upload-button,
+:root.theme-dark .send-btn:not(.ghost) {
+    background: var(--gradient-primary) !important;
+    color: var(--color-text-on-dark) !important;
+}
+
+:root.theme-dark .post-actions .ghost,
+:root.theme-dark .comments-toggle,
+:root.theme-dark .hero-icon-link,
+:root.theme-dark .media-actions .ghost,
+:root.theme-dark .send-btn.ghost {
+    background: var(--color-surface-muted) !important;
+    color: var(--color-text) !important;
 }

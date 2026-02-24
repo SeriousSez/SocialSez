@@ -493,3 +493,92 @@ label {
         text-align: center;
     }
 }
+
+:host-context(.theme-dark) {
+    color: var(--color-text);
+    background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 42%),
+        radial-gradient(circle at top left, rgba(14, 165, 233, 0.08), transparent 36%),
+        #020617;
+
+    .topbar,
+    .brand,
+    .tabs,
+    .profile-chip,
+    .side-card,
+    .content,
+    .panel,
+    .mobile-tabs {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text);
+    }
+
+    .message {
+        color: var(--color-link);
+        background: #1e293b;
+        border-color: #334155;
+    }
+
+    .brand-sub,
+    .hint,
+    .meta,
+    .profile-chip p,
+    .trend-count,
+    .search-box,
+    .side-card p,
+    .side-card li {
+        color: var(--color-text-muted);
+    }
+
+    .avatar,
+    .tab-badge {
+        background: #1e293b;
+        color: var(--color-text);
+    }
+
+    .tabs a {
+        border-color: var(--color-border);
+        color: var(--color-text);
+        background: var(--color-surface-muted);
+    }
+
+    .tabs a.active {
+        background: var(--gradient-primary);
+        color: var(--color-text-on-dark);
+        border-color: var(--color-border);
+        box-shadow: none;
+    }
+
+    .tabs a.active .tab-badge {
+        background: rgba(2, 6, 23, 0.24);
+        color: var(--color-text-on-dark);
+    }
+
+    .tabs a:hover {
+        border-color: var(--color-border-strong);
+    }
+
+    .search-row {
+        border-color: var(--color-border-strong);
+        background: var(--color-surface-muted);
+    }
+
+    .search-row:focus-within {
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.2);
+    }
+
+    .signin-link,
+    .mobile-tab {
+        border-color: var(--color-border);
+        color: var(--color-text);
+        background: var(--color-surface-muted);
+    }
+
+    .mobile-tab.active {
+        color: var(--color-text-on-dark);
+        background: var(--gradient-primary);
+        border-color: var(--color-border);
+    }
+}

@@ -500,6 +500,7 @@ h2 {
 
 .content-tabs {
     display: flex;
+    align-items: center;
     gap: 8px;
     margin: 4px 0 10px;
 }
@@ -509,8 +510,11 @@ h2 {
     border-radius: 999px;
     background: #fff;
     color: #334155;
+    font-size: 0.9rem;
     font-weight: 700;
-    padding: 6px 14px;
+    padding: 7px 14px;
+    box-shadow: none;
+    transform: none;
     cursor: pointer;
 }
 
@@ -518,6 +522,33 @@ h2 {
     background: #0f172a;
     border-color: #0f172a;
     color: #fff;
+}
+
+.content-tabs button:hover {
+    box-shadow: none;
+    transform: none;
+}
+
+:host-context(.theme-dark) {
+    .content-tabs button {
+        background: var(--color-surface-muted);
+        color: var(--color-text-muted);
+        border-color: var(--color-border);
+        opacity: 0.86;
+    }
+
+    .content-tabs button.active {
+        background: var(--gradient-primary);
+        color: var(--color-text-on-dark);
+        border-color: var(--color-border);
+        opacity: 1;
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 55%, transparent) inset;
+    }
+
+    .content-tabs button:not(.active):hover {
+        opacity: 1;
+        background: var(--color-surface-alt);
+    }
 }
 
 .list {
@@ -657,12 +688,15 @@ h2 {
     }
 
     .content-tabs {
+        width: 100%;
         margin: 0 0 6px;
         gap: 6px;
     }
 
     .content-tabs button {
-        padding: 4px 12px;
+        flex: 1 1 0;
+        text-align: center;
+        padding: 7px 14px;
         font-size: 0.9rem;
     }
 

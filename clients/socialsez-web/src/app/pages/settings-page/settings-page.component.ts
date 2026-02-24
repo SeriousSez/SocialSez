@@ -28,6 +28,7 @@ export class SettingsPageComponent implements OnDestroy {
 
     prefs = {
         compactFeed: false,
+        darkMode: false,
     };
 
     private readonly prefsStorageKey = 'socialsez-web-prefs';
@@ -264,6 +265,7 @@ export class SettingsPageComponent implements OnDestroy {
 
     savePrefs(): void {
         localStorage.setItem(this.prefsStorageKey, JSON.stringify(this.prefs));
+        this.applyThemePreference();
         this.status = 'Preferences saved.';
     }
 
@@ -277,10 +279,17 @@ export class SettingsPageComponent implements OnDestroy {
             const parsed = JSON.parse(stored) as Partial<typeof this.prefs>;
             this.prefs = {
                 compactFeed: parsed.compactFeed ?? this.prefs.compactFeed,
+                darkMode: parsed.darkMode ?? this.prefs.darkMode,
             };
         } catch {
-            this.prefs = { compactFeed: false };
+            this.prefs = { compactFeed: false, darkMode: false };
         }
+
+        this.applyThemePreference();
+    }
+
+    private applyThemePreference(): void {
+        document.documentElement.classList.toggle('theme-dark', !!this.prefs.darkMode);
     }
 
     private async loadAvatarCropFileAsync(file: File): Promise<void> {

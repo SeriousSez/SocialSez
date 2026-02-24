@@ -213,6 +213,28 @@ h2 {
     transform: none;
 }
 
+:host-context(.theme-dark) {
+    .profile-tabs button {
+        background: var(--color-surface-muted);
+        color: var(--color-text-muted);
+        border-color: var(--color-border);
+        opacity: 0.86;
+    }
+
+    .profile-tabs button.active {
+        background: var(--gradient-primary);
+        color: var(--color-text-on-dark);
+        border-color: var(--color-border);
+        opacity: 1;
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 55%, transparent) inset;
+    }
+
+    .profile-tabs button:not(.active):hover {
+        opacity: 1;
+        background: var(--color-surface-alt);
+    }
+}
+
 .profile-reels {
     display: grid;
 }
