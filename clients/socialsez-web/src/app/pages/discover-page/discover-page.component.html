@@ -1,7 +1,7 @@
 <section class="page">
     <h2>Discover</h2>
     <label>Search
-        <input [(ngModel)]="query" placeholder="Search users, posts, hashtags" (keydown.enter)="search()" />
+        <input [(ngModel)]="query" placeholder="Search users, reels, posts, hashtags" (keydown.enter)="search()" />
     </label>
 
     <div class="actions">
@@ -12,7 +12,24 @@
         <button *ngFor="let scope of scopes" type="button" [class.active]="selectedScope === scope.value" (click)="changeScope(scope.value)">{{ scope.label }}</button>
     </div>
 
-    <section class="discover-skeleton" *ngIf="loading" aria-label="Searching">
+    <section class="results" *ngIf="!loading && showRecommendedReelsSection">
+        <ng-container *ngTemplateOutlet="reelsSectionTemplate; context: { title: 'Recommended reels from people you do not follow', reels: recommendedReels }"></ng-container>
+
+        <section class="discover-empty" *ngIf="!recommendedReels.length">
+            <section class="message-empty no-chat-empty">
+                <div class="empty-art" aria-hidden="true">
+                    <span class="dot dot-a"></span>
+                    <span class="dot dot-b"></span>
+                    <span class="dot dot-c"></span>
+                </div>
+
+                <h4>No recommended reels yet</h4>
+                <p>{{ 'Interact more with reels, comments, and hashtags to improve your Discover recommendations.' }}</p>
+            </section>
+        </section>
+    </section>
+
+    <section class="discover-skeleton" *ngIf="loading" [attr.aria-label]="showingSearchResults ? 'Searching' : 'Loading recommendations'">
         <div class="section">
             <app-skeleton width="70px" height="16px"></app-skeleton>
             <article class="card" *ngFor="let _ of [1, 2]">
@@ -38,7 +55,7 @@
         </div>
     </section>
 
-    <section class="results" *ngIf="!loading && hasAnyResults">
+    <section class="results" *ngIf="!loading && showingSearchResults && hasAnyResults">
         <section class="section" *ngIf="showUsersSection && profileResults.length">
             <h3>Users</h3>
             <article class="card" *ngFor="let profile of profileResults">
@@ -55,6 +72,10 @@
                 <button type="button" (click)="follow(profile)">Follow User</button>
             </article>
         </section>
+
+        <ng-container *ngIf="showReelsSection">
+            <ng-container *ngTemplateOutlet="reelsSectionTemplate; context: { title: 'Reels', reels: reelResults }"></ng-container>
+        </ng-container>
 
         <section class="section" *ngIf="showHashtagsSection && hashtagResults.length">
             <h3>Hashtags</h3>
@@ -85,11 +106,24 @@
         </section>
     </section>
 
-    <p class="status" *ngIf="status">{{ status }}</p>
+    <p class="status" *ngIf="status && (showingSearchResults || recommendedReels.length)">{{ status }}</p>
 </section>
+
+<ng-template #reelsSectionTemplate let-title="title" let-reels="reels">
+    <section class="section" *ngIf="reels.length">
+        <h3>{{ title }}</h3>
+        <app-feed-reels-list [reels]="reels" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId" [viewerProfileId]="currentProfileId" (likeToggled)="toggleReelLike($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (commentAdded)="addReelComment($event)"
+            (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (authorAvatarClicked)="openProfileByHandle($event)">
+        </app-feed-reels-list>
+    </section>
+</ng-template>
 
 <app-share-post-modal [open]="!!pendingSharePost && pendingShareTarget === 'feed'" [post]="pendingSharePost" [target]="'feed'" [busy]="!!sharingPostId" [initialText]="shareNote" (cancel)="cancelShareModal()" (confirm)="submitShare($event)">
 </app-share-post-modal>
 
 <app-share-post-message-modal [open]="!!pendingSharePost && pendingShareTarget === 'chat'" [post]="pendingSharePost" [busy]="!!sharingPostId" (cancel)="cancelShareModal()" (confirm)="submitShareAsMessage($event)">
 </app-share-post-message-modal>
+
+<app-confirm-modal [open]="!!pendingDeleteReelComment" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingReelCommentId" (cancel)="cancelDeleteReelComment()"
+    (confirm)="confirmDeleteReelComment()">
+</app-confirm-modal>

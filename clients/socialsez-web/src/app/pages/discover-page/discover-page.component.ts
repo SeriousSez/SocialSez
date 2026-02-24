@@ -3,20 +3,22 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { HashtagSearchResultDto, PostDto, ProfileDto, StoryGroupDto } from '../../core/api.types';
+import { HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryGroupDto } from '../../core/api.types';
 import { buildSharedPostMarker, buildSharedPostPreview } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
+import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from '../feed-page/feed-reels-list.component';
+import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
 import { SharePostMessageModalComponent, SharePostMessageSubmit } from '../../shared/share-post-message-modal/share-post-message-modal.component';
 import { SharePostModalComponent } from '../../shared/share-post-modal/share-post-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
-type SearchScope = 'all' | 'posts' | 'hashtags' | 'users';
+type SearchScope = 'all' | 'posts' | 'hashtags' | 'users' | 'reels';
 
 @Component({
     selector: 'app-discover-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, PostCardComponent, SharePostModalComponent, SharePostMessageModalComponent, SkeletonComponent],
+    imports: [CommonModule, FormsModule, RouterLink, PostCardComponent, FeedReelsListComponent, SharePostModalComponent, SharePostMessageModalComponent, SkeletonComponent, ConfirmModalComponent],
     templateUrl: './discover-page.component.html',
     styleUrl: './discover-page.component.scss'
 })
@@ -26,10 +28,16 @@ export class DiscoverPageComponent {
     profileResults: ProfileDto[] = [];
     postResults: PostDto[] = [];
     hashtagResults: HashtagSearchResultDto[] = [];
+    reelResults: ReelDto[] = [];
+    recommendedReels: ReelDto[] = [];
 
     loading = false;
     status = '';
     reactingPostId: string | null = null;
+    reactingReelId: string | null = null;
+    commentingReelId: string | null = null;
+    deletingReelCommentId: string | null = null;
+    pendingDeleteReelComment: { reelId: string; commentId: string } | null = null;
     editingPostId: string | null = null;
     editContent = '';
     savingPost = false;
@@ -41,6 +49,7 @@ export class DiscoverPageComponent {
 
     readonly scopes: ReadonlyArray<{ value: SearchScope; label: string }> = [
         { value: 'all', label: 'All' },
+        { value: 'reels', label: 'Reels' },
         { value: 'posts', label: 'Posts' },
         { value: 'hashtags', label: 'Hashtags' },
         { value: 'users', label: 'Users' }
@@ -48,6 +57,8 @@ export class DiscoverPageComponent {
 
     private loadInFlight = false;
     private reloadQueued = false;
+    private loadingRecommendedReels = false;
+    private reloadRecommendedReelsQueued = false;
     private readonly destroyRef = inject(DestroyRef);
     private activeStoryGroups: StoryGroupDto[] = [];
     private refreshingStoryPresence = false;
@@ -59,15 +70,17 @@ export class DiscoverPageComponent {
                 const query = (params.get('q') ?? '').trim();
                 if (!query) {
                     this.query = '';
+                    this.selectedScope = 'all';
                     this.clearResults();
-                    this.loading = false;
                     this.status = '';
+                    void this.loadRecommendedNonFollowingReels();
                     return;
                 }
 
                 const type = this.normalizeScope(params.get('type'));
                 this.query = query;
                 this.selectedScope = type;
+                this.recommendedReels = [];
                 void this.runSearch(query);
             });
     }
@@ -75,8 +88,7 @@ export class DiscoverPageComponent {
     async search(): Promise<void> {
         const trimmedQuery = this.query.trim();
         if (!trimmedQuery) {
-            this.clearResults();
-            this.status = 'Enter a search query.';
+            await this.router.navigate(['/discover']);
             return;
         }
 
@@ -118,7 +130,7 @@ export class DiscoverPageComponent {
     }
 
     get hasAnyResults(): boolean {
-        return this.profileResults.length > 0 || this.postResults.length > 0 || this.hashtagResults.length > 0;
+        return this.profileResults.length > 0 || this.reelResults.length > 0 || this.postResults.length > 0 || this.hashtagResults.length > 0;
     }
 
     get showUsersSection(): boolean {
@@ -129,8 +141,20 @@ export class DiscoverPageComponent {
         return this.selectedScope === 'all' || this.selectedScope === 'posts';
     }
 
+    get showReelsSection(): boolean {
+        return this.selectedScope === 'all' || this.selectedScope === 'reels';
+    }
+
     get showHashtagsSection(): boolean {
         return this.selectedScope === 'all' || this.selectedScope === 'hashtags';
+    }
+
+    get showingSearchResults(): boolean {
+        return !!this.query.trim();
+    }
+
+    get showRecommendedReelsSection(): boolean {
+        return !this.showingSearchResults;
     }
 
     displayPostContent(post: PostDto): string {
@@ -380,6 +404,116 @@ export class DiscoverPageComponent {
         await this.runPostMutation(post.id, () => this.session.clearCommentReactionAsync(post.id, commentId), 'Could not clear comment reaction right now.');
     }
 
+    async toggleReelLike(reel: ReelDto): Promise<void> {
+        if (this.reactingReelId === reel.id || this.commentingReelId === reel.id) {
+            return;
+        }
+
+        this.reactingReelId = reel.id;
+        this.status = '';
+        try {
+            const updated = await this.session.toggleReelLikeAsync(reel.id);
+            this.applyReelUpdate(updated);
+        } catch {
+            this.status = 'Could not update reel like right now.';
+        } finally {
+            this.reactingReelId = null;
+        }
+    }
+
+    async addReelComment(event: ReelCommentCreateEvent): Promise<void> {
+        const { reel, content, parentCommentId } = event;
+        if (this.commentingReelId === reel.id) {
+            return;
+        }
+
+        this.commentingReelId = reel.id;
+        this.status = '';
+        try {
+            const updated = await this.session.addReelCommentAsync(reel.id, content, parentCommentId ?? null);
+            this.pendingDeleteReelComment = null;
+            this.applyReelUpdate(updated);
+        } catch {
+            this.status = 'Could not add reel comment right now.';
+        } finally {
+            this.commentingReelId = null;
+        }
+    }
+
+    async updateReelComment(event: ReelCommentUpdateEvent): Promise<void> {
+        const { reel, commentId, content } = event;
+        if (this.commentingReelId === reel.id) {
+            return;
+        }
+
+        this.commentingReelId = reel.id;
+        this.status = '';
+        try {
+            const updated = await this.session.updateReelCommentAsync(reel.id, commentId, content);
+            this.applyReelUpdate(updated);
+        } catch {
+            this.status = 'Could not update reel comment right now.';
+        } finally {
+            this.commentingReelId = null;
+        }
+    }
+
+    requestDeleteReelComment(event: ReelCommentDeleteEvent): void {
+        this.pendingDeleteReelComment = { reelId: event.reel.id, commentId: event.comment.id };
+    }
+
+    cancelDeleteReelComment(): void {
+        this.pendingDeleteReelComment = null;
+    }
+
+    async confirmDeleteReelComment(): Promise<void> {
+        const pending = this.pendingDeleteReelComment;
+        if (!pending || this.deletingReelCommentId || this.commentingReelId === pending.reelId) {
+            return;
+        }
+
+        this.deletingReelCommentId = pending.commentId;
+        this.commentingReelId = pending.reelId;
+        this.status = '';
+        try {
+            const updated = await this.session.deleteReelCommentAsync(pending.reelId, pending.commentId);
+            this.applyReelUpdate(updated);
+            this.pendingDeleteReelComment = null;
+        } catch {
+            this.status = 'Could not delete reel comment right now.';
+        } finally {
+            this.commentingReelId = null;
+            this.deletingReelCommentId = null;
+        }
+    }
+
+    async toggleReelCommentLike(event: { reel: ReelDto; commentId: string }): Promise<void> {
+        const { reel, commentId } = event;
+        if (this.reactingReelId === reel.id || this.commentingReelId === reel.id) {
+            return;
+        }
+
+        this.reactingReelId = reel.id;
+        this.status = '';
+        try {
+            const updated = await this.session.toggleReelCommentLikeAsync(reel.id, commentId);
+            this.applyReelUpdate(updated);
+        } catch {
+            this.status = 'Could not update reel comment like right now.';
+        } finally {
+            this.reactingReelId = null;
+        }
+    }
+
+    async openProfileByHandle(handle: string): Promise<void> {
+        const normalized = (handle ?? '').trim();
+        if (!normalized) {
+            return;
+        }
+
+        await this.router.navigate(['/users', normalized]);
+    }
+
     private async runSearch(query: string): Promise<void> {
         if (this.loadInFlight) {
             this.reloadQueued = true;
@@ -394,12 +528,16 @@ export class DiscoverPageComponent {
                 this.loading = true;
                 this.status = '';
                 this.clearResults();
+                this.recommendedReels = [];
                 void this.refreshActiveStoryPresence();
 
                 try {
                     switch (this.selectedScope) {
                         case 'users':
                             this.profileResults = await this.session.searchProfilesAsync(query);
+                            break;
+                        case 'reels':
+                            this.reelResults = await this.searchReelsAsync(query);
                             break;
                         case 'posts':
                             this.postResults = await this.session.searchPostsAsync(query);
@@ -408,17 +546,19 @@ export class DiscoverPageComponent {
                             this.hashtagResults = await this.loadHashtagsWithFallback(query);
                             break;
                         case 'all': {
-                            const [users, posts, hashtags] = await Promise.allSettled([
+                            const [users, reels, posts, hashtags] = await Promise.allSettled([
                                 this.session.searchProfilesAsync(query),
+                                this.searchReelsAsync(query),
                                 this.session.searchPostsAsync(query),
                                 this.loadHashtagsWithFallback(query)
                             ]);
 
                             this.profileResults = users.status === 'fulfilled' ? users.value : [];
+                            this.reelResults = reels.status === 'fulfilled' ? reels.value : [];
                             this.postResults = posts.status === 'fulfilled' ? posts.value : [];
                             this.hashtagResults = hashtags.status === 'fulfilled' ? hashtags.value : [];
 
-                            if (users.status === 'rejected' && posts.status === 'rejected' && hashtags.status === 'rejected') {
+                            if (users.status === 'rejected' && reels.status === 'rejected' && posts.status === 'rejected' && hashtags.status === 'rejected') {
                                 throw new Error('All searches failed.');
                             }
                             break;
@@ -474,8 +614,49 @@ export class DiscoverPageComponent {
 
     private clearResults(): void {
         this.profileResults = [];
+        this.reelResults = [];
         this.postResults = [];
         this.hashtagResults = [];
+    }
+
+    private async loadRecommendedNonFollowingReels(): Promise<void> {
+        if (this.loadingRecommendedReels) {
+            this.reloadRecommendedReelsQueued = true;
+            return;
+        }
+
+        this.loadingRecommendedReels = true;
+        try {
+            do {
+                this.reloadRecommendedReelsQueued = false;
+                this.loading = true;
+                this.status = '';
+                this.recommendedReels = [];
+
+                try {
+                    const [recommended, followingProfiles] = await Promise.all([
+                        this.session.loadReelFeedAsync(60, 'for-you'),
+                        this.session.loadFollowingAsync(250)
+                    ]);
+
+                    const followingIds = new Set(followingProfiles.map(profile => profile.id));
+                    const myProfileId = this.currentProfileId;
+                    this.recommendedReels = recommended.filter(reel => {
+                        if (myProfileId && reel.authorId === myProfileId) {
+                            return false;
+                        }
+
+                        return !followingIds.has(reel.authorId);
+                    });
+                } catch {
+                    this.status = 'Could not load recommended reels right now.';
+                } finally {
+                    this.loading = false;
+                }
+            } while (this.reloadRecommendedReelsQueued);
+        } finally {
+            this.loadingRecommendedReels = false;
+        }
     }
 
     private async loadHashtagsWithFallback(query: string): Promise<HashtagSearchResultDto[]> {
@@ -525,6 +706,41 @@ export class DiscoverPageComponent {
         this.postResults = this.postResults.map(post => post.id === updated.id ? updated : post);
     }
 
+    private applyReelUpdate(updated: ReelDto): void {
+        this.reelResults = this.reelResults.map(reel => reel.id === updated.id ? updated : reel);
+        this.recommendedReels = this.recommendedReels.map(reel => reel.id === updated.id ? updated : reel);
+    }
+
+    private async searchReelsAsync(query: string): Promise<ReelDto[]> {
+        const term = query.trim().toLowerCase();
+        if (!term) {
+            return [];
+        }
+
+        const [forYou, following] = await Promise.allSettled([
+            this.session.loadReelFeedAsync(80, 'for-you'),
+            this.session.loadReelFeedAsync(80, 'following')
+        ]);
+
+        const merged = [
+            ...(forYou.status === 'fulfilled' ? forYou.value : []),
+            ...(following.status === 'fulfilled' ? following.value : [])
+        ];
+
+        const deduped = new Map<string, ReelDto>();
+        for (const reel of merged) {
+            if (!deduped.has(reel.id)) {
+                deduped.set(reel.id, reel);
+            }
+        }
+
+        const matches = (value: string | null | undefined): boolean => (value ?? '').toLowerCase().includes(term);
+        return Array.from(deduped.values()).filter(reel =>
+            matches(reel.authorHandle)
+            || matches(reel.caption)
+            || reel.comments.some(comment => matches(comment.content) || matches(comment.authorHandle)));
+    }
+
     private async runPostMutation(postId: string, work: () => Promise<PostDto>, failureMessage: string): Promise<void> {
         if (this.reactingPostId === postId) {
             return;
@@ -544,6 +760,7 @@ export class DiscoverPageComponent {
     private normalizeScope(raw: string | null): SearchScope {
         switch (raw) {
             case 'users':
+            case 'reels':
             case 'posts':
             case 'hashtags':
             case 'all':
