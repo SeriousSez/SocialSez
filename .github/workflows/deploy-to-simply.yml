@@ -233,21 +233,36 @@ jobs:
           server-dir: /venli.api/
           dangerous-clean-slate: false
 
-      - name: Remove app_offline.htm from local publish folder
+      - name: Remove app_offline.htm from server
         shell: pwsh
         run: |
-          Remove-Item "${{ env.PUBLISH_PATH }}/app_offline.htm" -Force -ErrorAction SilentlyContinue
-          Write-Host "Removed app_offline.htm from local folder"
+          $server = "${{ secrets.FTP_SERVER }}"
+          $username = "${{ secrets.FTP_USERNAME }}"
+          $password = "${{ secrets.FTP_PASSWORD }}"
 
-      - name: Deploy to remove app_offline.htm from server
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ${{ env.PUBLISH_PATH }}/
-          server-dir: /venli.api/
-          dangerous-clean-slate: true
+          if ([string]::IsNullOrWhiteSpace($server) -or [string]::IsNullOrWhiteSpace($username) -or [string]::IsNullOrWhiteSpace($password)) {
+            throw "Missing FTP credentials for app_offline removal."
+          }
+
+          $uri = "ftp://$server/venli.api/app_offline.htm"
+          $request = [System.Net.FtpWebRequest]::Create($uri)
+          $request.Method = [System.Net.WebRequestMethods+Ftp]::DeleteFile
+          $request.Credentials = New-Object System.Net.NetworkCredential($username, $password)
+          $request.UseBinary = $true
+          $request.KeepAlive = $false
+
+          try {
+            $response = $request.GetResponse()
+            $response.Close()
+            Write-Host "Removed app_offline.htm from server"
+          } catch {
+            $message = $_.Exception.Message
+            if ($message -match "550") {
+              Write-Host "app_offline.htm was already removed on server"
+            } else {
+              throw
+            }
+          }
 
       - name: Wait for app to restart
         shell: pwsh

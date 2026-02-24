@@ -61,7 +61,11 @@
             <article class="card" *ngFor="let profile of profileResults">
                 <div class="identity">
                     <a class="avatar-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)" [attr.aria-label]="hasActiveStoryForHandle(profile.handle) ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
-                        <div class="avatar" [class.story-active]="hasActiveStoryForHandle(profile.handle)" [class.story-seen]="hasActiveStoryForHandle(profile.handle) && !hasUnseenStoryForHandle(profile.handle)">{{ profile.displayName[0] || profile.handle[0] }}</div>
+                        <img class="avatar" [class.story-active]="hasActiveStoryForHandle(profile.handle)" [class.story-seen]="hasActiveStoryForHandle(profile.handle) && !hasUnseenStoryForHandle(profile.handle)" *ngIf="profile.imageUrl; else discoverUserInitial" [src]="profile.imageUrl"
+                            onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile image" />
+                        <ng-template #discoverUserInitial>
+                            <div class="avatar" [class.story-active]="hasActiveStoryForHandle(profile.handle)" [class.story-seen]="hasActiveStoryForHandle(profile.handle) && !hasUnseenStoryForHandle(profile.handle)">{{ profile.displayName[0] || profile.handle[0] }}</div>
+                        </ng-template>
                     </a>
                     <h4>
                         <a class="user-link" [routerLink]="['/users', profile.handle]">{{ profile.displayName }}</a>

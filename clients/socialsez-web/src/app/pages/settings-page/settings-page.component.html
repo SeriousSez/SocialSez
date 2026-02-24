@@ -11,13 +11,15 @@
         <h3>Profile</h3>
         <label>Display Name <input [(ngModel)]="displayName" /></label>
         <label>Bio <textarea rows="4" [(ngModel)]="bio"></textarea></label>
-        <label>Profile Image <input type="file" accept="image/*" (change)="onProfileImageSelected($event)" [disabled]="uploadingProfileImage" /></label>
+        <div class="profile-image-actions">
+            <button type="button" class="ghost" (click)="openAvatarModal()" [disabled]="uploadingProfileImage">Change Image</button>
+            <button class="ghost" type="button" (click)="removeProfileImage()" [disabled]="!imageUrl.trim() || uploadingProfileImage">Remove Image</button>
+        </div>
         <p class="meta" *ngIf="uploadingProfileImage">Uploading image...</p>
         <img class="preview" *ngIf="imageUrl.trim()" [src]="imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile image preview" />
         <div class="actions">
             <button (click)="saveProfile()">Save Profile</button>
             <button class="ghost" (click)="reloadProfile()">Reload</button>
-            <button class="ghost" type="button" (click)="removeProfileImage()" [disabled]="!imageUrl.trim()">Remove Image</button>
         </div>
     </section>
 
@@ -46,10 +48,6 @@
             <input type="checkbox" [(ngModel)]="prefs.compactFeed" (change)="savePrefs()" />
             Compact feed layout
         </label>
-        <label class="toggle">
-            <input type="checkbox" [(ngModel)]="prefs.showDebugTimes" (change)="savePrefs()" />
-            Show debug timing hints
-        </label>
     </section>
 
     <section class="card logout-card">
@@ -62,3 +60,49 @@
 
     <p class="status" *ngIf="status">{{ status }}</p>
 </section>
+
+<div class="compose-modal" *ngIf="avatarModalOpen" role="dialog" aria-modal="true" aria-label="Update profile image" (click)="closeAvatarModal()">
+    <section class="compose-modal-card avatar-modal" (click)="$event.stopPropagation()">
+        <header class="compose-modal-head">
+            <h3>Update Profile Image</h3>
+            <button type="button" class="close" (click)="closeAvatarModal()" [disabled]="uploadingProfileImage" aria-label="Close avatar modal">✕</button>
+        </header>
+
+        <div class="composer-steps" aria-label="Avatar upload steps">
+            <span [class.active]="avatarModalStep === 1">1. Select</span>
+            <span [class.active]="avatarModalStep === 2">2. Crop & Upload</span>
+        </div>
+
+        <input #avatarFileInput type="file" class="visually-hidden" accept="image/*" (change)="onProfileImageSelected($event)" [disabled]="uploadingProfileImage" />
+
+        <ng-container *ngIf="avatarModalStep === 1">
+            <section class="upload-picker" aria-label="Select avatar image">
+                <span class="upload-icon" aria-hidden="true">🖼️</span>
+                <p class="upload-title">Choose an image for your profile</p>
+                <p class="upload-subtitle">Next step lets you crop and position it.</p>
+                <button type="button" class="upload-button" (click)="triggerAvatarFilePicker()" [disabled]="uploadingProfileImage">Select Image</button>
+            </section>
+            <p class="media-file" *ngIf="selectedAvatarFileName">Selected: {{ selectedAvatarFileName }}</p>
+        </ng-container>
+
+        <ng-container *ngIf="avatarModalStep === 2">
+            <div class="avatar-crop-panel" *ngIf="hasAvatarCropSelection">
+                <div class="avatar-crop-frame" [class.dragging]="uploadingProfileImage" (pointerdown)="onAvatarCropPointerDown($event)" (wheel)="onAvatarCropWheel($event)">
+                    <img class="avatar-crop-image" [ngStyle]="avatarCropImageStyle" [src]="avatarCropPreviewUrl" alt="Avatar crop preview" />
+                    <div class="avatar-crop-overlay" aria-hidden="true"></div>
+                </div>
+
+                <label class="zoom-control">Zoom
+                    <input type="range" min="1" max="3" step="0.01" [ngModel]="avatarCropZoom" (ngModelChange)="onAvatarCropZoomInput($event)" />
+                </label>
+                <p class="media-file">Drag image to reposition within the circle.</p>
+            </div>
+        </ng-container>
+
+        <div class="media-actions">
+            <button type="button" class="ghost" (click)="closeAvatarModal()" [disabled]="uploadingProfileImage">Cancel</button>
+            <button type="button" class="ghost" *ngIf="avatarModalStep === 2" (click)="backToAvatarSelectStep()" [disabled]="uploadingProfileImage">Back</button>
+            <button type="button" *ngIf="avatarModalStep === 2" [class.is-loading]="uploadingProfileImage" [disabled]="!hasAvatarCropSelection || uploadingProfileImage" (click)="uploadCroppedAvatar()">{{ uploadingProfileImage ? 'Uploading...' : 'Upload Image' }}</button>
+        </div>
+    </section>
+</div>
