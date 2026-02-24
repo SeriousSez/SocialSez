@@ -12,4 +12,5 @@ public class Reel
 
     public UserProfile Author { get; set; } = null!;
     public ICollection<ReelLike> Likes { get; set; } = new List<ReelLike>();
+    public ICollection<ReelComment> Comments { get; set; } = new List<ReelComment>();
 }

@@ -23,6 +23,8 @@ public class UserProfile
     public ICollection<StoryView> StoryViews { get; set; } = new List<StoryView>();
     public ICollection<Reel> Reels { get; set; } = new List<Reel>();
     public ICollection<ReelLike> ReelLikes { get; set; } = new List<ReelLike>();
+    public ICollection<ReelComment> ReelComments { get; set; } = new List<ReelComment>();
+    public ICollection<ReelCommentLike> ReelCommentLikes { get; set; } = new List<ReelCommentLike>();
     public ICollection<ProfileFollowRequest> ReceivedFollowRequests { get; set; } = new List<ProfileFollowRequest>();
     public ICollection<ProfileFollowRequest> SentFollowRequests { get; set; } = new List<ProfileFollowRequest>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();

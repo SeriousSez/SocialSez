@@ -89,69 +89,52 @@
         </div>
 
         <div class="comments" *ngIf="commentsOpen">
-            <div class="comment" *ngFor="let comment of post.comments">
-                <div class="comment-head">
-                    <div class="comment-author">
-                        <img class="comment-avatar" *ngIf="comment.authorImageUrl; else commentInitial" [src]="comment.authorImageUrl" alt="Comment author image" />
-                        <ng-template #commentInitial>
-                            <div class="comment-avatar">{{ comment.authorHandle[0] }}</div>
-                        </ng-template>
-                        <div class="comment-meta">{{ comment.authorHandle }} · {{ comment.createdAtUtc | date:'short' }}</div>
+            <div class="comment" *ngFor="let item of orderedComments" [class.reply-comment]="item.depth > 0">
+                <ng-container *ngIf="item.comment as comment">
+                    <img class="comment-avatar" *ngIf="comment.authorImageUrl; else commentInitial" [src]="comment.authorImageUrl" alt="Comment author image" />
+                    <ng-template #commentInitial>
+                        <div class="comment-avatar">{{ comment.authorHandle[0] }}</div>
+                    </ng-template>
+
+                    <div class="comment-main">
+                        <div class="comment-content" *ngIf="editingCommentId !== comment.id">
+                            <span class="comment-handle">{{ comment.authorHandle }}</span>
+                            <ng-container *ngFor="let line of commentContentLines(comment.content); let isLastLine = last">
+                                <ng-container *ngFor="let part of line">
+                                    <a *ngIf="part.hashtag; else maybeCommentMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="navigateToHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                                    <ng-template #maybeCommentMention>
+                                        <a *ngIf="part.mentionHandle; else plainCommentText" class="mention" [href]="'/users/' + part.mentionHandle" (click)="navigateToMention(part.mentionHandle, $event)">{{ part.text }}</a>
+                                    </ng-template>
+                                    <ng-template #plainCommentText>{{ part.text }}</ng-template>
+                                </ng-container>
+                                <br *ngIf="!isLastLine" />
+                            </ng-container>
+                        </div>
+
+                        <div class="comment-meta-row">
+                            <span class="comment-meta">{{ comment.createdAtUtc | date:'short' }}</span>
+                        </div>
+                        <button type="button" class="comment-thread-toggle" *ngIf="item.depth === 0 && getCommentReplyCount(comment.id) > 0" (mousedown)="onCommentThreadToggleMouseDown(comment.id, $event)" (click)="onCommentThreadToggleClick(comment.id, $event)">
+                            {{ isCommentReplyThreadExpanded(comment.id) ? 'Hide replies' : 'View replies (' + getCommentReplyCount(comment.id) + ')' }}
+                        </button>
+
                     </div>
 
-                    <div class="comment-actions" *ngIf="canEditComment(comment) || canDeleteComment(comment)">
-                        <button class="icon-btn" type="button" *ngIf="canEditComment(comment)" (click)="startEditComment(comment)" [disabled]="busy" aria-label="Edit comment" title="Edit comment">
-                            <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+                    <div class="comment-actions" *ngIf="editingCommentId !== comment.id">
+                        <button type="button" class="comment-like-button" *ngIf="editingCommentId !== comment.id" [class.active]="!!comment.myReactionType" (mousedown)="onCommentLikeMouseDown(comment, $event)" (click)="onCommentLikeClick(comment, $event)"
+                            [attr.aria-label]="comment.myReactionType ? 'Unlike comment' : 'Like comment'">
+                            <i class="fa-duotone fa-heart" [class.fa-solid]="!!comment.myReactionType" [class.fa-light]="!comment.myReactionType" aria-hidden="true"></i>
                         </button>
-                        <button class="icon-btn danger" type="button" *ngIf="canDeleteComment(comment)" (click)="removeComment(comment.id)" [disabled]="busy" aria-label="Delete comment" title="Delete comment">
+                        <button type="button" class="comment-reply-button" *ngIf="editingCommentId !== comment.id" (mousedown)="onCommentReplyMouseDown(comment, $event)" (click)="onCommentReplyClick(comment, $event)">Reply</button>
+                        <button class="icon-btn danger" type="button" *ngIf="canDeleteComment(comment)" (mousedown)="onDeleteCommentMouseDown(comment.id, $event)" (click)="onDeleteCommentClick(comment.id, $event)" aria-label="Delete comment" title="Delete comment">
                             <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
                         </button>
                     </div>
-                </div>
-
-                <ng-container *ngIf="editingCommentId === comment.id">
-                    <textarea #commentEditArea class="comment-edit-input" [attr.data-comment-edit-id]="comment.id" rows="2" [ngModel]="editCommentContent" (ngModelChange)="onCommentEditInput(comment.id, $event, commentEditArea)" (keyup)="onCommentEditCursor(comment.id, commentEditArea)"
-                        (click)="onCommentEditCursor(comment.id, commentEditArea)" (blur)="onTextAreaBlur()"></textarea>
-                    <div class="mention-suggestions" *ngIf="(mentionOpen || mentionLoading) && mentionTarget === 'comment-edit' && mentionTargetCommentId === comment.id">
-                        <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
-                        <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
-                            <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
-                            <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" alt="Profile avatar" />
-                            <span class="mention-meta">
-                                <span class="mention-name">{{ profile.displayName }}</span>
-                                <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
-                            </span>
-                        </button>
-                    </div>
                 </ng-container>
-                <div class="comment-content" *ngIf="editingCommentId !== comment.id">
-                    <ng-container *ngFor="let line of commentContentLines(comment.content); let isLastLine = last">
-                        <ng-container *ngFor="let part of line">
-                            <a *ngIf="part.hashtag; else maybeCommentMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="navigateToHashtag(part.hashtag, $event)">{{ part.text }}</a>
-                            <ng-template #maybeCommentMention>
-                                <a *ngIf="part.mentionHandle; else plainCommentText" class="mention" [href]="'/users/' + part.mentionHandle" (click)="navigateToMention(part.mentionHandle, $event)">{{ part.text }}</a>
-                            </ng-template>
-                            <ng-template #plainCommentText>{{ part.text }}</ng-template>
-                        </ng-container>
-                        <br *ngIf="!isLastLine" />
-                    </ng-container>
-                </div>
-
-                <div class="comment-edit-actions" *ngIf="editingCommentId === comment.id">
-                    <button type="button" (click)="saveCommentEdit(comment.id)" [disabled]="busy">Save</button>
-                    <button type="button" class="ghost" (click)="cancelEditComment()" [disabled]="busy">Cancel</button>
-                </div>
-
-                <div class="comment-engagement" *ngIf="editingCommentId !== comment.id">
-                    <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="comment.reactions" [myReactionType]="comment.myReactionType" [busy]="busy" [showCountWhenIdle]="false" [idleLabel]="'🙂 React'" (primaryClick)="onCommentPrimaryReaction(comment)"
-                        (reactionSelected)="onCommentReactionSelected(comment, $event)">
-                    </app-reaction-picker>
-                </div>
             </div>
 
             <div class="comment-compose">
-                <textarea #newCommentArea rows="2" placeholder="Write a comment..." [ngModel]="commentInput" (ngModelChange)="onCommentInput($event, newCommentArea)" (keyup)="onCommentCursor(newCommentArea)" (click)="onCommentCursor(newCommentArea)" (blur)="onTextAreaBlur()"
-                    [disabled]="busy"></textarea>
+                <textarea #newCommentArea rows="2" placeholder="Write a comment..." [ngModel]="commentInput" (ngModelChange)="onCommentInput($event, newCommentArea)" (keyup)="onCommentCursor(newCommentArea)" (click)="onCommentCursor(newCommentArea)" (blur)="onTextAreaBlur()"></textarea>
                 <div class="mention-suggestions" *ngIf="(mentionOpen || mentionLoading) && mentionTarget === 'comment-new'">
                     <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
                     <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
@@ -163,7 +146,7 @@
                         </span>
                     </button>
                 </div>
-                <button type="button" (click)="submitComment()" [disabled]="busy || !commentInput.trim()">Comment</button>
+                <button type="button" (click)="submitComment()" [disabled]="!commentInput.trim()">Comment</button>
             </div>
         </div>
     </ng-container>
@@ -182,4 +165,7 @@
     </p>
 
     <ng-content select="[post-footer]"></ng-content>
+
+    <app-confirm-modal [open]="!!pendingDeleteCommentId" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" (cancel)="cancelDeleteComment()" (confirm)="confirmDeleteComment()">
+    </app-confirm-modal>
 </article>

@@ -5,6 +5,7 @@ import {
     AuthResponse,
     ChatConversationDto,
     ChatMessageDto,
+    FeedMode,
     FollowActionResultDto,
     FollowRequestDto,
     FollowStatusDto,
@@ -15,7 +16,10 @@ import {
     PostDto,
     ProfileActivitySummaryDto,
     ProfileDto,
+    ReelDto,
     RegisterRequest,
+    StoryDto,
+    StoryGroupDto,
     UpdateProfileRequest
 } from './api.types';
 import { SocialSezApiService } from './socialsez-api.service';
@@ -112,8 +116,46 @@ export class SessionService {
         }
     }
 
-    async loadFeedAsync(): Promise<PostDto[]> {
-        return firstValueFrom(this.api.getFeed());
+    async loadFeedAsync(mode: FeedMode = 'for-you'): Promise<PostDto[]> {
+        return firstValueFrom(this.api.getFeed(25, mode));
+    }
+
+    async loadStoryFeedAsync(takeAuthors = 25, mode: FeedMode = 'for-you'): Promise<StoryGroupDto[]> {
+        return firstValueFrom(this.api.getStoryFeed(takeAuthors, mode));
+    }
+
+    async markStoryViewedAsync(storyId: string): Promise<void> {
+        await firstValueFrom(this.api.markStoryViewed(storyId));
+    }
+
+    async deleteStoryAsync(storyId: string): Promise<void> {
+        await firstValueFrom(this.api.deleteStory(storyId));
+        this.message = 'Story deleted.';
+        this.appChanges.next('posts');
+    }
+
+    async loadReelFeedAsync(take = 20, mode: FeedMode = 'for-you'): Promise<ReelDto[]> {
+        return firstValueFrom(this.api.getReelFeed(take, mode));
+    }
+
+    async loadReelsByAuthorHandleAsync(handle: string, take = 25): Promise<ReelDto[]> {
+        return firstValueFrom(this.api.getReelsByAuthorHandle(handle, take));
+    }
+
+    async toggleReelLikeAsync(reelId: string): Promise<ReelDto> {
+        return firstValueFrom(this.api.toggleReelLike(reelId));
+    }
+
+    async addReelCommentAsync(reelId: string, content: string, parentCommentId?: string | null): Promise<ReelDto> {
+        return firstValueFrom(this.api.addReelComment(reelId, content, parentCommentId));
+    }
+
+    async updateReelCommentAsync(reelId: string, commentId: string, content: string): Promise<ReelDto> {
+        return firstValueFrom(this.api.updateReelComment(reelId, commentId, content));
+    }
+
+    async deleteReelCommentAsync(reelId: string, commentId: string): Promise<ReelDto> {
+        return firstValueFrom(this.api.deleteReelComment(reelId, commentId));
     }
 
     async loadPostsByHashtagAsync(hashtag: string): Promise<PostDto[]> {
@@ -146,6 +188,33 @@ export class SessionService {
         this.appChanges.next('posts');
     }
 
+    async createStoryAsync(mediaFile: File, caption?: string): Promise<StoryDto> {
+        const story = await firstValueFrom(this.api.createStory(mediaFile, caption));
+        this.message = 'Story created.';
+        this.appChanges.next('posts');
+        return story;
+    }
+
+    async createReelAsync(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File): Promise<ReelDto> {
+        const reel = await firstValueFrom(this.api.createReel(videoFile, durationSeconds, caption, thumbnailFile));
+        this.message = 'Reel created.';
+        this.appChanges.next('posts');
+        return reel;
+    }
+
+    async updateReelAsync(reelId: string, caption?: string): Promise<ReelDto> {
+        const reel = await firstValueFrom(this.api.updateReel(reelId, caption));
+        this.message = 'Reel updated.';
+        this.appChanges.next('posts');
+        return reel;
+    }
+
+    async deleteReelAsync(reelId: string): Promise<void> {
+        await firstValueFrom(this.api.deleteReel(reelId));
+        this.message = 'Reel deleted.';
+        this.appChanges.next('posts');
+    }
+
     async updatePostAsync(postId: string, content: string): Promise<void> {
         await firstValueFrom(this.api.updatePost(postId, { content }));
         this.message = 'Post updated.';
@@ -173,8 +242,12 @@ export class SessionService {
         return updated;
     }
 
-    async addCommentAsync(postId: string, content: string): Promise<PostDto> {
-        return firstValueFrom(this.api.addComment(postId, content));
+    async addCommentAsync(postId: string, content: string, parentCommentId?: string | null): Promise<PostDto> {
+        return firstValueFrom(this.api.addComment(postId, content, parentCommentId));
+    }
+
+    async toggleReelCommentLikeAsync(reelId: string, commentId: string): Promise<ReelDto> {
+        return firstValueFrom(this.api.toggleReelCommentLike(reelId, commentId));
     }
 
     async updateCommentAsync(postId: string, commentId: string, content: string): Promise<PostDto> {

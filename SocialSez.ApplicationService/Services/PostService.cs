@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 using SocialSez.Domain.Entities;
@@ -15,9 +16,13 @@ public class PostService(SocialSezContext dbContext) : IPostService
     {
         "Like", "Love", "Laugh", "Wow", "Sad", "Angry"
     };
+    private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
+    private static volatile bool postSchemaInitialized;
 
     public async Task<PostDto> CreateAsync(CreatePostRequest request, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var author = await dbContext.UserProfiles.FirstOrDefaultAsync(x => x.Id == request.AuthorId, cancellationToken);
         if (author is null)
         {
@@ -61,6 +66,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
     public async Task<PostDto?> AddCommentAsync(Guid postId, CreateCommentRequest request, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var post = await dbContext.Posts
             .Include(x => x.Author)
             .Include(x => x.Comments)
@@ -87,11 +94,21 @@ public class PostService(SocialSezContext dbContext) : IPostService
             throw new ArgumentException("Comment content is required.", nameof(request));
         }
 
+        if (request.ParentCommentId.HasValue)
+        {
+            var parentExists = post.Comments.Any(comment => comment.Id == request.ParentCommentId.Value);
+            if (!parentExists)
+            {
+                throw new ArgumentException("Parent comment was not found on this post.", nameof(request));
+            }
+        }
+
         var comment = new Comment
         {
             Id = Guid.NewGuid(),
             PostId = postId,
             AuthorId = request.AuthorId,
+            ParentCommentId = request.ParentCommentId,
             Content = content,
             CreatedAtUtc = DateTime.UtcNow
         };
@@ -103,6 +120,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
     public async Task<PostDto?> UpdateCommentAsync(Guid postId, Guid commentId, Guid profileId, UpdateCommentRequest request, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var post = await dbContext.Posts
             .Include(x => x.Author)
             .Include(x => x.Comments)
@@ -141,6 +160,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
     public async Task<PostDto?> DeleteCommentAsync(Guid postId, Guid commentId, Guid profileId, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var post = await dbContext.Posts
             .Include(x => x.Author)
             .Include(x => x.Comments)
@@ -167,13 +188,38 @@ public class PostService(SocialSezContext dbContext) : IPostService
             throw new UnauthorizedAccessException("Only the comment author or post author can delete this comment.");
         }
 
-        dbContext.Comments.Remove(comment);
+        var commentIdsToDelete = new HashSet<Guid> { commentId };
+        var queue = new Queue<Guid>();
+        queue.Enqueue(commentId);
+
+        while (queue.Count > 0)
+        {
+            var currentId = queue.Dequeue();
+            var directReplies = post.Comments
+                .Where(item => item.ParentCommentId == currentId)
+                .Select(item => item.Id)
+                .Where(id => commentIdsToDelete.Add(id))
+                .ToArray();
+
+            foreach (var replyId in directReplies)
+            {
+                queue.Enqueue(replyId);
+            }
+        }
+
+        var commentsToDelete = post.Comments
+            .Where(item => commentIdsToDelete.Contains(item.Id))
+            .ToArray();
+
+        dbContext.Comments.RemoveRange(commentsToDelete);
         await dbContext.SaveChangesAsync(cancellationToken);
         return MapToPostDto(post, profileId);
     }
 
     public async Task<PostDto?> SetCommentReactionAsync(Guid postId, Guid commentId, Guid profileId, SetReactionRequest request, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var normalizedType = NormalizeReactionType(request.Type);
         if (!AllowedReactionTypes.Contains(normalizedType))
         {
@@ -222,6 +268,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
     public async Task<PostDto?> ClearCommentReactionAsync(Guid postId, Guid commentId, Guid profileId, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var post = await dbContext.Posts
             .Include(x => x.Author)
             .Include(x => x.Comments)
@@ -254,6 +302,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
     public async Task<PostDto?> UpdateAsync(Guid postId, Guid profileId, UpdatePostRequest request, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var post = await dbContext.Posts
             .Include(x => x.Author)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
@@ -310,6 +360,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
     public async Task<PostDto?> ToggleLikeAsync(Guid postId, Guid profileId, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var post = await dbContext.Posts
             .Include(x => x.Author)
             .Include(x => x.Comments)
@@ -350,6 +402,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
     public async Task<PostDto?> SetReactionAsync(Guid postId, Guid profileId, SetReactionRequest request, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var normalizedType = NormalizeReactionType(request.Type);
         if (!AllowedReactionTypes.Contains(normalizedType))
         {
@@ -392,6 +446,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
     public async Task<PostDto?> ClearReactionAsync(Guid postId, Guid profileId, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var post = await dbContext.Posts
             .Include(x => x.Author)
             .Include(x => x.Comments)
@@ -416,18 +472,98 @@ public class PostService(SocialSezContext dbContext) : IPostService
         return MapToPostDto(post, profileId);
     }
 
-    public async Task<IReadOnlyCollection<PostDto>> GetFeedAsync(Guid profileId, int take = 25, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<PostDto>> GetFeedAsync(Guid profileId, int take = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         take = Math.Clamp(take, 1, 100);
+        var nowUtc = DateTime.UtcNow;
 
         var followedIds = await dbContext.Follows
+            .AsNoTracking()
             .Where(x => x.FollowerId == profileId)
             .Select(x => x.FollowedId)
             .ToListAsync(cancellationToken);
 
         followedIds.Add(profileId);
+        var followedSet = followedIds.ToHashSet();
 
-        var posts = await dbContext.Posts
+        if (mode == FeedMode.Following)
+        {
+            var followingPosts = await dbContext.Posts
+                .AsNoTracking()
+                .Include(x => x.Author)
+                .Include(x => x.Comments)
+                    .ThenInclude(x => x.Author)
+                .Include(x => x.Comments)
+                    .ThenInclude(x => x.Reactions)
+                .Include(x => x.Reactions)
+                .Where(x => followedIds.Contains(x.AuthorId))
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .Take(take)
+                .ToArrayAsync(cancellationToken);
+
+            return followingPosts
+                .Select(post => MapToPostDto(post, profileId))
+                .ToArray();
+        }
+
+        var authorAffinity = new Dictionary<Guid, double>();
+        var hashtagAffinity = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+
+        var reactionSignals = await dbContext.PostReactions
+            .AsNoTracking()
+            .Where(x => x.ProfileId == profileId)
+            .Join(
+                dbContext.Posts.AsNoTracking(),
+                reaction => reaction.PostId,
+                post => post.Id,
+                (reaction, post) => new { post.AuthorId, post.Content, reaction.CreatedAtUtc })
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(800)
+            .ToArrayAsync(cancellationToken);
+
+        foreach (var signal in reactionSignals)
+        {
+            authorAffinity[signal.AuthorId] = authorAffinity.TryGetValue(signal.AuthorId, out var score)
+                ? score + 3.0
+                : 3.0;
+
+            foreach (var tag in ExtractHashtags(signal.Content))
+            {
+                hashtagAffinity[tag] = hashtagAffinity.TryGetValue(tag, out var tagScore)
+                    ? tagScore + 2.0
+                    : 2.0;
+            }
+        }
+
+        var commentSignals = await dbContext.Comments
+            .AsNoTracking()
+            .Where(x => x.AuthorId == profileId)
+            .Join(
+                dbContext.Posts.AsNoTracking(),
+                comment => comment.PostId,
+                post => post.Id,
+                (comment, post) => new { post.AuthorId, post.Content, comment.CreatedAtUtc })
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(500)
+            .ToArrayAsync(cancellationToken);
+
+        foreach (var signal in commentSignals)
+        {
+            authorAffinity[signal.AuthorId] = authorAffinity.TryGetValue(signal.AuthorId, out var score)
+                ? score + 4.5
+                : 4.5;
+
+            foreach (var tag in ExtractHashtags(signal.Content))
+            {
+                hashtagAffinity[tag] = hashtagAffinity.TryGetValue(tag, out var tagScore)
+                    ? tagScore + 2.8
+                    : 2.8;
+            }
+        }
+
+        var candidates = await dbContext.Posts
             .AsNoTracking()
             .Include(x => x.Author)
             .Include(x => x.Comments)
@@ -437,16 +573,46 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Reactions)
             .Where(x => followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
             .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(take)
+            .Take(Math.Clamp(take * 40, 120, 2000))
             .ToArrayAsync(cancellationToken);
 
-        return posts
+        var ranked = candidates
+            .Select(post =>
+            {
+                var authorScore = authorAffinity.TryGetValue(post.AuthorId, out var affinity) ? affinity : 0d;
+
+                var tags = ExtractHashtags(post.Content);
+                var hashtagScore = tags.Sum(tag => hashtagAffinity.TryGetValue(tag, out var score) ? score : 0d);
+
+                var engagementScore = Math.Min(6d, (post.Reactions.Count * 0.2) + (post.Comments.Count * 0.3));
+                var followingBoost = followedSet.Contains(post.AuthorId) ? 1.0 : 0d;
+
+                var ageDays = Math.Max(0, (nowUtc - post.CreatedAtUtc).TotalDays);
+                var recencyScore = Math.Max(0d, 4.5 - (ageDays * 0.35));
+
+                var totalScore = (authorScore * 0.45) + (hashtagScore * 0.35) + engagementScore + followingBoost + recencyScore;
+
+                return new
+                {
+                    Post = post,
+                    Score = totalScore
+                };
+            })
+            .OrderByDescending(x => x.Score)
+            .ThenByDescending(x => x.Post.CreatedAtUtc)
+            .Take(take)
+            .Select(x => x.Post)
+            .ToArray();
+
+        return ranked
             .Select(post => MapToPostDto(post, profileId))
             .ToArray();
     }
 
     public async Task<IReadOnlyCollection<PostDto>> SearchPostsAsync(Guid profileId, string query, int take = 25, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var normalizedQuery = query.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalizedQuery))
         {
@@ -590,6 +756,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
     public async Task<IReadOnlyCollection<PostDto>> GetByHashtagAsync(Guid profileId, string hashtag, int take = 25, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var normalizedHashtag = NormalizeHashtag(hashtag);
         if (string.IsNullOrEmpty(normalizedHashtag))
         {
@@ -632,6 +800,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
     public async Task<IReadOnlyCollection<PostDto>> GetByAuthorHandleAsync(Guid profileId, string handle, int take = 25, CancellationToken cancellationToken = default)
     {
+        await EnsurePostSchemaAsync(cancellationToken);
+
         var normalizedHandle = handle.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalizedHandle))
         {
@@ -673,6 +843,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
                 x.Id,
                 x.PostId,
                 x.AuthorId,
+                x.ParentCommentId,
                 x.Author.Handle,
                 x.Author.ImageUrl,
                 x.Content,
@@ -761,5 +932,52 @@ public class PostService(SocialSezContext dbContext) : IPostService
     {
         var escaped = Regex.Escape(hashtag);
         return new Regex($"(?<![\\p{{L}}\\p{{N}}_])#{escaped}(?![\\p{{L}}\\p{{N}}_])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    }
+
+    private static string[] ExtractHashtags(string? content)
+    {
+        if (string.IsNullOrWhiteSpace(content) || !content.Contains('#'))
+        {
+            return Array.Empty<string>();
+        }
+
+        return HashtagRegex.Matches(content)
+            .Select(match => match.Groups["tag"].Value)
+            .Where(tag => !string.IsNullOrWhiteSpace(tag))
+            .Select(tag => tag.ToLowerInvariant())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private async Task EnsurePostSchemaAsync(CancellationToken cancellationToken)
+    {
+        if (postSchemaInitialized || !dbContext.Database.IsSqlite())
+        {
+            return;
+        }
+
+        await SchemaInitLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (postSchemaInitialized)
+            {
+                return;
+            }
+
+            try
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Comments ADD COLUMN ParentCommentId TEXT NULL;", cancellationToken);
+            }
+            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+            {
+            }
+
+            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_Comments_ParentCommentId ON Comments (ParentCommentId);", cancellationToken);
+            postSchemaInitialized = true;
+        }
+        finally
+        {
+            SchemaInitLock.Release();
+        }
     }
 }

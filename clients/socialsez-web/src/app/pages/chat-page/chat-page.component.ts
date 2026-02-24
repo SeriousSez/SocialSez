@@ -3,20 +3,31 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, ElementRef, HostListener
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, ProfileDto, ReactionSummaryDto } from '../../core/api.types';
+import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, ProfileDto, ReactionSummaryDto, ReelCommentDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
 import { ChatRealtimeService } from '../../core/chat-realtime.service';
+import { SharedReelCommentPreview, SharedReelPreview, buildSharedReelMarker, buildSharedReelPreview, decodeSharedReelPayload } from '../../core/shared-reel.utils';
 import { SharedPostPreview, buildSharedPostMarker, decodeSharedPostPayload } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
+import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
+import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
 import { ChatSearchModalComponent } from '../../shared/chat-search-modal/chat-search-modal.component';
 import { ReactionPickerComponent } from '../../shared/reaction-picker/reaction-picker.component';
+import { ShareReelMessageModalComponent, ShareReelMessageSubmit } from '../../shared/share-reel-message-modal/share-reel-message-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import 'emoji-picker-element';
+
+interface SharedStoryPreview {
+    authorHandle?: string;
+    mediaUrl: string;
+}
 
 interface ParsedChatMessage {
     text: string;
     imageUrl?: string;
     gifUrl?: string;
     sharedPost?: SharedPostPreview;
+    sharedReel?: SharedReelPreview;
+    sharedStory?: SharedStoryPreview;
 }
 
 interface RichTextPart {
@@ -35,7 +46,7 @@ interface GiphyGifResult {
 @Component({
     selector: 'app-chat-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent],
+    imports: [CommonModule, FormsModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent, ShareReelMessageModalComponent, FeedStoryViewerComponent, ConfirmModalComponent],
     templateUrl: './chat-page.component.html',
     styleUrl: './chat-page.component.scss',
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
@@ -48,6 +59,11 @@ export class ChatPageComponent implements OnDestroy {
     private readonly sharedPreviewMaxLines = 7;
     private readonly composerMinHeightPx = 38;
     private readonly composerMaxHeightPx = 120;
+    private readonly preciseDateFormatter = new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
     readonly noReactions: ReadonlyArray<ReactionSummaryDto> = [];
     readonly suggestedStarterMessages = [
         'Hey 👋',
@@ -94,10 +110,43 @@ export class ChatPageComponent implements OnDestroy {
     searchingGifs = false;
     imageUrlInput: string | null = null;
     sharedPostInput: SharedPostPreview | null = null;
+    activeSharedReel: SharedReelPreview | null = null;
+    activeSharedReelResolved: ReelDto | null = null;
+    loadingSharedReelDetails = false;
+    reactingSharedReel = false;
+    commentingSharedReel = false;
+    sharingSharedReelId: string | null = null;
+    updatingSharedReel = false;
+    deletingSharedReel = false;
+    pendingDeleteSharedReelId: string | null = null;
+    sharedReelSettingsMenuOpen = false;
+    editingSharedReelCaption = false;
+    sharedReelCaptionDraft = '';
+    viewerCommentDraft = '';
+    replyingToSharedReelCommentId: string | null = null;
+    editingSharedReelCommentId: string | null = null;
+    editingSharedReelCommentDraft = '';
+    reactingSharedReelCommentId: string | null = null;
+    deletingSharedReelCommentId: string | null = null;
+    pendingDeleteSharedReelCommentId: string | null = null;
+    activeSharedReelMuted = true;
+    pendingShareReelFromViewer: ReelDto | null = null;
+    activeSharedStoryGroup: StoryGroupDto | null = null;
+    activeSharedStoryIndex = 0;
+    sendingSharedStoryReply = false;
+    sharingSharedStoryMessage = false;
+    deletingSharedStory = false;
+    pendingDeleteSharedStoryId: string | null = null;
+    sharedStoryViewerError = '';
+    pendingShareStoryFromViewer: StoryDto | null = null;
+    sharingSharedStoryId: string | null = null;
     emojiPickerOpen = false;
     gifInputOpen = false;
     uploadingImage = false;
     status = '';
+    private readonly likedSharedStoryIds = new Set<string>();
+    private readonly expandedSharedReelReplyRootIds = new Set<string>();
+    private activeStoryGroups: StoryGroupDto[] = [];
 
     readonly prefers24HourClock = (() => {
         const hourCycle = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle;
@@ -121,6 +170,9 @@ export class ChatPageComponent implements OnDestroy {
 
     @ViewChild('gifToggleBtn')
     private gifToggleBtnRef?: ElementRef<HTMLButtonElement>;
+
+    @ViewChild('activeSharedReelVideo')
+    private activeSharedReelVideoRef?: ElementRef<HTMLVideoElement>;
 
     @ViewChild('composerInput')
     private composerInputRef?: ElementRef<HTMLTextAreaElement>;
@@ -248,11 +300,40 @@ export class ChatPageComponent implements OnDestroy {
         });
     }
 
+    get activeSharedStory(): StoryDto | null {
+        const group = this.activeSharedStoryGroup;
+        if (!group) {
+            return null;
+        }
+
+        return group.stories[this.activeSharedStoryIndex] ?? null;
+    }
+
+    get hasPreviousSharedStory(): boolean {
+        return this.activeSharedStoryIndex > 0;
+    }
+
+    get hasNextSharedStory(): boolean {
+        const group = this.activeSharedStoryGroup;
+        return !!group && this.activeSharedStoryIndex < group.stories.length - 1;
+    }
+
+    get canDeleteActiveSharedStory(): boolean {
+        const story = this.activeSharedStory;
+        const myProfileId = this.currentProfileId;
+        if (!story || !myProfileId || story.authorId !== myProfileId) {
+            return false;
+        }
+
+        return this.isGuid(story.id);
+    }
+
     async loadConversations(): Promise<void> {
         this.loadingConversations = true;
         this.status = '';
 
         try {
+            void this.refreshActiveStoryPresence();
             this.conversations = await this.session.loadChatConversationsAsync();
 
             if (this.selectedConversationId) {
@@ -738,6 +819,16 @@ export class ChatPageComponent implements OnDestroy {
             return `Shared post from @${parsed.sharedPost.authorHandle}`;
         }
 
+        if (parsed.sharedStory) {
+            const authorHandle = parsed.sharedStory.authorHandle?.trim() ?? '';
+            return authorHandle ? `Shared story from @${authorHandle}` : 'Shared story';
+        }
+
+        if (parsed.sharedReel) {
+            const authorHandle = parsed.sharedReel.authorHandle?.trim() ?? '';
+            return authorHandle ? `Shared reel from @${authorHandle}` : 'Shared reel';
+        }
+
         return text;
     }
 
@@ -851,6 +942,25 @@ export class ChatPageComponent implements OnDestroy {
         void this.router.navigate(['/users', handle]);
     }
 
+    hasActiveStoryForHandle(handle: string): boolean {
+        const normalized = handle.trim().toLowerCase();
+        return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
+    }
+
+    openAvatarProfileOrStory(handle: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const normalized = handle.trim().toLowerCase();
+        const group = this.activeStoryGroups.find(item => item.authorHandle.trim().toLowerCase() === normalized);
+        if (group?.stories.length) {
+            this.openSharedStoryGroup(group);
+            return;
+        }
+
+        void this.router.navigate(['/users', handle]);
+    }
+
     openHashtag(tag: string, event: MouseEvent): void {
         event.preventDefault();
         void this.router.navigate(['/hashtags', tag]);
@@ -902,6 +1012,824 @@ export class ChatPageComponent implements OnDestroy {
     openSharedPost(shared: SharedPostPreview, event: MouseEvent): void {
         event.preventDefault();
         void this.router.navigate(['/users', shared.authorHandle], { fragment: `post-${shared.postId}` });
+    }
+
+    openSharedReel(sharedReel: SharedReelPreview, message: ChatMessageDto, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const normalizedSharedReel: SharedReelPreview = {
+            ...sharedReel,
+            authorHandle: sharedReel.authorHandle?.trim() || message.authorHandle,
+            authorImageUrl: sharedReel.authorImageUrl || message.authorImageUrl,
+            createdAtUtc: sharedReel.createdAtUtc || message.createdAtUtc
+        };
+
+        this.viewerCommentDraft = '';
+        this.activeSharedReelMuted = true;
+        this.sharedReelSettingsMenuOpen = false;
+        this.editingSharedReelCaption = false;
+        this.sharedReelCaptionDraft = '';
+        this.pendingShareReelFromViewer = null;
+        this.replyingToSharedReelCommentId = null;
+        this.editingSharedReelCommentId = null;
+        this.editingSharedReelCommentDraft = '';
+        this.reactingSharedReelCommentId = null;
+        this.deletingSharedReelCommentId = null;
+        this.pendingDeleteSharedReelCommentId = null;
+        this.expandedSharedReelReplyRootIds.clear();
+        this.activeSharedReelResolved = this.buildFallbackReelDto(normalizedSharedReel);
+        this.activeSharedReel = {
+            ...normalizedSharedReel
+        };
+
+        void this.resolveSharedReelDetails(normalizedSharedReel);
+    }
+
+    openSharedStory(sharedStory: SharedStoryPreview, message: ChatMessageDto, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const fallbackStory = this.buildSharedStoryFromPreview(sharedStory, message);
+        this.activeSharedStoryGroup = {
+            authorId: fallbackStory.authorId,
+            authorHandle: fallbackStory.authorHandle,
+            authorImageUrl: fallbackStory.authorImageUrl,
+            hasUnseenStories: true,
+            stories: [fallbackStory]
+        };
+        this.activeSharedStoryIndex = 0;
+        this.sharedStoryViewerError = '';
+        this.sendingSharedStoryReply = false;
+        this.sharingSharedStoryMessage = false;
+        this.pendingShareStoryFromViewer = null;
+        this.sharingSharedStoryId = null;
+
+        void this.resolveSharedStoryGroup(sharedStory, message, fallbackStory);
+    }
+
+    closeSharedStoryViewer(): void {
+        this.activeSharedStoryGroup = null;
+        this.activeSharedStoryIndex = 0;
+        this.sharedStoryViewerError = '';
+        this.sendingSharedStoryReply = false;
+        this.sharingSharedStoryMessage = false;
+        this.deletingSharedStory = false;
+        this.pendingDeleteSharedStoryId = null;
+        this.pendingShareStoryFromViewer = null;
+        this.sharingSharedStoryId = null;
+    }
+
+    showPreviousSharedStory(): void {
+        if (!this.hasPreviousSharedStory) {
+            return;
+        }
+
+        this.activeSharedStoryIndex -= 1;
+        this.sharedStoryViewerError = '';
+    }
+
+    showNextSharedStory(): void {
+        if (!this.hasNextSharedStory) {
+            this.closeSharedStoryViewer();
+            return;
+        }
+
+        this.activeSharedStoryIndex += 1;
+        this.sharedStoryViewerError = '';
+    }
+
+    isActiveSharedStoryLiked(storyId: string): boolean {
+        return this.likedSharedStoryIds.has(storyId);
+    }
+
+    toggleSharedStoryLike(story: StoryDto): void {
+        if (this.likedSharedStoryIds.has(story.id)) {
+            this.likedSharedStoryIds.delete(story.id);
+            return;
+        }
+
+        this.likedSharedStoryIds.add(story.id);
+    }
+
+    async sendSharedStoryReply(event: { story: StoryDto; message: string }): Promise<void> {
+        const conversationId = this.selectedConversationId;
+        const content = event.message.trim();
+        if (!conversationId || !content || this.sendingSharedStoryReply) {
+            return;
+        }
+
+        this.sendingSharedStoryReply = true;
+        this.sharedStoryViewerError = '';
+
+        try {
+            const created = await this.session.sendChatMessageAsync(conversationId, content);
+            this.upsertMessage(created);
+            this.applyConversationPreview(created);
+        } catch {
+            this.sharedStoryViewerError = 'Could not send your story reply right now.';
+        } finally {
+            this.sendingSharedStoryReply = false;
+        }
+    }
+
+    requestDeleteActiveSharedStory(story: StoryDto): void {
+        if (this.deletingSharedStory || !this.canDeleteActiveSharedStory) {
+            return;
+        }
+
+        this.pendingDeleteSharedStoryId = story.id;
+    }
+
+    cancelDeleteActiveSharedStory(): void {
+        if (this.deletingSharedStory) {
+            return;
+        }
+
+        this.pendingDeleteSharedStoryId = null;
+    }
+
+    async confirmDeleteActiveSharedStory(): Promise<void> {
+        const story = this.activeSharedStory;
+        if (!story || this.pendingDeleteSharedStoryId !== story.id || this.deletingSharedStory || !this.canDeleteActiveSharedStory) {
+            return;
+        }
+
+        this.deletingSharedStory = true;
+        this.sharedStoryViewerError = '';
+
+        try {
+            await this.session.deleteStoryAsync(story.id);
+            const group = this.activeSharedStoryGroup;
+            if (!group) {
+                this.closeSharedStoryViewer();
+                return;
+            }
+
+            const nextStories = group.stories.filter(item => item.id !== story.id);
+            if (!nextStories.length) {
+                this.closeSharedStoryViewer();
+                return;
+            }
+
+            const nextIndex = Math.min(this.activeSharedStoryIndex, nextStories.length - 1);
+            this.activeSharedStoryGroup = {
+                ...group,
+                stories: nextStories
+            };
+            this.activeSharedStoryIndex = nextIndex;
+            this.pendingDeleteSharedStoryId = null;
+            this.pendingShareStoryFromViewer = null;
+        } catch {
+            this.sharedStoryViewerError = 'Could not delete this story right now.';
+        } finally {
+            this.deletingSharedStory = false;
+        }
+    }
+
+    openSharedStoryShareModal(story: StoryDto): void {
+        if (this.sharingSharedStoryId) {
+            return;
+        }
+
+        this.pendingShareStoryFromViewer = story;
+        this.sharedStoryViewerError = '';
+    }
+
+    cancelSharedStoryShareModal(): void {
+        if (this.sharingSharedStoryId) {
+            return;
+        }
+
+        this.pendingShareStoryFromViewer = null;
+    }
+
+    async submitSharedStoryShareAsMessage(request: ShareReelMessageSubmit): Promise<void> {
+        const story = this.pendingShareStoryFromViewer;
+        if (!story) {
+            return;
+        }
+
+        const succeeded = await this.executeStoryShareToChat(story, request);
+        if (succeeded) {
+            this.pendingShareStoryFromViewer = null;
+        }
+    }
+
+    get pendingShareStoryAsReel(): ReelDto | null {
+        const story = this.pendingShareStoryFromViewer;
+        if (!story) {
+            return null;
+        }
+
+        return {
+            id: story.id,
+            authorId: story.authorId,
+            authorHandle: story.authorHandle,
+            authorImageUrl: story.authorImageUrl,
+            caption: story.caption,
+            videoUrl: story.mediaUrl,
+            thumbnailUrl: this.isImageMedia(story.mediaUrl) ? story.mediaUrl : undefined,
+            durationSeconds: 0,
+            createdAtUtc: story.createdAtUtc,
+            likeCount: 0,
+            likedByMe: false,
+            comments: []
+        };
+    }
+
+    closeSharedReelViewer(): void {
+        this.activeSharedReel = null;
+        this.activeSharedReelResolved = null;
+        this.activeSharedReelMuted = true;
+        this.loadingSharedReelDetails = false;
+        this.reactingSharedReel = false;
+        this.commentingSharedReel = false;
+        this.sharingSharedReelId = null;
+        this.updatingSharedReel = false;
+        this.deletingSharedReel = false;
+        this.pendingDeleteSharedReelId = null;
+        this.sharedReelSettingsMenuOpen = false;
+        this.editingSharedReelCaption = false;
+        this.sharedReelCaptionDraft = '';
+        this.viewerCommentDraft = '';
+        this.pendingShareReelFromViewer = null;
+        this.replyingToSharedReelCommentId = null;
+        this.editingSharedReelCommentId = null;
+        this.editingSharedReelCommentDraft = '';
+        this.reactingSharedReelCommentId = null;
+        this.deletingSharedReelCommentId = null;
+        this.pendingDeleteSharedReelCommentId = null;
+        this.expandedSharedReelReplyRootIds.clear();
+    }
+
+    onSharedReelViewerBackdropClick(event: MouseEvent): void {
+        if (event.target !== event.currentTarget) {
+            return;
+        }
+
+        this.closeSharedReelViewer();
+    }
+
+    toggleActiveSharedReelSound(): void {
+        this.activeSharedReelMuted = !this.activeSharedReelMuted;
+        this.syncActiveSharedReelVideoAudioState();
+    }
+
+    get canManageActiveSharedReel(): boolean {
+        const reel = this.activeSharedReelResolved;
+        const myProfileId = this.currentProfileId;
+        return !!reel?.id && !!myProfileId && reel.authorId === myProfileId;
+    }
+
+    toggleSharedReelSettingsMenu(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.deletingSharedReel) {
+            return;
+        }
+
+        this.sharedReelSettingsMenuOpen = !this.sharedReelSettingsMenuOpen;
+    }
+
+    startActiveSharedReelCaptionEdit(): void {
+        if (!this.canManageActiveSharedReel || this.updatingSharedReel || this.deletingSharedReel) {
+            return;
+        }
+
+        this.sharedReelCaptionDraft = this.activeSharedReelCaptionText;
+        this.editingSharedReelCaption = true;
+        this.sharedReelSettingsMenuOpen = false;
+    }
+
+    cancelActiveSharedReelCaptionEdit(): void {
+        if (this.updatingSharedReel) {
+            return;
+        }
+
+        this.editingSharedReelCaption = false;
+        this.sharedReelCaptionDraft = '';
+    }
+
+    async saveActiveSharedReelCaptionEdit(): Promise<void> {
+        const reel = this.activeSharedReelResolved;
+        if (!reel?.id || !this.canManageActiveSharedReel || this.updatingSharedReel || this.deletingSharedReel) {
+            return;
+        }
+
+        this.updatingSharedReel = true;
+        this.status = '';
+
+        try {
+            const captionPayload = this.buildActiveSharedReelCaptionPayload(this.sharedReelCaptionDraft);
+            const updated = await this.session.updateReelAsync(reel.id, captionPayload);
+            this.activeSharedReelResolved = updated;
+            if (this.activeSharedReel) {
+                this.activeSharedReel = {
+                    ...this.activeSharedReel,
+                    caption: updated.caption,
+                    comments: updated.comments.map(comment => this.mapReelComment(comment)),
+                    likeCount: updated.likeCount,
+                    likedByMe: updated.likedByMe,
+                    createdAtUtc: updated.createdAtUtc,
+                    thumbnailUrl: updated.thumbnailUrl || this.activeSharedReel.thumbnailUrl,
+                    authorImageUrl: updated.authorImageUrl || this.activeSharedReel.authorImageUrl
+                };
+            }
+
+            this.editingSharedReelCaption = false;
+            this.sharedReelCaptionDraft = '';
+        } catch {
+            this.status = 'Could not update this reel right now.';
+        } finally {
+            this.updatingSharedReel = false;
+        }
+    }
+
+    requestDeleteActiveSharedReel(): void {
+        const reel = this.activeSharedReelResolved;
+        if (!reel?.id || !this.canManageActiveSharedReel || this.deletingSharedReel || this.updatingSharedReel) {
+            return;
+        }
+
+        this.pendingDeleteSharedReelId = reel.id;
+        this.sharedReelSettingsMenuOpen = false;
+    }
+
+    cancelDeleteActiveSharedReel(): void {
+        if (this.deletingSharedReel) {
+            return;
+        }
+
+        this.pendingDeleteSharedReelId = null;
+    }
+
+    async confirmDeleteActiveSharedReel(): Promise<void> {
+        const reel = this.activeSharedReelResolved;
+        if (!reel?.id || this.pendingDeleteSharedReelId !== reel.id || !this.canManageActiveSharedReel || this.deletingSharedReel || this.updatingSharedReel) {
+            return;
+        }
+
+        this.deletingSharedReel = true;
+        this.status = '';
+
+        try {
+            await this.session.deleteReelAsync(reel.id);
+            this.closeSharedReelViewer();
+        } catch {
+            this.status = 'Could not delete this reel right now.';
+        } finally {
+            this.deletingSharedReel = false;
+        }
+    }
+
+    onActiveSharedReelVideoLoaded(): void {
+        this.syncActiveSharedReelVideoAudioState();
+    }
+
+    get activeSharedReelLikeCount(): number {
+        if (this.activeSharedReelResolved) {
+            return this.activeSharedReelResolved.likeCount;
+        }
+
+        return Math.max(0, this.activeSharedReel?.likeCount ?? 0);
+    }
+
+    get activeSharedReelLikedByMe(): boolean {
+        if (this.activeSharedReelResolved) {
+            return this.activeSharedReelResolved.likedByMe;
+        }
+
+        return !!this.activeSharedReel?.likedByMe;
+    }
+
+    get activeSharedReelCaptionText(): string {
+        return this.parseReelMetadata(this.activeSharedReelResolved?.caption ?? this.activeSharedReel?.caption).caption;
+    }
+
+    get activeSharedReelAuthorHandle(): string {
+        return this.normalizeProfileHandle(this.activeSharedReelResolved?.authorHandle ?? this.activeSharedReel?.authorHandle ?? '');
+    }
+
+    get activeSharedReelLocation(): string {
+        return this.parseReelMetadata(this.activeSharedReelResolved?.caption ?? this.activeSharedReel?.caption).location;
+    }
+
+    get activeSharedReelCollaborators(): string[] {
+        return this.parseReelMetadata(this.activeSharedReelResolved?.caption ?? this.activeSharedReel?.caption).collaborators;
+    }
+
+    get activeSharedReelFrameTransform(): string {
+        const metadata = this.parseReelMetadata(this.activeSharedReelResolved?.caption ?? this.activeSharedReel?.caption);
+        return `translate(${metadata.frameOffsetX}%, ${metadata.frameOffsetY}%) scale(${metadata.frameZoom})`;
+    }
+
+    get activeSharedReelComments(): SharedReelCommentPreview[] {
+        if (this.activeSharedReelResolved) {
+            return this.activeSharedReelResolved.comments.map(comment => this.mapReelComment(comment));
+        }
+
+        return this.activeSharedReel?.comments ?? [];
+    }
+
+    get orderedActiveSharedReelComments(): Array<{ comment: SharedReelCommentPreview; depth: number }> {
+        const comments = this.activeSharedReelComments;
+        if (!comments.length) {
+            return [];
+        }
+
+        const byParent = new Map<string, SharedReelCommentPreview[]>();
+        const byId = new Set(comments.map(comment => comment.id));
+        const roots: SharedReelCommentPreview[] = [];
+
+        for (const comment of comments) {
+            const parentId = comment.parentCommentId?.trim();
+            if (!parentId || !byId.has(parentId)) {
+                roots.push(comment);
+                continue;
+            }
+
+            const bucket = byParent.get(parentId);
+            if (bucket) {
+                bucket.push(comment);
+            } else {
+                byParent.set(parentId, [comment]);
+            }
+        }
+
+        const sortByCreated = (items: SharedReelCommentPreview[]) => items.sort((a, b) => {
+            const left = Date.parse(a.createdAtUtc);
+            const right = Date.parse(b.createdAtUtc);
+            if (Number.isNaN(left) || Number.isNaN(right)) {
+                return a.createdAtUtc.localeCompare(b.createdAtUtc);
+            }
+
+            return left - right;
+        });
+
+        sortByCreated(roots);
+        for (const bucket of byParent.values()) {
+            sortByCreated(bucket);
+        }
+
+        const ordered: Array<{ comment: SharedReelCommentPreview; depth: number }> = [];
+        const stack = roots.map(root => ({ comment: root, depth: 0, rootId: root.id })).reverse();
+
+        while (stack.length) {
+            const current = stack.pop();
+            if (!current) {
+                continue;
+            }
+
+            const threadExpanded = this.expandedSharedReelReplyRootIds.has(current.rootId);
+            if (current.depth > 0 && !threadExpanded) {
+                continue;
+            }
+
+            ordered.push(current);
+            const children = byParent.get(current.comment.id) ?? [];
+            for (let index = children.length - 1; index >= 0; index -= 1) {
+                stack.push({ comment: children[index], depth: current.depth + 1, rootId: current.rootId });
+            }
+        }
+
+        return ordered;
+    }
+
+    getActiveSharedReelReplyCount(rootCommentId: string): number {
+        const comments = this.activeSharedReelComments;
+        if (!comments.length) {
+            return 0;
+        }
+
+        const byParent = new Map<string, SharedReelCommentPreview[]>();
+        for (const comment of comments) {
+            const parentId = comment.parentCommentId?.trim();
+            if (!parentId) {
+                continue;
+            }
+
+            const bucket = byParent.get(parentId);
+            if (bucket) {
+                bucket.push(comment);
+            } else {
+                byParent.set(parentId, [comment]);
+            }
+        }
+
+        let total = 0;
+        const stack = [...(byParent.get(rootCommentId) ?? [])];
+        while (stack.length) {
+            const current = stack.pop();
+            if (!current) {
+                continue;
+            }
+
+            total += 1;
+            const children = byParent.get(current.id) ?? [];
+            for (const child of children) {
+                stack.push(child);
+            }
+        }
+
+        return total;
+    }
+
+    isActiveSharedReelReplyThreadExpanded(rootCommentId: string): boolean {
+        return this.expandedSharedReelReplyRootIds.has(rootCommentId);
+    }
+
+    toggleActiveSharedReelReplyThread(rootCommentId: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!this.getActiveSharedReelReplyCount(rootCommentId)) {
+            this.expandedSharedReelReplyRootIds.delete(rootCommentId);
+            return;
+        }
+
+        if (this.expandedSharedReelReplyRootIds.has(rootCommentId)) {
+            this.expandedSharedReelReplyRootIds.delete(rootCommentId);
+            return;
+        }
+
+        this.expandedSharedReelReplyRootIds.add(rootCommentId);
+    }
+
+    canEditActiveSharedReelComment(comment: SharedReelCommentPreview): boolean {
+        const reel = this.activeSharedReelResolved;
+        const myProfileId = this.currentProfileId;
+        if (!reel?.id || !myProfileId) {
+            return false;
+        }
+
+        const resolved = this.resolveActiveSharedReelComment(comment.id);
+        return !!resolved && resolved.authorId === myProfileId;
+    }
+
+    canDeleteActiveSharedReelComment(comment: SharedReelCommentPreview): boolean {
+        const reel = this.activeSharedReelResolved;
+        const myProfileId = this.currentProfileId;
+        if (!reel?.id || !myProfileId) {
+            return false;
+        }
+
+        const resolved = this.resolveActiveSharedReelComment(comment.id);
+        if (!resolved) {
+            return false;
+        }
+
+        return resolved.authorId === myProfileId || reel.authorId === myProfileId;
+    }
+
+    async replyToActiveSharedReelComment(comment: SharedReelCommentPreview, event: MouseEvent): Promise<void> {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const rootId = this.findActiveSharedReelCommentRootId(comment.id) ?? comment.id;
+        this.expandedSharedReelReplyRootIds.add(rootId);
+
+        const mentionPrefix = `@${comment.authorHandle} `;
+        const existing = this.viewerCommentDraft;
+        const trimmed = existing.trim();
+        this.viewerCommentDraft = trimmed.startsWith(mentionPrefix.trim())
+            ? existing
+            : `${mentionPrefix}${trimmed}`.trimEnd();
+        this.replyingToSharedReelCommentId = comment.id;
+    }
+
+    cancelActiveSharedReelReply(): void {
+        this.replyingToSharedReelCommentId = null;
+    }
+
+    startActiveSharedReelCommentEdit(comment: SharedReelCommentPreview, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.canEditActiveSharedReelComment(comment)) {
+            return;
+        }
+
+        this.editingSharedReelCommentId = comment.id;
+        this.editingSharedReelCommentDraft = comment.content;
+    }
+
+    cancelActiveSharedReelCommentEdit(event?: MouseEvent): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+        this.editingSharedReelCommentId = null;
+        this.editingSharedReelCommentDraft = '';
+    }
+
+    async saveActiveSharedReelCommentEdit(comment: SharedReelCommentPreview, event: Event): Promise<void> {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const reel = this.activeSharedReelResolved;
+        if (!reel?.id || this.commentingSharedReel || this.deletingSharedReelCommentId) {
+            return;
+        }
+
+        if (!this.canEditActiveSharedReelComment(comment)) {
+            return;
+        }
+
+        const updatedContent = this.editingSharedReelCommentDraft.trim();
+        if (!updatedContent) {
+            return;
+        }
+
+        this.commentingSharedReel = true;
+        try {
+            const updated = await this.session.updateReelCommentAsync(reel.id, comment.id, updatedContent);
+            this.applyActiveSharedReelUpdate(updated);
+            this.cancelActiveSharedReelCommentEdit();
+        } catch {
+            this.status = 'Could not update reel comment right now.';
+        } finally {
+            this.commentingSharedReel = false;
+        }
+    }
+
+    requestDeleteActiveSharedReelComment(comment: SharedReelCommentPreview, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.canDeleteActiveSharedReelComment(comment) || this.commentingSharedReel || this.deletingSharedReelCommentId) {
+            return;
+        }
+
+        this.pendingDeleteSharedReelCommentId = comment.id;
+        if (this.editingSharedReelCommentId === comment.id) {
+            this.cancelActiveSharedReelCommentEdit();
+        }
+    }
+
+    cancelDeleteActiveSharedReelComment(): void {
+        if (this.deletingSharedReelCommentId) {
+            return;
+        }
+
+        this.pendingDeleteSharedReelCommentId = null;
+    }
+
+    async confirmDeleteActiveSharedReelComment(): Promise<void> {
+        const reel = this.activeSharedReelResolved;
+        const commentId = this.pendingDeleteSharedReelCommentId;
+        if (!reel?.id || !commentId || this.commentingSharedReel || this.deletingSharedReelCommentId) {
+            return;
+        }
+
+        const pendingComment = this.activeSharedReelComments.find(comment => comment.id === commentId);
+        if (!pendingComment || !this.canDeleteActiveSharedReelComment(pendingComment)) {
+            this.pendingDeleteSharedReelCommentId = null;
+            return;
+        }
+
+        this.deletingSharedReelCommentId = commentId;
+        this.commentingSharedReel = true;
+        try {
+            const updated = await this.session.deleteReelCommentAsync(reel.id, commentId);
+            this.applyActiveSharedReelUpdate(updated);
+            this.pendingDeleteSharedReelCommentId = null;
+        } catch {
+            this.status = 'Could not delete reel comment right now.';
+        } finally {
+            this.commentingSharedReel = false;
+            this.deletingSharedReelCommentId = null;
+        }
+    }
+
+    async toggleActiveSharedReelCommentLike(comment: SharedReelCommentPreview, event: MouseEvent): Promise<void> {
+        event.preventDefault();
+        event.stopPropagation();
+        const reel = this.activeSharedReelResolved;
+        if (!reel?.id || this.commentingSharedReel || this.reactingSharedReelCommentId === comment.id) {
+            return;
+        }
+
+        this.reactingSharedReelCommentId = comment.id;
+        try {
+            const updated = await this.session.toggleReelCommentLikeAsync(reel.id, comment.id);
+            this.applyActiveSharedReelUpdate(updated);
+        } catch {
+            this.status = 'Could not update reel comment like right now.';
+        } finally {
+            this.reactingSharedReelCommentId = null;
+        }
+    }
+
+    get canSubmitActiveSharedReelComment(): boolean {
+        return !this.commentingSharedReel && !!this.viewerCommentDraft.trim() && !!this.activeSharedReelResolved?.id;
+    }
+
+    async toggleActiveSharedReelLike(): Promise<void> {
+        const reel = this.activeSharedReelResolved;
+        if (!reel?.id || this.reactingSharedReel) {
+            return;
+        }
+
+        this.reactingSharedReel = true;
+        try {
+            const updated = await this.session.toggleReelLikeAsync(reel.id);
+            this.activeSharedReelResolved = updated;
+            if (this.activeSharedReel) {
+                this.activeSharedReel = {
+                    ...this.activeSharedReel,
+                    likeCount: updated.likeCount,
+                    likedByMe: updated.likedByMe,
+                    comments: updated.comments.map(comment => this.mapReelComment(comment))
+                };
+            }
+        } catch {
+            this.status = 'Could not update reel like right now.';
+        } finally {
+            this.reactingSharedReel = false;
+        }
+    }
+
+    async submitActiveSharedReelComment(): Promise<void> {
+        const reel = this.activeSharedReelResolved;
+        const content = this.viewerCommentDraft.trim();
+        if (!reel?.id || !content || this.commentingSharedReel) {
+            return;
+        }
+
+        this.commentingSharedReel = true;
+        try {
+            const updated = await this.session.addReelCommentAsync(reel.id, content, this.replyingToSharedReelCommentId);
+            this.applyActiveSharedReelUpdate(updated);
+            this.viewerCommentDraft = '';
+            this.replyingToSharedReelCommentId = null;
+        } catch {
+            this.status = 'Could not add reel comment right now.';
+        } finally {
+            this.commentingSharedReel = false;
+        }
+    }
+
+    openActiveSharedReelShareModal(): void {
+        const reel = this.activeSharedReelResolved ?? (this.activeSharedReel ? this.buildFallbackReelDto(this.activeSharedReel) : null);
+        if (!reel || this.sharingSharedReelId) {
+            return;
+        }
+
+        this.pendingShareReelFromViewer = reel;
+    }
+
+    cancelActiveSharedReelShareModal(): void {
+        if (this.sharingSharedReelId) {
+            return;
+        }
+
+        this.pendingShareReelFromViewer = null;
+    }
+
+    async submitActiveSharedReelShareAsMessage(request: ShareReelMessageSubmit): Promise<void> {
+        const reel = this.pendingShareReelFromViewer;
+        if (!reel) {
+            return;
+        }
+
+        const succeeded = await this.executeReelShareToChat(reel, request);
+        if (succeeded) {
+            this.pendingShareReelFromViewer = null;
+        }
+    }
+
+    formatFeedTimestamp(utcValue: string): string {
+        const createdAt = this.parseUtcDate(utcValue);
+        if (Number.isNaN(createdAt.getTime())) {
+            return utcValue;
+        }
+
+        const now = Date.now();
+        const diffMs = Math.max(0, now - createdAt.getTime());
+        const minuteMs = 60 * 1000;
+        const hourMs = 60 * 60 * 1000;
+        const dayMs = 24 * hourMs;
+        const weekMs = 7 * dayMs;
+        const monthMs = 30 * dayMs;
+
+        if (diffMs < hourMs) {
+            const minutes = Math.max(1, Math.floor(diffMs / minuteMs));
+            return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+        }
+
+        if (diffMs < dayMs) {
+            const hours = Math.max(1, Math.floor(diffMs / hourMs));
+            return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+        }
+
+        if (diffMs < weekMs * 2) {
+            const days = Math.max(1, Math.floor(diffMs / dayMs));
+            return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+        }
+
+        if (diffMs < monthMs) {
+            const weeks = Math.max(1, Math.floor(diffMs / weekMs));
+            return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+        }
+
+        return this.preciseDateFormatter.format(createdAt);
     }
 
     formatTime(dateValueUtc: string): string {
@@ -1185,12 +2113,375 @@ export class ChatPageComponent implements OnDestroy {
         return parts.join('\n').trim();
     }
 
+    private async resolveSharedReelDetails(preview: SharedReelPreview): Promise<void> {
+        this.loadingSharedReelDetails = true;
+
+        try {
+            const byPayload = this.buildFallbackReelDto(preview);
+            const reelId = preview.reelId?.trim() ?? '';
+            const normalizedVideoUrl = this.normalizeComparableUrl(preview.videoUrl);
+            const [forYou, following] = await Promise.allSettled([
+                this.session.loadReelFeedAsync(80, 'for-you'),
+                this.session.loadReelFeedAsync(80, 'following')
+            ]);
+
+            const combined = [
+                ...(forYou.status === 'fulfilled' ? forYou.value : []),
+                ...(following.status === 'fulfilled' ? following.value : [])
+            ];
+
+            const found = combined.find(reel => (reelId && reel.id === reelId)
+                || this.normalizeComparableUrl(reel.videoUrl) === normalizedVideoUrl);
+
+            this.activeSharedReelResolved = found ?? byPayload;
+            if (this.activeSharedReel) {
+                this.activeSharedReel = {
+                    ...this.activeSharedReel,
+                    likeCount: this.activeSharedReelResolved.likeCount,
+                    likedByMe: this.activeSharedReelResolved.likedByMe,
+                    comments: this.activeSharedReelResolved.comments.map(comment => this.mapReelComment(comment)),
+                    caption: this.activeSharedReelResolved.caption,
+                    createdAtUtc: this.activeSharedReelResolved.createdAtUtc,
+                    thumbnailUrl: this.activeSharedReelResolved.thumbnailUrl || this.activeSharedReel.thumbnailUrl,
+                    authorImageUrl: this.activeSharedReelResolved.authorImageUrl || this.activeSharedReel.authorImageUrl
+                };
+            }
+        } catch {
+            if (this.activeSharedReel) {
+                this.activeSharedReelResolved = this.buildFallbackReelDto(this.activeSharedReel);
+            }
+        } finally {
+            this.loadingSharedReelDetails = false;
+        }
+    }
+
+    private buildFallbackReelDto(preview: SharedReelPreview): ReelDto {
+        return {
+            id: preview.reelId?.trim() || preview.videoUrl,
+            authorId: preview.reelId?.trim() || 'shared-reel',
+            authorHandle: preview.authorHandle?.trim() || 'reel',
+            authorImageUrl: preview.authorImageUrl,
+            caption: preview.caption ?? '',
+            videoUrl: preview.videoUrl,
+            thumbnailUrl: preview.thumbnailUrl,
+            durationSeconds: Math.max(1, Math.round(preview.durationSeconds ?? 1)),
+            createdAtUtc: preview.createdAtUtc ?? new Date().toISOString(),
+            likeCount: Math.max(0, preview.likeCount ?? 0),
+            likedByMe: !!preview.likedByMe,
+            comments: (preview.comments ?? []).map(comment => ({
+                id: comment.id,
+                reelId: preview.reelId?.trim() || preview.videoUrl,
+                authorId: comment.id,
+                authorHandle: comment.authorHandle,
+                authorImageUrl: comment.authorImageUrl,
+                parentCommentId: comment.parentCommentId,
+                content: comment.content,
+                createdAtUtc: comment.createdAtUtc,
+                likeCount: Math.max(0, comment.likeCount ?? 0),
+                likedByMe: !!comment.likedByMe
+            }))
+        };
+    }
+
+    private applyActiveSharedReelUpdate(updated: ReelDto): void {
+        this.activeSharedReelResolved = updated;
+        if (this.activeSharedReel) {
+            this.activeSharedReel = {
+                ...this.activeSharedReel,
+                likeCount: updated.likeCount,
+                likedByMe: updated.likedByMe,
+                comments: updated.comments.map(comment => this.mapReelComment(comment)),
+                caption: updated.caption,
+                createdAtUtc: updated.createdAtUtc,
+                thumbnailUrl: updated.thumbnailUrl || this.activeSharedReel.thumbnailUrl,
+                authorImageUrl: updated.authorImageUrl || this.activeSharedReel.authorImageUrl
+            };
+        }
+
+        this.syncExpandedActiveSharedReelReplyRoots();
+    }
+
+    private resolveActiveSharedReelComment(commentId: string): ReelCommentDto | null {
+        const reel = this.activeSharedReelResolved;
+        if (!reel?.comments?.length) {
+            return null;
+        }
+
+        return reel.comments.find(comment => comment.id === commentId) ?? null;
+    }
+
+    private mapReelComment(comment: ReelCommentDto): SharedReelCommentPreview {
+        return {
+            id: comment.id,
+            parentCommentId: comment.parentCommentId,
+            authorHandle: comment.authorHandle,
+            authorImageUrl: comment.authorImageUrl,
+            content: comment.content,
+            createdAtUtc: comment.createdAtUtc,
+            likeCount: comment.likeCount,
+            likedByMe: comment.likedByMe
+        };
+    }
+
+    private findActiveSharedReelCommentRootId(commentId: string): string | null {
+        const comments = this.activeSharedReelComments;
+        if (!comments.length) {
+            return null;
+        }
+
+        const byId = new Map(comments.map(comment => [comment.id, comment]));
+        let current = byId.get(commentId) ?? null;
+        while (current?.parentCommentId) {
+            const parentId = current.parentCommentId.trim();
+            const parent = byId.get(parentId);
+            if (!parent) {
+                break;
+            }
+
+            current = parent;
+        }
+
+        return current?.id ?? null;
+    }
+
+    private syncExpandedActiveSharedReelReplyRoots(): void {
+        if (!this.expandedSharedReelReplyRootIds.size) {
+            return;
+        }
+
+        const replyCounts = new Map<string, number>();
+        for (const comment of this.activeSharedReelComments) {
+            const parentId = comment.parentCommentId?.trim();
+            if (!parentId) {
+                continue;
+            }
+
+            const rootId = this.findActiveSharedReelCommentRootId(comment.id);
+            if (!rootId) {
+                continue;
+            }
+
+            replyCounts.set(rootId, (replyCounts.get(rootId) ?? 0) + 1);
+        }
+
+        for (const rootId of Array.from(this.expandedSharedReelReplyRootIds)) {
+            if (!(replyCounts.get(rootId) ?? 0)) {
+                this.expandedSharedReelReplyRootIds.delete(rootId);
+            }
+        }
+    }
+
+    private normalizeComparableUrl(value: string): string {
+        try {
+            const url = new URL(value);
+            url.search = '';
+            url.hash = '';
+            return url.toString();
+        } catch {
+            return value.trim();
+        }
+    }
+
+    normalizeProfileHandle(value: string): string {
+        return (value ?? '').trim().replace(/^@+/, '');
+    }
+
+    isImageMedia(url: string): boolean {
+        return this.isImageUrl(url);
+    }
+
+    private buildActiveSharedReelCaptionPayload(plainCaption: string): string {
+        const source = this.activeSharedReelResolved?.caption ?? this.activeSharedReel?.caption ?? '';
+        const metadataLines = source
+            .split('\n')
+            .map(value => value.trim())
+            .filter(value => value.startsWith('📍') || value.startsWith('🤝') || value.startsWith('🎞️FRAME'));
+
+        const caption = plainCaption.trim();
+        if (caption) {
+            metadataLines.push(caption);
+        }
+
+        return metadataLines.join('\n').trim();
+    }
+
+    private syncActiveSharedReelVideoAudioState(): void {
+        const video = this.activeSharedReelVideoRef?.nativeElement;
+        if (!video) {
+            return;
+        }
+
+        if (this.activeSharedReelMuted) {
+            video.setAttribute('muted', '');
+            video.muted = true;
+            video.defaultMuted = true;
+            return;
+        }
+
+        video.removeAttribute('muted');
+        video.defaultMuted = false;
+        video.muted = false;
+
+        video.volume = 1;
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            void playPromise.catch(() => { });
+        }
+    }
+
+    private parseReelMetadata(source: string | undefined): { location: string; collaborators: string[]; caption: string; frameZoom: number; frameOffsetX: number; frameOffsetY: number } {
+        const lines = (source ?? '').split('\n').map(value => value.trim()).filter(value => !!value);
+        let location = '';
+        let collaborators: string[] = [];
+        let frameZoom = 1;
+        let frameOffsetX = 0;
+        let frameOffsetY = 0;
+        const captionLines: string[] = [];
+
+        for (const line of lines) {
+            if (line.startsWith('📍')) {
+                location = line.replace(/^📍\s*/, '').trim();
+                continue;
+            }
+
+            if (line.startsWith('🤝')) {
+                collaborators = line
+                    .replace(/^🤝\s*/, '')
+                    .split(/\s+/)
+                    .map(value => value.trim())
+                    .filter(value => !!value);
+                continue;
+            }
+
+            if (line.startsWith('🎞️FRAME')) {
+                const zoomMatch = /\bz=([\d.]+)/i.exec(line);
+                const xMatch = /\bx=([-\d.]+)/i.exec(line);
+                const yMatch = /\by=([-\d.]+)/i.exec(line);
+
+                const parsedZoom = Number(zoomMatch?.[1] ?? '1');
+                const parsedX = Number(xMatch?.[1] ?? '0');
+                const parsedY = Number(yMatch?.[1] ?? '0');
+
+                frameZoom = Number.isFinite(parsedZoom) ? Math.max(1, Math.min(2.5, parsedZoom)) : 1;
+                frameOffsetX = Number.isFinite(parsedX) ? parsedX : 0;
+                frameOffsetY = Number.isFinite(parsedY) ? parsedY : 0;
+                continue;
+            }
+
+            captionLines.push(line);
+        }
+
+        return {
+            location,
+            collaborators,
+            caption: captionLines.join(' '),
+            frameZoom,
+            frameOffsetX,
+            frameOffsetY
+        };
+    }
+
+    private parseUtcDate(value: string): Date {
+        const hasExplicitTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
+        const normalized = hasExplicitTimezone ? value : `${value}Z`;
+        return new Date(normalized);
+    }
+
+    private async executeReelShareToChat(reel: ReelDto, request: ShareReelMessageSubmit): Promise<boolean> {
+        if (this.sharingSharedReelId) {
+            return false;
+        }
+
+        const recipientIds = request.recipientIds;
+        if (!recipientIds.length) {
+            return false;
+        }
+
+        this.sharingSharedReelId = reel.id;
+
+        try {
+            const shareText = request.note.trim();
+            const reelMessage = buildSharedReelMarker(buildSharedReelPreview(reel));
+            const sendToConversation = async (conversationId: string): Promise<void> => {
+                if (shareText) {
+                    await this.session.sendChatMessageAsync(conversationId, shareText);
+                }
+
+                await this.session.sendChatMessageAsync(conversationId, reelMessage);
+            };
+
+            if (request.mode === 'group' && recipientIds.length > 1) {
+                const group = await this.session.createGroupConversationAsync('', recipientIds);
+                await sendToConversation(group.id);
+            } else {
+                await Promise.all(recipientIds.map(async recipientId => {
+                    const conversation = await this.session.createDirectConversationAsync(recipientId);
+                    await sendToConversation(conversation.id);
+                }));
+            }
+
+            return true;
+        } catch {
+            this.status = 'Could not send this reel to direct messages right now.';
+            return false;
+        } finally {
+            this.sharingSharedReelId = null;
+        }
+    }
+
+    private async executeStoryShareToChat(story: StoryDto, request: ShareReelMessageSubmit): Promise<boolean> {
+        if (this.sharingSharedStoryId) {
+            return false;
+        }
+
+        const recipientIds = request.recipientIds;
+        if (!recipientIds.length) {
+            return false;
+        }
+
+        this.sharingSharedStoryId = story.id;
+        this.sharingSharedStoryMessage = true;
+        this.sharedStoryViewerError = '';
+
+        try {
+            const shareText = request.note.trim();
+            const storyMessage = this.buildSharedStoryMarker(story);
+            const sendToConversation = async (conversationId: string): Promise<void> => {
+                if (shareText) {
+                    await this.session.sendChatMessageAsync(conversationId, shareText);
+                }
+
+                await this.session.sendChatMessageAsync(conversationId, storyMessage);
+            };
+
+            if (request.mode === 'group' && recipientIds.length > 1) {
+                const group = await this.session.createGroupConversationAsync('', recipientIds);
+                await sendToConversation(group.id);
+            } else {
+                await Promise.all(recipientIds.map(async recipientId => {
+                    const conversation = await this.session.createDirectConversationAsync(recipientId);
+                    await sendToConversation(conversation.id);
+                }));
+            }
+
+            return true;
+        } catch {
+            this.sharedStoryViewerError = 'Could not share this story as a message right now.';
+            return false;
+        } finally {
+            this.sharingSharedStoryId = null;
+            this.sharingSharedStoryMessage = false;
+        }
+    }
+
     private parseMessageContent(content: string): ParsedChatMessage {
         const lines = content.split(/\r?\n/);
         const textLines: string[] = [];
         let imageUrl: string | undefined;
         let gifUrl: string | undefined;
         let sharedPost: SharedPostPreview | undefined;
+        let sharedReel: SharedReelPreview | undefined;
+        let sharedStory: SharedStoryPreview | undefined;
 
         for (const rawLine of lines) {
             const line = rawLine.trim();
@@ -1219,19 +2510,81 @@ export class ChatPageComponent implements OnDestroy {
                 }
             }
 
+            if (line.startsWith('[reel]')) {
+                const parsed = decodeSharedReelPayload(line.slice(6));
+                if (parsed) {
+                    sharedReel = parsed;
+                    continue;
+                }
+            }
+
             textLines.push(rawLine);
         }
 
-        const text = textLines.join('\n').trim();
+        let text = textLines.join('\n').trim();
 
-        if (!imageUrl && !gifUrl) {
+        if (!sharedStory && !sharedReel && !imageUrl && !gifUrl) {
+            const storyLeadPattern = /^🔗\s*Story\s+from\s+@([\w.]+)\s*$/i;
+            const storyLeadLine = lines.map(line => line.trim()).find(line => storyLeadPattern.test(line));
+
+            if (storyLeadLine) {
+                const storyMatch = storyLeadLine.match(storyLeadPattern);
+                const authorHandle = storyMatch?.[1]?.trim();
+                const storyMediaUrl = lines
+                    .map(line => this.normalizedMediaUrl(line))
+                    .find((url): url is string => !!url && (this.isImageUrl(url) || this.isVideoUrl(url)));
+
+                if (authorHandle && storyMediaUrl) {
+                    sharedStory = {
+                        authorHandle,
+                        mediaUrl: storyMediaUrl
+                    };
+
+                    const cleanedLines = textLines
+                        .map(line => line.trim())
+                        .filter(line => !!line)
+                        .filter(line => !storyLeadPattern.test(line))
+                        .filter(line => this.normalizedMediaUrl(line) !== storyMediaUrl);
+                    text = cleanedLines.join('\n').trim();
+                }
+            }
+        }
+
+        if (!imageUrl && !gifUrl && !sharedReel) {
             const normalized = this.normalizedMediaUrl(text);
             if (normalized) {
                 if (this.isGifUrl(normalized)) {
                     gifUrl = normalized;
                 } else if (this.isImageUrl(normalized)) {
                     imageUrl = normalized;
+                } else if (this.isVideoUrl(normalized)) {
+                    sharedReel = {
+                        videoUrl: normalized
+                    };
                 }
+            }
+        }
+
+        if (!sharedStory && !sharedReel && !imageUrl && !gifUrl) {
+            const videoUrlFromLine = lines
+                .map(line => this.normalizedMediaUrl(line))
+                .find((url): url is string => !!url && this.isVideoUrl(url));
+
+            if (videoUrlFromLine) {
+                const authorMatch = text.match(/🎬\s*Reel\s+from\s+@([\w.]+)/i);
+                const authorHandle = authorMatch?.[1]?.trim() || undefined;
+                sharedReel = {
+                    authorHandle,
+                    videoUrl: videoUrlFromLine
+                };
+
+                const reelLeadPattern = /^🎬\s*Reel\s+from\s+@[\w.]+\s*$/i;
+                const cleanedLines = textLines
+                    .map(line => line.trim())
+                    .filter(line => !!line)
+                    .filter(line => !reelLeadPattern.test(line))
+                    .filter(line => this.normalizedMediaUrl(line) !== videoUrlFromLine);
+                text = cleanedLines.join('\n').trim();
             }
         }
 
@@ -1239,7 +2592,9 @@ export class ChatPageComponent implements OnDestroy {
             text: imageUrl || gifUrl ? (text === imageUrl || text === gifUrl ? '' : text) : text,
             imageUrl,
             gifUrl,
-            sharedPost
+            sharedPost,
+            sharedReel,
+            sharedStory
         };
     }
 
@@ -1280,16 +2635,146 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     private isTextOnlyMessage(parsed: ParsedChatMessage): boolean {
-        return !!parsed.text && !parsed.imageUrl && !parsed.gifUrl && !parsed.sharedPost;
+        return !!parsed.text && !parsed.imageUrl && !parsed.gifUrl && !parsed.sharedPost && !parsed.sharedReel && !parsed.sharedStory;
     }
 
     private isSharedOnlyMessage(parsed: ParsedChatMessage): boolean {
-        return !!parsed.sharedPost && !parsed.text && !parsed.imageUrl && !parsed.gifUrl;
+        return (!!parsed.sharedPost || !!parsed.sharedReel || !!parsed.sharedStory) && !parsed.text && !parsed.imageUrl && !parsed.gifUrl;
     }
 
     private messageSearchIndex(content: string): string {
         const parsed = this.parseMessageContent(content);
-        return [parsed.text, parsed.imageUrl ?? '', parsed.gifUrl ?? '', parsed.sharedPost?.authorHandle ?? '', parsed.sharedPost?.content ?? ''].join(' ').toLowerCase();
+        return [
+            parsed.text,
+            parsed.imageUrl ?? '',
+            parsed.gifUrl ?? '',
+            parsed.sharedPost?.authorHandle ?? '',
+            parsed.sharedPost?.content ?? '',
+            parsed.sharedReel?.authorHandle ?? '',
+            parsed.sharedReel?.caption ?? '',
+            parsed.sharedReel?.videoUrl ?? '',
+            parsed.sharedStory?.authorHandle ?? '',
+            parsed.sharedStory?.mediaUrl ?? ''
+        ].join(' ').toLowerCase();
+    }
+
+    private buildSharedStoryMarker(story: StoryDto): string {
+        return `🔗 Story from @${story.authorHandle}\n${story.mediaUrl}`;
+    }
+
+    private buildSharedStoryFromPreview(preview: SharedStoryPreview, message: ChatMessageDto): StoryDto {
+        const authorHandle = preview.authorHandle?.trim() || message.authorHandle;
+        const createdAtUtc = message.createdAtUtc || new Date().toISOString();
+
+        return {
+            id: `shared-story-${message.id}`,
+            authorId: message.authorProfileId || `shared-story-${authorHandle}`,
+            authorHandle,
+            authorImageUrl: message.authorImageUrl,
+            caption: '',
+            mediaUrl: preview.mediaUrl,
+            createdAtUtc,
+            expiresAtUtc: this.buildSharedStoryExpiresAt(createdAtUtc),
+            viewedByMe: false,
+            viewCount: 0
+        };
+    }
+
+    private async resolveSharedStoryGroup(preview: SharedStoryPreview, message: ChatMessageDto, fallbackStory: StoryDto): Promise<void> {
+        const normalizedHandle = (preview.authorHandle?.trim() || message.authorHandle || '').toLowerCase();
+        const authorId = message.authorProfileId;
+        const normalizedMediaUrl = this.normalizeComparableUrl(preview.mediaUrl);
+
+        try {
+            const [forYou, following] = await Promise.allSettled([
+                this.session.loadStoryFeedAsync(80, 'for-you'),
+                this.session.loadStoryFeedAsync(80, 'following')
+            ]);
+
+            const groups = [
+                ...(forYou.status === 'fulfilled' ? forYou.value : []),
+                ...(following.status === 'fulfilled' ? following.value : [])
+            ];
+
+            if (!groups.length || !this.activeSharedStoryGroup?.stories.some(story => story.id === fallbackStory.id)) {
+                return;
+            }
+
+            const matchedGroup = groups.find(group => {
+                if (authorId && group.authorId === authorId) {
+                    return true;
+                }
+
+                return (group.authorHandle ?? '').trim().toLowerCase() === normalizedHandle;
+            });
+
+            if (!matchedGroup?.stories.length) {
+                return;
+            }
+
+            let matchedIndex = matchedGroup.stories.findIndex(story => this.normalizeComparableUrl(story.mediaUrl) === normalizedMediaUrl);
+            if (matchedIndex < 0) {
+                const firstUnseenIndex = matchedGroup.stories.findIndex(story => !story.viewedByMe);
+                matchedIndex = firstUnseenIndex >= 0 ? firstUnseenIndex : 0;
+            }
+
+            this.activeSharedStoryGroup = matchedGroup;
+            this.activeSharedStoryIndex = Math.max(0, matchedIndex);
+        } catch {
+            // Keep fallback single story when full story group cannot be resolved.
+        }
+    }
+
+    private buildSharedStoryExpiresAt(createdAtUtc: string): string {
+        const createdAt = Date.parse(createdAtUtc);
+        if (Number.isNaN(createdAt)) {
+            return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        }
+
+        return new Date(createdAt + 24 * 60 * 60 * 1000).toISOString();
+    }
+
+    private openSharedStoryGroup(group: StoryGroupDto): void {
+        if (!group.stories.length) {
+            return;
+        }
+
+        this.activeSharedStoryGroup = group;
+        const firstUnseenIndex = group.stories.findIndex(story => !story.viewedByMe);
+        this.activeSharedStoryIndex = firstUnseenIndex >= 0 ? firstUnseenIndex : 0;
+        this.sharedStoryViewerError = '';
+        this.sendingSharedStoryReply = false;
+        this.sharingSharedStoryMessage = false;
+        this.deletingSharedStory = false;
+        this.pendingDeleteSharedStoryId = null;
+        this.pendingShareStoryFromViewer = null;
+        this.sharingSharedStoryId = null;
+    }
+
+    private async refreshActiveStoryPresence(): Promise<void> {
+        try {
+            const [forYou, following] = await Promise.allSettled([
+                this.session.loadStoryFeedAsync(80, 'for-you'),
+                this.session.loadStoryFeedAsync(80, 'following')
+            ]);
+
+            const merged = [
+                ...(forYou.status === 'fulfilled' ? forYou.value : []),
+                ...(following.status === 'fulfilled' ? following.value : [])
+            ];
+
+            const deduped = new Map<string, StoryGroupDto>();
+            for (const group of merged) {
+                const key = group.authorId || group.authorHandle.trim().toLowerCase();
+                if (!deduped.has(key)) {
+                    deduped.set(key, group);
+                }
+            }
+
+            this.activeStoryGroups = Array.from(deduped.values());
+        } catch {
+            this.activeStoryGroups = [];
+        }
     }
 
     private adjustComposerHeight(): void {
@@ -1339,6 +2824,14 @@ export class ChatPageComponent implements OnDestroy {
 
     private isImageUrl(url: string): boolean {
         return /\.(png|jpe?g|webp|bmp|svg|gif)($|\?)/i.test(url);
+    }
+
+    private isVideoUrl(url: string): boolean {
+        return /\.(mp4|webm|mov|m4v|ogg)($|\?)/i.test(url);
+    }
+
+    private isGuid(value: string): boolean {
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test((value ?? '').trim());
     }
 
     private scheduleProfileSearch(query: string): void {

@@ -3,7 +3,7 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { HashtagSearchResultDto, PostDto, ProfileDto } from '../../core/api.types';
+import { HashtagSearchResultDto, PostDto, ProfileDto, StoryGroupDto } from '../../core/api.types';
 import { buildSharedPostMarker, buildSharedPostPreview } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
@@ -49,6 +49,8 @@ export class DiscoverPageComponent {
     private loadInFlight = false;
     private reloadQueued = false;
     private readonly destroyRef = inject(DestroyRef);
+    private activeStoryGroups: StoryGroupDto[] = [];
+    private refreshingStoryPresence = false;
 
     constructor(private readonly session: SessionService, private readonly route: ActivatedRoute, private readonly router: Router) {
         this.route.queryParamMap
@@ -96,6 +98,23 @@ export class DiscoverPageComponent {
 
     get currentProfileId(): string | null {
         return this.session.profile?.id ?? null;
+    }
+
+    hasActiveStoryForHandle(handle: string): boolean {
+        const normalized = handle.trim().toLowerCase();
+        return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
+    }
+
+    async openProfileOrStory(handle: string, event: MouseEvent): Promise<void> {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (this.hasActiveStoryForHandle(handle)) {
+            await this.router.navigate(['/feed'], { queryParams: { story: handle } });
+            return;
+        }
+
+        await this.router.navigate(['/users', handle]);
     }
 
     get hasAnyResults(): boolean {
@@ -339,8 +358,10 @@ export class DiscoverPageComponent {
         await this.runPostMutation(post.id, () => this.session.clearPostReactionAsync(post.id), 'Could not clear reaction right now.');
     }
 
-    async addComment(post: PostDto, content: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.addCommentAsync(post.id, content), 'Could not add comment right now.');
+    async addComment(post: PostDto, payload: string | { content: string; parentCommentId?: string | null }): Promise<void> {
+        const content = typeof payload === 'string' ? payload : payload.content;
+        const parentCommentId = typeof payload === 'string' ? null : (payload.parentCommentId ?? null);
+        await this.runPostMutation(post.id, () => this.session.addCommentAsync(post.id, content, parentCommentId), 'Could not add comment right now.');
     }
 
     async updateComment(post: PostDto, commentId: string, content: string): Promise<void> {
@@ -373,6 +394,7 @@ export class DiscoverPageComponent {
                 this.loading = true;
                 this.status = '';
                 this.clearResults();
+                void this.refreshActiveStoryPresence();
 
                 try {
                     switch (this.selectedScope) {
@@ -414,6 +436,39 @@ export class DiscoverPageComponent {
             } while (this.reloadQueued);
         } finally {
             this.loadInFlight = false;
+        }
+    }
+
+    private async refreshActiveStoryPresence(): Promise<void> {
+        if (this.refreshingStoryPresence) {
+            return;
+        }
+
+        this.refreshingStoryPresence = true;
+        try {
+            const [forYou, following] = await Promise.allSettled([
+                this.session.loadStoryFeedAsync(80, 'for-you'),
+                this.session.loadStoryFeedAsync(80, 'following')
+            ]);
+
+            const merged = [
+                ...(forYou.status === 'fulfilled' ? forYou.value : []),
+                ...(following.status === 'fulfilled' ? following.value : [])
+            ];
+
+            const deduped = new Map<string, StoryGroupDto>();
+            for (const group of merged) {
+                const key = group.authorId || group.authorHandle.trim().toLowerCase();
+                if (!deduped.has(key)) {
+                    deduped.set(key, group);
+                }
+            }
+
+            this.activeStoryGroups = Array.from(deduped.values());
+        } catch {
+            this.activeStoryGroups = [];
+        } finally {
+            this.refreshingStoryPresence = false;
         }
     }
 
@@ -471,7 +526,7 @@ export class DiscoverPageComponent {
     }
 
     private async runPostMutation(postId: string, work: () => Promise<PostDto>, failureMessage: string): Promise<void> {
-        if (this.reactingPostId) {
+        if (this.reactingPostId === postId) {
             return;
         }
 

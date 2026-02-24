@@ -31,7 +31,7 @@ public class StoriesController(IStoryService storyService, IWebHostEnvironment e
 
             var mediaUrl = await SaveMediaAsync(profileId, request.Media, cancellationToken);
             var story = await storyService.CreateAsync(
-                new CreateStoryRequest(profileId, request.Caption, mediaUrl, request.ExpiresInHours),
+                new CreateStoryRequest(profileId, request.Caption, mediaUrl),
                 cancellationToken);
 
             return Ok(story);
@@ -81,14 +81,15 @@ public class StoriesController(IStoryService storyService, IWebHostEnvironment e
 
     [Authorize]
     [HttpGet("feed")]
-    public async Task<ActionResult<IReadOnlyCollection<StoryGroupDto>>> GetFeed([FromQuery] int takeAuthors = 25, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IReadOnlyCollection<StoryGroupDto>>> GetFeed([FromQuery] int takeAuthors = 25, [FromQuery] string mode = "for-you", CancellationToken cancellationToken = default)
     {
         if (!TryGetProfileId(out var profileId))
         {
             return Unauthorized();
         }
 
-        var feed = await storyService.GetFeedAsync(profileId, takeAuthors, cancellationToken);
+        var feedMode = ParseFeedMode(mode);
+        var feed = await storyService.GetFeedAsync(profileId, takeAuthors, feedMode, cancellationToken);
         return Ok(feed);
     }
 
@@ -98,6 +99,13 @@ public class StoriesController(IStoryService storyService, IWebHostEnvironment e
             ?? User.FindFirstValue("sub");
 
         return Guid.TryParse(raw, out profileId);
+    }
+
+    private static FeedMode ParseFeedMode(string? mode)
+    {
+        return string.Equals(mode, "following", StringComparison.OrdinalIgnoreCase)
+            ? FeedMode.Following
+            : FeedMode.ForYou;
     }
 
     private async Task<string> SaveMediaAsync(Guid profileId, IFormFile file, CancellationToken cancellationToken)
@@ -127,5 +135,5 @@ public class StoriesController(IStoryService storyService, IWebHostEnvironment e
         ".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm", ".mov", ".m4v", ".ogv"
     };
 
-    public sealed record CreateStoryFormRequest(string? Caption, int? ExpiresInHours, IFormFile? Media);
+    public sealed record CreateStoryFormRequest(string? Caption, IFormFile? Media);
 }

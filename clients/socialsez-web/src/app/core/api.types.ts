@@ -63,6 +63,7 @@ export interface CommentDto {
     id: string;
     postId: string;
     authorId: string;
+    parentCommentId?: string;
     authorHandle: string;
     authorImageUrl?: string;
     content: string;
@@ -136,6 +137,57 @@ export interface PostDto {
     reactions: ReactionSummaryDto[];
     comments: CommentDto[];
 }
+
+export interface StoryDto {
+    id: string;
+    authorId: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    caption?: string;
+    mediaUrl: string;
+    createdAtUtc: string;
+    expiresAtUtc: string;
+    viewedByMe: boolean;
+    viewCount: number;
+}
+
+export interface StoryGroupDto {
+    authorId: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    hasUnseenStories: boolean;
+    stories: StoryDto[];
+}
+
+export interface ReelDto {
+    id: string;
+    authorId: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    caption?: string;
+    videoUrl: string;
+    thumbnailUrl?: string;
+    durationSeconds: number;
+    createdAtUtc: string;
+    likeCount: number;
+    likedByMe: boolean;
+    comments: ReelCommentDto[];
+}
+
+export interface ReelCommentDto {
+    id: string;
+    reelId: string;
+    authorId: string;
+    parentCommentId?: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    content: string;
+    createdAtUtc: string;
+    likeCount: number;
+    likedByMe: boolean;
+}
+
+export type FeedMode = 'for-you' | 'following';
 
 export interface UploadImageResponse {
     url: string;

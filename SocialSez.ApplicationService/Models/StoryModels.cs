@@ -1,6 +1,6 @@
 namespace SocialSez.ApplicationService.Models;
 
-public sealed record CreateStoryRequest(Guid AuthorId, string? Caption, string MediaUrl, int? ExpiresInHours);
+public sealed record CreateStoryRequest(Guid AuthorId, string? Caption, string MediaUrl);
 
 public sealed record StoryDto(
     Guid Id,

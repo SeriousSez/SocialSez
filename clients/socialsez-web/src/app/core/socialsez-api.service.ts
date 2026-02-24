@@ -13,6 +13,7 @@ import {
     FollowRequestDto,
     FollowStatusDto,
     FollowSuggestionsDto,
+    FeedMode,
     HashtagSearchResultDto,
     LoginRequest,
     MarkAllReadResponse,
@@ -20,9 +21,12 @@ import {
     PostDto,
     ProfileActivitySummaryDto,
     ProfileDto,
+    ReelDto,
     RegisterRequest,
     SetMessageReactionRequest,
     SetReactionRequest,
+    StoryDto,
+    StoryGroupDto,
     UpdatePostRequest,
     UpdateProfilePrivacyRequest,
     UpdateProfileRequest,
@@ -123,6 +127,45 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<PostDto>(`${this.baseUrl}/posts`, formData, { headers: this.authHeaders() }));
     }
 
+    createStory(mediaFile: File, caption?: string): Observable<StoryDto> {
+        const formData = new FormData();
+        formData.append('media', mediaFile);
+
+        if (caption?.trim()) {
+            formData.append('caption', caption.trim());
+        }
+
+        return this.withAutoRefresh(() => this.http.post<StoryDto>(`${this.baseUrl}/stories`, formData, { headers: this.authHeaders() }));
+    }
+
+    deleteStory(storyId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/stories/${storyId}`, { headers: this.authHeaders() }));
+    }
+
+    createReel(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File): Observable<ReelDto> {
+        const formData = new FormData();
+        formData.append('video', videoFile);
+        formData.append('durationSeconds', `${Math.max(1, Math.round(durationSeconds))}`);
+
+        if (caption?.trim()) {
+            formData.append('caption', caption.trim());
+        }
+
+        if (thumbnailFile) {
+            formData.append('thumbnail', thumbnailFile);
+        }
+
+        return this.withAutoRefresh(() => this.http.post<ReelDto>(`${this.baseUrl}/reels`, formData, { headers: this.authHeaders() }));
+    }
+
+    updateReel(reelId: string, caption?: string): Observable<ReelDto> {
+        return this.withAutoRefresh(() => this.http.put<ReelDto>(`${this.baseUrl}/reels/${reelId}`, { caption }, { headers: this.authHeaders() }));
+    }
+
+    deleteReel(reelId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/reels/${reelId}`, { headers: this.authHeaders() }));
+    }
+
     updatePost(postId: string, request: UpdatePostRequest): Observable<PostDto> {
         return this.withAutoRefresh(() => this.http.put<PostDto>(`${this.baseUrl}/posts/${postId}`, request, { headers: this.authHeaders() }));
     }
@@ -143,8 +186,8 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.delete<PostDto>(`${this.baseUrl}/posts/${postId}/reaction`, { headers: this.authHeaders() }));
     }
 
-    addComment(postId: string, content: string): Observable<PostDto> {
-        return this.withAutoRefresh(() => this.http.post<PostDto>(`${this.baseUrl}/posts/${postId}/comments`, { content }, { headers: this.authHeaders() }));
+    addComment(postId: string, content: string, parentCommentId?: string | null): Observable<PostDto> {
+        return this.withAutoRefresh(() => this.http.post<PostDto>(`${this.baseUrl}/posts/${postId}/comments`, { content, parentCommentId: parentCommentId ?? null }, { headers: this.authHeaders() }));
     }
 
     updateComment(postId: string, commentId: string, content: string): Observable<PostDto> {
@@ -169,8 +212,8 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<UploadImageResponse>(`${this.baseUrl}/uploads/images`, formData, { headers: this.authHeaders() }).pipe(timeout(20000)));
     }
 
-    getFeed(take = 25): Observable<PostDto[]> {
-        return this.withAutoRefresh(() => this.http.get<PostDto[]>(`${this.baseUrl}/posts/feed?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    getFeed(take = 25, mode: FeedMode = 'for-you'): Observable<PostDto[]> {
+        return this.withAutoRefresh(() => this.http.get<PostDto[]>(`${this.baseUrl}/posts/feed?take=${take}&mode=${mode}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
     getPostsByHashtag(hashtag: string, take = 25): Observable<PostDto[]> {
@@ -193,6 +236,43 @@ export class SocialSezApiService {
 
     getTrendingHashtags(take = 10): Observable<HashtagSearchResultDto[]> {
         return this.withAutoRefresh(() => this.http.get<HashtagSearchResultDto[]>(`${this.baseUrl}/posts/hashtags/trending?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getStoryFeed(takeAuthors = 25, mode: FeedMode = 'for-you'): Observable<StoryGroupDto[]> {
+        return this.withAutoRefresh(() => this.http.get<StoryGroupDto[]>(`${this.baseUrl}/stories/feed?takeAuthors=${takeAuthors}&mode=${mode}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    markStoryViewed(storyId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/stories/${storyId}/view`, {}, { headers: this.authHeaders() }));
+    }
+
+    getReelFeed(take = 20, mode: FeedMode = 'for-you'): Observable<ReelDto[]> {
+        return this.withAutoRefresh(() => this.http.get<ReelDto[]>(`${this.baseUrl}/reels/feed?take=${take}&mode=${mode}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getReelsByAuthorHandle(handle: string, take = 25): Observable<ReelDto[]> {
+        const normalized = handle.trim().toLowerCase();
+        return this.withAutoRefresh(() => this.http.get<ReelDto[]>(`${this.baseUrl}/reels/by-author/${encodeURIComponent(normalized)}?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    toggleReelLike(reelId: string): Observable<ReelDto> {
+        return this.withAutoRefresh(() => this.http.post<ReelDto>(`${this.baseUrl}/reels/${reelId}/like`, {}, { headers: this.authHeaders() }));
+    }
+
+    addReelComment(reelId: string, content: string, parentCommentId?: string | null): Observable<ReelDto> {
+        return this.withAutoRefresh(() => this.http.post<ReelDto>(`${this.baseUrl}/reels/${reelId}/comments`, { content, parentCommentId: parentCommentId ?? null }, { headers: this.authHeaders() }));
+    }
+
+    updateReelComment(reelId: string, commentId: string, content: string): Observable<ReelDto> {
+        return this.withAutoRefresh(() => this.http.put<ReelDto>(`${this.baseUrl}/reels/${reelId}/comments/${commentId}`, { content }, { headers: this.authHeaders() }));
+    }
+
+    deleteReelComment(reelId: string, commentId: string): Observable<ReelDto> {
+        return this.withAutoRefresh(() => this.http.delete<ReelDto>(`${this.baseUrl}/reels/${reelId}/comments/${commentId}`, { headers: this.authHeaders() }));
+    }
+
+    toggleReelCommentLike(reelId: string, commentId: string): Observable<ReelDto> {
+        return this.withAutoRefresh(() => this.http.post<ReelDto>(`${this.baseUrl}/reels/${reelId}/comments/${commentId}/like`, {}, { headers: this.authHeaders() }));
     }
 
     follow(followedId: string): Observable<FollowActionResultDto> {

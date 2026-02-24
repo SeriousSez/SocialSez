@@ -2,7 +2,9 @@
     <ng-container *ngIf="profile as profile; else noProfileState">
         <ng-container *ngIf="!loading; else profileOverviewSkeleton">
             <header class="profile-hero">
-                <img class="hero-image" [src]="avatarImageUrl" [alt]="profile.displayName + ' avatar'" />
+                <a class="hero-image-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)" [attr.aria-label]="viewedProfileHasActiveStory ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
+                    <img class="hero-image" [class.story-active]="viewedProfileHasActiveStory" [src]="avatarImageUrl" [alt]="profile.displayName + ' avatar'" />
+                </a>
 
                 <div class="hero-copy">
                     <h2>{{ profile.displayName }}</h2>
@@ -14,6 +16,8 @@
                 <div class="hero-actions">
                     <ng-container *ngIf="isOwnProfile; else followActions">
                         <button type="button" (click)="openComposer()">New Post</button>
+                        <button type="button" (click)="openStoryComposer()">New Story</button>
+                        <button type="button" (click)="openReelComposer()">New Reel</button>
                         <a class="ghost-link" routerLink="/settings">Settings</a>
                     </ng-container>
                     <ng-template #followActions>
@@ -32,6 +36,10 @@
                     <p>{{ totalPosts }}</p>
                 </article>
                 <article class="activity-card">
+                    <h3>Reels</h3>
+                    <p>{{ totalReels }}</p>
+                </article>
+                <article class="activity-card">
                     <h3>{{ isOwnProfile ? 'Comments on your posts' : 'Comments on their posts' }}</h3>
                     <p>{{ totalCommentsOnPosts }}</p>
                 </article>
@@ -39,6 +47,11 @@
                     <h3>Active last 7 days</h3>
                     <p>{{ activeLast7Days }}</p>
                 </article>
+            </section>
+
+            <section class="profile-tabs" aria-label="Profile content tabs">
+                <button type="button" [class.active]="activeTab === 'posts'" (click)="setActiveTab('posts')">Posts</button>
+                <button type="button" [class.active]="activeTab === 'reels'" (click)="setActiveTab('reels')">Reels</button>
             </section>
         </ng-container>
 
@@ -63,26 +76,83 @@
             </section>
         </ng-template>
 
-        <app-post-composer *ngIf="showComposer" [showCancel]="true" (posted)="onComposerPosted()" (canceled)="onComposerCanceled()"></app-post-composer>
+        <div class="compose-modal" *ngIf="showComposer" (click)="onPostComposerBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create post">
+            <section class="compose-modal-card" aria-label="Create post">
+                <header class="compose-modal-head">
+                    <h3>New Post</h3>
+                    <button type="button" class="close" (click)="onComposerCanceled()" aria-label="Close post composer">✕</button>
+                </header>
 
-        <section class="profile-posts-skeleton" *ngIf="loading" aria-label="Loading posts">
+                <app-post-composer [showCancel]="false" (posted)="onComposerPosted()" (canceled)="onComposerCanceled()"></app-post-composer>
+            </section>
+        </div>
+
+        <div class="compose-modal" *ngIf="showStoryComposer" (click)="onStoryComposerBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create story">
+            <section class="media-composer compose-modal-card" aria-label="Create story">
+                <header class="compose-modal-head">
+                    <h3>New Story</h3>
+                    <button type="button" class="close" (click)="cancelStoryComposer()" [disabled]="postingStory" aria-label="Close story composer">✕</button>
+                </header>
+
+                <input #storyMediaInput type="file" class="visually-hidden" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onStoryMediaSelected($event)" [disabled]="postingStory" />
+
+                <section class="upload-picker" aria-label="Story media upload" *ngIf="!storyMediaPreviewUrl">
+                    <span class="upload-icon" aria-hidden="true">📸</span>
+                    <p class="upload-title">Start by selecting your story media</p>
+                    <p class="upload-subtitle">Images, MP4, WebM, MOV and similar formats are supported.</p>
+                    <button type="button" class="upload-button" (click)="storyMediaInput.click()" [disabled]="postingStory">Select Story Media</button>
+                </section>
+
+                <div class="story-preview-panel" *ngIf="storyMediaPreviewUrl">
+                    <video *ngIf="storyMediaFile?.type?.startsWith('video/')" [src]="storyMediaPreviewUrl" controls playsinline preload="metadata"></video>
+                    <img *ngIf="!storyMediaFile?.type?.startsWith('video/')" [src]="storyMediaPreviewUrl" alt="Story media preview" />
+                    <p class="media-file" *ngIf="storyMediaFile as file">Selected: {{ file.name }}</p>
+                </div>
+
+                <p class="media-file">Stories expire automatically after 24 hours.</p>
+                <p class="error" *ngIf="storyComposerError">{{ storyComposerError }}</p>
+
+                <div class="media-actions">
+                    <button type="button" class="ghost" (click)="cancelStoryComposer()" [disabled]="postingStory">Cancel</button>
+                    <button type="button" class="ghost" (click)="storyMediaInput.click()" [disabled]="postingStory">Change Media</button>
+                    <button type="button" (click)="publishStory()" [disabled]="!storyMediaFile || postingStory">{{ postingStory ? 'Publishing...' : 'Publish Story' }}</button>
+                </div>
+            </section>
+        </div>
+
+        <app-reel-composer-modal [open]="showReelComposer" (closed)="onReelComposerClosed()" (published)="onReelComposerPublished()"></app-reel-composer-modal>
+
+        <section class="profile-posts-skeleton" *ngIf="loading && activeTab === 'posts'" aria-label="Loading posts">
             <app-skeleton *ngFor="let _ of [1, 2]" width="100%" height="170px" radius="12px"></app-skeleton>
         </section>
 
-        <div class="post-list" *ngIf="!loading && posts.length; else noPostsYet">
+        <section class="profile-posts-skeleton" *ngIf="loading && activeTab === 'reels'" aria-label="Loading reels">
+            <app-skeleton *ngFor="let _ of [1, 2]" width="100%" height="500px" radius="12px"></app-skeleton>
+        </section>
+
+        <div class="post-list" *ngIf="activeTab === 'posts' && !loading && posts.length; else noPostsYet">
             <app-post-card *ngFor="let post of posts" [post]="post" [content]="displayPostContent(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [showActions]="isOwnProfile" [showBottomMeta]="true" [showCommentsCount]="true" [reacting]="reactingPostId === post.id"
                 [busy]="reactingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)"
                 (clearReaction)="clearReaction(post)" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)"
                 (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
                 <div post-header class="author">
-                    <img class="avatar" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
+                    <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)">
+                        <img class="avatar" [class.story-active]="viewedProfileHasActiveStory" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl" alt="Author image" />
+                    </a>
                     <ng-template #authorInitial>
-                        <div class="avatar">{{ post.authorHandle[0] }}</div>
+                        <div class="avatar" [class.story-active]="viewedProfileHasActiveStory">{{ post.authorHandle[0] }}</div>
                     </ng-template>
                     <div class="author-meta"><a class="author-link" [routerLink]="['/users', post.authorHandle]">@{{ post.authorHandle }}</a> · {{ post.createdAtUtc | date:'short' }}</div>
                 </div>
             </app-post-card>
         </div>
+
+        <section class="profile-reels" *ngIf="activeTab === 'reels' && !loading && reels.length; else noReelsYet">
+            <app-feed-reels-list [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId" [viewerProfileId]="currentProfileId" [showOwnerActions]="isOwnProfile" [updatingReelId]="updatingReelId"
+                [deletingReelId]="deletingReelId" (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelUpdated)="updateReelCaption($event.reel, $event.caption)"
+                (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (reelDeleted)="deleteReel($event)">
+            </app-feed-reels-list>
+        </section>
 
     </ng-container>
 
@@ -110,12 +180,30 @@
 </section>
 
 <ng-template #noPostsYet>
-    <p class="status" *ngIf="!loading && isPrivateLockedView"><i class="fa-duotone fa-light fa-hourglass-clock" aria-hidden="true"></i>No posts visible until this private profile approves your follow request.</p>
-    <p class="status" *ngIf="!loading && isOwnProfile">You have no posts yet. Start sharing from Compose.</p>
-    <p class="status" *ngIf="!loading && !isOwnProfile && !isPrivateLockedView">No posts yet.</p>
+    <p class="status" *ngIf="activeTab === 'posts' && !loading && isPrivateLockedView"><i class="fa-duotone fa-light fa-hourglass-clock" aria-hidden="true"></i>No posts visible until this private profile approves your follow request.</p>
+    <p class="status" *ngIf="activeTab === 'posts' && !loading && isOwnProfile">You have no posts yet. Start sharing from Compose.</p>
+    <p class="status" *ngIf="activeTab === 'posts' && !loading && !isOwnProfile && !isPrivateLockedView">No posts yet.</p>
 </ng-template>
 
+<ng-template #noReelsYet>
+    <p class="status" *ngIf="activeTab === 'reels' && !loading && isPrivateLockedView"><i class="fa-duotone fa-light fa-hourglass-clock" aria-hidden="true"></i>No reels visible until this private profile approves your follow request.</p>
+    <p class="status" *ngIf="activeTab === 'reels' && !loading && isOwnProfile">You have no reels yet. Create one from your profile.</p>
+    <p class="status" *ngIf="activeTab === 'reels' && !loading && !isOwnProfile && !isPrivateLockedView">No reels yet.</p>
+</ng-template>
+
+<app-feed-story-viewer [activeStory]="activeStory" [activeStoryGroup]="activeStoryGroup" [activeStoryIndex]="activeStoryIndex" [storyCount]="activeStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousStory" [hasNextStory]="hasNextStory"
+    [liked]="activeStory ? isStoryLiked(activeStory.id) : false" [sendingReply]="sendingStoryReply" [sharingStory]="sharingStoryMessage" [canDelete]="false" [deletingStory]="false" [errorMessage]="storyViewerError" (closed)="closeStoryViewer()" (previous)="showPreviousStory()"
+    (next)="showNextStory()" (replySubmitted)="sendStoryReply($event)" (likeToggled)="toggleStoryLike($event)" (shareRequested)="shareStoryAsMessage($event)">
+</app-feed-story-viewer>
+
 <app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
+</app-confirm-modal>
+
+<app-confirm-modal [open]="!!pendingDeleteReelId" title="Delete reel" message="Delete this reel? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingReelId" (cancel)="cancelDeleteReel()" (confirm)="confirmDeleteReel()">
+</app-confirm-modal>
+
+<app-confirm-modal [open]="!!pendingDeleteReelComment" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingReelCommentId" (cancel)="cancelDeleteReelComment()"
+    (confirm)="confirmDeleteReelComment()">
 </app-confirm-modal>
 
 <app-share-post-modal [open]="!!pendingSharePost && pendingShareTarget === 'feed'" [post]="pendingSharePost" [target]="'feed'" [busy]="!!sharingPostId" [initialText]="shareNote" (cancel)="cancelShareModal()" (confirm)="submitShare($event)">

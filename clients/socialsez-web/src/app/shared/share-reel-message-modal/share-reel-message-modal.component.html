@@ -1,0 +1,71 @@
+<section class="modal-overlay" *ngIf="open" (click)="onBackdropClick($event)">
+    <article class="modal-card" role="dialog" aria-modal="true" [attr.aria-label]="'Send ' + contentLabel + ' as message'">
+        <header class="modal-head">
+            <h3>{{ title }}</h3>
+            <button type="button" class="close-btn" (click)="cancel.emit()" [disabled]="busy" aria-label="Close">×</button>
+        </header>
+
+        <section class="preview-search-row">
+            <section class="reel-preview" *ngIf="reel as currentReel" [attr.aria-label]="contentLabel + ' preview'">
+                <header class="reel-preview-head">
+                    <img class="reel-preview-avatar" *ngIf="currentReel.authorImageUrl as avatar" [src]="avatar" alt="Reel author avatar" />
+                    <span class="reel-preview-avatar fallback" *ngIf="!currentReel.authorImageUrl">{{ currentReel.authorHandle.charAt(0).toUpperCase() }}</span>
+                    <div class="reel-preview-meta">
+                        <span>Sharing {{ contentLabel }} from</span>
+                        <strong>@{{ currentReel.authorHandle }}</strong>
+                    </div>
+                </header>
+
+                <p class="reel-preview-content" *ngIf="currentReel.caption">{{ currentReel.caption }}</p>
+                <img class="reel-preview-thumbnail" *ngIf="previewThumbnailUrl as thumbnail; else noReelThumbnail" [src]="thumbnail" alt="Shared reel thumbnail" />
+                <ng-template #noReelThumbnail>
+                    <video class="reel-preview-thumbnail reel-preview-video" *ngIf="contentKind === 'reel' && isVideoMediaUrl(currentReel.videoUrl); else noPreviewMedia" [src]="currentReel.videoUrl" muted autoplay loop playsinline preload="metadata" aria-label="Shared video preview"></video>
+                    <ng-template #noPreviewMedia>
+                        <video class="reel-preview-thumbnail story-static-preview" *ngIf="contentKind === 'story' && isVideoMediaUrl(currentReel.videoUrl); else noStaticMedia" [src]="currentReel.videoUrl" muted playsinline preload="auto" aria-label="Shared story preview"></video>
+                        <ng-template #noStaticMedia>
+                            <div class="reel-preview-thumbnail fallback" aria-label="No reel thumbnail available">
+                                <span>{{ contentKind === 'story' ? 'Story preview unavailable' : 'Reel thumbnail unavailable' }}</span>
+                            </div>
+                        </ng-template>
+                    </ng-template>
+                </ng-template>
+            </section>
+
+            <section class="search-recipients-col">
+                <div class="search-wrap">
+                    <span class="search-icon" aria-hidden="true">⌕</span>
+                    <input type="search" [ngModel]="query" (ngModelChange)="onQueryChange($event)" placeholder="Search" [disabled]="busy" />
+                </div>
+
+                <section class="recipients-list" aria-label="Recipients">
+                    <p class="state" *ngIf="loading">Loading people...</p>
+                    <p class="state" *ngIf="!loading && !visibleRecipients.length">No people found.</p>
+
+                    <button type="button" class="recipient" *ngFor="let recipient of visibleRecipients" (click)="toggleRecipient(recipient.id)" [disabled]="busy">
+                        <div class="avatar fallback" *ngIf="!recipient.imageUrl">{{ (recipient.displayName || recipient.handle).charAt(0).toUpperCase() }}</div>
+                        <img class="avatar" *ngIf="recipient.imageUrl as avatar" [src]="avatar" alt="Recipient avatar" />
+
+                        <div class="meta">
+                            <h4>{{ recipient.displayName }}</h4>
+                            <p>{{ recipient.bio || ('@' + recipient.handle) }}</p>
+                        </div>
+
+                        <span class="checkbox" [class.checked]="isSelected(recipient.id)"></span>
+                    </button>
+                </section>
+            </section>
+        </section>
+
+        <div class="message-wrap">
+            <textarea rows="3" [ngModel]="note" (ngModelChange)="note = $event" placeholder="Write a message" [disabled]="busy"></textarea>
+        </div>
+
+        <footer class="modal-foot">
+            <span class="dm-only-note">Sharing is available via direct messages only.</span>
+            <div class="send-actions">
+                <button type="button" class="send-btn ghost" (click)="submitGroup()" *ngIf="selectedCount > 1" [disabled]="!canSendGroup">Send as group</button>
+                <button type="button" class="send-btn" (click)="submitSeparate()" [disabled]="!canSend">{{ selectedCount > 1 ? 'Send separately' : 'Send' }}</button>
+            </div>
+        </footer>
+    </article>
+</section>

@@ -21,6 +21,8 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<StoryView> StoryViews => Set<StoryView>();
     public DbSet<Reel> Reels => Set<Reel>();
     public DbSet<ReelLike> ReelLikes => Set<ReelLike>();
+    public DbSet<ReelComment> ReelComments => Set<ReelComment>();
+    public DbSet<ReelCommentLike> ReelCommentLikes => Set<ReelCommentLike>();
     public DbSet<ProfileFollowRequest> ProfileFollowRequests => Set<ProfileFollowRequest>();
     public DbSet<Notification> Notifications => Set<Notification>();
 
@@ -98,7 +100,13 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
                 .HasForeignKey(x => x.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne(x => x.ParentComment)
+                .WithMany(x => x.Replies)
+                .HasForeignKey(x => x.ParentCommentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasIndex(x => new { x.PostId, x.CreatedAtUtc });
+            entity.HasIndex(x => x.ParentCommentId);
         });
 
         modelBuilder.Entity<CommentReaction>(entity =>
@@ -288,6 +296,50 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
 
             entity.HasOne(x => x.Profile)
                 .WithMany(x => x.ReelLikes)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.ProfileId);
+        });
+
+        modelBuilder.Entity<ReelComment>(entity =>
+        {
+            entity.ToTable("ReelComments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Content).HasMaxLength(500).IsRequired();
+
+            entity.HasOne(x => x.Reel)
+                .WithMany(x => x.Comments)
+                .HasForeignKey(x => x.ReelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Author)
+                .WithMany(x => x.ReelComments)
+                .HasForeignKey(x => x.AuthorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.ParentComment)
+                .WithMany(x => x.Replies)
+                .HasForeignKey(x => x.ParentCommentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => new { x.ReelId, x.CreatedAtUtc });
+            entity.HasIndex(x => x.AuthorId);
+            entity.HasIndex(x => x.ParentCommentId);
+        });
+
+        modelBuilder.Entity<ReelCommentLike>(entity =>
+        {
+            entity.ToTable("ReelCommentLikes");
+            entity.HasKey(x => new { x.ReelCommentId, x.ProfileId });
+
+            entity.HasOne(x => x.ReelComment)
+                .WithMany(x => x.Likes)
+                .HasForeignKey(x => x.ReelCommentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.ReelCommentLikes)
                 .HasForeignKey(x => x.ProfileId)
                 .OnDelete(DeleteBehavior.Cascade);
 

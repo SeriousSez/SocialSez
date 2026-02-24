@@ -4,7 +4,7 @@
 
     <div class="composer-textarea-wrap">
         <textarea #composerTextarea rows="7" [ngModel]="content" (ngModelChange)="onContentInput($event, composerTextarea)" (keyup)="onContentCursor(composerTextarea)" (click)="onContentCursor(composerTextarea)" (blur)="onContentBlur()" placeholder="What’s new today?"
-            [disabled]="uploadingMedia"></textarea>
+            [attr.maxlength]="maxContentLength" [disabled]="uploadingMedia"></textarea>
 
         <div class="mention-suggestions" *ngIf="mentionOpen || mentionLoading">
             <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
@@ -18,7 +18,14 @@
             </button>
         </div>
     </div>
-    <label class="upload">Post Media <input type="file" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onPostMediaSelected($event)" [disabled]="uploadingMedia" /></label>
+    <input #postMediaInput type="file" class="visually-hidden" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onPostMediaSelected($event)" [disabled]="uploadingMedia" />
+    <section class="upload-picker" aria-label="Post media upload">
+        <span class="upload-icon" aria-hidden="true">🖼️</span>
+        <p class="upload-title">Add photo or video to your post</p>
+        <p class="upload-subtitle">Images, GIFs, MP4, WebM, MOV and similar formats are supported.</p>
+        <button type="button" class="upload-button" (click)="openPostMediaPicker()" [disabled]="uploadingMedia">Select Post Media</button>
+        <p class="meta" *ngIf="selectedMediaFile as mediaFile">Selected: {{ mediaFile.name }}</p>
+    </section>
     <p class="meta" *ngIf="uploadingMedia">Uploading media and publishing...</p>
 
     <section class="crop-panel" *ngIf="mediaPreviewUrl">
@@ -30,7 +37,7 @@
     </section>
 
     <div class="actions">
-        <span class="meta">{{ content.length }}/500</span>
+        <span class="meta">{{ content.length }}/{{ maxContentLength }}</span>
         <div class="action-buttons">
             <button *ngIf="showCancel" class="ghost" type="button" (click)="cancel()" [disabled]="uploadingMedia">Cancel</button>
             <button class="ghost" type="button" (click)="removePostMedia()" [disabled]="!mediaPreviewUrl || uploadingMedia">Remove Media</button>

@@ -97,12 +97,9 @@ h1 {
 .brand-mark {
     width: 38px;
     height: 38px;
-    display: grid;
-    place-items: center;
+    display: block;
     border-radius: 10px;
-    background: linear-gradient(135deg, #2563eb, #0f172a);
-    color: #fff;
-    font-weight: 800;
+    object-fit: contain;
 }
 
 .tabs {

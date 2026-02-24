@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
-import { PostDto, ProfileActivitySummaryDto, ProfileDto } from '../../core/api.types';
+import { PostDto, ProfileActivitySummaryDto, ProfileDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
 import { buildSharedPostMarker, buildSharedPostPreview } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
@@ -12,16 +12,21 @@ import { PostCardComponent } from '../../shared/post-card/post-card.component';
 import { SharePostMessageModalComponent, SharePostMessageSubmit } from '../../shared/share-post-message-modal/share-post-message-modal.component';
 import { SharePostModalComponent } from '../../shared/share-post-modal/share-post-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
+import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from '../feed-page/feed-reels-list.component';
+import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
+import { ReelComposerModalComponent } from '../../shared/reel-composer-modal/reel-composer-modal.component';
 
 @Component({
     selector: 'app-profile-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, SkeletonComponent],
+    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent],
     templateUrl: './profile-page.component.html',
     styleUrl: './profile-page.component.scss'
 })
-export class ProfilePageComponent {
+export class ProfilePageComponent implements OnDestroy {
+    activeTab: 'posts' | 'reels' = 'posts';
     posts: PostDto[] = [];
+    reels: ReelDto[] = [];
     loading = true;
     error = '';
     avatarImageUrl = '';
@@ -31,7 +36,20 @@ export class ProfilePageComponent {
     deletingPostId: string | null = null;
     pendingDeletePostId: string | null = null;
     reactingPostId: string | null = null;
+    reactingReelId: string | null = null;
+    commentingReelId: string | null = null;
+    updatingReelId: string | null = null;
+    deletingReelId: string | null = null;
+    pendingDeleteReelId: string | null = null;
+    deletingReelCommentId: string | null = null;
+    pendingDeleteReelComment: { reelId: string; commentId: string } | null = null;
     showComposer = false;
+    showStoryComposer = false;
+    showReelComposer = false;
+    storyMediaFile: File | null = null;
+    storyMediaPreviewUrl = '';
+    storyComposerError = '';
+    postingStory = false;
     sharingPostId: string | null = null;
     pendingSharePost: PostDto | null = null;
     pendingShareTarget: 'feed' | 'chat' | null = null;
@@ -42,10 +60,19 @@ export class ProfilePageComponent {
     isFollowing = false;
     isRequested = false;
     followRequiresApproval = false;
+    viewedProfileHasActiveStory = false;
+    activeStoryGroup: StoryGroupDto | null = null;
+    activeStoryIndex = 0;
+    storyViewerError = '';
+    sendingStoryReply = false;
+    sharingStoryMessage = false;
     activitySummary: ProfileActivitySummaryDto | null = null;
     private loadInFlight = false;
     private reloadQueued = false;
     private followStateResetTimerId: number | null = null;
+    private readonly likedStoryIds = new Set<string>();
+    private storyMediaObjectUrl = '';
+    private markingStoryId: string | null = null;
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(public readonly session: SessionService, private readonly route: ActivatedRoute, private readonly router: Router) {
@@ -120,6 +147,10 @@ export class ProfilePageComponent {
         return this.activitySummary?.postCount ?? this.posts.length;
     }
 
+    get totalReels(): number {
+        return this.reels.length;
+    }
+
     get totalCommentsOnPosts(): number {
         return this.activitySummary?.commentCountOnPosts
             ?? this.posts.reduce((sum, post) => sum + post.comments.length, 0);
@@ -134,12 +165,93 @@ export class ProfilePageComponent {
         return this.posts.filter(post => Date.parse(post.createdAtUtc) >= weekAgoMs).length;
     }
 
+    get activeStoryAuthorHandles(): string[] {
+        const handle = this.viewedProfile?.handle?.trim().toLowerCase();
+        if (!handle || !this.viewedProfileHasActiveStory) {
+            return [];
+        }
+
+        return [handle];
+    }
+
+    get currentProfileHandle(): string | null {
+        return this.viewedProfile?.handle?.trim().toLowerCase() ?? null;
+    }
+
+    get activeStory(): StoryDto | null {
+        if (!this.activeStoryGroup) {
+            return null;
+        }
+
+        return this.activeStoryGroup.stories[this.activeStoryIndex] ?? null;
+    }
+
+    get hasPreviousStory(): boolean {
+        return this.activeStoryIndex > 0;
+    }
+
+    get hasNextStory(): boolean {
+        return !!this.activeStoryGroup && this.activeStoryIndex < this.activeStoryGroup.stories.length - 1;
+    }
+
+    setActiveTab(tab: 'posts' | 'reels'): void {
+        this.activeTab = tab;
+    }
+
     openComposer(): void {
         if (!this.isOwnProfile) {
             return;
         }
 
+        this.showStoryComposer = false;
+        this.showReelComposer = false;
         this.showComposer = true;
+    }
+
+    openStoryComposer(): void {
+        if (!this.isOwnProfile) {
+            return;
+        }
+
+        this.showComposer = false;
+        this.showReelComposer = false;
+        this.showStoryComposer = true;
+        this.storyComposerError = '';
+    }
+
+    openReelComposer(): void {
+        if (!this.isOwnProfile) {
+            return;
+        }
+
+        this.showComposer = false;
+        this.showStoryComposer = false;
+        this.showReelComposer = true;
+    }
+
+    onReelComposerClosed(): void {
+        this.showReelComposer = false;
+    }
+
+    onReelComposerPublished(): void {
+        this.activeTab = 'reels';
+        void this.load();
+    }
+
+    onPostComposerBackdropClick(event: MouseEvent): void {
+        if (event.target !== event.currentTarget) {
+            return;
+        }
+
+        this.onComposerCanceled();
+    }
+
+    onStoryComposerBackdropClick(event: MouseEvent): void {
+        if (event.target !== event.currentTarget || this.postingStory) {
+            return;
+        }
+
+        this.cancelStoryComposer();
     }
 
     onComposerCanceled(): void {
@@ -149,6 +261,55 @@ export class ProfilePageComponent {
     async onComposerPosted(): Promise<void> {
         this.showComposer = false;
         await this.load();
+    }
+
+    cancelStoryComposer(): void {
+        if (this.postingStory) {
+            return;
+        }
+
+        this.showStoryComposer = false;
+        this.storyComposerError = '';
+        this.clearStoryMediaSelection();
+    }
+
+    async onStoryMediaSelected(event: Event): Promise<void> {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0] ?? null;
+
+        this.clearStoryMediaSelection();
+
+        if (file) {
+            this.storyMediaFile = file;
+            this.storyMediaPreviewUrl = URL.createObjectURL(file);
+            this.storyMediaObjectUrl = this.storyMediaPreviewUrl;
+            this.storyComposerError = '';
+        }
+
+        input.value = '';
+    }
+
+    async publishStory(): Promise<void> {
+        if (!this.storyMediaFile || this.postingStory) {
+            return;
+        }
+
+        this.postingStory = true;
+        this.storyComposerError = '';
+
+        try {
+            await this.session.createStoryAsync(this.storyMediaFile);
+            this.cancelStoryComposer();
+            await this.load();
+        } catch {
+            this.storyComposerError = 'Could not publish story right now.';
+        } finally {
+            this.postingStory = false;
+        }
+    }
+
+    ngOnDestroy(): void {
+        this.clearStoryMediaSelection();
     }
 
     async load(): Promise<void> {
@@ -190,17 +351,30 @@ export class ProfilePageComponent {
 
                     this.viewedProfile = profile;
                     this.showComposer = false;
+                    this.showStoryComposer = false;
+                    this.showReelComposer = false;
                     this.cancelDeletePost();
 
                     this.avatarImageUrl = profile.imageUrl?.trim()
                         ? profile.imageUrl
                         : this.buildAvatarImage(profile.displayName, profile.handle);
 
+                    this.viewedProfileHasActiveStory = await this.hasActiveStoryForHandleAsync(profile.handle);
+
                     try {
                         this.posts = await this.loadPostsForProfileAsync(profile.handle);
                     } catch {
                         this.posts = [];
                         this.error = 'Could not load posts for this profile right now.';
+                    }
+
+                    try {
+                        this.reels = await this.loadReelsForProfileAsync(profile.handle);
+                    } catch {
+                        this.reels = [];
+                        if (!this.error) {
+                            this.error = 'Could not load reels for this profile right now.';
+                        }
                     }
 
                     try {
@@ -223,6 +397,7 @@ export class ProfilePageComponent {
                         ? 'Could not load this profile right now.'
                         : 'Could not load your profile details right now.';
                     this.viewedProfile = null;
+                    this.viewedProfileHasActiveStory = false;
                     this.posts = [];
                     this.activitySummary = null;
                 } finally {
@@ -343,8 +518,10 @@ export class ProfilePageComponent {
         await this.runPostMutation(post.id, () => this.session.clearPostReactionAsync(post.id), 'Could not clear reaction right now.');
     }
 
-    async addComment(post: PostDto, content: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.addCommentAsync(post.id, content), 'Could not add comment right now.');
+    async addComment(post: PostDto, payload: string | { content: string; parentCommentId?: string | null }): Promise<void> {
+        const content = typeof payload === 'string' ? payload : payload.content;
+        const parentCommentId = typeof payload === 'string' ? null : (payload.parentCommentId ?? null);
+        await this.runPostMutation(post.id, () => this.session.addCommentAsync(post.id, content, parentCommentId), 'Could not add comment right now.');
     }
 
     async updateComment(post: PostDto, commentId: string, content: string): Promise<void> {
@@ -369,6 +546,252 @@ export class ProfilePageComponent {
 
     async sharePostToChat(post: PostDto): Promise<void> {
         this.openShareModal(post, 'chat');
+    }
+
+    async toggleReelLike(reel: ReelDto): Promise<void> {
+        if (this.reactingReelId === reel.id || this.commentingReelId === reel.id) {
+            return;
+        }
+
+        this.reactingReelId = reel.id;
+        this.error = '';
+
+        try {
+            const updated = await this.session.toggleReelLikeAsync(reel.id);
+            this.applyReelUpdate(updated);
+        } catch {
+            this.error = 'Could not update reel like right now.';
+        } finally {
+            this.reactingReelId = null;
+        }
+    }
+
+    async addReelComment(event: ReelCommentCreateEvent): Promise<void> {
+        const { reel, content, parentCommentId } = event;
+        const trimmed = content.trim();
+        if (!trimmed || this.reactingReelId === reel.id || this.commentingReelId === reel.id) {
+            return;
+        }
+
+        this.commentingReelId = reel.id;
+        this.error = '';
+
+        try {
+            const updated = await this.session.addReelCommentAsync(reel.id, trimmed, parentCommentId ?? null);
+            this.applyReelUpdate(updated);
+        } catch {
+            this.error = 'Could not add reel comment right now.';
+        } finally {
+            this.commentingReelId = null;
+        }
+    }
+
+    async updateReelComment(event: ReelCommentUpdateEvent): Promise<void> {
+        const { reel, commentId, content } = event;
+        const trimmed = content.trim();
+        if (!trimmed || this.reactingReelId === reel.id || this.commentingReelId === reel.id) {
+            return;
+        }
+
+        this.commentingReelId = reel.id;
+        this.error = '';
+
+        try {
+            const updated = await this.session.updateReelCommentAsync(reel.id, commentId, trimmed);
+            this.applyReelUpdate(updated);
+        } catch {
+            this.error = 'Could not update reel comment right now.';
+        } finally {
+            this.commentingReelId = null;
+        }
+    }
+
+    requestDeleteReelComment(event: ReelCommentDeleteEvent): void {
+        this.pendingDeleteReelComment = { reelId: event.reel.id, commentId: event.comment.id };
+    }
+
+    cancelDeleteReelComment(): void {
+        this.pendingDeleteReelComment = null;
+    }
+
+    async confirmDeleteReelComment(): Promise<void> {
+        const pending = this.pendingDeleteReelComment;
+        if (!pending || this.deletingReelCommentId || this.commentingReelId === pending.reelId) {
+            return;
+        }
+
+        this.deletingReelCommentId = pending.commentId;
+        this.commentingReelId = pending.reelId;
+        this.error = '';
+        try {
+            const updated = await this.session.deleteReelCommentAsync(pending.reelId, pending.commentId);
+            this.applyReelUpdate(updated);
+            this.pendingDeleteReelComment = null;
+        } catch {
+            this.error = 'Could not delete reel comment right now.';
+        } finally {
+            this.commentingReelId = null;
+            this.deletingReelCommentId = null;
+        }
+    }
+
+    async toggleReelCommentLike(event: { reel: ReelDto; commentId: string }): Promise<void> {
+        const { reel, commentId } = event;
+        if (this.reactingReelId === reel.id || this.commentingReelId === reel.id) {
+            return;
+        }
+
+        this.reactingReelId = reel.id;
+        this.error = '';
+
+        try {
+            const updated = await this.session.toggleReelCommentLikeAsync(reel.id, commentId);
+            this.applyReelUpdate(updated);
+        } catch {
+            this.error = 'Could not update reel comment like right now.';
+        } finally {
+            this.reactingReelId = null;
+        }
+    }
+
+    async updateReelCaption(reel: ReelDto, caption: string): Promise<void> {
+        if (this.updatingReelId || this.deletingReelId) {
+            return;
+        }
+
+        this.updatingReelId = reel.id;
+        this.error = '';
+
+        try {
+            const updated = await this.session.updateReelAsync(reel.id, caption);
+            this.applyReelUpdate(updated);
+        } catch {
+            this.error = 'Could not update reel right now.';
+        } finally {
+            this.updatingReelId = null;
+        }
+    }
+
+    deleteReel(reel: ReelDto): void {
+        if (this.updatingReelId || this.deletingReelId) {
+            return;
+        }
+
+        this.pendingDeleteReelId = reel.id;
+    }
+
+    cancelDeleteReel(): void {
+        if (this.deletingReelId) {
+            return;
+        }
+
+        this.pendingDeleteReelId = null;
+    }
+
+    async confirmDeleteReel(): Promise<void> {
+        const reelId = this.pendingDeleteReelId;
+        if (!reelId || this.updatingReelId || this.deletingReelId) {
+            return;
+        }
+
+        this.deletingReelId = reelId;
+        this.error = '';
+
+        try {
+            await this.session.deleteReelAsync(reelId);
+            this.reels = this.reels.filter(existing => existing.id !== reelId);
+            this.pendingDeleteReelId = null;
+        } catch {
+            this.error = 'Could not delete reel right now.';
+        } finally {
+            this.deletingReelId = null;
+        }
+    }
+
+    async openProfileOrStory(handle: string, event?: MouseEvent): Promise<void> {
+        event?.preventDefault();
+        event?.stopPropagation();
+
+        const normalized = handle.trim().toLowerCase();
+        if (this.viewedProfileHasActiveStory && this.currentProfileHandle === normalized) {
+            await this.openStoryForHandle(handle);
+            return;
+        }
+
+        await this.router.navigate(['/users', handle]);
+    }
+
+    closeStoryViewer(): void {
+        this.activeStoryGroup = null;
+        this.activeStoryIndex = 0;
+        this.storyViewerError = '';
+        this.sendingStoryReply = false;
+        this.sharingStoryMessage = false;
+    }
+
+    showPreviousStory(): void {
+        if (!this.hasPreviousStory) {
+            return;
+        }
+
+        this.activeStoryIndex -= 1;
+        void this.markActiveStoryViewed();
+    }
+
+    showNextStory(): void {
+        if (!this.hasNextStory) {
+            this.closeStoryViewer();
+            return;
+        }
+
+        this.activeStoryIndex += 1;
+        this.storyViewerError = '';
+        void this.markActiveStoryViewed();
+    }
+
+    isStoryLiked(storyId: string): boolean {
+        return this.likedStoryIds.has(storyId);
+    }
+
+    toggleStoryLike(story: StoryDto): void {
+        if (this.likedStoryIds.has(story.id)) {
+            this.likedStoryIds.delete(story.id);
+            return;
+        }
+
+        this.likedStoryIds.add(story.id);
+    }
+
+    async sendStoryReply(event: { story: StoryDto; message: string }): Promise<void> {
+        if (this.sendingStoryReply) {
+            return;
+        }
+
+        const { story, message } = event;
+        if (!message.trim()) {
+            return;
+        }
+
+        if (story.authorId === this.currentProfileId) {
+            this.storyViewerError = 'You cannot send a direct message to yourself.';
+            return;
+        }
+
+        this.storyViewerError = '';
+        this.sendingStoryReply = true;
+
+        try {
+            const conversation = await this.session.createDirectConversationAsync(story.authorId);
+            await this.session.sendChatMessageAsync(conversation.id, message.trim());
+        } catch {
+            this.storyViewerError = 'Could not send your story reply right now.';
+        } finally {
+            this.sendingStoryReply = false;
+        }
+    }
+
+    async shareStoryAsMessage(_story: StoryDto): Promise<void> {
+        this.storyViewerError = 'Story sharing from profile is not available yet.';
     }
 
     cancelShareModal(): void {
@@ -518,8 +941,12 @@ export class ProfilePageComponent {
         this.posts = this.posts.map(post => post.id === updated.id ? updated : post);
     }
 
+    private applyReelUpdate(updated: ReelDto): void {
+        this.reels = this.reels.map(reel => reel.id === updated.id ? updated : reel);
+    }
+
     private async runPostMutation(postId: string, work: () => Promise<PostDto>, failureMessage: string): Promise<void> {
-        if (this.reactingPostId) {
+        if (this.reactingPostId === postId) {
             return;
         }
 
@@ -555,6 +982,114 @@ export class ProfilePageComponent {
             const normalizedHandle = handle.trim().toLowerCase();
             return fallbackResults.filter(post => post.authorHandle.toLowerCase() === normalizedHandle);
         }
+    }
+
+    private async loadReelsForProfileAsync(handle: string): Promise<ReelDto[]> {
+        try {
+            return await this.session.loadReelsByAuthorHandleAsync(handle);
+        } catch {
+            const [forYou, following] = await Promise.allSettled([
+                this.session.loadReelFeedAsync(80, 'for-you'),
+                this.session.loadReelFeedAsync(80, 'following')
+            ]);
+
+            const merged = [
+                ...(forYou.status === 'fulfilled' ? forYou.value : []),
+                ...(following.status === 'fulfilled' ? following.value : [])
+            ];
+
+            const normalizedHandle = handle.trim().toLowerCase();
+            return merged.filter(reel => reel.authorHandle.toLowerCase() === normalizedHandle);
+        }
+    }
+
+    private async hasActiveStoryForHandleAsync(handle: string): Promise<boolean> {
+        const normalized = handle.trim().toLowerCase();
+
+        try {
+            const [forYou, following] = await Promise.allSettled([
+                this.session.loadStoryFeedAsync(80, 'for-you'),
+                this.session.loadStoryFeedAsync(80, 'following')
+            ]);
+
+            const merged = [
+                ...(forYou.status === 'fulfilled' ? forYou.value : []),
+                ...(following.status === 'fulfilled' ? following.value : [])
+            ];
+
+            return merged.some((group: StoryGroupDto) => group.authorHandle.trim().toLowerCase() === normalized);
+        } catch {
+            return false;
+        }
+    }
+
+    private async openStoryForHandle(handle: string): Promise<void> {
+        const group = await this.loadStoryGroupForHandleAsync(handle);
+        if (!group || !group.stories.length) {
+            await this.router.navigate(['/users', handle]);
+            return;
+        }
+
+        this.activeStoryGroup = group;
+        const firstUnseenIndex = group.stories.findIndex(story => !story.viewedByMe);
+        this.activeStoryIndex = firstUnseenIndex >= 0 ? firstUnseenIndex : 0;
+        this.storyViewerError = '';
+        void this.markActiveStoryViewed();
+    }
+
+    private async loadStoryGroupForHandleAsync(handle: string): Promise<StoryGroupDto | null> {
+        const normalized = handle.trim().toLowerCase();
+
+        try {
+            const [forYou, following] = await Promise.allSettled([
+                this.session.loadStoryFeedAsync(80, 'for-you'),
+                this.session.loadStoryFeedAsync(80, 'following')
+            ]);
+
+            const merged = [
+                ...(forYou.status === 'fulfilled' ? forYou.value : []),
+                ...(following.status === 'fulfilled' ? following.value : [])
+            ];
+
+            return merged.find(group => group.authorHandle.trim().toLowerCase() === normalized) ?? null;
+        } catch {
+            return null;
+        }
+    }
+
+    private async markActiveStoryViewed(): Promise<void> {
+        const story = this.activeStory;
+        if (!story || story.viewedByMe || this.markingStoryId) {
+            return;
+        }
+
+        this.markingStoryId = story.id;
+        try {
+            await this.session.markStoryViewedAsync(story.id);
+            if (!this.activeStoryGroup) {
+                return;
+            }
+
+            this.activeStoryGroup = {
+                ...this.activeStoryGroup,
+                stories: this.activeStoryGroup.stories.map(item => item.id === story.id ? { ...item, viewedByMe: true } : item),
+                hasUnseenStories: this.activeStoryGroup.stories.some(item => item.id !== story.id && !item.viewedByMe)
+            };
+        } catch {
+            return;
+        } finally {
+            this.markingStoryId = null;
+        }
+    }
+
+    private clearStoryMediaSelection(): void {
+        if (this.storyMediaObjectUrl) {
+            URL.revokeObjectURL(this.storyMediaObjectUrl);
+        }
+
+        this.storyMediaObjectUrl = '';
+        this.storyMediaFile = null;
+        this.storyMediaPreviewUrl = '';
     }
 
     private setFollowState(state: 'idle' | 'loading' | 'success' | 'failure', autoResetMs = 0): void {

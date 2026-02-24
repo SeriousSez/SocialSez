@@ -13,6 +13,8 @@ import { SessionService } from '../../core/session.service';
     styleUrl: './post-composer.component.scss'
 })
 export class PostComposerComponent implements OnDestroy {
+    readonly maxContentLength = 500;
+
     @Input() showCancel = false;
     @Input() title = 'Compose';
     @Input() subtitle = 'Share a thought, launch update, or quick note.';
@@ -42,6 +44,9 @@ export class PostComposerComponent implements OnDestroy {
     @ViewChild('composerTextarea')
     private composerTextareaRef?: ElementRef<HTMLTextAreaElement>;
 
+    @ViewChild('postMediaInput')
+    private postMediaInputRef?: ElementRef<HTMLInputElement>;
+
     constructor(private readonly session: SessionService) { }
 
     ngOnDestroy(): void {
@@ -54,8 +59,16 @@ export class PostComposerComponent implements OnDestroy {
     }
 
     onContentInput(value: string, textarea: HTMLTextAreaElement): void {
-        this.content = value;
-        this.updateMentionSuggestions(value, textarea.selectionStart ?? value.length);
+        const normalizedValue = this.normalizeContentLength(value);
+        this.content = normalizedValue;
+
+        if (normalizedValue !== value) {
+            const nextCaret = Math.min(textarea.selectionStart ?? normalizedValue.length, normalizedValue.length);
+            textarea.value = normalizedValue;
+            textarea.setSelectionRange(nextCaret, nextCaret);
+        }
+
+        this.updateMentionSuggestions(this.content, Math.min(textarea.selectionStart ?? this.content.length, this.content.length));
     }
 
     onContentCursor(textarea: HTMLTextAreaElement): void {
@@ -74,9 +87,10 @@ export class PostComposerComponent implements OnDestroy {
         }
 
         const replacement = `@${profile.handle} `;
-        this.content = `${this.content.slice(0, this.mentionRangeStart)}${replacement}${this.content.slice(this.mentionRangeEnd)}`;
+        const mergedContent = `${this.content.slice(0, this.mentionRangeStart)}${replacement}${this.content.slice(this.mentionRangeEnd)}`;
+        this.content = this.normalizeContentLength(mergedContent);
 
-        const nextCaret = this.mentionRangeStart + replacement.length;
+        const nextCaret = Math.min(this.mentionRangeStart + replacement.length, this.content.length);
         this.closeMentionSuggestions();
 
         await Promise.resolve();
@@ -122,6 +136,14 @@ export class PostComposerComponent implements OnDestroy {
         this.canceled.emit();
     }
 
+    openPostMediaPicker(): void {
+        if (this.uploadingMedia) {
+            return;
+        }
+
+        this.postMediaInputRef?.nativeElement.click();
+    }
+
     onPostMediaSelected(event: Event): void {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0];
@@ -141,7 +163,6 @@ export class PostComposerComponent implements OnDestroy {
         } else if (file.type === 'image/gif') {
             this.mediaKind = 'image-static';
             this.cropOutputFormat = 'jpeg';
-            this.status = 'GIF attached. Cropping is disabled to preserve animation.';
         } else if (file.type.startsWith('image/')) {
             this.mediaKind = 'image-croppable';
             this.cropOutputFormat = 'jpeg';
@@ -289,5 +310,13 @@ export class PostComposerComponent implements OnDestroy {
         const extension = this.cropOutputFormat === 'png' ? 'png' : 'jpg';
         const mimeType = this.croppedImageBlob.type || (this.cropOutputFormat === 'png' ? 'image/png' : 'image/jpeg');
         return new File([this.croppedImageBlob], `${baseName}-crop.${extension}`, { type: mimeType });
+    }
+
+    private normalizeContentLength(value: string): string {
+        if (value.length <= this.maxContentLength) {
+            return value;
+        }
+
+        return value.slice(0, this.maxContentLength);
     }
 }

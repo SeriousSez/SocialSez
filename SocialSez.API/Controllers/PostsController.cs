@@ -99,7 +99,7 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
 
         try
         {
-            var comment = await postService.AddCommentAsync(postId, new CreateCommentRequest(profileId, request.Content), cancellationToken);
+            var comment = await postService.AddCommentAsync(postId, new CreateCommentRequest(profileId, request.Content, request.ParentCommentId), cancellationToken);
             return comment is null ? NotFound() : Ok(comment);
         }
         catch (ArgumentException ex)
@@ -237,14 +237,15 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
 
     [Authorize]
     [HttpGet("feed")]
-    public async Task<ActionResult<IReadOnlyCollection<PostDto>>> GetFeed([FromQuery] int take = 25, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IReadOnlyCollection<PostDto>>> GetFeed([FromQuery] int take = 25, [FromQuery] string mode = "for-you", CancellationToken cancellationToken = default)
     {
         if (!TryGetProfileId(out var profileId))
         {
             return Unauthorized();
         }
 
-        var feed = await postService.GetFeedAsync(profileId, take, cancellationToken);
+        var feedMode = ParseFeedMode(mode);
+        var feed = await postService.GetFeedAsync(profileId, take, feedMode, cancellationToken);
         return Ok(feed);
     }
 
@@ -318,6 +319,13 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
         return Guid.TryParse(raw, out profileId);
     }
 
+    private static FeedMode ParseFeedMode(string? mode)
+    {
+        return string.Equals(mode, "following", StringComparison.OrdinalIgnoreCase)
+            ? FeedMode.Following
+            : FeedMode.ForYou;
+    }
+
     private async Task<string> SaveMediaAsync(Guid profileId, IFormFile file, CancellationToken cancellationToken)
     {
         var extension = Path.GetExtension(file.FileName);
@@ -346,6 +354,6 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
     };
 
     public sealed record CreatePostFormRequest(string? Content, IFormFile? Image);
-    public sealed record CreateCommentBody(string Content);
+    public sealed record CreateCommentBody(string Content, Guid? ParentCommentId = null);
     public sealed record UpdateCommentBody(string Content);
 }

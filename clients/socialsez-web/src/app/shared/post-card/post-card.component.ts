@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommentDto, PostDto, ProfileDto } from '../../core/api.types';
 import { SharedPostPreview, extractSharedPostFromContent } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
+import { ConfirmModalComponent } from '../confirm-modal/confirm-modal.component';
 import { ReactionPickerComponent } from '../reaction-picker/reaction-picker.component';
 
 export interface CommentUpdatePayload {
@@ -17,6 +18,11 @@ export interface CommentReactionPayload {
     reactionType: string;
 }
 
+export interface AddCommentPayload {
+    content: string;
+    parentCommentId?: string | null;
+}
+
 interface PostContentPart {
     text: string;
     hashtag?: string;
@@ -26,11 +32,12 @@ interface PostContentPart {
 @Component({
     selector: 'app-post-card',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactionPickerComponent],
+    imports: [CommonModule, FormsModule, ReactionPickerComponent, ConfirmModalComponent],
     templateUrl: './post-card.component.html',
     styleUrl: './post-card.component.scss'
 })
 export class PostCardComponent implements OnDestroy {
+    private static readonly OpenCommentPostIds = new Set<string>();
     @Input({ required: true }) post!: PostDto;
     @Input()
     set content(value: string) {
@@ -62,7 +69,7 @@ export class PostCardComponent implements OnDestroy {
     @Output() saveEdit = new EventEmitter<void>();
     @Output() cancelEdit = new EventEmitter<void>();
     @Output() deletePost = new EventEmitter<void>();
-    @Output() addComment = new EventEmitter<string>();
+    @Output() addComment = new EventEmitter<AddCommentPayload>();
     @Output() updateComment = new EventEmitter<CommentUpdatePayload>();
     @Output() deleteComment = new EventEmitter<string>();
     @Output() setCommentReaction = new EventEmitter<CommentReactionPayload>();
@@ -81,8 +88,10 @@ export class PostCardComponent implements OnDestroy {
 
     commentInput = '';
     commentsOpen = false;
+    replyingToCommentId: string | null = null;
     editingCommentId: string | null = null;
     editCommentContent = '';
+    pendingDeleteCommentId: string | null = null;
     contentLines: PostContentPart[][] = [];
     sharedPost: SharedPostPreview | null = null;
     mentionResults: ProfileDto[] = [];
@@ -91,18 +100,41 @@ export class PostCardComponent implements OnDestroy {
     private _content = '';
     private readonly router = inject(Router);
     private readonly session = inject(SessionService);
+    private currentPostId: string | null = null;
     mentionTarget: 'post-edit' | 'comment-new' | 'comment-edit' | null = null;
     mentionTargetCommentId: string | null = null;
+    private readonly expandedCommentReplyRootIds = new Set<string>();
     private mentionRangeStart = -1;
     private mentionRangeEnd = -1;
     private mentionSearchDebounceId: number | null = null;
     private mentionSearchToken = 0;
+    private readonly pointerHandledActionKeys = new Map<string, number>();
 
     ngOnDestroy(): void {
         if (this.mentionSearchDebounceId !== null) {
             window.clearTimeout(this.mentionSearchDebounceId);
             this.mentionSearchDebounceId = null;
         }
+
+        if (this.currentPostId && !this.commentsOpen) {
+            PostCardComponent.OpenCommentPostIds.delete(this.currentPostId);
+        }
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (!changes['post']) {
+            return;
+        }
+
+        const nextPostId = this.post?.id ?? null;
+        if (!nextPostId || nextPostId === this.currentPostId) {
+            return;
+        }
+
+        this.currentPostId = nextPostId;
+        this.commentsOpen = PostCardComponent.OpenCommentPostIds.has(nextPostId);
+        this.replyingToCommentId = null;
+        this.expandedCommentReplyRootIds.clear();
     }
 
     onPostPrimaryReaction(): void {
@@ -138,17 +170,14 @@ export class PostCardComponent implements OnDestroy {
     }
 
     submitComment(): void {
-        if (this.busy) {
-            return;
-        }
-
         const content = this.commentInput.trim();
         if (!content) {
             return;
         }
 
-        this.addComment.emit(content);
+        this.addComment.emit({ content, parentCommentId: this.replyingToCommentId });
         this.commentInput = '';
+        this.replyingToCommentId = null;
     }
 
     onCommentInput(value: string, textarea: HTMLTextAreaElement): void {
@@ -162,10 +191,106 @@ export class PostCardComponent implements OnDestroy {
 
     toggleComments(): void {
         this.commentsOpen = !this.commentsOpen;
+
+        const postId = this.post?.id;
+        if (!postId) {
+            return;
+        }
+
+        if (this.commentsOpen) {
+            PostCardComponent.OpenCommentPostIds.add(postId);
+            return;
+        }
+
+        this.replyingToCommentId = null;
+        this.expandedCommentReplyRootIds.clear();
+        PostCardComponent.OpenCommentPostIds.delete(postId);
+    }
+
+    async replyToComment(comment: CommentDto): Promise<void> {
+        this.commentsOpen = true;
+        const postId = this.post?.id;
+        if (postId) {
+            PostCardComponent.OpenCommentPostIds.add(postId);
+        }
+
+        const mentionPrefix = `@${comment.authorHandle} `;
+        const current = this.commentInput.trim();
+        this.commentInput = current.startsWith(mentionPrefix.trim())
+            ? this.commentInput
+            : `${mentionPrefix}${current}`.trimEnd();
+        this.replyingToCommentId = comment.id;
+        const rootId = this.findCommentRootId(comment.id) ?? comment.id;
+        this.expandedCommentReplyRootIds.add(rootId);
+
+        await this.focusMatchingTextarea('.comment-compose textarea', this.commentInput.length);
     }
 
     canEditComment(comment: CommentDto): boolean {
         return !!this.viewerProfileId && comment.authorId === this.viewerProfileId;
+    }
+
+    get orderedComments(): Array<{ comment: CommentDto; depth: number }> {
+        const comments = this.post?.comments ?? [];
+        if (!comments.length) {
+            return [];
+        }
+
+        const byParent = new Map<string, CommentDto[]>();
+        const byId = new Set(comments.map(comment => comment.id));
+        const roots: CommentDto[] = [];
+
+        for (const comment of comments) {
+            const parentId = comment.parentCommentId?.trim();
+            if (!parentId || !byId.has(parentId)) {
+                roots.push(comment);
+                continue;
+            }
+
+            const bucket = byParent.get(parentId);
+            if (bucket) {
+                bucket.push(comment);
+            } else {
+                byParent.set(parentId, [comment]);
+            }
+        }
+
+        const sortByCreated = (items: CommentDto[]) => items.sort((a, b) => {
+            const left = Date.parse(a.createdAtUtc);
+            const right = Date.parse(b.createdAtUtc);
+            if (Number.isNaN(left) || Number.isNaN(right)) {
+                return a.createdAtUtc.localeCompare(b.createdAtUtc);
+            }
+
+            return left - right;
+        });
+
+        sortByCreated(roots);
+        for (const bucket of byParent.values()) {
+            sortByCreated(bucket);
+        }
+
+        const ordered: Array<{ comment: CommentDto; depth: number }> = [];
+        const stack = roots.map(root => ({ comment: root, depth: 0, rootId: root.id })).reverse();
+
+        while (stack.length) {
+            const current = stack.pop();
+            if (!current) {
+                continue;
+            }
+
+            if (current.depth > 0 && !this.expandedCommentReplyRootIds.has(current.rootId)) {
+                continue;
+            }
+
+            ordered.push(current);
+            const children = byParent.get(current.comment.id) ?? [];
+            for (let index = children.length - 1; index >= 0; index--) {
+                stack.push({ comment: children[index], depth: current.depth + 1, rootId: current.rootId });
+            }
+        }
+
+        return ordered;
     }
 
     canDeleteComment(comment: CommentDto): boolean {
@@ -176,35 +301,116 @@ export class PostCardComponent implements OnDestroy {
         return comment.authorId === this.viewerProfileId || this.post.authorId === this.viewerProfileId;
     }
 
-    startEditComment(comment: CommentDto): void {
-        if (!this.canEditComment(comment) || this.busy) {
+    getCommentReplyCount(rootCommentId: string): number {
+        const comments = this.post?.comments ?? [];
+        if (!comments.length) {
+            return 0;
+        }
+
+        const byParent = new Map<string, CommentDto[]>();
+        for (const comment of comments) {
+            const parentId = comment.parentCommentId?.trim();
+            if (!parentId) {
+                continue;
+            }
+
+            const bucket = byParent.get(parentId);
+            if (bucket) {
+                bucket.push(comment);
+            } else {
+                byParent.set(parentId, [comment]);
+            }
+        }
+
+        let total = 0;
+        const stack = [...(byParent.get(rootCommentId) ?? [])];
+        while (stack.length) {
+            const current = stack.pop();
+            if (!current) {
+                continue;
+            }
+
+            total += 1;
+            const children = byParent.get(current.id) ?? [];
+            for (const child of children) {
+                stack.push(child);
+            }
+        }
+
+        return total;
+    }
+
+    isCommentReplyThreadExpanded(rootCommentId: string): boolean {
+        return this.expandedCommentReplyRootIds.has(rootCommentId);
+    }
+
+    toggleCommentReplyThread(rootCommentId: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const replyCount = this.getCommentReplyCount(rootCommentId);
+        if (!replyCount) {
+            this.expandedCommentReplyRootIds.delete(rootCommentId);
             return;
         }
 
+        if (this.expandedCommentReplyRootIds.has(rootCommentId)) {
+            this.expandedCommentReplyRootIds.delete(rootCommentId);
+            return;
+        }
+
+        this.expandedCommentReplyRootIds.add(rootCommentId);
+    }
+
+    onCommentThreadToggleMouseDown(rootCommentId: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.markPointerHandled(`comment-thread-toggle:${rootCommentId}`);
+        this.toggleCommentReplyThread(rootCommentId, event);
+    }
+
+    onCommentThreadToggleClick(rootCommentId: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.consumePointerHandled(`comment-thread-toggle:${rootCommentId}`)) {
+            return;
+        }
+
+        this.toggleCommentReplyThread(rootCommentId, event);
+    }
+
+    startEditComment(comment: CommentDto): void {
+        if (!this.canEditComment(comment)) {
+            return;
+        }
+
+        this.closeMentionSuggestions();
         this.editingCommentId = comment.id;
         this.editCommentContent = comment.content;
     }
 
-    onCommentEditInput(commentId: string, value: string, textarea: HTMLTextAreaElement): void {
+    onCommentEditMouseDown(comment: CommentDto, event: MouseEvent): void {
+        event.stopPropagation();
+        window.setTimeout(() => {
+            this.startEditComment(comment);
+        }, 0);
+    }
+
+    onCommentEditInput(value: string): void {
         this.editCommentContent = value;
-        this.updateMentionSuggestions('comment-edit', commentId, value, textarea.selectionStart ?? value.length);
     }
 
-    onCommentEditCursor(commentId: string, textarea: HTMLTextAreaElement): void {
-        this.updateMentionSuggestions('comment-edit', commentId, this.editCommentContent, textarea.selectionStart ?? this.editCommentContent.length);
-    }
-
-    cancelEditComment(): void {
+    cancelEditComment(event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
         this.editingCommentId = null;
         this.editCommentContent = '';
         this.closeMentionSuggestions();
     }
 
-    saveCommentEdit(commentId: string): void {
-        if (this.busy) {
-            return;
-        }
-
+    saveCommentEdit(commentId: string, event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
         const content = this.editCommentContent.trim();
         if (!content) {
             return;
@@ -215,18 +421,41 @@ export class PostCardComponent implements OnDestroy {
     }
 
     removeComment(commentId: string): void {
-        if (this.busy) {
+        this.pendingDeleteCommentId = commentId;
+    }
+
+    onDeleteCommentMouseDown(commentId: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.markPointerHandled(`comment-delete:${commentId}`);
+        this.removeComment(commentId);
+    }
+
+    onDeleteCommentClick(commentId: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.consumePointerHandled(`comment-delete:${commentId}`)) {
             return;
         }
 
+        this.removeComment(commentId);
+    }
+
+    cancelDeleteComment(): void {
+        this.pendingDeleteCommentId = null;
+    }
+
+    confirmDeleteComment(): void {
+        const commentId = this.pendingDeleteCommentId;
+        if (!commentId) {
+            return;
+        }
+
+        this.pendingDeleteCommentId = null;
         this.deleteComment.emit(commentId);
     }
 
     onCommentPrimaryReaction(comment: CommentDto): void {
-        if (this.busy) {
-            return;
-        }
-
         if (comment.myReactionType) {
             this.clearCommentReaction.emit(comment.id);
             return;
@@ -235,11 +464,41 @@ export class PostCardComponent implements OnDestroy {
         this.setCommentReaction.emit({ commentId: comment.id, reactionType: 'Love' });
     }
 
-    onCommentReactionSelected(comment: CommentDto, reactionType: string): void {
-        if (this.busy) {
+    onCommentLikeMouseDown(comment: CommentDto, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.markPointerHandled(`comment-like:${comment.id}`);
+        this.onCommentPrimaryReaction(comment);
+    }
+
+    onCommentLikeClick(comment: CommentDto, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.consumePointerHandled(`comment-like:${comment.id}`)) {
             return;
         }
 
+        this.onCommentPrimaryReaction(comment);
+    }
+
+    onCommentReplyMouseDown(comment: CommentDto, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.markPointerHandled(`comment-reply:${comment.id}`);
+        void this.replyToComment(comment);
+    }
+
+    onCommentReplyClick(comment: CommentDto, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.consumePointerHandled(`comment-reply:${comment.id}`)) {
+            return;
+        }
+
+        void this.replyToComment(comment);
+    }
+
+    onCommentReactionSelected(comment: CommentDto, reactionType: string): void {
         if (reactionType === 'Love') {
             this.onCommentPrimaryReaction(comment);
             return;
@@ -482,5 +741,40 @@ export class PostCardComponent implements OnDestroy {
 
         element.focus();
         element.setSelectionRange(caret, caret);
+    }
+
+    private markPointerHandled(key: string): void {
+        this.pointerHandledActionKeys.set(key, Date.now() + 700);
+    }
+
+    private consumePointerHandled(key: string): boolean {
+        const expiresAt = this.pointerHandledActionKeys.get(key);
+        if (!expiresAt) {
+            return false;
+        }
+
+        this.pointerHandledActionKeys.delete(key);
+        return expiresAt > Date.now();
+    }
+
+    private findCommentRootId(commentId: string): string | null {
+        const comments = this.post?.comments ?? [];
+        if (!comments.length) {
+            return null;
+        }
+
+        const byId = new Map(comments.map(comment => [comment.id, comment]));
+        let current = byId.get(commentId) ?? null;
+        while (current?.parentCommentId) {
+            const parentId = current.parentCommentId.trim();
+            const parent = byId.get(parentId);
+            if (!parent) {
+                break;
+            }
+
+            current = parent;
+        }
+
+        return current?.id ?? null;
     }
 }

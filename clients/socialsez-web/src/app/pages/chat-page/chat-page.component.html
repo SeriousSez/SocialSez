@@ -57,9 +57,10 @@
 
         <section class="message-panel" *ngIf="selectedConversation as conversation; else noConversation">
             <header class="message-panel-head">
-                <a class="thread-person thread-person-link" *ngIf="chatHeaderProfileHandle(conversation) as profileHandle; else threadPersonStatic" [attr.href]="'/users/' + profileHandle" (click)="openUserProfile(profileHandle, $event)" [attr.aria-label]="'View @' + profileHandle + ' profile'">
-                    <span class="thread-avatar" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
-                    <img class="thread-avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
+                <a class="thread-person thread-person-link" *ngIf="chatHeaderProfileHandle(conversation) as profileHandle; else threadPersonStatic" [attr.href]="'/users/' + profileHandle" (click)="openAvatarProfileOrStory(profileHandle, $event)"
+                    [attr.aria-label]="hasActiveStoryForHandle(profileHandle) ? ('Open @' + profileHandle + ' stories') : ('View @' + profileHandle + ' profile')">
+                    <span class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
+                    <img class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" alt="Conversation avatar" />
 
                     <div class="thread-identity">
                         <h3>{{ chatHeaderName(conversation) }}</h3>
@@ -122,13 +123,16 @@
                     <article class="message" [class.own]="currentProfileId === message.authorProfileId" [class.compact]="isCompactMessage(i)" [class.linked-text]="isLinkedTextToNextShared(i)" [class.linked-shared]="isLinkedSharedFromPreviousText(i)">
                         <div class="message-row">
                             <ng-container *ngIf="currentProfileId !== message.authorProfileId">
-                                <span class="message-avatar" *ngIf="!messageAvatarUrl(message)">{{ messageAvatarText(message) }}</span>
-                                <img class="message-avatar" *ngIf="messageAvatarUrl(message) as avatar" [src]="avatar" alt="Message sender avatar" />
+                                <button type="button" class="message-avatar-trigger" (click)="openAvatarProfileOrStory(message.authorHandle, $event)"
+                                    [attr.aria-label]="hasActiveStoryForHandle(message.authorHandle) ? ('Open @' + message.authorHandle + ' stories') : ('View @' + message.authorHandle + ' profile')">
+                                    <span class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" *ngIf="!messageAvatarUrl(message)">{{ messageAvatarText(message) }}</span>
+                                    <img class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" *ngIf="messageAvatarUrl(message) as avatar" [src]="avatar" alt="Message sender avatar" />
+                                </button>
                             </ng-container>
 
                             <div class="bubble-wrap" *ngIf="parsedMessage(message) as parsed">
-                                <div class="bubble" [class.media-only]="parsed.gifUrl || parsed.imageUrl" [class.shared-only]="parsed.sharedPost && !parsed.text && !parsed.gifUrl && !parsed.imageUrl" [class.shared-with-text]="parsed.sharedPost && !!parsed.text"
-                                    [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
+                                <div class="bubble" [class.media-only]="parsed.gifUrl || parsed.imageUrl || parsed.sharedReel || parsed.sharedStory" [class.shared-only]="(parsed.sharedPost || parsed.sharedReel || parsed.sharedStory) && !parsed.text && !parsed.gifUrl && !parsed.imageUrl"
+                                    [class.shared-with-text]="(parsed.sharedPost || parsed.sharedStory) && !!parsed.text" [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
                                     <p *ngIf="parsed.text">{{ parsed.text }}</p>
                                     <article class="shared-post-preview" *ngIf="parsed.sharedPost as shared">
                                         <header class="shared-post-head">
@@ -155,6 +159,56 @@
                                         <div class="shared-post-actions" *ngIf="isSharedPreviewTruncated(shared.content) || shared.imageUrl">
                                             <a class="shared-post-expand" [href]="'/users/' + shared.authorHandle" (click)="openSharedPost(shared, $event)">View full post</a>
                                         </div>
+                                    </article>
+                                    <article class="shared-reel-preview shared-story-preview" *ngIf="parsed.sharedStory as sharedStory">
+                                        <p class="shared-story-label">Story from @{{ sharedStory.authorHandle || message.authorHandle }}</p>
+                                        <button type="button" class="shared-reel-trigger shared-story-trigger" (click)="openSharedStory(sharedStory, message, $event)">
+                                            <div class="shared-reel-frame shared-story-frame">
+                                                <img class="shared-reel-thumbnail" *ngIf="isImageMedia(sharedStory.mediaUrl); else sharedStoryNoThumb" [src]="sharedStory.mediaUrl" alt="Shared story preview" />
+                                                <ng-template #sharedStoryNoThumb>
+                                                    <div class="shared-reel-thumbnail-fallback" aria-label="Shared story preview unavailable">
+                                                        <i class="fa-duotone fa-light fa-images" aria-hidden="true"></i>
+                                                    </div>
+                                                </ng-template>
+
+                                                <header class="shared-reel-overlay-top">
+                                                    <img class="shared-reel-author-avatar" *ngIf="(message.authorImageUrl) as avatar" [src]="avatar" alt="Shared story author avatar" />
+                                                    <span class="shared-reel-author-fallback" *ngIf="!message.authorImageUrl">{{ (sharedStory.authorHandle || message.authorHandle || 'S')[0].toUpperCase() }}</span>
+                                                    <strong class="shared-reel-author-handle">{{ sharedStory.authorHandle || message.authorHandle || 'story' }}</strong>
+                                                </header>
+
+                                                <div class="shared-reel-overlay-bottom">
+                                                    <span class="shared-reel-badge" aria-label="Story">
+                                                        <i class="fa-duotone fa-light fa-circle-play" aria-hidden="true"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </article>
+                                    <article class="shared-reel-preview" *ngIf="parsed.sharedReel as sharedReel">
+                                        <button type="button" class="shared-reel-trigger" (click)="openSharedReel(sharedReel, message, $event)">
+                                            <div class="shared-reel-frame">
+                                                <img class="shared-reel-thumbnail" *ngIf="sharedReel.thumbnailUrl as thumbnail; else sharedReelNoThumb" [src]="thumbnail" alt="Shared reel thumbnail" />
+                                                <ng-template #sharedReelNoThumb>
+                                                    <div class="shared-reel-thumbnail-fallback" aria-label="Shared reel thumbnail unavailable">
+                                                        <i class="fa-duotone fa-solid fa-clapperboard-play" aria-hidden="true"></i>
+                                                    </div>
+                                                </ng-template>
+
+                                                <header class="shared-reel-overlay-top">
+                                                    <img class="shared-reel-author-avatar" *ngIf="(sharedReel.authorImageUrl || message.authorImageUrl) as avatar" [src]="avatar" alt="Shared reel author avatar" />
+                                                    <span class="shared-reel-author-fallback" *ngIf="!(sharedReel.authorImageUrl || message.authorImageUrl)">{{ (sharedReel.authorHandle || message.authorHandle || 'R')[0].toUpperCase() }}</span>
+                                                    <strong class="shared-reel-author-handle" *ngIf="sharedReel.authorHandle as authorHandle">{{ authorHandle }}</strong>
+                                                    <strong class="shared-reel-author-handle" *ngIf="!sharedReel.authorHandle">shared reel</strong>
+                                                </header>
+
+                                                <div class="shared-reel-overlay-bottom">
+                                                    <span class="shared-reel-badge" aria-label="Reel">
+                                                        <i class="fa-duotone fa-solid fa-clapperboard-play" aria-hidden="true"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </button>
                                     </article>
                                     <img class="chat-message-media" *ngIf="parsed.imageUrl" [src]="parsed.imageUrl" alt="Sent image" />
                                     <img class="chat-message-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" alt="Sent GIF" />
@@ -267,4 +321,157 @@
     <app-chat-search-modal [open]="chatSearchModalOpen" [query]="modalSearchUsersQuery" [searching]="searchingProfiles" [loadingSuggestions]="loadingProfileSuggestions" [error]="searchUsersError" [profiles]="filteredProfiles" [followingSuggestions]="suggestedFollowingProfiles"
         [relevantSuggestions]="suggestedRelevantProfiles" [busy]="startingDirectChat" (close)="closeChatSearchModal()" (queryChange)="onModalSearchUsersInput($event)" (selectProfile)="selectProfileForChat($event)">
     </app-chat-search-modal>
+
+    <div class="shared-reel-viewer" *ngIf="activeSharedReel as reel" (click)="onSharedReelViewerBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Shared reel viewer">
+        <section class="shared-reel-viewer-card">
+            <button type="button" class="shared-reel-viewer-close" (click)="toggleSharedReelSettingsMenu($event)" aria-label="Reel settings">
+                <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
+            </button>
+            <div class="shared-reel-viewer-menu" *ngIf="sharedReelSettingsMenuOpen">
+                <button type="button" (click)="startActiveSharedReelCaptionEdit()" [disabled]="!canManageActiveSharedReel || updatingSharedReel || deletingSharedReel">Edit reel</button>
+                <button type="button" class="danger" (click)="requestDeleteActiveSharedReel()" [disabled]="!canManageActiveSharedReel || updatingSharedReel || deletingSharedReel">
+                    {{ deletingSharedReel ? 'Deleting…' : 'Delete reel' }}
+                </button>
+            </div>
+            <div class="shared-reel-viewer-media">
+                <div class="shared-reel-viewer-stage">
+                    <video #activeSharedReelVideo [src]="reel.videoUrl" [poster]="reel.thumbnailUrl || null" [style.transform]="activeSharedReelFrameTransform" playsinline [muted]="activeSharedReelMuted" autoplay loop preload="metadata" (loadedmetadata)="onActiveSharedReelVideoLoaded()"></video>
+                    <button type="button" class="shared-reel-sound-toggle" (click)="toggleActiveSharedReelSound()" [attr.aria-label]="activeSharedReelMuted ? 'Unmute reel' : 'Mute reel'">
+                        <i class="fa-duotone" [class.fa-volume-xmark]="activeSharedReelMuted" [class.fa-volume-high]="!activeSharedReelMuted" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+            <aside class="shared-reel-viewer-meta">
+                <div class="shared-reel-viewer-meta-scroll">
+                    <header>
+                        <img class="shared-reel-viewer-avatar" *ngIf="reel.authorImageUrl" [src]="reel.authorImageUrl" alt="Reel author avatar" />
+                        <span class="shared-reel-viewer-avatar-fallback" *ngIf="!reel.authorImageUrl">{{ (reel.authorHandle || 'R')[0].toUpperCase() }}</span>
+                        <div class="shared-reel-viewer-author">
+                            <strong *ngIf="activeSharedReelAuthorHandle as handle">
+                                <a class="shared-reel-profile-link" [href]="'/users/' + handle" (click)="openUserProfile(handle, $event)">@{{ handle }}</a>
+                            </strong>
+                            <p *ngIf="reel.createdAtUtc || activeSharedReelLocation">
+                                <span *ngIf="reel.createdAtUtc">{{ formatFeedTimestamp(reel.createdAtUtc) }}</span>
+                                <span *ngIf="reel.createdAtUtc && activeSharedReelLocation"> · </span>
+                                <span *ngIf="activeSharedReelLocation">📍 {{ activeSharedReelLocation }}</span>
+                            </p>
+                        </div>
+                    </header>
+
+                    <section class="shared-reel-viewer-caption" *ngIf="!editingSharedReelCaption && (activeSharedReelAuthorHandle || activeSharedReelCaptionText)">
+                        <p>
+                            <a *ngIf="activeSharedReelAuthorHandle as handle" class="shared-reel-caption-handle" [href]="'/users/' + handle" (click)="openUserProfile(handle, $event)">@{{ handle }}</a>
+                            <span *ngIf="activeSharedReelCaptionText"> {{ activeSharedReelCaptionText }}</span>
+                        </p>
+                    </section>
+
+                    <section class="shared-reel-viewer-caption-edit" *ngIf="editingSharedReelCaption">
+                        <textarea rows="4" [(ngModel)]="sharedReelCaptionDraft" placeholder="Edit reel caption..." [disabled]="updatingSharedReel || deletingSharedReel"></textarea>
+                        <div class="shared-reel-viewer-caption-edit-actions">
+                            <button type="button" class="ghost" (click)="cancelActiveSharedReelCaptionEdit()" [disabled]="updatingSharedReel || deletingSharedReel">Cancel</button>
+                            <button type="button" (click)="saveActiveSharedReelCaptionEdit()" [disabled]="updatingSharedReel || deletingSharedReel">{{ updatingSharedReel ? 'Saving…' : 'Save' }}</button>
+                        </div>
+                    </section>
+
+                    <p class="shared-reel-viewer-collaborators" *ngIf="activeSharedReelCollaborators.length">
+                        🤝
+                        <ng-container *ngFor="let collaborator of activeSharedReelCollaborators; let isLast = last">
+                            <a class="shared-reel-profile-link" [href]="'/users/' + normalizeProfileHandle(collaborator)" (click)="openUserProfile(normalizeProfileHandle(collaborator), $event)">@{{ normalizeProfileHandle(collaborator) }}</a><span *ngIf="!isLast"> </span>
+                        </ng-container>
+                    </p>
+
+                    <p class="viewer-loading" *ngIf="loadingSharedReelDetails">Loading reel details...</p>
+
+                    <section class="shared-reel-viewer-comments-wrap">
+                        <div class="shared-reel-viewer-comments-head" *ngIf="activeSharedReelComments.length">
+                            <span>For you</span>
+                        </div>
+                        <section class="shared-reel-viewer-comments" *ngIf="activeSharedReelComments.length">
+                            <article class="viewer-comment" *ngFor="let item of orderedActiveSharedReelComments" [class.reply-comment]="item.depth > 0">
+                                <ng-container *ngIf="item.comment as comment">
+                                    <img class="viewer-comment-avatar" *ngIf="comment.authorImageUrl; else viewerCommentInitial" [src]="comment.authorImageUrl" alt="Comment author image" />
+                                    <ng-template #viewerCommentInitial>
+                                        <div class="viewer-comment-avatar">{{ comment.authorHandle[0] }}</div>
+                                    </ng-template>
+
+                                    <div class="viewer-comment-main">
+                                        <p class="viewer-comment-line" *ngIf="editingSharedReelCommentId !== comment.id"><strong>@{{ comment.authorHandle }}</strong> {{ comment.content }}</p>
+                                        <div class="viewer-comment-edit" *ngIf="editingSharedReelCommentId === comment.id">
+                                            <input type="text" [value]="editingSharedReelCommentDraft" (input)="editingSharedReelCommentDraft = $any($event.target).value" (click)="$event.stopPropagation()" (keydown.enter)="saveActiveSharedReelCommentEdit(comment, $event)" />
+                                            <div class="viewer-comment-edit-actions">
+                                                <button type="button" (click)="saveActiveSharedReelCommentEdit(comment, $event)">Save</button>
+                                                <button type="button" class="ghost" (click)="cancelActiveSharedReelCommentEdit($event)">Cancel</button>
+                                            </div>
+                                        </div>
+                                        <p class="viewer-comment-meta">{{ comment.createdAtUtc | date:'short' }}</p>
+                                        <button type="button" class="viewer-comment-thread-toggle" *ngIf="item.depth === 0 && getActiveSharedReelReplyCount(comment.id) > 0" (mousedown)="toggleActiveSharedReelReplyThread(comment.id, $event)">
+                                            {{ isActiveSharedReelReplyThreadExpanded(comment.id) ? 'Hide replies' : 'View replies (' + getActiveSharedReelReplyCount(comment.id) + ')' }}
+                                        </button>
+                                    </div>
+
+                                    <div class="viewer-comment-actions" *ngIf="editingSharedReelCommentId !== comment.id">
+                                        <button type="button" class="viewer-comment-like" [class.active]="comment.likedByMe" [disabled]="reactingSharedReelCommentId === comment.id" (mousedown)="toggleActiveSharedReelCommentLike(comment, $event)"
+                                            [attr.aria-label]="comment.likedByMe ? 'Unlike comment' : 'Like comment'">
+                                            <i class="fa-duotone fa-heart" [class.fa-solid]="comment.likedByMe" [class.fa-light]="!comment.likedByMe" aria-hidden="true"></i>
+                                        </button>
+                                        <span class="viewer-comment-like-count" *ngIf="(comment.likeCount ?? 0) > 0">{{ comment.likeCount }}</span>
+                                        <button type="button" class="viewer-comment-reply" (mousedown)="replyToActiveSharedReelComment(comment, $event)">Reply</button>
+                                        <button type="button" class="viewer-comment-action danger" *ngIf="canDeleteActiveSharedReelComment(comment)" (mousedown)="requestDeleteActiveSharedReelComment(comment, $event)" aria-label="Delete comment">
+                                            <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </ng-container>
+                            </article>
+                        </section>
+                    </section>
+                </div>
+
+                <div class="shared-reel-viewer-actions">
+                    <button type="button" class="viewer-action" [class.active]="activeSharedReelLikedByMe" (click)="toggleActiveSharedReelLike()" [disabled]="reactingSharedReel || !activeSharedReelResolved?.id" aria-label="Like reel">
+                        <i class="fa-duotone fa-heart" [class.fa-solid]="activeSharedReelLikedByMe" [class.fa-light]="!activeSharedReelLikedByMe" aria-hidden="true"></i>
+                        <span>{{ activeSharedReelLikeCount }}</span>
+                    </button>
+                    <span class="viewer-action viewer-comments-count">
+                        <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
+                        <span>{{ activeSharedReelComments.length }}</span>
+                    </span>
+                    <button type="button" class="viewer-action" (click)="openActiveSharedReelShareModal()" [disabled]="!activeSharedReelResolved || !!sharingSharedReelId" aria-label="Share reel">
+                        <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <div class="shared-reel-viewer-comment-form">
+                    <p class="viewer-replying-tag" *ngIf="replyingToSharedReelCommentId as replyCommentId">
+                        Replying to comment
+                        <button type="button" class="ghost" (click)="cancelActiveSharedReelReply()">Cancel</button>
+                    </p>
+                    <input type="text" [(ngModel)]="viewerCommentDraft" placeholder="Add a comment..." [disabled]="commentingSharedReel || !activeSharedReelResolved?.id" />
+                    <button type="button" (click)="submitActiveSharedReelComment()" [disabled]="!canSubmitActiveSharedReelComment">
+                        {{ commentingSharedReel ? 'Posting...' : 'Post' }}
+                    </button>
+                </div>
+            </aside>
+        </section>
+    </div>
+
+    <app-confirm-modal [open]="!!pendingDeleteSharedReelCommentId" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingSharedReelCommentId"
+        (cancel)="cancelDeleteActiveSharedReelComment()" (confirm)="confirmDeleteActiveSharedReelComment()">
+    </app-confirm-modal>
+
+    <app-feed-story-viewer [activeStory]="activeSharedStory" [activeStoryGroup]="activeSharedStoryGroup" [activeStoryIndex]="activeSharedStoryIndex" [storyCount]="activeSharedStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousSharedStory" [hasNextStory]="hasNextSharedStory"
+        [liked]="activeSharedStory ? isActiveSharedStoryLiked(activeSharedStory.id) : false" [sendingReply]="sendingSharedStoryReply" [sharingStory]="sharingSharedStoryMessage" [canDelete]="canDeleteActiveSharedStory" [deletingStory]="deletingSharedStory" [errorMessage]="sharedStoryViewerError"
+        (closed)="closeSharedStoryViewer()" (previous)="showPreviousSharedStory()" (next)="showNextSharedStory()" (replySubmitted)="sendSharedStoryReply($event)" (likeToggled)="toggleSharedStoryLike($event)" (shareRequested)="openSharedStoryShareModal($event)"
+        (deleteRequested)="requestDeleteActiveSharedStory($event)">
+    </app-feed-story-viewer>
+
+    <app-confirm-modal [open]="!!pendingDeleteSharedStoryId" title="Delete story" message="Delete this story? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingSharedStory" (cancel)="cancelDeleteActiveSharedStory()"
+        (confirm)="confirmDeleteActiveSharedStory()">
+    </app-confirm-modal>
+
+    <app-confirm-modal [open]="!!pendingDeleteSharedReelId" title="Delete reel" message="Delete this reel? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingSharedReel" (cancel)="cancelDeleteActiveSharedReel()"
+        (confirm)="confirmDeleteActiveSharedReel()">
+    </app-confirm-modal>
+
+    <app-share-reel-message-modal [open]="!!pendingShareReelFromViewer" [reel]="pendingShareReelFromViewer" [busy]="!!sharingSharedReelId" (cancel)="cancelActiveSharedReelShareModal()" (confirm)="submitActiveSharedReelShareAsMessage($event)"></app-share-reel-message-modal>
+    <app-share-reel-message-modal [open]="!!pendingShareStoryFromViewer" [reel]="pendingShareStoryAsReel" [contentKind]="'story'" [busy]="!!sharingSharedStoryId" (cancel)="cancelSharedStoryShareModal()" (confirm)="submitSharedStoryShareAsMessage($event)"></app-share-reel-message-modal>
 </section>

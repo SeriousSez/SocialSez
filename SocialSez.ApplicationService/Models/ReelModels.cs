@@ -7,6 +7,24 @@ public sealed record CreateReelRequest(
     string? ThumbnailUrl,
     int DurationSeconds);
 
+public sealed record CreateReelCommentRequest(Guid AuthorId, string Content, Guid? ParentCommentId = null);
+
+public sealed record UpdateReelCommentRequest(string Content);
+
+public sealed record UpdateReelRequest(string? Caption);
+
+public sealed record ReelCommentDto(
+    Guid Id,
+    Guid ReelId,
+    Guid AuthorId,
+    Guid? ParentCommentId,
+    string AuthorHandle,
+    string? AuthorImageUrl,
+    string Content,
+    DateTime CreatedAtUtc,
+    int LikeCount,
+    bool LikedByMe);
+
 public sealed record ReelDto(
     Guid Id,
     Guid AuthorId,
@@ -18,4 +36,5 @@ public sealed record ReelDto(
     int DurationSeconds,
     DateTime CreatedAtUtc,
     int LikeCount,
-    bool LikedByMe);
+    bool LikedByMe,
+    IReadOnlyCollection<ReelCommentDto> Comments);

@@ -6,13 +6,14 @@ public sealed record UpdatePostRequest(string? Content);
 
 public sealed record SetReactionRequest(string Type);
 
-public sealed record CreateCommentRequest(Guid AuthorId, string Content);
+public sealed record CreateCommentRequest(Guid AuthorId, string Content, Guid? ParentCommentId = null);
 public sealed record UpdateCommentRequest(string Content);
 
 public sealed record CommentDto(
     Guid Id,
     Guid PostId,
     Guid AuthorId,
+    Guid? ParentCommentId,
     string AuthorHandle,
     string? AuthorImageUrl,
     string Content,

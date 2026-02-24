@@ -8,7 +8,7 @@ namespace SocialSez.ApplicationService.Services;
 
 public class StoryService(SocialSezContext dbContext) : IStoryService
 {
-    private const int DefaultExpiryHours = 24;
+    private const int StoryExpiryHours = 24;
 
     public async Task<StoryDto> CreateAsync(CreateStoryRequest request, CancellationToken cancellationToken = default)
     {
@@ -33,9 +33,6 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             throw new ArgumentException("Story caption cannot exceed 300 characters.", nameof(request));
         }
 
-        var expiresInHours = request.ExpiresInHours ?? DefaultExpiryHours;
-        expiresInHours = Math.Clamp(expiresInHours, 1, 48);
-
         var story = new Story
         {
             Id = Guid.NewGuid(),
@@ -43,7 +40,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             Caption = string.IsNullOrWhiteSpace(caption) ? null : caption,
             MediaUrl = mediaUrl,
             CreatedAtUtc = DateTime.UtcNow,
-            ExpiresAtUtc = DateTime.UtcNow.AddHours(expiresInHours)
+            ExpiresAtUtc = DateTime.UtcNow.AddHours(StoryExpiryHours)
         };
 
         dbContext.Stories.Add(story);
@@ -113,7 +110,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
         return true;
     }
 
-    public async Task<IReadOnlyCollection<StoryGroupDto>> GetFeedAsync(Guid profileId, int takeAuthors = 25, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<StoryGroupDto>> GetFeedAsync(Guid profileId, int takeAuthors = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default)
     {
         var nowUtc = DateTime.UtcNow;
         takeAuthors = Math.Clamp(takeAuthors, 1, 100);
@@ -126,18 +123,54 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
         followedIds.Add(profileId);
 
-        var activeStories = await dbContext.Stories
+        var followedSet = followedIds.ToHashSet();
+
+        var baseStoriesQuery = dbContext.Stories
             .AsNoTracking()
             .Include(x => x.Author)
             .Include(x => x.Views)
-            .Where(x => (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate) && x.ExpiresAtUtc > nowUtc)
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(takeAuthors * 10)
+            .Where(x => x.ExpiresAtUtc > nowUtc);
+
+        var activeStories = await (mode == FeedMode.Following
+            ? baseStoriesQuery
+                .Where(x => followedIds.Contains(x.AuthorId))
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .Take(takeAuthors * 10)
+            : baseStoriesQuery
+                .Where(x => followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .Take(takeAuthors * 20))
             .ToListAsync(cancellationToken);
+
+        Dictionary<Guid, double> watchAffinityByAuthor = new();
+        if (mode == FeedMode.ForYou)
+        {
+            var recentWindowUtc = nowUtc.AddDays(-14);
+            watchAffinityByAuthor = await dbContext.StoryViews
+                .AsNoTracking()
+                .Where(x => x.ViewerId == profileId)
+                .Join(
+                    dbContext.Stories.AsNoTracking(),
+                    view => view.StoryId,
+                    story => story.Id,
+                    (view, story) => new { story.AuthorId, view.ViewedAtUtc })
+                .GroupBy(x => x.AuthorId)
+                .Select(group => new
+                {
+                    AuthorId = group.Key,
+                    Score = group.Sum(item => item.ViewedAtUtc >= recentWindowUtc ? 2.0 : 1.0)
+                })
+                .ToDictionaryAsync(x => x.AuthorId, x => x.Score, cancellationToken);
+        }
 
         var grouped = activeStories
             .GroupBy(x => x.AuthorId)
-            .OrderByDescending(group => group.Max(story => story.CreatedAtUtc))
+            .Where(group => mode == FeedMode.ForYou || followedSet.Contains(group.Key))
+            .OrderByDescending(group =>
+                mode == FeedMode.ForYou && watchAffinityByAuthor.TryGetValue(group.Key, out var score)
+                    ? score
+                    : 0d)
+            .ThenByDescending(group => group.Max(story => story.CreatedAtUtc))
             .Take(takeAuthors)
             .Select(group =>
             {

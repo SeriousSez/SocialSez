@@ -74,6 +74,30 @@ public class ReelsController(IReelService reelService, IWebHostEnvironment envir
     }
 
     [Authorize]
+    [HttpPut("{reelId:guid}")]
+    public async Task<ActionResult<ReelDto>> Update(Guid reelId, [FromBody] UpdateReelBody request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await reelService.UpdateAsync(reelId, profileId, new UpdateReelRequest(request.Caption), cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
     [HttpPost("{reelId:guid}/like")]
     public async Task<ActionResult<ReelDto>> ToggleLike(Guid reelId, CancellationToken cancellationToken)
     {
@@ -87,16 +111,111 @@ public class ReelsController(IReelService reelService, IWebHostEnvironment envir
     }
 
     [Authorize]
-    [HttpGet("feed")]
-    public async Task<ActionResult<IReadOnlyCollection<ReelDto>>> GetFeed([FromQuery] int take = 25, CancellationToken cancellationToken = default)
+    [HttpPost("{reelId:guid}/comments")]
+    public async Task<ActionResult<ReelDto>> AddComment(Guid reelId, [FromBody] CreateReelCommentBody request, CancellationToken cancellationToken)
     {
         if (!TryGetProfileId(out var profileId))
         {
             return Unauthorized();
         }
 
-        var feed = await reelService.GetFeedAsync(profileId, take, cancellationToken);
+        try
+        {
+            var updated = await reelService.AddCommentAsync(reelId, new CreateReelCommentRequest(profileId, request.Content, request.ParentCommentId), cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpPut("{reelId:guid}/comments/{commentId:guid}")]
+    public async Task<ActionResult<ReelDto>> UpdateComment(Guid reelId, Guid commentId, [FromBody] UpdateReelCommentBody request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await reelService.UpdateCommentAsync(reelId, commentId, profileId, new UpdateReelCommentRequest(request.Content), cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpDelete("{reelId:guid}/comments/{commentId:guid}")]
+    public async Task<ActionResult<ReelDto>> DeleteComment(Guid reelId, Guid commentId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await reelService.DeleteCommentAsync(reelId, commentId, profileId, cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [Authorize]
+    [HttpPost("{reelId:guid}/comments/{commentId:guid}/like")]
+    public async Task<ActionResult<ReelDto>> ToggleCommentLike(Guid reelId, Guid commentId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var updated = await reelService.ToggleCommentLikeAsync(reelId, commentId, profileId, cancellationToken);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [Authorize]
+    [HttpGet("feed")]
+    public async Task<ActionResult<IReadOnlyCollection<ReelDto>>> GetFeed([FromQuery] int take = 25, [FromQuery] string mode = "for-you", CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var feedMode = ParseFeedMode(mode);
+        var feed = await reelService.GetFeedAsync(profileId, take, feedMode, cancellationToken);
         return Ok(feed);
+    }
+
+    [Authorize]
+    [HttpGet("by-author/{handle}")]
+    public async Task<ActionResult<IReadOnlyCollection<ReelDto>>> GetByAuthor([FromRoute] string handle, [FromQuery] int take = 25, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var reels = await reelService.GetByAuthorHandleAsync(profileId, handle, take, cancellationToken);
+        return Ok(reels);
     }
 
     private bool TryGetProfileId(out Guid profileId)
@@ -105,6 +224,13 @@ public class ReelsController(IReelService reelService, IWebHostEnvironment envir
             ?? User.FindFirstValue("sub");
 
         return Guid.TryParse(raw, out profileId);
+    }
+
+    private static FeedMode ParseFeedMode(string? mode)
+    {
+        return string.Equals(mode, "following", StringComparison.OrdinalIgnoreCase)
+            ? FeedMode.Following
+            : FeedMode.ForYou;
     }
 
     private async Task<string> SaveVideoAsync(Guid profileId, IFormFile file, CancellationToken cancellationToken)
@@ -161,5 +287,8 @@ public class ReelsController(IReelService reelService, IWebHostEnvironment envir
         ".jpg", ".jpeg", ".png", ".webp"
     };
 
+    public sealed record CreateReelCommentBody(string Content, Guid? ParentCommentId = null);
+    public sealed record UpdateReelCommentBody(string Content);
+    public sealed record UpdateReelBody(string? Caption);
     public sealed record CreateReelFormRequest(string? Caption, int DurationSeconds, IFormFile? Video, IFormFile? Thumbnail);
 }

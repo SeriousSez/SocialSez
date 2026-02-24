@@ -75,6 +75,11 @@ label {
     text-transform: uppercase
 }
 
+.avatar.story-active {
+    border: 2px solid transparent;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #ec4899;
+}
+
 .card h3 {
     margin: 0;
     font-size: 1.02rem

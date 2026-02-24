@@ -3,7 +3,7 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
-import { PostDto } from '../../core/api.types';
+import { PostDto, StoryGroupDto } from '../../core/api.types';
 import { buildSharedPostMarker, buildSharedPostPreview } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
@@ -36,6 +36,8 @@ export class HashtagPageComponent {
     private loadInFlight = false;
     private reloadQueued = false;
     private readonly destroyRef = inject(DestroyRef);
+    private activeStoryGroups: StoryGroupDto[] = [];
+    private refreshingStoryPresence = false;
 
     constructor(private readonly session: SessionService, private readonly route: ActivatedRoute, private readonly router: Router) {
         this.session.appChanges$
@@ -57,6 +59,23 @@ export class HashtagPageComponent {
 
     get currentProfileId(): string | null {
         return this.session.profile?.id ?? null;
+    }
+
+    hasActiveStoryForHandle(handle: string): boolean {
+        const normalized = handle.trim().toLowerCase();
+        return this.activeStoryGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
+    }
+
+    async openProfileOrStory(handle: string, event: MouseEvent): Promise<void> {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (this.hasActiveStoryForHandle(handle)) {
+            await this.router.navigate(['/feed'], { queryParams: { story: handle } });
+            return;
+        }
+
+        await this.router.navigate(['/users', handle]);
     }
 
     displayPostContent(post: PostDto): string {
@@ -271,8 +290,10 @@ export class HashtagPageComponent {
         await this.runPostMutation(post.id, () => this.session.clearPostReactionAsync(post.id), 'Could not clear reaction right now.');
     }
 
-    async addComment(post: PostDto, content: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.addCommentAsync(post.id, content), 'Could not add comment right now.');
+    async addComment(post: PostDto, payload: string | { content: string; parentCommentId?: string | null }): Promise<void> {
+        const content = typeof payload === 'string' ? payload : payload.content;
+        const parentCommentId = typeof payload === 'string' ? null : (payload.parentCommentId ?? null);
+        await this.runPostMutation(post.id, () => this.session.addCommentAsync(post.id, content, parentCommentId), 'Could not add comment right now.');
     }
 
     async updateComment(post: PostDto, commentId: string, content: string): Promise<void> {
@@ -311,6 +332,7 @@ export class HashtagPageComponent {
                 this.reloadQueued = false;
                 this.loading = true;
                 this.error = '';
+                void this.refreshActiveStoryPresence();
 
                 try {
                     this.posts = await this.session.loadPostsByHashtagAsync(this.hashtag);
@@ -326,12 +348,45 @@ export class HashtagPageComponent {
         }
     }
 
+    private async refreshActiveStoryPresence(): Promise<void> {
+        if (this.refreshingStoryPresence) {
+            return;
+        }
+
+        this.refreshingStoryPresence = true;
+        try {
+            const [forYou, following] = await Promise.allSettled([
+                this.session.loadStoryFeedAsync(80, 'for-you'),
+                this.session.loadStoryFeedAsync(80, 'following')
+            ]);
+
+            const merged = [
+                ...(forYou.status === 'fulfilled' ? forYou.value : []),
+                ...(following.status === 'fulfilled' ? following.value : [])
+            ];
+
+            const deduped = new Map<string, StoryGroupDto>();
+            for (const group of merged) {
+                const key = group.authorId || group.authorHandle.trim().toLowerCase();
+                if (!deduped.has(key)) {
+                    deduped.set(key, group);
+                }
+            }
+
+            this.activeStoryGroups = Array.from(deduped.values());
+        } catch {
+            this.activeStoryGroups = [];
+        } finally {
+            this.refreshingStoryPresence = false;
+        }
+    }
+
     private applyPostUpdate(updated: PostDto): void {
         this.posts = this.posts.map(post => post.id === updated.id ? updated : post);
     }
 
     private async runPostMutation(postId: string, work: () => Promise<PostDto>, failureMessage: string): Promise<void> {
-        if (this.reactingPostId) {
+        if (this.reactingPostId === postId) {
             return;
         }
 

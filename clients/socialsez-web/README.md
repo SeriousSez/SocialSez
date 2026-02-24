@@ -12,6 +12,23 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+## Local secrets (not committed)
+
+To use local API keys (for example Google Maps) without committing them:
+
+1. Set your key in `src/environments/environment.local.ts`.
+2. Run the app with:
+
+```bash
+npm run start:local
+```
+
+You can also build with local values using:
+
+```bash
+npm run build:local
+```
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

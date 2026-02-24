@@ -1,0 +1,118 @@
+<section class="reels-list">
+    <article class="reel-card" *ngFor="let reel of reels" #reelItem [attr.data-reel-id]="reel.id">
+        <header class="reel-head">
+            <div class="author">
+                <button type="button" class="avatar-button" (click)="onAuthorAvatarClick(reel.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForAuthor(reel.authorHandle) ? ('Open @' + reel.authorHandle + ' stories') : ('View @' + reel.authorHandle + ' profile')">
+                    <img class="avatar" [class.story-active]="hasActiveStoryForAuthor(reel.authorHandle)" *ngIf="reel.authorImageUrl; else reelAuthorInitial" [src]="reel.authorImageUrl" alt="Author image" />
+                    <ng-template #reelAuthorInitial>
+                        <div class="avatar" [class.story-active]="hasActiveStoryForAuthor(reel.authorHandle)">{{ reel.authorHandle[0] }}</div>
+                    </ng-template>
+                </button>
+                <div class="meta">
+                    <a class="author-link" [routerLink]="['/users', reel.authorHandle]">@{{ reel.authorHandle }}</a>
+                    <span> · {{ formatFeedTimestamp(reel.createdAtUtc) }}</span>
+                    <span *ngIf="getReelLocation(reel)">· 📍 {{ getReelLocation(reel) }}</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="reel-video-frame" (click)="onReelFrameClick(reel.id)">
+            <video #reelVideoEl class="reel-video" [attr.data-reel-id]="reel.id" [style.transform]="getReelFrameTransform(reel)" [poster]="reel.thumbnailUrl || null" [src]="reel.videoUrl" [muted]="isReelMuted(reel.id)" [loop]="activeReelId === reel.id" playsinline preload="metadata"></video>
+            <button type="button" class="reel-hover-delete" *ngIf="canShowOwnerActions(reel) && !isEditingReel(reel.id)" (click)="requestReelDelete(reel); $event.stopPropagation()" [disabled]="!!updatingReelId || !!deletingReelId" aria-label="Delete reel">
+                {{ deletingReelId === reel.id ? 'Deleting…' : 'Delete' }}
+            </button>
+            <button type="button" class="reel-volume" (click)="toggleMute($event, reel.id)" [attr.aria-label]="isReelMuted(reel.id) ? 'Unmute reel' : 'Mute reel'">
+                {{ isReelMuted(reel.id) ? '🔇' : '🔊' }}
+            </button>
+        </div>
+
+        <footer class="reel-engagement">
+            <div class="engagement-actions">
+                <div class="action-group">
+                    <button type="button" class="icon-button like-button" [class.active]="reel.likedByMe" [disabled]="reactingReelId === reel.id" (click)="onToggleLike(reel)" aria-label="Like reel">
+                        <i class="fa-duotone fa-heart" [class.fa-solid]="reel.likedByMe" [class.fa-light]="!reel.likedByMe" aria-hidden="true"></i>
+                    </button>
+                    <span class="engagement-count">{{ reel.likeCount }}</span>
+                </div>
+                <div class="action-group">
+                    <button type="button" class="icon-button comment-button" [class.active]="isCommentsOpen(reel.id)" [disabled]="commentingReelId === reel.id" (click)="onCommentClick(reel.id)" aria-label="Comment on reel">
+                        <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
+                    </button>
+                    <span class="comment-count" aria-label="Reel comment count">{{ reel.comments.length }}</span>
+                </div>
+                <button type="button" class="icon-button" [disabled]="sharingReelId === reel.id" (click)="onShareReel(reel)" aria-label="Share reel in direct messages">
+                    <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="owner-reel-actions" *ngIf="canShowOwnerActions(reel)">
+                <button type="button" class="text-action" (click)="startReelEdit(reel)" [disabled]="!!updatingReelId || !!deletingReelId" *ngIf="!isEditingReel(reel.id)">Edit</button>
+            </div>
+        </footer>
+
+        <section class="reel-edit-form" *ngIf="isEditingReel(reel.id)">
+            <textarea rows="3" [value]="editingReelCaption" (input)="editingReelCaption = $any($event.target).value" placeholder="Edit reel caption..." [disabled]="updatingReelId === reel.id"></textarea>
+            <div class="reel-edit-actions">
+                <button type="button" class="ghost" (click)="cancelReelEdit()" [disabled]="updatingReelId === reel.id">Cancel</button>
+                <button type="button" (click)="submitReelEdit(reel)" [disabled]="updatingReelId === reel.id">{{ updatingReelId === reel.id ? 'Saving…' : 'Save' }}</button>
+            </div>
+        </section>
+
+        <ng-container *ngIf="getReelCaptionText(reel) as reelCaption">
+            <p class="reel-caption" [class.expanded]="isReelCaptionExpanded(reel.id)"><strong>@{{ reel.authorHandle }}</strong> {{ reelCaption }}</p>
+            <button type="button" class="reel-read-more" *ngIf="shouldShowReelReadMore(reel)" (click)="toggleReelCaption(reel.id)">
+                {{ isReelCaptionExpanded(reel.id) ? 'Read less' : 'Read more' }}
+            </button>
+        </ng-container>
+
+        <p class="reel-collaborators" *ngIf="getReelCollaborators(reel).length">🤝 {{ getReelCollaborators(reel).join(' ') }}</p>
+
+        <section class="reel-comments" *ngIf="isCommentsOpen(reel.id) && reel.comments.length">
+            <article class="reel-comment" *ngFor="let item of getOrderedReelComments(reel)" [class.reply-comment]="item.depth > 0">
+                <ng-container *ngIf="item.comment as comment">
+                    <img class="reel-comment-avatar" *ngIf="comment.authorImageUrl; else reelCommentInitial" [src]="comment.authorImageUrl" alt="Comment author image" />
+                    <ng-template #reelCommentInitial>
+                        <div class="reel-comment-avatar">{{ comment.authorHandle[0] }}</div>
+                    </ng-template>
+
+                    <div class="reel-comment-main">
+                        <p class="reel-comment-line" *ngIf="editingReelCommentId !== comment.id"><strong>@{{ comment.authorHandle }}</strong> {{ comment.content }}</p>
+                        <div class="reel-comment-edit" *ngIf="editingReelCommentId === comment.id">
+                            <input type="text" [value]="editingReelCommentDraft" (input)="editingReelCommentDraft = $any($event.target).value" (click)="$event.stopPropagation()" (keydown.enter)="saveReelCommentEdit(reel, comment, $event)" />
+                            <div class="reel-comment-edit-actions">
+                                <button type="button" (click)="saveReelCommentEdit(reel, comment, $event)">Save</button>
+                                <button type="button" class="ghost" (click)="cancelReelCommentEdit($event)">Cancel</button>
+                            </div>
+                        </div>
+                        <p class="reel-comment-meta">{{ comment.createdAtUtc | date:'short' }}</p>
+                        <button type="button" class="reel-comment-thread-toggle" *ngIf="item.depth === 0 && getReelReplyCount(reel, comment.id) > 0" (mousedown)="onReelThreadToggleMouseDown(reel, comment.id, $event)" (click)="onReelThreadToggleClick(reel, comment.id, $event)">
+                            {{ isReelReplyThreadExpanded(reel.id, comment.id) ? 'Hide replies' : 'View replies (' + getReelReplyCount(reel, comment.id) + ')' }}
+                        </button>
+                    </div>
+
+                    <div class="reel-comment-actions" *ngIf="editingReelCommentId !== comment.id">
+                        <button type="button" class="reel-comment-like" [class.active]="comment.likedByMe" [disabled]="reactingReelId === reel.id" (mousedown)="onReelCommentLikeMouseDown(reel, comment, $event)" (click)="onReelCommentLikeClick(reel, comment, $event)"
+                            [attr.aria-label]="comment.likedByMe ? 'Unlike comment' : 'Like comment'">
+                            <i class="fa-duotone fa-heart" [class.fa-solid]="comment.likedByMe" [class.fa-light]="!comment.likedByMe" aria-hidden="true"></i>
+                        </button>
+                        <span class="comment-like-count" *ngIf="comment.likeCount > 0">{{ comment.likeCount }}</span>
+                        <button type="button" class="reel-comment-reply" (mousedown)="onReelCommentReplyMouseDown(reel.id, comment, $event)" (click)="onReelCommentReplyClick(reel.id, comment, $event)">Reply</button>
+                        <!-- <button type="button" class="reel-comment-action" *ngIf="canEditReelComment(comment)" (mousedown)="onReelCommentEditMouseDown(comment, $event)" (click)="onReelCommentEditClick(comment, $event)" aria-label="Edit comment">
+                            <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+                        </button> -->
+                        <button type="button" class="reel-comment-action danger" *ngIf="canDeleteReelComment(reel, comment)" (mousedown)="onDeleteReelCommentMouseDown(reel, comment, $event)" (click)="onDeleteReelCommentClick(reel, comment, $event)" aria-label="Delete comment">
+                            <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </ng-container>
+            </article>
+        </section>
+
+        <div class="reel-comment-form" *ngIf="isCommentsOpen(reel.id)">
+            <input type="text" [attr.data-reel-comment-id]="reel.id" [value]="getReelCommentDraft(reel.id)" (input)="onReelCommentDraftChange(reel.id, $any($event.target).value)" placeholder="Add a comment..." [disabled]="commentingReelId === reel.id" />
+            <button type="button" (click)="onSubmitReelComment(reel)" [disabled]="commentingReelId === reel.id || !getReelCommentDraft(reel.id).trim()">
+                {{ commentingReelId === reel.id ? 'Posting...' : 'Post' }}
+            </button>
+        </div>
+    </article>
+</section>
