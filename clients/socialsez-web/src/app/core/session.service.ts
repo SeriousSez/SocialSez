@@ -120,11 +120,13 @@ export class SessionService {
     }
 
     async loadFeedAsync(mode: FeedMode = 'for-you'): Promise<PostDto[]> {
-        return firstValueFrom(this.api.getFeed(25, mode));
+        const feed = await firstValueFrom(this.api.getFeed(25, mode));
+        return feed.map(post => this.normalizePost(post));
     }
 
     async loadStoryFeedAsync(takeAuthors = 25, mode: FeedMode = 'for-you'): Promise<StoryGroupDto[]> {
-        return firstValueFrom(this.api.getStoryFeed(takeAuthors, mode));
+        const groups = await firstValueFrom(this.api.getStoryFeed(takeAuthors, mode));
+        return groups.map(group => this.normalizeStoryGroup(group));
     }
 
     async markStoryViewedAsync(storyId: string): Promise<void> {
@@ -138,55 +140,67 @@ export class SessionService {
     }
 
     async loadReelFeedAsync(take = 20, mode: FeedMode = 'for-you'): Promise<ReelDto[]> {
-        return firstValueFrom(this.api.getReelFeed(take, mode));
+        const reels = await firstValueFrom(this.api.getReelFeed(take, mode));
+        return reels.map(reel => this.normalizeReel(reel));
     }
 
     async loadReelsByAuthorHandleAsync(handle: string, take = 25): Promise<ReelDto[]> {
-        return firstValueFrom(this.api.getReelsByAuthorHandle(handle, take));
+        const reels = await firstValueFrom(this.api.getReelsByAuthorHandle(handle, take));
+        return reels.map(reel => this.normalizeReel(reel));
     }
 
     async loadPublicReelsByAuthorHandleAsync(handle: string, take = 25): Promise<ReelDto[]> {
-        return firstValueFrom(this.api.getPublicReelsByAuthorHandle(handle, take));
+        const reels = await firstValueFrom(this.api.getPublicReelsByAuthorHandle(handle, take));
+        return reels.map(reel => this.normalizeReel(reel));
     }
 
     async loadPublicStoriesByAuthorHandleAsync(handle: string): Promise<StoryGroupDto | null> {
         try {
-            return await firstValueFrom(this.api.getPublicStoriesByAuthorHandle(handle));
+            const storyGroup = await firstValueFrom(this.api.getPublicStoriesByAuthorHandle(handle));
+            return this.normalizeStoryGroup(storyGroup);
         } catch {
             return null;
         }
     }
 
     async toggleReelLikeAsync(reelId: string): Promise<ReelDto> {
-        return firstValueFrom(this.api.toggleReelLike(reelId));
+        const updated = await firstValueFrom(this.api.toggleReelLike(reelId));
+        return this.normalizeReel(updated);
     }
 
     async addReelCommentAsync(reelId: string, content: string, parentCommentId?: string | null): Promise<ReelDto> {
-        return firstValueFrom(this.api.addReelComment(reelId, content, parentCommentId));
+        const updated = await firstValueFrom(this.api.addReelComment(reelId, content, parentCommentId));
+        return this.normalizeReel(updated);
     }
 
     async updateReelCommentAsync(reelId: string, commentId: string, content: string): Promise<ReelDto> {
-        return firstValueFrom(this.api.updateReelComment(reelId, commentId, content));
+        const updated = await firstValueFrom(this.api.updateReelComment(reelId, commentId, content));
+        return this.normalizeReel(updated);
     }
 
     async deleteReelCommentAsync(reelId: string, commentId: string): Promise<ReelDto> {
-        return firstValueFrom(this.api.deleteReelComment(reelId, commentId));
+        const updated = await firstValueFrom(this.api.deleteReelComment(reelId, commentId));
+        return this.normalizeReel(updated);
     }
 
     async loadPostsByHashtagAsync(hashtag: string): Promise<PostDto[]> {
-        return firstValueFrom(this.api.getPostsByHashtag(hashtag));
+        const posts = await firstValueFrom(this.api.getPostsByHashtag(hashtag));
+        return posts.map(post => this.normalizePost(post));
     }
 
     async loadPostsByAuthorHandleAsync(handle: string): Promise<PostDto[]> {
-        return firstValueFrom(this.api.getPostsByAuthorHandle(handle));
+        const posts = await firstValueFrom(this.api.getPostsByAuthorHandle(handle));
+        return posts.map(post => this.normalizePost(post));
     }
 
     async loadPublicPostsByAuthorHandleAsync(handle: string): Promise<PostDto[]> {
-        return firstValueFrom(this.api.getPublicPostsByAuthorHandle(handle));
+        const posts = await firstValueFrom(this.api.getPublicPostsByAuthorHandle(handle));
+        return posts.map(post => this.normalizePost(post));
     }
 
     async searchPostsAsync(query: string): Promise<PostDto[]> {
-        return firstValueFrom(this.api.searchPosts(query));
+        const posts = await firstValueFrom(this.api.searchPosts(query));
+        return posts.map(post => this.normalizePost(post));
     }
 
     async searchHashtagsAsync(query: string): Promise<HashtagSearchResultDto[]> {
@@ -209,21 +223,21 @@ export class SessionService {
     }
 
     async createStoryAsync(mediaFile: File, caption?: string): Promise<StoryDto> {
-        const story = await firstValueFrom(this.api.createStory(mediaFile, caption));
+        const story = this.normalizeStory(await firstValueFrom(this.api.createStory(mediaFile, caption)));
         this.message = 'Story created.';
         this.emitAppChange('posts');
         return story;
     }
 
     async createReelAsync(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File): Promise<ReelDto> {
-        const reel = await firstValueFrom(this.api.createReel(videoFile, durationSeconds, caption, thumbnailFile));
+        const reel = this.normalizeReel(await firstValueFrom(this.api.createReel(videoFile, durationSeconds, caption, thumbnailFile)));
         this.message = 'Reel created.';
         this.emitAppChange('posts');
         return reel;
     }
 
     async updateReelAsync(reelId: string, caption?: string): Promise<ReelDto> {
-        const reel = await firstValueFrom(this.api.updateReel(reelId, caption));
+        const reel = this.normalizeReel(await firstValueFrom(this.api.updateReel(reelId, caption)));
         this.message = 'Reel updated.';
         this.emitAppChange('posts');
         return reel;
@@ -249,41 +263,47 @@ export class SessionService {
 
     async togglePostLikeAsync(postId: string): Promise<PostDto> {
         const updated = await firstValueFrom(this.api.togglePostLike(postId));
-        return updated;
+        return this.normalizePost(updated);
     }
 
     async setPostReactionAsync(postId: string, reactionType: string): Promise<PostDto> {
         const updated = await firstValueFrom(this.api.setPostReaction(postId, { type: reactionType }));
-        return updated;
+        return this.normalizePost(updated);
     }
 
     async clearPostReactionAsync(postId: string): Promise<PostDto> {
         const updated = await firstValueFrom(this.api.clearPostReaction(postId));
-        return updated;
+        return this.normalizePost(updated);
     }
 
     async addCommentAsync(postId: string, content: string, parentCommentId?: string | null): Promise<PostDto> {
-        return firstValueFrom(this.api.addComment(postId, content, parentCommentId));
+        const updated = await firstValueFrom(this.api.addComment(postId, content, parentCommentId));
+        return this.normalizePost(updated);
     }
 
     async toggleReelCommentLikeAsync(reelId: string, commentId: string): Promise<ReelDto> {
-        return firstValueFrom(this.api.toggleReelCommentLike(reelId, commentId));
+        const updated = await firstValueFrom(this.api.toggleReelCommentLike(reelId, commentId));
+        return this.normalizeReel(updated);
     }
 
     async updateCommentAsync(postId: string, commentId: string, content: string): Promise<PostDto> {
-        return firstValueFrom(this.api.updateComment(postId, commentId, content));
+        const updated = await firstValueFrom(this.api.updateComment(postId, commentId, content));
+        return this.normalizePost(updated);
     }
 
     async deleteCommentAsync(postId: string, commentId: string): Promise<PostDto> {
-        return firstValueFrom(this.api.deleteComment(postId, commentId));
+        const updated = await firstValueFrom(this.api.deleteComment(postId, commentId));
+        return this.normalizePost(updated);
     }
 
     async setCommentReactionAsync(postId: string, commentId: string, reactionType: string): Promise<PostDto> {
-        return firstValueFrom(this.api.setCommentReaction(postId, commentId, { type: reactionType }));
+        const updated = await firstValueFrom(this.api.setCommentReaction(postId, commentId, { type: reactionType }));
+        return this.normalizePost(updated);
     }
 
     async clearCommentReactionAsync(postId: string, commentId: string): Promise<PostDto> {
-        return firstValueFrom(this.api.clearCommentReaction(postId, commentId));
+        const updated = await firstValueFrom(this.api.clearCommentReaction(postId, commentId));
+        return this.normalizePost(updated);
     }
 
     async uploadImageAsync(file: File): Promise<string> {
@@ -422,6 +442,47 @@ export class SessionService {
         return {
             ...profile,
             imageUrl: normalizedImageUrl
+        };
+    }
+
+    private normalizePost(post: PostDto): PostDto {
+        return {
+            ...post,
+            authorImageUrl: this.normalizeMediaUrl(post.authorImageUrl),
+            imageUrl: this.normalizeMediaUrl(post.imageUrl),
+            comments: (post.comments ?? []).map(comment => ({
+                ...comment,
+                authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
+            }))
+        };
+    }
+
+    private normalizeStory(story: StoryDto): StoryDto {
+        return {
+            ...story,
+            authorImageUrl: this.normalizeMediaUrl(story.authorImageUrl),
+            mediaUrl: this.normalizeMediaUrl(story.mediaUrl) ?? story.mediaUrl
+        };
+    }
+
+    private normalizeStoryGroup(storyGroup: StoryGroupDto): StoryGroupDto {
+        return {
+            ...storyGroup,
+            authorImageUrl: this.normalizeMediaUrl(storyGroup.authorImageUrl),
+            stories: (storyGroup.stories ?? []).map(story => this.normalizeStory(story))
+        };
+    }
+
+    private normalizeReel(reel: ReelDto): ReelDto {
+        return {
+            ...reel,
+            authorImageUrl: this.normalizeMediaUrl(reel.authorImageUrl),
+            videoUrl: this.normalizeMediaUrl(reel.videoUrl) ?? reel.videoUrl,
+            thumbnailUrl: this.normalizeMediaUrl(reel.thumbnailUrl),
+            comments: (reel.comments ?? []).map(comment => ({
+                ...comment,
+                authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
+            }))
         };
     }
 

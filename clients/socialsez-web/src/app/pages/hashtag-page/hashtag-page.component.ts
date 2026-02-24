@@ -4,8 +4,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
 import { PostDto, StoryGroupDto } from '../../core/api.types';
-import { buildSharedPostMarker, buildSharedPostPreview } from '../../core/shared-post.utils';
+import { PostInteractionsService } from '../../core/post-interactions.service';
 import { SessionService } from '../../core/session.service';
+import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
 import { SharePostMessageModalComponent, SharePostMessageSubmit } from '../../shared/share-post-message-modal/share-post-message-modal.component';
 import { SharePostModalComponent } from '../../shared/share-post-modal/share-post-modal.component';
@@ -14,7 +15,7 @@ import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 @Component({
     selector: 'app-hashtag-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, PostCardComponent, SharePostModalComponent, SharePostMessageModalComponent, SkeletonComponent],
+    imports: [CommonModule, RouterLink, PostCardComponent, SharePostModalComponent, SharePostMessageModalComponent, SkeletonComponent, ConfirmModalComponent],
     templateUrl: './hashtag-page.component.html',
     styleUrl: './hashtag-page.component.scss'
 })
@@ -28,6 +29,7 @@ export class HashtagPageComponent {
     editContent = '';
     savingPost = false;
     deletingPostId: string | null = null;
+    pendingDeletePostId: string | null = null;
     sharingPostId: string | null = null;
     pendingSharePost: PostDto | null = null;
     pendingShareTarget: 'feed' | 'chat' | null = null;
@@ -39,7 +41,12 @@ export class HashtagPageComponent {
     private activeStoryGroups: StoryGroupDto[] = [];
     private refreshingStoryPresence = false;
 
-    constructor(private readonly session: SessionService, private readonly route: ActivatedRoute, private readonly router: Router) {
+    constructor(
+        private readonly session: SessionService,
+        private readonly postInteractions: PostInteractionsService,
+        private readonly route: ActivatedRoute,
+        private readonly router: Router
+    ) {
         this.session.appChanges$
             .pipe(
                 filter(change => change === 'posts' || change === 'profile' || change === 'session'),
@@ -62,7 +69,7 @@ export class HashtagPageComponent {
     }
 
     get isAuthenticated(): boolean {
-        return this.session.isAuthenticated();
+        return this.postInteractions.isAuthenticated();
     }
 
     hasActiveStoryForHandle(handle: string): boolean {
@@ -145,8 +152,25 @@ export class HashtagPageComponent {
         }
     }
 
-    async deletePost(postId: string): Promise<void> {
+    requestDeletePost(postId: string): void {
         if (this.deletingPostId || this.savingPost) {
+            return;
+        }
+
+        this.pendingDeletePostId = postId;
+    }
+
+    cancelDeletePost(): void {
+        if (this.deletingPostId) {
+            return;
+        }
+
+        this.pendingDeletePostId = null;
+    }
+
+    async confirmDeletePost(): Promise<void> {
+        const postId = this.pendingDeletePostId;
+        if (!postId || this.deletingPostId || this.savingPost) {
             return;
         }
 
@@ -162,6 +186,7 @@ export class HashtagPageComponent {
         } catch {
             this.error = 'Could not delete post.';
         } finally {
+            this.pendingDeletePostId = null;
             this.deletingPostId = null;
         }
     }
@@ -250,9 +275,7 @@ export class HashtagPageComponent {
         this.error = '';
 
         try {
-            const marker = buildSharedPostMarker(buildSharedPostPreview(post));
-            const message = shareText ? `${shareText}\n${marker}` : marker;
-            await this.session.createPostAsync(message);
+            await this.postInteractions.shareToFeed(post, shareText);
             return true;
         } catch {
             this.error = 'Could not share this post right now.';
@@ -276,24 +299,7 @@ export class HashtagPageComponent {
         this.error = '';
 
         try {
-            const marker = buildSharedPostMarker(buildSharedPostPreview(post));
-            const shareText = request.note.trim();
-            const sendToConversation = async (conversationId: string): Promise<void> => {
-                if (shareText) {
-                    await this.session.sendChatMessageAsync(conversationId, shareText);
-                }
-                await this.session.sendChatMessageAsync(conversationId, marker);
-            };
-
-            if (request.mode === 'group' && recipientIds.length > 1) {
-                const group = await this.session.createGroupConversationAsync('', recipientIds);
-                await sendToConversation(group.id);
-            } else {
-                await Promise.all(recipientIds.map(async (recipientId) => {
-                    const conversation = await this.session.createDirectConversationAsync(recipientId);
-                    await sendToConversation(conversation.id);
-                }));
-            }
+            await this.postInteractions.shareToChat(post, request);
             return true;
         } catch {
             this.error = 'Could not send this post to chat right now.';
@@ -308,7 +314,7 @@ export class HashtagPageComponent {
             return;
         }
 
-        await this.runPostMutation(post.id, () => this.session.togglePostLikeAsync(post.id), 'Could not update like right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.toggleLike(post.id), 'Could not update like right now.');
     }
 
     async setReaction(post: PostDto, reactionType: string): Promise<void> {
@@ -316,7 +322,7 @@ export class HashtagPageComponent {
             return;
         }
 
-        await this.runPostMutation(post.id, () => this.session.setPostReactionAsync(post.id, reactionType), 'Could not set reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.setReaction(post.id, reactionType), 'Could not set reaction right now.');
     }
 
     async clearReaction(post: PostDto): Promise<void> {
@@ -324,7 +330,7 @@ export class HashtagPageComponent {
             return;
         }
 
-        await this.runPostMutation(post.id, () => this.session.clearPostReactionAsync(post.id), 'Could not clear reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.clearReaction(post.id), 'Could not clear reaction right now.');
     }
 
     async addComment(post: PostDto, payload: string | { content: string; parentCommentId?: string | null }): Promise<void> {
@@ -334,15 +340,15 @@ export class HashtagPageComponent {
 
         const content = typeof payload === 'string' ? payload : payload.content;
         const parentCommentId = typeof payload === 'string' ? null : (payload.parentCommentId ?? null);
-        await this.runPostMutation(post.id, () => this.session.addCommentAsync(post.id, content, parentCommentId), 'Could not add comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.addComment(post.id, content, parentCommentId), 'Could not add comment right now.');
     }
 
     async updateComment(post: PostDto, commentId: string, content: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.updateCommentAsync(post.id, commentId, content), 'Could not update comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.updateComment(post.id, commentId, content), 'Could not update comment right now.');
     }
 
     async deleteComment(post: PostDto, commentId: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.deleteCommentAsync(post.id, commentId), 'Could not delete comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.deleteComment(post.id, commentId), 'Could not delete comment right now.');
     }
 
     async setCommentReaction(post: PostDto, commentId: string, reactionType: string): Promise<void> {
@@ -350,7 +356,7 @@ export class HashtagPageComponent {
             return;
         }
 
-        await this.runPostMutation(post.id, () => this.session.setCommentReactionAsync(post.id, commentId, reactionType), 'Could not react to comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.setCommentReaction(post.id, commentId, reactionType), 'Could not react to comment right now.');
     }
 
     async clearCommentReaction(post: PostDto, commentId: string): Promise<void> {
@@ -358,7 +364,7 @@ export class HashtagPageComponent {
             return;
         }
 
-        await this.runPostMutation(post.id, () => this.session.clearCommentReactionAsync(post.id, commentId), 'Could not clear comment reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.clearCommentReaction(post.id, commentId), 'Could not clear comment reaction right now.');
     }
 
     async load(): Promise<void> {

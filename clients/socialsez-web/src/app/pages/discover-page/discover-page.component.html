@@ -89,7 +89,7 @@
             <div class="post-list">
                 <app-post-card *ngFor="let post of postResults" [post]="post" [content]="displayPostContent(post)" [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId"
                     [canInteract]="isAuthenticated" [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)"
-                    (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="deletePost(post.id)" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)"
+                    (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)"
                     (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)"
                     (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
                     <div post-header class="author">
@@ -125,6 +125,9 @@
 
 <app-share-post-message-modal [open]="!!pendingSharePost && pendingShareTarget === 'chat'" [post]="pendingSharePost" [busy]="!!sharingPostId" (cancel)="cancelShareModal()" (confirm)="submitShareAsMessage($event)">
 </app-share-post-message-modal>
+
+<app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
+</app-confirm-modal>
 
 <app-confirm-modal [open]="!!pendingDeleteReelComment" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingReelCommentId" (cancel)="cancelDeleteReelComment()"
     (confirm)="confirmDeleteReelComment()">

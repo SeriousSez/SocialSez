@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryGroupDto } from '../../core/api.types';
-import { buildSharedPostMarker, buildSharedPostPreview } from '../../core/shared-post.utils';
+import { PostInteractionsService } from '../../core/post-interactions.service';
 import { SessionService } from '../../core/session.service';
 import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from '../feed-page/feed-reels-list.component';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
@@ -42,6 +42,7 @@ export class DiscoverPageComponent {
     editContent = '';
     savingPost = false;
     deletingPostId: string | null = null;
+    pendingDeletePostId: string | null = null;
     sharingPostId: string | null = null;
     pendingSharePost: PostDto | null = null;
     pendingShareTarget: 'feed' | 'chat' | null = null;
@@ -63,7 +64,12 @@ export class DiscoverPageComponent {
     private activeStoryGroups: StoryGroupDto[] = [];
     private refreshingStoryPresence = false;
 
-    constructor(private readonly session: SessionService, private readonly route: ActivatedRoute, private readonly router: Router) {
+    constructor(
+        private readonly session: SessionService,
+        private readonly postInteractions: PostInteractionsService,
+        private readonly route: ActivatedRoute,
+        private readonly router: Router
+    ) {
         this.route.queryParamMap
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(params => {
@@ -113,7 +119,7 @@ export class DiscoverPageComponent {
     }
 
     get isAuthenticated(): boolean {
-        return this.session.isAuthenticated();
+        return this.postInteractions.isAuthenticated();
     }
 
     get activeStoryAuthorHandles(): string[] {
@@ -234,8 +240,25 @@ export class DiscoverPageComponent {
         }
     }
 
-    async deletePost(postId: string): Promise<void> {
+    requestDeletePost(postId: string): void {
         if (this.deletingPostId || this.savingPost) {
+            return;
+        }
+
+        this.pendingDeletePostId = postId;
+    }
+
+    cancelDeletePost(): void {
+        if (this.deletingPostId) {
+            return;
+        }
+
+        this.pendingDeletePostId = null;
+    }
+
+    async confirmDeletePost(): Promise<void> {
+        const postId = this.pendingDeletePostId;
+        if (!postId || this.deletingPostId || this.savingPost) {
             return;
         }
 
@@ -251,6 +274,7 @@ export class DiscoverPageComponent {
         } catch {
             this.status = 'Could not delete post.';
         } finally {
+            this.pendingDeletePostId = null;
             this.deletingPostId = null;
         }
     }
@@ -323,9 +347,7 @@ export class DiscoverPageComponent {
         this.status = '';
 
         try {
-            const marker = buildSharedPostMarker(buildSharedPostPreview(post));
-            const message = shareText ? `${shareText}\n${marker}` : marker;
-            await this.session.createPostAsync(message);
+            await this.postInteractions.shareToFeed(post, shareText);
             this.status = 'Post shared.';
             return true;
         } catch {
@@ -350,24 +372,7 @@ export class DiscoverPageComponent {
         this.status = '';
 
         try {
-            const marker = buildSharedPostMarker(buildSharedPostPreview(post));
-            const shareText = request.note.trim();
-            const sendToConversation = async (conversationId: string): Promise<void> => {
-                if (shareText) {
-                    await this.session.sendChatMessageAsync(conversationId, shareText);
-                }
-                await this.session.sendChatMessageAsync(conversationId, marker);
-            };
-
-            if (request.mode === 'group' && recipientIds.length > 1) {
-                const group = await this.session.createGroupConversationAsync('', recipientIds);
-                await sendToConversation(group.id);
-            } else {
-                await Promise.all(recipientIds.map(async (recipientId) => {
-                    const conversation = await this.session.createDirectConversationAsync(recipientId);
-                    await sendToConversation(conversation.id);
-                }));
-            }
+            await this.postInteractions.shareToChat(post, request);
             this.status = 'Post sent as message.';
             return true;
         } catch {
@@ -395,15 +400,15 @@ export class DiscoverPageComponent {
     }
 
     async toggleLike(post: PostDto): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.togglePostLikeAsync(post.id), 'Could not update like right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.toggleLike(post.id), 'Could not update like right now.');
     }
 
     async setReaction(post: PostDto, reactionType: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.setPostReactionAsync(post.id, reactionType), 'Could not set reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.setReaction(post.id, reactionType), 'Could not set reaction right now.');
     }
 
     async clearReaction(post: PostDto): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.clearPostReactionAsync(post.id), 'Could not clear reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.clearReaction(post.id), 'Could not clear reaction right now.');
     }
 
     async addComment(post: PostDto, payload: string | { content: string; parentCommentId?: string | null }): Promise<void> {
@@ -413,23 +418,23 @@ export class DiscoverPageComponent {
 
         const content = typeof payload === 'string' ? payload : payload.content;
         const parentCommentId = typeof payload === 'string' ? null : (payload.parentCommentId ?? null);
-        await this.runPostMutation(post.id, () => this.session.addCommentAsync(post.id, content, parentCommentId), 'Could not add comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.addComment(post.id, content, parentCommentId), 'Could not add comment right now.');
     }
 
     async updateComment(post: PostDto, commentId: string, content: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.updateCommentAsync(post.id, commentId, content), 'Could not update comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.updateComment(post.id, commentId, content), 'Could not update comment right now.');
     }
 
     async deleteComment(post: PostDto, commentId: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.deleteCommentAsync(post.id, commentId), 'Could not delete comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.deleteComment(post.id, commentId), 'Could not delete comment right now.');
     }
 
     async setCommentReaction(post: PostDto, commentId: string, reactionType: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.setCommentReactionAsync(post.id, commentId, reactionType), 'Could not react to comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.setCommentReaction(post.id, commentId, reactionType), 'Could not react to comment right now.');
     }
 
     async clearCommentReaction(post: PostDto, commentId: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.session.clearCommentReactionAsync(post.id, commentId), 'Could not clear comment reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.clearCommentReaction(post.id, commentId), 'Could not clear comment reaction right now.');
     }
 
     async toggleReelLike(reel: ReelDto): Promise<void> {
