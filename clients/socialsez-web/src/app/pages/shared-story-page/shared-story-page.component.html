@@ -21,7 +21,7 @@
     <article class="shared-card" *ngIf="story as item">
         <header class="meta-row">
             <div class="author-meta">
-                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
+                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
                 <ng-template #authorInitial>
                     <div class="author-avatar">{{ (item.authorHandle[0] || '?') | uppercase }}</div>
                 </ng-template>
@@ -36,10 +36,10 @@
         <p class="content" *ngIf="item.caption">{{ item.caption }}</p>
 
         <ng-container *ngIf="isVideoMedia(item.mediaUrl); else imageStory">
-            <video class="media" [src]="item.mediaUrl" controls playsinline preload="metadata"></video>
+            <video class="media" [src]="item.mediaUrl" controls autoplay muted loop playsinline preload="auto"></video>
         </ng-container>
         <ng-template #imageStory>
-            <img class="media" [src]="item.mediaUrl" alt="Shared story media" />
+            <img class="media" [src]="item.mediaUrl" loading="eager" decoding="async" alt="Shared story media" />
         </ng-template>
     </article>
 </section>

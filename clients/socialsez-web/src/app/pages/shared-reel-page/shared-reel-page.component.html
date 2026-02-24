@@ -21,7 +21,7 @@
     <article class="shared-card" *ngIf="reel as item">
         <header class="meta-row">
             <div class="author-meta">
-                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
+                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
                 <ng-template #authorInitial>
                     <div class="author-avatar">{{ (item.authorHandle[0] || '?') | uppercase }}</div>
                 </ng-template>

@@ -9,6 +9,9 @@
     position: relative;
     width: fit-content;
     touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .reaction-zone:has(.reaction-popover)::before {
@@ -68,6 +71,8 @@
     opacity: 0;
     transform: translateY(3px);
     transition: opacity 120ms ease, transform 120ms ease;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .reaction-popover.ready {
@@ -105,6 +110,7 @@
     font-size: 1.05rem;
     box-shadow: none;
     transform: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .reaction-pop-btn:hover {

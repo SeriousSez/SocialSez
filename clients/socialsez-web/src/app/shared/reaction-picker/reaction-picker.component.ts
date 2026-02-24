@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, NgZone, OnDestroy, Output, ViewChild, inject } from '@angular/core';
 import { ReactionSummaryDto } from '../../core/api.types';
 
 interface ReactionOption {
@@ -43,12 +43,51 @@ export class ReactionPickerComponent implements OnDestroy {
     private touchOpenTimerId: number | null = null;
     private activeTouchId: number | null = null;
     private touchLongPressTriggered = false;
+    private touchStartX = 0;
+    private touchStartY = 0;
+    private readonly ngZone = inject(NgZone);
+    private readonly onDocumentTouchMoveBound: (event: TouchEvent) => void;
+    private readonly onDocumentTouchEndBound: (event: TouchEvent) => void;
+    private readonly onDocumentTouchCancelBound: () => void;
     highlightedReactionType: string | null = null;
+
+    constructor() {
+        this.onDocumentTouchMoveBound = (event: TouchEvent) => {
+            if (this.activeTouchId === null) {
+                return;
+            }
+
+            this.ngZone.run(() => this.onDocumentTouchMove(event));
+        };
+
+        this.onDocumentTouchEndBound = (event: TouchEvent) => {
+            if (this.activeTouchId === null) {
+                return;
+            }
+
+            this.ngZone.run(() => this.onDocumentTouchEnd(event));
+        };
+
+        this.onDocumentTouchCancelBound = () => {
+            if (this.activeTouchId === null) {
+                return;
+            }
+
+            this.ngZone.run(() => this.onDocumentTouchCancel());
+        };
+
+        document.addEventListener('touchmove', this.onDocumentTouchMoveBound, { passive: false });
+        document.addEventListener('touchend', this.onDocumentTouchEndBound);
+        document.addEventListener('touchcancel', this.onDocumentTouchCancelBound);
+    }
 
     ngOnDestroy(): void {
         this.clearTimers();
         this.clearCloseAnimationTimer();
         this.clearTouchOpenTimer();
+        document.removeEventListener('touchmove', this.onDocumentTouchMoveBound);
+        document.removeEventListener('touchend', this.onDocumentTouchEndBound);
+        document.removeEventListener('touchcancel', this.onDocumentTouchCancelBound);
     }
 
     onPrimaryButtonClick(event: MouseEvent): void {
@@ -125,27 +164,17 @@ export class ReactionPickerComponent implements OnDestroy {
         this.clearTouchOpenTimer();
         const firstTouch = event.touches[0];
         this.activeTouchId = firstTouch.identifier;
+        this.touchStartX = firstTouch.clientX;
+        this.touchStartY = firstTouch.clientY;
         this.touchLongPressTriggered = false;
         this.highlightedReactionType = null;
 
         this.touchOpenTimerId = window.setTimeout(() => {
-            this.touchLongPressTriggered = true;
-            this.open = true;
-            this.popoverReady = false;
-            this.popoverClosing = false;
-            this.resolvedPopoverAlign = this.popoverAlign;
-            this.resolvedPopoverVertical = 'top';
+            this.openTouchPopover(firstTouch.clientX, firstTouch.clientY);
             this.touchOpenTimerId = null;
-
-            window.setTimeout(() => {
-                this.adjustPopoverAlignment();
-                this.popoverReady = true;
-                this.updateHighlightedReactionFromTouchPoint(firstTouch.clientX, firstTouch.clientY);
-            }, 0);
         }, 420);
     }
 
-    @HostListener('document:touchmove', ['$event'])
     onDocumentTouchMove(event: TouchEvent): void {
         if (this.activeTouchId === null) {
             return;
@@ -156,13 +185,22 @@ export class ReactionPickerComponent implements OnDestroy {
             return;
         }
 
+        if (!this.touchLongPressTriggered) {
+            const deltaX = touch.clientX - this.touchStartX;
+            const deltaY = touch.clientY - this.touchStartY;
+            const movedDistance = Math.hypot(deltaX, deltaY);
+            if (movedDistance >= 8) {
+                this.clearTouchOpenTimer();
+                this.openTouchPopover(touch.clientX, touch.clientY);
+            }
+        }
+
         if (this.touchLongPressTriggered) {
             event.preventDefault();
             this.updateHighlightedReactionFromTouchPoint(touch.clientX, touch.clientY);
         }
     }
 
-    @HostListener('document:touchend', ['$event'])
     onDocumentTouchEnd(event: TouchEvent): void {
         if (this.activeTouchId === null) {
             return;
@@ -191,7 +229,6 @@ export class ReactionPickerComponent implements OnDestroy {
         this.closePopoverNow();
     }
 
-    @HostListener('document:touchcancel')
     onDocumentTouchCancel(): void {
         if (this.activeTouchId === null) {
             return;
@@ -264,6 +301,28 @@ export class ReactionPickerComponent implements OnDestroy {
         this.clearTouchOpenTimer();
         this.activeTouchId = null;
         this.touchLongPressTriggered = false;
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+    }
+
+    private openTouchPopover(clientX: number, clientY: number): void {
+        if (this.touchLongPressTriggered) {
+            this.updateHighlightedReactionFromTouchPoint(clientX, clientY);
+            return;
+        }
+
+        this.touchLongPressTriggered = true;
+        this.open = true;
+        this.popoverReady = false;
+        this.popoverClosing = false;
+        this.resolvedPopoverAlign = this.popoverAlign;
+        this.resolvedPopoverVertical = 'top';
+
+        window.setTimeout(() => {
+            this.adjustPopoverAlignment();
+            this.popoverReady = true;
+            this.updateHighlightedReactionFromTouchPoint(clientX, clientY);
+        }, 0);
     }
 
     private findActiveTouch(touchList: TouchList): Touch | null {
