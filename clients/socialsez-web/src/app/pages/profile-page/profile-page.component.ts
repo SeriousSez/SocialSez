@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
@@ -133,6 +133,7 @@ export class ProfilePageComponent implements OnDestroy {
         this.stopStoryFrameDragging();
     };
     private readonly ngZone = inject(NgZone);
+    private readonly cdr = inject(ChangeDetectorRef);
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(public readonly session: SessionService, private readonly route: ActivatedRoute, private readonly router: Router) {
@@ -754,6 +755,7 @@ export class ProfilePageComponent implements OnDestroy {
                     this.activitySummary = null;
                 } finally {
                     this.loading = false;
+                    this.cdr.detectChanges();
                 }
             } while (this.reloadQueued);
         } finally {
@@ -1571,6 +1573,22 @@ export class ProfilePageComponent implements OnDestroy {
     }
 
     private getNewestUnseenStoryIndex(stories: Array<{ viewedByMe: boolean; createdAtUtc: string }>): number {
+        if (!stories.some(story => story.viewedByMe)) {
+            let oldestIndex = 0;
+            let oldestTimestamp = Number.POSITIVE_INFINITY;
+
+            for (let index = 0; index < stories.length; index += 1) {
+                const parsedTimestamp = Date.parse(stories[index].createdAtUtc);
+                const timestamp = Number.isNaN(parsedTimestamp) ? Number.POSITIVE_INFINITY : parsedTimestamp;
+                if (timestamp < oldestTimestamp) {
+                    oldestTimestamp = timestamp;
+                    oldestIndex = index;
+                }
+            }
+
+            return oldestIndex;
+        }
+
         let selectedIndex = -1;
         let selectedTimestamp = Number.NEGATIVE_INFINITY;
 

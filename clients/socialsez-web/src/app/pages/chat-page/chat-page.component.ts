@@ -2756,6 +2756,22 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     private getNewestUnseenStoryIndex(stories: Array<{ viewedByMe: boolean; createdAtUtc: string }>): number {
+        if (!stories.some(story => story.viewedByMe)) {
+            let oldestIndex = 0;
+            let oldestTimestamp = Number.POSITIVE_INFINITY;
+
+            for (let index = 0; index < stories.length; index += 1) {
+                const parsedTimestamp = Date.parse(stories[index].createdAtUtc);
+                const timestamp = Number.isNaN(parsedTimestamp) ? Number.POSITIVE_INFINITY : parsedTimestamp;
+                if (timestamp < oldestTimestamp) {
+                    oldestTimestamp = timestamp;
+                    oldestIndex = index;
+                }
+            }
+
+            return oldestIndex;
+        }
+
         let selectedIndex = -1;
         let selectedTimestamp = Number.NEGATIVE_INFINITY;
 
