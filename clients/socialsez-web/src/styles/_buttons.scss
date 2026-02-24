@@ -1,8 +1,8 @@
 button {
     border: none;
     border-radius: 10px;
-    background: linear-gradient(135deg, #0f172a, #1f2937);
-    color: #ffffff;
+    background: var(--gradient-primary);
+    color: var(--color-text-on-dark);
     padding: 10px 14px;
     cursor: pointer;
     font-weight: 700;
@@ -11,7 +11,7 @@ button {
 
 button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 14px 26px -20px #0f172a;
+    box-shadow: 0 14px 26px -20px var(--color-primary);
 }
 
 button:disabled {
@@ -22,7 +22,7 @@ button:disabled {
 }
 
 button:focus-visible {
-    outline: 2px solid #60a5fa;
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
 }
 
@@ -45,17 +45,17 @@ button.is-loading::after {
 
 button.ghost.is-loading::after {
     border: 2px solid rgba(15, 23, 42, 0.25);
-    border-top-color: #0f172a;
+    border-top-color: var(--color-primary);
 }
 
 button.is-success {
-    background: #166534;
-    color: #ffffff;
+    background: var(--color-success);
+    color: var(--color-text-on-dark);
 }
 
 button.is-failure {
-    background: #991b1b;
-    color: #ffffff;
+    background: var(--color-danger-strong);
+    color: var(--color-text-on-dark);
 }
 
 @keyframes button-spin {
@@ -66,11 +66,11 @@ button.is-failure {
 
 button.ghost {
     background: #e2e8f0;
-    color: #0f172a;
+    color: var(--color-text);
 }
 
 button.danger {
-    background: linear-gradient(135deg, #991b1b, #b91c1c);
+    background: var(--gradient-danger);
 }
 
 button.retry {
@@ -100,9 +100,9 @@ button.retry {
     height: 100%;
     border: none;
     border-radius: 0;
-    border-left: 1px solid #dbe4f0;
+    border-left: 1px solid var(--color-border);
     background: transparent;
-    color: #64748b;
+    color: var(--color-text-muted);
     display: grid;
     place-items: center;
     padding: 0;
@@ -112,14 +112,14 @@ button.retry {
 }
 
 .search-row .search-btn:hover {
-    background: #f8fafc;
-    color: #334155;
+    background: var(--color-surface-alt);
+    color: var(--color-text-subtle);
     box-shadow: none;
     transform: none;
 }
 
 .search-row .search-btn:focus-visible {
-    outline: 2px solid #60a5fa;
+    outline: 2px solid var(--color-accent);
     outline-offset: -2px;
 }
 
@@ -128,7 +128,7 @@ button.retry {
     border-radius: 10px;
     padding: 10px 12px;
     background: transparent;
-    color: #334155;
+    color: var(--color-text-subtle);
     font-weight: 700;
     box-shadow: none;
     transform: none;
@@ -140,13 +140,13 @@ button.retry {
 }
 
 .mode-btn.active {
-    background: #0f172a;
-    color: #fff;
-    border-color: #0f172a;
+    background: var(--color-primary);
+    color: var(--color-text-on-dark);
+    border-color: var(--color-primary);
 }
 
 button.auth-submit {
-    background: #2563eb;
+    background: var(--color-secondary);
 }
 
 button.auth-submit:hover {
@@ -158,7 +158,7 @@ button.link-btn {
     padding: 0;
     margin-left: 6px;
     background: transparent;
-    color: #0b4ab8;
+    color: var(--color-link);
     font-weight: 700;
     box-shadow: none;
     transform: none;
