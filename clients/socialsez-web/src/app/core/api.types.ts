@@ -6,6 +6,7 @@ export interface ProfileDto {
     imageUrl?: string;
     isPrivate: boolean;
     createdAtUtc: string;
+    handleChangeAvailableAtUtc?: string;
 }
 
 export interface ProfileActivitySummaryDto {
@@ -45,6 +46,7 @@ export interface UpdateProfileRequest {
     displayName: string;
     bio?: string;
     imageUrl?: string;
+    handle?: string;
 }
 
 export interface UpdateProfilePrivacyRequest {

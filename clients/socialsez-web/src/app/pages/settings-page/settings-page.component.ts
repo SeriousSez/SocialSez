@@ -20,6 +20,7 @@ export class SettingsPageComponent implements OnDestroy {
     };
 
     displayName = '';
+    handle = '';
     bio = '';
     imageUrl = '';
     isPrivate = false;
@@ -56,6 +57,7 @@ export class SettingsPageComponent implements OnDestroy {
     constructor(public readonly session: SessionService) {
         if (session.profile) {
             this.displayName = session.profile.displayName;
+            this.handle = session.profile.handle;
             this.bio = session.profile.bio;
             this.imageUrl = session.profile.imageUrl ?? '';
             this.isPrivate = session.profile.isPrivate;
@@ -70,14 +72,16 @@ export class SettingsPageComponent implements OnDestroy {
 
     async saveProfile(): Promise<void> {
         try {
+            this.handle = this.normalizeHandle(this.handle);
             await this.session.updateProfileAsync({
                 displayName: this.displayName,
+                handle: this.handle,
                 bio: this.bio,
                 imageUrl: this.imageUrl
             });
             this.status = 'Profile settings saved.';
-        } catch {
-            this.status = 'Could not save profile settings.';
+        } catch (error) {
+            this.status = this.extractApiMessage(error, 'Could not save profile settings.');
         }
     }
 
@@ -86,6 +90,7 @@ export class SettingsPageComponent implements OnDestroy {
             await this.session.refreshMeAsync();
             if (this.session.profile) {
                 this.displayName = this.session.profile.displayName;
+                this.handle = this.session.profile.handle;
                 this.bio = this.session.profile.bio;
                 this.imageUrl = this.session.profile.imageUrl ?? '';
                 this.isPrivate = this.session.profile.isPrivate;
@@ -103,6 +108,20 @@ export class SettingsPageComponent implements OnDestroy {
         } catch {
             this.status = 'Could not save privacy setting.';
         }
+    }
+
+    onHandleInput(value: string): void {
+        this.handle = this.normalizeHandle(value);
+    }
+
+    get handleChangeAvailableAtUtc(): Date | null {
+        const raw = this.session.profile?.handleChangeAvailableAtUtc;
+        if (!raw) {
+            return null;
+        }
+
+        const parsed = new Date(raw);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
     }
 
     async refreshSession(): Promise<void> {
@@ -302,6 +321,22 @@ export class SettingsPageComponent implements OnDestroy {
 
     private applyThemePreference(): void {
         document.documentElement.classList.toggle('theme-dark', !!this.prefs.darkMode);
+    }
+
+    private normalizeHandle(value: string): string {
+        return value
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '-');
+    }
+
+    private extractApiMessage(error: unknown, fallback: string): string {
+        const maybeMessage = (error as { error?: { message?: string } })?.error?.message;
+        if (typeof maybeMessage === 'string' && maybeMessage.trim()) {
+            return maybeMessage;
+        }
+
+        return fallback;
     }
 
     private async loadAvatarCropFileAsync(file: File): Promise<void> {

@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
-import { filter } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { filter, skip } from 'rxjs';
 import { FeedMode, PostDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
 import { executePostShareAction, executePostShareToChat, executePostShareToFeedAndReload } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
@@ -150,6 +150,7 @@ export class FeedPageComponent implements OnDestroy {
     private readonly destroyRef = inject(DestroyRef);
     private readonly ngZone = inject(NgZone);
     private pendingStoryHandleFromRoute: string | null = null;
+    private hasLoadedAtLeastOnce = false;
 
     constructor(
         private readonly session: SessionService,
@@ -162,22 +163,11 @@ export class FeedPageComponent implements OnDestroy {
         this.session.appChanges$
             .pipe(
                 filter(change => change === 'posts' || change === 'profile' || change === 'session'),
+                skip(1),
                 takeUntilDestroyed(this.destroyRef)
             )
             .subscribe(() => {
                 void this.load();
-            });
-
-        this.router.events
-            .pipe(
-                filter(event => event instanceof NavigationEnd),
-                takeUntilDestroyed(this.destroyRef)
-            )
-            .subscribe((event) => {
-                const navigation = event as NavigationEnd;
-                if (navigation.urlAfterRedirects.startsWith('/feed')) {
-                    void this.load();
-                }
             });
 
         this.route.queryParamMap
@@ -190,7 +180,11 @@ export class FeedPageComponent implements OnDestroy {
 
         this.syncCompactFeedPreference();
 
-        void this.load();
+        queueMicrotask(() => {
+            if (!this.loadInFlight && !this.hasLoadedAtLeastOnce) {
+                void this.load();
+            }
+        });
     }
 
     get currentProfileId(): string | null {
@@ -653,6 +647,7 @@ export class FeedPageComponent implements OnDestroy {
                 await this.loadStories(mode);
             } while (this.reloadQueued);
         } finally {
+            this.hasLoadedAtLeastOnce = true;
             this.loadInFlight = false;
         }
     }

@@ -477,14 +477,14 @@
 .chat-layout .reaction-summary.corner {
     position: absolute;
     bottom: -12px;
-    left: -5px;
+    left: 0px;
     z-index: 2;
     flex-wrap: nowrap;
 }
 
 .chat-layout .message.own .reaction-summary.corner {
     left: auto;
-    right: -5px;
+    right: 0px;
 }
 
 .chat-layout .reaction-summary span {
@@ -796,6 +796,12 @@
 :root.theme-dark .chat-layout .bubble p,
 :root.theme-dark .chat-layout .message-time-side,
 :root.theme-dark .chat-layout .reaction-summary {
+    color: var(--color-text-subtle);
+}
+
+:root.theme-dark .chat-layout .reaction-summary span {
+    background: var(--color-surface-muted);
+    border-color: var(--color-border);
     color: var(--color-text-subtle);
 }
 

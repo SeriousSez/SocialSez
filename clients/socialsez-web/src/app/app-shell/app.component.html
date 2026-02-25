@@ -30,7 +30,7 @@
             <a class="tab-chat" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i><span>Chat</span></a>
             <a class="tab-notifications" routerLink="/notifications" routerLinkActive="active" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-bell" aria-hidden="true"></i>
-                <span class="tab-label">
+                <span class="tab-content">
                     <span>Notifications</span>
                     <span class="tab-badge" *ngIf="unreadNotificationsCount > 0">{{ unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount }}</span>
                 </span>
@@ -79,9 +79,9 @@
             </ul>
             <p class="hint" *ngIf="!loadingTrending && !trendingHashtags.length">No trending hashtags yet.</p>
         </div>
-        <p class="hint" *ngIf="showDebug && session.nextSilentRefreshAt">
+        <!-- <p class="hint" *ngIf="showDebug && session.nextSilentRefreshAt">
             [debug] Next silent refresh: {{ session.nextSilentRefreshAt | date:'mediumTime' }}
-        </p>
+        </p> -->
     </aside>
 </main>
 

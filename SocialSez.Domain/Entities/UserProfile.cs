@@ -9,6 +9,7 @@ public class UserProfile
     public string? ImageUrl { get; set; }
     public bool IsPrivate { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime? LastHandleChangeAtUtc { get; set; }
 
     public ICollection<Post> Posts { get; set; } = new List<Post>();
     public ICollection<PostReaction> Reactions { get; set; } = new List<PostReaction>();

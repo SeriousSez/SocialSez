@@ -402,6 +402,16 @@ using (var scope = app.Services.CreateScope())
                 dbContext.Database.ExecuteSqlRaw("ALTER TABLE UserProfiles ADD COLUMN IsPrivate INTEGER NOT NULL DEFAULT 0;");
             }
 
+            var handleCooldownColumnExists = dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('UserProfiles') WHERE name = 'LastHandleChangeAtUtc'")
+                .ToList()
+                .Count > 0;
+
+            if (!handleCooldownColumnExists)
+            {
+                dbContext.Database.ExecuteSqlRaw("ALTER TABLE UserProfiles ADD COLUMN LastHandleChangeAtUtc TEXT NULL;");
+            }
+
             var parentCommentColumnExists = dbContext.Database
                 .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('Comments') WHERE name = 'ParentCommentId'")
                 .ToList()
@@ -425,6 +435,19 @@ using (var scope = app.Services.CreateScope())
             }
 
             dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_ReelComments_ParentCommentId ON ReelComments (ParentCommentId);");
+        }
+
+        if (dbContext.Database.IsMySql())
+        {
+            var handleCooldownColumnExists = dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'UserProfiles' AND COLUMN_NAME = 'LastHandleChangeAtUtc' LIMIT 1;")
+                .ToList()
+                .Count > 0;
+
+            if (!handleCooldownColumnExists)
+            {
+                dbContext.Database.ExecuteSqlRaw("ALTER TABLE UserProfiles ADD COLUMN LastHandleChangeAtUtc datetime(6) NULL;");
+            }
         }
     }
     catch (Exception ex)

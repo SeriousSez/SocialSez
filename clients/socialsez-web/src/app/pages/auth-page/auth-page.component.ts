@@ -44,8 +44,8 @@ export class AuthPageComponent {
                 displayName: this.displayName,
                 bio: this.bio
             });
-        } catch {
-            this.errorMessage = 'Could not register with these details.';
+        } catch (error) {
+            this.errorMessage = this.extractApiMessage(error, 'Could not register with these details.');
         }
     }
 
@@ -75,5 +75,14 @@ export class AuthPageComponent {
             .trim()
             .toLowerCase()
             .replace(/\s+/g, '-');
+    }
+
+    private extractApiMessage(error: unknown, fallback: string): string {
+        const maybeMessage = (error as { error?: { message?: string } })?.error?.message;
+        if (typeof maybeMessage === 'string' && maybeMessage.trim()) {
+            return maybeMessage;
+        }
+
+        return fallback;
     }
 }

@@ -310,3 +310,28 @@ app-reel-composer-modal {
     background: var(--color-surface-muted) !important;
     color: var(--color-text) !important;
 }
+
+html,
+body,
+* {
+    scrollbar-color: var(--color-border-input) var(--color-surface-alt);
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-surface-alt);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-border-input);
+    border: 2px solid var(--color-surface-alt);
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-strong);
+}

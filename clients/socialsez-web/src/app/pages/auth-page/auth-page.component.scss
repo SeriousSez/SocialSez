@@ -33,11 +33,29 @@ h2 {
     padding: 10px 12px;
     width: 100%;
     min-height: 42px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #64748b;
+    font-weight: 800;
+    box-shadow: none;
+    transform: none;
+}
+
+.mode-btn.active {
+    background: #1e293b;
+    color: #fff;
+    border-color: #1e293b;
 }
 
 .mode-btn:disabled {
     opacity: 1;
     cursor: default;
+}
+
+.mode-btn:not(.active):hover {
+    background: #eef2f7;
+    color: #334155;
 }
 
 .auth-form {
@@ -74,6 +92,30 @@ label {
 
 .link-btn {
     cursor: pointer;
+}
+
+:host-context(.theme-dark) {
+    .mode-switch {
+        border-color: var(--color-border);
+        background: var(--color-surface-muted);
+    }
+
+    .mode-btn {
+        background: transparent;
+        color: var(--color-text-muted);
+        border-color: transparent;
+    }
+
+    .mode-btn.active {
+        background: var(--gradient-primary);
+        color: var(--color-text-on-dark);
+        border-color: var(--color-border);
+    }
+
+    .mode-btn:not(.active):hover {
+        background: var(--color-surface-alt);
+        color: var(--color-text);
+    }
 }
 
 @media (max-width:760px) {

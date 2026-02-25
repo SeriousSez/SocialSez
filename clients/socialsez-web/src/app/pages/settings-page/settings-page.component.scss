@@ -7,12 +7,15 @@
 
 h2 {
     margin: 0;
-    letter-spacing: -0.02em
+    letter-spacing: -0.02em;
+    font-size: 1.35rem;
+    line-height: 1.2;
 }
 
 .page-head p {
     margin: 4px 0 0;
-    color: #475569
+    color: #475569;
+    font-size: 0.9rem;
 }
 
 .chip {
@@ -35,7 +38,9 @@ h2 {
 }
 
 .card h3 {
-    margin: 0
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.25;
 }
 
 .section-toggle {
@@ -102,14 +107,17 @@ label {
 
 .meta {
     margin: 0;
-    color: #334155
+    color: #334155;
+    font-size: 0.9rem;
+    line-height: 1.35;
 }
 
 .toggle {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 600
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 .toggle input {
@@ -307,6 +315,15 @@ label {
     .page-head {
         flex-direction: column;
         align-items: flex-start
+    }
+
+    h2 {
+        font-size: 1.22rem;
+    }
+
+    .card h3,
+    .section-toggle h3 {
+        font-size: 0.95rem;
     }
 
     .page {

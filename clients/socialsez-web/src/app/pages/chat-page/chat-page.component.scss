@@ -1253,6 +1253,10 @@
     color: #475569;
 }
 
+.mobile-reaction-menu {
+    display: none;
+}
+
 @media (max-width: 960px) {
     .chat-layout {
         grid-template-columns: 1fr;
@@ -1383,6 +1387,68 @@
 
     .message-panel {
         grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .message {
+        position: relative;
+    }
+
+    .message-reaction-picker app-reaction-picker {
+        display: none;
+    }
+
+    .message-reaction-picker {
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+    }
+
+    .mobile-reaction-menu {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        position: absolute;
+        left: 38px;
+        bottom: calc(100% + 6px);
+        z-index: 25;
+        padding: 6px;
+        border: 1px solid #dbe4f0;
+        border-radius: 999px;
+        background: #fff;
+        box-shadow: 0 14px 26px -18px rgba(15, 23, 42, 0.55);
+        max-width: calc(100vw - 32px);
+        overflow-x: auto;
+    }
+
+    .message.own .mobile-reaction-menu {
+        left: auto;
+        right: 8px;
+    }
+
+    .mobile-reaction-option {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        border-radius: 50%;
+        border: 1px solid #dbe4f0;
+        background: #f8fafc;
+        color: #0f172a;
+        padding: 0;
+        display: grid;
+        place-items: center;
+        font-size: 1.05rem;
+        line-height: 1;
+        box-shadow: none;
+        transform: none;
+    }
+
+    .mobile-reaction-option.active {
+        background: #dbeafe;
+        border-color: #93c5fd;
+    }
+
+    .mobile-reaction-option:disabled {
+        opacity: 0.7;
     }
 
     .message-list {

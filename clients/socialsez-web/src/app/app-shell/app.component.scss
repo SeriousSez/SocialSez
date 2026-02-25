@@ -126,7 +126,7 @@ h1 {
     transition: 160ms ease;
 }
 
-.tab-label {
+.tab-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -501,7 +501,10 @@ label {
         border-top: 1px solid #dbe4f0;
         box-shadow: none;
         padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+        height: calc(var(--mobile-footer-nav-height) + env(safe-area-inset-bottom));
+        box-sizing: border-box;
         overflow-x: auto;
+        pointer-events: none;
     }
 
     .mobile-footer-tabs.hidden-on-chat {
@@ -525,6 +528,7 @@ label {
         transform: none;
         opacity: 0.82;
         position: relative;
+        pointer-events: auto;
     }
 
     .mobile-footer-tab i {

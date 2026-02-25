@@ -67,6 +67,7 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
             entity.Property(x => x.Bio).HasMaxLength(500);
             entity.Property(x => x.ImageUrl).HasMaxLength(1024);
             entity.Property(x => x.IsPrivate).HasDefaultValue(false);
+            entity.Property(x => x.LastHandleChangeAtUtc);
             entity.HasIndex(x => x.Handle).IsUnique();
         });
 

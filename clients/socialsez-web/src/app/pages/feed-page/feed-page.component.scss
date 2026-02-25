@@ -85,6 +85,7 @@ h2 {
     .hero-create-dropdown button:hover {
         background: var(--color-surface-alt);
     }
+
 }
 
 .upload-status {
@@ -457,8 +458,13 @@ h2 {
 }
 
 .stories-rail::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: var(--color-border-input);
+    border: 1px solid var(--color-surface-alt);
     border-radius: 999px;
+}
+
+.stories-rail::-webkit-scrollbar-track {
+    background: var(--color-surface-alt);
 }
 
 .story-item {

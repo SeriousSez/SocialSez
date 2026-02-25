@@ -20,6 +20,12 @@ h2 {
     background: #fff;
 }
 
+:host-context(.theme-dark) .back-link {
+    background: var(--color-surface-muted);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
 .list {
     display: grid;
     gap: 10px;

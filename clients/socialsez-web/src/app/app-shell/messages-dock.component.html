@@ -144,6 +144,11 @@
 
                     <article class="thread-message" [class.own]="isOwnMessage(message)" [class.compact]="isCompactMessage(i)" [class.shared-only]="messageVariant(message.content) === 'shared-only'" [class.media-only]="messageVariant(message.content) === 'media-only'">
                         <div class="thread-row">
+                            <ng-container *ngIf="!isOwnMessage(message)">
+                                <span class="thread-message-avatar fallback" *ngIf="!messageAvatarUrl(message)">{{ messageAvatarText(message) }}</span>
+                                <img class="thread-message-avatar" *ngIf="messageAvatarUrl(message) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Message sender avatar" />
+                            </ng-container>
+
                             <div class="thread-bubble-wrap" *ngIf="parsedMessage(message.content) as parsed">
                                 <div class="thread-body">
                                     <p *ngIf="parsed.text">{{ parsed.text }}</p>
@@ -203,7 +208,7 @@
                                 </div>
 
                                 <div class="dock-reaction-summary corner" *ngIf="message.reactions.length">
-                                    <span *ngFor="let reaction of message.reactions">{{ reactionEmoji(reaction.type) }} {{ reaction.count }}</span>
+                                    <span *ngFor="let reaction of message.reactions">{{ reactionEmoji(reaction.type) }}</span>
                                 </div>
                             </div>
 

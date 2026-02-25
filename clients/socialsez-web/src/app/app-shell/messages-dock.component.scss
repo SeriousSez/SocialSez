@@ -290,6 +290,23 @@
     gap: 6px;
 }
 
+.thread-message-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.thread-message-avatar.fallback {
+    display: grid;
+    place-items: center;
+    background: #dbeafe;
+    color: #1e3a8a;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
 .thread-bubble-wrap {
     position: relative;
 }
@@ -788,6 +805,12 @@
     .chat-search-hint,
     .status {
         color: var(--color-text-muted);
+    }
+
+    .thread-message-avatar.fallback {
+        background: var(--color-surface-muted);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
     }
 
     .thread-message.shared-only .thread-body,

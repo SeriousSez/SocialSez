@@ -55,8 +55,19 @@ public class ProfilesController(IProfileService profileService) : ControllerBase
             return Unauthorized();
         }
 
-        var profile = await profileService.UpdateAsync(profileId, request, cancellationToken);
-        return profile is null ? NotFound() : Ok(profile);
+        try
+        {
+            var profile = await profileService.UpdateAsync(profileId, request, cancellationToken);
+            return profile is null ? NotFound() : Ok(profile);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [Authorize]

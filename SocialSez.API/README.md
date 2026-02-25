@@ -16,6 +16,14 @@ dotnet run --project SocialSez.API
 
 In `DEBUG`, the app uses SQLite (`ConnectionStrings:Sqlite`) so data persists across restarts without extra setup. In non-debug builds, it uses MySQL from `ConnectionStrings:MySql`.
 
+## MySQL schema update
+
+If you deployed a database created before the handle cooldown feature, apply this script once:
+
+- `artifacts/db/mysql/2026-02-25-add-last-handle-change-at-utc.sql`
+
+It adds `UserProfiles.LastHandleChangeAtUtc` in an idempotent way so login/profile queries do not fail.
+
 ## Stories and Reels API (MVP)
 
 All endpoints require JWT auth.

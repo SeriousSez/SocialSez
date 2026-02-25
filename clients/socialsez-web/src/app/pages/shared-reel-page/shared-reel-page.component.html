@@ -33,7 +33,19 @@
             <button type="button" class="ghost" (click)="copyLinkAsync()">Copy link</button>
         </header>
 
-        <p class="content" *ngIf="item.caption">{{ item.caption }}</p>
+        <p class="content" *ngIf="item.caption as caption">
+            <ng-container *ngFor="let line of contentLines(caption); let isLast = last">
+                <span class="content-line">
+                    <ng-container *ngFor="let part of line">
+                        <a *ngIf="part.hashtag; else reelPlainText" class="hashtag" [href]="'/hashtags/' + part.hashtag" (pointerup)="goToHashtag(part.hashtag, $event)" (click)="goToHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                        <ng-template #reelPlainText>{{ part.text }}</ng-template>
+                    </ng-container>
+                </span>
+                <br *ngIf="!isLast" />
+            </ng-container>
+        </p>
+
+        <p class="hashtag-debug">Hashtag clicks: {{ hashtagClickCount }} <span *ngIf="lastClickedHashtag">(last: #{{ lastClickedHashtag }})</span></p>
 
         <video class="media" [poster]="item.thumbnailUrl || null" [src]="item.videoUrl" controls autoplay muted loop playsinline preload="auto"></video>
     </article>

@@ -1,11 +1,13 @@
 <section class="page">
     <h2>Discover</h2>
-    <label>Search
-        <input [(ngModel)]="query" placeholder="Search users, reels, posts, hashtags" (keydown.enter)="search()" />
-    </label>
+    <div class="search-row">
+        <label class="search-label">Search
+            <input [(ngModel)]="query" placeholder="Search users, reels, posts, hashtags" (keydown.enter)="search()" />
+        </label>
 
-    <div class="actions">
-        <button type="button" (click)="search()">Search</button>
+        <div class="actions">
+            <button type="button" (click)="search()">Search</button>
+        </div>
     </div>
 
     <div class="scope-tabs" *ngIf="query.trim()">

@@ -477,6 +477,41 @@ export class MessagesDockComponent {
         return this.session.profile?.id === message.authorProfileId;
     }
 
+    messageAvatarUrl(message: ChatMessageDto): string | undefined {
+        if (this.isOwnMessage(message)) {
+            return this.session.profile?.imageUrl?.trim() || undefined;
+        }
+
+        const directImage = message.authorImageUrl?.trim();
+        if (directImage) {
+            return directImage;
+        }
+
+        const participantImage = this.activeConversation?.participants
+            .find(participant => participant.profileId === message.authorProfileId)
+            ?.imageUrl
+            ?.trim();
+
+        return participantImage || undefined;
+    }
+
+    messageAvatarText(message: ChatMessageDto): string {
+        if (this.isOwnMessage(message)) {
+            const source = this.session.profile?.displayName?.trim()
+                || this.session.profile?.handle?.trim()
+                || message.authorHandle?.trim();
+            return source ? source[0].toUpperCase() : 'U';
+        }
+
+        const source = message.authorHandle?.trim()
+            || this.activeConversation?.participants
+                .find(participant => participant.profileId === message.authorProfileId)
+                ?.displayName
+                ?.trim();
+
+        return source ? source[0].toUpperCase() : 'U';
+    }
+
     shouldShowMessageTimeBreak(index: number): boolean {
         if (index < 0 || index >= this.messages.length) {
             return false;

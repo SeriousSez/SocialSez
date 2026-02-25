@@ -132,7 +132,26 @@ public class AuthService(
             expiresAtUtc,
             refreshTokenRaw,
             refreshTokenExpiresAtUtc,
-            new ProfileDto(profile.Id, profile.Handle, profile.DisplayName, profile.Bio, profile.ImageUrl, profile.IsPrivate, profile.CreatedAtUtc));
+            new ProfileDto(
+                profile.Id,
+                profile.Handle,
+                profile.DisplayName,
+                profile.Bio,
+                profile.ImageUrl,
+                profile.IsPrivate,
+                profile.CreatedAtUtc,
+                CalculateHandleChangeAvailableAtUtc(profile.LastHandleChangeAtUtc)));
+    }
+
+    private static DateTime? CalculateHandleChangeAvailableAtUtc(DateTime? lastHandleChangeAtUtc)
+    {
+        if (!lastHandleChangeAtUtc.HasValue)
+        {
+            return null;
+        }
+
+        var availability = lastHandleChangeAtUtc.Value.AddDays(30);
+        return availability > DateTime.UtcNow ? availability : null;
     }
 
     private async Task<(string RefreshToken, DateTime ExpiresAtUtc)> CreateRefreshTokenAsync(Guid userId, CancellationToken cancellationToken)

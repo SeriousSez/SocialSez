@@ -151,6 +151,11 @@ export class ChatPageComponent implements OnDestroy {
     gifInputOpen = false;
     uploadingImage = false;
     status = '';
+    mobileReactionMessageId: string | null = null;
+    private mobileReactionPressTimerId: number | null = null;
+    private mobileReactionPressedMessageId: string | null = null;
+    private mobileReactionLongPressTriggered = false;
+    private readonly mobileReactionLongPressDelayMs = 420;
     private readonly likedSharedStoryIds = new Set<string>();
     private readonly expandedSharedReelReplyRootIds = new Set<string>();
     private readonly unavailableSharedReelKeys = new Set<string>();
@@ -238,6 +243,8 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.clearMobileReactionLongPressState();
+
         if (this.searchProfilesDebounceId !== null) {
             window.clearTimeout(this.searchProfilesDebounceId);
             this.searchProfilesDebounceId = null;
@@ -255,12 +262,22 @@ export class ChatPageComponent implements OnDestroy {
 
     @HostListener('document:pointerdown', ['$event'])
     onDocumentPointerDown(event: PointerEvent): void {
+        const path = event.composedPath();
+        const isInside = (element: Element | null | undefined): boolean => !!element && path.includes(element);
+
+        if (this.mobileReactionMessageId) {
+            const clickedInsideMobileReactionMenu = path.some(
+                item => item instanceof HTMLElement && item.classList.contains('mobile-reaction-menu')
+            );
+
+            if (!clickedInsideMobileReactionMenu) {
+                this.mobileReactionMessageId = null;
+            }
+        }
+
         if (!this.emojiPickerOpen && !this.gifInputOpen) {
             return;
         }
-
-        const path = event.composedPath();
-        const isInside = (element: Element | null | undefined): boolean => !!element && path.includes(element);
 
         const picker = this.emojiPickerWrapRef?.nativeElement;
         if (this.emojiPickerOpen && isInside(picker)) {
@@ -284,6 +301,67 @@ export class ChatPageComponent implements OnDestroy {
 
         this.emojiPickerOpen = false;
         this.gifInputOpen = false;
+    }
+
+    onMessagePressStart(message: ChatMessageDto, event: PointerEvent): void {
+        if (event.pointerType !== 'touch') {
+            return;
+        }
+
+        if (!this.isMobileReactionMode() || this.loadingMessages || this.reactingMessageId === message.id) {
+            return;
+        }
+
+        const target = event.target as HTMLElement | null;
+        if (target && this.isMessageInteractionTarget(target)) {
+            return;
+        }
+
+        this.clearMobileReactionLongPressState();
+        this.mobileReactionPressedMessageId = message.id;
+        this.mobileReactionLongPressTriggered = false;
+        this.mobileReactionPressTimerId = window.setTimeout(() => {
+            this.mobileReactionLongPressTriggered = true;
+            this.mobileReactionMessageId = message.id;
+            this.mobileReactionPressTimerId = null;
+        }, this.mobileReactionLongPressDelayMs);
+    }
+
+    onMessagePressEnd(event?: PointerEvent): void {
+        if (!this.isMobileReactionMode()) {
+            return;
+        }
+
+        if (event?.pointerType === 'touch' && this.mobileReactionLongPressTriggered) {
+            event.preventDefault();
+        }
+
+        if (this.mobileReactionPressTimerId !== null) {
+            window.clearTimeout(this.mobileReactionPressTimerId);
+            this.mobileReactionPressTimerId = null;
+        }
+
+        this.mobileReactionPressedMessageId = null;
+        this.mobileReactionLongPressTriggered = false;
+    }
+
+    onMessagePressCancel(): void {
+        this.clearMobileReactionLongPressState();
+    }
+
+    onMessageContextMenu(event: MouseEvent): void {
+        if (!this.isMobileReactionMode()) {
+            return;
+        }
+
+        event.preventDefault();
+    }
+
+    async onMobileReactionSelected(message: ChatMessageDto, reactionType: string, event: MouseEvent): Promise<void> {
+        event.preventDefault();
+        event.stopPropagation();
+        await this.onMessageReactionSelected(message, reactionType);
+        this.mobileReactionMessageId = null;
     }
 
     get currentProfileId(): string | null {
@@ -2055,6 +2133,26 @@ export class ChatPageComponent implements OnDestroy {
 
     reactionEmoji(type: string): string {
         return this.reactionOptions.find(x => x.type === type)?.emoji ?? '👍';
+    }
+
+    private isMobileReactionMode(): boolean {
+        return window.matchMedia('(max-width: 680px)').matches;
+    }
+
+    private isMessageInteractionTarget(target: HTMLElement): boolean {
+        return !!target.closest(
+            'a, button, input, textarea, select, label, [role="button"], .reaction-zone, .mobile-reaction-menu, .hashtag, .mention'
+        );
+    }
+
+    private clearMobileReactionLongPressState(): void {
+        if (this.mobileReactionPressTimerId !== null) {
+            window.clearTimeout(this.mobileReactionPressTimerId);
+            this.mobileReactionPressTimerId = null;
+        }
+
+        this.mobileReactionPressedMessageId = null;
+        this.mobileReactionLongPressTriggered = false;
     }
 
     trackByConversationId(_: number, conversation: ChatConversationDto): string {

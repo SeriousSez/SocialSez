@@ -9,6 +9,8 @@ namespace SocialSez.ApplicationService.Services;
 
 public class ProfileService(SocialSezContext dbContext) : IProfileService
 {
+    private static readonly TimeSpan HandleChangeCooldown = TimeSpan.FromDays(30);
+
     public async Task<ProfileDto> CreateAsync(CreateProfileRequest request, CancellationToken cancellationToken = default)
     {
         var handle = NormalizeHandle(request.Handle);
@@ -170,6 +172,42 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
             return null;
         }
 
+        var requestedHandleRaw = request.Handle?.Trim();
+        if (!string.IsNullOrWhiteSpace(requestedHandleRaw))
+        {
+            var normalizedRequestedHandle = NormalizeHandle(requestedHandleRaw);
+            if (string.IsNullOrWhiteSpace(normalizedRequestedHandle))
+            {
+                throw new ArgumentException("Handle is required.", nameof(request));
+            }
+
+            if (!string.Equals(profile.Handle, normalizedRequestedHandle, StringComparison.Ordinal))
+            {
+                var nowUtc = DateTime.UtcNow;
+                if (profile.LastHandleChangeAtUtc is DateTime lastHandleChangeAtUtc)
+                {
+                    var cooldownEndsAtUtc = lastHandleChangeAtUtc.Add(HandleChangeCooldown);
+                    if (cooldownEndsAtUtc > nowUtc)
+                    {
+                        var remaining = cooldownEndsAtUtc - nowUtc;
+                        var remainingDays = Math.Max(1, (int)Math.Ceiling(remaining.TotalDays));
+                        throw new InvalidOperationException($"You can change your handle every 30 days. Try again in {remainingDays} day{(remainingDays == 1 ? string.Empty : "s")}.");
+                    }
+                }
+
+                var isTaken = await dbContext.UserProfiles
+                    .AnyAsync(x => x.Id != profileId && x.Handle == normalizedRequestedHandle, cancellationToken);
+
+                if (isTaken)
+                {
+                    throw new InvalidOperationException("Handle already exists.");
+                }
+
+                profile.Handle = normalizedRequestedHandle;
+                profile.LastHandleChangeAtUtc = nowUtc;
+            }
+        }
+
         profile.DisplayName = request.DisplayName.Trim();
         profile.Bio = request.Bio?.Trim() ?? string.Empty;
         profile.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
@@ -206,12 +244,41 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
 
     private static ProfileDto ToDto(UserProfile profile, bool canViewPrivateInfo)
     {
+        var handleChangeAvailableAtUtc = CalculateHandleChangeAvailableAtUtc(profile.LastHandleChangeAtUtc);
+
         if (!profile.IsPrivate || canViewPrivateInfo)
         {
-            return new ProfileDto(profile.Id, profile.Handle, profile.DisplayName, profile.Bio, profile.ImageUrl, profile.IsPrivate, profile.CreatedAtUtc);
+            return new ProfileDto(
+                profile.Id,
+                profile.Handle,
+                profile.DisplayName,
+                profile.Bio,
+                profile.ImageUrl,
+                profile.IsPrivate,
+                profile.CreatedAtUtc,
+                handleChangeAvailableAtUtc);
         }
 
-        return new ProfileDto(profile.Id, profile.Handle, profile.DisplayName, string.Empty, profile.ImageUrl, profile.IsPrivate, profile.CreatedAtUtc);
+        return new ProfileDto(
+            profile.Id,
+            profile.Handle,
+            profile.DisplayName,
+            string.Empty,
+            profile.ImageUrl,
+            profile.IsPrivate,
+            profile.CreatedAtUtc,
+            handleChangeAvailableAtUtc);
+    }
+
+    private static DateTime? CalculateHandleChangeAvailableAtUtc(DateTime? lastHandleChangeAtUtc)
+    {
+        if (!lastHandleChangeAtUtc.HasValue)
+        {
+            return null;
+        }
+
+        var availability = lastHandleChangeAtUtc.Value.Add(HandleChangeCooldown);
+        return availability > DateTime.UtcNow ? availability : null;
     }
 
     private static string NormalizeHandle(string handle)

@@ -37,7 +37,13 @@
 
         <div class="section-body" *ngIf="sectionOpenState.account">
             <p class="meta"><strong>Profile Id:</strong> {{ profile.id }}</p>
-            <p class="meta"><strong>Handle:</strong> @{{ profile.handle }}</p>
+            <label>Handle <input [(ngModel)]="handle" (ngModelChange)="onHandleInput($event)" /></label>
+            <p class="meta" *ngIf="handleChangeAvailableAtUtc as availableAt; else handleReadyNow">
+                Handle changes are limited to once every 30 days. Next change available on {{ availableAt | date:'mediumDate' }}.
+            </p>
+            <ng-template #handleReadyNow>
+                <p class="meta">Handle changes are limited to once every 30 days. You can change it now.</p>
+            </ng-template>
             <label class="toggle">
                 <input type="checkbox" [(ngModel)]="isPrivate" (change)="savePrivacy()" />
                 Private profile

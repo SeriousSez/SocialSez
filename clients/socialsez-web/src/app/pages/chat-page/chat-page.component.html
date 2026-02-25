@@ -138,7 +138,9 @@
                 <ng-container *ngFor="let message of visibleMessages; trackBy: trackByMessageId; let i = index">
                     <div class="message-time-break" *ngIf="shouldShowMessageTimeBreak(i)">{{ formatMessageBreak(message.createdAtUtc) }}</div>
 
-                    <article class="message" [class.own]="currentProfileId === message.authorProfileId" [class.compact]="isCompactMessage(i)" [class.linked-text]="isLinkedTextToNextShared(i)" [class.linked-shared]="isLinkedSharedFromPreviousText(i)">
+                    <article class="message" [class.own]="currentProfileId === message.authorProfileId" [class.compact]="isCompactMessage(i)" [class.linked-text]="isLinkedTextToNextShared(i)" [class.linked-shared]="isLinkedSharedFromPreviousText(i)"
+                        [class.mobile-reaction-open]="mobileReactionMessageId === message.id" (pointerdown)="onMessagePressStart(message, $event)" (pointerup)="onMessagePressEnd($event)" (pointercancel)="onMessagePressCancel()" (pointerleave)="onMessagePressEnd($event)"
+                        (contextmenu)="onMessageContextMenu($event)">
                         <div class="message-row">
                             <ng-container *ngIf="currentProfileId !== message.authorProfileId">
                                 <button type="button" class="message-avatar-trigger" (click)="openAvatarProfileOrStory(message.authorHandle, $event)"
@@ -233,7 +235,7 @@
                                 </div>
 
                                 <div class="reaction-summary corner" *ngIf="message.reactions.length">
-                                    <span *ngFor="let reaction of message.reactions">{{ reactionEmoji(reaction.type) }} {{ reaction.count }}</span>
+                                    <span *ngFor="let reaction of message.reactions">{{ reactionEmoji(reaction.type) }}</span>
                                 </div>
                             </div>
 
@@ -242,6 +244,12 @@
                                     (primaryClick)="onMessagePrimaryReaction(message)" (reactionSelected)="onMessageReactionSelected(message, $event)">
                                 </app-reaction-picker>
                                 <span class="message-time-side">{{ formatTime(message.createdAtUtc) }}</span>
+                            </div>
+
+                            <div class="mobile-reaction-menu" *ngIf="mobileReactionMessageId === message.id" (click)="$event.stopPropagation()">
+                                <button type="button" class="mobile-reaction-option" *ngFor="let reaction of reactionOptions" [class.active]="message.myReactionType === reaction.type" [disabled]="reactingMessageId === message.id" (click)="onMobileReactionSelected(message, reaction.type, $event)">
+                                    {{ reaction.emoji }}
+                                </button>
                             </div>
                         </div>
                     </article>
