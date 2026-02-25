@@ -292,6 +292,20 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         return this.storyMuted ? '🔇' : '🔊';
     }
 
+    get nextStory(): StoryDto | null {
+        const stories = this.activeStoryGroup?.stories ?? [];
+        if (!stories.length) {
+            return null;
+        }
+
+        const nextIndex = this.activeStoryIndex + 1;
+        if (nextIndex < 0 || nextIndex >= stories.length) {
+            return null;
+        }
+
+        return stories[nextIndex] ?? null;
+    }
+
     getStorySegmentProgress(segmentIndex: number): number {
         if (segmentIndex < this.activeStoryIndex) {
             return 100;

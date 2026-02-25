@@ -25,6 +25,16 @@
     animation: story-viewer-card-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
+.story-preload-media {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    left: -9999px;
+    top: -9999px;
+    opacity: 0;
+    pointer-events: none;
+}
+
 .story-viewer.closing .story-viewer-card {
     animation: story-viewer-card-out 180ms ease-in both;
 }

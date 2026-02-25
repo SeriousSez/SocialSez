@@ -1,5 +1,12 @@
 <div class="story-viewer" [class.closing]="isClosing" *ngIf="activeStory as story" (click)="close()" role="dialog" aria-modal="true" aria-label="Story viewer">
     <article class="story-viewer-card" (click)="$event.stopPropagation()">
+        <ng-container *ngIf="nextStory as upcomingStory">
+            <video *ngIf="isVideoStory(upcomingStory.mediaUrl); else preloadNextStoryImage" class="story-preload-media" [src]="upcomingStory.mediaUrl" preload="metadata" muted playsinline tabindex="-1" aria-hidden="true"></video>
+            <ng-template #preloadNextStoryImage>
+                <img class="story-preload-media" [src]="upcomingStory.mediaUrl" alt="" aria-hidden="true" />
+            </ng-template>
+        </ng-container>
+
         <div class="story-progress" aria-hidden="true">
             <span class="story-progress-segment" *ngFor="let segment of storySegments">
                 <span class="story-progress-fill" [style.width.%]="getStorySegmentProgress(segment)"></span>
