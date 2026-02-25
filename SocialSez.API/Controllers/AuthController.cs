@@ -13,6 +13,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         try
         {
+            Console.WriteLine($"Registering user: {request.DisplayName}");
             var response = await authService.RegisterAsync(request, cancellationToken);
             return Ok(response);
         }
