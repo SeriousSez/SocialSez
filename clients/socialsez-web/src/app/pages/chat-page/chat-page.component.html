@@ -154,7 +154,7 @@
                                 <div class="bubble" [class.media-only]="parsed.gifUrl || parsed.imageUrl || parsed.sharedReel || parsed.sharedStory" [class.shared-only]="(parsed.sharedPost || parsed.sharedReel || parsed.sharedStory) && !parsed.text && !parsed.gifUrl && !parsed.imageUrl"
                                     [class.shared-with-text]="(parsed.sharedPost || parsed.sharedStory) && !!parsed.text" [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
                                     <p *ngIf="parsed.text">{{ parsed.text }}</p>
-                                    <article class="shared-post-preview" *ngIf="parsed.sharedPost as shared">
+                                    <article class="shared-post-preview" *ngIf="parsed.sharedPost as shared" [attr.role]="'button'" tabindex="0" (click)="openSharedPost(shared, $event)" (keydown.enter)="openSharedPost(shared, $event)" (keydown.space)="openSharedPost(shared, $event)">
                                         <header class="shared-post-head">
                                             <img class="shared-post-author-avatar" *ngIf="shared.authorImageUrl" [src]="shared.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared post author avatar" />
                                             <span class="shared-post-author-fallback" *ngIf="!shared.authorImageUrl">{{ shared.authorHandle[0].toUpperCase() }}</span>
@@ -175,9 +175,6 @@
                                                 </ng-container>
                                                 <br *ngIf="!isLastLine" />
                                             </ng-container>
-                                        </div>
-                                        <div class="shared-post-actions" *ngIf="isSharedPreviewTruncated(shared.content) || shared.imageUrl">
-                                            <a class="shared-post-expand" [href]="'/users/' + shared.authorHandle" (click)="openSharedPost(shared, $event)">View full post</a>
                                         </div>
                                     </article>
                                     <article class="shared-reel-preview shared-story-preview" *ngIf="parsed.sharedStory as sharedStory">
@@ -205,8 +202,8 @@
                                             </div>
                                         </button>
                                     </article>
-                                    <article class="shared-reel-preview" *ngIf="parsed.sharedReel as sharedReel">
-                                        <button type="button" class="shared-reel-trigger" (click)="openSharedReel(sharedReel, message, $event)">
+                                    <article class="shared-reel-preview" *ngIf="parsed.sharedReel as sharedReel" [class.unavailable]="isSharedReelUnavailable(sharedReel)">
+                                        <button type="button" class="shared-reel-trigger" (click)="openSharedReel(sharedReel, message, $event)" [disabled]="isSharedReelUnavailable(sharedReel)">
                                             <div class="shared-reel-frame">
                                                 <img class="shared-reel-thumbnail" *ngIf="sharedReel.thumbnailUrl as thumbnail; else sharedReelNoThumb" [src]="thumbnail" alt="Shared reel thumbnail" />
                                                 <ng-template #sharedReelNoThumb>
@@ -218,8 +215,7 @@
                                                 <header class="shared-reel-overlay-top">
                                                     <img class="shared-reel-author-avatar" *ngIf="(sharedReel.authorImageUrl || message.authorImageUrl) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared reel author avatar" />
                                                     <span class="shared-reel-author-fallback" *ngIf="!(sharedReel.authorImageUrl || message.authorImageUrl)">{{ (sharedReel.authorHandle || message.authorHandle || 'R')[0].toUpperCase() }}</span>
-                                                    <strong class="shared-reel-author-handle" *ngIf="sharedReel.authorHandle as authorHandle">{{ authorHandle }}</strong>
-                                                    <strong class="shared-reel-author-handle" *ngIf="!sharedReel.authorHandle">shared reel</strong>
+                                                    <strong class="shared-reel-author-handle">{{ sharedReel.authorHandle || message.authorHandle || 'shared reel' }}</strong>
                                                 </header>
 
                                                 <div class="shared-reel-overlay-bottom">
@@ -227,6 +223,8 @@
                                                         <i class="fa-duotone fa-solid fa-clapperboard-play" aria-hidden="true"></i>
                                                     </span>
                                                 </div>
+
+                                                <div class="shared-reel-unavailable-badge" *ngIf="isSharedReelUnavailable(sharedReel)">Reel was deleted</div>
                                             </div>
                                         </button>
                                     </article>

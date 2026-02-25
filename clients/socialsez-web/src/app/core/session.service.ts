@@ -155,6 +155,20 @@ export class SessionService {
         return reels.map(reel => this.normalizeReel(reel));
     }
 
+    async loadPublicReelByIdAsync(reelId: string): Promise<ReelDto | null> {
+        const normalized = reelId.trim();
+        if (!normalized) {
+            return null;
+        }
+
+        try {
+            const reel = await firstValueFrom(this.api.getPublicReel(normalized));
+            return this.normalizeReel(reel);
+        } catch {
+            return null;
+        }
+    }
+
     async loadPublicStoriesByAuthorHandleAsync(handle: string): Promise<StoryGroupDto | null> {
         try {
             const storyGroup = await firstValueFrom(this.api.getPublicStoriesByAuthorHandle(handle));

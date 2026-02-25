@@ -139,36 +139,83 @@
             <p class="status" *ngIf="!loadingMessages && status">{{ status }}</p>
 
             <div #threadList class="thread-list" *ngIf="!loadingMessages && !status">
-                <article class="thread-message" [class.own]="isOwnMessage(message)" [class.shared-only]="messageVariant(message.content) === 'shared-only'" [class.media-only]="messageVariant(message.content) === 'media-only'" *ngFor="let message of messages; trackBy: trackByMessageId">
-                    <div class="thread-row">
-                        <div class="thread-bubble-wrap" *ngIf="parsedMessage(message.content) as parsed">
-                            <div class="thread-body">
-                                <p *ngIf="parsed.text">{{ parsed.text }}</p>
-                                <article class="dock-shared-post-preview" *ngIf="parsed.sharedPost as shared" role="button" tabindex="0" (click)="openSharedPost(shared, $event)" (keydown.enter)="openSharedPost(shared, $event)" (keydown.space)="openSharedPost(shared, $event)">
-                                    <header class="dock-shared-post-head">
-                                        <span>Shared post from</span>
-                                        <strong>@{{ shared.authorHandle }}</strong>
-                                    </header>
-                                    <p class="dock-shared-post-content" *ngIf="shared.content">{{ sharedPreviewContent(shared.content) }}</p>
-                                    <img class="dock-shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" alt="Shared post media" />
-                                </article>
-                                <img class="dock-media" *ngIf="parsed.imageUrl" [src]="parsed.imageUrl" alt="Sent image" />
-                                <img class="dock-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" alt="Sent GIF" />
+                <ng-container *ngFor="let message of messages; trackBy: trackByMessageId; let i = index">
+                    <div class="thread-time-break" *ngIf="shouldShowMessageTimeBreak(i)">{{ formatMessageBreak(message.createdAtUtc) }}</div>
+
+                    <article class="thread-message" [class.own]="isOwnMessage(message)" [class.compact]="isCompactMessage(i)" [class.shared-only]="messageVariant(message.content) === 'shared-only'" [class.media-only]="messageVariant(message.content) === 'media-only'">
+                        <div class="thread-row">
+                            <div class="thread-bubble-wrap" *ngIf="parsedMessage(message.content) as parsed">
+                                <div class="thread-body">
+                                    <p *ngIf="parsed.text">{{ parsed.text }}</p>
+                                    <article class="dock-shared-post-preview" *ngIf="parsed.sharedPost as shared" role="button" tabindex="0" (click)="openSharedPost(shared, $event)" (keydown.enter)="openSharedPost(shared, $event)" (keydown.space)="openSharedPost(shared, $event)">
+                                        <div class="dock-shared-post-head">
+                                            <img class="dock-shared-post-author-avatar" *ngIf="shared.authorImageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared post author avatar" />
+                                            <span class="dock-shared-post-author-fallback" *ngIf="!shared.authorImageUrl">{{ shared.authorHandle[0].toUpperCase() }}</span>
+                                            <div class="dock-shared-post-author-meta">
+                                                <span>Shared post from</span>
+                                                <strong>@{{ shared.authorHandle }}</strong>
+                                            </div>
+                                        </div>
+                                        <p class="dock-shared-post-content" *ngIf="shared.content">{{ sharedPreviewContent(shared.content) }}</p>
+                                        <img class="dock-shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" alt="Shared post media" />
+                                    </article>
+                                    <article class="dock-shared-reel-preview dock-shared-story-preview" *ngIf="parsed.sharedStory as sharedStory">
+                                        <p class="dock-shared-story-label">Story from @{{ sharedStory.authorHandle || message.authorHandle }}</p>
+                                        <button type="button" class="dock-shared-story-trigger" (click)="openSharedStory(sharedStory, message, $event)">
+                                            <div class="dock-shared-reel-frame dock-shared-story-frame">
+                                                <img class="dock-shared-reel-image" *ngIf="isImageMedia(sharedStory.mediaUrl); else dockSharedStoryNoThumb" [src]="sharedStory.mediaUrl" alt="Shared story preview" />
+                                                <ng-template #dockSharedStoryNoThumb>
+                                                    <div class="dock-shared-reel-fallback" aria-label="Shared story preview unavailable">
+                                                        <i class="fa-duotone fa-light fa-images" aria-hidden="true"></i>
+                                                    </div>
+                                                </ng-template>
+
+                                                <div class="dock-shared-reel-overlay-top">
+                                                    <img class="dock-shared-reel-author-avatar" *ngIf="message.authorImageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared story author avatar" />
+                                                    <span class="dock-shared-reel-author-fallback" *ngIf="!message.authorImageUrl">{{ (sharedStory.authorHandle || message.authorHandle || 'S')[0].toUpperCase() }}</span>
+                                                    <strong class="dock-shared-reel-author-handle">{{ sharedStory.authorHandle || message.authorHandle || 'story' }}</strong>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </article>
+                                    <article class="dock-shared-reel-preview" *ngIf="parsed.sharedReel as sharedReel" [class.unavailable]="isSharedReelUnavailable(sharedReel)">
+                                        <button type="button" class="dock-shared-story-trigger" (click)="openSharedReel(sharedReel, message, $event)" [disabled]="isSharedReelUnavailable(sharedReel) || loadingSharedReelDetails">
+                                            <div class="dock-shared-reel-frame">
+                                                <img class="dock-shared-reel-image" *ngIf="sharedReel.thumbnailUrl as thumbnail; else dockSharedReelFallback" [src]="thumbnail" alt="Shared reel preview" />
+                                                <ng-template #dockSharedReelFallback>
+                                                    <div class="dock-shared-reel-fallback" aria-label="Shared reel preview unavailable">
+                                                        <i class="fa-duotone fa-solid fa-clapperboard-play" aria-hidden="true"></i>
+                                                    </div>
+                                                </ng-template>
+
+                                                <div class="dock-shared-reel-overlay-top">
+                                                    <img class="dock-shared-reel-author-avatar" *ngIf="(sharedReel.authorImageUrl || message.authorImageUrl) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared reel author avatar" />
+                                                    <span class="dock-shared-reel-author-fallback" *ngIf="!(sharedReel.authorImageUrl || message.authorImageUrl)">{{ (sharedReel.authorHandle || message.authorHandle || 'R')[0].toUpperCase() }}</span>
+                                                    <strong class="dock-shared-reel-author-handle">{{ sharedReel.authorHandle || message.authorHandle || 'shared reel' }}</strong>
+                                                </div>
+
+                                                <div class="dock-shared-reel-unavailable-badge" *ngIf="isSharedReelUnavailable(sharedReel)">Reel was deleted</div>
+                                            </div>
+                                        </button>
+                                    </article>
+                                    <img class="dock-media" *ngIf="parsed.imageUrl" [src]="parsed.imageUrl" alt="Sent image" />
+                                    <img class="dock-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" alt="Sent GIF" />
+                                </div>
+
+                                <div class="dock-reaction-summary corner" *ngIf="message.reactions.length">
+                                    <span *ngFor="let reaction of message.reactions">{{ reactionEmoji(reaction.type) }} {{ reaction.count }}</span>
+                                </div>
                             </div>
 
-                            <div class="dock-reaction-summary corner" *ngIf="message.reactions.length">
-                                <span *ngFor="let reaction of message.reactions">{{ reactionEmoji(reaction.type) }} {{ reaction.count }}</span>
+                            <div class="dock-message-actions">
+                                <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="noReactions" [myReactionType]="message.myReactionType" [busy]="reactingMessageId === message.id" [popoverAlign]="isOwnMessage(message) ? 'end' : 'start'"
+                                    (primaryClick)="onMessagePrimaryReaction(message)" (reactionSelected)="onMessageReactionSelected(message, $event)">
+                                </app-reaction-picker>
+                                <span class="dock-message-time-side">{{ message.createdAtUtc | date:'shortTime' }}</span>
                             </div>
                         </div>
-
-                        <div class="dock-message-actions">
-                            <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="noReactions" [myReactionType]="message.myReactionType" [busy]="reactingMessageId === message.id" [popoverAlign]="isOwnMessage(message) ? 'end' : 'start'"
-                                (primaryClick)="onMessagePrimaryReaction(message)" (reactionSelected)="onMessageReactionSelected(message, $event)">
-                            </app-reaction-picker>
-                        </div>
-                    </div>
-                    <small>{{ messageAuthorLabel(message) }} · {{ message.createdAtUtc | date:'shortTime' }}</small>
-                </article>
+                    </article>
+                </ng-container>
             </div>
 
             <footer class="thread-composer" *ngIf="activeConversation">
@@ -217,5 +264,6 @@
                 <button type="button" (click)="sendMessage($event)" [disabled]="sendingMessage || uploadingImage || (!draftMessage.trim() && !hasComposerMedia())">Send</button>
             </footer>
         </ng-template>
+
     </section>
 </ng-container>

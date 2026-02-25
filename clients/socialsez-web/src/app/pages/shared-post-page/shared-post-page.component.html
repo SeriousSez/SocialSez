@@ -1,7 +1,7 @@
 <section class="shared-page">
     <header class="shared-head">
         <h2>Shared Post</h2>
-        <a routerLink="/auth">Sign in</a>
+        <a routerLink="/auth" *ngIf="!session.isAuthenticated()">Sign in</a>
     </header>
 
     <article class="shared-card" *ngIf="loading">

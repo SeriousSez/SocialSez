@@ -116,9 +116,90 @@
     </a>
 </nav>
 
-<app-messages-dock [visible]="showMessagesDock"></app-messages-dock>
+<app-messages-dock [visible]="showMessagesDock" (sharedMediaRequested)="onDockSharedMediaRequested($event)"></app-messages-dock>
 
 <app-feed-story-viewer [activeStory]="activeProfileChipStory" [activeStoryGroup]="profileChipStoryGroup" [activeStoryIndex]="profileChipStoryIndex" [storyCount]="profileChipStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousProfileChipStory" [hasNextStory]="hasNextProfileChipStory"
     [liked]="activeProfileChipStory ? isProfileChipStoryLiked(activeProfileChipStory.id) : false" [sendingReply]="false" [sharingStory]="false" [canDelete]="false" [deletingStory]="false" [errorMessage]="''" (closed)="closeProfileChipStoryViewer()" (previous)="showPreviousProfileChipStory()"
     (next)="showNextProfileChipStory()" (likeToggled)="toggleProfileChipStoryLike($event)">
 </app-feed-story-viewer>
+
+<app-feed-story-viewer [activeStory]="activeDockStory" [activeStoryGroup]="dockStoryGroup" [activeStoryIndex]="dockStoryIndex" [storyCount]="dockStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousDockStory" [hasNextStory]="hasNextDockStory"
+    [liked]="activeDockStory ? isDockStoryLiked(activeDockStory.id) : false" [sendingReply]="false" [sharingStory]="false" [canDelete]="false" [deletingStory]="false" [errorMessage]="''" (closed)="closeDockStoryViewer()" (previous)="showPreviousDockStory()" (next)="showNextDockStory()"
+    (likeToggled)="toggleDockStoryLike($event)">
+</app-feed-story-viewer>
+
+<div class="shared-reel-viewer" *ngIf="dockReelModal as reel" (click)="onDockReelBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Shared reel viewer">
+    <section class="shared-reel-viewer-card">
+        <button type="button" class="shared-reel-viewer-close" (click)="closeDockReelModal($event)" aria-label="Close reel viewer">
+            <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
+        </button>
+
+        <div class="shared-reel-viewer-media">
+            <div class="shared-reel-viewer-stage">
+                <video [src]="reel.videoUrl" [poster]="reel.thumbnailUrl || null" playsinline [muted]="reel.muted" autoplay loop preload="metadata"></video>
+                <button type="button" class="shared-reel-sound-toggle" (click)="toggleDockReelSound()" [attr.aria-label]="reel.muted ? 'Unmute reel' : 'Mute reel'">
+                    <i class="fa-duotone" [class.fa-volume-xmark]="reel.muted" [class.fa-volume-high]="!reel.muted" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <aside class="shared-reel-viewer-meta">
+            <div class="shared-reel-viewer-meta-scroll">
+                <header>
+                    <img class="shared-reel-viewer-avatar" *ngIf="reel.authorImageUrl" [src]="reel.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reel author avatar" />
+                    <span class="shared-reel-viewer-avatar-fallback" *ngIf="!reel.authorImageUrl">{{ (reel.authorHandle || 'R')[0].toUpperCase() }}</span>
+                    <div class="shared-reel-viewer-author">
+                        <strong>@{{ reel.authorHandle }}</strong>
+                        <p *ngIf="reel.createdAtUtc">{{ reel.createdAtUtc | date:'short' }}</p>
+                    </div>
+                </header>
+
+                <section class="shared-reel-viewer-caption" *ngIf="reel.caption">
+                    <p>
+                        <span class="shared-reel-caption-handle">@{{ reel.authorHandle }}</span>
+                        <span> {{ reel.caption }}</span>
+                    </p>
+                </section>
+
+                <section class="shared-reel-viewer-comments-wrap">
+                    <div class="shared-reel-viewer-comments-head" *ngIf="reel.comments.length">
+                        <strong>Comments</strong>
+                    </div>
+                    <section class="shared-reel-viewer-comments" *ngIf="reel.comments.length; else noDockReelComments">
+                        <article class="viewer-comment" *ngFor="let comment of reel.comments">
+                            <header>
+                                <strong>@{{ comment.authorHandle }}</strong>
+                                <span>{{ comment.createdAtUtc | date:'shortTime' }}</span>
+                            </header>
+                            <p>{{ comment.content }}</p>
+                        </article>
+                    </section>
+                    <ng-template #noDockReelComments>
+                        <p class="viewer-comments-empty">No comments yet.</p>
+                    </ng-template>
+                </section>
+            </div>
+
+            <div class="shared-reel-viewer-actions">
+                <button type="button" class="viewer-action" [class.active]="reel.likedByMe" (click)="toggleDockReelLike()" [disabled]="togglingDockReelLike || !reel.reelId" aria-label="Like reel">
+                    <i class="fa-duotone fa-heart" [class.fa-solid]="reel.likedByMe" [class.fa-light]="!reel.likedByMe" aria-hidden="true"></i>
+                    <span>{{ reel.likeCount }}</span>
+                </button>
+
+                <button type="button" class="viewer-action" aria-label="Comment count" disabled>
+                    <i class="fa-duotone fa-light fa-comment" aria-hidden="true"></i>
+                    <span>{{ reel.comments.length }}</span>
+                </button>
+
+                <button type="button" class="viewer-action" aria-label="Share reel" disabled>
+                    <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="shared-reel-viewer-comment-form">
+                <input type="text" [(ngModel)]="dockReelCommentDraft" placeholder="Add a comment..." [disabled]="submittingDockReelComment || !reel.reelId" (keydown.enter)="submitDockReelComment()" />
+                <button type="button" (click)="submitDockReelComment()" [disabled]="!canSubmitDockReelComment">{{ submittingDockReelComment ? 'Posting…' : 'Post' }}</button>
+            </div>
+        </aside>
+    </section>
+</div>

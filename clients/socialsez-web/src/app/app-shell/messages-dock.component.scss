@@ -256,9 +256,17 @@
     padding: 12px;
     display: grid;
     align-content: start;
-    gap: 10px;
+    gap: 0;
     flex: 1;
     min-height: 0;
+}
+
+.thread-time-break {
+    text-align: center;
+    color: #64748b;
+    font-size: 0.72rem;
+    line-height: 1;
+    margin: 7px 0 9px;
 }
 
 .thread-message {
@@ -267,6 +275,11 @@
     gap: 5px;
     position: relative;
     justify-items: start;
+    padding-bottom: 10px;
+}
+
+.thread-message.compact {
+    padding-bottom: 4px;
 }
 
 .thread-row {
@@ -368,12 +381,46 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    color: #475569;
-    font-size: 0.76rem;
+    color: #0f172a;
 }
 
-.dock-shared-post-head strong {
+.dock-shared-post-author-avatar,
+.dock-shared-post-author-fallback {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.dock-shared-post-author-fallback {
+    display: grid;
+    place-items: center;
+    background: #dbeafe;
+    color: #1e3a8a;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.dock-shared-post-author-meta {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+}
+
+.dock-shared-post-author-meta span {
+    color: #475569;
+    font-size: 0.72rem;
+    line-height: 1.1;
+}
+
+.dock-shared-post-author-meta strong {
     color: #0f172a;
+    font-size: 0.84rem;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .dock-shared-post-content {
@@ -396,19 +443,133 @@
     margin-top: 8px;
 }
 
-.thread-message small {
-    color: #64748b;
-    font-size: 11px;
+.dock-shared-reel-preview {
+    margin-top: 8px;
+    width: fit-content;
 }
 
-.thread-message.own small {
-    text-align: right;
-    justify-self: end;
+.dock-shared-story-preview {
+    display: grid;
+    gap: 6px;
+}
+
+.dock-shared-story-label {
+    margin: 0;
+    color: #334155;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.dock-shared-story-trigger {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    border-radius: 12px;
+    line-height: 0;
+}
+
+.dock-shared-reel-preview.unavailable .dock-shared-story-trigger {
+    cursor: not-allowed;
+}
+
+.dock-shared-reel-preview.unavailable .dock-shared-reel-frame {
+    filter: grayscale(1);
+    opacity: 0.64;
+}
+
+.dock-shared-reel-frame {
+    width: min(160px, 58vw);
+    aspect-ratio: 9 / 16;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    background: #0f172a;
+}
+
+.dock-shared-story-frame {
+    width: min(150px, 56vw);
+}
+
+.dock-shared-reel-image,
+.dock-shared-reel-fallback {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.dock-shared-reel-fallback {
+    display: grid;
+    place-items: center;
+    background: #0f172a;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.2rem;
+}
+
+.dock-shared-reel-overlay-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.58), rgba(15, 23, 42, 0));
+}
+
+.dock-shared-reel-author-avatar,
+.dock-shared-reel-author-fallback {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.dock-shared-reel-author-fallback {
+    display: grid;
+    place-items: center;
+    background: #dbeafe;
+    color: #1e3a8a;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.dock-shared-reel-author-handle {
+    display: inline-block;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.15;
+    text-shadow: 0 1px 2px rgba(15, 23, 42, 0.85);
+    max-width: calc(100% - 40px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dock-shared-reel-unavailable-badge {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 23, 42, 0.78);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .dock-message-actions {
     display: inline-flex;
     align-items: center;
+    gap: 6px;
     opacity: 0;
     pointer-events: none;
     transform: translateY(3px);
@@ -438,6 +599,12 @@
 
 .thread-message.own .dock-message-actions {
     flex-direction: row-reverse;
+}
+
+.dock-message-time-side {
+    font-size: 11px;
+    line-height: 1;
+    color: #64748b;
 }
 
 .dock-reaction-summary {
@@ -555,6 +722,92 @@
     padding: 12px 14px;
     color: #94a3b8;
     text-align: center;
+}
+
+:host-context(.theme-dark) {
+    .messages-dock {
+        background: var(--color-surface-muted);
+        color: var(--color-text);
+        border-color: var(--color-border);
+        box-shadow: none;
+    }
+
+    .messages-panel {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        box-shadow: none;
+    }
+
+    .messages-panel header,
+    .thread-composer,
+    .new-chat-suggestion-group,
+    .row,
+    .dock-skeleton-row {
+        border-color: var(--color-border);
+    }
+
+    .messages-panel h3,
+    .icon-btn,
+    .dock-search-input,
+    .meta strong,
+    .thread-message p,
+    .dock-shared-post-content,
+    .dock-shared-post-author-meta strong,
+    .thread-composer input {
+        color: var(--color-text);
+    }
+
+    .dock-search-bar,
+    .thread-composer,
+    .thread-composer-input-shell,
+    .row,
+    .dock-skeleton-row,
+    .status,
+    .dock-reaction-summary span,
+    .dock-message-actions .reaction-btn,
+    .dock-shared-post-preview {
+        background: var(--color-surface-muted);
+        border-color: var(--color-border);
+    }
+
+    .row:hover,
+    .thread-message .thread-body,
+    .thread-message.own .thread-body {
+        background: var(--color-surface-alt);
+        border-color: var(--color-border-strong);
+    }
+
+    .meta small,
+    .time,
+    .thread-time-break,
+    .dock-message-time-side,
+    .dock-search-input::placeholder,
+    .dock-shared-story-label,
+    .dock-shared-post-author-meta span,
+    .dock-reaction-summary,
+    .chat-search-hint,
+    .status {
+        color: var(--color-text-muted);
+    }
+
+    .thread-message.shared-only .thread-body,
+    .thread-message.own.shared-only .thread-body,
+    .thread-message.media-only .thread-body,
+    .thread-message.own.media-only .thread-body {
+        background: transparent;
+        border-color: transparent;
+    }
+
+    .dock-shared-post-image,
+    .dock-media {
+        border-color: var(--color-border);
+    }
+
+    .dock-message-actions .reaction-btn.active {
+        background: var(--color-surface-alt);
+        border-color: var(--color-border-strong);
+        color: var(--color-text);
+    }
 }
 
 @media (max-width: 780px) {

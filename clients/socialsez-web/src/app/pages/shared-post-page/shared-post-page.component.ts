@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { PostDto } from '../../core/api.types';
 import { SocialSezApiService } from '../../core/socialsez-api.service';
+import { SessionService } from '../../core/session.service';
 
 @Component({
     selector: 'app-shared-post-page',
@@ -18,7 +19,7 @@ export class SharedPostPageComponent {
     error = '';
     post: PostDto | null = null;
 
-    constructor(private readonly route: ActivatedRoute, private readonly api: SocialSezApiService) {
+    constructor(private readonly route: ActivatedRoute, private readonly api: SocialSezApiService, public readonly session: SessionService) {
         this.route.paramMap.subscribe(params => {
             const postId = (params.get('id') ?? '').trim();
             void this.loadAsync(postId);

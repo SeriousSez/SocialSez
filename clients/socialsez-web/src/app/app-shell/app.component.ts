@@ -5,9 +5,24 @@ import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
+import { SharedReelCommentPreview } from '../core/shared-reel.utils';
 import { SessionService } from '../core/session.service';
 import { MessagesDockComponent } from './messages-dock.component';
 import { FeedStoryViewerComponent } from '../pages/feed-page/feed-story-viewer.component';
+
+interface DockReelModalState {
+    reelId?: string;
+    videoUrl: string;
+    thumbnailUrl?: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    caption?: string;
+    createdAtUtc?: string;
+    likeCount: number;
+    likedByMe: boolean;
+    comments: SharedReelCommentPreview[];
+    muted: boolean;
+}
 
 @Component({
     selector: 'app-root',
@@ -27,6 +42,12 @@ export class AppComponent implements OnInit, OnDestroy {
     profileChipFirstStoryId: string | null = null;
     profileChipStoryGroup: StoryGroupDto | null = null;
     profileChipStoryIndex = 0;
+    dockStoryGroup: StoryGroupDto | null = null;
+    dockStoryIndex = 0;
+    dockReelModal: DockReelModalState | null = null;
+    dockReelCommentDraft = '';
+    submittingDockReelComment = false;
+    togglingDockReelLike = false;
     private failedProfileChipImageUrl: string | null = null;
     private readonly prefsStorageKey = 'socialsez-web-prefs';
     private readonly likedProfileChipStoryIds = new Set<string>();
@@ -223,6 +244,293 @@ export class AppComponent implements OnInit, OnDestroy {
     closeProfileChipStoryViewer(): void {
         this.profileChipStoryGroup = null;
         this.profileChipStoryIndex = 0;
+    }
+
+    onDockSharedMediaRequested(media: {
+        kind: 'story' | 'reel';
+        mediaUrl: string;
+        authorHandle: string;
+        authorImageUrl?: string;
+        authorProfileId?: string;
+        reelId?: string;
+        caption?: string;
+        createdAtUtc?: string;
+        likeCount?: number;
+        likedByMe?: boolean;
+        comments?: SharedReelCommentPreview[];
+        thumbnailUrl?: string;
+    }): void {
+        if (media.kind === 'story') {
+            const fallbackStory = this.buildDockSharedStoryFromRequest(media);
+
+            this.dockReelModal = null;
+            this.dockStoryGroup = {
+                authorId: fallbackStory.authorId,
+                authorHandle: fallbackStory.authorHandle,
+                authorImageUrl: fallbackStory.authorImageUrl,
+                hasUnseenStories: true,
+                stories: [fallbackStory]
+            };
+            this.dockStoryIndex = 0;
+            void this.resolveDockStoryGroup(media, fallbackStory);
+            return;
+        }
+
+        this.dockStoryGroup = null;
+        this.dockStoryIndex = 0;
+        this.dockReelModal = {
+            reelId: media.reelId,
+            videoUrl: media.mediaUrl,
+            thumbnailUrl: media.thumbnailUrl,
+            authorHandle: media.authorHandle,
+            authorImageUrl: media.authorImageUrl,
+            caption: media.caption,
+            createdAtUtc: media.createdAtUtc,
+            likeCount: Math.max(0, media.likeCount ?? 0),
+            likedByMe: !!media.likedByMe,
+            comments: [...(media.comments ?? [])],
+            muted: true
+        };
+        this.dockReelCommentDraft = '';
+        this.submittingDockReelComment = false;
+        this.togglingDockReelLike = false;
+    }
+
+    closeDockStoryViewer(): void {
+        this.dockStoryGroup = null;
+        this.dockStoryIndex = 0;
+    }
+
+    showPreviousDockStory(): void {
+        if (this.dockStoryIndex <= 0) {
+            return;
+        }
+
+        this.dockStoryIndex -= 1;
+    }
+
+    showNextDockStory(): void {
+        const group = this.dockStoryGroup;
+        if (!group) {
+            return;
+        }
+
+        if (this.dockStoryIndex >= group.stories.length - 1) {
+            this.closeDockStoryViewer();
+            return;
+        }
+
+        this.dockStoryIndex += 1;
+    }
+
+    closeDockReelModal(event?: Event): void {
+        event?.stopPropagation();
+        this.dockReelModal = null;
+        this.dockReelCommentDraft = '';
+        this.submittingDockReelComment = false;
+        this.togglingDockReelLike = false;
+    }
+
+    onDockReelBackdropClick(event: MouseEvent): void {
+        if (event.target !== event.currentTarget) {
+            return;
+        }
+
+        this.closeDockReelModal();
+    }
+
+    toggleDockReelSound(): void {
+        if (!this.dockReelModal) {
+            return;
+        }
+
+        this.dockReelModal = {
+            ...this.dockReelModal,
+            muted: !this.dockReelModal.muted
+        };
+    }
+
+    async toggleDockReelLike(): Promise<void> {
+        const reel = this.dockReelModal;
+        if (!reel?.reelId || this.togglingDockReelLike) {
+            return;
+        }
+
+        this.togglingDockReelLike = true;
+        try {
+            const updated = await this.session.toggleReelLikeAsync(reel.reelId);
+            this.applyDockReelUpdate(updated);
+        } finally {
+            this.togglingDockReelLike = false;
+        }
+    }
+
+    async submitDockReelComment(): Promise<void> {
+        const reel = this.dockReelModal;
+        const content = this.dockReelCommentDraft.trim();
+        if (!reel?.reelId || !content || this.submittingDockReelComment) {
+            return;
+        }
+
+        this.submittingDockReelComment = true;
+        try {
+            const updated = await this.session.addReelCommentAsync(reel.reelId, content);
+            this.applyDockReelUpdate(updated);
+            this.dockReelCommentDraft = '';
+        } finally {
+            this.submittingDockReelComment = false;
+        }
+    }
+
+    get canSubmitDockReelComment(): boolean {
+        return !!this.dockReelModal?.reelId && !!this.dockReelCommentDraft.trim() && !this.submittingDockReelComment;
+    }
+
+    get activeDockStory(): StoryDto | null {
+        if (!this.dockStoryGroup) {
+            return null;
+        }
+
+        return this.dockStoryGroup.stories[this.dockStoryIndex] ?? null;
+    }
+
+    get hasPreviousDockStory(): boolean {
+        return this.dockStoryIndex > 0;
+    }
+
+    get hasNextDockStory(): boolean {
+        return !!this.dockStoryGroup && this.dockStoryIndex < this.dockStoryGroup.stories.length - 1;
+    }
+
+    isDockStoryLiked(_: string): boolean {
+        return false;
+    }
+
+    toggleDockStoryLike(_: StoryDto): void {
+        // no-op for dock-opened shared stories
+    }
+
+    private buildDockSharedStoryFromRequest(media: {
+        mediaUrl: string;
+        authorHandle: string;
+        authorImageUrl?: string;
+        authorProfileId?: string;
+        createdAtUtc?: string;
+    }): StoryDto {
+        const createdAtUtc = media.createdAtUtc?.trim() || new Date().toISOString();
+        return {
+            id: `dock-story-${Date.now()}`,
+            authorId: media.authorProfileId?.trim() || `dock-shared-story-${media.authorHandle}`,
+            authorHandle: media.authorHandle,
+            authorImageUrl: media.authorImageUrl,
+            caption: '',
+            mediaUrl: media.mediaUrl,
+            createdAtUtc,
+            expiresAtUtc: this.buildDockStoryExpiresAt(createdAtUtc),
+            viewedByMe: false,
+            viewCount: 0
+        };
+    }
+
+    private async resolveDockStoryGroup(media: {
+        mediaUrl: string;
+        authorHandle: string;
+        authorProfileId?: string;
+    }, fallbackStory: StoryDto): Promise<void> {
+        const normalizedHandle = (media.authorHandle ?? '').trim().toLowerCase();
+        const authorId = media.authorProfileId?.trim();
+        const normalizedMediaUrl = this.normalizeComparableUrl(media.mediaUrl);
+
+        try {
+            const [forYou, following] = await Promise.allSettled([
+                this.session.loadStoryFeedAsync(80, 'for-you'),
+                this.session.loadStoryFeedAsync(80, 'following')
+            ]);
+
+            const groups = [
+                ...(forYou.status === 'fulfilled' ? forYou.value : []),
+                ...(following.status === 'fulfilled' ? following.value : [])
+            ];
+
+            if (!groups.length || !this.dockStoryGroup?.stories.some(story => story.id === fallbackStory.id)) {
+                return;
+            }
+
+            const matchedGroup = groups.find(group => {
+                if (authorId && group.authorId === authorId) {
+                    return true;
+                }
+
+                return (group.authorHandle ?? '').trim().toLowerCase() === normalizedHandle;
+            });
+
+            if (!matchedGroup?.stories.length) {
+                return;
+            }
+
+            let matchedIndex = matchedGroup.stories.findIndex(story => this.normalizeComparableUrl(story.mediaUrl) === normalizedMediaUrl);
+            if (matchedIndex < 0) {
+                matchedIndex = this.getNewestUnseenProfileChipStoryIndex(matchedGroup.stories);
+            }
+
+            this.dockStoryGroup = matchedGroup;
+            this.dockStoryIndex = Math.max(0, matchedIndex);
+        } catch {
+            // Keep fallback single story when full story group cannot be resolved.
+        }
+    }
+
+    private buildDockStoryExpiresAt(createdAtUtc: string): string {
+        const createdAt = Date.parse(createdAtUtc);
+        if (Number.isNaN(createdAt)) {
+            return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        }
+
+        return new Date(createdAt + 24 * 60 * 60 * 1000).toISOString();
+    }
+
+    private normalizeComparableUrl(value: string | null | undefined): string {
+        const source = (value ?? '').trim();
+        if (!source) {
+            return '';
+        }
+
+        try {
+            const parsed = new URL(source);
+            parsed.hash = '';
+            return parsed.toString();
+        } catch {
+            return source;
+        }
+    }
+
+    private applyDockReelUpdate(reel: ReelDto): void {
+        if (!this.dockReelModal) {
+            return;
+        }
+
+        this.dockReelModal = {
+            ...this.dockReelModal,
+            reelId: reel.id,
+            videoUrl: reel.videoUrl || this.dockReelModal.videoUrl,
+            thumbnailUrl: reel.thumbnailUrl || this.dockReelModal.thumbnailUrl,
+            authorHandle: reel.authorHandle || this.dockReelModal.authorHandle,
+            authorImageUrl: reel.authorImageUrl || this.dockReelModal.authorImageUrl,
+            caption: reel.caption || this.dockReelModal.caption,
+            createdAtUtc: reel.createdAtUtc || this.dockReelModal.createdAtUtc,
+            likeCount: reel.likeCount,
+            likedByMe: reel.likedByMe,
+            comments: reel.comments.map(comment => ({
+                id: comment.id,
+                parentCommentId: comment.parentCommentId,
+                authorHandle: comment.authorHandle,
+                authorImageUrl: comment.authorImageUrl,
+                content: comment.content,
+                createdAtUtc: comment.createdAtUtc,
+                likeCount: comment.likeCount,
+                likedByMe: comment.likedByMe
+            }))
+        };
     }
 
     showPreviousProfileChipStory(): void {

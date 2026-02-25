@@ -153,6 +153,7 @@ export class ChatPageComponent implements OnDestroy {
     status = '';
     private readonly likedSharedStoryIds = new Set<string>();
     private readonly expandedSharedReelReplyRootIds = new Set<string>();
+    private readonly unavailableSharedReelKeys = new Set<string>();
     private activeStoryGroups: StoryGroupDto[] = [];
 
     readonly prefers24HourClock = (() => {
@@ -501,6 +502,7 @@ export class ChatPageComponent implements OnDestroy {
             this.ngZone.run(() => {
                 this.messages = loadedMessages;
             });
+            void this.prefetchUnavailableSharedReelsFromMessages(loadedMessages);
         } catch {
             this.ngZone.run(() => {
                 this.messages = [];
@@ -982,6 +984,7 @@ export class ChatPageComponent implements OnDestroy {
 
     openUserProfile(handle: string, event: MouseEvent): void {
         event.preventDefault();
+        event.stopPropagation();
         void this.router.navigate(['/users', handle]);
     }
 
@@ -1011,6 +1014,7 @@ export class ChatPageComponent implements OnDestroy {
 
     openHashtag(tag: string, event: MouseEvent): void {
         event.preventDefault();
+        event.stopPropagation();
         void this.router.navigate(['/hashtags', tag]);
     }
 
@@ -1057,21 +1061,58 @@ export class ChatPageComponent implements OnDestroy {
         return clipped.length > this.sharedPreviewMaxChars;
     }
 
-    openSharedPost(shared: SharedPostPreview, event: MouseEvent): void {
+    openSharedPost(shared: SharedPostPreview, event: Event): void {
         event.preventDefault();
-        void this.router.navigate(['/users', shared.authorHandle], { fragment: `post-${shared.postId}` });
+        event.stopPropagation();
+        void this.router.navigate(['/shared/post', shared.postId]);
     }
 
-    openSharedReel(sharedReel: SharedReelPreview, message: ChatMessageDto, event: MouseEvent): void {
+    async openSharedReel(sharedReel: SharedReelPreview, message: ChatMessageDto, event: MouseEvent): Promise<void> {
         event.preventDefault();
         event.stopPropagation();
 
-        const normalizedSharedReel: SharedReelPreview = {
+        if (this.isSharedReelUnavailable(sharedReel)) {
+            this.status = 'Reel was deleted.';
+            return;
+        }
+
+        let normalizedSharedReel: SharedReelPreview = {
             ...sharedReel,
             authorHandle: sharedReel.authorHandle?.trim() || message.authorHandle,
             authorImageUrl: sharedReel.authorImageUrl || message.authorImageUrl,
             createdAtUtc: sharedReel.createdAtUtc || message.createdAtUtc
         };
+
+        const reelId = normalizedSharedReel.reelId?.trim() ?? '';
+        if (reelId) {
+            this.loadingSharedReelDetails = true;
+            try {
+                const foundById = await this.session.loadPublicReelByIdAsync(reelId);
+                if (!foundById) {
+                    this.markSharedReelUnavailable(normalizedSharedReel);
+                    this.status = 'Reel was deleted.';
+                    return;
+                }
+
+                normalizedSharedReel = {
+                    ...normalizedSharedReel,
+                    videoUrl: foundById.videoUrl || normalizedSharedReel.videoUrl,
+                    thumbnailUrl: foundById.thumbnailUrl || normalizedSharedReel.thumbnailUrl,
+                    caption: foundById.caption || normalizedSharedReel.caption,
+                    authorHandle: foundById.authorHandle || normalizedSharedReel.authorHandle,
+                    authorImageUrl: foundById.authorImageUrl || normalizedSharedReel.authorImageUrl,
+                    likeCount: foundById.likeCount,
+                    likedByMe: foundById.likedByMe,
+                    comments: foundById.comments.map(comment => this.mapReelComment(comment)),
+                    createdAtUtc: foundById.createdAtUtc || normalizedSharedReel.createdAtUtc
+                };
+            } catch {
+                this.status = 'Could not open this reel right now.';
+                return;
+            } finally {
+                this.loadingSharedReelDetails = false;
+            }
+        }
 
         this.viewerCommentDraft = '';
         this.activeSharedReelMuted = true;
@@ -2038,12 +2079,48 @@ export class ChatPageComponent implements OnDestroy {
             this.messages = [...this.messages, updated]
                 .sort((left, right) => left.createdAtUtc.localeCompare(right.createdAtUtc));
             this.scrollToBottomOnNextRender();
+            void this.prefetchUnavailableSharedReelsFromMessages([updated]);
             return;
         }
 
         const next = [...this.messages];
         next[index] = updated;
         this.messages = next;
+        void this.prefetchUnavailableSharedReelsFromMessages([updated]);
+    }
+
+    private async prefetchUnavailableSharedReelsFromMessages(messages: ReadonlyArray<ChatMessageDto>): Promise<void> {
+        const byKey = new Map<string, SharedReelPreview>();
+
+        for (const message of messages) {
+            const preview = this.parsedMessage(message).sharedReel;
+            const reelId = preview?.reelId?.trim();
+            if (!preview || !reelId || this.isSharedReelUnavailable(preview)) {
+                continue;
+            }
+
+            const key = this.sharedReelAvailabilityKey(preview);
+            if (!byKey.has(key)) {
+                byKey.set(key, preview);
+            }
+        }
+
+        if (!byKey.size) {
+            return;
+        }
+
+        const checks = await Promise.allSettled(
+            Array.from(byKey.values()).map(async preview => ({
+                preview,
+                reel: await this.session.loadPublicReelByIdAsync(preview.reelId!.trim())
+            }))
+        );
+
+        for (const result of checks) {
+            if (result.status === 'fulfilled' && !result.value.reel) {
+                this.markSharedReelUnavailable(result.value.preview);
+            }
+        }
     }
 
     private scrollToBottomOnNextRender(): void {
@@ -2182,6 +2259,18 @@ export class ChatPageComponent implements OnDestroy {
             const byPayload = this.buildFallbackReelDto(preview);
             const reelId = preview.reelId?.trim() ?? '';
             const normalizedVideoUrl = this.normalizeComparableUrl(preview.videoUrl);
+            let foundById: ReelDto | null = null;
+
+            if (reelId) {
+                foundById = await this.session.loadPublicReelByIdAsync(reelId);
+                if (!foundById && this.isSameActiveSharedReelPreview(preview)) {
+                    this.markSharedReelUnavailable(preview);
+                    this.status = 'Reel was deleted.';
+                    this.closeSharedReelViewer();
+                    return;
+                }
+            }
+
             const [forYou, following] = await Promise.allSettled([
                 this.session.loadReelFeedAsync(80, 'for-you'),
                 this.session.loadReelFeedAsync(80, 'following')
@@ -2195,7 +2284,11 @@ export class ChatPageComponent implements OnDestroy {
             const found = combined.find(reel => (reelId && reel.id === reelId)
                 || this.normalizeComparableUrl(reel.videoUrl) === normalizedVideoUrl);
 
-            this.activeSharedReelResolved = found ?? byPayload;
+            if (!this.isSameActiveSharedReelPreview(preview)) {
+                return;
+            }
+
+            this.activeSharedReelResolved = foundById ?? found ?? byPayload;
             if (this.activeSharedReel) {
                 this.activeSharedReel = {
                     ...this.activeSharedReel,
@@ -2215,6 +2308,38 @@ export class ChatPageComponent implements OnDestroy {
         } finally {
             this.loadingSharedReelDetails = false;
         }
+    }
+
+    private isSameActiveSharedReelPreview(preview: SharedReelPreview): boolean {
+        const active = this.activeSharedReel;
+        if (!active) {
+            return false;
+        }
+
+        const previewId = preview.reelId?.trim();
+        const activeId = active.reelId?.trim();
+        if (previewId && activeId) {
+            return previewId === activeId;
+        }
+
+        return this.normalizeComparableUrl(preview.videoUrl) === this.normalizeComparableUrl(active.videoUrl);
+    }
+
+    isSharedReelUnavailable(preview: SharedReelPreview): boolean {
+        return this.unavailableSharedReelKeys.has(this.sharedReelAvailabilityKey(preview));
+    }
+
+    private markSharedReelUnavailable(preview: SharedReelPreview): void {
+        this.unavailableSharedReelKeys.add(this.sharedReelAvailabilityKey(preview));
+    }
+
+    private sharedReelAvailabilityKey(preview: SharedReelPreview): string {
+        const reelId = preview.reelId?.trim();
+        if (reelId) {
+            return `id:${reelId}`;
+        }
+
+        return `url:${this.normalizeComparableUrl(preview.videoUrl)}`;
     }
 
     private buildFallbackReelDto(preview: SharedReelPreview): ReelDto {
