@@ -131,6 +131,7 @@ export class SessionService {
 
     async markStoryViewedAsync(storyId: string): Promise<void> {
         await firstValueFrom(this.api.markStoryViewed(storyId));
+        this.emitAppChange('posts');
     }
 
     async deleteStoryAsync(storyId: string): Promise<void> {

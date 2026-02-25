@@ -3,6 +3,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, ElementRef, HostListener
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { filter } from 'rxjs';
 import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, ProfileDto, ReactionSummaryDto, ReelCommentDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
 import { ChatRealtimeService } from '../../core/chat-realtime.service';
 import { ReelInteractionsService } from '../../core/reel-interactions.service';
@@ -144,6 +145,8 @@ export class ChatPageComponent implements OnDestroy {
     sharedStoryViewerError = '';
     pendingShareStoryFromViewer: StoryDto | null = null;
     sharingSharedStoryId: string | null = null;
+    private markingSharedStoryId: string | null = null;
+    private pendingSharedStoryViewedSync = false;
     emojiPickerOpen = false;
     gifInputOpen = false;
     uploadingImage = false;
@@ -219,6 +222,15 @@ export class ChatPageComponent implements OnDestroy {
                 }
 
                 this.sharedPostInput = parsed;
+            });
+
+        this.session.appChanges$
+            .pipe(
+                filter(change => change === 'posts' || change === 'profile' || change === 'session'),
+                takeUntilDestroyed(this.destroyRef)
+            )
+            .subscribe(() => {
+                void this.refreshActiveStoryPresence();
             });
 
         void this.loadConversations();
@@ -1100,6 +1112,7 @@ export class ChatPageComponent implements OnDestroy {
         this.sharingSharedStoryMessage = false;
         this.pendingShareStoryFromViewer = null;
         this.sharingSharedStoryId = null;
+        void this.markActiveSharedStoryViewed();
 
         void this.resolveSharedStoryGroup(sharedStory, message, fallbackStory);
     }
@@ -1123,6 +1136,7 @@ export class ChatPageComponent implements OnDestroy {
 
         this.activeSharedStoryIndex -= 1;
         this.sharedStoryViewerError = '';
+        void this.markActiveSharedStoryViewed();
     }
 
     showNextSharedStory(): void {
@@ -1133,6 +1147,7 @@ export class ChatPageComponent implements OnDestroy {
 
         this.activeSharedStoryIndex += 1;
         this.sharedStoryViewerError = '';
+        void this.markActiveSharedStoryViewed();
     }
 
     isActiveSharedStoryLiked(storyId: string): boolean {
@@ -2720,6 +2735,7 @@ export class ChatPageComponent implements OnDestroy {
 
             this.activeSharedStoryGroup = matchedGroup;
             this.activeSharedStoryIndex = Math.max(0, matchedIndex);
+            void this.markActiveSharedStoryViewed();
         } catch {
             // Keep fallback single story when full story group cannot be resolved.
         }
@@ -2748,6 +2764,58 @@ export class ChatPageComponent implements OnDestroy {
         this.pendingDeleteSharedStoryId = null;
         this.pendingShareStoryFromViewer = null;
         this.sharingSharedStoryId = null;
+        void this.markActiveSharedStoryViewed();
+    }
+
+    private async markActiveSharedStoryViewed(): Promise<void> {
+        const story = this.activeSharedStory;
+        if (!story || story.viewedByMe) {
+            return;
+        }
+
+        if (this.markingSharedStoryId) {
+            this.pendingSharedStoryViewedSync = true;
+            return;
+        }
+
+        this.markingSharedStoryId = story.id;
+        try {
+            await this.session.markStoryViewedAsync(story.id);
+            this.markSharedStoryViewedLocally(story.id);
+        } catch {
+            return;
+        } finally {
+            this.markingSharedStoryId = null;
+            if (this.pendingSharedStoryViewedSync) {
+                this.pendingSharedStoryViewedSync = false;
+                void this.markActiveSharedStoryViewed();
+            }
+        }
+    }
+
+    private markSharedStoryViewedLocally(storyId: string): void {
+        if (this.activeSharedStoryGroup) {
+            const updatedStories = this.activeSharedStoryGroup.stories.map(story => story.id === storyId ? { ...story, viewedByMe: true } : story);
+            this.activeSharedStoryGroup = {
+                ...this.activeSharedStoryGroup,
+                stories: updatedStories,
+                hasUnseenStories: updatedStories.some(story => !story.viewedByMe)
+            };
+        }
+
+        this.activeStoryGroups = this.activeStoryGroups.map(group => {
+            const hasStory = group.stories.some(story => story.id === storyId);
+            if (!hasStory) {
+                return group;
+            }
+
+            const updatedStories = group.stories.map(story => story.id === storyId ? { ...story, viewedByMe: true } : story);
+            return {
+                ...group,
+                stories: updatedStories,
+                hasUnseenStories: updatedStories.some(story => !story.viewedByMe)
+            };
+        });
     }
 
     private getNewestUnseenStoryIndex(stories: Array<{ viewedByMe: boolean; createdAtUtc: string }>): number {

@@ -177,6 +177,24 @@ h1 {
     padding: 10px;
 }
 
+.profile-chip-avatar {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    line-height: 0;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.profile-chip-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.profile-chip-link:hover strong {
+    text-decoration: underline;
+}
+
 .profile-chip p {
     margin: 2px 0 0;
     color: #64748b;
@@ -193,6 +211,15 @@ h1 {
     color: #1e3a8a;
     font-weight: 700;
     object-fit: cover;
+}
+
+.profile-chip .avatar.story-active {
+    border: 2px solid transparent;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #ec4899;
+}
+
+.profile-chip .avatar.story-seen {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #94a3b8;
 }
 
 .search-box {

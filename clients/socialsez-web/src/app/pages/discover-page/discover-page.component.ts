@@ -3,6 +3,7 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { filter } from 'rxjs';
 import { HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryGroupDto } from '../../core/api.types';
 import { executePostShareAction, executePostShareToChat } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
@@ -94,6 +95,15 @@ export class DiscoverPageComponent {
                 this.selectedScope = type;
                 this.recommendedReels = [];
                 void this.runSearch(query);
+            });
+
+        this.session.appChanges$
+            .pipe(
+                filter(change => change === 'posts' || change === 'profile' || change === 'session'),
+                takeUntilDestroyed(this.destroyRef)
+            )
+            .subscribe(() => {
+                void this.refreshActiveStoryPresence();
             });
     }
 

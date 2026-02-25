@@ -9,14 +9,18 @@
         </div>
 
         <div class="profile-chip" *ngIf="session.profile as profile">
-            <img class="avatar" *ngIf="shouldRenderProfileChipImage(profile.imageUrl); else profileInitial" [src]="profile.imageUrl" (error)="onProfileChipImageError(profile.imageUrl)" alt="Profile image" />
-            <ng-template #profileInitial>
-                <div class="avatar">{{ profile.displayName[0] || profile.handle[0] }}</div>
-            </ng-template>
-            <div>
+            <button type="button" class="profile-chip-avatar" (click)="openProfileChipAvatar(profile, $event)" [attr.aria-label]="hasStoryForProfileChip() ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
+                <img class="avatar" [class.story-active]="hasUnseenStoryForProfileChip()" [class.story-seen]="hasStoryForProfileChip() && !hasUnseenStoryForProfileChip()" *ngIf="shouldRenderProfileChipImage(profile.imageUrl); else profileInitial" [src]="profile.imageUrl"
+                    (error)="onProfileChipImageError(profile.imageUrl)" alt="Profile image" />
+                <ng-template #profileInitial>
+                    <span class="avatar" [class.story-active]="hasUnseenStoryForProfileChip()" [class.story-seen]="hasStoryForProfileChip() && !hasUnseenStoryForProfileChip()">{{ profile.displayName[0] || profile.handle[0] }}</span>
+                </ng-template>
+            </button>
+
+            <a class="profile-chip-link" routerLink="/profile">
                 <strong>{{ profile.displayName }}</strong>
                 <p>@{{ profile.handle }}</p>
-            </div>
+            </a>
         </div>
 
         <nav class="tabs">
@@ -113,3 +117,8 @@
 </nav>
 
 <app-messages-dock [visible]="showMessagesDock"></app-messages-dock>
+
+<app-feed-story-viewer [activeStory]="activeProfileChipStory" [activeStoryGroup]="profileChipStoryGroup" [activeStoryIndex]="profileChipStoryIndex" [storyCount]="profileChipStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousProfileChipStory" [hasNextStory]="hasNextProfileChipStory"
+    [liked]="activeProfileChipStory ? isProfileChipStoryLiked(activeProfileChipStory.id) : false" [sendingReply]="false" [sharingStory]="false" [canDelete]="false" [deletingStory]="false" [errorMessage]="''" (closed)="closeProfileChipStoryViewer()" (previous)="showPreviousProfileChipStory()"
+    (next)="showNextProfileChipStory()" (likeToggled)="toggleProfileChipStoryLike($event)">
+</app-feed-story-viewer>

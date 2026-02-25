@@ -264,6 +264,10 @@
     flex-shrink: 0;
 }
 
+.conversation .avatar.conversation-avatar-trigger {
+    cursor: pointer;
+}
+
 .title {
     font-weight: 600;
     min-width: 0;
@@ -390,13 +394,15 @@
 }
 
 .thread-avatar.story-active,
-.message-avatar.story-active {
+.message-avatar.story-active,
+.conversation .avatar.story-active {
     border: 2px solid transparent;
     box-shadow: 0 0 0 2px #fff, 0 0 0 4px #ec4899;
 }
 
 .thread-avatar.story-seen,
-.message-avatar.story-seen {
+.message-avatar.story-seen,
+.conversation .avatar.story-seen {
     box-shadow: 0 0 0 2px #fff, 0 0 0 4px #94a3b8;
 }
 

@@ -1,28 +1,38 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, HostListener, OnInit, inject, isDevMode } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, OnInit, inject, isDevMode } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
-import { HashtagSearchResultDto, ReelDto } from '../core/api.types';
+import { HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
 import { SessionService } from '../core/session.service';
 import { MessagesDockComponent } from './messages-dock.component';
+import { FeedStoryViewerComponent } from '../pages/feed-page/feed-story-viewer.component';
 
 @Component({
     selector: 'app-root',
-    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, MessagesDockComponent],
+    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, MessagesDockComponent, FeedStoryViewerComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
     readonly showDebug = isDevMode();
     working = false;
     searchText = '';
     trendingHashtags: HashtagSearchResultDto[] = [];
     loadingTrending = false;
     unreadNotificationsCount = 0;
+    profileChipHasStory = false;
+    profileChipHasUnseenStory = false;
+    profileChipFirstStoryId: string | null = null;
+    profileChipStoryGroup: StoryGroupDto | null = null;
+    profileChipStoryIndex = 0;
     private failedProfileChipImageUrl: string | null = null;
     private readonly prefsStorageKey = 'socialsez-web-prefs';
+    private readonly likedProfileChipStoryIds = new Set<string>();
+    private markingProfileChipStoryId: string | null = null;
+    private pendingProfileChipViewedSync = false;
+    private storyStatusPollTimerId: number | null = null;
 
     private readonly destroyRef = inject(DestroyRef);
 
@@ -53,6 +63,7 @@ export class AppComponent implements OnInit {
             .subscribe(change => {
                 if (change === 'posts' || change === 'session') {
                     void this.loadTrendingHashtags();
+                    void this.refreshProfileChipStoryStatus();
                 }
 
                 if (change === 'session' || change === 'notifications') {
@@ -75,6 +86,14 @@ export class AppComponent implements OnInit {
             });
 
         void this.initializeAsync();
+        this.startStoryStatusPolling();
+    }
+
+    ngOnDestroy(): void {
+        if (this.storyStatusPollTimerId !== null) {
+            window.clearInterval(this.storyStatusPollTimerId);
+            this.storyStatusPollTimerId = null;
+        }
     }
 
     @HostListener('window:storage', ['$event'])
@@ -89,6 +108,7 @@ export class AppComponent implements OnInit {
     private async initializeAsync(): Promise<void> {
         await this.session.bootstrapAsync();
         await this.loadTrendingHashtags();
+        await this.refreshProfileChipStoryStatus();
         await this.loadUnreadNotificationsCountAsync();
     }
 
@@ -141,6 +161,237 @@ export class AppComponent implements OnInit {
         }
 
         this.failedProfileChipImageUrl = normalized;
+    }
+
+    hasStoryForProfileChip(): boolean {
+        return this.profileChipHasStory;
+    }
+
+    hasUnseenStoryForProfileChip(): boolean {
+        return this.profileChipHasUnseenStory;
+    }
+
+    async openProfileChipAvatar(profile: ProfileDto, event: MouseEvent): Promise<void> {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const handle = profile.handle?.trim().toLowerCase();
+        if (!handle) {
+            await this.router.navigate(['/profile']);
+            return;
+        }
+
+        try {
+            const group = await this.loadProfileChipStoryGroupAsync(handle);
+            if (group?.stories.length) {
+                this.profileChipHasStory = true;
+                this.profileChipHasUnseenStory = this.hasUnseenStories(group);
+                this.profileChipFirstStoryId = group.stories[0]?.id ?? null;
+                this.profileChipStoryGroup = group;
+                this.profileChipStoryIndex = this.getNewestUnseenProfileChipStoryIndex(group.stories);
+                void this.markActiveProfileChipStoryViewed();
+                return;
+            }
+        } catch {
+            // Fall through to profile navigation when story lookup fails.
+        }
+
+        await this.router.navigate(['/profile']);
+    }
+
+    private async refreshProfileChipStoryStatus(): Promise<void> {
+        const handle = this.session.profile?.handle?.trim().toLowerCase();
+        if (!handle) {
+            this.profileChipHasStory = false;
+            this.profileChipHasUnseenStory = false;
+            this.profileChipFirstStoryId = null;
+            return;
+        }
+
+        try {
+            const group = await this.loadProfileChipStoryGroupAsync(handle);
+            this.profileChipHasStory = !!group?.stories.length;
+            this.profileChipHasUnseenStory = group ? this.hasUnseenStories(group) : false;
+            this.profileChipFirstStoryId = group?.stories[0]?.id ?? null;
+        } catch {
+            this.profileChipHasStory = false;
+            this.profileChipHasUnseenStory = false;
+            this.profileChipFirstStoryId = null;
+        }
+    }
+
+    closeProfileChipStoryViewer(): void {
+        this.profileChipStoryGroup = null;
+        this.profileChipStoryIndex = 0;
+    }
+
+    showPreviousProfileChipStory(): void {
+        if (this.profileChipStoryIndex <= 0) {
+            return;
+        }
+
+        this.profileChipStoryIndex -= 1;
+        void this.markActiveProfileChipStoryViewed();
+    }
+
+    showNextProfileChipStory(): void {
+        const group = this.profileChipStoryGroup;
+        if (!group) {
+            return;
+        }
+
+        if (this.profileChipStoryIndex >= group.stories.length - 1) {
+            this.closeProfileChipStoryViewer();
+            return;
+        }
+
+        this.profileChipStoryIndex += 1;
+        void this.markActiveProfileChipStoryViewed();
+    }
+
+    isProfileChipStoryLiked(storyId: string): boolean {
+        return this.likedProfileChipStoryIds.has(storyId);
+    }
+
+    toggleProfileChipStoryLike(story: StoryDto): void {
+        if (this.likedProfileChipStoryIds.has(story.id)) {
+            this.likedProfileChipStoryIds.delete(story.id);
+            return;
+        }
+
+        this.likedProfileChipStoryIds.add(story.id);
+    }
+
+    get activeProfileChipStory(): StoryDto | null {
+        if (!this.profileChipStoryGroup) {
+            return null;
+        }
+
+        return this.profileChipStoryGroup.stories[this.profileChipStoryIndex] ?? null;
+    }
+
+    get hasPreviousProfileChipStory(): boolean {
+        return this.profileChipStoryIndex > 0;
+    }
+
+    get hasNextProfileChipStory(): boolean {
+        return !!this.profileChipStoryGroup && this.profileChipStoryIndex < this.profileChipStoryGroup.stories.length - 1;
+    }
+
+    private getNewestUnseenProfileChipStoryIndex(stories: StoryDto[]): number {
+        if (!stories.some(story => story.viewedByMe)) {
+            let oldestIndex = 0;
+            let oldestTimestamp = Number.POSITIVE_INFINITY;
+
+            for (let index = 0; index < stories.length; index += 1) {
+                const parsedTimestamp = Date.parse(stories[index].createdAtUtc);
+                const timestamp = Number.isNaN(parsedTimestamp) ? Number.POSITIVE_INFINITY : parsedTimestamp;
+                if (timestamp < oldestTimestamp) {
+                    oldestTimestamp = timestamp;
+                    oldestIndex = index;
+                }
+            }
+
+            return oldestIndex;
+        }
+
+        let selectedIndex = -1;
+        let selectedTimestamp = Number.NEGATIVE_INFINITY;
+
+        for (let index = 0; index < stories.length; index += 1) {
+            const story = stories[index];
+            if (story.viewedByMe) {
+                continue;
+            }
+
+            const parsedTimestamp = Date.parse(story.createdAtUtc);
+            const timestamp = Number.isNaN(parsedTimestamp) ? Number.NEGATIVE_INFINITY : parsedTimestamp;
+            if (selectedIndex < 0 || timestamp > selectedTimestamp) {
+                selectedIndex = index;
+                selectedTimestamp = timestamp;
+            }
+        }
+
+        return selectedIndex >= 0 ? selectedIndex : 0;
+    }
+
+    private async markActiveProfileChipStoryViewed(): Promise<void> {
+        const story = this.activeProfileChipStory;
+        if (!story || story.viewedByMe) {
+            return;
+        }
+
+        if (this.markingProfileChipStoryId) {
+            this.pendingProfileChipViewedSync = true;
+            return;
+        }
+
+        this.markingProfileChipStoryId = story.id;
+        try {
+            await this.session.markStoryViewedAsync(story.id);
+            this.markProfileChipStoryViewedLocally(story.id);
+        } catch {
+            return;
+        } finally {
+            this.markingProfileChipStoryId = null;
+            if (this.pendingProfileChipViewedSync) {
+                this.pendingProfileChipViewedSync = false;
+                void this.markActiveProfileChipStoryViewed();
+            }
+        }
+    }
+
+    private markProfileChipStoryViewedLocally(storyId: string): void {
+        const group = this.profileChipStoryGroup;
+        if (!group) {
+            return;
+        }
+
+        const updatedStories = group.stories.map(story => story.id === storyId ? { ...story, viewedByMe: true } : story);
+        this.profileChipStoryGroup = {
+            ...group,
+            stories: updatedStories,
+            hasUnseenStories: updatedStories.some(story => !story.viewedByMe)
+        };
+
+        this.profileChipHasStory = updatedStories.length > 0;
+        this.profileChipHasUnseenStory = this.hasUnseenStories(this.profileChipStoryGroup);
+        this.profileChipFirstStoryId = updatedStories[0]?.id ?? null;
+    }
+
+    private hasUnseenStories(group: StoryGroupDto): boolean {
+        if (!group.stories.length) {
+            return false;
+        }
+
+        return group.stories.some(story => !story.viewedByMe);
+    }
+
+    private async loadProfileChipStoryGroupAsync(handle: string): Promise<StoryGroupDto | null> {
+        const normalized = handle.trim().toLowerCase();
+
+        if (this.session.isAuthenticated()) {
+            try {
+                const [forYou, following] = await Promise.allSettled([
+                    this.session.loadStoryFeedAsync(80, 'for-you'),
+                    this.session.loadStoryFeedAsync(80, 'following')
+                ]);
+
+                const merged = [
+                    ...(forYou.status === 'fulfilled' ? forYou.value : []),
+                    ...(following.status === 'fulfilled' ? following.value : [])
+                ];
+
+                const matched = merged.find(group => group.authorHandle.trim().toLowerCase() === normalized);
+                if (matched) {
+                    return matched;
+                }
+            } catch {
+                // Fall back to public endpoint below.
+            }
+        }
+
+        return this.session.loadPublicStoriesByAuthorHandleAsync(normalized);
     }
 
     private async loadTrendingHashtags(): Promise<void> {
@@ -242,5 +493,19 @@ export class AppComponent implements OnInit {
         } catch {
             this.unreadNotificationsCount = 0;
         }
+    }
+
+    private startStoryStatusPolling(): void {
+        if (this.storyStatusPollTimerId !== null) {
+            return;
+        }
+
+        this.storyStatusPollTimerId = window.setInterval(() => {
+            if (!this.session.isAuthenticated() || document.hidden) {
+                return;
+            }
+
+            void this.refreshProfileChipStoryStatus();
+        }, 30000);
     }
 }

@@ -114,6 +114,7 @@ export class ProfilePageComponent implements OnDestroy {
     private reloadQueued = false;
     private hasLoadedProfileOnce = false;
     private lastLoadedProfileKey: string | null = null;
+    private pendingOpenStoryFromQuery = false;
     private followStateResetTimerId: number | null = null;
     private readonly likedStoryIds = new Set<string>();
     private profileLinkCopiedResetTimerId: number | null = null;
@@ -171,6 +172,18 @@ export class ProfilePageComponent implements OnDestroy {
                 const rawHandle = params.get('handle');
                 this.viewedHandle = rawHandle ? rawHandle.trim().toLowerCase() : null;
                 void this.load();
+            });
+
+        this.route.queryParamMap
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(params => {
+                const shouldOpenStory = (params.get('story') ?? '').trim() === '1';
+                if (!shouldOpenStory) {
+                    return;
+                }
+
+                this.pendingOpenStoryFromQuery = true;
+                void this.tryOpenPendingOwnStoryFromQuery();
             });
 
         void this.load();
@@ -727,6 +740,7 @@ export class ProfilePageComponent implements OnDestroy {
                     const storyState = await this.loadStoryStateForHandleAsync(profile.handle);
                     this.viewedProfileHasActiveStory = storyState.hasActive;
                     this.viewedProfileHasUnseenStory = storyState.hasUnseen;
+                    await this.tryOpenPendingOwnStoryFromQuery();
 
                     try {
                         this.posts = await this.loadPostsForProfileAsync(profile.handle);
@@ -1486,6 +1500,28 @@ export class ProfilePageComponent implements OnDestroy {
         this.storyViewerError = '';
         void this.markActiveStoryViewed();
         return true;
+    }
+
+    private async tryOpenPendingOwnStoryFromQuery(): Promise<void> {
+        if (!this.pendingOpenStoryFromQuery || this.loading) {
+            return;
+        }
+
+        const handle = this.viewedProfile?.handle?.trim().toLowerCase();
+        if (!handle || this.currentProfileHandle !== handle) {
+            this.pendingOpenStoryFromQuery = false;
+            return;
+        }
+
+        this.pendingOpenStoryFromQuery = false;
+        await this.openStoryForHandle(handle);
+
+        await this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { story: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true
+        });
     }
 
     private async loadStoryGroupForHandleAsync(handle: string): Promise<StoryGroupDto | null> {
