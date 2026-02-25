@@ -136,7 +136,12 @@ export class AppComponent implements OnInit, OnDestroy {
     private applyThemePreference(): void {
         const stored = localStorage.getItem(this.prefsStorageKey);
         if (!stored) {
-            document.documentElement.classList.remove('theme-dark');
+            const prefersDark = this.prefersSystemDarkMode();
+            document.documentElement.classList.toggle('theme-dark', prefersDark);
+            localStorage.setItem(this.prefsStorageKey, JSON.stringify({
+                compactFeed: false,
+                darkMode: prefersDark
+            }));
             return;
         }
 
@@ -144,8 +149,18 @@ export class AppComponent implements OnInit, OnDestroy {
             const parsed = JSON.parse(stored) as { darkMode?: boolean };
             document.documentElement.classList.toggle('theme-dark', !!parsed.darkMode);
         } catch {
-            document.documentElement.classList.remove('theme-dark');
+            const prefersDark = this.prefersSystemDarkMode();
+            document.documentElement.classList.toggle('theme-dark', prefersDark);
+            localStorage.setItem(this.prefsStorageKey, JSON.stringify({
+                compactFeed: false,
+                darkMode: prefersDark
+            }));
         }
+    }
+
+    private prefersSystemDarkMode(): boolean {
+        return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+            && window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
 
     async logout(): Promise<void> {
