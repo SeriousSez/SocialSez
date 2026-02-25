@@ -230,6 +230,10 @@ export class FeedPageComponent implements OnDestroy {
         return !!story && !!this.currentProfileId && story.authorId === this.currentProfileId;
     }
 
+    trackPostById(_: number, post: PostDto): string {
+        return post.id;
+    }
+
     openComposer(): void {
         this.createMenuOpen = false;
         this.showStoryComposer = false;

@@ -151,3 +151,38 @@
 .chat-search-meta strong {
     color: #0f172a;
 }
+
+:host-context(.theme-dark) {
+    .chat-search-modal {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+    }
+
+    .chat-search-modal-head {
+        border-bottom-color: var(--color-border);
+    }
+
+    .chat-search-modal-head h3,
+    .chat-search-meta strong,
+    .chat-search-input-row input {
+        color: var(--color-text);
+    }
+
+    .chat-search-close,
+    .chat-search-result {
+        background: var(--color-surface-muted);
+        border-color: var(--color-border);
+        color: var(--color-text);
+    }
+
+    .chat-search-result:hover:not(:disabled),
+    .chat-search-close:hover:not(:disabled) {
+        background: var(--color-surface-alt);
+    }
+
+    .chat-search-hint,
+    .chat-search-meta small,
+    .chat-suggestion-group h4 {
+        color: var(--color-text-muted);
+    }
+}

@@ -1,0 +1,9 @@
+<ng-container *ngIf="rendered">
+    <div class="sheet-backdrop" [class.opening]="!closing" [class.closing]="closing" (click)="requestClose()"></div>
+    <section class="sheet-panel" [class.opening]="!closing" [class.closing]="closing" (click)="$event.stopPropagation()">
+        <header class="sheet-header" *ngIf="title">
+            <h3>{{ title }}</h3>
+        </header>
+        <ng-content></ng-content>
+    </section>
+</ng-container>

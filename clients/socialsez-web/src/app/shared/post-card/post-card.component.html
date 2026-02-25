@@ -73,70 +73,73 @@
 
             <button class="comments-toggle" type="button" (click)="toggleComments()" [attr.aria-expanded]="commentsOpen">
                 <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
-                <span>Comments</span>
-                <span>{{ post.comments.length }}</span>
+                <span class="action-label">Comments</span>
+                <span class="action-count">{{ post.comments.length }}</span>
             </button>
 
             <button class="comments-toggle" type="button" (click)="triggerShareToFeed()" [disabled]="busy || !canInteract" aria-label="Share to feed" title="Share to feed">
                 <i class="fa-duotone fa-light fa-repeat" aria-hidden="true"></i>
-                <span>Share</span>
+                <span class="action-label">Share</span>
             </button>
 
             <button class="comments-toggle" type="button" (click)="triggerShareToChat()" [disabled]="busy || !canInteract" aria-label="Send to chat" title="Send to chat">
                 <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
-                <span>Send</span>
+                <span class="action-label">Send</span>
             </button>
 
             <button class="comments-toggle" type="button" (click)="triggerCopyLink()" [disabled]="busy" aria-label="Copy share link" title="Copy share link">
                 <i class="fa-duotone" [class.fa-light]="!copyLinkCopied" [class.fa-solid]="copyLinkCopied" [class.fa-link]="!copyLinkCopied" [class.fa-check]="copyLinkCopied" aria-hidden="true"></i>
-                <span>{{ copyLinkCopied ? 'Copied' : 'Copy link' }}</span>
+                <span class="action-label">{{ copyLinkCopied ? 'Copied' : 'Copy link' }}</span>
             </button>
         </div>
 
-        <div class="comments" *ngIf="commentsOpen">
-            <div class="comment" *ngFor="let item of orderedComments" [class.reply-comment]="item.depth > 0">
-                <ng-container *ngIf="item.comment as comment">
-                    <img class="comment-avatar" *ngIf="comment.authorImageUrl; else commentInitial" [src]="comment.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
-                    <ng-template #commentInitial>
-                        <div class="comment-avatar">{{ comment.authorHandle[0] }}</div>
-                    </ng-template>
+        <app-comments-sheet [open]="commentsOpen" (close)="toggleComments()">
+            <section class="comments">
+                <p class="comments-empty" *ngIf="!orderedComments.length">Be the first to comment.</p>
+                <div class="comment" *ngFor="let item of orderedComments" [class.reply-comment]="item.depth > 0">
+                    <ng-container *ngIf="item.comment as comment">
+                        <img class="comment-avatar" *ngIf="comment.authorImageUrl; else commentInitial" [src]="comment.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
+                        <ng-template #commentInitial>
+                            <div class="comment-avatar">{{ comment.authorHandle[0] }}</div>
+                        </ng-template>
 
-                    <div class="comment-main">
-                        <div class="comment-content" *ngIf="editingCommentId !== comment.id">
-                            <span class="comment-handle">{{ comment.authorHandle }}</span>
-                            <ng-container *ngFor="let line of commentContentLines(comment.content); let isLastLine = last">
-                                <ng-container *ngFor="let part of line">
-                                    <a *ngIf="part.hashtag; else maybeCommentMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="navigateToHashtag(part.hashtag, $event)">{{ part.text }}</a>
-                                    <ng-template #maybeCommentMention>
-                                        <a *ngIf="part.mentionHandle; else plainCommentText" class="mention" [href]="'/users/' + part.mentionHandle" (click)="navigateToMention(part.mentionHandle, $event)">{{ part.text }}</a>
-                                    </ng-template>
-                                    <ng-template #plainCommentText>{{ part.text }}</ng-template>
+                        <div class="comment-main">
+                            <div class="comment-content" *ngIf="editingCommentId !== comment.id">
+                                <a class="comment-handle mention" [href]="'/users/' + comment.authorHandle" (click)="navigateToMention(comment.authorHandle, $event)">@{{ comment.authorHandle }}</a>
+                                <ng-container *ngFor="let line of commentContentLines(comment.content); let isLastLine = last">
+                                    <ng-container *ngFor="let part of line">
+                                        <a *ngIf="part.hashtag; else maybeCommentMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="navigateToHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                                        <ng-template #maybeCommentMention>
+                                            <a *ngIf="part.mentionHandle; else plainCommentText" class="mention" [href]="'/users/' + part.mentionHandle" (click)="navigateToMention(part.mentionHandle, $event)">{{ part.text }}</a>
+                                        </ng-template>
+                                        <ng-template #plainCommentText>{{ part.text }}</ng-template>
+                                    </ng-container>
+                                    <br *ngIf="!isLastLine" />
                                 </ng-container>
-                                <br *ngIf="!isLastLine" />
-                            </ng-container>
+                            </div>
+
+                            <div class="comment-meta-row">
+                                <span class="comment-meta">{{ comment.createdAtUtc | date:'short' }}</span>
+                            </div>
+                            <button type="button" class="comment-thread-toggle" *ngIf="item.depth === 0 && getCommentReplyCount(comment.id) > 0" (mousedown)="onCommentThreadToggleMouseDown(comment.id, $event)" (click)="onCommentThreadToggleClick(comment.id, $event)">
+                                {{ isCommentReplyThreadExpanded(comment.id) ? 'Hide replies' : 'View replies (' + getCommentReplyCount(comment.id) + ')' }}
+                            </button>
+
                         </div>
 
-                        <div class="comment-meta-row">
-                            <span class="comment-meta">{{ comment.createdAtUtc | date:'short' }}</span>
+                        <div class="comment-actions" *ngIf="editingCommentId !== comment.id">
+                            <button type="button" class="comment-like-button" *ngIf="editingCommentId !== comment.id && canInteract" [class.active]="!!comment.myReactionType" (mousedown)="onCommentLikeMouseDown(comment, $event)" (click)="onCommentLikeClick(comment, $event)"
+                                [attr.aria-label]="comment.myReactionType ? 'Unlike comment' : 'Like comment'">
+                                <i class="fa-duotone fa-heart" [class.fa-solid]="!!comment.myReactionType" [class.fa-light]="!comment.myReactionType" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="comment-reply-button" *ngIf="editingCommentId !== comment.id && canInteract" (mousedown)="onCommentReplyMouseDown(comment, $event)" (click)="onCommentReplyClick(comment, $event)">Reply</button>
+                            <button class="icon-btn danger" type="button" *ngIf="canDeleteComment(comment)" (mousedown)="onDeleteCommentMouseDown(comment.id, $event)" (click)="onDeleteCommentClick(comment.id, $event)" aria-label="Delete comment" title="Delete comment">
+                                <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
+                            </button>
                         </div>
-                        <button type="button" class="comment-thread-toggle" *ngIf="item.depth === 0 && getCommentReplyCount(comment.id) > 0" (mousedown)="onCommentThreadToggleMouseDown(comment.id, $event)" (click)="onCommentThreadToggleClick(comment.id, $event)">
-                            {{ isCommentReplyThreadExpanded(comment.id) ? 'Hide replies' : 'View replies (' + getCommentReplyCount(comment.id) + ')' }}
-                        </button>
-
-                    </div>
-
-                    <div class="comment-actions" *ngIf="editingCommentId !== comment.id">
-                        <button type="button" class="comment-like-button" *ngIf="editingCommentId !== comment.id && canInteract" [class.active]="!!comment.myReactionType" (mousedown)="onCommentLikeMouseDown(comment, $event)" (click)="onCommentLikeClick(comment, $event)"
-                            [attr.aria-label]="comment.myReactionType ? 'Unlike comment' : 'Like comment'">
-                            <i class="fa-duotone fa-heart" [class.fa-solid]="!!comment.myReactionType" [class.fa-light]="!comment.myReactionType" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="comment-reply-button" *ngIf="editingCommentId !== comment.id && canInteract" (mousedown)="onCommentReplyMouseDown(comment, $event)" (click)="onCommentReplyClick(comment, $event)">Reply</button>
-                        <button class="icon-btn danger" type="button" *ngIf="canDeleteComment(comment)" (mousedown)="onDeleteCommentMouseDown(comment.id, $event)" (click)="onDeleteCommentClick(comment.id, $event)" aria-label="Delete comment" title="Delete comment">
-                            <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </ng-container>
-            </div>
+                    </ng-container>
+                </div>
+            </section>
 
             <div class="comment-compose" *ngIf="canInteract">
                 <textarea #newCommentArea rows="2" placeholder="Write a comment..." [ngModel]="commentInput" (ngModelChange)="onCommentInput($event, newCommentArea)" (keyup)="onCommentCursor(newCommentArea)" (click)="onCommentCursor(newCommentArea)" (blur)="onTextAreaBlur()"></textarea>
@@ -153,7 +156,7 @@
                 </div>
                 <button type="button" (click)="submitComment()" [disabled]="!commentInput.trim()">Comment</button>
             </div>
-        </div>
+        </app-comments-sheet>
     </ng-container>
 
     <div class="post-actions" *ngIf="showActions && isEditing">

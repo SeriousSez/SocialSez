@@ -19,7 +19,6 @@
                 <p class="reel-preview-content" *ngIf="currentReel.caption">{{ currentReel.caption }}</p>
                 <img class="reel-preview-thumbnail" *ngIf="previewThumbnailUrl as thumbnail; else noReelThumbnail" [src]="thumbnail" alt="Shared reel thumbnail" />
                 <ng-template #noReelThumbnail>
-                    <video class="reel-preview-thumbnail reel-preview-video" *ngIf="contentKind === 'reel' && isVideoMediaUrl(currentReel.videoUrl); else noPreviewMedia" [src]="currentReel.videoUrl" muted autoplay loop playsinline preload="metadata" aria-label="Shared video preview"></video>
                     <ng-template #noPreviewMedia>
                         <video class="reel-preview-thumbnail story-static-preview" *ngIf="contentKind === 'story' && isVideoMediaUrl(currentReel.videoUrl); else noStaticMedia" [src]="currentReel.videoUrl" muted playsinline preload="auto" aria-label="Shared story preview"></video>
                         <ng-template #noStaticMedia>

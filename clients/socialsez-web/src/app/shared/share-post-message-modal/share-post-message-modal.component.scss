@@ -2,7 +2,7 @@
     position: fixed;
     inset: 0;
     z-index: 1000;
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(2, 6, 23, 0.6);
     display: grid;
     place-items: center;
     padding: 12px;
@@ -17,6 +17,7 @@
     background: #fff;
     border-radius: 10px;
     border: 1px solid #dbe4f0;
+    box-shadow: 0 28px 56px -28px #020617;
 }
 
 .modal-head {
@@ -141,18 +142,22 @@
 
 .search-wrap input:focus {
     outline: none;
+    border: none;
+    box-shadow: none;
 }
 
 .recipients-list {
     overflow: auto;
-    border-top: 1px solid #f1f5f9;
-    border-bottom: 1px solid #f1f5f9;
+    margin: 0 16px;
+    border: 1px solid #dbe4f0;
+    border-radius: 8px;
 }
 
 .state {
     margin: 0;
     padding: 14px 16px;
     color: #64748b;
+    text-align: left;
 }
 
 .recipient {
@@ -239,7 +244,7 @@
     border: 1px solid #dbe4f0;
     border-radius: 10px;
     padding: 12px;
-    resize: vertical;
+    resize: none;
     min-height: 74px;
     font: inherit;
 }
@@ -276,4 +281,63 @@
 
 .send-btn.ghost {
     margin-left: 0;
+}
+
+:host-context(.theme-dark) {
+    .modal-card {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        box-shadow: 0 30px 60px -28px rgba(2, 6, 23, 0.95);
+    }
+
+    .modal-head {
+        border-bottom-color: var(--color-border);
+    }
+
+    .modal-head h3,
+    .post-preview-content,
+    .meta h4,
+    .message-wrap textarea,
+    .search-wrap input {
+        color: var(--color-text);
+    }
+
+    .post-preview-meta,
+    .post-preview-meta strong,
+    .post-preview-more,
+    .meta p,
+    .state,
+    .copy-feedback,
+    .search-icon {
+        color: var(--color-text-muted);
+    }
+
+    .post-preview,
+    .post-preview-image,
+    .search-wrap,
+    .recipients-list,
+    .recipient,
+    .message-wrap textarea,
+    .checkbox {
+        background: var(--color-surface-muted);
+        border-color: var(--color-border);
+    }
+
+    .checkbox.checked {
+        background: var(--color-accent);
+        border-color: var(--color-accent);
+        box-shadow: inset 0 0 0 4px var(--color-surface-muted);
+    }
+
+    .state {
+        background: transparent;
+    }
+
+    .recipient {
+        border-bottom-color: var(--color-border);
+    }
+
+    .recipient:hover {
+        background: var(--color-surface-alt);
+    }
 }

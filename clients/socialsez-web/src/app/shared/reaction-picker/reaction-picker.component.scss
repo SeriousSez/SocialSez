@@ -36,10 +36,17 @@
     padding: 8px 12px;
     box-shadow: none;
     transform: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .reaction-btn:hover {
     background: var(--color-surface-alt);
+    box-shadow: none;
+    transform: none;
+}
+
+.reaction-btn:active {
+    background: var(--color-surface-muted);
     box-shadow: none;
     transform: none;
 }
@@ -116,6 +123,12 @@
 .reaction-pop-btn:hover {
     background: var(--color-surface-alt);
     transform: translateY(-1px) scale(1.08);
+    box-shadow: none;
+}
+
+.reaction-pop-btn:active {
+    background: var(--color-surface-muted);
+    transform: none;
     box-shadow: none;
 }
 

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { CommentDto, PostDto, ProfileDto } from '../../core/api.types';
 import { SharedPostPreview, extractSharedPostFromContent } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
+import { CommentsSheetComponent } from '../comments-sheet/comments-sheet.component';
 import { ConfirmModalComponent } from '../confirm-modal/confirm-modal.component';
 import { ReactionPickerComponent } from '../reaction-picker/reaction-picker.component';
 
@@ -32,11 +33,11 @@ interface PostContentPart {
 @Component({
     selector: 'app-post-card',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactionPickerComponent, ConfirmModalComponent],
+    imports: [CommonModule, FormsModule, ReactionPickerComponent, ConfirmModalComponent, CommentsSheetComponent],
     templateUrl: './post-card.component.html',
     styleUrl: './post-card.component.scss'
 })
-export class PostCardComponent implements OnDestroy {
+export class PostCardComponent implements OnChanges, OnDestroy {
     private static readonly OpenCommentPostIds = new Set<string>();
     @Input({ required: true }) post!: PostDto;
     @Input()
@@ -129,6 +130,7 @@ export class PostCardComponent implements OnDestroy {
         if (this.currentPostId && !this.commentsOpen) {
             PostCardComponent.OpenCommentPostIds.delete(this.currentPostId);
         }
+
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -145,6 +147,7 @@ export class PostCardComponent implements OnDestroy {
         this.commentsOpen = PostCardComponent.OpenCommentPostIds.has(nextPostId);
         this.replyingToCommentId = null;
         this.expandedCommentReplyRootIds.clear();
+
     }
 
     onPostPrimaryReaction(): void {

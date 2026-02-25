@@ -105,7 +105,7 @@ textarea {
     border-radius: 10px;
     padding: 10px;
     font: inherit;
-    resize: vertical;
+    resize: none;
     min-height: 92px;
 }
 
@@ -204,4 +204,40 @@ textarea {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
+}
+
+:host-context(.theme-dark) {
+    .modal-card {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text);
+    }
+
+    h3,
+    .post-preview-content,
+    .post-preview-meta strong,
+    textarea {
+        color: var(--color-text);
+    }
+
+    p,
+    .post-preview-meta,
+    .post-preview-more,
+    .mention-subline,
+    .mention-hint {
+        color: var(--color-text-muted);
+    }
+
+    .post-preview,
+    .post-preview-image,
+    textarea,
+    .mention-suggestions,
+    .mention-suggestions button {
+        background: var(--color-surface-muted);
+        border-color: var(--color-border);
+    }
+
+    .mention-suggestions button:hover {
+        background: var(--color-surface-alt);
+    }
 }

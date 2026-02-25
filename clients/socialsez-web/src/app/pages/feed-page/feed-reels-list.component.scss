@@ -170,7 +170,7 @@
     border: 1px solid #cbd5e1;
     border-radius: 10px;
     padding: 0.55rem 0.65rem;
-    resize: vertical;
+    resize: none;
     min-height: 72px;
     font: inherit;
 }
@@ -208,11 +208,18 @@
     line-height: 1;
     padding: 2px;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .icon-button:hover {
     transform: none;
     box-shadow: none;
+}
+
+.icon-button:active {
+    transform: none;
+    box-shadow: none;
+    background: transparent;
 }
 
 .icon-button:disabled {
@@ -222,6 +229,13 @@
 
 .like-button.active {
     color: #e11d48;
+}
+
+.like-button.active i {
+    --fa-primary-color: #e11d48;
+    --fa-secondary-color: #e11d48;
+    --fa-primary-opacity: 1;
+    --fa-secondary-opacity: 0.35;
 }
 
 .comment-button.active {
@@ -297,6 +311,16 @@
 .reel-comments {
     display: grid;
     gap: 10px;
+    min-height: 0;
+    overflow: auto;
+}
+
+.reel-comments-empty {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.92rem;
+    text-align: center;
+    justify-self: center;
 }
 
 .reel-comment {
@@ -339,6 +363,11 @@
     margin: 0;
     line-height: 1.32;
     overflow-wrap: anywhere;
+}
+
+.reel-comment-handle {
+    margin-right: 5px;
+    font-weight: 700;
 }
 
 .reel-comment-meta {
@@ -454,20 +483,116 @@
 
 .reel-comment-form {
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 8px;
+    gap: 6px;
+    border-top: 1px solid #dbe4f0;
+    padding-top: 10px;
+    background: inherit;
 
-    input {
-        border: 1px solid #cbd5e1;
+    textarea {
+        width: 100%;
+        box-sizing: border-box;
+        max-width: 100%;
+        border: 1px solid #c6d4e6;
         border-radius: 10px;
-        padding: 0.45rem 0.65rem;
-        font-size: 13px;
+        padding: 8px;
+        font: inherit;
+        font-size: 0.86rem;
+        line-height: 1.35;
+        min-height: 40px;
+        resize: none;
+        background: #fff;
     }
 
     button {
-        padding: 0.4rem 0.7rem;
-        border-radius: 10px;
-        font-size: 13px;
+        border: none;
+        border-radius: 9px;
+        background: linear-gradient(135deg, #0f172a, #1f2937);
+        color: #ffffff;
+        padding: 6px 10px;
         font-weight: 700;
     }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .reel-card button {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .reel-card button:active {
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+:host-context(.theme-dark) {
+    .reel-card {
+        border-bottom-color: var(--color-border);
+    }
+
+    .reel-caption,
+    .comment-count,
+    .engagement-count,
+    .reel-comment,
+    .reel-comment-edit input,
+    .reel-comment-form textarea,
+    .reel-edit-form textarea {
+        color: var(--color-text);
+    }
+
+    .reel-collaborators,
+    .meta,
+    .reel-comment-meta,
+    .reel-comment-reply,
+    .reel-comment-thread-toggle,
+    .reel-comments-empty {
+        color: var(--color-text-muted);
+    }
+
+    .icon-button,
+    .reel-comment-like,
+    .reel-comment-action {
+        color: var(--color-text);
+    }
+
+    .like-button.active {
+        color: #fb7185;
+    }
+
+    .like-button.active i {
+        --fa-primary-color: #fb7185;
+        --fa-secondary-color: #fb7185;
+        --fa-primary-opacity: 1;
+        --fa-secondary-opacity: 0.4;
+    }
+
+    .reel-comment-like:hover,
+    .reel-comment-action:hover {
+        background: var(--color-surface-muted);
+    }
+
+    .author-link,
+    .reel-read-more {
+        color: var(--color-link);
+    }
+
+    .reel-comment-edit input,
+    .reel-comment-form textarea,
+    .reel-edit-form textarea {
+        background: var(--color-surface-muted);
+        border-color: var(--color-border);
+    }
+
+    .reel-comment-form {
+        border-top-color: var(--color-border);
+    }
+
+    .reel-comment-form textarea::placeholder {
+        color: var(--color-text-muted);
+    }
+
+    .reel-comment-edit-actions .ghost {
+        background: var(--color-surface-muted);
+        color: var(--color-text);
+    }
+
 }

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReelCommentDto, ReelDto } from '../../core/api.types';
+import { CommentsSheetComponent } from '../../shared/comments-sheet/comments-sheet.component';
 
 export interface ReelCommentCreateEvent {
     reel: ReelDto;
@@ -23,7 +24,7 @@ export interface ReelCommentDeleteEvent {
 @Component({
     selector: 'app-feed-reels-list',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, CommentsSheetComponent],
     templateUrl: './feed-reels-list.component.html',
     styleUrl: './feed-reels-list.component.scss'
 })
@@ -228,6 +229,10 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         return this.unseenStoryAuthorHandles.some(item => item.trim().toLowerCase() === normalized);
     }
 
+    trackReelById(_: number, reel: ReelDto): string {
+        return reel.id;
+    }
+
     canManageReel(reel: ReelDto): boolean {
         return !!this.viewerProfileId && reel.authorId === this.viewerProfileId;
     }
@@ -249,7 +254,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         }
 
         this.openedReelComments.add(reelId);
-        const input = document.querySelector<HTMLInputElement>(`input[data-reel-comment-id="${reelId}"]`);
+        const input = document.querySelector<HTMLTextAreaElement>(`textarea[data-reel-comment-id="${reelId}"]`);
         window.setTimeout(() => {
             input?.focus();
         }, 0);
@@ -290,7 +295,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         this.expandReelReplyThread(reelId, rootId);
 
         await Promise.resolve();
-        const input = document.querySelector<HTMLInputElement>(`input[data-reel-comment-id="${reelId}"]`);
+        const input = document.querySelector<HTMLTextAreaElement>(`textarea[data-reel-comment-id="${reelId}"]`);
         if (!input) {
             return;
         }
