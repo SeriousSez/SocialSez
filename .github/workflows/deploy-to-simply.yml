@@ -242,6 +242,9 @@ jobs:
           local-dir: ${{ env.PUBLISH_PATH }}/
           server-dir: /venli.api/
           dangerous-clean-slate: false
+          exclude: |
+            **/uploads/**
+            **/logs/**
 
       - name: Remove app_offline.htm from server
         shell: pwsh

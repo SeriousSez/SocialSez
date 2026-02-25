@@ -63,6 +63,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     private readonly reelVisibility = new Map<string, number>();
     private readonly mutedReelIds = new Set<string>();
     private readonly pausedByUserReelIds = new Set<string>();
+    private readonly failedReelVideoIds = new Set<string>();
     private readonly expandedReelCaptions = new Set<string>();
     private readonly expandedReelReplyThreadRootsByReelId = new Map<string, Set<string>>();
     private readonly openedReelComments = new Set<string>();
@@ -113,6 +114,12 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         for (const key of Array.from(this.pausedByUserReelIds.values())) {
             if (!currentIds.has(key)) {
                 this.pausedByUserReelIds.delete(key);
+            }
+        }
+
+        for (const key of Array.from(this.failedReelVideoIds.values())) {
+            if (!currentIds.has(key)) {
+                this.failedReelVideoIds.delete(key);
             }
         }
 
@@ -605,6 +612,10 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     onReelFrameClick(reelId: string): void {
+        if (this.isReelVideoUnavailable(reelId)) {
+            return;
+        }
+
         const video = this.findVideoByReelId(reelId);
         if (!video) {
             return;
@@ -642,6 +653,26 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
 
     isReelMuted(reelId: string): boolean {
         return this.mutedReelIds.has(reelId);
+    }
+
+    isReelVideoUnavailable(reelId: string): boolean {
+        return this.failedReelVideoIds.has(reelId);
+    }
+
+    onReelVideoLoadedMetadata(reelId: string): void {
+        this.failedReelVideoIds.delete(reelId);
+    }
+
+    onReelVideoError(reelId: string): void {
+        this.failedReelVideoIds.add(reelId);
+        this.pausedByUserReelIds.add(reelId);
+
+        if (this.activeReelId === reelId) {
+            this.activeReelId = null;
+        }
+
+        const video = this.findVideoByReelId(reelId);
+        video?.pause();
     }
 
     getReelLocation(reel: ReelDto): string {
@@ -864,7 +895,9 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
                 continue;
             }
 
-            const shouldPlay = this.activeReelId === reelId && !this.pausedByUserReelIds.has(reelId);
+            const shouldPlay = this.activeReelId === reelId
+                && !this.pausedByUserReelIds.has(reelId)
+                && !this.failedReelVideoIds.has(reelId);
             if (shouldPlay) {
                 void this.playVideo(video);
                 continue;
@@ -886,10 +919,20 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     private async playVideo(video: HTMLVideoElement): Promise<void> {
+        const reelId = video.dataset['reelId'];
+
         try {
             await video.play();
         } catch {
+            if (reelId) {
+                this.failedReelVideoIds.add(reelId);
+            }
+
             return;
+        }
+
+        if (reelId) {
+            this.failedReelVideoIds.delete(reelId);
         }
     }
 

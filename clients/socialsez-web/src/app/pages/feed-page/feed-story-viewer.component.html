@@ -26,10 +26,15 @@
 
         <div class="story-media-wrap">
             <video #storyVideoEl *ngIf="isVideoStory(story.mediaUrl); else imageStory" [src]="story.mediaUrl" autoplay [muted]="storyMuted" playsinline preload="auto" (loadedmetadata)="onVideoLoadedMetadata(storyVideoEl)" (play)="onVideoPlay()" (pause)="onVideoPause()"
-                (timeupdate)="onVideoTimeUpdate(storyVideoEl)" (ended)="onVideoEnded()"></video>
+                (timeupdate)="onVideoTimeUpdate(storyVideoEl)" (ended)="onVideoEnded()" (error)="onVideoError()"></video>
             <ng-template #imageStory>
                 <img [src]="story.mediaUrl" alt="Story" />
             </ng-template>
+
+            <div class="story-video-error" *ngIf="isVideoStory(story.mediaUrl) && videoPlaybackError">
+                <strong>Video unavailable</strong>
+                <p>This story video could not be decoded in this browser.</p>
+            </div>
 
             <p class="story-caption" *ngIf="story.caption">{{ story.caption }}</p>
         </div>

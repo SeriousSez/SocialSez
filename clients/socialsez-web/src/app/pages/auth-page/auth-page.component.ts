@@ -12,6 +12,8 @@ import { SessionService } from '../../core/session.service';
 })
 export class AuthPageComponent {
     mode: 'login' | 'register' = 'login';
+    isSubmitting = false;
+    private readonly minimumSubmitLoadingMs = 450;
 
     email = '';
     password = '';
@@ -62,12 +64,29 @@ export class AuthPageComponent {
     }
 
     async submit(): Promise<void> {
-        if (this.mode === 'login') {
-            await this.login();
+        if (this.isSubmitting) {
             return;
         }
 
-        await this.register();
+        this.isSubmitting = true;
+        const startedAt = Date.now();
+
+        try {
+            if (this.mode === 'login') {
+                await this.login();
+                return;
+            }
+
+            await this.register();
+        } finally {
+            const elapsed = Date.now() - startedAt;
+            const remaining = this.minimumSubmitLoadingMs - elapsed;
+            if (remaining > 0) {
+                await new Promise<void>(resolve => window.setTimeout(resolve, remaining));
+            }
+
+            this.isSubmitting = false;
+        }
     }
 
     private normalizeHandle(value: string): string {

@@ -164,6 +164,32 @@
     text-shadow: 0 3px 16px rgba(0, 0, 0, 0.7);
 }
 
+.story-video-error {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 112px;
+    z-index: 6;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    color: #e2e8f0;
+    padding: 10px 12px;
+    display: grid;
+    gap: 3px;
+    text-align: center;
+}
+
+.story-video-error strong,
+.story-video-error p {
+    margin: 0;
+}
+
+.story-video-error p {
+    font-size: 0.84rem;
+    color: #cbd5e1;
+}
+
 .story-nav {
     -webkit-appearance: none;
     appearance: none;

@@ -42,6 +42,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     currentStoryProgress = 0;
     isClosing = false;
     copyLinkCopied = false;
+    videoPlaybackError = false;
 
     private imageProgressFrameId = 0;
     private videoProgressFrameId = 0;
@@ -60,6 +61,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
             this.replyDraft = '';
             this.isClosing = false;
             this.copyLinkCopied = false;
+            this.videoPlaybackError = false;
             this.clearCloseTimeout();
             this.resetPlaybackState();
         }
@@ -169,6 +171,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
             return;
         }
 
+        this.videoPlaybackError = false;
         this.currentStoryProgress = 0;
         this.paused = false;
         video.muted = this.storyMuted;
@@ -199,6 +202,12 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         this.stopVideoProgressLoop();
         this.currentStoryProgress = 1;
         this.showNext();
+    }
+
+    onVideoError(): void {
+        this.videoPlaybackError = true;
+        this.paused = true;
+        this.stopVideoProgressLoop();
     }
 
     onReplySubmit(): void {

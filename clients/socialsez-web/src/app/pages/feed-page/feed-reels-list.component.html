@@ -18,7 +18,12 @@
         </header>
 
         <div class="reel-video-frame" (click)="onReelFrameClick(reel.id)">
-            <video #reelVideoEl class="reel-video" [attr.data-reel-id]="reel.id" [style.transform]="getReelFrameTransform(reel)" [poster]="reel.thumbnailUrl || null" [src]="reel.videoUrl" [muted]="isReelMuted(reel.id)" [loop]="activeReelId === reel.id" playsinline preload="metadata"></video>
+            <video #reelVideoEl class="reel-video" [attr.data-reel-id]="reel.id" [style.transform]="getReelFrameTransform(reel)" [poster]="reel.thumbnailUrl || null" [src]="reel.videoUrl" [muted]="isReelMuted(reel.id)" [loop]="activeReelId === reel.id" playsinline preload="metadata"
+                (loadedmetadata)="onReelVideoLoadedMetadata(reel.id)" (error)="onReelVideoError(reel.id)"></video>
+            <div class="reel-video-error" *ngIf="isReelVideoUnavailable(reel.id)">
+                <strong>Video unavailable</strong>
+                <p>This reel could not be decoded in this browser.</p>
+            </div>
             <div class="reel-frame-actions" *ngIf="canShowOwnerActions(reel) && !isEditingReel(reel.id)">
                 <button type="button" class="reel-frame-action" (click)="startReelEdit(reel); $event.stopPropagation()" [disabled]="!!updatingReelId || !!deletingReelId" aria-label="Edit reel">
                     <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
@@ -28,7 +33,7 @@
                         aria-hidden="true"></i>
                 </button>
             </div>
-            <button type="button" class="reel-volume" (click)="toggleMute($event, reel.id)" [attr.aria-label]="isReelMuted(reel.id) ? 'Unmute reel' : 'Mute reel'">
+            <button type="button" class="reel-volume" (click)="toggleMute($event, reel.id)" [disabled]="isReelVideoUnavailable(reel.id)" [attr.aria-label]="isReelMuted(reel.id) ? 'Unmute reel' : 'Mute reel'">
                 {{ isReelMuted(reel.id) ? '🔇' : '🔊' }}
             </button>
         </div>

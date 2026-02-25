@@ -6,8 +6,8 @@
     </div>
 
     <div class="mode-switch" role="tablist" aria-label="Authentication mode">
-        <button type="button" class="mode-btn" role="tab" [attr.aria-selected]="mode === 'login'" [class.active]="mode === 'login'" [disabled]="mode === 'login'" (click)="setMode('login')">Sign in</button>
-        <button type="button" class="mode-btn" role="tab" [attr.aria-selected]="mode === 'register'" [class.active]="mode === 'register'" [disabled]="mode === 'register'" (click)="setMode('register')">Create account</button>
+        <button type="button" class="mode-btn" role="tab" [attr.aria-selected]="mode === 'login'" [class.active]="mode === 'login'" [disabled]="mode === 'login' || isSubmitting" (click)="setMode('login')">Sign in</button>
+        <button type="button" class="mode-btn" role="tab" [attr.aria-selected]="mode === 'register'" [class.active]="mode === 'register'" [disabled]="mode === 'register' || isSubmitting" (click)="setMode('register')">Create account</button>
     </div>
 
     <form class="auth-form" (ngSubmit)="submit()">
@@ -20,7 +20,10 @@
         </div>
 
         <div class="actions">
-            <button class="auth-submit" type="submit">{{ mode === 'login' ? 'Sign in' : 'Create account' }}</button>
+            <button class="auth-submit" type="submit" [disabled]="isSubmitting">
+                <span class="btn-loader" *ngIf="isSubmitting" aria-hidden="true"></span>
+                <span>{{ isSubmitting ? (mode === 'login' ? 'Signing in...' : 'Creating account...') : (mode === 'login' ? 'Sign in' : 'Create account') }}</span>
+            </button>
         </div>
     </form>
 
@@ -28,10 +31,10 @@
 
     <p class="switch-cta" *ngIf="mode === 'login'">
         New here?
-        <button type="button" class="link-btn" (click)="setMode('register')">Create an account</button>
+        <button type="button" class="link-btn" [disabled]="isSubmitting" (click)="setMode('register')">Create an account</button>
     </p>
     <p class="switch-cta" *ngIf="mode === 'register'">
         Already have an account?
-        <button type="button" class="link-btn" (click)="setMode('login')">Sign in</button>
+        <button type="button" class="link-btn" [disabled]="isSubmitting" (click)="setMode('login')">Sign in</button>
     </p>
 </section>

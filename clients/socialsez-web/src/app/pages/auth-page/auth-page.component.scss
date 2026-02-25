@@ -84,6 +84,23 @@ label {
     gap: 8px;
 }
 
+.auth-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 170px;
+}
+
+.btn-loader {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    animation: auth-btn-spin 0.7s linear infinite;
+}
+
 .switch-cta {
     margin: 0;
     color: #475569;
@@ -125,5 +142,11 @@ label {
 
     .full {
         grid-column: auto;
+    }
+}
+
+@keyframes auth-btn-spin {
+    to {
+        transform: rotate(360deg);
     }
 }
