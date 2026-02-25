@@ -445,6 +445,7 @@
     margin: 0;
     font-size: 0.92rem;
     line-height: 1.35;
+    color: #0f172a;
     white-space: pre-wrap;
     overflow-wrap: break-word;
     word-break: normal;
@@ -763,4 +764,64 @@
 
 .chat-layout .message.own .bubble.shared-with-text .shared-post-preview {
     border-radius: 14px 4px 14px 14px;
+}
+
+:root.theme-dark .chat-layout .shared-post-preview {
+    background: var(--color-surface-alt) !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text) !important;
+}
+
+:root.theme-dark .chat-layout .shared-post-head,
+:root.theme-dark .chat-layout .shared-post-content,
+:root.theme-dark .chat-layout .shared-post-head strong {
+    color: var(--color-text) !important;
+}
+
+:root.theme-dark .chat-layout .bubble {
+    background: var(--color-surface-muted);
+    border-color: var(--color-border);
+}
+
+:root.theme-dark .chat-layout .message.own .bubble {
+    background: var(--color-surface-alt);
+    border-color: var(--color-border-strong);
+}
+
+:root.theme-dark .chat-layout .bubble p,
+:root.theme-dark .chat-layout .message-time-side,
+:root.theme-dark .chat-layout .reaction-summary {
+    color: var(--color-text-subtle);
+}
+
+:root.theme-dark .chat-layout .shared-post-content .hashtag,
+:root.theme-dark .chat-layout .shared-post-content .mention {
+    color: var(--color-secondary-strong);
+}
+
+:root.theme-dark .chat-composer {
+    border-top-color: var(--color-border);
+}
+
+:root.theme-dark .chat-composer-input-shell {
+    background: var(--color-surface-muted);
+    border-color: var(--color-border);
+}
+
+:root.theme-dark .chat-composer-input-shell textarea {
+    color: var(--color-text);
+}
+
+:root.theme-dark .chat-composer-input-shell textarea:focus,
+:root.theme-dark .chat-composer-input-shell textarea:focus-visible {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+:root.theme-dark .chat-composer-input-shell textarea::placeholder {
+    color: var(--color-text-muted);
+}
+
+:root.theme-dark .chat-composer-icon {
+    color: var(--color-text-muted);
 }

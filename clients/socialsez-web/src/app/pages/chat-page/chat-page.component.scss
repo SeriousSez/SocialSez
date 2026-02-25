@@ -441,9 +441,9 @@
 }
 
 .message-list {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0;
-    align-content: start;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;

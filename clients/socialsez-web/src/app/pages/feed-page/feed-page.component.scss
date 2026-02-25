@@ -750,3 +750,10 @@ h2 {
     }
 
 }
+
+@media (max-width: 780px) {
+    app-feed-reels-list {
+        display: block;
+        padding-bottom: calc(var(--mobile-footer-nav-height) + env(safe-area-inset-bottom));
+    }
+}
