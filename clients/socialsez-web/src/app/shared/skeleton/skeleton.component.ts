@@ -16,11 +16,18 @@ import { Component, Input } from '@angular/core';
         `
             :host {
                 display: block;
+                --skeleton-base: #e2e8f0;
+                --skeleton-highlight: #f1f5f9;
+            }
+
+            :host-context(.theme-dark) {
+                --skeleton-base: #0f172a;
+                --skeleton-highlight: #1e293b;
             }
 
             .skeleton-block {
                 display: block;
-                background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+                background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 50%, var(--skeleton-base) 75%);
                 background-size: 240% 100%;
                 animation: skeleton-shimmer 1.25s ease-in-out infinite;
             }

@@ -11,6 +11,14 @@ import { SessionService } from '../../core/session.service';
     styleUrl: './settings-page.component.scss'
 })
 export class SettingsPageComponent implements OnDestroy {
+    readonly sectionOpenState: Record<'profile' | 'account' | 'session' | 'preferences' | 'logout', boolean> = {
+        profile: true,
+        account: false,
+        session: false,
+        preferences: false,
+        logout: false
+    };
+
     displayName = '';
     bio = '';
     imageUrl = '';
@@ -54,6 +62,10 @@ export class SettingsPageComponent implements OnDestroy {
         }
 
         this.loadPrefs();
+    }
+
+    toggleSection(section: 'profile' | 'account' | 'session' | 'preferences' | 'logout'): void {
+        this.sectionOpenState[section] = !this.sectionOpenState[section];
     }
 
     async saveProfile(): Promise<void> {

@@ -470,6 +470,12 @@ export class ChatPageComponent implements OnDestroy {
         const previousConversationId = this.selectedConversationId;
         this.selectedConversationId = conversation.id;
         this.selectedConversation = conversation;
+        void this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { conversation: conversation.id },
+            queryParamsHandling: 'merge',
+            replaceUrl: true
+        });
         this.messages = [];
         this.messageSearchQuery = '';
         this.newMessage = '';
@@ -508,6 +514,21 @@ export class ChatPageComponent implements OnDestroy {
                 }
             });
         });
+    }
+
+    clearSelectedConversation(): void {
+        this.selectedConversationId = null;
+        this.selectedConversation = null;
+        void this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { conversation: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true
+        });
+        this.messages = [];
+        this.messageSearchQuery = '';
+        this.loadingMessages = false;
+        this.status = '';
     }
 
     async sendMessage(): Promise<void> {

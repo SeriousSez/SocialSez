@@ -2,6 +2,7 @@
     display: block;
     font-family: Inter, Arial, sans-serif;
     color: #0f172a;
+    --mobile-footer-nav-height: 56px;
     min-height: 100dvh;
     background:
         radial-gradient(circle at top right, rgba(59, 130, 246, 0.14), transparent 42%),
@@ -361,7 +362,9 @@ label {
     .shell.chat-mode {
         grid-template-columns: 1fr;
         max-width: 100%;
-        padding: 16px 12px 28px;
+        padding: 0;
+        gap: 0;
+        min-height: 100dvh;
     }
 
     .left-rail,
@@ -389,7 +392,57 @@ label {
     }
 
     .content {
+        margin: 0;
         padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: #ffffff;
+        min-height: calc(100dvh - (var(--mobile-footer-nav-height) + env(safe-area-inset-bottom)));
+        box-sizing: border-box;
+        display: grid;
+        align-content: start;
+    }
+
+    .content> :not(router-outlet) {
+        min-height: 100%;
+    }
+
+    .shell.chat-mode {
+        padding: 0;
+        height: 100dvh;
+        min-height: 0;
+        align-content: stretch;
+        overflow: hidden;
+    }
+
+    .shell.chat-mode .main-column {
+        gap: 0;
+        height: 100%;
+        min-height: 0;
+    }
+
+    .shell.chat-mode .content {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+        height: 100%;
+        min-height: 0;
+        display: grid;
+        grid-template-rows: minmax(0, 1fr);
+    }
+
+    .shell.chat-mode .content>router-outlet {
+        display: none;
+    }
+
+    .shell.chat-mode .content>app-chat-page {
+        display: block;
+        min-height: 0;
+        height: 100%;
     }
 
     .main-column {
@@ -405,7 +458,7 @@ label {
     }
 
     .shell {
-        padding-bottom: 16px;
+        padding-bottom: 0;
     }
 
     .mobile-footer-tabs {
@@ -419,9 +472,13 @@ label {
         gap: 0;
         background: #ffffff;
         border-top: 1px solid #dbe4f0;
-        box-shadow: 0 -12px 24px -22px #0f172a;
+        box-shadow: none;
         padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
         overflow-x: auto;
+    }
+
+    .mobile-footer-tabs.hidden-on-chat {
+        display: none;
     }
 
     .mobile-footer-tab {
@@ -481,19 +538,31 @@ label {
 
 @media (max-width: 560px) {
     .shell {
-        gap: 10px;
+        gap: 0;
     }
 
     .content {
-        margin: 12px 0px calc(12px + 50px + env(safe-area-inset-bottom));
+        margin: 0;
+    }
+
+    .shell.chat-mode {
+        gap: 0;
+    }
+
+    .shell.chat-mode .content {
+        margin: 0;
+        border-radius: 0;
     }
 
     .brand,
     .tabs,
     .topbar,
-    .content,
     .side-card {
         border-radius: 12px;
+    }
+
+    .shell.chat-mode .content {
+        border-radius: 0;
     }
 
     .tabs {

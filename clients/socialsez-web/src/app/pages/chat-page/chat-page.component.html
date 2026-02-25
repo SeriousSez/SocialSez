@@ -3,7 +3,7 @@
         <h2>Messages</h2>
     </header>
 
-    <section class="chat-layout">
+    <section class="chat-layout" [class.mobile-thread-active]="!!selectedConversationId">
         <aside class="chat-sidebar">
             <section class="chat-tools">
                 <div class="chat-search-row">
@@ -57,30 +57,37 @@
 
         <section class="message-panel" *ngIf="selectedConversation as conversation; else noConversation">
             <header class="message-panel-head">
-                <a class="thread-person thread-person-link" *ngIf="chatHeaderProfileHandle(conversation) as profileHandle; else threadPersonStatic" [attr.href]="'/users/' + profileHandle" (click)="openAvatarProfileOrStory(profileHandle, $event)"
-                    [attr.aria-label]="hasActiveStoryForHandle(profileHandle) ? ('Open @' + profileHandle + ' stories') : ('View @' + profileHandle + ' profile')">
-                    <span class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation)
-                        }}</span>
-                    <img class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar"
-                        onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
+                <div class="thread-head-main">
+                    <button type="button" class="thread-back" (click)="clearSelectedConversation()" aria-label="Back to chats">
+                        <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
+                    </button>
 
-                    <div class="thread-identity">
-                        <h3>{{ chatHeaderName(conversation) }}</h3>
-                        <p>{{ chatHeaderHandle(conversation) }}</p>
-                    </div>
-                </a>
-
-                <ng-template #threadPersonStatic>
-                    <div class="thread-person">
-                        <span class="thread-avatar" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
-                        <img class="thread-avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
+                    <a class="thread-person thread-person-link" *ngIf="chatHeaderProfileHandle(conversation) as profileHandle; else threadPersonStatic" [attr.href]="'/users/' + profileHandle" (click)="openAvatarProfileOrStory(profileHandle, $event)"
+                        [attr.aria-label]="hasActiveStoryForHandle(profileHandle) ? ('Open @' + profileHandle + ' stories') : ('View @' + profileHandle + ' profile')">
+                        <span class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="!conversationAvatarUrl(conversation)">{{
+                            conversationAvatarText(conversation)
+                            }}</span>
+                        <img class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar"
+                            onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
 
                         <div class="thread-identity">
                             <h3>{{ chatHeaderName(conversation) }}</h3>
                             <p>{{ chatHeaderHandle(conversation) }}</p>
                         </div>
-                    </div>
-                </ng-template>
+                    </a>
+
+                    <ng-template #threadPersonStatic>
+                        <div class="thread-person">
+                            <span class="thread-avatar" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
+                            <img class="thread-avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
+
+                            <div class="thread-identity">
+                                <h3>{{ chatHeaderName(conversation) }}</h3>
+                                <p>{{ chatHeaderHandle(conversation) }}</p>
+                            </div>
+                        </div>
+                    </ng-template>
+                </div>
 
                 <div class="thread-search">
                     <input [(ngModel)]="messageSearchQuery" placeholder="Search messages" />

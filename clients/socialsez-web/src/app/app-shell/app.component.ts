@@ -36,6 +36,15 @@ export class AppComponent implements OnInit {
         return this.router.url.startsWith('/chat');
     }
 
+    get isChatThreadRoute(): boolean {
+        if (!this.isChatRoute) {
+            return false;
+        }
+
+        const conversation = this.router.parseUrl(this.router.url).queryParamMap.get('conversation');
+        return !!conversation?.trim();
+    }
+
     ngOnInit(): void {
         this.applyThemePreference();
 

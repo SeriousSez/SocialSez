@@ -331,6 +331,34 @@
     max-height: 51px;
 }
 
+.thread-head-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.thread-back {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    display: none;
+    place-items: center;
+    padding: 0;
+    box-shadow: none;
+    transform: none;
+}
+
+.thread-back:hover {
+    background: var(--color-surface-alt);
+    box-shadow: none;
+    transform: none;
+}
+
 .thread-person {
     display: flex;
     align-items: center;
@@ -415,6 +443,7 @@
 .message-list {
     display: grid;
     gap: 0;
+    align-content: start;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
@@ -1239,13 +1268,34 @@
 }
 
 @media (max-width: 680px) {
+    .chat-page {
+        gap: 0;
+        height: 100%;
+        min-height: 0;
+        grid-template-rows: minmax(0, 1fr);
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .page-head {
+        display: none;
+    }
+
     .chat-layout {
-        border-radius: 12px;
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+        border-bottom: 0;
+        border-top: 0;
+        height: 100%;
+        min-height: 0;
+        max-height: none;
+        overflow: hidden;
     }
 
     .chat-sidebar,
     .message-panel {
-        padding: 10px;
+        padding: 12px;
     }
 
     .chat-search-row {
@@ -1281,17 +1331,43 @@
         padding-bottom: 8px;
     }
 
+    .thread-back {
+        display: grid;
+    }
+
+    .chat-layout.mobile-thread-active .chat-sidebar {
+        display: none;
+    }
+
+    .chat-layout.mobile-thread-active .message-panel {
+        display: grid;
+    }
+
+    .chat-layout:not(.mobile-thread-active) .message-panel {
+        display: none;
+    }
+
+    .message-panel {
+        grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .message-list {
+        max-height: none;
+        min-height: 0;
+        padding-right: 0;
+    }
+
     .thread-search input {
         height: 34px;
         padding: 0 10px;
     }
 
-    .conversation-list {
-        max-height: 180px;
+    .thread-search {
+        display: none;
     }
 
-    .message-list {
-        max-height: 320px;
+    .conversation-list {
+        max-height: none;
     }
 
     .shared-reel-viewer-card {

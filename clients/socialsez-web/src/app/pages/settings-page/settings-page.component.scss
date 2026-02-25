@@ -38,6 +38,42 @@ h2 {
     margin: 0
 }
 
+.section-toggle {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: inherit;
+    box-shadow: none;
+    transform: none;
+    text-align: left;
+}
+
+.section-toggle h3 {
+    margin: 0;
+}
+
+.section-toggle-icon {
+    font-size: 1rem;
+    line-height: 1;
+    color: #64748b;
+    transition: transform 140ms ease;
+}
+
+.section-toggle-icon.open {
+    transform: rotate(180deg);
+}
+
+.section-body {
+    display: grid;
+    gap: 10px;
+}
+
 .preview {
     width: 96px;
     height: 96px;
@@ -271,5 +307,10 @@ label {
     .page-head {
         flex-direction: column;
         align-items: flex-start
+    }
+
+    .page {
+        padding-bottom: calc(50px + env(safe-area-inset-bottom));
+        box-sizing: border-box;
     }
 }

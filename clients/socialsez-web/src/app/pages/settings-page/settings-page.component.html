@@ -8,57 +8,87 @@
     </header>
 
     <section class="card">
-        <h3>Profile</h3>
-        <label>Display Name <input [(ngModel)]="displayName" /></label>
-        <label>Bio <textarea rows="4" [(ngModel)]="bio"></textarea></label>
-        <div class="profile-image-actions">
-            <button type="button" class="ghost" (click)="openAvatarModal()" [disabled]="uploadingProfileImage">Change Image</button>
-            <button class="ghost" type="button" (click)="removeProfileImage()" [disabled]="!imageUrl.trim() || uploadingProfileImage">Remove Image</button>
-        </div>
-        <p class="meta" *ngIf="uploadingProfileImage">Uploading image...</p>
-        <img class="preview" *ngIf="imageUrl.trim()" [src]="imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile image preview" />
-        <div class="actions">
-            <button (click)="saveProfile()">Save Profile</button>
-            <button class="ghost" (click)="reloadProfile()">Reload</button>
-        </div>
-    </section>
+        <button type="button" class="section-toggle" (click)="toggleSection('profile')" [attr.aria-expanded]="sectionOpenState.profile">
+            <h3>Profile</h3>
+            <span class="section-toggle-icon" [class.open]="sectionOpenState.profile">▾</span>
+        </button>
 
-    <section class="card">
-        <h3>Account</h3>
-        <p class="meta"><strong>Profile Id:</strong> {{ profile.id }}</p>
-        <p class="meta"><strong>Handle:</strong> @{{ profile.handle }}</p>
-        <label class="toggle">
-            <input type="checkbox" [(ngModel)]="isPrivate" (change)="savePrivacy()" />
-            Private profile
-        </label>
-        <p class="meta"><strong>Joined:</strong> {{ profile.createdAtUtc | date:'mediumDate' }}</p>
-    </section>
-
-    <section class="card">
-        <h3>Session</h3>
-        <p class="meta">Use these controls for your current login session.</p>
-        <div class="actions">
-            <button (click)="refreshSession()">Refresh Session</button>
+        <div class="section-body" *ngIf="sectionOpenState.profile">
+            <label>Display Name <input [(ngModel)]="displayName" /></label>
+            <label>Bio <textarea rows="4" [(ngModel)]="bio"></textarea></label>
+            <div class="profile-image-actions">
+                <button type="button" class="ghost" (click)="openAvatarModal()" [disabled]="uploadingProfileImage">Change Image</button>
+                <button class="ghost" type="button" (click)="removeProfileImage()" [disabled]="!imageUrl.trim() || uploadingProfileImage">Remove Image</button>
+            </div>
+            <p class="meta" *ngIf="uploadingProfileImage">Uploading image...</p>
+            <img class="preview" *ngIf="imageUrl.trim()" [src]="imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile image preview" />
+            <div class="actions">
+                <button (click)="saveProfile()">Save Profile</button>
+                <button class="ghost" (click)="reloadProfile()">Reload</button>
+            </div>
         </div>
     </section>
 
     <section class="card">
-        <h3>Preferences</h3>
-        <label class="toggle">
-            <input type="checkbox" [(ngModel)]="prefs.compactFeed" (change)="savePrefs()" />
-            Compact feed layout
-        </label>
-        <label class="toggle">
-            <input type="checkbox" [(ngModel)]="prefs.darkMode" (change)="savePrefs()" />
-            Dark mode
-        </label>
+        <button type="button" class="section-toggle" (click)="toggleSection('account')" [attr.aria-expanded]="sectionOpenState.account">
+            <h3>Account</h3>
+            <span class="section-toggle-icon" [class.open]="sectionOpenState.account">▾</span>
+        </button>
+
+        <div class="section-body" *ngIf="sectionOpenState.account">
+            <p class="meta"><strong>Profile Id:</strong> {{ profile.id }}</p>
+            <p class="meta"><strong>Handle:</strong> @{{ profile.handle }}</p>
+            <label class="toggle">
+                <input type="checkbox" [(ngModel)]="isPrivate" (change)="savePrivacy()" />
+                Private profile
+            </label>
+            <p class="meta"><strong>Joined:</strong> {{ profile.createdAtUtc | date:'mediumDate' }}</p>
+        </div>
+    </section>
+
+    <section class="card">
+        <button type="button" class="section-toggle" (click)="toggleSection('session')" [attr.aria-expanded]="sectionOpenState.session">
+            <h3>Session</h3>
+            <span class="section-toggle-icon" [class.open]="sectionOpenState.session">▾</span>
+        </button>
+
+        <div class="section-body" *ngIf="sectionOpenState.session">
+            <p class="meta">Use these controls for your current login session.</p>
+            <div class="actions">
+                <button (click)="refreshSession()">Refresh Session</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <button type="button" class="section-toggle" (click)="toggleSection('preferences')" [attr.aria-expanded]="sectionOpenState.preferences">
+            <h3>Preferences</h3>
+            <span class="section-toggle-icon" [class.open]="sectionOpenState.preferences">▾</span>
+        </button>
+
+        <div class="section-body" *ngIf="sectionOpenState.preferences">
+            <label class="toggle">
+                <input type="checkbox" [(ngModel)]="prefs.compactFeed" (change)="savePrefs()" />
+                Compact feed layout
+            </label>
+            <label class="toggle">
+                <input type="checkbox" [(ngModel)]="prefs.darkMode" (change)="savePrefs()" />
+                Dark mode
+            </label>
+        </div>
     </section>
 
     <section class="card logout-card">
-        <h3>Sign out</h3>
-        <p class="meta">Sign out of your current account on this device.</p>
-        <div class="actions">
-            <button class="danger" (click)="logout()">Logout</button>
+        <button type="button" class="section-toggle" (click)="toggleSection('logout')" [attr.aria-expanded]="sectionOpenState.logout">
+            <h3>Sign out</h3>
+            <span class="section-toggle-icon" [class.open]="sectionOpenState.logout">▾</span>
+        </button>
+
+        <div class="section-body" *ngIf="sectionOpenState.logout">
+            <p class="meta">Sign out of your current account on this device.</p>
+            <div class="actions">
+                <button class="danger" (click)="logout()">Logout</button>
+            </div>
         </div>
     </section>
 
