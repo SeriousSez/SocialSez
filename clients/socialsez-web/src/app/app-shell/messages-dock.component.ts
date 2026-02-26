@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, ProfileDto } from '../core/api.types';
 import { SharedReelCommentPreview, SharedReelPreview, decodeSharedReelPayload } from '../core/shared-reel.utils';
 import { SharedPostPreview, decodeSharedPostPayload } from '../core/shared-post.utils';
+import { SharedStoryPreview, decodeSharedStoryPayload } from '../core/shared-story.utils';
 import { SessionService } from '../core/session.service';
 import { ReactionPickerComponent } from '../shared/reaction-picker/reaction-picker.component';
 import { SkeletonComponent } from '../shared/skeleton/skeleton.component';
@@ -18,11 +19,6 @@ interface ParsedDockMessage {
     sharedPost?: SharedPostPreview;
     sharedReel?: SharedReelPreview;
     sharedStory?: SharedStoryPreview;
-}
-
-interface SharedStoryPreview {
-    authorHandle?: string;
-    mediaUrl: string;
 }
 
 interface DockMediaRequest {
@@ -609,6 +605,23 @@ export class MessagesDockComponent {
                 }
             }
 
+            if (line.startsWith('[story]')) {
+                const parsed = decodeSharedStoryPayload(line.slice(7));
+                if (parsed) {
+                    const mediaUrl = this.normalizedMediaUrl(parsed.mediaUrl) ?? parsed.mediaUrl;
+                    const thumbnailUrl = parsed.thumbnailUrl
+                        ? this.normalizedMediaUrl(parsed.thumbnailUrl) ?? parsed.thumbnailUrl
+                        : undefined;
+
+                    sharedStory = {
+                        ...parsed,
+                        mediaUrl,
+                        thumbnailUrl
+                    };
+                    continue;
+                }
+            }
+
             textLines.push(rawLine);
         }
 
@@ -623,12 +636,13 @@ export class MessagesDockComponent {
                 const authorHandle = storyMatch?.[1]?.trim();
                 const storyMediaUrl = lines
                     .map(line => this.normalizedMediaUrl(line))
-                    .find((url): url is string => !!url && (this.isImageUrl(url) || this.isVideoUrl(url)));
+                    .find((url): url is string => !!url);
 
                 if (authorHandle && storyMediaUrl) {
                     sharedStory = {
                         authorHandle,
-                        mediaUrl: storyMediaUrl
+                        mediaUrl: storyMediaUrl,
+                        thumbnailUrl: this.isImageUrl(storyMediaUrl) ? storyMediaUrl : undefined
                     };
 
                     const cleanedLines = textLines
@@ -683,6 +697,10 @@ export class MessagesDockComponent {
 
     isImageMedia(url: string): boolean {
         return this.isImageUrl(url);
+    }
+
+    isVideoMedia(url: string): boolean {
+        return this.isVideoUrl(url);
     }
 
     async onMessagePrimaryReaction(message: ChatMessageDto): Promise<void> {
@@ -1172,10 +1190,6 @@ export class MessagesDockComponent {
             const url = new URL(trimmed);
             if (url.protocol !== 'http:' && url.protocol !== 'https:') {
                 return null;
-            }
-
-            if (this.apiOrigin && url.pathname.startsWith('/uploads/')) {
-                return `${this.apiOrigin}${url.pathname}${url.search}${url.hash}`;
             }
 
             const isLocalHost = url.hostname === 'localhost'

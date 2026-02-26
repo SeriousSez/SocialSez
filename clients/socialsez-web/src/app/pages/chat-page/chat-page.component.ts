@@ -10,6 +10,7 @@ import { ReelInteractionsService } from '../../core/reel-interactions.service';
 import { executeReelShareToChat } from '../../core/reel-share-to-chat.utils';
 import { SharedReelCommentPreview, SharedReelPreview, decodeSharedReelPayload } from '../../core/shared-reel.utils';
 import { SharedPostPreview, buildSharedPostMarker, decodeSharedPostPayload } from '../../core/shared-post.utils';
+import { SharedStoryPreview, buildSharedStoryMarker as buildStoryShareMarker, buildSharedStoryPreview, decodeSharedStoryPayload } from '../../core/shared-story.utils';
 import { cancelStoryShareModal, openStoryShareModal } from '../../core/story-share-modal-state.utils';
 import { executeStoryShareToChat as executeStoryShareToChatCore } from '../../core/story-share-to-chat.utils';
 import { SessionService } from '../../core/session.service';
@@ -21,11 +22,6 @@ import { ShareReelMessageModalComponent, ShareReelMessageSubmit } from '../../sh
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { environment } from '../../../environments/environment';
 import 'emoji-picker-element';
-
-interface SharedStoryPreview {
-    authorHandle?: string;
-    mediaUrl: string;
-}
 
 interface ParsedChatMessage {
     text: string;
@@ -2577,6 +2573,10 @@ export class ChatPageComponent implements OnDestroy {
         return this.isImageUrl(url);
     }
 
+    isVideoMedia(url: string): boolean {
+        return this.isVideoUrl(url);
+    }
+
     private buildActiveSharedReelCaptionPayload(plainCaption: string): string {
         const source = this.activeSharedReelResolved?.caption ?? this.activeSharedReel?.caption ?? '';
         const metadataLines = source
@@ -2759,6 +2759,23 @@ export class ChatPageComponent implements OnDestroy {
                 }
             }
 
+            if (line.startsWith('[story]')) {
+                const parsed = decodeSharedStoryPayload(line.slice(7));
+                if (parsed) {
+                    const mediaUrl = this.normalizedMediaUrl(parsed.mediaUrl) ?? parsed.mediaUrl;
+                    const thumbnailUrl = parsed.thumbnailUrl
+                        ? this.normalizedMediaUrl(parsed.thumbnailUrl) ?? parsed.thumbnailUrl
+                        : undefined;
+
+                    sharedStory = {
+                        ...parsed,
+                        mediaUrl,
+                        thumbnailUrl
+                    };
+                    continue;
+                }
+            }
+
             textLines.push(rawLine);
         }
 
@@ -2773,12 +2790,13 @@ export class ChatPageComponent implements OnDestroy {
                 const authorHandle = storyMatch?.[1]?.trim();
                 const storyMediaUrl = lines
                     .map(line => this.normalizedMediaUrl(line))
-                    .find((url): url is string => !!url && (this.isImageUrl(url) || this.isVideoUrl(url)));
+                    .find((url): url is string => !!url);
 
                 if (authorHandle && storyMediaUrl) {
                     sharedStory = {
                         authorHandle,
-                        mediaUrl: storyMediaUrl
+                        mediaUrl: storyMediaUrl,
+                        thumbnailUrl: this.isImageUrl(storyMediaUrl) ? storyMediaUrl : undefined
                     };
 
                     const cleanedLines = textLines
@@ -2900,7 +2918,7 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     private buildSharedStoryMarker(story: StoryDto): string {
-        return `🔗 Story from @${story.authorHandle}\n${story.mediaUrl}`;
+        return buildStoryShareMarker(buildSharedStoryPreview(story));
     }
 
     private buildSharedStoryFromPreview(preview: SharedStoryPreview, message: ChatMessageDto): StoryDto {
@@ -3146,10 +3164,6 @@ export class ChatPageComponent implements OnDestroy {
             const url = new URL(trimmed);
             if (url.protocol !== 'http:' && url.protocol !== 'https:') {
                 return null;
-            }
-
-            if (this.apiOrigin && url.pathname.startsWith('/uploads/')) {
-                return `${this.apiOrigin}${url.pathname}${url.search}${url.hash}`;
             }
 
             const isLocalHost = url.hostname === 'localhost'

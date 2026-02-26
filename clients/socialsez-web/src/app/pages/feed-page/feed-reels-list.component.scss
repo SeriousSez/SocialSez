@@ -225,17 +225,22 @@
 .icon-button {
     border: 0;
     background: transparent;
-    color: #0f172a;
+    color: var(--color-text);
     font-size: 18px;
     line-height: 1;
     padding: 2px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    transition: color 120ms ease;
 }
 
 .icon-button:hover {
     transform: none;
     box-shadow: none;
+}
+
+.icon-button:not(.active):hover {
+    color: var(--color-text-subtle);
 }
 
 .icon-button:active {
@@ -250,18 +255,31 @@
 }
 
 .like-button.active {
-    color: #e11d48;
+    color: var(--color-danger);
 }
 
 .like-button.active i {
-    --fa-primary-color: #e11d48;
-    --fa-secondary-color: #e11d48;
+    --fa-primary-color: var(--color-danger);
+    --fa-secondary-color: var(--color-danger);
     --fa-primary-opacity: 1;
     --fa-secondary-opacity: 0.35;
 }
 
+.like-button.active:hover {
+    color: var(--color-danger-strong);
+}
+
+.like-button.active:hover i {
+    --fa-primary-color: var(--color-danger-strong);
+    --fa-secondary-color: var(--color-danger-strong);
+}
+
 .comment-button.active {
-    color: #1d4ed8;
+    color: var(--color-secondary);
+}
+
+.comment-button.active:hover {
+    color: var(--color-secondary-strong);
 }
 
 .engagement-count {
@@ -449,26 +467,32 @@
     border: 0;
     border-radius: 6px;
     background: transparent;
-    color: #334155;
+    color: var(--color-text-subtle);
     display: grid;
     place-items: center;
     padding: 0;
     cursor: pointer;
+    transition: color 120ms ease, background-color 120ms ease;
 }
 
 .reel-comment-like.active {
-    color: #e11d48;
+    color: var(--color-danger);
 }
 
 .reel-comment-action.danger {
-    color: #991b1b;
+    color: var(--color-danger);
 }
 
 .reel-comment-like:hover,
 .reel-comment-action:hover {
     transform: none;
     box-shadow: none;
-    background: #f1f5f9;
+    color: var(--color-text);
+}
+
+.reel-comment-like.active:hover,
+.reel-comment-action.danger:hover {
+    color: var(--color-danger-strong);
 }
 
 .reel-comment-edit {
@@ -570,26 +594,16 @@
         color: var(--color-text-muted);
     }
 
-    .icon-button,
-    .reel-comment-like,
-    .reel-comment-action {
+    .icon-button:not(.active),
+    .reel-comment-like:not(.active),
+    .reel-comment-action:not(.danger) {
         color: var(--color-text);
     }
 
-    .like-button.active {
-        color: #fb7185;
-    }
-
-    .like-button.active i {
-        --fa-primary-color: #fb7185;
-        --fa-secondary-color: #fb7185;
-        --fa-primary-opacity: 1;
-        --fa-secondary-opacity: 0.4;
-    }
-
-    .reel-comment-like:hover,
-    .reel-comment-action:hover {
-        background: var(--color-surface-muted);
+    .icon-button:not(.active):hover,
+    .reel-comment-like:not(.active):hover,
+    .reel-comment-action:not(.danger):hover {
+        color: var(--color-text-subtle);
     }
 
     .author-link,

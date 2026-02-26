@@ -10,6 +10,7 @@ import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-
 import { executeReelShareToChat } from '../../core/reel-share-to-chat.utils';
 import { ReelInteractionsService } from '../../core/reel-interactions.service';
 import { cancelReelShareModal, openReelShareModal } from '../../core/reel-share-modal-state.utils';
+import { buildSharedStoryMarker, buildSharedStoryPreview } from '../../core/shared-story.utils';
 import { cancelStoryShareModal as cancelStoryShareModalState, openStoryShareModal } from '../../core/story-share-modal-state.utils';
 import { executeStoryShareToChat as executeStoryShareToChatCore } from '../../core/story-share-to-chat.utils';
 import { StoryPresenceService } from '../../core/story-presence.service';
@@ -1185,7 +1186,7 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     private buildSharedStoryMarker(story: StoryDto): string {
-        return `🔗 Story from @${story.authorHandle}\n${story.mediaUrl}`;
+        return buildSharedStoryMarker(buildSharedStoryPreview(story));
     }
 
     private isStoryVideo(story: StoryDto): boolean {
