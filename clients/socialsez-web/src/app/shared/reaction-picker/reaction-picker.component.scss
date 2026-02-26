@@ -208,12 +208,22 @@
     box-shadow: none;
 }
 
+
+.reaction-pop-btn.faded:not(:hover):not(.active):not(.touch-hover) {
+    opacity: 0.45;
+    filter: grayscale(0.18) brightness(1.08);
+    transition: opacity 120ms, filter 120ms;
+    pointer-events: auto;
+}
+
 .reaction-pop-btn.touch-hover {
     background: var(--reaction-bg-hover);
     transform: translateY(-4px) scale(1.42);
     position: relative;
     z-index: 1;
     box-shadow: none;
+    opacity: 1 !important;
+    filter: none !important;
 }
 
 .reaction-pop-btn.active {

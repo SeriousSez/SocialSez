@@ -13,7 +13,7 @@
         <div class="reaction-popover" [class.align-end]="resolvedPopoverAlign === 'end'" [class.place-below]="resolvedPopoverVertical === 'bottom'" [class.ready]="popoverReady" [class.closing]="popoverClosing" [style.left.px]="popoverLeft" [style.top.px]="popoverTop" *ngIf="open" #popover
             (mouseenter)="onPopoverHoverStart()" (mouseleave)="onPopoverHoverEnd()">
             <button type="button" class="reaction-pop-btn" *ngFor="let reaction of reactionOptions" (click)="pickReaction(reaction.type, $event)" [disabled]="busy" [class.active]="myReactionType === reaction.type" [class.touch-hover]="highlightedReactionType === reaction.type"
-                [attr.data-reaction-type]="reaction.type.toLowerCase()" [attr.aria-label]="reaction.type">
+                [class.faded]="myReactionType && myReactionType !== reaction.type && highlightedReactionType !== reaction.type" [attr.data-reaction-type]="reaction.type.toLowerCase()" [attr.aria-label]="reaction.type">
                 <i [class]="reactionIconClass(reaction.type)" aria-hidden="true"></i>
             </button>
         </div>
