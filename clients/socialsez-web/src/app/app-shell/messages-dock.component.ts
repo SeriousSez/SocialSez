@@ -8,6 +8,7 @@ import { SharedPostPreview, decodeSharedPostPayload } from '../core/shared-post.
 import { SessionService } from '../core/session.service';
 import { ReactionPickerComponent } from '../shared/reaction-picker/reaction-picker.component';
 import { SkeletonComponent } from '../shared/skeleton/skeleton.component';
+import { environment } from '../../environments/environment';
 import 'emoji-picker-element';
 
 interface ParsedDockMessage {
@@ -57,6 +58,7 @@ interface GiphyGifResult {
 export class MessagesDockComponent {
     @Input() visible = false;
     @Output() sharedMediaRequested = new EventEmitter<DockMediaRequest>();
+    private readonly apiOrigin = this.resolveApiOrigin();
     private readonly messageGapForTimeBreakMs = 30 * 60 * 1000;
     private readonly messageGapForCompactMs = 5 * 60 * 1000;
     private readonly giphyApiKey = 'iY9dDrlVL8teP0Csu3Y1Fcq3AbyCPPmg';
@@ -576,7 +578,7 @@ export class MessagesDockComponent {
             const line = rawLine.trim();
 
             if (line.startsWith('[image]')) {
-                const url = line.slice(7).trim();
+                const url = this.normalizedMediaUrl(line.slice(7));
                 if (url) {
                     imageUrl = url;
                 }
@@ -584,7 +586,7 @@ export class MessagesDockComponent {
             }
 
             if (line.startsWith('[gif]')) {
-                const url = line.slice(5).trim();
+                const url = this.normalizedMediaUrl(line.slice(5));
                 if (url) {
                     gifUrl = url;
                 }
@@ -1158,15 +1160,43 @@ export class MessagesDockComponent {
             return null;
         }
 
+        if (trimmed.startsWith('data:')) {
+            return trimmed;
+        }
+
+        if (trimmed.startsWith('/')) {
+            return this.apiOrigin ? `${this.apiOrigin}${trimmed}` : trimmed;
+        }
+
         try {
             const url = new URL(trimmed);
             if (url.protocol !== 'http:' && url.protocol !== 'https:') {
                 return null;
             }
 
+            if (this.apiOrigin && url.pathname.startsWith('/uploads/')) {
+                return `${this.apiOrigin}${url.pathname}${url.search}${url.hash}`;
+            }
+
+            const isLocalHost = url.hostname === 'localhost'
+                || url.hostname === '127.0.0.1'
+                || url.hostname === '0.0.0.0';
+
+            if (this.apiOrigin && isLocalHost) {
+                return `${this.apiOrigin}${url.pathname}${url.search}${url.hash}`;
+            }
+
             return url.toString();
         } catch {
             return null;
+        }
+    }
+
+    private resolveApiOrigin(): string {
+        try {
+            return new URL(environment.apiBaseUrl).origin;
+        } catch {
+            return '';
         }
     }
 

@@ -19,6 +19,7 @@ import { ChatSearchModalComponent } from '../../shared/chat-search-modal/chat-se
 import { ReactionPickerComponent } from '../../shared/reaction-picker/reaction-picker.component';
 import { ShareReelMessageModalComponent, ShareReelMessageSubmit } from '../../shared/share-reel-message-modal/share-reel-message-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
+import { environment } from '../../../environments/environment';
 import 'emoji-picker-element';
 
 interface SharedStoryPreview {
@@ -57,6 +58,7 @@ interface GiphyGifResult {
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ChatPageComponent implements OnDestroy {
+    private readonly apiOrigin = this.resolveApiOrigin();
     private readonly giphyApiKey = 'iY9dDrlVL8teP0Csu3Y1Fcq3AbyCPPmg';
     private readonly messageGapForTimeBreakMs = 30 * 60 * 1000;
     private readonly messageGapForCompactMs = 5 * 60 * 1000;
@@ -3132,15 +3134,43 @@ export class ChatPageComponent implements OnDestroy {
             return null;
         }
 
+        if (trimmed.startsWith('data:')) {
+            return trimmed;
+        }
+
+        if (trimmed.startsWith('/')) {
+            return this.apiOrigin ? `${this.apiOrigin}${trimmed}` : trimmed;
+        }
+
         try {
             const url = new URL(trimmed);
             if (url.protocol !== 'http:' && url.protocol !== 'https:') {
                 return null;
             }
 
+            if (this.apiOrigin && url.pathname.startsWith('/uploads/')) {
+                return `${this.apiOrigin}${url.pathname}${url.search}${url.hash}`;
+            }
+
+            const isLocalHost = url.hostname === 'localhost'
+                || url.hostname === '127.0.0.1'
+                || url.hostname === '0.0.0.0';
+
+            if (this.apiOrigin && isLocalHost) {
+                return `${this.apiOrigin}${url.pathname}${url.search}${url.hash}`;
+            }
+
             return url.toString();
         } catch {
             return null;
+        }
+    }
+
+    private resolveApiOrigin(): string {
+        try {
+            return new URL(environment.apiBaseUrl).origin;
+        } catch {
+            return '';
         }
     }
 
