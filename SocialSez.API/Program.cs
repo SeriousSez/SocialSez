@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SocialSez.API.Hubs;
@@ -469,7 +470,26 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
+var webRoot = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+var configuredUploadsRoot = app.Configuration["Uploads:RootPath"];
+var uploadsRoot = !string.IsNullOrWhiteSpace(configuredUploadsRoot)
+    ? (Path.IsPathRooted(configuredUploadsRoot)
+        ? configuredUploadsRoot
+        : Path.GetFullPath(configuredUploadsRoot, app.Environment.ContentRootPath))
+    : (Directory.Exists("/venli.uploads")
+        ? "/venli.uploads"
+        : Path.Combine(webRoot, "uploads"));
+
+Directory.CreateDirectory(uploadsRoot);
+Directory.CreateDirectory(Path.Combine(uploadsRoot, "images"));
+Directory.CreateDirectory(Path.Combine(uploadsRoot, "stories"));
+
 app.UseCors("ClientApps");
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsRoot),
+    RequestPath = "/uploads"
+});
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();

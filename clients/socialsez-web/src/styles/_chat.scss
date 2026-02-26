@@ -837,6 +837,13 @@
     padding: 2px 7px;
 }
 
+.chat-layout .reaction-summary .reaction-total {
+    background: transparent;
+    border: 0;
+    padding: 0 2px 0 0;
+    font-weight: 600;
+}
+
 .shared-post-expand {
     border: 1px solid #2563eb;
     background: #2563eb;
@@ -1253,6 +1260,11 @@
     background: var(--color-surface-muted);
     border-color: var(--color-border);
     color: var(--color-text-subtle);
+}
+
+:root.theme-dark .chat-layout .reaction-summary .reaction-total {
+    background: transparent;
+    border: 0;
 }
 
 :root.theme-dark .chat-layout .shared-post-content .hashtag,

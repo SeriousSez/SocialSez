@@ -67,8 +67,8 @@
         </ng-container>
 
         <div class="engagement">
-            <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="post.reactions" [myReactionType]="post.myReactionType" [busy]="reacting || !canInteract" [primaryCount]="post.likeCount" [showCountWhenIdle]="true" [idleLabel]="'👍'" (primaryClick)="onPostPrimaryReaction()"
-                (reactionSelected)="onPostReactionSelected($event)">
+            <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="post.reactions" [myReactionType]="post.myReactionType" [busy]="reacting || !canInteract" [primaryCount]="post.likeCount" [showCountWhenIdle]="true" [idleLabel]="'👍'" [triggerStyle]="'bubble-icon'"
+                (primaryClick)="onPostPrimaryReaction()" (reactionSelected)="onPostReactionSelected($event)">
             </app-reaction-picker>
 
             <button class="comments-toggle" type="button" (click)="toggleComments()" [attr.aria-expanded]="commentsOpen">

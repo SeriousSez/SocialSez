@@ -1,7 +1,13 @@
 <div class="reaction-row">
     <div class="reaction-zone" #zone (mouseenter)="onHoverStart()" (mouseleave)="onHoverEnd()" (touchstart)="onTouchStart($event)">
-        <button class="reaction-btn" type="button" (click)="onPrimaryButtonClick($event)" [disabled]="busy" [class.active]="!!myReactionType">
-            {{ buttonLabel }}
+        <button class="reaction-btn" type="button" (click)="onPrimaryButtonClick($event)" [disabled]="busy" [class.active]="!!myReactionType" [class.icon-only]="triggerStyle === 'icon'" [class.bubble-icon]="triggerStyle === 'bubble-icon'"
+            [attr.aria-label]="triggerStyle !== 'default' ? 'Add reaction' : null">
+            <ng-container *ngIf="triggerStyle !== 'default'; else textTrigger">
+                <i class="fa-duotone fa-light fa-heart" aria-hidden="true"></i>
+            </ng-container>
+            <ng-template #textTrigger>
+                {{ buttonLabel }}
+            </ng-template>
         </button>
 
         <div class="reaction-popover" [class.align-end]="resolvedPopoverAlign === 'end'" [class.place-below]="resolvedPopoverVertical === 'bottom'" [class.ready]="popoverReady" [class.closing]="popoverClosing" [style.left.px]="popoverLeft" [style.top.px]="popoverTop" *ngIf="open" #popover

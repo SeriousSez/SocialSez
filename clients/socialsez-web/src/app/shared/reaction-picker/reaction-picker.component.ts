@@ -23,6 +23,7 @@ export class ReactionPickerComponent implements OnDestroy {
     @Input() showCountWhenIdle = false;
     @Input() idleLabel = '🙂';
     @Input() popoverAlign: 'start' | 'end' = 'start';
+    @Input() triggerStyle: 'default' | 'icon' | 'bubble-icon' = 'icon';
 
     @Output() primaryClick = new EventEmitter<void>();
     @Output() reactionSelected = new EventEmitter<string>();

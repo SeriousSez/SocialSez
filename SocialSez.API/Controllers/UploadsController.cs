@@ -6,7 +6,7 @@ namespace SocialSez.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UploadsController(IWebHostEnvironment environment) : ControllerBase
+public class UploadsController(IWebHostEnvironment environment, IConfiguration configuration) : ControllerBase
 {
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -35,7 +35,7 @@ public class UploadsController(IWebHostEnvironment environment) : ControllerBase
             return BadRequest(new { message = "Only image files are allowed (.jpg, .jpeg, .png, .webp, .gif)." });
         }
 
-        var uploadsRoot = Path.Combine(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"), "uploads", "images");
+        var uploadsRoot = Path.Combine(ResolveUploadsRoot(), "images");
         Directory.CreateDirectory(uploadsRoot);
 
         var safeFileName = $"{profileId:N}-{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
@@ -57,6 +57,24 @@ public class UploadsController(IWebHostEnvironment environment) : ControllerBase
             ?? User.FindFirstValue("sub");
 
         return Guid.TryParse(raw, out profileId);
+    }
+
+    private string ResolveUploadsRoot()
+    {
+        var configuredUploadsRoot = configuration["Uploads:RootPath"];
+        if (!string.IsNullOrWhiteSpace(configuredUploadsRoot))
+        {
+            return Path.IsPathRooted(configuredUploadsRoot)
+                ? configuredUploadsRoot
+                : Path.GetFullPath(configuredUploadsRoot, environment.ContentRootPath);
+        }
+
+        if (Directory.Exists("/venli.uploads"))
+        {
+            return "/venli.uploads";
+        }
+
+        return Path.Combine(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"), "uploads");
     }
 
     public sealed record UploadImageResponse(string Url);

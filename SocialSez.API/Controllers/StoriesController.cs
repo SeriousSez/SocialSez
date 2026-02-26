@@ -8,7 +8,7 @@ namespace SocialSez.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class StoriesController(IStoryService storyService, IWebHostEnvironment environment) : ControllerBase
+public class StoriesController(IStoryService storyService, IWebHostEnvironment environment, IConfiguration configuration) : ControllerBase
 {
     [Authorize]
     [HttpPost]
@@ -130,6 +130,24 @@ public class StoriesController(IStoryService storyService, IWebHostEnvironment e
             : FeedMode.ForYou;
     }
 
+    private string ResolveUploadsRoot()
+    {
+        var configuredUploadsRoot = configuration["Uploads:RootPath"];
+        if (!string.IsNullOrWhiteSpace(configuredUploadsRoot))
+        {
+            return Path.IsPathRooted(configuredUploadsRoot)
+                ? configuredUploadsRoot
+                : Path.GetFullPath(configuredUploadsRoot, environment.ContentRootPath);
+        }
+
+        if (Directory.Exists("/venli.uploads"))
+        {
+            return "/venli.uploads";
+        }
+
+        return Path.Combine(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"), "uploads");
+    }
+
     private async Task<string> SaveMediaAsync(Guid profileId, IFormFile file, CancellationToken cancellationToken)
     {
         var extension = Path.GetExtension(file.FileName);
@@ -138,7 +156,7 @@ public class StoriesController(IStoryService storyService, IWebHostEnvironment e
             throw new ArgumentException("Allowed story media files: .jpg, .jpeg, .png, .webp, .gif, .mp4, .webm, .mov, .m4v, .ogv.");
         }
 
-        var uploadsRoot = Path.Combine(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"), "uploads", "stories");
+        var uploadsRoot = Path.Combine(ResolveUploadsRoot(), "stories");
         Directory.CreateDirectory(uploadsRoot);
 
         var safeFileName = $"story-{profileId:N}-{Guid.NewGuid():N}{extension.ToLowerInvariant()}";

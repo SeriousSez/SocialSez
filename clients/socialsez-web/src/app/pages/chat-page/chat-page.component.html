@@ -252,6 +252,7 @@
 
                                         <div class="reaction-summary corner" *ngIf="message.reactions.length">
                                             <span *ngFor="let reaction of message.reactions">{{ reactionEmoji(reaction.type) }}</span>
+                                            <span class="reaction-total" *ngIf="reactionTotalCount(message) > 1">{{ reactionTotalCount(message) }}</span>
                                         </div>
                                     </div>
 

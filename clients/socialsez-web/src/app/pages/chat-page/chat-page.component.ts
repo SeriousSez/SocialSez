@@ -1392,12 +1392,16 @@ export class ChatPageComponent implements OnDestroy {
             return;
         }
 
+        const shouldStickToBottom = this.isLastMessageInThread(message.id);
         this.reactingMessageId = message.id;
         this.status = '';
 
         try {
             const updated = await this.session.setMessageReactionAsync(message.id, reactionType);
             this.applyMessageUpdate(updated);
+            if (shouldStickToBottom) {
+                this.scrollToBottomOnNextRender();
+            }
         } catch {
             this.status = 'Could not set reaction.';
         } finally {
@@ -1410,12 +1414,16 @@ export class ChatPageComponent implements OnDestroy {
             return;
         }
 
+        const shouldStickToBottom = this.isLastMessageInThread(message.id);
         this.reactingMessageId = message.id;
         this.status = '';
 
         try {
             const updated = await this.session.clearMessageReactionAsync(message.id);
             this.applyMessageUpdate(updated);
+            if (shouldStickToBottom) {
+                this.scrollToBottomOnNextRender();
+            }
         } catch {
             this.status = 'Could not clear reaction.';
         } finally {
@@ -2567,6 +2575,10 @@ export class ChatPageComponent implements OnDestroy {
         return this.reactionOptions.find(x => x.type === type)?.emoji ?? '👍';
     }
 
+    reactionTotalCount(message: ChatMessageDto): number {
+        return message.reactions.reduce((sum, reaction) => sum + Math.max(0, reaction.count ?? 0), 0);
+    }
+
     private isMobileReactionMode(): boolean {
         return window.matchMedia('(max-width: 680px)').matches;
     }
@@ -2732,6 +2744,16 @@ export class ChatPageComponent implements OnDestroy {
 
     private applyMessageUpdate(updated: ChatMessageDto): void {
         this.upsertMessage(updated);
+    }
+
+    private isLastMessageInThread(messageId: string): boolean {
+        const targetId = (messageId ?? '').trim();
+        if (!targetId || !this.messages.length) {
+            return false;
+        }
+
+        const lastMessage = this.messages[this.messages.length - 1];
+        return lastMessage?.id === targetId;
     }
 
     private upsertMessage(updated: ChatMessageDto): void {
