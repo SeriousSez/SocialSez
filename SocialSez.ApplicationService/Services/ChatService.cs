@@ -171,12 +171,15 @@ public class ChatService(SocialSezContext dbContext) : IChatService
         return MapConversationDto(created, null);
     }
 
-    public async Task<IReadOnlyCollection<ChatMessageDto>?> GetMessagesAsync(Guid profileId, Guid conversationId, int take = 50, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<ChatMessageDto>?> GetMessagesAsync(Guid profileId, Guid conversationId, int take = 50, int skip = 0, CancellationToken cancellationToken = default)
     {
         if (!await IsMemberAsync(profileId, conversationId, cancellationToken))
         {
             return null;
         }
+
+        var boundedTake = Math.Clamp(take, 1, 100);
+        var boundedSkip = Math.Max(skip, 0);
 
         var messages = await dbContext.ChatMessages
             .AsNoTracking()
@@ -184,7 +187,8 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             .Include(x => x.Reactions)
             .Where(x => x.ConversationId == conversationId)
             .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(Math.Clamp(take, 1, 100))
+            .Skip(boundedSkip)
+            .Take(boundedTake)
             .ToListAsync(cancellationToken);
 
         return messages
@@ -225,6 +229,48 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             .FirstOrDefaultAsync(x => x.Id == message.Id, cancellationToken);
 
         return hydrated is null ? null : MapMessageDto(hydrated, profileId);
+    }
+
+    public async Task<ChatMessageDto?> UpdateMessageAsync(Guid profileId, Guid messageId, UpdateChatMessageRequest request, CancellationToken cancellationToken = default)
+    {
+        var message = await dbContext.ChatMessages
+            .Include(x => x.AuthorProfile)
+            .Include(x => x.Reactions)
+            .Include(x => x.Conversation)
+                .ThenInclude(x => x.Members)
+            .FirstOrDefaultAsync(x => x.Id == messageId, cancellationToken);
+
+        if (message is null)
+        {
+            return null;
+        }
+
+        if (!message.Conversation.Members.Any(x => x.ProfileId == profileId))
+        {
+            return null;
+        }
+
+        if (message.AuthorProfileId != profileId)
+        {
+            return null;
+        }
+
+        var content = request.Content?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            throw new ArgumentException("Message content is required.", nameof(request));
+        }
+
+        if (string.Equals(message.Content, content, StringComparison.Ordinal))
+        {
+            return MapMessageDto(message, profileId);
+        }
+
+        message.Content = content;
+        message.EditedAtUtc = DateTime.UtcNow;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return MapMessageDto(message, profileId);
     }
 
     public async Task<ChatMessageDto?> SetMessageReactionAsync(Guid profileId, Guid messageId, SetMessageReactionRequest request, CancellationToken cancellationToken = default)
@@ -354,6 +400,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             entity.AuthorProfile.ImageUrl,
             entity.Content,
             entity.CreatedAtUtc,
+            entity.EditedAtUtc,
             myReaction,
             summaries);
     }

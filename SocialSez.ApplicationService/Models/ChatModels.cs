@@ -6,6 +6,8 @@ public sealed record CreateGroupConversationRequest(string? Title, IReadOnlyColl
 
 public sealed record CreateChatMessageRequest(string Content);
 
+public sealed record UpdateChatMessageRequest(string Content);
+
 public sealed record SetMessageReactionRequest(string Type);
 
 public sealed record ChatParticipantDto(
@@ -38,5 +40,6 @@ public sealed record ChatMessageDto(
     string? AuthorImageUrl,
     string Content,
     DateTime CreatedAtUtc,
+    DateTime? EditedAtUtc,
     string? MyReactionType,
     IReadOnlyCollection<ReactionSummaryDto> Reactions);

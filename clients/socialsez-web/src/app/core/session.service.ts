@@ -425,12 +425,16 @@ export class SessionService {
         return firstValueFrom(this.api.createGroupConversation({ title, memberProfileIds }));
     }
 
-    async loadChatMessagesAsync(conversationId: string, take = 50): Promise<ChatMessageDto[]> {
-        return firstValueFrom(this.api.getChatMessages(conversationId, take));
+    async loadChatMessagesAsync(conversationId: string, take = 50, skip = 0): Promise<ChatMessageDto[]> {
+        return firstValueFrom(this.api.getChatMessages(conversationId, take, skip));
     }
 
     async sendChatMessageAsync(conversationId: string, content: string): Promise<ChatMessageDto> {
         return firstValueFrom(this.api.sendChatMessage(conversationId, { content }));
+    }
+
+    async updateChatMessageAsync(messageId: string, content: string): Promise<ChatMessageDto> {
+        return firstValueFrom(this.api.updateChatMessage(messageId, { content }));
     }
 
     async setMessageReactionAsync(messageId: string, reactionType: string): Promise<ChatMessageDto> {

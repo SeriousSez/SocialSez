@@ -27,6 +27,7 @@ import {
     SetReactionRequest,
     StoryDto,
     StoryGroupDto,
+    UpdateChatMessageRequest,
     UpdatePostRequest,
     UpdateProfilePrivacyRequest,
     UpdateProfileRequest,
@@ -366,12 +367,16 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<ChatConversationDto>(`${this.baseUrl}/chat/conversations/group`, request, { headers: this.authHeaders() }));
     }
 
-    getChatMessages(conversationId: string, take = 50): Observable<ChatMessageDto[]> {
-        return this.withAutoRefresh(() => this.http.get<ChatMessageDto[]>(`${this.baseUrl}/chat/conversations/${conversationId}/messages?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    getChatMessages(conversationId: string, take = 50, skip = 0): Observable<ChatMessageDto[]> {
+        return this.withAutoRefresh(() => this.http.get<ChatMessageDto[]>(`${this.baseUrl}/chat/conversations/${conversationId}/messages?take=${take}&skip=${skip}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
     sendChatMessage(conversationId: string, request: CreateChatMessageRequest): Observable<ChatMessageDto> {
         return this.withAutoRefresh(() => this.http.post<ChatMessageDto>(`${this.baseUrl}/chat/conversations/${conversationId}/messages`, request, { headers: this.authHeaders() }));
+    }
+
+    updateChatMessage(messageId: string, request: UpdateChatMessageRequest): Observable<ChatMessageDto> {
+        return this.withAutoRefresh(() => this.http.put<ChatMessageDto>(`${this.baseUrl}/chat/messages/${messageId}`, request, { headers: this.authHeaders() }));
     }
 
     setMessageReaction(messageId: string, request: SetMessageReactionRequest): Observable<ChatMessageDto> {

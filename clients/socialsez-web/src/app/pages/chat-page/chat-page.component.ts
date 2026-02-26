@@ -14,6 +14,7 @@ import { SharedStoryPreview, buildSharedStoryMarker as buildStoryShareMarker, bu
 import { cancelStoryShareModal, openStoryShareModal } from '../../core/story-share-modal-state.utils';
 import { executeStoryShareToChat as executeStoryShareToChatCore } from '../../core/story-share-to-chat.utils';
 import { SessionService } from '../../core/session.service';
+import { ChatReplyPreview, buildChatReplyMarker, decodeChatReplyPayload, isChatReplyMarker, stripChatReplyMarkerPrefix } from '../../core/chat-reply.utils';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
 import { ChatSearchModalComponent } from '../../shared/chat-search-modal/chat-search-modal.component';
@@ -25,6 +26,7 @@ import 'emoji-picker-element';
 
 interface ParsedChatMessage {
     text: string;
+    reply?: ChatReplyPreview;
     imageUrl?: string;
     gifUrl?: string;
     sharedPost?: SharedPostPreview;
@@ -58,10 +60,16 @@ export class ChatPageComponent implements OnDestroy {
     private readonly giphyApiKey = 'iY9dDrlVL8teP0Csu3Y1Fcq3AbyCPPmg';
     private readonly messageGapForTimeBreakMs = 30 * 60 * 1000;
     private readonly messageGapForCompactMs = 5 * 60 * 1000;
+    private readonly messagesPageSize = 50;
+    private readonly loadOlderScrollTopThresholdPx = 24;
+    private readonly messageActionsPreferBelowTopThresholdPx = 220;
+    private readonly messageActionsEstimatedWidthPx = 132;
     private readonly sharedPreviewMaxChars = 320;
     private readonly sharedPreviewMaxLines = 7;
     private readonly composerMinHeightPx = 38;
     private readonly composerMaxHeightPx = 120;
+    private readonly typingIdleTimeoutMs = 1800;
+    private readonly remoteTypingExpiryMs = 3200;
     private readonly preciseDateFormatter = new Intl.DateTimeFormat(undefined, {
         month: 'short',
         day: 'numeric',
@@ -92,7 +100,18 @@ export class ChatPageComponent implements OnDestroy {
 
     loadingConversations = true;
     loadingMessages = false;
+    loadingOlderMessages = false;
+    hasOlderMessages = true;
+    showNoOlderMessagesMarker = false;
     sendingMessage = false;
+    updatingMessageId: string | null = null;
+    messageActionsMessageId: string | null = null;
+    messageActionsOpenBelow = false;
+    messageActionsMenuLeftPx = 0;
+    messageActionsMenuTopPx = 0;
+    highlightedReplyTargetMessageId: string | null = null;
+    replyingToMessageId: string | null = null;
+    replyingToPreview: ChatReplyPreview | null = null;
     startingDirectChat = false;
     reactingMessageId: string | null = null;
     searchingProfiles = false;
@@ -107,6 +126,8 @@ export class ChatPageComponent implements OnDestroy {
     modalSearchUsersQuery = '';
     messageSearchQuery = '';
     newMessage = '';
+    editingMessageId: string | null = null;
+    editingMessageDraft = '';
     gifUrlInput = '';
     gifSearchQuery = '';
     gifResults: GiphyGifResult[] = [];
@@ -154,6 +175,12 @@ export class ChatPageComponent implements OnDestroy {
     private mobileReactionPressedMessageId: string | null = null;
     private mobileReactionLongPressTriggered = false;
     private readonly mobileReactionLongPressDelayMs = 420;
+    private replyTargetHighlightTimerId: number | null = null;
+    private localTypingIdleTimerId: number | null = null;
+    private localTypingConversationId: string | null = null;
+    private localTypingActive = false;
+    private readonly remoteTypingProfileIds = new Set<string>();
+    private readonly remoteTypingTimerByProfileId = new Map<string, number>();
     private readonly likedSharedStoryIds = new Set<string>();
     private readonly expandedSharedReelReplyRootIds = new Set<string>();
     private readonly unavailableSharedReelKeys = new Set<string>();
@@ -163,6 +190,10 @@ export class ChatPageComponent implements OnDestroy {
         const hourCycle = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle;
         return hourCycle === 'h23' || hourCycle === 'h24';
     })();
+
+    get typingParticipantCount(): number {
+        return this.remoteTypingProfileIds.size;
+    }
 
     @ViewChild('messageList')
     private messageListRef?: ElementRef<HTMLDivElement>;
@@ -206,6 +237,14 @@ export class ChatPageComponent implements OnDestroy {
                 this.applyConversationPreview(message);
             });
 
+        this.chatRealtime.typingChanged$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((typing) => {
+                this.ngZone.run(() => {
+                    this.handleRemoteTypingChanged(typing.conversationId, typing.profileId, typing.isTyping);
+                });
+            });
+
         this.route.queryParamMap
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((params) => {
@@ -242,6 +281,9 @@ export class ChatPageComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.clearMobileReactionLongPressState();
+        this.clearReplyTargetHighlight();
+        this.resetLocalTypingState();
+        this.clearRemoteTypingState();
 
         if (this.searchProfilesDebounceId !== null) {
             window.clearTimeout(this.searchProfilesDebounceId);
@@ -270,6 +312,19 @@ export class ChatPageComponent implements OnDestroy {
 
             if (!clickedInsideMobileReactionMenu) {
                 this.mobileReactionMessageId = null;
+            }
+        }
+
+        if (this.messageActionsMessageId) {
+            const clickedInsideMessageActions = path.some(
+                item => item instanceof HTMLElement && (item.classList.contains('message-actions-menu') || item.classList.contains('message-actions-toggle'))
+            );
+
+            if (!clickedInsideMessageActions) {
+                this.messageActionsMessageId = null;
+                this.messageActionsOpenBelow = false;
+                this.messageActionsMenuLeftPx = 0;
+                this.messageActionsMenuTopPx = 0;
             }
         }
 
@@ -557,6 +612,7 @@ export class ChatPageComponent implements OnDestroy {
 
     async selectConversation(conversation: ChatConversationDto): Promise<void> {
         const previousConversationId = this.selectedConversationId;
+        this.stopTypingForConversation(previousConversationId);
         this.selectedConversationId = conversation.id;
         this.selectedConversation = conversation;
         void this.router.navigate([], {
@@ -566,22 +622,31 @@ export class ChatPageComponent implements OnDestroy {
             replaceUrl: true
         });
         this.messages = [];
+        this.hasOlderMessages = true;
+        this.loadingOlderMessages = false;
+        this.showNoOlderMessagesMarker = false;
+        this.clearRemoteTypingState();
         this.messageSearchQuery = '';
         this.newMessage = '';
+        this.cancelReplyToMessage();
+        this.closeMessageActions();
+        this.cancelEditingMessage();
         this.loadingMessages = true;
         this.status = '';
 
         const realtimeSyncTask = this.syncRealtimeMembership(previousConversationId, conversation.id);
 
         try {
-            const loadedMessages = await this.withTimeout(this.session.loadChatMessagesAsync(conversation.id), 5000);
+            const loadedMessages = await this.withTimeout(this.session.loadChatMessagesAsync(conversation.id, this.messagesPageSize), 5000);
             this.ngZone.run(() => {
                 this.messages = loadedMessages;
+                this.hasOlderMessages = loadedMessages.length >= this.messagesPageSize;
             });
             void this.prefetchUnavailableSharedReelsFromMessages(loadedMessages);
         } catch {
             this.ngZone.run(() => {
                 this.messages = [];
+                this.hasOlderMessages = false;
                 this.status = 'Could not load messages.';
             });
         } finally {
@@ -607,6 +672,7 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     clearSelectedConversation(): void {
+        this.stopTypingForConversation(this.selectedConversationId);
         this.selectedConversationId = null;
         this.selectedConversation = null;
         void this.router.navigate([], {
@@ -616,9 +682,371 @@ export class ChatPageComponent implements OnDestroy {
             replaceUrl: true
         });
         this.messages = [];
+        this.hasOlderMessages = true;
+        this.loadingOlderMessages = false;
+        this.showNoOlderMessagesMarker = false;
+        this.clearRemoteTypingState();
         this.messageSearchQuery = '';
+        this.messageActionsMessageId = null;
+        this.messageActionsOpenBelow = false;
+        this.messageActionsMenuLeftPx = 0;
+        this.messageActionsMenuTopPx = 0;
+        this.cancelReplyToMessage();
+        this.cancelEditingMessage();
         this.loadingMessages = false;
         this.status = '';
+    }
+
+    onMessageListScroll(): void {
+        const container = this.messageListRef?.nativeElement;
+        if (!container) {
+            return;
+        }
+
+        const nearTop = container.scrollTop <= this.loadOlderScrollTopThresholdPx;
+        if (!nearTop) {
+            this.showNoOlderMessagesMarker = false;
+            return;
+        }
+
+        if (!this.hasOlderMessages) {
+            this.showNoOlderMessagesMarker = true;
+            return;
+        }
+
+        this.showNoOlderMessagesMarker = false;
+
+        if (this.loadingMessages || this.loadingOlderMessages || !this.selectedConversationId) {
+            return;
+        }
+
+        void this.loadOlderMessages();
+    }
+
+    beginReplyToMessage(message: ChatMessageDto, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const preview = this.buildReplyPreviewFromMessage(message);
+        if (!preview) {
+            return;
+        }
+
+        this.replyingToMessageId = message.id;
+        this.replyingToPreview = preview;
+        this.closeMessageActions();
+    }
+
+    cancelReplyToMessage(): void {
+        this.replyingToMessageId = null;
+        this.replyingToPreview = null;
+    }
+
+    isReplySharedMedia(reply: ChatReplyPreview): boolean {
+        return reply.sourceType === 'post' || reply.sourceType === 'reel' || reply.sourceType === 'story';
+    }
+
+    replyPreviewThumbnail(reply: ChatReplyPreview): string | undefined {
+        const sourceMessage = this.replySourceMessage(reply);
+        if (!sourceMessage) {
+            return reply.thumbnailUrl;
+        }
+
+        const parsed = this.parsedMessage(sourceMessage);
+        if (reply.sourceType === 'post') {
+            return parsed.sharedPost?.imageUrl ?? reply.thumbnailUrl;
+        }
+
+        if (reply.sourceType === 'reel') {
+            return parsed.sharedReel?.thumbnailUrl ?? reply.thumbnailUrl;
+        }
+
+        if (reply.sourceType === 'story') {
+            return parsed.sharedStory?.thumbnailUrl || parsed.sharedStory?.mediaUrl || reply.thumbnailUrl;
+        }
+
+        return reply.thumbnailUrl;
+    }
+
+    async onReplyPreviewClick(_message: ChatMessageDto, reply: ChatReplyPreview, event: MouseEvent): Promise<void> {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const sourceMessage = this.replySourceMessage(reply);
+        const parsed = sourceMessage ? this.parsedMessage(sourceMessage) : null;
+
+        if (reply.sourceType === 'post' && parsed?.sharedPost) {
+            this.openSharedPost(parsed.sharedPost, event);
+            return;
+        }
+
+        if (reply.sourceType === 'reel' && parsed?.sharedReel && sourceMessage) {
+            await this.openSharedReel(parsed.sharedReel, sourceMessage, event);
+            return;
+        }
+
+        if (reply.sourceType === 'story' && parsed?.sharedStory && sourceMessage) {
+            this.openSharedStory(parsed.sharedStory, sourceMessage, event);
+            return;
+        }
+
+        if (reply.messageId) {
+            this.scrollToMessageById(reply.messageId);
+        }
+    }
+
+    composerReplyLabel(reply: ChatReplyPreview): string {
+        return `@${reply.authorHandle}`;
+    }
+
+    replyPreviewLabel(message: ChatMessageDto, reply: ChatReplyPreview): string {
+        const currentHandle = (this.session.profile?.handle ?? '').trim().toLowerCase();
+        const repliedToHandle = (reply.authorHandle ?? '').trim();
+        const repliedToIsMe = !!currentHandle && repliedToHandle.toLowerCase() === currentHandle;
+
+        const repliedTarget = repliedToIsMe ? 'you' : `@${repliedToHandle}`;
+        if (message.authorProfileId === this.currentProfileId) {
+            return `You replied to ${repliedTarget}`;
+        }
+
+        return `@${message.authorHandle} replied to ${repliedTarget}`;
+    }
+
+    replyPreviewText(reply: ChatReplyPreview): string {
+        const text = (reply.text ?? '').trim();
+        if (text) {
+            return text;
+        }
+
+        switch (reply.sourceType) {
+            case 'image':
+                return '📷 Image';
+            case 'gif':
+                return 'GIF';
+            case 'post':
+                return 'Shared post';
+            case 'reel':
+                return 'Shared reel';
+            case 'story':
+                return 'Shared story';
+            default:
+                return 'Message';
+        }
+    }
+
+    isReplyToOwnMessage(reply: ChatReplyPreview): boolean {
+        const currentHandle = (this.session.profile?.handle ?? '').trim().toLowerCase();
+        if (!currentHandle) {
+            return false;
+        }
+
+        return (reply.authorHandle ?? '').trim().toLowerCase() === currentHandle;
+    }
+
+    canShowMessageActions(message: ChatMessageDto): boolean {
+        return !!message;
+    }
+
+    isMessageActionsOpen(message: ChatMessageDto): boolean {
+        return this.messageActionsMessageId === message.id;
+    }
+
+    isMessageActionsOpenBelow(message: ChatMessageDto): boolean {
+        return this.isMessageActionsOpen(message) && this.messageActionsOpenBelow;
+    }
+
+    toggleMessageActions(message: ChatMessageDto, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!this.canShowMessageActions(message)) {
+            return;
+        }
+
+        if (this.messageActionsMessageId === message.id) {
+            this.messageActionsMessageId = null;
+            this.messageActionsOpenBelow = false;
+            this.messageActionsMenuLeftPx = 0;
+            this.messageActionsMenuTopPx = 0;
+            return;
+        }
+
+        const trigger = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+        const triggerRect = trigger?.getBoundingClientRect();
+        const menuOptionCount = this.canEditMessage(message) ? 2 : 1;
+        const menuHeaderHeight = 29;
+        const estimatedMenuHeight = menuOptionCount * 36 + menuHeaderHeight + 10;
+        const edgeGap = 8;
+        const viewportEdgePadding = 8;
+        const menuWidth = this.messageActionsEstimatedWidthPx;
+
+        if (!triggerRect) {
+            this.messageActionsMessageId = message.id;
+            this.messageActionsOpenBelow = true;
+            this.messageActionsMenuLeftPx = viewportEdgePadding;
+            this.messageActionsMenuTopPx = viewportEdgePadding;
+            return;
+        }
+
+        const availableAbove = triggerRect.top;
+        const availableBelow = window.innerHeight - triggerRect.bottom;
+
+        const canOpenAbove = availableAbove >= estimatedMenuHeight + edgeGap;
+        const canOpenBelow = availableBelow >= estimatedMenuHeight + edgeGap;
+        const nearTopEdge = triggerRect.top < this.messageActionsPreferBelowTopThresholdPx;
+
+        const shouldOpenBelow = nearTopEdge || (!canOpenAbove && (canOpenBelow || availableBelow >= availableAbove));
+
+        const targetLeft = triggerRect.right - menuWidth;
+        const maxLeft = window.innerWidth - menuWidth - viewportEdgePadding;
+        const clampedLeft = Math.max(viewportEdgePadding, Math.min(targetLeft, maxLeft));
+
+        const rawTop = shouldOpenBelow
+            ? triggerRect.bottom + edgeGap
+            : triggerRect.top - estimatedMenuHeight - edgeGap;
+        const maxTop = window.innerHeight - estimatedMenuHeight - viewportEdgePadding;
+        const clampedTop = Math.max(viewportEdgePadding, Math.min(rawTop, maxTop));
+
+        this.messageActionsMessageId = message.id;
+        this.messageActionsOpenBelow = shouldOpenBelow;
+        this.messageActionsMenuLeftPx = clampedLeft;
+        this.messageActionsMenuTopPx = clampedTop;
+
+        requestAnimationFrame(() => {
+            if (this.messageActionsMessageId !== message.id) {
+                return;
+            }
+
+            const menuElement = document.querySelector('.chat-layout .message-actions-menu') as HTMLElement | null;
+            const actualWidth = menuElement?.offsetWidth ?? menuWidth;
+            const actualHeight = menuElement?.offsetHeight ?? estimatedMenuHeight;
+
+            const refinedTargetLeft = triggerRect.right - actualWidth;
+            const refinedMaxLeft = window.innerWidth - actualWidth - viewportEdgePadding;
+            this.messageActionsMenuLeftPx = Math.max(viewportEdgePadding, Math.min(refinedTargetLeft, refinedMaxLeft));
+
+            const refinedRawTop = shouldOpenBelow
+                ? triggerRect.bottom + edgeGap
+                : triggerRect.top - actualHeight - edgeGap;
+            const refinedMaxTop = window.innerHeight - actualHeight - viewportEdgePadding;
+            this.messageActionsMenuTopPx = Math.max(viewportEdgePadding, Math.min(refinedRawTop, refinedMaxTop));
+        });
+    }
+
+    closeMessageActions(event?: Event): void {
+        event?.stopPropagation();
+        this.messageActionsMessageId = null;
+        this.messageActionsOpenBelow = false;
+        this.messageActionsMenuLeftPx = 0;
+        this.messageActionsMenuTopPx = 0;
+    }
+
+    beginMessageEditFromMenu(message: ChatMessageDto, event: Event): void {
+        this.closeMessageActions(event);
+        this.startEditingMessage(message, event);
+    }
+
+    async copyMessageText(message: ChatMessageDto, event: Event): Promise<void> {
+        this.closeMessageActions(event);
+
+        const content = this.conversationPreview(message.content).trim();
+        if (!content) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(content);
+            this.status = 'Message copied.';
+        } catch {
+            this.status = 'Could not copy message.';
+        }
+    }
+
+    isEditingMessage(message: ChatMessageDto): boolean {
+        return this.editingMessageId === message.id;
+    }
+
+    messageWasEdited(message: ChatMessageDto): boolean {
+        return !!message.editedAtUtc;
+    }
+
+    canEditMessage(message: ChatMessageDto): boolean {
+        if (this.currentProfileId !== message.authorProfileId) {
+            return false;
+        }
+
+        const parsed = this.parsedMessage(message);
+        return !!parsed.text.trim()
+            && !parsed.imageUrl
+            && !parsed.gifUrl
+            && !parsed.sharedPost
+            && !parsed.sharedReel
+            && !parsed.sharedStory;
+    }
+
+    startEditingMessage(message: ChatMessageDto, event?: Event): void {
+        event?.stopPropagation();
+
+        if (!this.canEditMessage(message) || this.updatingMessageId !== null) {
+            return;
+        }
+
+        this.editingMessageId = message.id;
+        this.editingMessageDraft = message.content;
+        this.status = '';
+    }
+
+    cancelEditingMessage(force = false): void {
+        if (!force && this.updatingMessageId !== null) {
+            return;
+        }
+
+        this.editingMessageId = null;
+        this.editingMessageDraft = '';
+    }
+
+    onEditMessageKeydown(event: KeyboardEvent, message: ChatMessageDto): void {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            this.cancelEditingMessage(true);
+            return;
+        }
+
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            void this.saveEditedMessage(message);
+        }
+    }
+
+    async saveEditedMessage(message: ChatMessageDto): Promise<void> {
+        if (this.editingMessageId !== message.id || this.updatingMessageId !== null) {
+            return;
+        }
+
+        const content = this.editingMessageDraft.trim();
+        if (!content) {
+            this.status = 'Message content is required.';
+            return;
+        }
+
+        if (content === message.content) {
+            this.cancelEditingMessage();
+            return;
+        }
+
+        this.updatingMessageId = message.id;
+        this.status = '';
+
+        try {
+            const updated = await this.session.updateChatMessageAsync(message.id, content);
+            this.upsertMessage(updated);
+            this.applyConversationPreview(updated);
+            this.cancelEditingMessage(true);
+        } catch {
+            this.status = 'Could not update message.';
+        } finally {
+            this.updatingMessageId = null;
+        }
     }
 
     async sendMessage(): Promise<void> {
@@ -627,6 +1055,8 @@ export class ChatPageComponent implements OnDestroy {
         if (!conversationId || !content || this.sendingMessage) {
             return;
         }
+
+        this.stopTypingForConversation(conversationId);
 
         this.sendingMessage = true;
         this.status = '';
@@ -639,6 +1069,7 @@ export class ChatPageComponent implements OnDestroy {
             this.gifUrlInput = '';
             this.imageUrlInput = null;
             this.sharedPostInput = null;
+            this.cancelReplyToMessage();
             this.gifInputOpen = false;
             this.emojiPickerOpen = false;
             this.resetComposerHeight();
@@ -651,6 +1082,7 @@ export class ChatPageComponent implements OnDestroy {
 
     onComposerInputChange(): void {
         this.adjustComposerHeight();
+        this.notifyLocalTypingActivity();
     }
 
     onComposerKeydown(event: KeyboardEvent): void {
@@ -659,6 +1091,7 @@ export class ChatPageComponent implements OnDestroy {
         }
 
         event.preventDefault();
+        this.stopTypingForConversation(this.selectedConversationId);
         void this.sendMessage();
     }
 
@@ -674,6 +1107,7 @@ export class ChatPageComponent implements OnDestroy {
     appendEmoji(emoji: string): void {
         this.newMessage = `${this.newMessage}${emoji}`;
         this.adjustComposerHeight();
+        this.notifyLocalTypingActivity();
     }
 
     onEmojiPicked(event: Event): void {
@@ -2153,6 +2587,141 @@ export class ChatPageComponent implements OnDestroy {
         this.mobileReactionLongPressTriggered = false;
     }
 
+    private clearReplyTargetHighlight(): void {
+        if (this.replyTargetHighlightTimerId !== null) {
+            window.clearTimeout(this.replyTargetHighlightTimerId);
+            this.replyTargetHighlightTimerId = null;
+        }
+
+        this.highlightedReplyTargetMessageId = null;
+    }
+
+    private handleRemoteTypingChanged(conversationId: string, profileId: string, isTyping: boolean): void {
+        if (!conversationId || !profileId || this.selectedConversationId !== conversationId) {
+            return;
+        }
+
+        if (profileId === this.currentProfileId) {
+            return;
+        }
+
+        if (!isTyping) {
+            this.removeRemoteTypingProfile(profileId);
+            return;
+        }
+
+        const hadAnyTyping = this.remoteTypingProfileIds.size > 0;
+        this.remoteTypingProfileIds.add(profileId);
+        const existingTimer = this.remoteTypingTimerByProfileId.get(profileId);
+        if (existingTimer !== undefined) {
+            window.clearTimeout(existingTimer);
+        }
+
+        const timerId = window.setTimeout(() => {
+            this.remoteTypingTimerByProfileId.delete(profileId);
+            this.remoteTypingProfileIds.delete(profileId);
+        }, this.remoteTypingExpiryMs);
+
+        this.remoteTypingTimerByProfileId.set(profileId, timerId);
+
+        if (!hadAnyTyping) {
+            this.scrollToTypingIndicatorOnNextRender();
+        }
+    }
+
+
+    private scrollToTypingIndicatorOnNextRender(): void {
+        window.setTimeout(() => {
+            requestAnimationFrame(() => {
+                const container = this.messageListRef?.nativeElement;
+                if (!container) {
+                    return;
+                }
+
+                const indicator = container.querySelector<HTMLElement>('.typing-indicator-row');
+                if (indicator) {
+                    indicator.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
+                    return;
+                }
+
+                this.scrollToBottomOnNextRender();
+            });
+        }, 0);
+    }
+
+    private removeRemoteTypingProfile(profileId: string): void {
+        const existingTimer = this.remoteTypingTimerByProfileId.get(profileId);
+        if (existingTimer !== undefined) {
+            window.clearTimeout(existingTimer);
+            this.remoteTypingTimerByProfileId.delete(profileId);
+        }
+
+        this.remoteTypingProfileIds.delete(profileId);
+    }
+
+    private clearRemoteTypingState(): void {
+        for (const timerId of this.remoteTypingTimerByProfileId.values()) {
+            window.clearTimeout(timerId);
+        }
+
+        this.remoteTypingTimerByProfileId.clear();
+        this.remoteTypingProfileIds.clear();
+    }
+
+    private notifyLocalTypingActivity(): void {
+        const conversationId = this.selectedConversationId;
+        if (!conversationId) {
+            return;
+        }
+
+        if (!this.newMessage.trim()) {
+            this.stopTypingForConversation(conversationId);
+            return;
+        }
+
+        if (!this.localTypingActive || this.localTypingConversationId !== conversationId) {
+            this.localTypingActive = true;
+            this.localTypingConversationId = conversationId;
+            void this.chatRealtime.setTyping(conversationId, true).catch(() => { });
+        }
+
+        if (this.localTypingIdleTimerId !== null) {
+            window.clearTimeout(this.localTypingIdleTimerId);
+        }
+
+        this.localTypingIdleTimerId = window.setTimeout(() => {
+            this.localTypingIdleTimerId = null;
+            this.stopTypingForConversation(this.localTypingConversationId);
+        }, this.typingIdleTimeoutMs);
+    }
+
+    private stopTypingForConversation(conversationId: string | null): void {
+        if (this.localTypingIdleTimerId !== null) {
+            window.clearTimeout(this.localTypingIdleTimerId);
+            this.localTypingIdleTimerId = null;
+        }
+
+        const targetConversationId = conversationId ?? this.localTypingConversationId;
+        const shouldBroadcastStop = this.localTypingActive && !!targetConversationId;
+
+        this.localTypingActive = false;
+        this.localTypingConversationId = null;
+
+        if (shouldBroadcastStop) {
+            void this.chatRealtime.setTyping(targetConversationId!, false).catch(() => { });
+        }
+    }
+
+    private resetLocalTypingState(): void {
+        if (this.localTypingIdleTimerId !== null) {
+            window.clearTimeout(this.localTypingIdleTimerId);
+            this.localTypingIdleTimerId = null;
+        }
+
+        this.localTypingActive = false;
+        this.localTypingConversationId = null;
+    }
+
     trackByConversationId(_: number, conversation: ChatConversationDto): string {
         return conversation.id;
     }
@@ -2168,6 +2737,21 @@ export class ChatPageComponent implements OnDestroy {
     private upsertMessage(updated: ChatMessageDto): void {
         if (this.selectedConversationId !== updated.conversationId) {
             return;
+        }
+
+        if (updated.authorProfileId) {
+            this.removeRemoteTypingProfile(updated.authorProfileId);
+        }
+
+        if (this.editingMessageId === updated.id && this.updatingMessageId === updated.id) {
+            this.cancelEditingMessage(true);
+        }
+
+        if (this.messageActionsMessageId === updated.id) {
+            this.messageActionsMessageId = null;
+            this.messageActionsOpenBelow = false;
+            this.messageActionsMenuLeftPx = 0;
+            this.messageActionsMenuTopPx = 0;
         }
 
         const index = this.messages.findIndex(x => x.id === updated.id);
@@ -2244,6 +2828,119 @@ export class ChatPageComponent implements OnDestroy {
         };
 
         requestAnimationFrame(() => scrollToBottom(maxAttempts));
+    }
+
+    private async loadOlderMessages(): Promise<void> {
+        const conversationId = this.selectedConversationId;
+        const container = this.messageListRef?.nativeElement;
+        if (!conversationId || !container) {
+            return;
+        }
+
+        const skip = this.messages.length;
+        if (skip <= 0) {
+            return;
+        }
+
+        this.loadingOlderMessages = true;
+        const previousHeight = container.scrollHeight;
+        const previousTop = container.scrollTop;
+
+        try {
+            const olderChunk = await this.withTimeout(this.session.loadChatMessagesAsync(conversationId, this.messagesPageSize, skip), 7000);
+
+            if (this.selectedConversationId !== conversationId) {
+                return;
+            }
+
+            if (!olderChunk.length) {
+                this.hasOlderMessages = false;
+                return;
+            }
+
+            const existingIds = new Set(this.messages.map(message => message.id));
+            const uniqueOlder = olderChunk.filter(message => !existingIds.has(message.id));
+            if (!uniqueOlder.length) {
+                this.hasOlderMessages = false;
+                return;
+            }
+
+            this.messages = [...uniqueOlder, ...this.messages];
+            this.hasOlderMessages = olderChunk.length >= this.messagesPageSize;
+            void this.prefetchUnavailableSharedReelsFromMessages(uniqueOlder);
+
+            requestAnimationFrame(() => {
+                const currentContainer = this.messageListRef?.nativeElement;
+                if (!currentContainer) {
+                    return;
+                }
+
+                const nextHeight = currentContainer.scrollHeight;
+                currentContainer.scrollTop = Math.max(0, nextHeight - previousHeight + previousTop);
+            });
+        } catch {
+            if (this.selectedConversationId === conversationId && !this.status) {
+                this.status = 'Could not load older messages.';
+            }
+        } finally {
+            if (this.selectedConversationId === conversationId) {
+                this.loadingOlderMessages = false;
+            }
+        }
+    }
+
+    private scrollToMessageById(messageId: string): void {
+        const targetId = (messageId ?? '').trim();
+        if (!targetId) {
+            return;
+        }
+
+        const maxAttempts = 8;
+        const attemptScroll = (attemptsLeft: number) => {
+            const container = this.messageListRef?.nativeElement;
+            if (!container) {
+                if (attemptsLeft > 0) {
+                    window.setTimeout(() => attemptScroll(attemptsLeft - 1), 80);
+                }
+                return;
+            }
+
+            const target = Array.from(container.querySelectorAll<HTMLElement>('article.message[data-message-id]'))
+                .find(element => element.getAttribute('data-message-id') === targetId);
+
+            if (!target) {
+                if (attemptsLeft > 0) {
+                    window.setTimeout(() => attemptScroll(attemptsLeft - 1), 80);
+                }
+                return;
+            }
+
+            target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+            this.highlightMessageById(targetId);
+        };
+
+        requestAnimationFrame(() => attemptScroll(maxAttempts));
+    }
+
+    private highlightMessageById(messageId: string): void {
+        this.clearReplyTargetHighlight();
+        this.highlightedReplyTargetMessageId = messageId;
+        this.replyTargetHighlightTimerId = window.setTimeout(() => {
+            if (this.highlightedReplyTargetMessageId === messageId) {
+                this.highlightedReplyTargetMessageId = null;
+            }
+
+            this.replyTargetHighlightTimerId = null;
+        }, 1600);
+    }
+
+    private replySourceMessage(reply: ChatReplyPreview): ChatMessageDto | null {
+        const targetId = (reply.messageId ?? '').trim();
+        if (!targetId) {
+            return null;
+        }
+
+        return this.messages.find(message => message.id === targetId) ?? null;
     }
 
     private applyConversationPreview(message: ChatMessageDto): void {
@@ -2326,8 +3023,13 @@ export class ChatPageComponent implements OnDestroy {
         const gifUrl = this.composerGifUrl();
         const imageUrl = this.composerImageUrl();
         const sharedPost = this.sharedPostInput;
+        const replyPreview = this.replyingToPreview;
 
         const parts: string[] = [];
+
+        if (replyPreview) {
+            parts.push(buildChatReplyMarker(replyPreview));
+        }
 
         if (text) {
             parts.push(text);
@@ -2718,6 +3420,7 @@ export class ChatPageComponent implements OnDestroy {
     private parseMessageContent(content: string): ParsedChatMessage {
         const lines = content.split(/\r?\n/);
         const textLines: string[] = [];
+        let reply: ChatReplyPreview | undefined;
         let imageUrl: string | undefined;
         let gifUrl: string | undefined;
         let sharedPost: SharedPostPreview | undefined;
@@ -2726,6 +3429,14 @@ export class ChatPageComponent implements OnDestroy {
 
         for (const rawLine of lines) {
             const line = rawLine.trim();
+
+            if (isChatReplyMarker(line)) {
+                const parsed = decodeChatReplyPayload(stripChatReplyMarkerPrefix(line));
+                if (parsed) {
+                    reply = parsed;
+                    continue;
+                }
+            }
 
             if (line.startsWith('[image]')) {
                 const url = this.normalizedMediaUrl(line.slice(7));
@@ -2849,6 +3560,7 @@ export class ChatPageComponent implements OnDestroy {
 
         return {
             text: imageUrl || gifUrl ? (text === imageUrl || text === gifUrl ? '' : text) : text,
+            reply,
             imageUrl,
             gifUrl,
             sharedPost,
@@ -2905,6 +3617,8 @@ export class ChatPageComponent implements OnDestroy {
         const parsed = this.parseMessageContent(content);
         return [
             parsed.text,
+            parsed.reply?.authorHandle ?? '',
+            parsed.reply?.text ?? '',
             parsed.imageUrl ?? '',
             parsed.gifUrl ?? '',
             parsed.sharedPost?.authorHandle ?? '',
@@ -2915,6 +3629,95 @@ export class ChatPageComponent implements OnDestroy {
             parsed.sharedStory?.authorHandle ?? '',
             parsed.sharedStory?.mediaUrl ?? ''
         ].join(' ').toLowerCase();
+    }
+
+    private buildReplyPreviewFromMessage(message: ChatMessageDto): ChatReplyPreview | null {
+        const parsed = this.parsedMessage(message);
+        const fallbackText = this.messageSearchIndex(message.content).trim();
+        const authorHandle = (message.authorHandle ?? '').trim();
+
+        if (!authorHandle) {
+            return null;
+        }
+
+        if (parsed.text.trim()) {
+            return {
+                messageId: message.id,
+                authorHandle,
+                text: this.trimReplyText(parsed.text),
+                sourceType: 'text'
+            };
+        }
+
+        if (parsed.imageUrl) {
+            return {
+                messageId: message.id,
+                authorHandle,
+                text: '📷 Image',
+                thumbnailUrl: parsed.imageUrl,
+                sourceType: 'image'
+            };
+        }
+
+        if (parsed.gifUrl) {
+            return {
+                messageId: message.id,
+                authorHandle,
+                text: 'GIF',
+                thumbnailUrl: parsed.gifUrl,
+                sourceType: 'gif'
+            };
+        }
+
+        if (parsed.sharedPost) {
+            return {
+                messageId: message.id,
+                authorHandle,
+                text: 'Shared post',
+                thumbnailUrl: parsed.sharedPost.imageUrl,
+                sourceType: 'post'
+            };
+        }
+
+        if (parsed.sharedStory) {
+            return {
+                messageId: message.id,
+                authorHandle,
+                text: 'Shared story',
+                thumbnailUrl: parsed.sharedStory.thumbnailUrl || parsed.sharedStory.mediaUrl,
+                sourceType: 'story'
+            };
+        }
+
+        if (parsed.sharedReel) {
+            return {
+                messageId: message.id,
+                authorHandle,
+                text: 'Shared reel',
+                thumbnailUrl: parsed.sharedReel.thumbnailUrl,
+                sourceType: 'reel'
+            };
+        }
+
+        if (fallbackText) {
+            return {
+                messageId: message.id,
+                authorHandle,
+                text: this.trimReplyText(fallbackText),
+                sourceType: 'text'
+            };
+        }
+
+        return null;
+    }
+
+    private trimReplyText(value: string, maxLength = 80): string {
+        const normalized = value.replace(/\s+/g, ' ').trim();
+        if (normalized.length <= maxLength) {
+            return normalized;
+        }
+
+        return `${normalized.slice(0, maxLength - 1).trimEnd()}…`;
     }
 
     private buildSharedStoryMarker(story: StoryDto): string {

@@ -208,6 +208,10 @@ export interface CreateChatMessageRequest {
     content: string;
 }
 
+export interface UpdateChatMessageRequest {
+    content: string;
+}
+
 export interface SetMessageReactionRequest {
     type: string;
 }
@@ -245,6 +249,7 @@ export interface ChatMessageDto {
     authorImageUrl?: string;
     content: string;
     createdAtUtc: string;
+    editedAtUtc?: string;
     myReactionType?: string;
     reactions: ReactionSummaryDto[];
 }

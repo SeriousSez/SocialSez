@@ -72,14 +72,14 @@ public class ChatController(IChatService chatService, IHubContext<ChatHub> chatH
     }
 
     [HttpGet("conversations/{conversationId:guid}/messages")]
-    public async Task<ActionResult<IReadOnlyCollection<ChatMessageDto>>> GetMessages(Guid conversationId, [FromQuery] int take = 50, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IReadOnlyCollection<ChatMessageDto>>> GetMessages(Guid conversationId, [FromQuery] int take = 50, [FromQuery] int skip = 0, CancellationToken cancellationToken = default)
     {
         if (!TryGetProfileId(out var profileId))
         {
             return Unauthorized();
         }
 
-        var messages = await chatService.GetMessagesAsync(profileId, conversationId, take, cancellationToken);
+        var messages = await chatService.GetMessagesAsync(profileId, conversationId, take, skip, cancellationToken);
         return messages is null ? NotFound() : Ok(messages);
     }
 
@@ -94,6 +94,32 @@ public class ChatController(IChatService chatService, IHubContext<ChatHub> chatH
         try
         {
             var message = await chatService.SendMessageAsync(profileId, conversationId, request, cancellationToken);
+            if (message is not null)
+            {
+                await chatHubContext.Clients
+                    .Group(ChatHub.ConversationGroup(message.ConversationId))
+                    .SendAsync(ChatHub.MessageUpsertedEvent, message, cancellationToken);
+            }
+
+            return message is null ? NotFound() : Ok(message);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("messages/{messageId:guid}")]
+    public async Task<ActionResult<ChatMessageDto>> UpdateMessage(Guid messageId, [FromBody] UpdateChatMessageRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var message = await chatService.UpdateMessageAsync(profileId, messageId, request, cancellationToken);
             if (message is not null)
             {
                 await chatHubContext.Clients

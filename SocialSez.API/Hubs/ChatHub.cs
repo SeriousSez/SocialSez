@@ -9,6 +9,9 @@ namespace SocialSez.API.Hubs;
 public class ChatHub(IChatService chatService) : Hub
 {
     public const string MessageUpsertedEvent = "MessageUpserted";
+    public const string TypingChangedEvent = "TypingChanged";
+
+    public sealed record TypingChangedPayload(Guid ConversationId, Guid ProfileId, bool IsTyping);
 
     public async Task JoinConversation(Guid conversationId)
     {
@@ -30,6 +33,25 @@ public class ChatHub(IChatService chatService) : Hub
     public Task LeaveConversation(Guid conversationId)
     {
         return Groups.RemoveFromGroupAsync(Context.ConnectionId, ConversationGroup(conversationId));
+    }
+
+    public async Task SetTyping(Guid conversationId, bool isTyping)
+    {
+        var profileId = GetProfileId();
+        if (profileId is null)
+        {
+            throw new HubException("Unauthorized.");
+        }
+
+        var isMember = await chatService.IsConversationMemberAsync(profileId.Value, conversationId, Context.ConnectionAborted);
+        if (!isMember)
+        {
+            throw new HubException("Forbidden.");
+        }
+
+        var payload = new TypingChangedPayload(conversationId, profileId.Value, isTyping);
+        await Clients.GroupExcept(ConversationGroup(conversationId), [Context.ConnectionId])
+            .SendAsync(TypingChangedEvent, payload, Context.ConnectionAborted);
     }
 
     public static string ConversationGroup(Guid conversationId)
