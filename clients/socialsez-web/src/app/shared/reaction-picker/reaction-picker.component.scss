@@ -73,23 +73,23 @@
 .reaction-btn.icon-only.active {
     background: transparent;
     border: 0;
-    color: var(--color-danger);
-}
-
-.reaction-btn.icon-only.active i {
-    --fa-primary-color: var(--color-danger);
-    --fa-secondary-color: var(--color-danger);
-    --fa-primary-opacity: 1;
-    --fa-secondary-opacity: 0.35;
+    color: var(--trigger-fg);
 }
 
 .reaction-btn.icon-only.active:hover {
-    color: var(--color-danger-strong);
+    color: var(--trigger-fg);
+}
+
+.reaction-btn.icon-only.active i {
+    --fa-primary-color: var(--trigger-fg);
+    --fa-secondary-color: var(--trigger-fg-secondary);
+    --fa-primary-opacity: 1;
+    --fa-secondary-opacity: 1;
 }
 
 .reaction-btn.icon-only.active:hover i {
-    --fa-primary-color: var(--color-danger-strong);
-    --fa-secondary-color: var(--color-danger-strong);
+    --fa-primary-color: var(--trigger-fg);
+    --fa-secondary-color: var(--trigger-fg-secondary);
 }
 
 .reaction-btn:active {
@@ -99,9 +99,29 @@
 }
 
 .reaction-btn.active {
-    background: color-mix(in srgb, var(--color-secondary) 20%, var(--color-surface-muted));
-    color: var(--color-text);
-    border-color: color-mix(in srgb, var(--color-secondary) 45%, var(--color-border));
+    --trigger-bg: color-mix(in srgb, var(--color-secondary) 60%, var(--color-surface) 40%);
+    --trigger-bg-hover: color-mix(in srgb, var(--color-secondary) 70%, var(--color-surface) 30%);
+    --trigger-fg: color-mix(in srgb, var(--color-text) 80%, var(--color-secondary) 20%);
+    --trigger-fg-secondary: color-mix(in srgb, var(--trigger-bg) 34%, var(--color-surface) 66%);
+    --trigger-accent: var(--color-secondary);
+    --trigger-accent-hover: color-mix(in srgb, var(--color-text) 20%, var(--color-secondary) 80%);
+    --trigger-border-tone: var(--trigger-accent);
+    --trigger-border-tone-hover: var(--trigger-accent);
+    background: var(--trigger-bg);
+    color: var(--trigger-fg);
+    border-color: color-mix(in srgb, var(--color-text-on-dark) 34%, var(--trigger-border-tone) 66%);
+}
+
+.reaction-btn.active:hover {
+    background: var(--trigger-bg-hover);
+    border-color: color-mix(in srgb, var(--color-text-on-dark) 42%, var(--trigger-border-tone-hover) 58%);
+}
+
+.reaction-btn.active i {
+    --fa-primary-color: var(--trigger-fg);
+    --fa-secondary-color: var(--trigger-fg-secondary);
+    --fa-primary-opacity: 1;
+    --fa-secondary-opacity: 1;
 }
 
 .reaction-popover {
@@ -151,43 +171,55 @@
 }
 
 .reaction-pop-btn {
+    --reaction-bg: var(--color-surface-muted);
+    --reaction-bg-hover: var(--color-surface-alt);
+    --reaction-fg: color-mix(in srgb, var(--color-text) 88%, var(--color-surface) 12%);
+    --reaction-fg-secondary: color-mix(in srgb, var(--reaction-bg) 34%, var(--color-surface) 66%);
+    --reaction-border-tone: var(--reaction-bg);
+    --reaction-border-tone-hover: var(--reaction-bg-hover);
     width: 34px;
     height: 34px;
     min-width: 34px;
-    border: 1px solid var(--color-border);
+    border: 1px solid color-mix(in srgb, var(--color-text-on-dark) 34%, var(--reaction-border-tone) 66%);
     border-radius: 50%;
-    background: var(--color-surface-muted);
-    color: var(--color-text);
+    background: var(--reaction-bg);
+    color: var(--reaction-fg);
     padding: 0;
     display: grid;
     place-items: center;
     font-size: 1.05rem;
     box-shadow: none;
     transform: none;
+    transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
     -webkit-tap-highlight-color: transparent;
 }
 
 .reaction-pop-btn:hover {
-    background: var(--color-surface-alt);
-    transform: translateY(-1px) scale(1.08);
+    background: var(--reaction-bg-hover);
+    transform: translateY(-4px) scale(1.42);
+    position: relative;
+    z-index: 1;
     box-shadow: none;
 }
 
 .reaction-pop-btn:active {
-    background: var(--color-surface-muted);
+    background: var(--reaction-bg);
     transform: none;
     box-shadow: none;
 }
 
 .reaction-pop-btn.touch-hover {
-    background: var(--color-surface-alt);
-    transform: translateY(-1px) scale(1.08);
+    background: var(--reaction-bg-hover);
+    transform: translateY(-4px) scale(1.42);
+    position: relative;
+    z-index: 1;
     box-shadow: none;
 }
 
 .reaction-pop-btn.active {
-    background: color-mix(in srgb, var(--color-secondary) 20%, var(--color-surface-muted));
-    color: var(--color-text);
+    background: var(--reaction-bg-hover);
+    border-color: color-mix(in srgb, var(--color-text-on-dark) 42%, var(--reaction-border-tone-hover) 58%);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--reaction-bg-hover) 32%, transparent);
 }
 
 .reaction-summary {
@@ -206,13 +238,18 @@
 }
 
 .reaction-btn.bubble-icon {
-    min-width: 42px;
+    --bubble-bg: #f8fafc;
+    --bubble-bg-hover: #e2e8f0;
+    --bubble-border: #cbd5e1;
+    --bubble-fg: #0f172a;
+    width: 34px;
     height: 34px;
-    border-radius: 999px;
-    border: 1px solid #cbd5e1;
-    background: #f8fafc;
-    color: #0f172a;
-    padding: 0 12px;
+    min-width: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--bubble-border);
+    background: var(--bubble-bg);
+    color: var(--bubble-fg);
+    padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -223,25 +260,172 @@
 }
 
 .reaction-btn.bubble-icon:hover {
-    background: #e2e8f0;
+    background: var(--bubble-bg-hover);
 }
 
 .reaction-btn.bubble-icon.active {
-    color: var(--color-danger);
-}
-
-.reaction-btn.bubble-icon.active i {
-    --fa-primary-color: var(--color-danger);
-    --fa-secondary-color: var(--color-danger);
-    --fa-primary-opacity: 1;
-    --fa-secondary-opacity: 0.35;
+    --bubble-bg: var(--trigger-bg);
+    --bubble-bg-hover: var(--trigger-bg-hover);
+    --bubble-border: color-mix(in srgb, var(--color-text-on-dark) 34%, var(--trigger-border-tone) 66%);
+    --bubble-fg: var(--trigger-fg);
+    color: var(--trigger-fg);
 }
 
 .reaction-btn.bubble-icon.active:hover {
-    color: var(--color-danger-strong);
+    --bubble-border: color-mix(in srgb, var(--color-text-on-dark) 42%, var(--trigger-border-tone-hover) 58%);
+    color: var(--trigger-fg);
 }
 
-.reaction-btn.bubble-icon.active:hover i {
-    --fa-primary-color: var(--color-danger-strong);
-    --fa-secondary-color: var(--color-danger-strong);
+.reaction-btn.active[data-reaction-type='like'] {
+    --trigger-accent: #4F8CFF;
+    --trigger-bg: color-mix(in srgb, var(--trigger-accent) 62%, var(--color-surface) 38%);
+    --trigger-bg-hover: color-mix(in srgb, var(--trigger-accent) 72%, var(--color-surface) 28%);
+    --trigger-fg: color-mix(in srgb, var(--color-text) 80%, var(--trigger-accent) 20%);
+    --trigger-accent-hover: color-mix(in srgb, var(--color-text) 20%, var(--trigger-accent) 80%);
+}
+
+.reaction-btn.active[data-reaction-type='love'] {
+    --trigger-accent: #E11D48;
+    --trigger-bg: color-mix(in srgb, var(--trigger-accent) 60%, var(--color-surface) 40%);
+    --trigger-bg-hover: color-mix(in srgb, var(--trigger-accent) 70%, var(--color-surface) 30%);
+    --trigger-fg: color-mix(in srgb, var(--color-text) 80%, var(--trigger-accent) 20%);
+    --trigger-accent-hover: color-mix(in srgb, var(--color-text) 20%, var(--trigger-accent) 80%);
+}
+
+.reaction-btn.active[data-reaction-type='laugh'] {
+    --trigger-accent: #FFC83D;
+    --trigger-bg: color-mix(in srgb, var(--trigger-accent) 62%, var(--color-surface) 38%);
+    --trigger-bg-hover: color-mix(in srgb, var(--trigger-accent) 72%, var(--color-surface) 28%);
+    --trigger-fg: color-mix(in srgb, var(--color-text) 80%, var(--trigger-accent) 20%);
+    --trigger-accent-hover: color-mix(in srgb, var(--color-text) 20%, var(--trigger-accent) 80%);
+}
+
+.reaction-btn.active[data-reaction-type='wow'] {
+    --trigger-accent: #38D9E6;
+    --trigger-bg: color-mix(in srgb, var(--trigger-accent) 60%, var(--color-surface) 40%);
+    --trigger-bg-hover: color-mix(in srgb, var(--trigger-accent) 70%, var(--color-surface) 30%);
+    --trigger-fg: color-mix(in srgb, var(--color-text) 80%, var(--trigger-accent) 20%);
+    --trigger-accent-hover: color-mix(in srgb, var(--color-text) 20%, var(--trigger-accent) 80%);
+}
+
+.reaction-btn.active[data-reaction-type='sad'] {
+    --trigger-accent: #5C7CFA;
+    --trigger-bg: color-mix(in srgb, var(--trigger-accent) 58%, var(--color-surface) 42%);
+    --trigger-bg-hover: color-mix(in srgb, var(--trigger-accent) 68%, var(--color-surface) 32%);
+    --trigger-fg: color-mix(in srgb, var(--color-text) 80%, var(--trigger-accent) 20%);
+    --trigger-accent-hover: color-mix(in srgb, var(--color-text) 20%, var(--trigger-accent) 80%);
+}
+
+.reaction-btn.active[data-reaction-type='angry'] {
+    --trigger-accent: #FF3B30;
+    --trigger-bg: color-mix(in srgb, var(--trigger-accent) 58%, var(--color-surface) 42%);
+    --trigger-bg-hover: color-mix(in srgb, var(--trigger-accent) 68%, var(--color-surface) 32%);
+    --trigger-fg: color-mix(in srgb, var(--color-text) 80%, var(--trigger-accent) 20%);
+    --trigger-accent-hover: color-mix(in srgb, var(--color-text) 20%, var(--trigger-accent) 80%);
+}
+
+.reaction-btn.active[data-reaction-type='partyhorn'],
+.reaction-btn.active[data-reaction-type='party-horn'],
+.reaction-btn.active[data-reaction-type='party'] {
+    --partyhorn-start: #C77DFF;
+    --partyhorn-end: #FF85A1;
+    --partyhorn-start-hover: color-mix(in srgb, var(--partyhorn-start) 88%, var(--color-surface) 12%);
+    --partyhorn-end-hover: color-mix(in srgb, var(--partyhorn-end) 88%, var(--color-surface) 12%);
+    --trigger-accent: color-mix(in srgb, var(--partyhorn-start) 52%, var(--partyhorn-end) 48%);
+    --trigger-bg: linear-gradient(135deg, var(--partyhorn-start), var(--partyhorn-end));
+    --trigger-bg-hover: linear-gradient(135deg, var(--partyhorn-start-hover), var(--partyhorn-end-hover));
+    --trigger-fg: color-mix(in srgb, var(--color-text) 80%, var(--trigger-accent) 20%);
+    --trigger-fg-secondary: color-mix(in srgb, var(--partyhorn-start) 34%, var(--color-surface) 66%);
+    --trigger-accent-hover: color-mix(in srgb, var(--color-text) 20%, var(--trigger-accent) 80%);
+    --trigger-border-tone: var(--trigger-accent);
+    --trigger-border-tone-hover: color-mix(in srgb, var(--partyhorn-start-hover) 52%, var(--partyhorn-end-hover) 48%);
+}
+
+.reaction-btn.active[data-reaction-type='clap'],
+.reaction-btn.active[data-reaction-type='hands-clapping'],
+.reaction-btn.active[data-reaction-type='handsclapping'] {
+    --trigger-accent: var(--color-warning);
+    --trigger-bg: color-mix(in srgb, var(--trigger-accent) 64%, var(--color-surface) 36%);
+    --trigger-bg-hover: color-mix(in srgb, var(--trigger-accent) 74%, var(--color-surface) 26%);
+    --trigger-fg: color-mix(in srgb, var(--color-text) 80%, var(--trigger-accent) 20%);
+    --trigger-accent-hover: color-mix(in srgb, var(--color-text) 20%, var(--trigger-accent) 80%);
+}
+
+.reaction-pop-btn i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    font-size: 0.92rem;
+    line-height: 1;
+    transform: translateY(0.6px);
+    color: var(--reaction-fg);
+    --fa-primary-color: var(--reaction-fg);
+    --fa-secondary-color: var(--reaction-fg-secondary);
+    --fa-primary-opacity: 1;
+    --fa-secondary-opacity: 1;
+}
+
+.reaction-pop-btn[data-reaction-type='like'] {
+    --reaction-accent: #4F8CFF;
+    --reaction-bg: color-mix(in srgb, var(--reaction-accent) 62%, var(--color-surface) 38%);
+    --reaction-bg-hover: color-mix(in srgb, var(--reaction-accent) 72%, var(--color-surface) 28%);
+    --reaction-fg: color-mix(in srgb, var(--color-text) 80%, var(--reaction-accent) 20%);
+}
+
+.reaction-pop-btn[data-reaction-type='love'] {
+    --reaction-accent: #E11D48;
+    --reaction-bg: color-mix(in srgb, var(--reaction-accent) 60%, var(--color-surface) 40%);
+    --reaction-bg-hover: color-mix(in srgb, var(--reaction-accent) 70%, var(--color-surface) 30%);
+    --reaction-fg: color-mix(in srgb, var(--color-text) 80%, var(--reaction-accent) 20%);
+}
+
+.reaction-pop-btn[data-reaction-type='laugh'] {
+    --reaction-accent: #FFC83D;
+    --reaction-bg: color-mix(in srgb, var(--reaction-accent) 62%, var(--color-surface) 38%);
+    --reaction-bg-hover: color-mix(in srgb, var(--reaction-accent) 72%, var(--color-surface) 28%);
+    --reaction-fg: color-mix(in srgb, var(--color-text) 80%, var(--reaction-accent) 20%);
+}
+
+.reaction-pop-btn[data-reaction-type='wow'] {
+    --reaction-accent: #38D9E6;
+    --reaction-bg: color-mix(in srgb, var(--reaction-accent) 60%, var(--color-surface) 40%);
+    --reaction-bg-hover: color-mix(in srgb, var(--reaction-accent) 70%, var(--color-surface) 30%);
+    --reaction-fg: color-mix(in srgb, var(--color-text) 80%, var(--reaction-accent) 20%);
+}
+
+.reaction-pop-btn[data-reaction-type='sad'] {
+    --reaction-accent: #5C7CFA;
+    --reaction-bg: color-mix(in srgb, var(--reaction-accent) 58%, var(--color-surface) 42%);
+    --reaction-bg-hover: color-mix(in srgb, var(--reaction-accent) 68%, var(--color-surface) 32%);
+    --reaction-fg: color-mix(in srgb, var(--color-text) 80%, var(--reaction-accent) 20%);
+}
+
+.reaction-pop-btn[data-reaction-type='angry'] {
+    --reaction-accent: #FF3B30;
+    --reaction-bg: color-mix(in srgb, var(--reaction-accent) 58%, var(--color-surface) 42%);
+    --reaction-bg-hover: color-mix(in srgb, var(--reaction-accent) 68%, var(--color-surface) 32%);
+    --reaction-fg: color-mix(in srgb, var(--color-text) 80%, var(--reaction-accent) 20%);
+}
+
+.reaction-pop-btn[data-reaction-type='partyhorn'] {
+    --partyhorn-start: #C77DFF;
+    --partyhorn-end: #FF85A1;
+    --partyhorn-start-hover: color-mix(in srgb, var(--partyhorn-start) 88%, var(--color-surface) 12%);
+    --partyhorn-end-hover: color-mix(in srgb, var(--partyhorn-end) 88%, var(--color-surface) 12%);
+    --reaction-accent: color-mix(in srgb, var(--partyhorn-start) 52%, var(--partyhorn-end) 48%);
+    --reaction-bg: linear-gradient(135deg, var(--partyhorn-start), var(--partyhorn-end));
+    --reaction-bg-hover: linear-gradient(135deg, var(--partyhorn-start-hover), var(--partyhorn-end-hover));
+    --reaction-fg: color-mix(in srgb, var(--color-text) 80%, var(--reaction-accent) 20%);
+    --reaction-fg-secondary: color-mix(in srgb, var(--partyhorn-start) 34%, var(--color-surface) 66%);
+    --reaction-border-tone: var(--reaction-accent);
+    --reaction-border-tone-hover: color-mix(in srgb, var(--partyhorn-start-hover) 52%, var(--partyhorn-end-hover) 48%);
+}
+
+.reaction-pop-btn[data-reaction-type='clap'] {
+    --reaction-accent: var(--color-warning);
+    --reaction-bg: color-mix(in srgb, var(--reaction-accent) 64%, var(--color-surface) 36%);
+    --reaction-bg-hover: color-mix(in srgb, var(--reaction-accent) 74%, var(--color-surface) 26%);
+    --reaction-fg: color-mix(in srgb, var(--color-text) 80%, var(--reaction-accent) 20%);
 }

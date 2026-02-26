@@ -101,6 +101,22 @@ export function extractSharedPostFromContent(content: string): { text: string; s
     };
 }
 
+export function buildSharedPostReferenceCounts(posts: ReadonlyArray<PostDto>): Map<string, number> {
+    const counts = new Map<string, number>();
+
+    for (const post of posts) {
+        const sharedPost = extractSharedPostFromContent(post.content).sharedPost;
+        const sourcePostId = sharedPost?.postId;
+        if (!sourcePostId) {
+            continue;
+        }
+
+        counts.set(sourcePostId, (counts.get(sourcePostId) ?? 0) + 1);
+    }
+
+    return counts;
+}
+
 function stripMessageMarkers(content: string): string {
     const lines = content.split(/\r?\n/);
     const cleaned = lines

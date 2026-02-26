@@ -807,7 +807,7 @@
 
 .chat-layout .reaction-summary {
     display: flex;
-    gap: 5px;
+    gap: 0;
     flex-wrap: wrap;
     color: #475569;
     font-size: 12px;
@@ -830,17 +830,22 @@
     right: 0px;
 }
 
-.chat-layout .reaction-summary span {
+.chat-layout .reaction-summary .reaction-badge {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 999px;
-    padding: 2px 7px;
+    padding: 4px 6px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.chat-layout .reaction-summary .reaction-emoji {
+    line-height: 1;
 }
 
 .chat-layout .reaction-summary .reaction-total {
-    background: transparent;
-    border: 0;
-    padding: 0 2px 0 0;
+    line-height: 1;
+    padding-left: 1px;
     font-weight: 600;
 }
 
@@ -1256,15 +1261,14 @@
     color: var(--color-text);
 }
 
-:root.theme-dark .chat-layout .reaction-summary span {
+:root.theme-dark .chat-layout .reaction-summary .reaction-badge {
     background: var(--color-surface-muted);
     border-color: var(--color-border);
     color: var(--color-text-subtle);
 }
 
 :root.theme-dark .chat-layout .reaction-summary .reaction-total {
-    background: transparent;
-    border: 0;
+    color: var(--color-text);
 }
 
 :root.theme-dark .chat-layout .shared-post-content .hashtag,

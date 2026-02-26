@@ -14,6 +14,7 @@ import { buildSharedStoryMarker, buildSharedStoryPreview } from '../../core/shar
 import { cancelStoryShareModal as cancelStoryShareModalState, openStoryShareModal } from '../../core/story-share-modal-state.utils';
 import { executeStoryShareToChat as executeStoryShareToChatCore } from '../../core/story-share-to-chat.utils';
 import { StoryPresenceService } from '../../core/story-presence.service';
+import { buildSharedPostReferenceCounts } from '../../core/shared-post.utils';
 import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from './feed-reels-list.component';
 import { FeedStoryViewerComponent } from './feed-story-viewer.component';
 import { ReelComposerModalComponent, ReelUploadStatusEvent } from '../../shared/reel-composer-modal/reel-composer-modal.component';
@@ -26,6 +27,7 @@ import { SharePostModalComponent } from '../../shared/share-post-modal/share-pos
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { SegmentedTabItem, SegmentedTabsComponent } from '../../shared/segmented-tabs/segmented-tabs.component';
+import { CreateContentMenuComponent } from '../../shared/create-content-menu/create-content-menu.component';
 
 interface StoryTrimPreviewOption {
     previewUrl: string;
@@ -34,7 +36,7 @@ interface StoryTrimPreviewOption {
 @Component({
     selector: 'app-feed-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, PostCardComponent, PostComposerComponent, ReelComposerModalComponent, FeedReelsListComponent, FeedStoryViewerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, ConfirmModalComponent, SkeletonComponent, SegmentedTabsComponent],
+    imports: [CommonModule, RouterLink, PostCardComponent, PostComposerComponent, ReelComposerModalComponent, FeedReelsListComponent, FeedStoryViewerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, ConfirmModalComponent, SkeletonComponent, SegmentedTabsComponent, CreateContentMenuComponent],
     templateUrl: './feed-page.component.html',
     styleUrl: './feed-page.component.scss'
 })
@@ -152,6 +154,8 @@ export class FeedPageComponent implements OnDestroy {
     private readonly ngZone = inject(NgZone);
     private pendingStoryHandleFromRoute: string | null = null;
     private hasLoadedAtLeastOnce = false;
+    private repostCountSource: PostDto[] | null = null;
+    private repostCountsByPostId = new Map<string, number>();
 
     constructor(
         private readonly session: SessionService,
@@ -914,6 +918,20 @@ export class FeedPageComponent implements OnDestroy {
             .trim();
     }
 
+    getPostRepostCount(postId: string): number {
+        this.ensurePostRepostCounts();
+        return this.repostCountsByPostId.get(postId) ?? 0;
+    }
+
+    private ensurePostRepostCounts(): void {
+        if (this.repostCountSource === this.feed) {
+            return;
+        }
+
+        this.repostCountSource = this.feed;
+        this.repostCountsByPostId = buildSharedPostReferenceCounts(this.feed);
+    }
+
     async toggleLike(post: PostDto): Promise<void> {
         await this.runPostMutation(post.id, () => this.postInteractions.toggleLike(post.id), 'Could not update like right now.');
     }
@@ -1486,7 +1504,7 @@ export class FeedPageComponent implements OnDestroy {
         }
 
         let selectedIndex = -1;
-        let selectedTimestamp = Number.NEGATIVE_INFINITY;
+        let selectedTimestamp = Number.POSITIVE_INFINITY;
 
         for (let index = 0; index < stories.length; index += 1) {
             const story = stories[index];
@@ -1495,8 +1513,8 @@ export class FeedPageComponent implements OnDestroy {
             }
 
             const parsedTimestamp = Date.parse(story.createdAtUtc);
-            const timestamp = Number.isNaN(parsedTimestamp) ? Number.NEGATIVE_INFINITY : parsedTimestamp;
-            if (selectedIndex < 0 || timestamp > selectedTimestamp) {
+            const timestamp = Number.isNaN(parsedTimestamp) ? Number.POSITIVE_INFINITY : parsedTimestamp;
+            if (selectedIndex < 0 || timestamp < selectedTimestamp) {
                 selectedIndex = index;
                 selectedTimestamp = timestamp;
             }

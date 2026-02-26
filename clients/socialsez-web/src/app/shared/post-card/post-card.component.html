@@ -66,9 +66,32 @@
             </ng-template>
         </ng-container>
 
+        <div class="engagement-summary">
+            <div class="summary-reactions">
+                <span class="summary-reaction-icons" *ngIf="topReactionBadges.length; else noReactionEmoji">
+                    <span class="summary-reaction-emoji" *ngFor="let badge of topReactionBadges" [ngClass]="reactionBadgeClass(badge.type)">
+                        <i [class]="reactionIconClass(badge.type)" aria-hidden="true"></i>
+                    </span>
+                </span>
+                <ng-template #noReactionEmoji>
+                    <span class="summary-reaction-icons empty">
+                        <span class="summary-reaction-emoji type-default">
+                            <i class="fa-duotone fa-solid fa-thumbs-up" aria-hidden="true"></i>
+                        </span>
+                    </span>
+                </ng-template>
+                <span class="summary-reaction-count">{{ totalReactionCount | number }}</span>
+            </div>
+
+            <div class="summary-counts">
+                <span>{{ post.comments.length | number }} comments</span>
+                <span>·</span>
+                <span>{{ repostCount | number }} reposts</span>
+            </div>
+        </div>
+
         <div class="engagement">
-            <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="post.reactions" [myReactionType]="post.myReactionType" [busy]="reacting || !canInteract" [primaryCount]="post.likeCount" [showCountWhenIdle]="true" [idleLabel]="'👍'" [triggerStyle]="'bubble-icon'"
-                (primaryClick)="onPostPrimaryReaction()" (reactionSelected)="onPostReactionSelected($event)">
+            <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="[]" [myReactionType]="post.myReactionType" [busy]="reacting || !canInteract" [triggerStyle]="'bubble-icon'" (primaryClick)="onPostPrimaryReaction()" (reactionSelected)="onPostReactionSelected($event)">
             </app-reaction-picker>
 
             <button class="comments-toggle" type="button" (click)="toggleComments()" [attr.aria-expanded]="commentsOpen">
@@ -77,9 +100,9 @@
                 <span class="action-count">{{ post.comments.length }}</span>
             </button>
 
-            <button class="comments-toggle" type="button" (click)="triggerShareToFeed()" [disabled]="busy || !canInteract" aria-label="Share to feed" title="Share to feed">
+            <button class="comments-toggle" type="button" (click)="triggerShareToFeed()" [disabled]="busy || !canInteract" aria-label="Repost to feed" title="Repost to feed">
                 <i class="fa-duotone fa-light fa-repeat" aria-hidden="true"></i>
-                <span class="action-label">Share</span>
+                <span class="action-label">Repost</span>
             </button>
 
             <button class="comments-toggle" type="button" (click)="triggerShareToChat()" [disabled]="busy || !canInteract" aria-label="Send to chat" title="Send to chat">

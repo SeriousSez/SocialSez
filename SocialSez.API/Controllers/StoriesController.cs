@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SocialSez.API.Infrastructure;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 
@@ -132,20 +133,7 @@ public class StoriesController(IStoryService storyService, IWebHostEnvironment e
 
     private string ResolveUploadsRoot()
     {
-        var configuredUploadsRoot = configuration["Uploads:RootPath"];
-        if (!string.IsNullOrWhiteSpace(configuredUploadsRoot))
-        {
-            return Path.IsPathRooted(configuredUploadsRoot)
-                ? configuredUploadsRoot
-                : Path.GetFullPath(configuredUploadsRoot, environment.ContentRootPath);
-        }
-
-        if (Directory.Exists("/venli.uploads"))
-        {
-            return "/venli.uploads";
-        }
-
-        return Path.Combine(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"), "uploads");
+        return UploadsRootResolver.Resolve(configuration, environment);
     }
 
     private async Task<string> SaveMediaAsync(Guid profileId, IFormFile file, CancellationToken cancellationToken)

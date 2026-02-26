@@ -30,6 +30,10 @@ interface PostContentPart {
     mentionHandle?: string;
 }
 
+interface PostReactionBadge {
+    type: string;
+}
+
 @Component({
     selector: 'app-post-card',
     standalone: true,
@@ -62,6 +66,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     @Input() viewerProfileId: string | null = null;
     @Input() busy = false;
     @Input() canInteract = true;
+    @Input() repostCount = 0;
 
     @Output() editValueChange = new EventEmitter<string>();
     @Output() toggleLike = new EventEmitter<void>();
@@ -86,7 +91,9 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         { type: 'Laugh', emoji: '😂' },
         { type: 'Wow', emoji: '😮' },
         { type: 'Sad', emoji: '😢' },
-        { type: 'Angry', emoji: '😡' }
+        { type: 'Angry', emoji: '😡' },
+        { type: 'PartyHorn', emoji: '🎉' },
+        { type: 'Clap', emoji: '👏' }
     ] as const;
 
     commentInput = '';
@@ -165,11 +172,6 @@ export class PostCardComponent implements OnChanges, OnDestroy {
 
     onPostReactionSelected(reactionType: string): void {
         if (!this.canInteract) {
-            return;
-        }
-
-        if (reactionType === 'Love') {
-            this.onPostPrimaryReaction();
             return;
         }
 
@@ -536,11 +538,6 @@ export class PostCardComponent implements OnChanges, OnDestroy {
             return;
         }
 
-        if (reactionType === 'Love') {
-            this.onCommentPrimaryReaction(comment);
-            return;
-        }
-
         if (comment.myReactionType === reactionType) {
             this.clearCommentReaction.emit(comment.id);
             return;
@@ -552,6 +549,87 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     reactionEmoji(type: string): string {
         const option = this.reactionOptions.find(x => x.type === type);
         return option?.emoji ?? '👍';
+    }
+
+    get topReactionBadges(): PostReactionBadge[] {
+        const sorted = [...(this.post?.reactions ?? [])]
+            .filter(reaction => reaction.count > 0)
+            .sort((left, right) => right.count - left.count)
+            .slice(0, 3);
+
+        if (!sorted.length && (this.post?.likeCount ?? 0) > 0) {
+            return [{ type: 'Like' }];
+        }
+
+        return sorted.map(reaction => ({ type: reaction.type }));
+    }
+
+    get totalReactionCount(): number {
+        const reactions = this.post?.reactions ?? [];
+        const summed = reactions.reduce((total, reaction) => total + Math.max(0, reaction.count ?? 0), 0);
+
+        if (summed > 0) {
+            return summed;
+        }
+
+        return Math.max(0, this.post?.likeCount ?? 0);
+    }
+
+    reactionBadgeClass(type: string): string {
+        switch ((type ?? '').trim().toLowerCase()) {
+            case 'like':
+                return 'type-like';
+            case 'love':
+                return 'type-love';
+            case 'laugh':
+                return 'type-laugh';
+            case 'wow':
+                return 'type-wow';
+            case 'sad':
+                return 'type-sad';
+            case 'angry':
+                return 'type-angry';
+            case 'partyhorn':
+            case 'party-horn':
+            case 'party':
+                return 'type-partyhorn';
+            case 'clap':
+            case 'hands-clapping':
+            case 'handsclapping':
+            case 'fire':
+                return 'type-clap';
+            default:
+                return 'type-default';
+        }
+    }
+
+    reactionIconClass(type: string): string {
+        switch ((type ?? '').trim().toLowerCase()) {
+            case 'like':
+                return 'fa-duotone fa-solid fa-thumbs-up';
+            case 'love':
+                return 'fa-duotone fa-solid fa-heart';
+            case 'laugh':
+                return 'fa-duotone fa-solid fa-face-laugh-squint';
+            case 'wow':
+                return 'fa-duotone fa-solid fa-face-surprise';
+            case 'sad':
+                return 'fa-duotone fa-solid fa-face-sad-tear';
+            case 'angry':
+                return 'fa-duotone fa-solid fa-face-angry';
+            case 'partyhorn':
+            case 'party-horn':
+            case 'party':
+                return 'fa-duotone fa-solid fa-party-horn';
+            case 'clap':
+            case 'hands-clapping':
+            case 'handsclapping':
+                return 'fa-duotone fa-solid fa-hands-clapping';
+            case 'fire':
+                return 'fa-duotone fa-solid fa-fire';
+            default:
+                return 'fa-duotone fa-solid fa-thumbs-up';
+        }
     }
 
     isVideoMedia(url: string | null | undefined): boolean {

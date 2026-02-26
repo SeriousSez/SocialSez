@@ -116,10 +116,6 @@ h2 {
     gap: 8px;
 }
 
-.hero-create-menu {
-    position: relative;
-}
-
 .hero-icon-button,
 .hero-icon-link {
     width: 40px;
@@ -149,57 +145,6 @@ h2 {
     display: block;
     font-size: 1rem;
     line-height: 1;
-}
-
-.hero-create-dropdown {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 8px);
-    min-width: 140px;
-    display: grid;
-    gap: 4px;
-    padding: 6px;
-    border: 1px solid #dbe4f0;
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 18px 34px -24px #0f172a;
-    z-index: 40;
-}
-
-.hero-create-dropdown button {
-    display: block;
-    width: 100%;
-    border: none;
-    border-radius: 8px;
-    background: transparent;
-    color: #0f172a;
-    text-align: left;
-    padding: 8px 10px;
-    font-weight: 700;
-    box-shadow: none;
-    transform: none;
-}
-
-.hero-create-dropdown button:hover {
-    background: #f8fafc;
-    box-shadow: none;
-    transform: none;
-}
-
-:host-context(.theme-dark) {
-    .hero-create-dropdown {
-        background: var(--color-surface);
-        border-color: var(--color-border);
-        box-shadow: 0 18px 34px -24px rgba(2, 6, 23, 0.9);
-    }
-
-    .hero-create-dropdown button {
-        color: var(--color-text);
-    }
-
-    .hero-create-dropdown button:hover {
-        background: var(--color-surface-alt);
-    }
 }
 
 .profile-reels {

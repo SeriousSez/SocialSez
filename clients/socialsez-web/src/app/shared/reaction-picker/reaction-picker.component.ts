@@ -141,7 +141,9 @@ export class ReactionPickerComponent implements OnDestroy {
         this.scheduleClose(240);
     }
 
-    pickReaction(type: string): void {
+    pickReaction(type: string, event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
         this.highlightedReactionType = null;
         this.closePopoverNow();
         this.reactionSelected.emit(type);
@@ -254,6 +256,35 @@ export class ReactionPickerComponent implements OnDestroy {
 
     emojiFor(type: string): string {
         return this.reactionOptions.find(x => x.type === type)?.emoji ?? '👍';
+    }
+
+    reactionIconClass(type: string): string {
+        switch ((type ?? '').trim().toLowerCase()) {
+            case 'like':
+                return 'fa-duotone fa-solid fa-thumbs-up';
+            case 'love':
+                return 'fa-duotone fa-solid fa-heart';
+            case 'laugh':
+                return 'fa-duotone fa-solid fa-face-laugh-squint';
+            case 'wow':
+                return 'fa-duotone fa-solid fa-face-surprise';
+            case 'sad':
+                return 'fa-duotone fa-solid fa-face-sad-tear';
+            case 'angry':
+                return 'fa-duotone fa-solid fa-face-angry';
+            case 'partyhorn':
+            case 'party-horn':
+            case 'party':
+                return 'fa-duotone fa-solid fa-party-horn';
+            case 'clap':
+            case 'hands-clapping':
+            case 'handsclapping':
+                return 'fa-duotone fa-solid fa-hands-clapping';
+            case 'fire':
+                return 'fa-duotone fa-solid fa-fire';
+            default:
+                return 'fa-duotone fa-solid fa-thumbs-up';
+        }
     }
 
     get buttonLabel(): string {

@@ -14,7 +14,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
     private static readonly Regex HashtagRegex = new(@"(?<![\p{L}\p{N}_])#(?<tag>[\p{L}\p{N}_]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     private static readonly HashSet<string> AllowedReactionTypes = new(StringComparer.Ordinal)
     {
-        "Like", "Love", "Laugh", "Wow", "Sad", "Angry"
+        "Like", "Love", "Laugh", "Wow", "Sad", "Angry", "PartyHorn", "Clap"
     };
     private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
     private static volatile bool postSchemaInitialized;
@@ -983,8 +983,14 @@ public class PostService(SocialSezContext dbContext) : IPostService
             return string.Empty;
         }
 
-        var trimmed = rawType.Trim().ToLowerInvariant();
-        return trimmed switch
+        var trimmed = rawType.Trim();
+        var normalizedToken = trimmed
+            .Replace("-", string.Empty, StringComparison.Ordinal)
+            .Replace("_", string.Empty, StringComparison.Ordinal)
+            .Replace(" ", string.Empty, StringComparison.Ordinal)
+            .ToLowerInvariant();
+
+        return normalizedToken switch
         {
             "like" => LikeReactionType,
             "love" => "Love",
@@ -992,6 +998,10 @@ public class PostService(SocialSezContext dbContext) : IPostService
             "wow" => "Wow",
             "sad" => "Sad",
             "angry" => "Angry",
+            "party" => "PartyHorn",
+            "partyhorn" => "PartyHorn",
+            "clap" => "Clap",
+            "handsclapping" => "Clap",
             _ => string.Empty
         };
     }

@@ -10,7 +10,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
 {
     private static readonly HashSet<string> AllowedReactionTypes = new(StringComparer.Ordinal)
     {
-        "Like", "Love", "Laugh", "Wow", "Sad", "Angry", "Fire", "Party"
+        "Like", "Love", "Laugh", "Wow", "Sad", "Angry", "PartyHorn", "Clap", "Fire", "Party"
     };
 
     public async Task<bool> IsConversationMemberAsync(Guid profileId, Guid conversationId, CancellationToken cancellationToken = default)
@@ -362,7 +362,27 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             return string.Empty;
         }
 
-        return char.ToUpperInvariant(trimmed[0]) + trimmed[1..].ToLowerInvariant();
+        var normalizedToken = trimmed
+            .Replace("-", string.Empty, StringComparison.Ordinal)
+            .Replace("_", string.Empty, StringComparison.Ordinal)
+            .Replace(" ", string.Empty, StringComparison.Ordinal)
+            .ToLowerInvariant();
+
+        return normalizedToken switch
+        {
+            "like" => "Like",
+            "love" => "Love",
+            "laugh" => "Laugh",
+            "wow" => "Wow",
+            "sad" => "Sad",
+            "angry" => "Angry",
+            "party" => "PartyHorn",
+            "partyhorn" => "PartyHorn",
+            "clap" => "Clap",
+            "handsclapping" => "Clap",
+            "fire" => "Fire",
+            _ => string.Empty
+        };
     }
 
     private static ChatConversationDto MapConversationDto(ChatConversation entity, ChatMessage? lastMessage)

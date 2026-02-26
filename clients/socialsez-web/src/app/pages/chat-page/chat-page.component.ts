@@ -88,8 +88,8 @@ export class ChatPageComponent implements OnDestroy {
         { type: 'Wow', emoji: '😮' },
         { type: 'Sad', emoji: '😢' },
         { type: 'Angry', emoji: '😡' },
-        { type: 'Fire', emoji: '🔥' },
-        { type: 'Party', emoji: '🎉' }
+        { type: 'PartyHorn', emoji: '🎉' },
+        { type: 'Clap', emoji: '👏' }
     ] as const;
 
     conversations: ChatConversationDto[] = [];
@@ -1441,11 +1441,6 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     async onMessageReactionSelected(message: ChatMessageDto, reactionType: string): Promise<void> {
-        if (reactionType === 'Love') {
-            await this.onMessagePrimaryReaction(message);
-            return;
-        }
-
         if (message.myReactionType === reactionType) {
             await this.clearMessageReaction(message);
             return;
@@ -3904,7 +3899,7 @@ export class ChatPageComponent implements OnDestroy {
         }
 
         let selectedIndex = -1;
-        let selectedTimestamp = Number.NEGATIVE_INFINITY;
+        let selectedTimestamp = Number.POSITIVE_INFINITY;
 
         for (let index = 0; index < stories.length; index += 1) {
             const story = stories[index];
@@ -3913,8 +3908,8 @@ export class ChatPageComponent implements OnDestroy {
             }
 
             const parsedTimestamp = Date.parse(story.createdAtUtc);
-            const timestamp = Number.isNaN(parsedTimestamp) ? Number.NEGATIVE_INFINITY : parsedTimestamp;
-            if (selectedIndex < 0 || timestamp > selectedTimestamp) {
+            const timestamp = Number.isNaN(parsedTimestamp) ? Number.POSITIVE_INFINITY : parsedTimestamp;
+            if (selectedIndex < 0 || timestamp < selectedTimestamp) {
                 selectedIndex = index;
                 selectedTimestamp = timestamp;
             }

@@ -9,6 +9,7 @@ import { PostInteractionsService } from '../../core/post-interactions.service';
 import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
 import { SessionService } from '../../core/session.service';
 import { StoryPresenceService } from '../../core/story-presence.service';
+import { buildSharedPostReferenceCounts } from '../../core/shared-post.utils';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
 import { SharePostMessageModalComponent, SharePostMessageSubmit } from '../../shared/share-post-message-modal/share-post-message-modal.component';
@@ -43,6 +44,8 @@ export class HashtagPageComponent {
     private readonly destroyRef = inject(DestroyRef);
     private activeStoryGroups: StoryGroupDto[] = [];
     private refreshingStoryPresence = false;
+    private repostCountSource: PostDto[] | null = null;
+    private repostCountsByPostId = new Map<string, number>();
 
     constructor(
         private readonly session: SessionService,
@@ -109,6 +112,20 @@ export class HashtagPageComponent {
             .replace(/(?:blob:[^\s]+|https?:\/\/[^\s]+)/gi, ' ')
             .replace(/\s{2,}/g, ' ')
             .trim();
+    }
+
+    getPostRepostCount(postId: string): number {
+        this.ensurePostRepostCounts();
+        return this.repostCountsByPostId.get(postId) ?? 0;
+    }
+
+    private ensurePostRepostCounts(): void {
+        if (this.repostCountSource === this.posts) {
+            return;
+        }
+
+        this.repostCountSource = this.posts;
+        this.repostCountsByPostId = buildSharedPostReferenceCounts(this.posts);
     }
 
     canManagePost(post: PostDto): boolean {

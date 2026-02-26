@@ -8,6 +8,125 @@
     position: relative;
 }
 
+.engagement-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border-top: 1px solid #dbe4f0;
+    border-bottom: 1px solid #dbe4f0;
+    padding: 8px 0;
+}
+
+.summary-reactions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.summary-reaction-icons {
+    display: inline-flex;
+    align-items: center;
+}
+
+.summary-reaction-emoji {
+    --summary-bg: var(--color-surface);
+    --summary-fg: color-mix(in srgb, var(--color-text) 88%, var(--color-surface) 12%);
+    --summary-fg-secondary: color-mix(in srgb, var(--summary-bg) 34%, var(--color-surface) 66%);
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid var(--color-surface);
+    margin-left: -5px;
+    background: var(--summary-bg);
+    display: inline-grid;
+    place-items: center;
+    font-size: 0.8rem;
+    line-height: 1;
+}
+
+.summary-reaction-emoji i {
+    font-size: 0.62rem;
+    color: var(--summary-fg);
+    --fa-primary-color: var(--summary-fg);
+    --fa-secondary-color: var(--summary-fg-secondary);
+    --fa-primary-opacity: 1;
+    --fa-secondary-opacity: 1;
+}
+
+.summary-reaction-emoji.type-like {
+    --summary-accent: #4F8CFF;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 62%, var(--color-surface) 38%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.summary-reaction-emoji.type-love {
+    --summary-accent: #E11D48;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 60%, var(--color-surface) 40%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.summary-reaction-emoji.type-laugh {
+    --summary-accent: #FFC83D;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 62%, var(--color-surface) 38%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.summary-reaction-emoji.type-wow {
+    --summary-accent: #38D9E6;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 60%, var(--color-surface) 40%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.summary-reaction-emoji.type-sad {
+    --summary-accent: #5C7CFA;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 58%, var(--color-surface) 42%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.summary-reaction-emoji.type-angry {
+    --summary-accent: #FF3B30;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 58%, var(--color-surface) 42%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.summary-reaction-emoji.type-partyhorn {
+    --summary-party-start: #C77DFF;
+    --summary-party-end: #FF85A1;
+    --summary-accent: color-mix(in srgb, var(--summary-party-start) 52%, var(--summary-party-end) 48%);
+    --summary-bg: linear-gradient(135deg, var(--summary-party-start), var(--summary-party-end));
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+    --summary-fg-secondary: color-mix(in srgb, var(--summary-party-start) 34%, var(--color-surface) 66%);
+}
+
+.summary-reaction-emoji.type-clap {
+    --summary-accent: var(--color-warning);
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 64%, var(--color-surface) 36%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.summary-reaction-emoji.type-default {
+    --summary-bg: color-mix(in srgb, var(--color-border-input) 32%, var(--color-surface) 68%);
+}
+
+.summary-reaction-emoji:first-child {
+    margin-left: 0;
+}
+
+.summary-reaction-count,
+.summary-counts {
+    color: #475569;
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.summary-counts {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .post-icon-actions {
     position: absolute;
     top: 12px;
@@ -417,6 +536,57 @@
 }
 
 :host-context(.theme-dark) {
+
+    .engagement-summary {
+        border-top-color: var(--color-border);
+        border-bottom-color: var(--color-border);
+    }
+
+    .summary-reaction-emoji {
+        border-color: var(--color-surface);
+        background: var(--color-surface);
+    }
+
+    .summary-reaction-emoji.type-like {
+        background: color-mix(in srgb, #4F8CFF 56%, var(--color-surface) 44%);
+    }
+
+    .summary-reaction-emoji.type-love {
+        background: color-mix(in srgb, #E11D48 54%, var(--color-surface) 46%);
+    }
+
+    .summary-reaction-emoji.type-laugh {
+        background: color-mix(in srgb, #FFC83D 60%, var(--color-surface) 40%);
+    }
+
+    .summary-reaction-emoji.type-wow {
+        background: color-mix(in srgb, #38D9E6 54%, var(--color-surface) 46%);
+    }
+
+    .summary-reaction-emoji.type-sad {
+        background: color-mix(in srgb, #5C7CFA 52%, var(--color-surface) 48%);
+    }
+
+    .summary-reaction-emoji.type-angry {
+        background: color-mix(in srgb, #FF3B30 52%, var(--color-surface) 48%);
+    }
+
+    .summary-reaction-emoji.type-partyhorn {
+        background: linear-gradient(135deg, #C77DFF, #FF85A1);
+    }
+
+    .summary-reaction-emoji.type-clap {
+        background: color-mix(in srgb, var(--color-warning) 58%, var(--color-surface) 42%);
+    }
+
+    .summary-reaction-emoji.type-default {
+        background: color-mix(in srgb, var(--color-border-input) 42%, var(--color-surface) 58%);
+    }
+
+    .summary-reaction-count,
+    .summary-counts {
+        color: var(--color-text-muted);
+    }
 
     .comment,
     .comment-content,

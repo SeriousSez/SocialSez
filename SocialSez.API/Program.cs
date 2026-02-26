@@ -9,6 +9,7 @@ using SocialSez.API.Hubs;
 using SocialSez.ApplicationService.Extensions;
 using SocialSez.Infrastructure.Extensions;
 using SocialSez.Infrastructure;
+using SocialSez.API.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -471,18 +472,12 @@ app.UseExceptionHandler(errorApp =>
 });
 
 var webRoot = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
-var configuredUploadsRoot = app.Configuration["Uploads:RootPath"];
-var uploadsRoot = !string.IsNullOrWhiteSpace(configuredUploadsRoot)
-    ? (Path.IsPathRooted(configuredUploadsRoot)
-        ? configuredUploadsRoot
-        : Path.GetFullPath(configuredUploadsRoot, app.Environment.ContentRootPath))
-    : (Directory.Exists("/venli.uploads")
-        ? "/venli.uploads"
-        : Path.Combine(webRoot, "uploads"));
+var uploadsRoot = UploadsRootResolver.Resolve(app.Configuration, app.Environment);
 
 Directory.CreateDirectory(uploadsRoot);
 Directory.CreateDirectory(Path.Combine(uploadsRoot, "images"));
 Directory.CreateDirectory(Path.Combine(uploadsRoot, "stories"));
+app.Logger.LogInformation("Uploads root resolved to: {UploadsRoot}", uploadsRoot);
 
 app.UseCors("ClientApps");
 app.UseStaticFiles(new StaticFileOptions

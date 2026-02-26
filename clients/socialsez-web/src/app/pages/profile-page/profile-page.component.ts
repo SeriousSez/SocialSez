@@ -23,6 +23,8 @@ import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent,
 import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
 import { ReelComposerModalComponent } from '../../shared/reel-composer-modal/reel-composer-modal.component';
 import { SegmentedTabItem, SegmentedTabsComponent } from '../../shared/segmented-tabs/segmented-tabs.component';
+import { CreateContentMenuComponent } from '../../shared/create-content-menu/create-content-menu.component';
+import { buildSharedPostReferenceCounts } from '../../core/shared-post.utils';
 
 interface StoryTrimPreviewOption {
     previewUrl: string;
@@ -31,7 +33,7 @@ interface StoryTrimPreviewOption {
 @Component({
     selector: 'app-profile-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent, SegmentedTabsComponent],
+    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent, SegmentedTabsComponent, CreateContentMenuComponent],
     templateUrl: './profile-page.component.html',
     styleUrl: './profile-page.component.scss'
 })
@@ -148,6 +150,8 @@ export class ProfilePageComponent implements OnDestroy {
     private readonly ngZone = inject(NgZone);
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly destroyRef = inject(DestroyRef);
+    private repostCountSource: PostDto[] | null = null;
+    private repostCountsByPostId = new Map<string, number>();
 
     constructor(
         public readonly session: SessionService,
@@ -805,6 +809,20 @@ export class ProfilePageComponent implements OnDestroy {
             .replace(/(?:blob:[^\s]+|https?:\/\/[^\s]+)/gi, ' ')
             .replace(/\s{2,}/g, ' ')
             .trim();
+    }
+
+    getPostRepostCount(postId: string): number {
+        this.ensurePostRepostCounts();
+        return this.repostCountsByPostId.get(postId) ?? 0;
+    }
+
+    private ensurePostRepostCounts(): void {
+        if (this.repostCountSource === this.posts) {
+            return;
+        }
+
+        this.repostCountSource = this.posts;
+        this.repostCountsByPostId = buildSharedPostReferenceCounts(this.posts);
     }
 
     startEdit(post: PostDto): void {
@@ -1592,7 +1610,7 @@ export class ProfilePageComponent implements OnDestroy {
         }
 
         let selectedIndex = -1;
-        let selectedTimestamp = Number.NEGATIVE_INFINITY;
+        let selectedTimestamp = Number.POSITIVE_INFINITY;
 
         for (let index = 0; index < stories.length; index += 1) {
             const story = stories[index];
@@ -1601,8 +1619,8 @@ export class ProfilePageComponent implements OnDestroy {
             }
 
             const parsedTimestamp = Date.parse(story.createdAtUtc);
-            const timestamp = Number.isNaN(parsedTimestamp) ? Number.NEGATIVE_INFINITY : parsedTimestamp;
-            if (selectedIndex < 0 || timestamp > selectedTimestamp) {
+            const timestamp = Number.isNaN(parsedTimestamp) ? Number.POSITIVE_INFINITY : parsedTimestamp;
+            if (selectedIndex < 0 || timestamp < selectedTimestamp) {
                 selectedIndex = index;
                 selectedTimestamp = timestamp;
             }

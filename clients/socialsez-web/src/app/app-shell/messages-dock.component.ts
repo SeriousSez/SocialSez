@@ -66,6 +66,8 @@ export class MessagesDockComponent {
         Wow: '😮',
         Sad: '😢',
         Angry: '😡',
+        PartyHorn: '🎉',
+        Clap: '👏',
         Fire: '🔥',
         Party: '🎉'
     };
@@ -77,8 +79,8 @@ export class MessagesDockComponent {
         { type: 'Wow', emoji: '😮' },
         { type: 'Sad', emoji: '😢' },
         { type: 'Angry', emoji: '😡' },
-        { type: 'Fire', emoji: '🔥' },
-        { type: 'Party', emoji: '🎉' }
+        { type: 'PartyHorn', emoji: '🎉' },
+        { type: 'Clap', emoji: '👏' }
     ] as const;
     private readonly dockStartedConversationIds = new Set<string>();
 
@@ -713,11 +715,6 @@ export class MessagesDockComponent {
     }
 
     async onMessageReactionSelected(message: ChatMessageDto, reactionType: string): Promise<void> {
-        if (reactionType === 'Love') {
-            await this.onMessagePrimaryReaction(message);
-            return;
-        }
-
         if (message.myReactionType === reactionType) {
             await this.clearMessageReaction(message);
             return;

@@ -10,6 +10,7 @@ import { PostInteractionsService } from '../../core/post-interactions.service';
 import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
 import { ReelInteractionsService } from '../../core/reel-interactions.service';
 import { StoryPresenceService } from '../../core/story-presence.service';
+import { buildSharedPostReferenceCounts } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
 import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from '../feed-page/feed-reels-list.component';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
@@ -68,6 +69,8 @@ export class DiscoverPageComponent {
     private readonly destroyRef = inject(DestroyRef);
     private activeStoryGroups: StoryGroupDto[] = [];
     private refreshingStoryPresence = false;
+    private repostCountSource: PostDto[] | null = null;
+    private repostCountsByPostId = new Map<string, number>();
 
     constructor(
         private readonly session: SessionService,
@@ -207,6 +210,20 @@ export class DiscoverPageComponent {
             .replace(/(?:blob:[^\s]+|https?:\/\/[^\s]+)/gi, ' ')
             .replace(/\s{2,}/g, ' ')
             .trim();
+    }
+
+    getPostRepostCount(postId: string): number {
+        this.ensurePostRepostCounts();
+        return this.repostCountsByPostId.get(postId) ?? 0;
+    }
+
+    private ensurePostRepostCounts(): void {
+        if (this.repostCountSource === this.postResults) {
+            return;
+        }
+
+        this.repostCountSource = this.postResults;
+        this.repostCountsByPostId = buildSharedPostReferenceCounts(this.postResults);
     }
 
     canManagePost(post: PostDto): boolean {
