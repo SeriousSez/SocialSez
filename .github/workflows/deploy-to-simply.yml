@@ -77,11 +77,20 @@ jobs:
             ConnectionStrings = @{
               MySql = $env:MYSQL_CONNECTION_STRING
             }
-            JWTSettings = @{
-              securityKey = "SocialSezSecretKey 85738a5f-871a-4cd1-a03c-bfdfa352d3d2"
-              validIssuer = "SocialSez"
-              validAudience = "https://venli.api.sezginsahin.dk/"
-              expiryInMinutes = 60
+            Jwt = @{
+              Issuer = "SocialSez"
+              Audience = "SocialSez.Clients"
+              Key = "SocialSez-Super-Secret-Key-Replace-In-Production-2026"
+              ExpiryMinutes = 120
+              RefreshExpiryDays = 14
+            }
+            Cors = @{
+              AllowedOrigins = @(
+                "https://venli.sezginsahin.dk"
+              )
+            }
+            Uploads = @{
+              RootPath = "/venli.uploads"
             }
             AllowedHosts = '*'
           }
