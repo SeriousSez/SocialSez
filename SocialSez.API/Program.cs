@@ -473,18 +473,30 @@ app.UseExceptionHandler(errorApp =>
 
 var webRoot = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
 var uploadsRoot = UploadsRootResolver.Resolve(app.Configuration, app.Environment);
+var uploadsStaticEnabled = false;
 
-Directory.CreateDirectory(uploadsRoot);
-Directory.CreateDirectory(Path.Combine(uploadsRoot, "images"));
-Directory.CreateDirectory(Path.Combine(uploadsRoot, "stories"));
-app.Logger.LogInformation("Uploads root resolved to: {UploadsRoot}", uploadsRoot);
+try
+{
+    Directory.CreateDirectory(uploadsRoot);
+    Directory.CreateDirectory(Path.Combine(uploadsRoot, "images"));
+    Directory.CreateDirectory(Path.Combine(uploadsRoot, "stories"));
+    uploadsStaticEnabled = true;
+    app.Logger.LogInformation("Uploads root resolved to: {UploadsRoot}", uploadsRoot);
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex, "Uploads directory initialization failed for path {UploadsRoot}. Continuing without uploads static files.", uploadsRoot);
+}
 
 app.UseCors("ClientApps");
-app.UseStaticFiles(new StaticFileOptions
+if (uploadsStaticEnabled)
 {
-    FileProvider = new PhysicalFileProvider(uploadsRoot),
-    RequestPath = "/uploads"
-});
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(uploadsRoot),
+        RequestPath = "/uploads"
+    });
+}
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();

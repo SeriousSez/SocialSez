@@ -1,54 +1,29 @@
-using Microsoft.Extensions.FileProviders;
-
 namespace SocialSez.API.Infrastructure;
 
 public static class UploadsRootResolver
 {
     public static string Resolve(IConfiguration configuration, IWebHostEnvironment environment)
     {
-        var configuredUploadsRoot = configuration["Uploads:RootPath"];
-        if (!string.IsNullOrWhiteSpace(configuredUploadsRoot))
-        {
-            return Path.IsPathRooted(configuredUploadsRoot)
-                ? configuredUploadsRoot
-                : Path.GetFullPath(configuredUploadsRoot, environment.ContentRootPath);
-        }
-
         var fallback = Path.Combine(
             environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"),
             "uploads");
 
-        if (OperatingSystem.IsWindows() || environment.IsDevelopment())
+        var configuredUploadsRoot = configuration["Uploads:RootPath"];
+        if (!string.IsNullOrWhiteSpace(configuredUploadsRoot))
         {
-            return fallback;
-        }
+            var configuredPath = Path.IsPathRooted(configuredUploadsRoot)
+                ? configuredUploadsRoot
+                : Path.GetFullPath(configuredUploadsRoot, environment.ContentRootPath);
 
-        var candidates = BuildProductionCandidates(environment.ContentRootPath);
-        foreach (var candidate in candidates)
-        {
-            if (TryEnsureWritableDirectory(candidate))
+            if (TryEnsureWritableDirectory(configuredPath))
             {
-                return candidate;
+                return configuredPath;
             }
         }
 
-        return fallback;
-    }
-
-    private static IEnumerable<string> BuildProductionCandidates(string contentRootPath)
-    {
-        yield return "/venli.uploads";
-
-        yield return Path.GetFullPath(
-            Path.Combine(contentRootPath, "..", "venli.uploads"));
-
-        var homeDirectory = Environment.GetEnvironmentVariable("HOME");
-        if (!string.IsNullOrWhiteSpace(homeDirectory))
-        {
-            yield return Path.Combine(homeDirectory, "venli.uploads");
-        }
-
-        yield return Path.Combine(contentRootPath, "venli.uploads");
+        return TryEnsureWritableDirectory(fallback)
+            ? fallback
+            : environment.ContentRootPath;
     }
 
     private static bool TryEnsureWritableDirectory(string path)
