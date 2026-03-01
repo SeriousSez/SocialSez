@@ -19,6 +19,7 @@
     transform: none;
     line-height: 1;
     cursor: pointer;
+    touch-action: manipulation;
 }
 
 .hero-icon-button i {
@@ -54,6 +55,7 @@
     font-weight: 700;
     box-shadow: none;
     transform: none;
+    touch-action: manipulation;
 }
 
 .hero-create-dropdown button:hover {

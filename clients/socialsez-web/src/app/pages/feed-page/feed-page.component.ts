@@ -45,6 +45,7 @@ export class FeedPageComponent implements OnDestroy {
     private static readonly StoryCropFrameHeightPercent = 100;
     private static readonly StoryOutputAspect = 9 / 16;
     private static readonly StoryMaxTrimDurationSeconds = 60;
+    private static readonly ComposerCloseAnimationDurationMs = 180;
 
     @ViewChild('storyPreviewVideo') private readonly storyPreviewVideoRef?: ElementRef<HTMLVideoElement>;
 
@@ -87,7 +88,9 @@ export class FeedPageComponent implements OnDestroy {
     pendingShareTarget: 'feed' | 'chat' | null = null;
     shareNote = '';
     showComposer = false;
+    composerClosing = false;
     showStoryComposer = false;
+    storyComposerClosing = false;
     storyComposerStep: 1 | 2 = 1;
     storyMediaFile: File | null = null;
     storyMediaPreviewUrl = '';
@@ -115,6 +118,8 @@ export class FeedPageComponent implements OnDestroy {
     compactFeedEnabled = false;
     reelUploadStatus: ReelUploadStatusEvent | null = null;
     private reelUploadStatusHideTimeoutId: number | null = null;
+    private composerCloseTimerId: number | null = null;
+    private storyComposerCloseTimerId: number | null = null;
     private readonly preciseDateFormatter = new Intl.DateTimeFormat(undefined, {
         month: 'short',
         day: 'numeric',
@@ -235,12 +240,22 @@ export class FeedPageComponent implements OnDestroy {
 
     openComposer(): void {
         this.createMenuOpen = false;
+        if (this.storyComposerCloseTimerId !== null) {
+            window.clearTimeout(this.storyComposerCloseTimerId);
+            this.storyComposerCloseTimerId = null;
+        }
+        this.storyComposerClosing = false;
         this.showStoryComposer = false;
         this.showReelComposer = false;
+        if (this.composerCloseTimerId !== null) {
+            window.clearTimeout(this.composerCloseTimerId);
+            this.composerCloseTimerId = null;
+        }
+        this.composerClosing = false;
         this.showComposer = true;
     }
 
-    toggleCreateMenu(event: MouseEvent): void {
+    toggleCreateMenu(event: Event): void {
         event.preventDefault();
         event.stopPropagation();
         this.createMenuOpen = !this.createMenuOpen;
@@ -272,8 +287,18 @@ export class FeedPageComponent implements OnDestroy {
 
     openStoryComposer(): void {
         this.createMenuOpen = false;
+        if (this.composerCloseTimerId !== null) {
+            window.clearTimeout(this.composerCloseTimerId);
+            this.composerCloseTimerId = null;
+        }
+        this.composerClosing = false;
         this.showComposer = false;
         this.showReelComposer = false;
+        if (this.storyComposerCloseTimerId !== null) {
+            window.clearTimeout(this.storyComposerCloseTimerId);
+            this.storyComposerCloseTimerId = null;
+        }
+        this.storyComposerClosing = false;
         this.showStoryComposer = true;
         this.storyComposerStep = 1;
         this.storyComposerError = '';
@@ -338,25 +363,69 @@ export class FeedPageComponent implements OnDestroy {
             this.reelUploadStatusHideTimeoutId = null;
         }
 
+        if (this.composerCloseTimerId !== null) {
+            window.clearTimeout(this.composerCloseTimerId);
+            this.composerCloseTimerId = null;
+        }
+
+        if (this.storyComposerCloseTimerId !== null) {
+            window.clearTimeout(this.storyComposerCloseTimerId);
+            this.storyComposerCloseTimerId = null;
+        }
+
         this.detachStoryFrameDragListeners();
         this.detachStoryTrimDragListeners();
         this.clearStoryMediaSelection();
     }
 
     onComposerCanceled(): void {
-        this.showComposer = false;
+        this.beginPostComposerClose();
     }
 
     async onComposerPosted(): Promise<void> {
-        this.showComposer = false;
+        this.beginPostComposerClose();
         await this.load();
     }
 
     cancelStoryComposer(): void {
-        this.showStoryComposer = false;
-        this.storyComposerStep = 1;
-        this.clearStoryMediaSelection();
-        this.storyComposerError = '';
+        this.beginStoryComposerClose();
+    }
+
+    private beginPostComposerClose(): void {
+        if ((!this.showComposer && !this.composerClosing) || this.composerClosing) {
+            return;
+        }
+
+        this.composerClosing = true;
+        if (this.composerCloseTimerId !== null) {
+            window.clearTimeout(this.composerCloseTimerId);
+        }
+
+        this.composerCloseTimerId = window.setTimeout(() => {
+            this.showComposer = false;
+            this.composerClosing = false;
+            this.composerCloseTimerId = null;
+        }, FeedPageComponent.ComposerCloseAnimationDurationMs);
+    }
+
+    private beginStoryComposerClose(): void {
+        if ((!this.showStoryComposer && !this.storyComposerClosing) || this.storyComposerClosing) {
+            return;
+        }
+
+        this.storyComposerClosing = true;
+        if (this.storyComposerCloseTimerId !== null) {
+            window.clearTimeout(this.storyComposerCloseTimerId);
+        }
+
+        this.storyComposerCloseTimerId = window.setTimeout(() => {
+            this.showStoryComposer = false;
+            this.storyComposerClosing = false;
+            this.storyComposerStep = 1;
+            this.clearStoryMediaSelection();
+            this.storyComposerError = '';
+            this.storyComposerCloseTimerId = null;
+        }, FeedPageComponent.ComposerCloseAnimationDurationMs);
     }
 
     goToStoryComposerStep(step: 1 | 2): void {

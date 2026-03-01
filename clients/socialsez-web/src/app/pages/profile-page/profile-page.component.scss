@@ -304,6 +304,7 @@ h2 {
     place-items: center;
     padding: 16px;
     z-index: 220;
+    animation: profile-compose-overlay-in 180ms ease-out;
 }
 
 .compose-modal-card {
@@ -317,6 +318,60 @@ h2 {
     padding: 14px;
     display: grid;
     gap: 10px;
+    animation: profile-compose-card-in 180ms ease-out;
+    transform-origin: center top;
+}
+
+.compose-modal.closing {
+    animation: profile-compose-overlay-out 180ms ease-in forwards;
+}
+
+.compose-modal.closing .compose-modal-card {
+    animation: profile-compose-card-out 180ms ease-in forwards;
+}
+
+@keyframes profile-compose-overlay-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes profile-compose-overlay-out {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes profile-compose-card-in {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes profile-compose-card-out {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+    }
 }
 
 .compose-modal-head {

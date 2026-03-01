@@ -1,5 +1,5 @@
 <div class="hero-create-menu" (click)="$event.stopPropagation()">
-    <button type="button" class="hero-icon-button" (click)="onToggle($event)" aria-label="Create content">
+    <button type="button" class="hero-icon-button" (pointerdown)="onTogglePointerDown($event)" (click)="onToggleClick($event)" aria-label="Create content">
         <i class="fa-duotone fa-light fa-plus" aria-hidden="true"></i>
     </button>
 

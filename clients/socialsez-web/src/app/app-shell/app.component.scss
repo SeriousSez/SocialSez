@@ -420,7 +420,7 @@ label {
 
     .content {
         margin: 0;
-        padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+        padding: 14px 14px calc(14px + var(--mobile-footer-nav-height) + env(safe-area-inset-bottom));
         border: 0;
         border-radius: 0;
         box-shadow: none;

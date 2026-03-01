@@ -1,4 +1,4 @@
-<div class="reel-modal" *ngIf="open" (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create reel">
+<div class="reel-modal" [class.closing]="isClosing" *ngIf="isRendered" (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create reel">
     <section class="media-composer reel-modal-card" aria-label="Create reel">
         <header class="reel-modal-head">
             <div class="reel-modal-title">

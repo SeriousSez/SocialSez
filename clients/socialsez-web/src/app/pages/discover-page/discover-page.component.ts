@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -28,7 +28,7 @@ type SearchScope = 'all' | 'posts' | 'hashtags' | 'users' | 'reels';
     templateUrl: './discover-page.component.html',
     styleUrl: './discover-page.component.scss'
 })
-export class DiscoverPageComponent {
+export class DiscoverPageComponent implements OnDestroy {
     query = '';
     selectedScope: SearchScope = 'all';
     profileResults: ProfileDto[] = [];
@@ -71,6 +71,7 @@ export class DiscoverPageComponent {
     private refreshingStoryPresence = false;
     private repostCountSource: PostDto[] | null = null;
     private repostCountsByPostId = new Map<string, number>();
+    private queryDebounceTimerId: number | null = null;
 
     constructor(
         private readonly session: SessionService,
@@ -118,6 +119,25 @@ export class DiscoverPageComponent {
         }
 
         await this.router.navigate(['/discover'], { queryParams: { q: trimmedQuery, type: this.selectedScope } });
+    }
+
+    onQueryChanged(): void {
+        if (this.queryDebounceTimerId !== null) {
+            window.clearTimeout(this.queryDebounceTimerId);
+            this.queryDebounceTimerId = null;
+        }
+
+        this.queryDebounceTimerId = window.setTimeout(() => {
+            this.queryDebounceTimerId = null;
+            void this.search();
+        }, 240);
+    }
+
+    ngOnDestroy(): void {
+        if (this.queryDebounceTimerId !== null) {
+            window.clearTimeout(this.queryDebounceTimerId);
+            this.queryDebounceTimerId = null;
+        }
     }
 
     async changeScope(scope: SearchScope): Promise<void> {

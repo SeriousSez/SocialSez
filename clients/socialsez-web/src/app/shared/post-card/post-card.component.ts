@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CommentDto, PostDto, ProfileDto } from '../../core/api.types';
+import { CommentDto, PostDto, PostReactionDetailDto, ProfileDto } from '../../core/api.types';
 import { SharedPostPreview, extractSharedPostFromContent } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
 import { CommentsSheetComponent } from '../comments-sheet/comments-sheet.component';
@@ -34,6 +34,15 @@ interface PostReactionBadge {
     type: string;
 }
 
+interface ReactionDetailEntry {
+    profileId: string;
+    displayName: string;
+    handle: string;
+    subtitle: string;
+    imageUrl: string;
+    reactionType: string;
+}
+
 @Component({
     selector: 'app-post-card',
     standalone: true,
@@ -43,6 +52,8 @@ interface PostReactionBadge {
 })
 export class PostCardComponent implements OnChanges, OnDestroy {
     private static readonly OpenCommentPostIds = new Set<string>();
+    private static readonly ReactionsModalCloseDurationMs = 180;
+    private static readonly ReactionsModalResizeDurationMs = 220;
     @Input({ required: true }) post!: PostDto;
     @Input()
     set content(value: string) {
@@ -98,6 +109,11 @@ export class PostCardComponent implements OnChanges, OnDestroy {
 
     commentInput = '';
     commentsOpen = false;
+    reactionsModalOpen = false;
+    reactionsModalClosing = false;
+    reactionsModalAnimatingHeight = false;
+    reactionsModalListHeight: number | null = null;
+    selectedReactionFilter = 'all';
     replyingToCommentId: string | null = null;
     editingCommentId: string | null = null;
     editCommentContent = '';
@@ -120,8 +136,11 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     private mentionRangeEnd = -1;
     private mentionSearchDebounceId: number | null = null;
     private copyLinkResetTimerId: number | null = null;
+    private reactionsModalCloseTimerId: number | null = null;
+    private reactionsModalResizeTimerId: number | null = null;
     private mentionSearchToken = 0;
     private readonly pointerHandledActionKeys = new Map<string, number>();
+    @ViewChild('reactionsModalList') private reactionsModalListRef?: ElementRef<HTMLDivElement>;
 
     ngOnDestroy(): void {
         if (this.mentionSearchDebounceId !== null) {
@@ -132,6 +151,16 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         if (this.copyLinkResetTimerId !== null) {
             window.clearTimeout(this.copyLinkResetTimerId);
             this.copyLinkResetTimerId = null;
+        }
+
+        if (this.reactionsModalCloseTimerId !== null) {
+            window.clearTimeout(this.reactionsModalCloseTimerId);
+            this.reactionsModalCloseTimerId = null;
+        }
+
+        if (this.reactionsModalResizeTimerId !== null) {
+            window.clearTimeout(this.reactionsModalResizeTimerId);
+            this.reactionsModalResizeTimerId = null;
         }
 
         if (this.currentPostId && !this.commentsOpen) {
@@ -549,6 +578,266 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     reactionEmoji(type: string): string {
         const option = this.reactionOptions.find(x => x.type === type);
         return option?.emoji ?? '👍';
+    }
+
+    openReactionsModal(event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+        if (this.reactionsModalCloseTimerId !== null) {
+            window.clearTimeout(this.reactionsModalCloseTimerId);
+            this.reactionsModalCloseTimerId = null;
+        }
+
+        this.reactionsModalClosing = false;
+        this.reactionsModalAnimatingHeight = false;
+        this.reactionsModalListHeight = null;
+        this.selectedReactionFilter = 'all';
+        this.reactionsModalOpen = true;
+    }
+
+    onReactionSummaryMouseDown(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.markPointerHandled('post-reactions-summary');
+        this.openReactionsModal(event);
+    }
+
+    onReactionSummaryClick(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.consumePointerHandled('post-reactions-summary')) {
+            return;
+        }
+
+        this.openReactionsModal(event);
+    }
+
+    closeReactionsModal(): void {
+        if (!this.reactionsModalOpen || this.reactionsModalClosing) {
+            return;
+        }
+
+        this.reactionsModalClosing = true;
+        this.reactionsModalCloseTimerId = window.setTimeout(() => {
+            this.reactionsModalOpen = false;
+            this.reactionsModalClosing = false;
+            this.reactionsModalCloseTimerId = null;
+            this.reactionsModalAnimatingHeight = false;
+            this.reactionsModalListHeight = null;
+        }, PostCardComponent.ReactionsModalCloseDurationMs);
+    }
+
+    onReactionSummaryKeydown(event: KeyboardEvent): void {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+
+        event.preventDefault();
+        this.openReactionsModal(event);
+    }
+
+    selectReactionFilter(filterKey: string): void {
+        if (this.selectedReactionFilter === filterKey) {
+            return;
+        }
+
+        this.animateReactionListResize(filterKey);
+    }
+
+    onReactionTabMouseDown(filterKey: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.selectReactionFilter(filterKey);
+    }
+
+    onReactionTabClick(filterKey: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.selectReactionFilter(filterKey);
+    }
+
+    private animateReactionListResize(nextFilterKey: string): void {
+        const listElement = this.reactionsModalListRef?.nativeElement;
+        if (!listElement) {
+            this.selectedReactionFilter = nextFilterKey;
+            return;
+        }
+
+        const startHeight = listElement.offsetHeight;
+        this.selectedReactionFilter = nextFilterKey;
+
+        window.setTimeout(() => {
+            const latestListElement = this.reactionsModalListRef?.nativeElement;
+            if (!latestListElement) {
+                return;
+            }
+
+            const endHeight = latestListElement.scrollHeight;
+            if (startHeight === endHeight) {
+                this.reactionsModalAnimatingHeight = false;
+                this.reactionsModalListHeight = null;
+                return;
+            }
+
+            this.reactionsModalAnimatingHeight = true;
+            this.reactionsModalListHeight = startHeight;
+
+            window.requestAnimationFrame(() => {
+                this.reactionsModalListHeight = endHeight;
+            });
+
+            if (this.reactionsModalResizeTimerId !== null) {
+                window.clearTimeout(this.reactionsModalResizeTimerId);
+            }
+
+            this.reactionsModalResizeTimerId = window.setTimeout(() => {
+                this.reactionsModalAnimatingHeight = false;
+                this.reactionsModalListHeight = null;
+                this.reactionsModalResizeTimerId = null;
+            }, PostCardComponent.ReactionsModalResizeDurationMs);
+        }, 0);
+    }
+
+    get reactionModalFilters(): Array<{ key: string; type: string; count: number }> {
+        const countsByType = new Map<string, number>();
+
+        for (const reaction of this.post?.reactions ?? []) {
+            const canonicalType = this.canonicalReactionType(reaction.type);
+            countsByType.set(canonicalType, (countsByType.get(canonicalType) ?? 0) + Math.max(0, reaction.count ?? 0));
+        }
+
+        if (!countsByType.size && this.totalReactionCount > 0) {
+            countsByType.set('Like', this.totalReactionCount);
+        }
+
+        const orderedTypes = this.reactionOptions.map(option => this.canonicalReactionType(option.type));
+        const filters = orderedTypes
+            .filter((type, index, list) => list.indexOf(type) === index)
+            .map(type => ({ key: type.toLowerCase(), type, count: countsByType.get(type) ?? 0 }))
+            .filter(item => item.count > 0);
+
+        return [{ key: 'all', type: 'All', count: this.totalReactionCount }, ...filters];
+    }
+
+    get visibleReactionDetails(): ReactionDetailEntry[] {
+        const details = this.allReactionDetails;
+        if (!details.length) {
+            return [];
+        }
+
+        if (this.selectedReactionFilter === 'all') {
+            return details;
+        }
+
+        return details.filter(detail => this.canonicalReactionType(detail.reactionType).toLowerCase() === this.selectedReactionFilter);
+    }
+
+    get reactionDetailsAvailable(): boolean {
+        return this.allReactionDetails.length > 0;
+    }
+
+    get reactionDetailsEmptyMessage(): string {
+        if (!this.reactionDetailsAvailable) {
+            return 'Reaction details are not available yet for this post.';
+        }
+
+        return 'No people found for this reaction.';
+    }
+
+    private get allReactionDetails(): ReactionDetailEntry[] {
+        const typedEntries = (this.post?.reactionDetails ?? []) as PostReactionDetailDto[];
+        if (typedEntries.length) {
+            return typedEntries
+                .map(entry => ({
+                    profileId: entry.profileId,
+                    displayName: entry.displayName,
+                    handle: entry.handle,
+                    subtitle: entry.bio ?? '',
+                    imageUrl: entry.imageUrl ?? '',
+                    reactionType: this.canonicalReactionType(entry.reactionType)
+                }))
+                .sort((left, right) => left.displayName.localeCompare(right.displayName));
+        }
+
+        const post = this.post as unknown as Record<string, unknown>;
+        const directCandidates = [
+            post['reactionDetails'],
+            post['reactionUsers'],
+            post['reactors'],
+            post['reactionEntries'],
+            post['reactionsDetailed']
+        ];
+
+        let rawEntries: unknown[] = [];
+        for (const candidate of directCandidates) {
+            if (Array.isArray(candidate)) {
+                rawEntries = candidate;
+                break;
+            }
+        }
+
+        if (!rawEntries.length) {
+            for (const summary of (this.post?.reactions ?? []) as unknown as Array<Record<string, unknown>>) {
+                const nested = summary['users'] ?? summary['profiles'] ?? summary['reactors'] ?? null;
+                if (!Array.isArray(nested)) {
+                    continue;
+                }
+
+                rawEntries.push(...nested.map(entry => ({ ...(entry as Record<string, unknown>), reactionType: summary['type'] })));
+            }
+        }
+
+        const mapped = rawEntries
+            .map(entry => {
+                const item = entry as Record<string, unknown>;
+                const handle = String(item['handle'] ?? item['userHandle'] ?? item['profileHandle'] ?? '').trim();
+                const rawDisplayName = item['displayName'] ?? item['name'] ?? item['userDisplayName'] ?? handle;
+                const displayName = String(rawDisplayName || 'Unknown user').trim();
+                const subtitle = String(item['subtitle'] ?? item['bio'] ?? item['headline'] ?? item['title'] ?? '').trim();
+                const imageUrl = String(item['imageUrl'] ?? item['avatarUrl'] ?? item['userImageUrl'] ?? '').trim();
+                const reactionType = this.canonicalReactionType(String(item['reactionType'] ?? item['type'] ?? item['reaction'] ?? 'Like'));
+                const profileId = String(item['profileId'] ?? item['id'] ?? handle ?? displayName).trim();
+
+                return {
+                    profileId,
+                    displayName,
+                    handle,
+                    subtitle,
+                    imageUrl,
+                    reactionType
+                };
+            })
+            .filter(entry => !!entry.profileId)
+            .sort((left, right) => left.displayName.localeCompare(right.displayName));
+
+        return mapped;
+    }
+
+    private canonicalReactionType(type: string | null | undefined): string {
+        switch ((type ?? '').trim().toLowerCase()) {
+            case 'like':
+                return 'Like';
+            case 'love':
+                return 'Love';
+            case 'laugh':
+                return 'Laugh';
+            case 'wow':
+                return 'Wow';
+            case 'sad':
+                return 'Sad';
+            case 'angry':
+                return 'Angry';
+            case 'partyhorn':
+            case 'party-horn':
+            case 'party':
+                return 'PartyHorn';
+            case 'clap':
+            case 'hands-clapping':
+            case 'handsclapping':
+                return 'Clap';
+            default:
+                return 'Like';
+        }
     }
 
     get topReactionBadges(): PostReactionBadge[] {

@@ -11,12 +11,25 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 export class CreateContentMenuComponent {
     @Input() open = false;
 
-    @Output() toggle = new EventEmitter<MouseEvent>();
+    @Output() toggle = new EventEmitter<Event>();
     @Output() createPost = new EventEmitter<void>();
     @Output() createReel = new EventEmitter<void>();
     @Output() createStory = new EventEmitter<void>();
+    private toggleHandledByPointer = false;
 
-    onToggle(event: MouseEvent): void {
+    onTogglePointerDown(event: PointerEvent): void {
+        this.toggleHandledByPointer = true;
+        this.toggle.emit(event);
+    }
+
+    onToggleClick(event: MouseEvent): void {
+        if (this.toggleHandledByPointer) {
+            this.toggleHandledByPointer = false;
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+
         this.toggle.emit(event);
     }
 

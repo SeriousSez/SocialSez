@@ -78,7 +78,7 @@
             </section>
         </ng-template>
 
-        <div class="compose-modal" *ngIf="showComposer" (click)="onPostComposerBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create post">
+        <div class="compose-modal" *ngIf="showComposer || composerClosing" [class.closing]="composerClosing" (click)="onPostComposerBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create post">
             <section class="compose-modal-card" aria-label="Create post">
                 <header class="compose-modal-head">
                     <h3>New Post</h3>
@@ -89,7 +89,7 @@
             </section>
         </div>
 
-        <div class="compose-modal" *ngIf="showStoryComposer" (click)="onStoryComposerBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create story">
+        <div class="compose-modal" *ngIf="showStoryComposer || storyComposerClosing" [class.closing]="storyComposerClosing" (click)="onStoryComposerBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create story">
             <section class="media-composer compose-modal-card" aria-label="Create story">
                 <header class="compose-modal-head">
                     <h3>New Story</h3>

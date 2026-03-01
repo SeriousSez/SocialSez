@@ -326,8 +326,4 @@ label {
         font-size: 0.95rem;
     }
 
-    .page {
-        padding-bottom: calc(50px + env(safe-area-inset-bottom));
-        box-sizing: border-box;
-    }
 }

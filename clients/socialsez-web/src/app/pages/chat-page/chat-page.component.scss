@@ -1355,6 +1355,115 @@
     color: var(--color-text-soft);
 }
 
+.reaction-summary {
+    display: inline-flex;
+    align-items: center;
+}
+
+.reaction-summary.corner {
+    position: absolute;
+    bottom: -10px;
+    left: 2px;
+    z-index: 2;
+}
+
+.message.own .reaction-summary.corner {
+    left: auto;
+    right: 2px;
+}
+
+.reaction-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+}
+
+.reaction-emoji {
+    --summary-bg: var(--color-surface);
+    --summary-fg: color-mix(in srgb, var(--color-text) 88%, var(--color-surface) 12%);
+    --summary-fg-secondary: color-mix(in srgb, var(--summary-bg) 34%, var(--color-surface) 66%);
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid var(--color-surface);
+    margin-left: -5px;
+    background: var(--summary-bg);
+    display: inline-grid;
+    place-items: center;
+    line-height: 1;
+}
+
+.reaction-emoji i {
+    font-size: 0.62rem;
+    color: var(--summary-fg);
+    --fa-primary-color: var(--summary-fg);
+    --fa-secondary-color: var(--summary-fg-secondary);
+    --fa-primary-opacity: 1;
+    --fa-secondary-opacity: 1;
+}
+
+.reaction-emoji.type-like {
+    --summary-accent: #4F8CFF;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 62%, var(--color-surface) 38%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.reaction-emoji.type-love {
+    --summary-accent: #E11D48;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 60%, var(--color-surface) 40%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.reaction-emoji.type-laugh {
+    --summary-accent: #FFC83D;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 62%, var(--color-surface) 38%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.reaction-emoji.type-wow {
+    --summary-accent: #38D9E6;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 60%, var(--color-surface) 40%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.reaction-emoji.type-sad {
+    --summary-accent: #5C7CFA;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 58%, var(--color-surface) 42%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.reaction-emoji.type-angry {
+    --summary-accent: #FF3B30;
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 58%, var(--color-surface) 42%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.reaction-emoji.type-partyhorn {
+    --summary-party-start: #C77DFF;
+    --summary-party-end: #FF85A1;
+    --summary-accent: color-mix(in srgb, var(--summary-party-start) 52%, var(--summary-party-end) 48%);
+    --summary-bg: linear-gradient(135deg, var(--summary-party-start), var(--summary-party-end));
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+    --summary-fg-secondary: color-mix(in srgb, var(--summary-party-start) 34%, var(--color-surface) 66%);
+}
+
+.reaction-emoji.type-clap {
+    --summary-accent: var(--color-warning);
+    --summary-bg: color-mix(in srgb, var(--summary-accent) 64%, var(--color-surface) 36%);
+    --summary-fg: color-mix(in srgb, var(--color-text) 80%, var(--summary-accent) 20%);
+}
+
+.reaction-emoji:first-child {
+    margin-left: 0;
+}
+
+.reaction-total {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    font-weight: 700;
+    margin-left: 2px;
+}
+
 .mobile-reaction-menu {
     display: none;
 }

@@ -67,7 +67,7 @@
         </ng-container>
 
         <div class="engagement-summary">
-            <div class="summary-reactions">
+            <div class="summary-reactions clickable" role="button" tabindex="0" aria-label="Show reactions" (mousedown)="onReactionSummaryMouseDown($event)" (click)="onReactionSummaryClick($event)" (keydown)="onReactionSummaryKeydown($event)">
                 <span class="summary-reaction-icons" *ngIf="topReactionBadges.length; else noReactionEmoji">
                     <span class="summary-reaction-emoji" *ngFor="let badge of topReactionBadges" [ngClass]="reactionBadgeClass(badge.type)">
                         <i [class]="reactionIconClass(badge.type)" aria-hidden="true"></i>
@@ -88,6 +88,54 @@
                 <span>·</span>
                 <span>{{ repostCount | number }} reposts</span>
             </div>
+        </div>
+
+        <div class="reactions-modal-backdrop" *ngIf="reactionsModalOpen || reactionsModalClosing" [class.closing]="reactionsModalClosing" (click)="closeReactionsModal()">
+            <section class="reactions-modal" [class.closing]="reactionsModalClosing" role="dialog" aria-modal="true" aria-label="Reactions" (click)="$event.stopPropagation()">
+                <header class="reactions-modal-header">
+                    <h3>Reactions</h3>
+                    <button type="button" class="reactions-modal-close" (click)="closeReactionsModal()" aria-label="Close reactions">
+                        <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
+                    </button>
+                </header>
+
+                <div class="reactions-modal-tabs">
+                    <button type="button" class="reaction-tab" *ngFor="let filter of reactionModalFilters" [class.active]="selectedReactionFilter === filter.key" (mousedown)="onReactionTabMouseDown(filter.key, $event)" (click)="onReactionTabClick(filter.key, $event)">
+                        <ng-container *ngIf="filter.key === 'all'; else reactionFilterIcon">
+                            <span class="reaction-tab-label">All</span>
+                        </ng-container>
+                        <ng-template #reactionFilterIcon>
+                            <span class="summary-reaction-emoji" [ngClass]="reactionBadgeClass(filter.type)">
+                                <i [class]="reactionIconClass(filter.type)" aria-hidden="true"></i>
+                            </span>
+                        </ng-template>
+                        <span class="reaction-tab-count">{{ filter.count | number }}</span>
+                    </button>
+                </div>
+
+                <div class="reactions-modal-list" #reactionsModalList [class.animating-height]="reactionsModalAnimatingHeight" [style.height.px]="reactionsModalListHeight" *ngIf="visibleReactionDetails.length; else reactionsModalEmpty">
+                    <article class="reaction-person" *ngFor="let item of visibleReactionDetails">
+                        <img class="reaction-person-avatar" *ngIf="item.imageUrl; else reactionPersonInitial" [src]="item.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reaction author image" />
+                        <ng-template #reactionPersonInitial>
+                            <div class="reaction-person-avatar fallback">{{ (item.displayName || item.handle || '?').charAt(0).toUpperCase() }}</div>
+                        </ng-template>
+
+                        <div class="reaction-person-main">
+                            <p class="reaction-person-name">{{ item.displayName }}</p>
+                            <p class="reaction-person-subtitle" *ngIf="item.subtitle">{{ item.subtitle }}</p>
+                            <p class="reaction-person-subtitle" *ngIf="!item.subtitle && item.handle">@{{ item.handle }}</p>
+                        </div>
+
+                        <span class="summary-reaction-emoji reaction-person-reaction" [ngClass]="reactionBadgeClass(item.reactionType)">
+                            <i [class]="reactionIconClass(item.reactionType)" aria-hidden="true"></i>
+                        </span>
+                    </article>
+                </div>
+
+                <ng-template #reactionsModalEmpty>
+                    <div class="reactions-modal-empty">{{ reactionDetailsEmptyMessage }}</div>
+                </ng-template>
+            </section>
         </div>
 
         <div class="engagement">

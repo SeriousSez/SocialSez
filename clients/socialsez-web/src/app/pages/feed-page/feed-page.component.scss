@@ -41,6 +41,7 @@ h2 {
     place-items: center;
     z-index: 1100;
     padding: 16px;
+    animation: feed-compose-overlay-in 180ms ease-out;
 }
 
 .compose-modal-card {
@@ -53,6 +54,60 @@ h2 {
     background: #fff;
     display: grid;
     gap: 10px;
+    animation: feed-compose-card-in 180ms ease-out;
+    transform-origin: center top;
+}
+
+.compose-modal.closing {
+    animation: feed-compose-overlay-out 180ms ease-in forwards;
+}
+
+.compose-modal.closing .compose-modal-card {
+    animation: feed-compose-card-out 180ms ease-in forwards;
+}
+
+@keyframes feed-compose-overlay-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes feed-compose-overlay-out {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes feed-compose-card-in {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes feed-compose-card-out {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+    }
 }
 
 .compose-modal-head {
@@ -364,6 +419,16 @@ h2 {
 
 .stories-tabs button.active {
     color: #0f172a;
+}
+
+:host-context(.theme-dark) {
+    .stories-tabs button {
+        color: var(--color-text-muted);
+    }
+
+    .stories-tabs button.active {
+        color: var(--color-text);
+    }
 }
 
 .stories-rail {

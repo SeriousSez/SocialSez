@@ -15,12 +15,77 @@
     place-items: center;
     z-index: 1100;
     padding: 16px;
+    animation: reel-modal-overlay-in 180ms ease-out both;
+}
+
+.reel-modal.closing {
+    animation: reel-modal-overlay-out 180ms ease-in both;
 }
 
 .reel-modal-card {
     width: min(820px, 100%);
     max-height: 92vh;
     overflow: auto;
+    transform-origin: center top;
+    animation: reel-modal-card-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.reel-modal.closing .reel-modal-card {
+    animation: reel-modal-card-out 180ms ease-in both;
+}
+
+@keyframes reel-modal-overlay-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes reel-modal-overlay-out {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes reel-modal-card-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes reel-modal-card-out {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .reel-modal,
+    .reel-modal-card,
+    .reel-modal.closing,
+    .reel-modal.closing .reel-modal-card {
+        animation: none;
+    }
 }
 
 .reel-modal-head {

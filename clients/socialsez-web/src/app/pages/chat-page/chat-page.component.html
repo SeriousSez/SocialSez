@@ -201,9 +201,12 @@
                                                     <div class="shared-reel-frame shared-story-frame">
                                                         <img class="shared-reel-thumbnail" *ngIf="(sharedStory.thumbnailUrl || !isVideoMedia(sharedStory.mediaUrl)); else sharedStoryNoThumb" [src]="sharedStory.thumbnailUrl || sharedStory.mediaUrl" alt="Shared story preview" />
                                                         <ng-template #sharedStoryNoThumb>
-                                                            <div class="shared-reel-thumbnail-fallback" aria-label="Shared story preview unavailable">
-                                                                <i class="fa-duotone fa-light fa-images" aria-hidden="true"></i>
-                                                            </div>
+                                                            <video class="shared-reel-thumbnail" *ngIf="isVideoMedia(sharedStory.mediaUrl); else sharedStoryNoVideoThumb" [src]="sharedStory.mediaUrl" muted playsinline preload="auto" aria-label="Shared story preview"></video>
+                                                            <ng-template #sharedStoryNoVideoThumb>
+                                                                <div class="shared-reel-thumbnail-fallback" aria-label="Shared story preview unavailable">
+                                                                    <i class="fa-duotone fa-light fa-images" aria-hidden="true"></i>
+                                                                </div>
+                                                            </ng-template>
                                                         </ng-template>
 
                                                         <header class="shared-reel-overlay-top">
@@ -225,9 +228,12 @@
                                                     <div class="shared-reel-frame">
                                                         <img class="shared-reel-thumbnail" *ngIf="sharedReel.thumbnailUrl as thumbnail; else sharedReelNoThumb" [src]="thumbnail" alt="Shared reel thumbnail" />
                                                         <ng-template #sharedReelNoThumb>
-                                                            <div class="shared-reel-thumbnail-fallback" aria-label="Shared reel thumbnail unavailable">
-                                                                <i class="fa-duotone fa-solid fa-clapperboard-play" aria-hidden="true"></i>
-                                                            </div>
+                                                            <video class="shared-reel-thumbnail" *ngIf="isVideoMedia(sharedReel.videoUrl); else sharedReelNoVideoThumb" [src]="sharedReel.videoUrl" muted playsinline preload="auto" aria-label="Shared reel preview"></video>
+                                                            <ng-template #sharedReelNoVideoThumb>
+                                                                <div class="shared-reel-thumbnail-fallback" aria-label="Shared reel thumbnail unavailable">
+                                                                    <i class="fa-duotone fa-solid fa-clapperboard-play" aria-hidden="true"></i>
+                                                                </div>
+                                                            </ng-template>
                                                         </ng-template>
 
                                                         <header class="shared-reel-overlay-top">
@@ -250,10 +256,12 @@
                                             <img class="chat-message-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" alt="Sent GIF" />
                                         </div>
 
-                                        <div class="reaction-summary corner" *ngIf="message.reactions.length">
-                                            <span class="reaction-badge">
-                                                <span class="reaction-emoji" *ngFor="let reaction of message.reactions">{{ reactionEmoji(reaction.type) }}</span>
-                                                <span class="reaction-total" *ngIf="reactionTotalCount(message) > 1">{{ reactionTotalCount(message) }}</span>
+                                        <div class="reaction-summary corner" *ngIf="messageDisplayReactions(message) as visibleReactions">
+                                            <span class="reaction-badge" *ngIf="visibleReactions.length" [class.has-multiple]="reactionTotalCountFromReactions(visibleReactions) > 1">
+                                                <span class="reaction-emoji" *ngFor="let reaction of visibleReactions" [ngClass]="reactionBadgeClass(reaction.type)">
+                                                    <i [class]="reactionIconClass(reaction.type)" aria-hidden="true"></i>
+                                                </span>
+                                                <span class="reaction-total" *ngIf="reactionTotalCountFromReactions(visibleReactions) > 1">{{ reactionTotalCountFromReactions(visibleReactions) }}</span>
                                             </span>
                                         </div>
                                     </div>

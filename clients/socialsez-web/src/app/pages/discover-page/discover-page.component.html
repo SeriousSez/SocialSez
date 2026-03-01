@@ -2,12 +2,8 @@
     <h2>Discover</h2>
     <div class="search-row">
         <label class="search-label">Search
-            <input [(ngModel)]="query" placeholder="Search users, reels, posts, hashtags" (keydown.enter)="search()" />
+            <input [(ngModel)]="query" placeholder="Search users, reels, posts, hashtags" (ngModelChange)="onQueryChanged()" />
         </label>
-
-        <div class="actions">
-            <button type="button" (click)="search()">Search</button>
-        </div>
     </div>
 
     <div class="scope-tabs" *ngIf="query.trim()">

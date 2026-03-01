@@ -831,12 +831,17 @@
 }
 
 .chat-layout .reaction-summary .reaction-badge {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: 999px;
-    padding: 4px 6px;
+    padding: 2px 4px;
     display: inline-flex;
     align-items: center;
+}
+
+.chat-layout .reaction-summary .reaction-badge.has-multiple {
+    background: #f8fafc;
+    border-color: #e2e8f0;
 }
 
 .chat-layout .reaction-summary .reaction-emoji {
@@ -845,7 +850,6 @@
 
 .chat-layout .reaction-summary .reaction-total {
     line-height: 1;
-    padding-left: 1px;
     font-weight: 600;
 }
 
@@ -1262,9 +1266,14 @@
 }
 
 :root.theme-dark .chat-layout .reaction-summary .reaction-badge {
+    background: transparent;
+    border-color: transparent;
+    color: var(--color-text-subtle);
+}
+
+:root.theme-dark .chat-layout .reaction-summary .reaction-badge.has-multiple {
     background: var(--color-surface-muted);
     border-color: var(--color-border);
-    color: var(--color-text-subtle);
 }
 
 :root.theme-dark .chat-layout .reaction-summary .reaction-total {

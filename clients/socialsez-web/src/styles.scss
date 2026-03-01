@@ -231,7 +231,6 @@ app-reel-composer-modal {
 :root.theme-dark .actions button,
 :root.theme-dark .content-tabs button,
 :root.theme-dark .scope-tabs button,
-:root.theme-dark .stories-tabs button,
 :root.theme-dark .icon-btn,
 :root.theme-dark button.ghost {
     background: var(--color-surface-muted) !important;
@@ -244,7 +243,6 @@ app-reel-composer-modal {
 :root.theme-dark .actions button:not(.ghost):not(.danger),
 :root.theme-dark .content-tabs button.active,
 :root.theme-dark .scope-tabs button.active,
-:root.theme-dark .stories-tabs button.active,
 :root.theme-dark .mobile-tab.active {
     background: var(--gradient-primary) !important;
     color: var(--color-text-on-dark) !important;

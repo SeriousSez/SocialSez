@@ -2567,11 +2567,95 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     reactionEmoji(type: string): string {
-        return this.reactionOptions.find(x => x.type === type)?.emoji ?? '👍';
+        const normalizedType = this.normalizeReactionType(type);
+        if (!normalizedType) {
+            return this.reactionOptions[0]?.emoji ?? '👍';
+        }
+
+        return this.reactionOptions.find(x => x.type === normalizedType)?.emoji ?? this.reactionOptions[0]?.emoji ?? '👍';
+    }
+
+    reactionIconClass(type: string): string {
+        switch ((type ?? '').trim().toLowerCase()) {
+            case 'like':
+                return 'fa-duotone fa-solid fa-thumbs-up';
+            case 'love':
+                return 'fa-duotone fa-solid fa-heart';
+            case 'laugh':
+                return 'fa-duotone fa-solid fa-face-laugh-squint';
+            case 'wow':
+                return 'fa-duotone fa-solid fa-face-surprise';
+            case 'sad':
+                return 'fa-duotone fa-solid fa-face-sad-tear';
+            case 'angry':
+                return 'fa-duotone fa-solid fa-face-angry';
+            case 'partyhorn':
+            case 'party-horn':
+            case 'party':
+                return 'fa-duotone fa-solid fa-party-horn';
+            case 'clap':
+            case 'hands-clapping':
+            case 'handsclapping':
+                return 'fa-duotone fa-solid fa-hands-clapping';
+            default:
+                return 'fa-duotone fa-solid fa-thumbs-up';
+        }
+    }
+
+    reactionBadgeClass(type: string): string {
+        const normalizedType = this.normalizeReactionType(type) ?? 'Like';
+        return `type-${normalizedType.toLowerCase()}`;
+    }
+
+    messageDisplayReactions(message: ChatMessageDto): ReactionSummaryDto[] {
+        const counts = new Map<string, number>();
+
+        for (const reaction of message.reactions) {
+            const normalizedType = this.normalizeReactionType(reaction.type);
+            if (!normalizedType) {
+                continue;
+            }
+
+            const count = Math.max(0, reaction.count ?? 0);
+            if (!count) {
+                continue;
+            }
+
+            counts.set(normalizedType, (counts.get(normalizedType) ?? 0) + count);
+        }
+
+        return this.reactionOptions
+            .filter(option => counts.has(option.type))
+            .map(option => ({
+                type: option.type,
+                count: counts.get(option.type) ?? 0
+            }));
+    }
+
+    reactionTotalCountFromReactions(reactions: ReadonlyArray<ReactionSummaryDto>): number {
+        return reactions.reduce((sum, reaction) => sum + Math.max(0, reaction.count ?? 0), 0);
     }
 
     reactionTotalCount(message: ChatMessageDto): number {
-        return message.reactions.reduce((sum, reaction) => sum + Math.max(0, reaction.count ?? 0), 0);
+        return this.reactionTotalCountFromReactions(this.messageDisplayReactions(message));
+    }
+
+    private normalizeReactionType(type: string): string | null {
+        const normalized = (type ?? '').trim();
+        if (!normalized) {
+            return null;
+        }
+
+        const option = this.reactionOptions.find(item => item.type.toLowerCase() === normalized.toLowerCase());
+        if (option) {
+            return option.type;
+        }
+
+        if (normalized.toLowerCase() === 'party') {
+            return 'PartyHorn';
+        }
+
+        return null;
     }
 
     private isMobileReactionMode(): boolean {

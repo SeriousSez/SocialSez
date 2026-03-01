@@ -61,6 +61,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             false,
             null,
             Array.Empty<ReactionSummaryDto>(),
+            Array.Empty<PostReactionDetailDto>(),
             Array.Empty<CommentDto>());
     }
 
@@ -75,6 +76,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
 
         if (post is null)
@@ -129,6 +131,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
 
         if (post is null)
@@ -169,6 +172,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
 
         if (post is null)
@@ -233,6 +237,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
 
         if (post is null)
@@ -277,6 +282,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
 
         if (post is null)
@@ -335,6 +341,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
 
         return hydratedPost is null ? null : MapToPostDto(hydratedPost, profileId);
@@ -369,6 +376,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
 
         if (post is null)
@@ -417,6 +425,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
 
         if (post is null)
@@ -455,6 +464,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
 
         if (post is null)
@@ -498,6 +508,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
                 .Include(x => x.Comments)
                     .ThenInclude(x => x.Reactions)
                 .Include(x => x.Reactions)
+                    .ThenInclude(x => x.Profile)
                 .Where(x => followedIds.Contains(x.AuthorId))
                 .OrderByDescending(x => x.CreatedAtUtc)
                 .Take(take)
@@ -571,6 +582,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .Where(x => followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(Math.Clamp(take * 40, 120, 2000))
@@ -631,6 +643,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .Where(x =>
                 (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                 &&
@@ -784,6 +797,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .Where(x => (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                 && !string.IsNullOrWhiteSpace(x.Content)
                 && x.Content.ToLower().Contains(needle))
@@ -828,6 +842,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .Where(x => x.Author.Handle == normalizedHandle && (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
@@ -850,6 +865,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
 
         return post is null ? null : MapToPostDto(post, Guid.Empty);
@@ -898,6 +914,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Comments)
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .Where(x => x.AuthorId == author.Id)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
@@ -938,6 +955,19 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .ThenBy(x => x.Type)
             .ToArray();
 
+        var reactionDetails = post.Reactions
+            .Where(x => x.Profile is not null)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new PostReactionDetailDto(
+                x.ProfileId,
+                x.Profile.Handle,
+                x.Profile.DisplayName,
+                x.Profile.Bio,
+                x.Profile.ImageUrl,
+                x.Type,
+                x.CreatedAtUtc))
+            .ToArray();
+
         var myReactionType = post.Reactions
             .FirstOrDefault(x => x.ProfileId == profileId)
             ?.Type;
@@ -956,6 +986,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             string.Equals(myReactionType, LikeReactionType, StringComparison.OrdinalIgnoreCase),
             myReactionType,
             reactions,
+            reactionDetails,
             comments);
     }
 

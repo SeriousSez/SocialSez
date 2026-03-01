@@ -23,6 +23,15 @@ public sealed record CommentDto(
 
 public sealed record ReactionSummaryDto(string Type, int Count);
 
+public sealed record PostReactionDetailDto(
+    Guid ProfileId,
+    string Handle,
+    string DisplayName,
+    string? Bio,
+    string? ImageUrl,
+    string ReactionType,
+    DateTime ReactedAtUtc);
+
 public sealed record HashtagSearchResultDto(string Tag, int Count);
 
 public sealed record PostDto(
@@ -37,4 +46,5 @@ public sealed record PostDto(
     bool LikedByMe,
     string? MyReactionType,
     IReadOnlyCollection<ReactionSummaryDto> Reactions,
+    IReadOnlyCollection<PostReactionDetailDto> ReactionDetails,
     IReadOnlyCollection<CommentDto> Comments);

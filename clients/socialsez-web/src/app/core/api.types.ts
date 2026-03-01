@@ -79,6 +79,16 @@ export interface ReactionSummaryDto {
     count: number;
 }
 
+export interface PostReactionDetailDto {
+    profileId: string;
+    handle: string;
+    displayName: string;
+    bio?: string;
+    imageUrl?: string;
+    reactionType: string;
+    reactedAtUtc: string;
+}
+
 export interface FollowSuggestionsDto {
     following: ProfileDto[];
     relevant: ProfileDto[];
@@ -137,6 +147,7 @@ export interface PostDto {
     likedByMe: boolean;
     myReactionType?: string;
     reactions: ReactionSummaryDto[];
+    reactionDetails: PostReactionDetailDto[];
     comments: CommentDto[];
 }
 

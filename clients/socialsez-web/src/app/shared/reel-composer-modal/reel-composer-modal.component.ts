@@ -46,8 +46,32 @@ export class ReelComposerModalComponent implements OnDestroy {
     private static readonly CropFrameHeightPercent = 100;
     private static readonly ReelOutputAspect = 9 / 16;
     private static readonly MaxTrimDurationSeconds = 180;
+    private static readonly CloseAnimationDurationMs = 180;
 
-    @Input() open = false;
+    @Input()
+    set open(value: boolean) {
+        if (value === this._open) {
+            return;
+        }
+
+        this._open = value;
+        if (value) {
+            if (this.closeAnimationTimerId !== null) {
+                window.clearTimeout(this.closeAnimationTimerId);
+                this.closeAnimationTimerId = null;
+            }
+
+            this.isClosing = false;
+            this.isRendered = true;
+            return;
+        }
+
+        this.beginCloseAnimation(false);
+    }
+
+    get open(): boolean {
+        return this._open;
+    }
     @ViewChild('reelPreviewVideo') private readonly reelPreviewVideoRef?: ElementRef<HTMLVideoElement>;
     @ViewChild('reelVideoInput') private readonly reelVideoInputRef?: ElementRef<HTMLInputElement>;
     @ViewChild('reelThumbnailInput') private readonly reelThumbnailInputRef?: ElementRef<HTMLInputElement>;
@@ -60,6 +84,8 @@ export class ReelComposerModalComponent implements OnDestroy {
     reelLocation = '';
     reelCollaborators = '';
     reelComposerStep: 1 | 2 = 1;
+    isRendered = false;
+    isClosing = false;
     reelVideoFile: File | null = null;
     reelThumbnailFile: File | null = null;
     reelVideoPreviewUrl = '';
@@ -116,6 +142,8 @@ export class ReelComposerModalComponent implements OnDestroy {
     private readonly onFramePointerUp = () => {
         this.stopFrameDragging();
     };
+    private _open = false;
+    private closeAnimationTimerId: number | null = null;
 
     constructor(
         private readonly session: SessionService,
@@ -128,6 +156,10 @@ export class ReelComposerModalComponent implements OnDestroy {
         this.detachFrameDragListeners();
         this.closeLocationSuggestions();
         this.closeCollaboratorSuggestions();
+        if (this.closeAnimationTimerId !== null) {
+            window.clearTimeout(this.closeAnimationTimerId);
+            this.closeAnimationTimerId = null;
+        }
     }
 
     onBackdropClick(event: MouseEvent): void {
@@ -180,8 +212,43 @@ export class ReelComposerModalComponent implements OnDestroy {
             return;
         }
 
-        this.resetComposer();
-        this.closed.emit();
+        this.beginCloseAnimation(true, true);
+    }
+
+    private beginCloseAnimation(emitClosed: boolean, resetAfterClose = false): void {
+        if (!this.isRendered) {
+            if (resetAfterClose) {
+                this.resetComposer();
+            }
+            if (emitClosed) {
+                this.closed.emit();
+            }
+            return;
+        }
+
+        if (this.isClosing) {
+            return;
+        }
+
+        this.isClosing = true;
+
+        if (this.closeAnimationTimerId !== null) {
+            window.clearTimeout(this.closeAnimationTimerId);
+        }
+
+        this.closeAnimationTimerId = window.setTimeout(() => {
+            this.isClosing = false;
+            this.isRendered = false;
+            this.closeAnimationTimerId = null;
+
+            if (resetAfterClose) {
+                this.resetComposer();
+            }
+
+            if (emitClosed) {
+                this.closed.emit();
+            }
+        }, ReelComposerModalComponent.CloseAnimationDurationMs);
     }
 
     async onVideoSelected(event: Event): Promise<void> {

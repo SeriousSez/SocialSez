@@ -42,6 +42,7 @@ export class ProfilePageComponent implements OnDestroy {
     private static readonly StoryCropFrameHeightPercent = 100;
     private static readonly StoryOutputAspect = 9 / 16;
     private static readonly StoryMaxTrimDurationSeconds = 60;
+    private static readonly ComposerCloseAnimationDurationMs = 180;
 
     @ViewChild('storyPreviewVideo') private readonly storyPreviewVideoRef?: ElementRef<HTMLVideoElement>;
 
@@ -69,7 +70,9 @@ export class ProfilePageComponent implements OnDestroy {
     deletingReelCommentId: string | null = null;
     pendingDeleteReelComment: { reelId: string; commentId: string } | null = null;
     showComposer = false;
+    composerClosing = false;
     showStoryComposer = false;
+    storyComposerClosing = false;
     storyComposerStep: 1 | 2 = 1;
     showReelComposer = false;
     createMenuOpen = false;
@@ -120,6 +123,8 @@ export class ProfilePageComponent implements OnDestroy {
     private followStateResetTimerId: number | null = null;
     private readonly likedStoryIds = new Set<string>();
     private profileLinkCopiedResetTimerId: number | null = null;
+    private composerCloseTimerId: number | null = null;
+    private storyComposerCloseTimerId: number | null = null;
     private storyMediaObjectUrl = '';
     private markingStoryId: string | null = null;
     private draggingStoryFrame = false;
@@ -333,12 +338,22 @@ export class ProfilePageComponent implements OnDestroy {
         }
 
         this.createMenuOpen = false;
+        if (this.storyComposerCloseTimerId !== null) {
+            window.clearTimeout(this.storyComposerCloseTimerId);
+            this.storyComposerCloseTimerId = null;
+        }
+        this.storyComposerClosing = false;
         this.showStoryComposer = false;
         this.showReelComposer = false;
+        if (this.composerCloseTimerId !== null) {
+            window.clearTimeout(this.composerCloseTimerId);
+            this.composerCloseTimerId = null;
+        }
+        this.composerClosing = false;
         this.showComposer = true;
     }
 
-    toggleCreateMenu(event: MouseEvent): void {
+    toggleCreateMenu(event: Event): void {
         event.preventDefault();
         event.stopPropagation();
         this.createMenuOpen = !this.createMenuOpen;
@@ -375,8 +390,18 @@ export class ProfilePageComponent implements OnDestroy {
         }
 
         this.createMenuOpen = false;
+        if (this.composerCloseTimerId !== null) {
+            window.clearTimeout(this.composerCloseTimerId);
+            this.composerCloseTimerId = null;
+        }
+        this.composerClosing = false;
         this.showComposer = false;
         this.showReelComposer = false;
+        if (this.storyComposerCloseTimerId !== null) {
+            window.clearTimeout(this.storyComposerCloseTimerId);
+            this.storyComposerCloseTimerId = null;
+        }
+        this.storyComposerClosing = false;
         this.showStoryComposer = true;
         this.storyComposerStep = 1;
         this.storyComposerError = '';
@@ -419,11 +444,11 @@ export class ProfilePageComponent implements OnDestroy {
     }
 
     onComposerCanceled(): void {
-        this.showComposer = false;
+        this.beginPostComposerClose();
     }
 
     async onComposerPosted(): Promise<void> {
-        this.showComposer = false;
+        this.beginPostComposerClose();
         await this.load();
     }
 
@@ -432,10 +457,44 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
-        this.showStoryComposer = false;
-        this.storyComposerStep = 1;
-        this.storyComposerError = '';
-        this.clearStoryMediaSelection();
+        this.beginStoryComposerClose();
+    }
+
+    private beginPostComposerClose(): void {
+        if ((!this.showComposer && !this.composerClosing) || this.composerClosing) {
+            return;
+        }
+
+        this.composerClosing = true;
+        if (this.composerCloseTimerId !== null) {
+            window.clearTimeout(this.composerCloseTimerId);
+        }
+
+        this.composerCloseTimerId = window.setTimeout(() => {
+            this.showComposer = false;
+            this.composerClosing = false;
+            this.composerCloseTimerId = null;
+        }, ProfilePageComponent.ComposerCloseAnimationDurationMs);
+    }
+
+    private beginStoryComposerClose(): void {
+        if ((!this.showStoryComposer && !this.storyComposerClosing) || this.storyComposerClosing) {
+            return;
+        }
+
+        this.storyComposerClosing = true;
+        if (this.storyComposerCloseTimerId !== null) {
+            window.clearTimeout(this.storyComposerCloseTimerId);
+        }
+
+        this.storyComposerCloseTimerId = window.setTimeout(() => {
+            this.showStoryComposer = false;
+            this.storyComposerClosing = false;
+            this.storyComposerStep = 1;
+            this.storyComposerError = '';
+            this.clearStoryMediaSelection();
+            this.storyComposerCloseTimerId = null;
+        }, ProfilePageComponent.ComposerCloseAnimationDurationMs);
     }
 
     goToStoryComposerStep(step: 1 | 2): void {
@@ -663,7 +722,7 @@ export class ProfilePageComponent implements OnDestroy {
 
         try {
             const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile);
-            this.cancelStoryComposer();
+            this.beginStoryComposerClose();
 
             void (async () => {
                 try {
@@ -685,6 +744,16 @@ export class ProfilePageComponent implements OnDestroy {
         if (this.profileLinkCopiedResetTimerId !== null) {
             window.clearTimeout(this.profileLinkCopiedResetTimerId);
             this.profileLinkCopiedResetTimerId = null;
+        }
+
+        if (this.composerCloseTimerId !== null) {
+            window.clearTimeout(this.composerCloseTimerId);
+            this.composerCloseTimerId = null;
+        }
+
+        if (this.storyComposerCloseTimerId !== null) {
+            window.clearTimeout(this.storyComposerCloseTimerId);
+            this.storyComposerCloseTimerId = null;
         }
 
         this.clearStoryMediaSelection();
@@ -733,8 +802,18 @@ export class ProfilePageComponent implements OnDestroy {
                     this.hasLoadedProfileOnce = true;
                     this.lastLoadedProfileKey = currentProfileKey;
                     this.showComposer = false;
+                    this.composerClosing = false;
                     this.showStoryComposer = false;
+                    this.storyComposerClosing = false;
                     this.showReelComposer = false;
+                    if (this.composerCloseTimerId !== null) {
+                        window.clearTimeout(this.composerCloseTimerId);
+                        this.composerCloseTimerId = null;
+                    }
+                    if (this.storyComposerCloseTimerId !== null) {
+                        window.clearTimeout(this.storyComposerCloseTimerId);
+                        this.storyComposerCloseTimerId = null;
+                    }
                     this.cancelDeletePost();
 
                     this.avatarImageUrl = profile.imageUrl?.trim()
