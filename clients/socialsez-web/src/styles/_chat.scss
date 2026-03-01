@@ -1600,7 +1600,7 @@
 
     .shared-reel-mobile-comments-sheet .viewer-comment {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-columns: auto minmax(0, 1fr) auto;
         align-items: start;
         gap: 10px;
         padding: 10px 0;
@@ -1622,8 +1622,8 @@
 
     .shared-reel-mobile-comments-sheet .viewer-comment-main {
         min-width: 0;
-        background: var(--color-surface-muted);
-        border: 1px solid var(--color-border);
+        background: transparent;
+        border: 0;
         border-radius: 12px;
         padding: 8px 10px;
     }
@@ -1641,6 +1641,30 @@
         color: var(--color-text-muted);
         font-size: 0.76rem;
         line-height: 1;
+    }
+
+    .shared-reel-mobile-comments-sheet .viewer-comment-actions {
+        margin: 0;
+        display: grid;
+        justify-items: center;
+        align-content: start;
+        gap: 4px;
+        padding-top: 2px;
+    }
+
+    .shared-reel-mobile-comments-sheet .viewer-comment-like,
+    .shared-reel-mobile-comments-sheet .viewer-comment-action {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        border-radius: 999px;
+    }
+
+    .shared-reel-mobile-comments-sheet .viewer-comment-reply {
+        font-size: 0.74rem;
+        padding: 0;
+        line-height: 1;
+        color: var(--color-text-soft);
     }
 
     .shared-reel-mobile-comments-empty {

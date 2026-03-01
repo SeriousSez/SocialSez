@@ -546,6 +546,18 @@
                                         <div class="viewer-comment-main">
                                             <p class="viewer-comment-line"><strong>@{{ comment.authorHandle }}</strong> {{ comment.content }}</p>
                                             <p class="viewer-comment-meta">{{ comment.createdAtUtc | date:'short' }}</p>
+                                            <button type="button" class="viewer-comment-thread-toggle" *ngIf="item.depth === 0 && getActiveSharedReelReplyCount(comment.id) > 0" (click)="toggleActiveSharedReelReplyThread(comment.id, $event)">
+                                                {{ isActiveSharedReelReplyThreadExpanded(comment.id) ? 'Hide replies' : 'View replies (' + getActiveSharedReelReplyCount(comment.id) + ')' }}
+                                            </button>
+                                        </div>
+
+                                        <div class="viewer-comment-actions">
+                                            <button type="button" class="viewer-comment-like" [class.active]="comment.likedByMe" [disabled]="reactingSharedReelCommentId === comment.id" (click)="toggleActiveSharedReelCommentLike(comment, $event)"
+                                                [attr.aria-label]="comment.likedByMe ? 'Unlike comment' : 'Like comment'">
+                                                <i class="fa-duotone fa-heart" [class.fa-solid]="comment.likedByMe" [class.fa-light]="!comment.likedByMe" aria-hidden="true"></i>
+                                            </button>
+                                            <span class="viewer-comment-like-count" *ngIf="(comment.likeCount ?? 0) > 0">{{ comment.likeCount }}</span>
+                                            <button type="button" class="viewer-comment-reply" (click)="replyToActiveSharedReelComment(comment, $event)">Reply</button>
                                         </div>
                                     </ng-container>
                                 </article>
