@@ -263,4 +263,5 @@ export interface ChatMessageDto {
     editedAtUtc?: string;
     myReactionType?: string;
     reactions: ReactionSummaryDto[];
+    reactionDetails: PostReactionDetailDto[];
 }

@@ -42,4 +42,5 @@ public sealed record ChatMessageDto(
     DateTime CreatedAtUtc,
     DateTime? EditedAtUtc,
     string? MyReactionType,
-    IReadOnlyCollection<ReactionSummaryDto> Reactions);
+    IReadOnlyCollection<ReactionSummaryDto> Reactions,
+    IReadOnlyCollection<PostReactionDetailDto> ReactionDetails);

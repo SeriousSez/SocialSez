@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter } from 'rxjs';
-import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, ProfileDto, ReactionSummaryDto, ReelCommentDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
+import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, PostReactionDetailDto, ProfileDto, ReactionSummaryDto, ReelCommentDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
 import { ChatRealtimeService } from '../../core/chat-realtime.service';
 import { ReelInteractionsService } from '../../core/reel-interactions.service';
 import { executeReelShareToChat } from '../../core/reel-share-to-chat.utils';
@@ -47,6 +47,15 @@ interface GiphyGifResult {
     originalUrl: string;
 }
 
+interface MessageReactionDetailEntry {
+    profileId: string;
+    displayName: string;
+    handle: string;
+    subtitle: string;
+    imageUrl: string;
+    reactionType: string;
+}
+
 @Component({
     selector: 'app-chat-page',
     standalone: true,
@@ -56,6 +65,7 @@ interface GiphyGifResult {
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ChatPageComponent implements OnDestroy {
+    private static readonly MessageReactionsModalCloseDurationMs = 180;
     private readonly apiOrigin = this.resolveApiOrigin();
     private readonly giphyApiKey = 'iY9dDrlVL8teP0Csu3Y1Fcq3AbyCPPmg';
     private readonly messageGapForTimeBreakMs = 30 * 60 * 1000;
@@ -114,6 +124,10 @@ export class ChatPageComponent implements OnDestroy {
     replyingToPreview: ChatReplyPreview | null = null;
     startingDirectChat = false;
     reactingMessageId: string | null = null;
+    messageReactionsModalOpen = false;
+    messageReactionsModalClosing = false;
+    selectedMessageReactionFilter = 'all';
+    activeMessageReactionsMessage: ChatMessageDto | null = null;
     searchingProfiles = false;
     loadingProfileSuggestions = false;
     chatSearchModalOpen = false;
@@ -147,6 +161,7 @@ export class ChatPageComponent implements OnDestroy {
     editingSharedReelCaption = false;
     sharedReelCaptionDraft = '';
     viewerCommentDraft = '';
+    sharedReelChatReplyDraft = '';
     replyingToSharedReelCommentId: string | null = null;
     editingSharedReelCommentId: string | null = null;
     editingSharedReelCommentDraft = '';
@@ -154,6 +169,9 @@ export class ChatPageComponent implements OnDestroy {
     deletingSharedReelCommentId: string | null = null;
     pendingDeleteSharedReelCommentId: string | null = null;
     activeSharedReelMuted = true;
+    activeSharedReelPaused = false;
+    mobileSharedReelCommentsOpen = false;
+    activeSharedReelSourceReplyPreview: ChatReplyPreview | null = null;
     pendingShareReelFromViewer: ReelDto | null = null;
     activeSharedStoryGroup: StoryGroupDto | null = null;
     activeSharedStoryIndex = 0;
@@ -172,6 +190,7 @@ export class ChatPageComponent implements OnDestroy {
     status = '';
     mobileReactionMessageId: string | null = null;
     private mobileReactionPressTimerId: number | null = null;
+    private messageReactionsModalCloseTimerId: number | null = null;
     private mobileReactionPressedMessageId: string | null = null;
     private mobileReactionLongPressTriggered = false;
     private readonly mobileReactionLongPressDelayMs = 420;
@@ -181,6 +200,8 @@ export class ChatPageComponent implements OnDestroy {
     private localTypingActive = false;
     private readonly remoteTypingProfileIds = new Set<string>();
     private readonly remoteTypingTimerByProfileId = new Map<string, number>();
+    private messageReactionSummaryPointerHandled = false;
+    private messageReactionTabPointerHandled = false;
     private readonly likedSharedStoryIds = new Set<string>();
     private readonly expandedSharedReelReplyRootIds = new Set<string>();
     private readonly unavailableSharedReelKeys = new Set<string>();
@@ -290,6 +311,11 @@ export class ChatPageComponent implements OnDestroy {
             this.searchProfilesDebounceId = null;
         }
 
+        if (this.messageReactionsModalCloseTimerId !== null) {
+            window.clearTimeout(this.messageReactionsModalCloseTimerId);
+            this.messageReactionsModalCloseTimerId = null;
+        }
+
         const activeConversationId = this.selectedConversationId;
         if (!activeConversationId) {
             void this.chatRealtime.disconnect();
@@ -304,6 +330,16 @@ export class ChatPageComponent implements OnDestroy {
     onDocumentPointerDown(event: PointerEvent): void {
         const path = event.composedPath();
         const isInside = (element: Element | null | undefined): boolean => !!element && path.includes(element);
+
+        if (this.sharedReelSettingsMenuOpen) {
+            const clickedInsideSharedReelMenu = path.some(
+                item => item instanceof HTMLElement && (item.classList.contains('shared-reel-viewer-close') || item.classList.contains('shared-reel-viewer-menu'))
+            );
+
+            if (!clickedInsideSharedReelMenu) {
+                this.sharedReelSettingsMenuOpen = false;
+            }
+        }
 
         if (this.mobileReactionMessageId) {
             const clickedInsideMobileReactionMenu = path.some(
@@ -1531,6 +1567,34 @@ export class ChatPageComponent implements OnDestroy {
         void this.router.navigate(['/hashtags', tag]);
     }
 
+    openLocationInMaps(location: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const query = (location ?? '').trim();
+        if (!query) {
+            return;
+        }
+
+        const encoded = encodeURIComponent(query);
+        const userAgent = navigator.userAgent ?? '';
+        const isIos = /iPad|iPhone|iPod/i.test(userAgent)
+            || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isAndroid = /Android/i.test(userAgent);
+
+        if (isIos) {
+            window.location.href = `maps://?q=${encoded}`;
+            return;
+        }
+
+        if (isAndroid) {
+            window.location.href = `geo:0,0?q=${encoded}`;
+            return;
+        }
+
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, '_blank', 'noopener');
+    }
+
     richTextLines(content: string): RichTextPart[][] {
         return (content ?? '')
             .split(/\r?\n/)
@@ -1628,6 +1692,7 @@ export class ChatPageComponent implements OnDestroy {
         }
 
         this.viewerCommentDraft = '';
+        this.sharedReelChatReplyDraft = '';
         this.activeSharedReelMuted = true;
         this.sharedReelSettingsMenuOpen = false;
         this.editingSharedReelCaption = false;
@@ -1640,6 +1705,8 @@ export class ChatPageComponent implements OnDestroy {
         this.deletingSharedReelCommentId = null;
         this.pendingDeleteSharedReelCommentId = null;
         this.expandedSharedReelReplyRootIds.clear();
+        this.mobileSharedReelCommentsOpen = false;
+        this.activeSharedReelSourceReplyPreview = this.buildReplyPreviewFromMessage(message);
         this.activeSharedReelResolved = this.buildFallbackReelDto(normalizedSharedReel);
         this.activeSharedReel = {
             ...normalizedSharedReel
@@ -1868,6 +1935,7 @@ export class ChatPageComponent implements OnDestroy {
         this.editingSharedReelCaption = false;
         this.sharedReelCaptionDraft = '';
         this.viewerCommentDraft = '';
+        this.sharedReelChatReplyDraft = '';
         this.pendingShareReelFromViewer = null;
         this.replyingToSharedReelCommentId = null;
         this.editingSharedReelCommentId = null;
@@ -1876,6 +1944,15 @@ export class ChatPageComponent implements OnDestroy {
         this.deletingSharedReelCommentId = null;
         this.pendingDeleteSharedReelCommentId = null;
         this.expandedSharedReelReplyRootIds.clear();
+        this.activeSharedReelPaused = false;
+        this.mobileSharedReelCommentsOpen = false;
+        this.activeSharedReelSourceReplyPreview = null;
+    }
+
+    closeSharedReelViewerFromButton(event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.closeSharedReelViewer();
     }
 
     onSharedReelViewerBackdropClick(event: MouseEvent): void {
@@ -1889,6 +1966,77 @@ export class ChatPageComponent implements OnDestroy {
     toggleActiveSharedReelSound(): void {
         this.activeSharedReelMuted = !this.activeSharedReelMuted;
         this.syncActiveSharedReelVideoAudioState();
+    }
+
+    toggleActiveSharedReelPlayback(event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+
+        const video = this.activeSharedReelVideoRef?.nativeElement;
+        if (!video) {
+            return;
+        }
+
+        if (video.paused) {
+            const playPromise = video.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(() => {
+                    this.activeSharedReelPaused = video.paused;
+                });
+            }
+            return;
+        }
+
+        video.pause();
+        this.activeSharedReelPaused = true;
+    }
+
+    openMobileSharedReelComments(event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+        this.mobileSharedReelCommentsOpen = true;
+    }
+
+    closeMobileSharedReelComments(event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+        this.mobileSharedReelCommentsOpen = false;
+    }
+
+    async submitSharedReelChatReply(): Promise<void> {
+        const conversationId = this.selectedConversationId;
+        const text = this.sharedReelChatReplyDraft.trim();
+        if (!conversationId || !text || this.sendingMessage) {
+            return;
+        }
+
+        const parts: string[] = [];
+        if (this.activeSharedReelSourceReplyPreview) {
+            parts.push(buildChatReplyMarker(this.activeSharedReelSourceReplyPreview));
+        }
+        parts.push(text);
+        const content = parts.join('\n').trim();
+        if (!content) {
+            return;
+        }
+
+        this.sendingMessage = true;
+        this.status = '';
+
+        try {
+            const created = await this.session.sendChatMessageAsync(conversationId, content);
+            this.upsertMessage(created);
+            this.applyConversationPreview(created);
+            this.sharedReelChatReplyDraft = '';
+        } catch {
+            this.status = 'Could not send reply.';
+        } finally {
+            this.sendingMessage = false;
+        }
+    }
+
+    get canSubmitSharedReelChatReply(): boolean {
+        return !!this.selectedConversationId && !this.sendingMessage && !!this.sharedReelChatReplyDraft.trim();
     }
 
     get canManageActiveSharedReel(): boolean {
@@ -2001,6 +2149,11 @@ export class ChatPageComponent implements OnDestroy {
 
     onActiveSharedReelVideoLoaded(): void {
         this.syncActiveSharedReelVideoAudioState();
+        this.activeSharedReelPaused = this.activeSharedReelVideoRef?.nativeElement?.paused ?? false;
+    }
+
+    onActiveSharedReelPlaybackChanged(): void {
+        this.activeSharedReelPaused = this.activeSharedReelVideoRef?.nativeElement?.paused ?? false;
     }
 
     get activeSharedReelLikeCount(): number {
@@ -2640,6 +2793,133 @@ export class ChatPageComponent implements OnDestroy {
         return this.reactionTotalCountFromReactions(this.messageDisplayReactions(message));
     }
 
+    onMessageReactionSummaryMouseDown(message: ChatMessageDto, event: MouseEvent): void {
+        if (this.reactionTotalCount(message) <= 1) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        this.messageReactionSummaryPointerHandled = true;
+        this.openMessageReactionsModal(message);
+    }
+
+    onMessageReactionSummaryClick(message: ChatMessageDto, event: MouseEvent): void {
+        if (this.reactionTotalCount(message) <= 1) {
+            return;
+        }
+
+        if (this.messageReactionSummaryPointerHandled) {
+            this.messageReactionSummaryPointerHandled = false;
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        this.openMessageReactionsModal(message);
+    }
+
+    onMessageReactionSummaryKeydown(message: ChatMessageDto, event: KeyboardEvent): void {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+
+        if (this.reactionTotalCount(message) <= 1) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        this.openMessageReactionsModal(message);
+    }
+
+    closeMessageReactionsModal(): void {
+        if (!this.messageReactionsModalOpen || this.messageReactionsModalClosing) {
+            return;
+        }
+
+        this.messageReactionsModalClosing = true;
+        this.messageReactionsModalCloseTimerId = window.setTimeout(() => {
+            this.messageReactionsModalOpen = false;
+            this.messageReactionsModalClosing = false;
+            this.messageReactionsModalCloseTimerId = null;
+            this.activeMessageReactionsMessage = null;
+            this.selectedMessageReactionFilter = 'all';
+        }, ChatPageComponent.MessageReactionsModalCloseDurationMs);
+    }
+
+    selectMessageReactionFilter(filterKey: string): void {
+        this.selectedMessageReactionFilter = filterKey;
+    }
+
+    onMessageReactionTabMouseDown(filterKey: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.messageReactionTabPointerHandled = true;
+        this.selectMessageReactionFilter(filterKey);
+    }
+
+    onMessageReactionTabClick(filterKey: string, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (this.messageReactionTabPointerHandled) {
+            this.messageReactionTabPointerHandled = false;
+            return;
+        }
+
+        this.selectMessageReactionFilter(filterKey);
+    }
+
+    get messageReactionModalFilters(): Array<{ key: string; type: string; count: number }> {
+        const message = this.activeMessageReactionsMessage;
+        if (!message) {
+            return [];
+        }
+
+        const visibleReactions = this.messageDisplayReactions(message)
+            .map(reaction => ({
+                type: this.canonicalReactionType(reaction.type),
+                count: Math.max(0, reaction.count ?? 0)
+            }))
+            .filter(reaction => reaction.count > 0);
+
+        const totalCount = visibleReactions.reduce((sum, reaction) => sum + reaction.count, 0);
+        if (totalCount <= 1) {
+            return [];
+        }
+
+        return [
+            { key: 'all', type: 'All', count: totalCount },
+            ...visibleReactions.map(reaction => ({
+                key: reaction.type.toLowerCase(),
+                type: reaction.type,
+                count: reaction.count
+            }))
+        ];
+    }
+
+    get visibleMessageReactionDetails(): MessageReactionDetailEntry[] {
+        const details = this.messageReactionDetails;
+        if (!details.length) {
+            return [];
+        }
+
+        if (this.selectedMessageReactionFilter === 'all') {
+            return details;
+        }
+
+        return details.filter(detail => this.canonicalReactionType(detail.reactionType).toLowerCase() === this.selectedMessageReactionFilter);
+    }
+
+    get messageReactionDetailsEmptyMessage(): string {
+        if (!this.messageReactionDetails.length) {
+            return 'Reaction details are not available yet for this message.';
+        }
+
+        return 'No people found for this reaction.';
+    }
+
     private normalizeReactionType(type: string): string | null {
         const normalized = (type ?? '').trim();
         if (!normalized) {
@@ -2658,13 +2938,105 @@ export class ChatPageComponent implements OnDestroy {
         return null;
     }
 
+    private openMessageReactionsModal(message: ChatMessageDto): void {
+        if (this.reactionTotalCount(message) <= 1) {
+            return;
+        }
+
+        if (this.messageReactionsModalCloseTimerId !== null) {
+            window.clearTimeout(this.messageReactionsModalCloseTimerId);
+            this.messageReactionsModalCloseTimerId = null;
+        }
+
+        this.activeMessageReactionsMessage = message;
+        this.selectedMessageReactionFilter = 'all';
+        this.messageReactionsModalClosing = false;
+        this.messageReactionsModalOpen = true;
+    }
+
+    private get messageReactionDetails(): MessageReactionDetailEntry[] {
+        const message = this.activeMessageReactionsMessage;
+        if (!message) {
+            return [];
+        }
+
+        const typedEntries = (message as unknown as { reactionDetails?: PostReactionDetailDto[] }).reactionDetails ?? [];
+        if (typedEntries.length) {
+            return typedEntries
+                .map(entry => ({
+                    profileId: entry.profileId,
+                    displayName: entry.displayName,
+                    handle: entry.handle,
+                    subtitle: entry.bio ?? '',
+                    imageUrl: entry.imageUrl ?? '',
+                    reactionType: this.canonicalReactionType(entry.reactionType)
+                }))
+                .sort((left, right) => left.displayName.localeCompare(right.displayName));
+        }
+
+        const rawMessage = message as unknown as Record<string, unknown>;
+        const directCandidates = [
+            rawMessage['reactionDetails'],
+            rawMessage['reactionUsers'],
+            rawMessage['reactors'],
+            rawMessage['reactionEntries'],
+            rawMessage['reactionsDetailed']
+        ];
+
+        let rawEntries: unknown[] = [];
+        for (const candidate of directCandidates) {
+            if (Array.isArray(candidate)) {
+                rawEntries = candidate;
+                break;
+            }
+        }
+
+        if (!rawEntries.length) {
+            for (const summary of (message.reactions ?? []) as unknown as Array<Record<string, unknown>>) {
+                const nested = summary['users'] ?? summary['profiles'] ?? summary['reactors'] ?? null;
+                if (!Array.isArray(nested)) {
+                    continue;
+                }
+
+                rawEntries.push(...nested.map(entry => ({ ...(entry as Record<string, unknown>), reactionType: summary['type'] })));
+            }
+        }
+
+        return rawEntries
+            .map(entry => {
+                const item = entry as Record<string, unknown>;
+                const handle = String(item['handle'] ?? item['userHandle'] ?? item['profileHandle'] ?? '').trim();
+                const rawDisplayName = item['displayName'] ?? item['name'] ?? item['userDisplayName'] ?? handle;
+                const displayName = String(rawDisplayName || 'Unknown user').trim();
+                const subtitle = String(item['subtitle'] ?? item['bio'] ?? item['headline'] ?? item['title'] ?? '').trim();
+                const imageUrl = String(item['imageUrl'] ?? item['avatarUrl'] ?? item['userImageUrl'] ?? '').trim();
+                const reactionType = this.canonicalReactionType(String(item['reactionType'] ?? item['type'] ?? item['reaction'] ?? 'Like'));
+                const profileId = String(item['profileId'] ?? item['id'] ?? handle ?? displayName).trim();
+
+                return {
+                    profileId,
+                    displayName,
+                    handle,
+                    subtitle,
+                    imageUrl,
+                    reactionType
+                };
+            })
+            .filter(entry => !!entry.profileId)
+            .sort((left, right) => left.displayName.localeCompare(right.displayName));
+    }
+
+    private canonicalReactionType(type: string | null | undefined): string {
+        return this.normalizeReactionType(type ?? '') ?? 'Like';
+    }
+
     private isMobileReactionMode(): boolean {
         return window.matchMedia('(max-width: 680px)').matches;
     }
 
     private isMessageInteractionTarget(target: HTMLElement): boolean {
         return !!target.closest(
-            'a, button, input, textarea, select, label, [role="button"], .reaction-zone, .mobile-reaction-menu, .hashtag, .mention'
+            'a, button, input, textarea, select, label, [role="button"], .reaction-zone, .mobile-reaction-menu, .reaction-summary, .reaction-badge, .hashtag, .mention'
         );
     }
 

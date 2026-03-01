@@ -185,6 +185,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             .AsNoTracking()
             .Include(x => x.AuthorProfile)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .Where(x => x.ConversationId == conversationId)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Skip(boundedSkip)
@@ -222,13 +223,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
         dbContext.ChatMessages.Add(message);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var hydrated = await dbContext.ChatMessages
-            .AsNoTracking()
-            .Include(x => x.AuthorProfile)
-            .Include(x => x.Reactions)
-            .FirstOrDefaultAsync(x => x.Id == message.Id, cancellationToken);
-
-        return hydrated is null ? null : MapMessageDto(hydrated, profileId);
+        return await HydrateMessageDtoAsync(message.Id, profileId, cancellationToken);
     }
 
     public async Task<ChatMessageDto?> UpdateMessageAsync(Guid profileId, Guid messageId, UpdateChatMessageRequest request, CancellationToken cancellationToken = default)
@@ -236,6 +231,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
         var message = await dbContext.ChatMessages
             .Include(x => x.AuthorProfile)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .Include(x => x.Conversation)
                 .ThenInclude(x => x.Members)
             .FirstOrDefaultAsync(x => x.Id == messageId, cancellationToken);
@@ -263,14 +259,14 @@ public class ChatService(SocialSezContext dbContext) : IChatService
 
         if (string.Equals(message.Content, content, StringComparison.Ordinal))
         {
-            return MapMessageDto(message, profileId);
+            return await HydrateMessageDtoAsync(message.Id, profileId, cancellationToken);
         }
 
         message.Content = content;
         message.EditedAtUtc = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return MapMessageDto(message, profileId);
+        return await HydrateMessageDtoAsync(message.Id, profileId, cancellationToken);
     }
 
     public async Task<ChatMessageDto?> SetMessageReactionAsync(Guid profileId, Guid messageId, SetMessageReactionRequest request, CancellationToken cancellationToken = default)
@@ -284,6 +280,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
         var message = await dbContext.ChatMessages
             .Include(x => x.AuthorProfile)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .Include(x => x.Conversation)
                 .ThenInclude(x => x.Members)
             .FirstOrDefaultAsync(x => x.Id == messageId, cancellationToken);
@@ -315,7 +312,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return MapMessageDto(message, profileId);
+        return await HydrateMessageDtoAsync(message.Id, profileId, cancellationToken);
     }
 
     public async Task<ChatMessageDto?> ClearMessageReactionAsync(Guid profileId, Guid messageId, CancellationToken cancellationToken = default)
@@ -323,6 +320,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
         var message = await dbContext.ChatMessages
             .Include(x => x.AuthorProfile)
             .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
             .Include(x => x.Conversation)
                 .ThenInclude(x => x.Members)
             .FirstOrDefaultAsync(x => x.Id == messageId, cancellationToken);
@@ -344,7 +342,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        return MapMessageDto(message, profileId);
+        return await HydrateMessageDtoAsync(message.Id, profileId, cancellationToken);
     }
 
     private async Task<bool> IsMemberAsync(Guid profileId, Guid conversationId, CancellationToken cancellationToken)
@@ -412,6 +410,19 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             .ThenBy(x => x.Type)
             .ToArray();
 
+        var reactionDetails = entity.Reactions
+            .Where(x => x.Profile is not null)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new PostReactionDetailDto(
+                x.ProfileId,
+                x.Profile.Handle,
+                x.Profile.DisplayName,
+                x.Profile.Bio,
+                x.Profile.ImageUrl,
+                x.Type,
+                x.CreatedAtUtc))
+            .ToArray();
+
         return new ChatMessageDto(
             entity.Id,
             entity.ConversationId,
@@ -422,6 +433,19 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             entity.CreatedAtUtc,
             entity.EditedAtUtc,
             myReaction,
-            summaries);
+            summaries,
+            reactionDetails);
+    }
+
+    private async Task<ChatMessageDto?> HydrateMessageDtoAsync(Guid messageId, Guid viewerProfileId, CancellationToken cancellationToken)
+    {
+        var hydrated = await dbContext.ChatMessages
+            .AsNoTracking()
+            .Include(x => x.AuthorProfile)
+            .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
+            .FirstOrDefaultAsync(x => x.Id == messageId, cancellationToken);
+
+        return hydrated is null ? null : MapMessageDto(hydrated, viewerProfileId);
     }
 }

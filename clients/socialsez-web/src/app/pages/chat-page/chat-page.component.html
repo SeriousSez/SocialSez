@@ -257,7 +257,9 @@
                                         </div>
 
                                         <div class="reaction-summary corner" *ngIf="messageDisplayReactions(message) as visibleReactions">
-                                            <span class="reaction-badge" *ngIf="visibleReactions.length" [class.has-multiple]="reactionTotalCountFromReactions(visibleReactions) > 1">
+                                            <span class="reaction-badge" *ngIf="visibleReactions.length" [class.has-multiple]="reactionTotalCountFromReactions(visibleReactions) > 1" [class.clickable]="reactionTotalCountFromReactions(visibleReactions) > 1"
+                                                [attr.role]="reactionTotalCountFromReactions(visibleReactions) > 1 ? 'button' : null" [attr.tabindex]="reactionTotalCountFromReactions(visibleReactions) > 1 ? 0 : null" aria-label="Show reactions"
+                                                (mousedown)="onMessageReactionSummaryMouseDown(message, $event)" (click)="onMessageReactionSummaryClick(message, $event)" (keydown)="onMessageReactionSummaryKeydown(message, $event)">
                                                 <span class="reaction-emoji" *ngFor="let reaction of visibleReactions" [ngClass]="reactionBadgeClass(reaction.type)">
                                                     <i [class]="reactionIconClass(reaction.type)" aria-hidden="true"></i>
                                                 </span>
@@ -309,6 +311,55 @@
                         <span class="typing-dot"></span>
                         <span class="typing-dot"></span>
                     </div>
+                </div>
+
+                <div class="reactions-modal-backdrop" *ngIf="messageReactionsModalOpen || messageReactionsModalClosing" [class.closing]="messageReactionsModalClosing" (click)="closeMessageReactionsModal()">
+                    <section class="reactions-modal" [class.closing]="messageReactionsModalClosing" role="dialog" aria-modal="true" aria-label="Reactions" (click)="$event.stopPropagation()">
+                        <header class="reactions-modal-header">
+                            <h3>Reactions</h3>
+                            <button type="button" class="reactions-modal-close" (click)="closeMessageReactionsModal()" aria-label="Close reactions">
+                                <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
+                            </button>
+                        </header>
+
+                        <div class="reactions-modal-tabs" *ngIf="messageReactionModalFilters.length">
+                            <button type="button" class="reaction-tab" *ngFor="let filter of messageReactionModalFilters" [class.active]="selectedMessageReactionFilter === filter.key" (mousedown)="onMessageReactionTabMouseDown(filter.key, $event)"
+                                (click)="onMessageReactionTabClick(filter.key, $event)">
+                                <ng-container *ngIf="filter.key === 'all'; else messageReactionFilterIcon">
+                                    <span class="reaction-tab-label">All</span>
+                                </ng-container>
+                                <ng-template #messageReactionFilterIcon>
+                                    <span class="reaction-emoji reaction-tab-reaction" [ngClass]="reactionBadgeClass(filter.type)">
+                                        <i [class]="reactionIconClass(filter.type)" aria-hidden="true"></i>
+                                    </span>
+                                </ng-template>
+                                <span class="reaction-tab-count">{{ filter.count | number }}</span>
+                            </button>
+                        </div>
+
+                        <div class="reactions-modal-list" *ngIf="visibleMessageReactionDetails.length; else messageReactionsModalEmpty">
+                            <article class="reaction-person" *ngFor="let item of visibleMessageReactionDetails">
+                                <img class="reaction-person-avatar" *ngIf="item.imageUrl; else messageReactionPersonInitial" [src]="item.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reaction author image" />
+                                <ng-template #messageReactionPersonInitial>
+                                    <div class="reaction-person-avatar fallback">{{ (item.displayName || item.handle || '?').charAt(0).toUpperCase() }}</div>
+                                </ng-template>
+
+                                <div class="reaction-person-main">
+                                    <p class="reaction-person-name">{{ item.displayName }}</p>
+                                    <p class="reaction-person-subtitle" *ngIf="item.subtitle">{{ item.subtitle }}</p>
+                                    <p class="reaction-person-subtitle" *ngIf="!item.subtitle && item.handle">@{{ item.handle }}</p>
+                                </div>
+
+                                <span class="reaction-emoji reaction-person-reaction" [ngClass]="reactionBadgeClass(item.reactionType)">
+                                    <i [class]="reactionIconClass(item.reactionType)" aria-hidden="true"></i>
+                                </span>
+                            </article>
+                        </div>
+
+                        <ng-template #messageReactionsModalEmpty>
+                            <div class="reactions-modal-empty">{{ messageReactionDetailsEmptyMessage }}</div>
+                        </ng-template>
+                    </section>
                 </div>
             </div>
 
@@ -417,7 +468,11 @@
             <button type="button" class="shared-reel-viewer-close" (click)="toggleSharedReelSettingsMenu($event)" aria-label="Reel settings">
                 <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
             </button>
+            <button type="button" class="shared-reel-viewer-mobile-close" (click)="closeSharedReelViewerFromButton($event)" aria-label="Close reel viewer">
+                <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
+            </button>
             <div class="shared-reel-viewer-menu" *ngIf="sharedReelSettingsMenuOpen">
+                <button type="button" (click)="toggleActiveSharedReelSound()">{{ activeSharedReelMuted ? 'Unmute reel' : 'Mute reel' }}</button>
                 <button type="button" (click)="startActiveSharedReelCaptionEdit()" [disabled]="!canManageActiveSharedReel || updatingSharedReel || deletingSharedReel">Edit reel</button>
                 <button type="button" class="danger" (click)="requestDeleteActiveSharedReel()" [disabled]="!canManageActiveSharedReel || updatingSharedReel || deletingSharedReel">
                     {{ deletingSharedReel ? 'Deleting…' : 'Delete reel' }}
@@ -425,10 +480,87 @@
             </div>
             <div class="shared-reel-viewer-media">
                 <div class="shared-reel-viewer-stage">
-                    <video #activeSharedReelVideo [src]="reel.videoUrl" [poster]="reel.thumbnailUrl || null" [style.transform]="activeSharedReelFrameTransform" playsinline [muted]="activeSharedReelMuted" autoplay loop preload="metadata" (loadedmetadata)="onActiveSharedReelVideoLoaded()"></video>
-                    <button type="button" class="shared-reel-sound-toggle" (click)="toggleActiveSharedReelSound()" [attr.aria-label]="activeSharedReelMuted ? 'Unmute reel' : 'Mute reel'">
-                        <i class="fa-duotone" [class.fa-volume-xmark]="activeSharedReelMuted" [class.fa-volume-high]="!activeSharedReelMuted" aria-hidden="true"></i>
-                    </button>
+                    <video #activeSharedReelVideo [src]="reel.videoUrl" [poster]="reel.thumbnailUrl || null" [style.transform]="activeSharedReelFrameTransform" playsinline [muted]="activeSharedReelMuted" autoplay loop preload="metadata" (loadedmetadata)="onActiveSharedReelVideoLoaded()"
+                        (play)="onActiveSharedReelPlaybackChanged()" (pause)="onActiveSharedReelPlaybackChanged()" (click)="toggleActiveSharedReelPlayback($event)"></video>
+
+                    <div class="shared-reel-mobile-overlay">
+                        <header class="shared-reel-mobile-head">
+                            <img class="shared-reel-mobile-avatar" *ngIf="reel.authorImageUrl" [src]="reel.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reel author avatar" />
+                            <span class="shared-reel-mobile-avatar-fallback" *ngIf="!reel.authorImageUrl">{{ (reel.authorHandle || 'R')[0].toUpperCase() }}</span>
+                            <div class="shared-reel-mobile-author">
+                                <strong *ngIf="activeSharedReelAuthorHandle as handle">
+                                    <a class="shared-reel-profile-link" [href]="'/users/' + handle" (click)="openUserProfile(handle, $event)">@{{ handle }}</a>
+                                </strong>
+                                <p *ngIf="reel.createdAtUtc || activeSharedReelLocation">
+                                    <span *ngIf="reel.createdAtUtc">{{ formatFeedTimestamp(reel.createdAtUtc) }}</span>
+                                    <span *ngIf="reel.createdAtUtc && activeSharedReelLocation"> · </span>
+                                    <button type="button" class="shared-reel-location-link" *ngIf="activeSharedReelLocation" (click)="openLocationInMaps(activeSharedReelLocation, $event)">📍 {{ activeSharedReelLocation }}</button>
+                                </p>
+                            </div>
+                        </header>
+
+                        <div class="shared-reel-mobile-bottom">
+                            <section class="shared-reel-mobile-caption" *ngIf="activeSharedReelAuthorHandle || activeSharedReelCaptionText">
+                                <p>
+                                    <a *ngIf="activeSharedReelAuthorHandle as handle" class="shared-reel-caption-handle" [href]="'/users/' + handle" (click)="openUserProfile(handle, $event)">@{{ handle }}</a>
+                                    <span *ngIf="activeSharedReelCaptionText"> {{ activeSharedReelCaptionText }}</span>
+                                </p>
+                            </section>
+
+                            <div class="shared-reel-mobile-actions">
+                                <button type="button" class="shared-reel-mobile-action" [class.active]="activeSharedReelLikedByMe" (click)="toggleActiveSharedReelLike()" [disabled]="reactingSharedReel || !activeSharedReelResolved?.id" aria-label="Like reel">
+                                    <i class="fa-duotone fa-heart" [class.fa-solid]="activeSharedReelLikedByMe" [class.fa-light]="!activeSharedReelLikedByMe" aria-hidden="true"></i>
+                                    <span>{{ activeSharedReelLikeCount }}</span>
+                                </button>
+                                <button type="button" class="shared-reel-mobile-action" (click)="openMobileSharedReelComments($event)" aria-label="Open reel comments">
+                                    <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
+                                    <span>{{ activeSharedReelComments.length }}</span>
+                                </button>
+                                <button type="button" class="shared-reel-mobile-action" (click)="openActiveSharedReelShareModal()" [disabled]="!activeSharedReelResolved || !!sharingSharedReelId" aria-label="Share reel">
+                                    <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="shared-reel-mobile-reply">
+                            <input type="text" [(ngModel)]="sharedReelChatReplyDraft" placeholder="Reply to chat..." [disabled]="sendingMessage || !selectedConversationId" (keydown.enter)="submitSharedReelChatReply()" />
+                            <button type="button" (click)="submitSharedReelChatReply()" [disabled]="!canSubmitSharedReelChatReply">{{ sendingMessage ? '...' : 'Send' }}</button>
+                        </div>
+                    </div>
+
+                    <div class="shared-reel-mobile-comments-backdrop" *ngIf="mobileSharedReelCommentsOpen" (click)="closeMobileSharedReelComments($event)">
+                        <section class="shared-reel-mobile-comments-sheet" role="dialog" aria-modal="true" aria-label="Reel comments" (click)="$event.stopPropagation()">
+                            <header class="shared-reel-mobile-comments-head">
+                                <h4>Comments</h4>
+                                <button type="button" class="ghost" (click)="closeMobileSharedReelComments($event)" aria-label="Close comments">Close</button>
+                            </header>
+
+                            <section class="shared-reel-mobile-comments-list" *ngIf="activeSharedReelComments.length; else mobileSharedReelCommentsEmpty">
+                                <article class="viewer-comment" *ngFor="let item of orderedActiveSharedReelComments" [class.reply-comment]="item.depth > 0">
+                                    <ng-container *ngIf="item.comment as comment">
+                                        <img class="viewer-comment-avatar" *ngIf="comment.authorImageUrl; else mobileViewerCommentInitial" [src]="comment.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
+                                        <ng-template #mobileViewerCommentInitial>
+                                            <div class="viewer-comment-avatar">{{ comment.authorHandle[0] }}</div>
+                                        </ng-template>
+
+                                        <div class="viewer-comment-main">
+                                            <p class="viewer-comment-line"><strong>@{{ comment.authorHandle }}</strong> {{ comment.content }}</p>
+                                            <p class="viewer-comment-meta">{{ comment.createdAtUtc | date:'short' }}</p>
+                                        </div>
+                                    </ng-container>
+                                </article>
+                            </section>
+
+                            <ng-template #mobileSharedReelCommentsEmpty>
+                                <p class="shared-reel-mobile-comments-empty">No comments yet.</p>
+                            </ng-template>
+
+                            <div class="shared-reel-mobile-comments-form">
+                                <input type="text" [(ngModel)]="viewerCommentDraft" placeholder="Add a comment..." [disabled]="commentingSharedReel || !activeSharedReelResolved?.id" (keydown.enter)="submitActiveSharedReelComment()" />
+                                <button type="button" (click)="submitActiveSharedReelComment()" [disabled]="!canSubmitActiveSharedReelComment">{{ commentingSharedReel ? '...' : 'Post' }}</button>
+                            </div>
+                        </section>
+                    </div>
                 </div>
             </div>
             <aside class="shared-reel-viewer-meta">
@@ -443,7 +575,7 @@
                             <p *ngIf="reel.createdAtUtc || activeSharedReelLocation">
                                 <span *ngIf="reel.createdAtUtc">{{ formatFeedTimestamp(reel.createdAtUtc) }}</span>
                                 <span *ngIf="reel.createdAtUtc && activeSharedReelLocation"> · </span>
-                                <span *ngIf="activeSharedReelLocation">📍 {{ activeSharedReelLocation }}</span>
+                                <button type="button" class="shared-reel-location-link" *ngIf="activeSharedReelLocation" (click)="openLocationInMaps(activeSharedReelLocation, $event)">📍 {{ activeSharedReelLocation }}</button>
                             </p>
                         </div>
                     </header>
