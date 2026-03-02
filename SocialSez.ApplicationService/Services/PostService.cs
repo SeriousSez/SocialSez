@@ -11,6 +11,7 @@ namespace SocialSez.ApplicationService.Services;
 public class PostService(SocialSezContext dbContext) : IPostService
 {
     private const string LikeReactionType = "Like";
+    private const int MaxPostContentLength = 3000;
     private static readonly Regex HashtagRegex = new(@"(?<![\p{L}\p{N}_])#(?<tag>[\p{L}\p{N}_]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     private static readonly HashSet<string> AllowedReactionTypes = new(StringComparer.Ordinal)
     {
@@ -31,6 +32,11 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         var content = request.Content?.Trim() ?? string.Empty;
         var imageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
+
+        if (content.Length > MaxPostContentLength)
+        {
+            throw new ArgumentException($"Post content cannot exceed {MaxPostContentLength} characters.", nameof(request));
+        }
 
         if (string.IsNullOrWhiteSpace(content) && string.IsNullOrWhiteSpace(imageUrl))
         {
@@ -325,6 +331,11 @@ public class PostService(SocialSezContext dbContext) : IPostService
         }
 
         var content = request.Content?.Trim() ?? string.Empty;
+        if (content.Length > MaxPostContentLength)
+        {
+            throw new ArgumentException($"Post content cannot exceed {MaxPostContentLength} characters.", nameof(request));
+        }
+
         if (string.IsNullOrWhiteSpace(content) && string.IsNullOrWhiteSpace(post.ImageUrl))
         {
             throw new ArgumentException("Post content is required when no image is attached.", nameof(request));

@@ -54,13 +54,18 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     private static readonly OpenCommentPostIds = new Set<string>();
     private static readonly ReactionsModalCloseDurationMs = 180;
     private static readonly ReactionsModalResizeDurationMs = 220;
+    private static readonly MaxPostContentLength = 3000;
+    private static readonly PostContentPreviewLength = 300;
     @Input({ required: true }) post!: PostDto;
     @Input()
     set content(value: string) {
         this._content = value ?? '';
         const parsed = extractSharedPostFromContent(this._content);
         this.sharedPost = parsed.sharedPost;
-        this.contentLines = this.parseContentLines(parsed.text);
+        this.fullContentText = parsed.text;
+        this.contentExpanded = false;
+        this.isContentTruncated = this.fullContentText.length > PostCardComponent.PostContentPreviewLength;
+        this.refreshVisibleContent();
     }
 
     get content(): string {
@@ -119,6 +124,9 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     editCommentContent = '';
     pendingDeleteCommentId: string | null = null;
     contentLines: PostContentPart[][] = [];
+    fullContentText = '';
+    isContentTruncated = false;
+    contentExpanded = false;
     sharedPost: SharedPostPreview | null = null;
     mentionResults: ProfileDto[] = [];
     mentionOpen = false;
@@ -213,8 +221,25 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     }
 
     onPostEditInput(value: string, textarea: HTMLTextAreaElement): void {
-        this.editValueChange.emit(value);
-        this.updateMentionSuggestions('post-edit', null, value, textarea.selectionStart ?? value.length);
+        const normalizedValue = this.normalizePostContentLength(value);
+        this.editValueChange.emit(normalizedValue);
+
+        if (normalizedValue !== value) {
+            const nextCaret = Math.min(textarea.selectionStart ?? normalizedValue.length, normalizedValue.length);
+            textarea.value = normalizedValue;
+            textarea.setSelectionRange(nextCaret, nextCaret);
+        }
+
+        this.updateMentionSuggestions('post-edit', null, normalizedValue, textarea.selectionStart ?? normalizedValue.length);
+    }
+
+    toggleContentExpansion(): void {
+        if (!this.isContentTruncated) {
+            return;
+        }
+
+        this.contentExpanded = !this.contentExpanded;
+        this.refreshVisibleContent();
     }
 
     onPostEditCursor(textarea: HTMLTextAreaElement): void {
@@ -1046,6 +1071,24 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         return content
             .split(/\r?\n/)
             .map(line => this.parseLineParts(line));
+    }
+
+    private refreshVisibleContent(): void {
+        if (!this.isContentTruncated || this.contentExpanded) {
+            this.contentLines = this.parseContentLines(this.fullContentText);
+            return;
+        }
+
+        const previewText = `${this.fullContentText.slice(0, PostCardComponent.PostContentPreviewLength).trimEnd()}…`;
+        this.contentLines = this.parseContentLines(previewText);
+    }
+
+    private normalizePostContentLength(value: string): string {
+        if (value.length <= PostCardComponent.MaxPostContentLength) {
+            return value;
+        }
+
+        return value.slice(0, PostCardComponent.MaxPostContentLength);
     }
 
     private parseLineParts(line: string): PostContentPart[] {

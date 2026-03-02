@@ -13,7 +13,7 @@ import { SessionService } from '../../core/session.service';
     styleUrl: './post-composer.component.scss'
 })
 export class PostComposerComponent implements OnDestroy {
-    readonly maxContentLength = 500;
+    readonly maxContentLength = 3000;
 
     @Input() showCancel = false;
     @Input() title = 'Compose';

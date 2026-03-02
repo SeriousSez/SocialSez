@@ -41,7 +41,9 @@ h2 {
 
 .hero-copy {
     display: grid;
-    gap: 4px
+    gap: 4px;
+    position: relative;
+    z-index: 2;
 }
 
 .handle,
@@ -55,6 +57,21 @@ h2 {
     margin: 2px 0;
     color: #334155;
     font-size: 0.95rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.bio a {
+    color: #2563eb;
+    text-decoration: none;
+    word-break: break-word;
+    position: relative;
+    z-index: 3;
+    pointer-events: auto;
+}
+
+.bio a:hover {
+    text-decoration: underline;
 }
 
 .hero-stats {

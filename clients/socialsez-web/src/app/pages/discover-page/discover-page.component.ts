@@ -36,6 +36,7 @@ export class DiscoverPageComponent implements OnDestroy {
     hashtagResults: HashtagSearchResultDto[] = [];
     reelResults: ReelDto[] = [];
     recommendedReels: ReelDto[] = [];
+    recommendedProfiles: ProfileDto[] = [];
 
     loading = false;
     status = '';
@@ -214,6 +215,10 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     get showRecommendedReelsSection(): boolean {
+        return !this.showingSearchResults;
+    }
+
+    get showRecommendedProfilesSection(): boolean {
         return !this.showingSearchResults;
     }
 
@@ -692,11 +697,13 @@ export class DiscoverPageComponent implements OnDestroy {
                 this.loading = true;
                 this.status = '';
                 this.recommendedReels = [];
+                this.recommendedProfiles = [];
 
                 try {
-                    const [recommended, followingProfiles] = await Promise.all([
+                    const [recommended, followingProfiles, followSuggestions] = await Promise.all([
                         this.session.loadReelFeedAsync(60, 'for-you'),
-                        this.session.loadFollowingAsync(250)
+                        this.session.loadFollowingAsync(250),
+                        this.session.isAuthenticated() ? this.session.loadFollowSuggestionsAsync(8) : Promise.resolve({ following: [], relevant: [] })
                     ]);
 
                     const followingIds = new Set(followingProfiles.map(profile => profile.id));
@@ -708,6 +715,24 @@ export class DiscoverPageComponent implements OnDestroy {
 
                         return !followingIds.has(reel.authorId);
                     });
+
+                    const mergedProfiles = [...followSuggestions.relevant, ...followSuggestions.following];
+                    const uniqueProfiles = new Map<string, ProfileDto>();
+                    for (const profile of mergedProfiles) {
+                        if (myProfileId && profile.id === myProfileId) {
+                            continue;
+                        }
+
+                        if (followingIds.has(profile.id)) {
+                            continue;
+                        }
+
+                        if (!uniqueProfiles.has(profile.id)) {
+                            uniqueProfiles.set(profile.id, profile);
+                        }
+                    }
+
+                    this.recommendedProfiles = Array.from(uniqueProfiles.values()).slice(0, 10);
                 } catch {
                     this.status = 'Could not load recommended reels right now.';
                 } finally {

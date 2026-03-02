@@ -397,6 +397,25 @@
     overflow-wrap: anywhere;
 }
 
+.content-see-more {
+    justify-self: start;
+    border: 0;
+    background: transparent;
+    color: #1d4ed8;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.2;
+    padding: 0;
+    box-shadow: none;
+    transform: none;
+}
+
+.content-see-more:hover {
+    text-decoration: underline;
+    box-shadow: none;
+    transform: none;
+}
+
 .hashtag,
 .mention {
     color: #1d4ed8;

@@ -30,6 +30,11 @@ interface StoryTrimPreviewOption {
     previewUrl: string;
 }
 
+interface BioSegment {
+    text: string;
+    url?: string;
+}
+
 @Component({
     selector: 'app-profile-page',
     standalone: true,
@@ -155,6 +160,8 @@ export class ProfilePageComponent implements OnDestroy {
     private readonly ngZone = inject(NgZone);
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly hostElement = inject(ElementRef<HTMLElement>);
+    private lastBioPointerNavigationAt = 0;
     private repostCountSource: PostDto[] | null = null;
     private repostCountsByPostId = new Map<string, number>();
 
@@ -236,6 +243,98 @@ export class ProfilePageComponent implements OnDestroy {
         }
 
         return this.isFollowing ? 'Unfollow' : 'Follow';
+    }
+
+    parseBioSegments(bio: string): BioSegment[] {
+        const source = bio ?? '';
+        if (!source.trim()) {
+            return [];
+        }
+
+        const expression = /((?:https?:\/\/|www\.)[^\s]+|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,})(?:\/[^\s]*)?)/gi;
+        const segments: BioSegment[] = [];
+        let cursor = 0;
+
+        for (const match of source.matchAll(expression)) {
+            const value = match[0] ?? '';
+            const index = match.index ?? 0;
+            const cleanedValue = value.replace(/[),.;!?]+$/g, '');
+            const normalizedUrl = this.normalizeBioUrl(cleanedValue);
+
+            if (index > cursor) {
+                segments.push({ text: source.slice(cursor, index) });
+            }
+
+            if (normalizedUrl) {
+                segments.push({ text: cleanedValue, url: normalizedUrl });
+                const trailingPart = value.slice(cleanedValue.length);
+                if (trailingPart) {
+                    segments.push({ text: trailingPart });
+                }
+            } else {
+                segments.push({ text: value });
+            }
+
+            cursor = index + value.length;
+        }
+
+        if (cursor < source.length) {
+            segments.push({ text: source.slice(cursor) });
+        }
+
+        return segments.length ? segments : [{ text: source }];
+    }
+
+    openBioLink(url: string | undefined, event: MouseEvent): void {
+        if (!url) {
+            return;
+        }
+
+        if (Date.now() - this.lastBioPointerNavigationAt < 500) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        this.navigateToBioUrl(url);
+    }
+
+    private normalizeBioUrl(candidate: string): string | null {
+        const value = candidate.trim();
+        if (!value) {
+            return null;
+        }
+
+        if (/^https?:\/\//i.test(value)) {
+            return value;
+        }
+
+        if (/^www\./i.test(value)) {
+            return `https://${value}`;
+        }
+
+        if (/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,})(?:\/[^\s]*)?$/i.test(value)) {
+            return `https://${value}`;
+        }
+
+        return null;
+    }
+
+    private getEventPath(event: Event): EventTarget[] {
+        const composedPath = typeof event.composedPath === 'function' ? event.composedPath() : null;
+        if (Array.isArray(composedPath) && composedPath.length) {
+            return composedPath;
+        }
+
+        const fallbackPath: EventTarget[] = [];
+        let currentNode = event.target as Node | null;
+        while (currentNode) {
+            fallbackPath.push(currentNode);
+            currentNode = currentNode.parentNode;
+        }
+
+        fallbackPath.push(window);
+        return fallbackPath;
     }
 
     get isPrivateLockedView(): boolean {
@@ -370,13 +469,52 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
-        const clickedInsideMenu = event.composedPath().some((node) => {
+        const clickedInsideMenu = this.getEventPath(event).some((node) => {
             return node instanceof HTMLElement && node.classList.contains('hero-create-menu');
         });
 
         if (!clickedInsideMenu) {
             this.createMenuOpen = false;
         }
+    }
+
+    @HostListener('document:pointerdown', ['$event'])
+    onDocumentPointerDown(event: PointerEvent): void {
+        if (event.button !== 0) {
+            return;
+        }
+
+        const target = event.target as HTMLElement | null;
+        const bioLink = target?.closest('a.bio-link') as HTMLAnchorElement | null;
+        if (!bioLink) {
+            return;
+        }
+
+        if (!this.hostElement.nativeElement.contains(bioLink)) {
+            return;
+        }
+
+        const href = bioLink.href?.trim();
+        if (!href) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        this.lastBioPointerNavigationAt = Date.now();
+        this.navigateToBioUrl(href);
+    }
+
+    private navigateToBioUrl(url: string): void {
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+        anchor.style.display = 'none';
+
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
     }
 
     @HostListener('document:keydown.escape')

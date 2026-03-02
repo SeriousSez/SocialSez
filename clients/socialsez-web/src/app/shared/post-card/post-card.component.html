@@ -11,7 +11,7 @@
     <ng-content select="[post-header]"></ng-content>
 
     <ng-container *ngIf="isEditing">
-        <textarea #postEditArea class="edit-input" rows="4" [ngModel]="editValue" (ngModelChange)="onPostEditInput($event, postEditArea)" (keyup)="onPostEditCursor(postEditArea)" (click)="onPostEditCursor(postEditArea)" (blur)="onTextAreaBlur()"></textarea>
+        <textarea #postEditArea class="edit-input" rows="4" [ngModel]="editValue" (ngModelChange)="onPostEditInput($event, postEditArea)" (keyup)="onPostEditCursor(postEditArea)" (click)="onPostEditCursor(postEditArea)" (blur)="onTextAreaBlur()" [attr.maxlength]="3000"></textarea>
         <div class="mention-suggestions" *ngIf="(mentionOpen || mentionLoading) && mentionTarget === 'post-edit'">
             <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
             <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
@@ -38,6 +38,7 @@
                 <br *ngIf="!isLastLine" />
             </ng-container>
         </div>
+        <button class="content-see-more" type="button" *ngIf="isContentTruncated" (click)="toggleContentExpansion()">{{ contentExpanded ? 'See less' : 'See more' }}</button>
 
         <article class="shared-post-preview" *ngIf="sharedPost as shared" [attr.role]="'button'" tabindex="0" (click)="openSharedPost(shared, $event)" (keydown.enter)="openSharedPost(shared, $event)" (keydown.space)="openSharedPost(shared, $event)">
             <header class="shared-post-head">

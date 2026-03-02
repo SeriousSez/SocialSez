@@ -328,7 +328,7 @@ export class ChatPageComponent implements OnDestroy {
 
     @HostListener('document:pointerdown', ['$event'])
     onDocumentPointerDown(event: PointerEvent): void {
-        const path = event.composedPath();
+        const path = this.getEventPath(event);
         const isInside = (element: Element | null | undefined): boolean => !!element && path.includes(element);
 
         if (this.sharedReelSettingsMenuOpen) {
@@ -3032,6 +3032,23 @@ export class ChatPageComponent implements OnDestroy {
 
     private isMobileReactionMode(): boolean {
         return window.matchMedia('(max-width: 680px)').matches;
+    }
+
+    private getEventPath(event: Event): EventTarget[] {
+        const composedPath = typeof event.composedPath === 'function' ? event.composedPath() : null;
+        if (Array.isArray(composedPath) && composedPath.length) {
+            return composedPath;
+        }
+
+        const fallbackPath: EventTarget[] = [];
+        let currentNode = event.target as Node | null;
+        while (currentNode) {
+            fallbackPath.push(currentNode);
+            currentNode = currentNode.parentNode;
+        }
+
+        fallbackPath.push(window);
+        return fallbackPath;
     }
 
     private isMessageInteractionTarget(target: HTMLElement): boolean {
