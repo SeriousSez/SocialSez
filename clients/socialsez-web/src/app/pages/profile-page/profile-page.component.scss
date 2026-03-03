@@ -23,6 +23,16 @@
     border-radius: 50%;
 }
 
+.hero-image-blocked {
+    display: grid;
+    place-items: center;
+    color: #94a3b8;
+}
+
+.hero-image-blocked i {
+    font-size: 1.5rem;
+}
+
 .hero-image.story-active,
 .avatar.story-active {
     border: 2px solid transparent;
@@ -72,6 +82,36 @@ h2 {
 
 .bio a:hover {
     text-decoration: underline;
+}
+
+.trust-signals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.trust-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 10px;
+    border: 1px solid #dbe4f0;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.trust-pill.is-private {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.trust-pill i {
+    font-size: 0.82rem;
 }
 
 .hero-stats {
@@ -131,6 +171,80 @@ h2 {
     align-items: center;
     justify-content: flex-end;
     gap: 8px;
+    flex-wrap: wrap;
+}
+
+.hero-actions-follow .ghost {
+    white-space: nowrap;
+}
+
+.profile-safety-menu {
+    position: relative;
+}
+
+.profile-safety-trigger {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #f1f5f9;
+    color: #94a3b8;
+    display: grid;
+    place-items: center;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+
+.profile-safety-trigger:hover {
+    background: #e2e8f0;
+}
+
+.profile-safety-trigger:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.profile-safety-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 170px;
+    border: 1px solid #dbe4f0;
+    border-radius: 0;
+    background: #fff;
+    box-shadow: 0 16px 30px -24px #0f172a;
+    z-index: 20;
+    overflow: hidden;
+}
+
+.profile-safety-dropdown button {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 0;
+    background: #fff;
+    color: #1e293b;
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.profile-safety-dropdown button:last-child {
+    border-bottom: 0;
+}
+
+.profile-safety-dropdown button:hover {
+    background: #f8fafc;
+}
+
+.profile-safety-dropdown button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
 .hero-icon-button,

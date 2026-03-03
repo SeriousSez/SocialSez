@@ -2,7 +2,7 @@
     <h2>Discover</h2>
     <div class="search-row">
         <label class="search-label">Search
-            <input [(ngModel)]="query" placeholder="Search users, reels, posts, hashtags" (ngModelChange)="onQueryChanged()" />
+            <input [(ngModel)]="query" placeholder="Search users, reels, posts, hashtags" (input)="onQueryInput($event)" />
         </label>
     </div>
 

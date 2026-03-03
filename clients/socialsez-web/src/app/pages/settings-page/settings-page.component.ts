@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ProfileDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
+import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
 
 @Component({
     selector: 'app-settings-page',
@@ -11,11 +13,12 @@ import { SessionService } from '../../core/session.service';
     styleUrl: './settings-page.component.scss'
 })
 export class SettingsPageComponent implements OnDestroy {
-    readonly sectionOpenState: Record<'profile' | 'account' | 'session' | 'preferences' | 'logout', boolean> = {
+    readonly sectionOpenState: Record<'profile' | 'account' | 'session' | 'preferences' | 'blocked' | 'logout', boolean> = {
         profile: true,
         account: false,
         session: false,
         preferences: false,
+        blocked: false,
         logout: false
     };
 
@@ -24,7 +27,10 @@ export class SettingsPageComponent implements OnDestroy {
     bio = '';
     imageUrl = '';
     isPrivate = false;
-    status = '';
+    blockedProfiles: ProfileDto[] = [];
+    loadingBlockedProfiles = false;
+    unblockingProfileId: string | null = null;
+    private blockedProfilesLoaded = false;
     uploadingProfileImage = false;
     avatarModalOpen = false;
     avatarModalStep: 1 | 2 = 1;
@@ -66,8 +72,46 @@ export class SettingsPageComponent implements OnDestroy {
         this.loadPrefs();
     }
 
-    toggleSection(section: 'profile' | 'account' | 'session' | 'preferences' | 'logout'): void {
+    toggleSection(section: 'profile' | 'account' | 'session' | 'preferences' | 'blocked' | 'logout'): void {
         this.sectionOpenState[section] = !this.sectionOpenState[section];
+
+        if (section === 'blocked' && this.sectionOpenState.blocked) {
+            void this.loadBlockedProfilesAsync();
+        }
+    }
+
+    async loadBlockedProfilesAsync(force = false): Promise<void> {
+        if (this.loadingBlockedProfiles || (!force && this.blockedProfilesLoaded)) {
+            return;
+        }
+
+        this.loadingBlockedProfiles = true;
+        try {
+            this.blockedProfiles = await this.session.loadBlockedProfilesAsync(250);
+            this.blockedProfilesLoaded = true;
+        } catch {
+            this.session.message = actionError('load blocked users');
+        } finally {
+            this.loadingBlockedProfiles = false;
+        }
+    }
+
+    async unblock(profile: ProfileDto): Promise<void> {
+        if (this.unblockingProfileId || !profile?.id) {
+            return;
+        }
+
+        this.unblockingProfileId = profile.id;
+
+        try {
+            await this.session.unblockProfileAsync(profile.id);
+            this.blockedProfiles = this.blockedProfiles.filter(item => item.id !== profile.id);
+            this.session.message = `Unblocked @${profile.handle}.`;
+        } catch (error) {
+            this.session.message = toUserErrorMessage(error, actionError(`unblock @${profile.handle}`));
+        } finally {
+            this.unblockingProfileId = null;
+        }
     }
 
     async saveProfile(): Promise<void> {
@@ -79,9 +123,9 @@ export class SettingsPageComponent implements OnDestroy {
                 bio: this.bio,
                 imageUrl: this.imageUrl
             });
-            this.status = 'Profile settings saved.';
+            this.session.message = 'Profile settings saved.';
         } catch (error) {
-            this.status = this.extractApiMessage(error, 'Could not save profile settings.');
+            this.session.message = toUserErrorMessage(error, actionError('save profile settings'));
         }
     }
 
@@ -95,18 +139,18 @@ export class SettingsPageComponent implements OnDestroy {
                 this.imageUrl = this.session.profile.imageUrl ?? '';
                 this.isPrivate = this.session.profile.isPrivate;
             }
-            this.status = 'Profile settings reloaded.';
-        } catch {
-            this.status = 'Could not reload profile settings.';
+            this.session.message = 'Profile settings reloaded.';
+        } catch (error) {
+            this.session.message = toUserErrorMessage(error, actionError('reload profile settings'));
         }
     }
 
     async savePrivacy(): Promise<void> {
         try {
             await this.session.updateProfilePrivacyAsync(this.isPrivate);
-            this.status = 'Privacy setting saved.';
-        } catch {
-            this.status = 'Could not save privacy setting.';
+            this.session.message = 'Privacy setting saved.';
+        } catch (error) {
+            this.session.message = toUserErrorMessage(error, actionError('save privacy setting'));
         }
     }
 
@@ -127,9 +171,8 @@ export class SettingsPageComponent implements OnDestroy {
     async refreshSession(): Promise<void> {
         try {
             await this.session.refreshSessionAsync();
-            this.status = 'Session refreshed.';
-        } catch {
-            this.status = 'Could not refresh session.';
+        } catch (error) {
+            this.session.message = toUserErrorMessage(error, actionError('refresh your session'));
         }
     }
 
@@ -151,8 +194,8 @@ export class SettingsPageComponent implements OnDestroy {
         try {
             await this.loadAvatarCropFileAsync(file);
             this.avatarModalStep = 2;
-        } catch {
-            this.status = 'Could not load image for cropping.';
+        } catch (error) {
+            this.session.message = toUserErrorMessage(error, actionError('load image for cropping'));
         } finally {
             input.value = '';
         }
@@ -170,7 +213,6 @@ export class SettingsPageComponent implements OnDestroy {
         this.avatarModalOpen = true;
         this.avatarModalStep = 1;
         this.resetAvatarCropState();
-        this.status = '';
     }
 
     closeAvatarModal(force = false): void {
@@ -275,15 +317,14 @@ export class SettingsPageComponent implements OnDestroy {
         }
 
         this.uploadingProfileImage = true;
-        this.status = '';
 
         try {
             const cropped = await this.buildCroppedAvatarFileAsync();
             this.imageUrl = await this.session.uploadImageAsync(cropped);
-            this.status = 'Image uploaded. Save profile to apply it.';
+            this.session.message = 'Image uploaded. Save profile to apply it.';
             this.closeAvatarModal(true);
-        } catch {
-            this.status = 'Could not upload image.';
+        } catch (error) {
+            this.session.message = toUserErrorMessage(error, actionError('upload image'));
         } finally {
             this.uploadingProfileImage = false;
         }
@@ -291,13 +332,13 @@ export class SettingsPageComponent implements OnDestroy {
 
     removeProfileImage(): void {
         this.imageUrl = '';
-        this.status = 'Image removed. Save profile to apply it.';
+        this.session.message = 'Image removed. Save profile to apply it.';
     }
 
     savePrefs(): void {
         localStorage.setItem(this.prefsStorageKey, JSON.stringify(this.prefs));
         this.applyThemePreference();
-        this.status = 'Preferences saved.';
+        this.session.message = 'Preferences saved.';
     }
 
     private loadPrefs(): void {
@@ -328,15 +369,6 @@ export class SettingsPageComponent implements OnDestroy {
             .trim()
             .toLowerCase()
             .replace(/\s+/g, '-');
-    }
-
-    private extractApiMessage(error: unknown, fallback: string): string {
-        const maybeMessage = (error as { error?: { message?: string } })?.error?.message;
-        if (typeof maybeMessage === 'string' && maybeMessage.trim()) {
-            return maybeMessage;
-        }
-
-        return fallback;
     }
 
     private async loadAvatarCropFileAsync(file: File): Promise<void> {

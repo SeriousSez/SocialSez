@@ -126,10 +126,20 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
         }
 
         take = Math.Clamp(take, 1, 100);
+        HashSet<Guid>? blockedProfileIds = null;
+        if (viewerId.HasValue)
+        {
+            blockedProfileIds = await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken);
+        }
 
         var profilesQuery = dbContext.UserProfiles
             .AsNoTracking()
             .Where(x => x.Handle.Contains(normalizedQuery) || x.DisplayName.ToLower().Contains(normalizedQuery));
+
+        if (viewerId.HasValue && blockedProfileIds is not null && blockedProfileIds.Count > 0)
+        {
+            profilesQuery = profilesQuery.Where(x => !blockedProfileIds.Contains(x.Id));
+        }
 
         if (!viewerId.HasValue)
         {
@@ -162,6 +172,25 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
                 return ToDto(profile, canViewPrivateInfo);
             })
             .ToArray();
+    }
+
+    private async Task<HashSet<Guid>> GetBlockedProfileIdsAsync(Guid viewerId, CancellationToken cancellationToken)
+    {
+        var blockedByViewer = await dbContext.UserBlocks
+            .AsNoTracking()
+            .Where(x => x.BlockerId == viewerId)
+            .Select(x => x.BlockedId)
+            .ToListAsync(cancellationToken);
+
+        var blockingViewer = await dbContext.UserBlocks
+            .AsNoTracking()
+            .Where(x => x.BlockedId == viewerId)
+            .Select(x => x.BlockerId)
+            .ToListAsync(cancellationToken);
+
+        return blockedByViewer
+            .Concat(blockingViewer)
+            .ToHashSet();
     }
 
     public async Task<ProfileDto?> UpdateAsync(Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken = default)

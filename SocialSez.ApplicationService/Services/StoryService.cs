@@ -90,6 +90,12 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             return false;
         }
 
+        var blockedProfileIds = await GetBlockedProfileIdsAsync(viewerId, cancellationToken);
+        if (blockedProfileIds.Contains(story.AuthorId))
+        {
+            return false;
+        }
+
         var alreadyViewed = await dbContext.StoryViews.AnyAsync(
             x => x.StoryId == storyId && x.ViewerId == viewerId,
             cancellationToken);
@@ -114,6 +120,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
     {
         var nowUtc = DateTime.UtcNow;
         takeAuthors = Math.Clamp(takeAuthors, 1, 100);
+        var blockedProfileIds = await GetBlockedProfileIdsAsync(profileId, cancellationToken);
 
         var followedIds = await dbContext.Follows
             .AsNoTracking()
@@ -122,6 +129,12 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             .ToListAsync(cancellationToken);
 
         followedIds.Add(profileId);
+        if (blockedProfileIds.Count > 0)
+        {
+            followedIds = followedIds
+                .Where(id => !blockedProfileIds.Contains(id))
+                .ToList();
+        }
 
         var followedSet = followedIds.ToHashSet();
 
@@ -129,7 +142,8 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             .AsNoTracking()
             .Include(x => x.Author)
             .Include(x => x.Views)
-            .Where(x => x.ExpiresAtUtc > nowUtc);
+            .Where(x => x.ExpiresAtUtc > nowUtc)
+            .Where(x => !blockedProfileIds.Contains(x.AuthorId));
 
         var activeStories = await (mode == FeedMode.Following
             ? baseStoriesQuery
@@ -206,6 +220,11 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
     public async Task<StoryDto?> GetPublicByIdAsync(Guid storyId, CancellationToken cancellationToken = default)
     {
+        return await GetPublicByIdAsync(storyId, null, cancellationToken);
+    }
+
+    public async Task<StoryDto?> GetPublicByIdAsync(Guid storyId, Guid? viewerId, CancellationToken cancellationToken = default)
+    {
         var nowUtc = DateTime.UtcNow;
 
         var story = await dbContext.Stories
@@ -217,6 +236,15 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
         if (story is null)
         {
             return null;
+        }
+
+        if (viewerId.HasValue)
+        {
+            var blockedProfileIds = await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken);
+            if (blockedProfileIds.Contains(story.AuthorId))
+            {
+                return null;
+            }
         }
 
         return new StoryDto(
@@ -247,6 +275,15 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
         if (author is null)
         {
             return null;
+        }
+
+        if (viewerId.HasValue)
+        {
+            var blockedProfileIds = await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken);
+            if (blockedProfileIds.Contains(author.Id))
+            {
+                return null;
+            }
         }
 
         var canViewPrivate = false;
@@ -297,5 +334,24 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             author.ImageUrl,
             storyDtos.Any(x => !x.ViewedByMe),
             storyDtos);
+    }
+
+    private async Task<HashSet<Guid>> GetBlockedProfileIdsAsync(Guid viewerId, CancellationToken cancellationToken)
+    {
+        var blockedByViewer = await dbContext.UserBlocks
+            .AsNoTracking()
+            .Where(x => x.BlockerId == viewerId)
+            .Select(x => x.BlockedId)
+            .ToListAsync(cancellationToken);
+
+        var blockingViewer = await dbContext.UserBlocks
+            .AsNoTracking()
+            .Where(x => x.BlockedId == viewerId)
+            .Select(x => x.BlockerId)
+            .ToListAsync(cancellationToken);
+
+        return blockedByViewer
+            .Concat(blockingViewer)
+            .ToHashSet();
     }
 }

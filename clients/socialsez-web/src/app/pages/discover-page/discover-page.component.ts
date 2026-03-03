@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, NgZone, OnDestroy, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -12,6 +12,7 @@ import { ReelInteractionsService } from '../../core/reel-interactions.service';
 import { StoryPresenceService } from '../../core/story-presence.service';
 import { buildSharedPostReferenceCounts } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
+import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
 import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from '../feed-page/feed-reels-list.component';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
@@ -73,6 +74,8 @@ export class DiscoverPageComponent implements OnDestroy {
     private repostCountSource: PostDto[] | null = null;
     private repostCountsByPostId = new Map<string, number>();
     private queryDebounceTimerId: number | null = null;
+    private readonly cdr = inject(ChangeDetectorRef);
+    private readonly ngZone = inject(NgZone);
 
     constructor(
         private readonly session: SessionService,
@@ -92,6 +95,7 @@ export class DiscoverPageComponent implements OnDestroy {
                     this.clearResults();
                     this.status = '';
                     void this.loadRecommendedNonFollowingReels();
+                    this.cdr.detectChanges();
                     return;
                 }
 
@@ -100,6 +104,7 @@ export class DiscoverPageComponent implements OnDestroy {
                 this.selectedScope = type;
                 this.recommendedReels = [];
                 void this.runSearch(query);
+                this.cdr.detectChanges();
             });
 
         this.session.appChanges$
@@ -122,6 +127,15 @@ export class DiscoverPageComponent implements OnDestroy {
         await this.router.navigate(['/discover'], { queryParams: { q: trimmedQuery, type: this.selectedScope } });
     }
 
+    onQueryInput(event: Event): void {
+        const target = event.target as HTMLInputElement | null;
+        if (target) {
+            this.query = target.value;
+        }
+
+        this.onQueryChanged();
+    }
+
     onQueryChanged(): void {
         if (this.queryDebounceTimerId !== null) {
             window.clearTimeout(this.queryDebounceTimerId);
@@ -130,7 +144,9 @@ export class DiscoverPageComponent implements OnDestroy {
 
         this.queryDebounceTimerId = window.setTimeout(() => {
             this.queryDebounceTimerId = null;
-            void this.search();
+            this.ngZone.run(() => {
+                void this.search();
+            });
         }, 240);
     }
 
@@ -287,8 +303,8 @@ export class DiscoverPageComponent implements OnDestroy {
             const updatedContent = this.editContent;
             this.postResults = this.postResults.map(post => post.id === postId ? { ...post, content: updatedContent } : post);
             this.cancelEdit();
-        } catch {
-            this.status = 'Could not update post.';
+        } catch (error) {
+            this.status = toUserErrorMessage(error, actionError('update post'));
         } finally {
             this.savingPost = false;
         }
@@ -325,8 +341,8 @@ export class DiscoverPageComponent implements OnDestroy {
             if (this.editingPostId === postId) {
                 this.cancelEdit();
             }
-        } catch {
-            this.status = 'Could not delete post.';
+        } catch (error) {
+            this.status = toUserErrorMessage(error, actionError('delete post'));
         } finally {
             this.pendingDeletePostId = null;
             this.deletingPostId = null;
@@ -440,8 +456,8 @@ export class DiscoverPageComponent implements OnDestroy {
             this.status = result.status === 'RequestPending'
                 ? `Follow request sent to @${profile.handle}.`
                 : `Followed @${profile.handle}.`;
-        } catch {
-            this.status = 'Could not follow user.';
+        } catch (error) {
+            this.status = toUserErrorMessage(error, actionError('follow this user'));
         }
     }
 
@@ -493,8 +509,8 @@ export class DiscoverPageComponent implements OnDestroy {
         try {
             const updated = await this.reelInteractions.toggleLike(reel.id);
             this.applyReelUpdate(updated);
-        } catch {
-            this.status = 'Could not update reel like right now.';
+        } catch (error) {
+            this.status = toUserErrorMessage(error, actionError('update reel like'));
         } finally {
             this.reactingReelId = null;
         }
@@ -516,8 +532,8 @@ export class DiscoverPageComponent implements OnDestroy {
             const updated = await this.reelInteractions.addComment(reel.id, content, parentCommentId ?? null);
             this.pendingDeleteReelComment = null;
             this.applyReelUpdate(updated);
-        } catch {
-            this.status = 'Could not add reel comment right now.';
+        } catch (error) {
+            this.status = toUserErrorMessage(error, actionError('add reel comment'));
         } finally {
             this.commentingReelId = null;
         }
@@ -534,8 +550,8 @@ export class DiscoverPageComponent implements OnDestroy {
         try {
             const updated = await this.reelInteractions.updateComment(reel.id, commentId, content);
             this.applyReelUpdate(updated);
-        } catch {
-            this.status = 'Could not update reel comment right now.';
+        } catch (error) {
+            this.status = toUserErrorMessage(error, actionError('update reel comment'));
         } finally {
             this.commentingReelId = null;
         }
@@ -561,8 +577,8 @@ export class DiscoverPageComponent implements OnDestroy {
         try {
             const updated = await this.reelInteractions.deleteComment(pending.reelId, pending.commentId);
             this.applyReelUpdate(updated);
-        } catch {
-            this.status = 'Could not delete reel comment right now.';
+        } catch (error) {
+            this.status = toUserErrorMessage(error, actionError('delete reel comment'));
         } finally {
             this.pendingDeleteReelComment = null;
             this.commentingReelId = null;
@@ -581,8 +597,8 @@ export class DiscoverPageComponent implements OnDestroy {
         try {
             const updated = await this.reelInteractions.toggleCommentLike(reel.id, commentId);
             this.applyReelUpdate(updated);
-        } catch {
-            this.status = 'Could not update reel comment like right now.';
+        } catch (error) {
+            this.status = toUserErrorMessage(error, actionError('update reel comment like'));
         } finally {
             this.reactingReelId = null;
         }
@@ -617,17 +633,27 @@ export class DiscoverPageComponent implements OnDestroy {
                 try {
                     switch (this.selectedScope) {
                         case 'users':
-                            this.profileResults = await this.session.searchProfilesAsync(query);
+                            this.profileResults = this.rankProfiles(await this.session.searchProfilesAsync(query), query);
                             break;
                         case 'reels':
-                            this.reelResults = await this.searchReelsAsync(query);
+                            this.reelResults = this.rankReels(await this.searchReelsAsync(query), query);
                             break;
                         case 'posts':
-                            this.postResults = await this.session.searchPostsAsync(query);
+                            this.postResults = this.rankPosts(await this.session.searchPostsAsync(query), query);
                             break;
-                        case 'hashtags':
-                            this.hashtagResults = await this.loadHashtagsWithFallback(query);
+                        case 'hashtags': {
+                            const [hashtags, reels] = await Promise.allSettled([
+                                this.loadHashtagsWithFallback(query),
+                                this.searchReelsAsync(query)
+                            ]);
+
+                            const hashtagMatches = hashtags.status === 'fulfilled' ? hashtags.value : [];
+                            const reelHashtagMatches = reels.status === 'fulfilled'
+                                ? this.extractHashtagsFromReels(reels.value, query)
+                                : [];
+                            this.hashtagResults = this.rankHashtags(this.mergeHashtagResults(hashtagMatches, reelHashtagMatches), query);
                             break;
+                        }
                         case 'all': {
                             const [users, reels, posts, hashtags] = await Promise.allSettled([
                                 this.session.searchProfilesAsync(query),
@@ -636,10 +662,15 @@ export class DiscoverPageComponent implements OnDestroy {
                                 this.loadHashtagsWithFallback(query)
                             ]);
 
-                            this.profileResults = users.status === 'fulfilled' ? users.value : [];
-                            this.reelResults = reels.status === 'fulfilled' ? reels.value : [];
-                            this.postResults = posts.status === 'fulfilled' ? posts.value : [];
-                            this.hashtagResults = hashtags.status === 'fulfilled' ? hashtags.value : [];
+                            this.profileResults = users.status === 'fulfilled' ? this.rankProfiles(users.value, query) : [];
+                            this.reelResults = reels.status === 'fulfilled' ? this.rankReels(reels.value, query) : [];
+                            this.postResults = posts.status === 'fulfilled' ? this.rankPosts(posts.value, query) : [];
+
+                            const hashtagMatches = hashtags.status === 'fulfilled' ? hashtags.value : [];
+                            const reelHashtagMatches = reels.status === 'fulfilled'
+                                ? this.extractHashtagsFromReels(reels.value, query)
+                                : [];
+                            this.hashtagResults = this.rankHashtags(this.mergeHashtagResults(hashtagMatches, reelHashtagMatches), query);
 
                             if (users.status === 'rejected' && reels.status === 'rejected' && posts.status === 'rejected' && hashtags.status === 'rejected') {
                                 throw new Error('All searches failed.');
@@ -651,10 +682,11 @@ export class DiscoverPageComponent implements OnDestroy {
                     if (!this.hasAnyResults) {
                         this.status = 'No results found.';
                     }
-                } catch {
-                    this.status = 'Search failed. Please try again.';
+                } catch (error) {
+                    this.status = toUserErrorMessage(error, actionError('complete search'));
                 } finally {
                     this.loading = false;
+                    this.cdr.detectChanges();
                 }
             } while (this.reloadQueued);
         } finally {
@@ -733,10 +765,11 @@ export class DiscoverPageComponent implements OnDestroy {
                     }
 
                     this.recommendedProfiles = Array.from(uniqueProfiles.values()).slice(0, 10);
-                } catch {
-                    this.status = 'Could not load recommended reels right now.';
+                } catch (error) {
+                    this.status = toUserErrorMessage(error, actionError('load recommended reels'));
                 } finally {
                     this.loading = false;
+                    this.cdr.detectChanges();
                 }
             } while (this.reloadRecommendedReelsQueued);
         } finally {
@@ -787,6 +820,69 @@ export class DiscoverPageComponent implements OnDestroy {
             .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
     }
 
+    private extractHashtagsFromReels(reels: ReadonlyArray<ReelDto>, query: string): HashtagSearchResultDto[] {
+        const normalized = query.trim().replace(/^#/, '').toLowerCase();
+        const hashtagRegex = /#[\p{L}\p{N}_]+/gu;
+        const counts = new Map<string, number>();
+
+        for (const reel of reels) {
+            const candidates = [reel.caption, ...reel.comments.map(comment => comment.content)];
+            for (const candidate of candidates) {
+                if (!candidate) {
+                    continue;
+                }
+
+                const uniqueTags = new Set<string>();
+                for (const match of candidate.matchAll(hashtagRegex)) {
+                    const rawTag = match[0]?.slice(1);
+                    if (!rawTag) {
+                        continue;
+                    }
+
+                    if (normalized && !rawTag.toLowerCase().includes(normalized)) {
+                        continue;
+                    }
+
+                    uniqueTags.add(rawTag);
+                }
+
+                for (const tag of uniqueTags) {
+                    counts.set(tag, (counts.get(tag) ?? 0) + 1);
+                }
+            }
+        }
+
+        return Array.from(counts.entries())
+            .map(([tag, count]) => ({ tag, count }))
+            .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+    }
+
+    private mergeHashtagResults(primary: ReadonlyArray<HashtagSearchResultDto>, secondary: ReadonlyArray<HashtagSearchResultDto>): HashtagSearchResultDto[] {
+        const merged = new Map<string, HashtagSearchResultDto>();
+
+        for (const item of [...primary, ...secondary]) {
+            const key = item.tag.trim().toLowerCase();
+            if (!key) {
+                continue;
+            }
+
+            const existing = merged.get(key);
+            if (!existing) {
+                merged.set(key, { tag: item.tag, count: item.count });
+                continue;
+            }
+
+            merged.set(key, {
+                tag: existing.tag,
+                count: existing.count + item.count
+            });
+        }
+
+        return Array.from(merged.values())
+            .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+            .slice(0, 25);
+    }
+
     private applyPostUpdate(updated: PostDto): void {
         this.postResults = this.postResults.map(post => post.id === updated.id ? updated : post);
     }
@@ -820,10 +916,186 @@ export class DiscoverPageComponent implements OnDestroy {
         }
 
         const matches = (value: string | null | undefined): boolean => (value ?? '').toLowerCase().includes(term);
-        return Array.from(deduped.values()).filter(reel =>
+        const reelMatches = Array.from(deduped.values()).filter(reel =>
             matches(reel.authorHandle)
             || matches(reel.caption)
             || reel.comments.some(comment => matches(comment.content) || matches(comment.authorHandle)));
+
+        let profileMatches: ProfileDto[] = [];
+        try {
+            profileMatches = await this.session.searchProfilesAsync(query);
+        } catch {
+            profileMatches = [];
+        }
+
+        const matchingHandles = profileMatches
+            .map(profile => profile.handle?.trim().toLowerCase())
+            .filter((handle): handle is string => !!handle)
+            .slice(0, 8);
+
+        if (!matchingHandles.length) {
+            return reelMatches;
+        }
+
+        const authorReelResults = await Promise.allSettled(
+            matchingHandles.map(handle => this.isAuthenticated
+                ? this.session.loadReelsByAuthorHandleAsync(handle, 12)
+                : this.session.loadPublicReelsByAuthorHandleAsync(handle, 12))
+        );
+
+        for (const result of authorReelResults) {
+            if (result.status !== 'fulfilled') {
+                continue;
+            }
+
+            for (const reel of result.value) {
+                if (!deduped.has(reel.id)) {
+                    deduped.set(reel.id, reel);
+                }
+            }
+        }
+
+        const finalMatches = Array.from(deduped.values()).filter(reel =>
+            matches(reel.authorHandle)
+            || matches(reel.caption)
+            || reel.comments.some(comment => matches(comment.content) || matches(comment.authorHandle))
+            || matchingHandles.includes((reel.authorHandle ?? '').trim().toLowerCase()));
+
+        return finalMatches;
+    }
+
+    private rankProfiles(profiles: ReadonlyArray<ProfileDto>, query: string): ProfileDto[] {
+        const term = query.trim().toLowerCase();
+        if (!term) {
+            return [...profiles];
+        }
+
+        const score = (profile: ProfileDto): number => {
+            const handle = profile.handle.toLowerCase();
+            const displayName = profile.displayName.toLowerCase();
+            let rank = 0;
+
+            if (handle === term) {
+                rank += 120;
+            } else if (handle.startsWith(term)) {
+                rank += 90;
+            } else if (handle.includes(term)) {
+                rank += 55;
+            }
+
+            if (displayName === term) {
+                rank += 70;
+            } else if (displayName.startsWith(term)) {
+                rank += 45;
+            } else if (displayName.includes(term)) {
+                rank += 25;
+            }
+
+            return rank;
+        };
+
+        return [...profiles].sort((left, right) =>
+            score(right) - score(left)
+            || left.handle.localeCompare(right.handle));
+    }
+
+    private rankPosts(posts: ReadonlyArray<PostDto>, query: string): PostDto[] {
+        const term = query.trim().toLowerCase();
+        if (!term) {
+            return [...posts];
+        }
+
+        const score = (post: PostDto): number => {
+            const content = (post.content ?? '').toLowerCase();
+            const author = (post.authorHandle ?? '').toLowerCase();
+            let rank = 0;
+
+            if (author === term) {
+                rank += 60;
+            } else if (author.startsWith(term)) {
+                rank += 40;
+            } else if (author.includes(term)) {
+                rank += 25;
+            }
+
+            if (content.startsWith(term)) {
+                rank += 75;
+            } else if (content.includes(term)) {
+                rank += 50;
+            }
+
+            return rank;
+        };
+
+        return [...posts].sort((left, right) =>
+            score(right) - score(left)
+            || Date.parse(right.createdAtUtc) - Date.parse(left.createdAtUtc));
+    }
+
+    private rankReels(reels: ReadonlyArray<ReelDto>, query: string): ReelDto[] {
+        const term = query.trim().toLowerCase();
+        if (!term) {
+            return [...reels];
+        }
+
+        const score = (reel: ReelDto): number => {
+            const author = (reel.authorHandle ?? '').toLowerCase();
+            const caption = (reel.caption ?? '').toLowerCase();
+            const commentsText = reel.comments.map(comment => `${comment.authorHandle} ${comment.content}`).join(' ').toLowerCase();
+            let rank = 0;
+
+            if (author === term) {
+                rank += 80;
+            } else if (author.startsWith(term)) {
+                rank += 55;
+            } else if (author.includes(term)) {
+                rank += 30;
+            }
+
+            if (caption.startsWith(term)) {
+                rank += 65;
+            } else if (caption.includes(term)) {
+                rank += 40;
+            }
+
+            if (commentsText.includes(term)) {
+                rank += 20;
+            }
+
+            return rank;
+        };
+
+        return [...reels].sort((left, right) =>
+            score(right) - score(left)
+            || Date.parse(right.createdAtUtc) - Date.parse(left.createdAtUtc));
+    }
+
+    private rankHashtags(tags: ReadonlyArray<HashtagSearchResultDto>, query: string): HashtagSearchResultDto[] {
+        const term = query.trim().replace(/^#/, '').toLowerCase();
+        if (!term) {
+            return [...tags];
+        }
+
+        const score = (tag: HashtagSearchResultDto): number => {
+            const normalizedTag = tag.tag.toLowerCase();
+            if (normalizedTag === term) {
+                return 1000 + tag.count;
+            }
+
+            if (normalizedTag.startsWith(term)) {
+                return 500 + tag.count;
+            }
+
+            if (normalizedTag.includes(term)) {
+                return 200 + tag.count;
+            }
+
+            return tag.count;
+        };
+
+        return [...tags].sort((left, right) =>
+            score(right) - score(left)
+            || left.tag.localeCompare(right.tag));
     }
 
     private async runPostMutation(postId: string, work: () => Promise<PostDto>, failureMessage: string): Promise<void> {

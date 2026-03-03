@@ -499,6 +499,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         take = Math.Clamp(take, 1, 100);
         var nowUtc = DateTime.UtcNow;
+        var blockedProfileIds = await GetBlockedProfileIdsAsync(profileId, cancellationToken);
 
         var followedIds = await dbContext.Follows
             .AsNoTracking()
@@ -507,6 +508,13 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .ToListAsync(cancellationToken);
 
         followedIds.Add(profileId);
+        if (blockedProfileIds.Count > 0)
+        {
+            followedIds = followedIds
+                .Where(id => !blockedProfileIds.Contains(id))
+                .ToList();
+        }
+
         var followedSet = followedIds.ToHashSet();
 
         if (mode == FeedMode.Following)
@@ -594,7 +602,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
                 .ThenInclude(x => x.Profile)
-            .Where(x => followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
+            .Where(x => (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
+                && !blockedProfileIds.Contains(x.AuthorId))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(Math.Clamp(take * 40, 120, 2000))
             .ToArrayAsync(cancellationToken);
@@ -645,6 +654,9 @@ public class PostService(SocialSezContext dbContext) : IPostService
         take = Math.Clamp(take, 1, 100);
 
         var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
+        var blockedProfileIds = viewerId.HasValue
+            ? await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken)
+            : null;
 
         var posts = await dbContext.Posts
             .AsNoTracking()
@@ -657,6 +669,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
                 .ThenInclude(x => x.Profile)
             .Where(x =>
                 (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId))
                 &&
                 ((!string.IsNullOrWhiteSpace(x.Content) && x.Content.ToLower().Contains(normalizedQuery)) ||
                 x.Author.Handle.Contains(normalizedQuery)))
@@ -675,6 +688,9 @@ public class PostService(SocialSezContext dbContext) : IPostService
         take = Math.Clamp(take, 1, 100);
         var sinceUtc = DateTime.UtcNow.AddDays(-7);
         var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
+        var blockedProfileIds = viewerId.HasValue
+            ? await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken)
+            : null;
 
         var recentCandidates = await dbContext.Posts
             .AsNoTracking()
@@ -682,7 +698,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
                 !string.IsNullOrWhiteSpace(x.Content)
                 && x.Content.Contains('#')
                 && x.CreatedAtUtc >= sinceUtc
-                && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId))))
+                && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(2000)
             .Select(x => x.Content)
@@ -695,7 +712,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
                 .Where(x =>
                     !string.IsNullOrWhiteSpace(x.Content)
                     && x.Content.Contains('#')
-                    && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId))))
+                    && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
+                    && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
                 .OrderByDescending(x => x.CreatedAtUtc)
                 .Take(2000)
                 .Select(x => x.Content)
@@ -740,13 +758,17 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         take = Math.Clamp(take, 1, 100);
         var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
+        var blockedProfileIds = viewerId.HasValue
+            ? await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken)
+            : null;
 
         var candidates = await dbContext.Posts
             .AsNoTracking()
             .Where(x =>
                 !string.IsNullOrWhiteSpace(x.Content)
                 && x.Content.Contains('#')
-                && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId))))
+                && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(1000)
             .Select(x => x.Content)
@@ -799,6 +821,9 @@ public class PostService(SocialSezContext dbContext) : IPostService
         take = Math.Clamp(take, 1, 100);
         var needle = $"#{normalizedHashtag.ToLowerInvariant()}";
         var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
+        var blockedProfileIds = viewerId.HasValue
+            ? await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken)
+            : null;
 
         var candidates = await dbContext.Posts
             .AsNoTracking()
@@ -810,6 +835,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Include(x => x.Reactions)
                 .ThenInclude(x => x.Profile)
             .Where(x => (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId))
                 && !string.IsNullOrWhiteSpace(x.Content)
                 && x.Content.ToLower().Contains(needle))
             .OrderByDescending(x => x.CreatedAtUtc)
@@ -837,6 +863,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
         }
 
         take = Math.Clamp(take, 1, 100);
+        var blockedProfileIds = await GetBlockedProfileIdsAsync(profileId, cancellationToken);
 
         var followedIds = await dbContext.Follows
             .Where(x => x.FollowerId == profileId)
@@ -844,6 +871,12 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .ToListAsync(cancellationToken);
 
         followedIds.Add(profileId);
+        if (blockedProfileIds.Count > 0)
+        {
+            followedIds = followedIds
+                .Where(id => !blockedProfileIds.Contains(id))
+                .ToList();
+        }
 
         var posts = await dbContext.Posts
             .AsNoTracking()
@@ -854,7 +887,9 @@ public class PostService(SocialSezContext dbContext) : IPostService
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
                 .ThenInclude(x => x.Profile)
-            .Where(x => x.Author.Handle == normalizedHandle && (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate))
+            .Where(x => x.Author.Handle == normalizedHandle
+                && (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
+                && !blockedProfileIds.Contains(x.AuthorId))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
             .ToArrayAsync(cancellationToken);
@@ -864,7 +899,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .ToArray();
     }
 
-    public async Task<PostDto?> GetPublicByIdAsync(Guid postId, CancellationToken cancellationToken = default)
+    public async Task<PostDto?> GetPublicByIdAsync(Guid postId, Guid? viewerId = null, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
 
@@ -879,7 +914,21 @@ public class PostService(SocialSezContext dbContext) : IPostService
                 .ThenInclude(x => x.Profile)
             .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
 
-        return post is null ? null : MapToPostDto(post, Guid.Empty);
+        if (post is null)
+        {
+            return null;
+        }
+
+        if (viewerId.HasValue)
+        {
+            var blockedProfileIds = await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken);
+            if (blockedProfileIds.Contains(post.AuthorId))
+            {
+                return null;
+            }
+        }
+
+        return MapToPostDto(post, viewerId ?? Guid.Empty);
     }
 
     public async Task<IReadOnlyCollection<PostDto>> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, int take = 25, CancellationToken cancellationToken = default)
@@ -901,6 +950,15 @@ public class PostService(SocialSezContext dbContext) : IPostService
         if (author is null)
         {
             return Array.Empty<PostDto>();
+        }
+
+        if (viewerId.HasValue)
+        {
+            var blockedProfileIds = await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken);
+            if (blockedProfileIds.Contains(author.Id))
+            {
+                return Array.Empty<PostDto>();
+            }
         }
 
         var canViewPrivate = false;
@@ -935,6 +993,25 @@ public class PostService(SocialSezContext dbContext) : IPostService
         return posts
             .Select(post => MapToPostDto(post, mapProfileId))
             .ToArray();
+    }
+
+    private async Task<HashSet<Guid>> GetBlockedProfileIdsAsync(Guid viewerId, CancellationToken cancellationToken)
+    {
+        var blockedByViewer = await dbContext.UserBlocks
+            .AsNoTracking()
+            .Where(x => x.BlockerId == viewerId)
+            .Select(x => x.BlockedId)
+            .ToListAsync(cancellationToken);
+
+        var blockingViewer = await dbContext.UserBlocks
+            .AsNoTracking()
+            .Where(x => x.BlockedId == viewerId)
+            .Select(x => x.BlockerId)
+            .ToListAsync(cancellationToken);
+
+        return blockedByViewer
+            .Concat(blockingViewer)
+            .ToHashSet();
     }
 
     private static PostDto MapToPostDto(Post post, Guid profileId)

@@ -22,5 +22,5 @@ public interface IPostService
     Task<IReadOnlyCollection<PostDto>> GetByHashtagAsync(Guid? viewerId, string hashtag, int take = 25, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<PostDto>> GetByAuthorHandleAsync(Guid profileId, string handle, int take = 25, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<PostDto>> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, int take = 25, CancellationToken cancellationToken = default);
-    Task<PostDto?> GetPublicByIdAsync(Guid postId, CancellationToken cancellationToken = default);
+    Task<PostDto?> GetPublicByIdAsync(Guid postId, Guid? viewerId = null, CancellationToken cancellationToken = default);
 }

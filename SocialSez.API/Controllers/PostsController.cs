@@ -307,7 +307,8 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
     [HttpGet("{postId:guid}/public")]
     public async Task<ActionResult<PostDto>> GetPublicById(Guid postId, CancellationToken cancellationToken)
     {
-        var post = await postService.GetPublicByIdAsync(postId, cancellationToken);
+        var viewerId = TryGetOptionalProfileId();
+        var post = await postService.GetPublicByIdAsync(postId, viewerId, cancellationToken);
         return post is null ? NotFound() : Ok(post);
     }
 

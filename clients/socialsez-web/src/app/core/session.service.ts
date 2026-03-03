@@ -19,21 +19,35 @@ import {
     ProfileDto,
     ReelDto,
     RegisterRequest,
+    SafetyStatusDto,
     StoryDto,
     StoryGroupDto,
     UpdateProfileRequest
 } from './api.types';
 import { SocialSezApiService } from './socialsez-api.service';
 
+export interface SessionNoticeEntry {
+    id: number;
+    message: string;
+    isError: boolean;
+    createdAtUtc: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SessionService {
     profile: ProfileDto | null = null;
-    message = '';
+    private _message = '';
+    private _messageVersion = 0;
+    private readonly maxNoticeHistory = 20;
+    private readonly errorMessagePattern = /(error|failed|could not|unable to|invalid|denied|forbidden|unauthorized|not found|expired)/i;
+    private _noticeHistory: SessionNoticeEntry[] = [];
+    private readonly messageChanges = new ReplaySubject<number>(1);
     nextSilentRefreshAt: Date | null = null;
     private readonly apiOrigin = this.resolveApiOrigin();
 
     private readonly appChanges = new ReplaySubject<'profile' | 'posts' | 'session' | 'notifications'>(1);
     readonly appChanges$ = this.appChanges.asObservable();
+    readonly messageChanges$ = this.messageChanges.asObservable();
 
     private silentRefreshTimerId: number | undefined;
     private bootstrapPromise: Promise<void> | null = null;
@@ -44,6 +58,25 @@ export class SessionService {
         private readonly router: Router,
         private readonly ngZone: NgZone,
     ) { }
+
+    get message(): string {
+        return this._message;
+    }
+
+    set message(value: string) {
+        this._message = value ?? '';
+        this._messageVersion += 1;
+        this.addNoticeHistoryEntry(this._message, this._messageVersion);
+        this.ngZone.run(() => this.messageChanges.next(this._messageVersion));
+    }
+
+    get messageVersion(): number {
+        return this._messageVersion;
+    }
+
+    get noticeHistory(): readonly SessionNoticeEntry[] {
+        return this._noticeHistory;
+    }
 
     isAuthenticated(): boolean {
         return this.api.isAuthenticated();
@@ -73,7 +106,6 @@ export class SessionService {
         try {
             const auth = await firstValueFrom(this.api.refreshSession());
             this.applyAuth(auth);
-            this.message = 'Session restored.';
             this.emitAppChange('session');
         } catch {
             this.clearSession();
@@ -114,7 +146,7 @@ export class SessionService {
         const auth = await firstValueFrom(this.api.refreshSession());
         this.applyAuth(auth);
         if (!silent) {
-            this.message = 'Session refreshed.';
+            this.message = 'Session restored.';
             this.emitAppChange('session');
         }
     }
@@ -352,6 +384,45 @@ export class SessionService {
         return firstValueFrom(this.api.isFollowing(followedId));
     }
 
+    async getSafetyStatusAsync(targetProfileId: string): Promise<SafetyStatusDto> {
+        return firstValueFrom(this.api.getSafetyStatus(targetProfileId));
+    }
+
+    async loadBlockedProfilesAsync(take = 100): Promise<ProfileDto[]> {
+        const profiles = await firstValueFrom(this.api.getBlockedProfiles(take));
+        return profiles.map(profile => this.normalizeProfile(profile));
+    }
+
+    async blockProfileAsync(targetProfileId: string): Promise<void> {
+        await firstValueFrom(this.api.blockProfile(targetProfileId));
+        this.message = 'Profile blocked.';
+        this.emitAppChange('profile');
+    }
+
+    async unblockProfileAsync(targetProfileId: string): Promise<void> {
+        await firstValueFrom(this.api.unblockProfile(targetProfileId));
+        this.message = 'Profile unblocked.';
+        this.emitAppChange('profile');
+    }
+
+    async muteProfileAsync(targetProfileId: string): Promise<void> {
+        await firstValueFrom(this.api.muteProfile(targetProfileId));
+        this.message = 'Profile muted.';
+        this.emitAppChange('profile');
+    }
+
+    async unmuteProfileAsync(targetProfileId: string): Promise<void> {
+        await firstValueFrom(this.api.unmuteProfile(targetProfileId));
+        this.message = 'Profile unmuted.';
+        this.emitAppChange('profile');
+    }
+
+    async reportProfileAsync(targetProfileId: string, reason: string, details?: string): Promise<void> {
+        await firstValueFrom(this.api.reportProfile(targetProfileId, reason, details));
+        this.message = 'Report submitted.';
+        this.emitAppChange('profile');
+    }
+
     async isFollowingAsync(followedId: string): Promise<boolean> {
         const response = await this.getFollowStatusAsync(followedId);
         return response.isFollowing;
@@ -507,6 +578,22 @@ export class SessionService {
 
     private emitAppChange(change: 'profile' | 'posts' | 'session' | 'notifications'): void {
         this.ngZone.run(() => this.appChanges.next(change));
+    }
+
+    private addNoticeHistoryEntry(message: string, version: number): void {
+        const normalized = message.trim();
+        if (!normalized) {
+            return;
+        }
+
+        const entry: SessionNoticeEntry = {
+            id: version,
+            message: normalized,
+            isError: this.errorMessagePattern.test(normalized),
+            createdAtUtc: new Date().toISOString()
+        };
+
+        this._noticeHistory = [entry, ...this._noticeHistory].slice(0, this.maxNoticeHistory);
     }
 
     private resolveApiOrigin(): string {

@@ -1,3 +1,16 @@
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<section class="top-notice" *ngIf="showTopNotice" [attr.role]="isTopNoticeError ? 'alert' : 'status'" [attr.aria-live]="isTopNoticeError ? 'assertive' : 'polite'" aria-atomic="true">
+    <span class="top-notice-icon" [class.is-error]="isTopNoticeError" aria-hidden="true">
+        <i class="fa-duotone fa-light" [class.fa-circle-check]="!isTopNoticeError" [class.fa-circle-exclamation]="isTopNoticeError" aria-hidden="true"></i>
+    </span>
+    <div class="top-notice-copy">
+        <span class="banner-title">{{ topNoticeMessage }}</span>
+        <span class="banner-version" *ngIf="showTopNoticeVersion">{{ topNoticeVersion }}</span>
+    </div>
+    <button type="button" class="top-notice-action" *ngIf="showTopNoticeAction" (click)="onTopNoticeAction()" aria-label="Dismiss notification">{{ topNoticeActionLabel }}</button>
+</section>
+
 <main class="shell" [class.chat-mode]="isChatRoute">
     <aside class="left-rail">
         <div class="brand">
@@ -39,6 +52,19 @@
             <a class="tab-settings" routerLink="/settings" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i><span>Settings</span></a>
             <a class="tab-auth" routerLink="/auth" routerLinkActive="active" *ngIf="!session.isAuthenticated()"><i class="fa-duotone fa-light fa-right-to-bracket" aria-hidden="true"></i><span>Auth</span></a>
         </nav>
+
+        <div class="side-card side-card-mobile-fallback">
+            <h3>Recent activity</h3>
+            <p class="hint" *ngIf="!noticeHistoryPreview.length">No recent notifications.</p>
+            <ul *ngIf="noticeHistoryPreview.length" aria-label="Recent app notifications">
+                <li *ngFor="let entry of noticeHistoryPreview; trackBy: trackNoticeById">
+                    <span class="notice-history-row">
+                        <span class="notice-history-message" [class.is-error]="entry.isError">{{ entry.message }}</span>
+                        <span class="trend-count">{{ entry.createdAtUtc | date:'shortTime' }}</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
     </aside>
 
     <section class="main-column">
@@ -58,7 +84,7 @@
             </div>
         </header>
 
-        <section class="content">
+        <section id="main-content" class="content" tabindex="-1">
             <router-outlet></router-outlet>
         </section>
     </section>
@@ -78,6 +104,18 @@
                 </li>
             </ul>
             <p class="hint" *ngIf="!loadingTrending && !trendingHashtags.length">No trending hashtags yet.</p>
+        </div>
+        <div class="side-card">
+            <h3>Recent activity</h3>
+            <p class="hint" *ngIf="!noticeHistoryPreview.length">No recent notifications.</p>
+            <ul *ngIf="noticeHistoryPreview.length" aria-label="Recent app notifications">
+                <li *ngFor="let entry of noticeHistoryPreview; trackBy: trackNoticeById">
+                    <span class="notice-history-row">
+                        <span class="notice-history-message" [class.is-error]="entry.isError">{{ entry.message }}</span>
+                        <span class="trend-count">{{ entry.createdAtUtc | date:'shortTime' }}</span>
+                    </span>
+                </li>
+            </ul>
         </div>
         <!-- <p class="hint" *ngIf="showDebug && session.nextSilentRefreshAt">
             [debug] Next silent refresh: {{ session.nextSilentRefreshAt | date:'mediumTime' }}

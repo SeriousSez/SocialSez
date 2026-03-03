@@ -25,6 +25,9 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<ReelCommentLike> ReelCommentLikes => Set<ReelCommentLike>();
     public DbSet<ProfileFollowRequest> ProfileFollowRequests => Set<ProfileFollowRequest>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
+    public DbSet<UserMute> UserMutes => Set<UserMute>();
+    public DbSet<UserReport> UserReports => Set<UserReport>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -385,6 +388,64 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
                 .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasIndex(x => new { x.RecipientId, x.IsRead, x.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<UserBlock>(entity =>
+        {
+            entity.ToTable("UserBlocks");
+            entity.HasKey(x => new { x.BlockerId, x.BlockedId });
+
+            entity.HasOne(x => x.Blocker)
+                .WithMany(x => x.BlockedProfiles)
+                .HasForeignKey(x => x.BlockerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.Blocked)
+                .WithMany(x => x.BlockedByProfiles)
+                .HasForeignKey(x => x.BlockedId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.BlockedId);
+        });
+
+        modelBuilder.Entity<UserMute>(entity =>
+        {
+            entity.ToTable("UserMutes");
+            entity.HasKey(x => new { x.MuterId, x.MutedId });
+
+            entity.HasOne(x => x.Muter)
+                .WithMany(x => x.MutedProfiles)
+                .HasForeignKey(x => x.MuterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.Muted)
+                .WithMany(x => x.MutedByProfiles)
+                .HasForeignKey(x => x.MutedId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.MutedId);
+        });
+
+        modelBuilder.Entity<UserReport>(entity =>
+        {
+            entity.ToTable("UserReports");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Reason).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Details).HasMaxLength(1000);
+            entity.Property(x => x.Status).HasMaxLength(24).IsRequired();
+
+            entity.HasOne(x => x.Reporter)
+                .WithMany(x => x.ReportsFiled)
+                .HasForeignKey(x => x.ReporterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.TargetProfile)
+                .WithMany(x => x.ReportsReceived)
+                .HasForeignKey(x => x.TargetProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => new { x.TargetProfileId, x.CreatedAtUtc });
+            entity.HasIndex(x => new { x.ReporterId, x.CreatedAtUtc });
         });
     }
 }

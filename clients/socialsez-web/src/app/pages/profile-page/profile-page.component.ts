@@ -22,6 +22,7 @@ import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from '../feed-page/feed-reels-list.component';
 import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
 import { ReelComposerModalComponent } from '../../shared/reel-composer-modal/reel-composer-modal.component';
+import { ReportModalComponent } from '../../shared/report-modal/report-modal.component';
 import { SegmentedTabItem, SegmentedTabsComponent } from '../../shared/segmented-tabs/segmented-tabs.component';
 import { CreateContentMenuComponent } from '../../shared/create-content-menu/create-content-menu.component';
 import { buildSharedPostReferenceCounts } from '../../core/shared-post.utils';
@@ -38,7 +39,7 @@ interface BioSegment {
 @Component({
     selector: 'app-profile-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent, SegmentedTabsComponent, CreateContentMenuComponent],
+    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent, ReportModalComponent, SegmentedTabsComponent, CreateContentMenuComponent],
     templateUrl: './profile-page.component.html',
     styleUrl: './profile-page.component.scss'
 })
@@ -110,6 +111,15 @@ export class ProfilePageComponent implements OnDestroy {
     isFollowing = false;
     isRequested = false;
     followRequiresApproval = false;
+    profileSafetyMenuOpen = false;
+    isBlocked = false;
+    isBlockedByTarget = false;
+    isMuted = false;
+    blockingProfile = false;
+    mutingProfile = false;
+    reportingProfile = false;
+    showReportModal = false;
+    showBlockModal = false;
     viewedProfileHasActiveStory = false;
     viewedProfileHasUnseenStory = false;
     activeStoryGroup: StoryGroupDto | null = null;
@@ -224,6 +234,10 @@ export class ProfilePageComponent implements OnDestroy {
     get followButtonLabel(): string {
         if (this.followState === 'loading') {
             return 'Working...';
+        }
+
+        if (this.isBlockedView) {
+            return 'Blocked';
         }
 
         if (this.followState === 'success') {
@@ -344,6 +358,18 @@ export class ProfilePageComponent implements OnDestroy {
             && !this.isFollowing;
     }
 
+    get isBlockedView(): boolean {
+        return !!this.viewedProfile && !this.isOwnProfile && (this.isBlocked || this.isBlockedByTarget);
+    }
+
+    get blockedViewStatusMessage(): string {
+        if (this.isBlockedByTarget) {
+            return 'This profile blocked you. Posts, reels, stories, and bio are hidden.';
+        }
+
+        return 'You blocked this profile. Posts, reels, stories, and bio are hidden.';
+    }
+
     get totalPosts(): number {
         return this.activitySummary?.postCount ?? this.posts.length;
     }
@@ -354,6 +380,43 @@ export class ProfilePageComponent implements OnDestroy {
 
     get totalFollowing(): number {
         return this.activitySummary?.followingCount ?? 0;
+    }
+
+    get isEstablishedAccount(): boolean {
+        const createdAt = this.viewedProfile?.createdAtUtc;
+        if (!createdAt) {
+            return false;
+        }
+
+        const createdAtMs = Date.parse(createdAt);
+        if (Number.isNaN(createdAtMs)) {
+            return false;
+        }
+
+        const ageDays = (Date.now() - createdAtMs) / (1000 * 60 * 60 * 24);
+        return ageDays >= 30;
+    }
+
+    get lastActivityAtUtc(): string | null {
+        const timestamps = [
+            ...this.posts.map(post => post.createdAtUtc),
+            ...this.reels.map(reel => reel.createdAtUtc)
+        ];
+
+        let latestTimestamp: string | null = null;
+        let latestMs = Number.NEGATIVE_INFINITY;
+
+        for (const timestamp of timestamps) {
+            const parsedMs = Date.parse(timestamp);
+            if (Number.isNaN(parsedMs) || parsedMs <= latestMs) {
+                continue;
+            }
+
+            latestMs = parsedMs;
+            latestTimestamp = timestamp;
+        }
+
+        return latestTimestamp;
     }
 
     get activeStoryAuthorHandles(): string[] {
@@ -463,18 +526,62 @@ export class ProfilePageComponent implements OnDestroy {
         this.createMenuOpen = false;
     }
 
-    @HostListener('document:click', ['$event'])
-    onDocumentClick(event: MouseEvent): void {
-        if (!this.createMenuOpen) {
+    toggleProfileSafetyMenu(event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.profileSafetyMenuOpen = !this.profileSafetyMenuOpen;
+        this.cdr.detectChanges();
+    }
+
+    closeProfileSafetyMenu(): void {
+        this.profileSafetyMenuOpen = false;
+        this.cdr.detectChanges();
+    }
+
+    onSafetyActionSelected(action: 'mute' | 'block' | 'report'): void {
+        this.closeProfileSafetyMenu();
+
+        if (action === 'mute') {
+            void this.toggleMuteProfile();
             return;
         }
 
-        const clickedInsideMenu = this.getEventPath(event).some((node) => {
+        if (action === 'block') {
+            if (this.isBlocked) {
+                void this.toggleBlockProfile();
+            } else {
+                this.openBlockModal();
+            }
+            return;
+        }
+
+        this.openReportModal();
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent): void {
+        let shouldDetectChanges = false;
+
+        const clickedInsideCreateMenu = this.getEventPath(event).some((node) => {
             return node instanceof HTMLElement && node.classList.contains('hero-create-menu');
         });
 
-        if (!clickedInsideMenu) {
+        if (this.createMenuOpen && !clickedInsideCreateMenu) {
             this.createMenuOpen = false;
+            shouldDetectChanges = true;
+        }
+
+        const clickedInsideSafetyMenu = this.getEventPath(event).some((node) => {
+            return node instanceof HTMLElement && node.classList.contains('profile-safety-menu');
+        });
+
+        if (this.profileSafetyMenuOpen && !clickedInsideSafetyMenu) {
+            this.profileSafetyMenuOpen = false;
+            shouldDetectChanges = true;
+        }
+
+        if (shouldDetectChanges) {
+            this.cdr.detectChanges();
         }
     }
 
@@ -519,7 +626,14 @@ export class ProfilePageComponent implements OnDestroy {
 
     @HostListener('document:keydown.escape')
     onEscapePressed(): void {
+        const hadOpenMenus = this.createMenuOpen || this.profileSafetyMenuOpen || this.showBlockModal;
         this.createMenuOpen = false;
+        this.profileSafetyMenuOpen = false;
+        this.showBlockModal = false;
+
+        if (hadOpenMenus) {
+            this.cdr.detectChanges();
+        }
     }
 
     openStoryComposer(): void {
@@ -958,41 +1072,54 @@ export class ProfilePageComponent implements OnDestroy {
                         ? profile.imageUrl
                         : this.buildAvatarImage(profile.displayName, profile.handle);
 
-                    const storyState = await this.loadStoryStateForHandleAsync(profile.handle);
-                    this.viewedProfileHasActiveStory = storyState.hasActive;
-                    this.viewedProfileHasUnseenStory = storyState.hasUnseen;
-                    await this.tryOpenPendingOwnStoryFromQuery();
-
-                    try {
-                        this.posts = await this.loadPostsForProfileAsync(profile.handle);
-                    } catch {
-                        this.posts = [];
-                        this.error = 'Could not load posts for this profile right now.';
-                    }
-
-                    try {
-                        this.reels = await this.loadReelsForProfileAsync(profile.handle);
-                    } catch {
-                        this.reels = [];
-                        if (!this.error) {
-                            this.error = 'Could not load reels for this profile right now.';
-                        }
-                    }
-
-                    try {
-                        this.activitySummary = await this.session.loadProfileActivitySummaryAsync(profile.handle);
-                    } catch {
-                        this.activitySummary = null;
-                    }
-
                     if (this.isOwnProfile) {
                         this.isFollowing = false;
                         this.isRequested = false;
                         this.followRequiresApproval = false;
+                        this.isBlocked = false;
+                        this.isBlockedByTarget = false;
+                        this.isMuted = false;
                         this.clearFollowStateTimer();
                         this.followState = 'idle';
                     } else {
                         await this.refreshFollowStateAsync(profile.id);
+                        await this.refreshSafetyStateAsync(profile.id);
+                    }
+
+                    if (this.isBlockedView) {
+                        this.posts = [];
+                        this.reels = [];
+                        this.activitySummary = null;
+                        this.viewedProfileHasActiveStory = false;
+                        this.viewedProfileHasUnseenStory = false;
+                        this.closeStoryViewer();
+                    } else {
+                        const storyState = await this.loadStoryStateForHandleAsync(profile.handle);
+                        this.viewedProfileHasActiveStory = storyState.hasActive;
+                        this.viewedProfileHasUnseenStory = storyState.hasUnseen;
+                        await this.tryOpenPendingOwnStoryFromQuery();
+
+                        try {
+                            this.posts = await this.loadPostsForProfileAsync(profile.handle);
+                        } catch {
+                            this.posts = [];
+                            this.error = 'Could not load posts for this profile right now.';
+                        }
+
+                        try {
+                            this.reels = await this.loadReelsForProfileAsync(profile.handle);
+                        } catch {
+                            this.reels = [];
+                            if (!this.error) {
+                                this.error = 'Could not load reels for this profile right now.';
+                            }
+                        }
+
+                        try {
+                            this.activitySummary = await this.session.loadProfileActivitySummaryAsync(profile.handle);
+                        } catch {
+                            this.activitySummary = null;
+                        }
                     }
                 } catch {
                     this.error = this.viewedHandle
@@ -1003,6 +1130,9 @@ export class ProfilePageComponent implements OnDestroy {
                     this.viewedProfileHasUnseenStory = false;
                     this.posts = [];
                     this.activitySummary = null;
+                    this.isBlocked = false;
+                    this.isBlockedByTarget = false;
+                    this.isMuted = false;
                 } finally {
                     this.loading = false;
                     this.cdr.detectChanges();
@@ -1573,7 +1703,7 @@ export class ProfilePageComponent implements OnDestroy {
     }
 
     async toggleFollow(): Promise<void> {
-        if (this.isOwnProfile || !this.viewedProfile || this.followState === 'loading') {
+        if (this.isOwnProfile || !this.viewedProfile || this.followState === 'loading' || this.isBlockedView) {
             return;
         }
 
@@ -1598,6 +1728,139 @@ export class ProfilePageComponent implements OnDestroy {
             this.setFollowState('success', 1100);
         } catch {
             this.setFollowState('failure', 1400);
+        }
+    }
+
+    async toggleBlockProfile(): Promise<void> {
+        this.closeProfileSafetyMenu();
+
+        const profile = this.viewedProfile;
+        if (!profile || this.isOwnProfile || this.blockingProfile || !this.session.isAuthenticated()) {
+            return;
+        }
+
+        this.blockingProfile = true;
+        this.error = '';
+
+        try {
+            if (this.isBlocked) {
+                await this.session.unblockProfileAsync(profile.id);
+                this.isBlocked = false;
+            } else {
+                await this.session.blockProfileAsync(profile.id);
+                this.isBlocked = true;
+                this.isFollowing = false;
+                this.isRequested = false;
+                this.followRequiresApproval = false;
+                this.clearFollowStateTimer();
+                this.followState = 'idle';
+            }
+        } catch {
+            this.error = this.isBlocked
+                ? 'Could not unblock profile right now.'
+                : 'Could not block profile right now.';
+        } finally {
+            this.blockingProfile = false;
+        }
+    }
+
+    openBlockModal(): void {
+        const profile = this.viewedProfile;
+        if (!profile || this.isOwnProfile || this.blockingProfile || this.isBlocked || !this.session.isAuthenticated()) {
+            return;
+        }
+
+        this.showBlockModal = true;
+    }
+
+    closeBlockModal(): void {
+        if (this.blockingProfile) {
+            return;
+        }
+
+        this.showBlockModal = false;
+    }
+
+    async confirmBlockProfile(): Promise<void> {
+        if (this.blockingProfile || this.isBlocked) {
+            return;
+        }
+
+        await this.toggleBlockProfile();
+        if (this.isBlocked) {
+            this.showBlockModal = false;
+        }
+    }
+
+    async toggleMuteProfile(): Promise<void> {
+        this.closeProfileSafetyMenu();
+
+        const profile = this.viewedProfile;
+        if (!profile || this.isOwnProfile || this.mutingProfile || !this.session.isAuthenticated()) {
+            return;
+        }
+
+        this.mutingProfile = true;
+        this.error = '';
+
+        try {
+            if (this.isMuted) {
+                await this.session.unmuteProfileAsync(profile.id);
+                this.isMuted = false;
+            } else {
+                await this.session.muteProfileAsync(profile.id);
+                this.isMuted = true;
+            }
+        } catch {
+            this.error = this.isMuted
+                ? 'Could not unmute profile right now.'
+                : 'Could not mute profile right now.';
+        } finally {
+            this.mutingProfile = false;
+        }
+    }
+
+    openReportModal(): void {
+        this.closeProfileSafetyMenu();
+
+        const profile = this.viewedProfile;
+        if (!profile || this.isOwnProfile || this.reportingProfile || !this.session.isAuthenticated()) {
+            return;
+        }
+
+        this.showReportModal = true;
+    }
+
+    closeReportModal(): void {
+        if (this.reportingProfile) {
+            return;
+        }
+
+        this.showReportModal = false;
+    }
+
+    async submitProfileReport(payload: { reason: string; details?: string }): Promise<void> {
+        const profile = this.viewedProfile;
+        if (!profile || this.isOwnProfile || this.reportingProfile || !this.session.isAuthenticated()) {
+            return;
+        }
+
+        const reason = payload.reason.trim();
+        const details = payload.details?.trim();
+        if (!reason) {
+            return;
+        }
+
+        this.reportingProfile = true;
+        this.error = '';
+
+        try {
+            await this.session.reportProfileAsync(profile.id, reason, details || undefined);
+            this.showReportModal = false;
+        } catch {
+            this.error = 'Could not submit report right now.';
+        } finally {
+            this.reportingProfile = false;
         }
     }
 
@@ -1650,6 +1913,26 @@ export class ProfilePageComponent implements OnDestroy {
             this.isFollowing = false;
             this.isRequested = false;
             this.followRequiresApproval = false;
+        }
+    }
+
+    private async refreshSafetyStateAsync(targetProfileId: string): Promise<void> {
+        if (!this.session.isAuthenticated()) {
+            this.isBlocked = false;
+            this.isBlockedByTarget = false;
+            this.isMuted = false;
+            return;
+        }
+
+        try {
+            const status = await this.session.getSafetyStatusAsync(targetProfileId);
+            this.isBlocked = status.isBlocked;
+            this.isBlockedByTarget = status.isBlockedByTarget === true;
+            this.isMuted = status.isMuted;
+        } catch {
+            this.isBlocked = false;
+            this.isBlockedByTarget = false;
+            this.isMuted = false;
         }
     }
 

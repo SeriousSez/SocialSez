@@ -84,6 +84,43 @@
         </div>
     </section>
 
+    <section class="card">
+        <button type="button" class="section-toggle" (click)="toggleSection('blocked')" [attr.aria-expanded]="sectionOpenState.blocked">
+            <h3>Blocked users</h3>
+            <span class="section-toggle-icon" [class.open]="sectionOpenState.blocked">▾</span>
+        </button>
+
+        <div class="section-body" *ngIf="sectionOpenState.blocked">
+            <p class="meta">Manage users you have blocked.</p>
+
+            <p class="meta" *ngIf="loadingBlockedProfiles">Loading blocked users...</p>
+
+            <div class="blocked-list" *ngIf="!loadingBlockedProfiles && blockedProfiles.length; else emptyBlockedState">
+                <article class="blocked-item" *ngFor="let blocked of blockedProfiles">
+                    <a class="blocked-avatar-link" [attr.href]="'/users/' + blocked.handle" aria-label="View profile">
+                        <img class="blocked-avatar" *ngIf="blocked.imageUrl; else blockedInitial" [src]="blocked.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Blocked user image" />
+                        <ng-template #blockedInitial>
+                            <div class="blocked-avatar initial">{{ blocked.displayName[0] || blocked.handle[0] }}</div>
+                        </ng-template>
+                    </a>
+
+                    <div class="blocked-meta">
+                        <a class="blocked-name" [attr.href]="'/users/' + blocked.handle">{{ blocked.displayName }}</a>
+                        <a class="blocked-handle" [attr.href]="'/users/' + blocked.handle">@{{ blocked.handle }}</a>
+                    </div>
+
+                    <button type="button" class="ghost" [disabled]="unblockingProfileId === blocked.id" (click)="unblock(blocked)">
+                        {{ unblockingProfileId === blocked.id ? 'Unblocking...' : 'Unblock' }}
+                    </button>
+                </article>
+            </div>
+
+            <ng-template #emptyBlockedState>
+                <p class="meta" *ngIf="!loadingBlockedProfiles">You have not blocked anyone.</p>
+            </ng-template>
+        </div>
+    </section>
+
     <section class="card logout-card">
         <button type="button" class="section-toggle" (click)="toggleSection('logout')" [attr.aria-expanded]="sectionOpenState.logout">
             <h3>Sign out</h3>
@@ -98,7 +135,6 @@
         </div>
     </section>
 
-    <p class="status" *ngIf="status">{{ status }}</p>
 </section>
 
 <div class="compose-modal" *ngIf="avatarModalOpen" role="dialog" aria-modal="true" aria-label="Update profile image" (click)="closeAvatarModal()">

@@ -222,7 +222,8 @@ public class ReelsController(IReelService reelService, IWebHostEnvironment envir
     [HttpGet("{reelId:guid}/public")]
     public async Task<ActionResult<ReelDto>> GetPublicById(Guid reelId, CancellationToken cancellationToken)
     {
-        var reel = await reelService.GetPublicByIdAsync(reelId, cancellationToken);
+        var viewerId = TryGetOptionalProfileId();
+        var reel = await reelService.GetPublicByIdAsync(reelId, viewerId, cancellationToken);
         return reel is null ? NotFound() : Ok(reel);
     }
 

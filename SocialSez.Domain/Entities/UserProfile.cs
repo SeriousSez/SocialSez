@@ -29,4 +29,10 @@ public class UserProfile
     public ICollection<ProfileFollowRequest> ReceivedFollowRequests { get; set; } = new List<ProfileFollowRequest>();
     public ICollection<ProfileFollowRequest> SentFollowRequests { get; set; } = new List<ProfileFollowRequest>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public ICollection<UserBlock> BlockedProfiles { get; set; } = new List<UserBlock>();
+    public ICollection<UserBlock> BlockedByProfiles { get; set; } = new List<UserBlock>();
+    public ICollection<UserMute> MutedProfiles { get; set; } = new List<UserMute>();
+    public ICollection<UserMute> MutedByProfiles { get; set; } = new List<UserMute>();
+    public ICollection<UserReport> ReportsFiled { get; set; } = new List<UserReport>();
+    public ICollection<UserReport> ReportsReceived { get; set; } = new List<UserReport>();
 }

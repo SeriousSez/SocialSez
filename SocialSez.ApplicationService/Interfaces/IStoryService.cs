@@ -10,4 +10,5 @@ public interface IStoryService
     Task<IReadOnlyCollection<StoryGroupDto>> GetFeedAsync(Guid profileId, int takeAuthors = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default);
     Task<StoryGroupDto?> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, CancellationToken cancellationToken = default);
     Task<StoryDto?> GetPublicByIdAsync(Guid storyId, CancellationToken cancellationToken = default);
+    Task<StoryDto?> GetPublicByIdAsync(Guid storyId, Guid? viewerId, CancellationToken cancellationToken = default);
 }

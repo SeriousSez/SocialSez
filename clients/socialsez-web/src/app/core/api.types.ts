@@ -106,6 +106,12 @@ export interface FollowStatusDto {
     requiresApproval: boolean;
 }
 
+export interface SafetyStatusDto {
+    isBlocked: boolean;
+    isMuted: boolean;
+    isBlockedByTarget?: boolean;
+}
+
 export interface FollowRequestDto {
     followerId: string;
     followerHandle: string;

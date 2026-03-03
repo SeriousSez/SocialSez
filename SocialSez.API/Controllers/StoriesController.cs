@@ -98,7 +98,8 @@ public class StoriesController(IStoryService storyService, IWebHostEnvironment e
     [HttpGet("{storyId:guid}/public")]
     public async Task<ActionResult<StoryDto>> GetPublicById(Guid storyId, CancellationToken cancellationToken)
     {
-        var story = await storyService.GetPublicByIdAsync(storyId, cancellationToken);
+        var viewerId = TryGetOptionalProfileId();
+        var story = await storyService.GetPublicByIdAsync(storyId, viewerId, cancellationToken);
         return story is null ? NotFound() : Ok(story);
     }
 

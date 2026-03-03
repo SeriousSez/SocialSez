@@ -6,7 +6,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter } from 'rxjs';
 import { HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
 import { SharedReelCommentPreview } from '../core/shared-reel.utils';
-import { SessionService } from '../core/session.service';
+import { SessionNoticeEntry, SessionService } from '../core/session.service';
 import { MessagesDockComponent } from './messages-dock.component';
 import { FeedStoryViewerComponent } from '../pages/feed-page/feed-story-viewer.component';
 
@@ -54,10 +54,47 @@ export class AppComponent implements OnInit, OnDestroy {
     private markingProfileChipStoryId: string | null = null;
     private pendingProfileChipViewedSync = false;
     private storyStatusPollTimerId: number | null = null;
+    private topNoticeAutoDismissTimerId: number | null = null;
+    private dismissedTopNoticeVersion = 0;
+    private readonly updateMessagePattern = /(new\s+version|version\s+available|update\s+available)/i;
+    private readonly errorMessagePattern = /(error|failed|could not|unable to|invalid|denied|forbidden|unauthorized|not found|expired)/i;
 
     private readonly destroyRef = inject(DestroyRef);
 
     constructor(public readonly session: SessionService, private readonly router: Router) { }
+
+    get topNoticeMessage(): string {
+        return this.session.message?.trim() ?? '';
+    }
+
+    get showTopNotice(): boolean {
+        const message = this.topNoticeMessage;
+        return !!message && this.session.messageVersion > this.dismissedTopNoticeVersion;
+    }
+
+    get topNoticeVersion(): string {
+        return 'v1.1.3';
+    }
+
+    get showTopNoticeVersion(): boolean {
+        return this.updateMessagePattern.test(this.topNoticeMessage);
+    }
+
+    get isTopNoticeError(): boolean {
+        return this.isErrorNotice(this.topNoticeMessage);
+    }
+
+    get topNoticeActionLabel(): string {
+        return 'Dismiss';
+    }
+
+    get noticeHistoryPreview(): readonly SessionNoticeEntry[] {
+        return this.session.noticeHistory.slice(0, 6);
+    }
+
+    get showTopNoticeAction(): boolean {
+        return this.isTopNoticeError;
+    }
 
     get showMessagesDock(): boolean {
         return this.session.isAuthenticated() && !this.isChatRoute;
@@ -92,6 +129,12 @@ export class AppComponent implements OnInit, OnDestroy {
                 }
             });
 
+        this.session.messageChanges$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                this.onTopNoticeMessageChanged();
+            });
+
         this.router.events
             .pipe(
                 filter(event => event instanceof NavigationEnd),
@@ -115,6 +158,8 @@ export class AppComponent implements OnInit, OnDestroy {
             window.clearInterval(this.storyStatusPollTimerId);
             this.storyStatusPollTimerId = null;
         }
+
+        this.clearTopNoticeAutoDismissTimer();
     }
 
     @HostListener('window:storage', ['$event'])
@@ -179,6 +224,42 @@ export class AppComponent implements OnInit, OnDestroy {
         }
 
         await this.router.navigate(['/discover'], { queryParams: { q: query, type: 'all' } });
+    }
+
+    dismissTopNotice(): void {
+        this.clearTopNoticeAutoDismissTimer();
+        this.dismissedTopNoticeVersion = this.session.messageVersion;
+    }
+
+    onTopNoticeAction(): void {
+        this.dismissTopNotice();
+    }
+
+    trackNoticeById(_index: number, entry: SessionNoticeEntry): number {
+        return entry.id;
+    }
+
+    private onTopNoticeMessageChanged(): void {
+        this.clearTopNoticeAutoDismissTimer();
+
+        if (!this.showTopNotice || this.isErrorNotice(this.topNoticeMessage)) {
+            return;
+        }
+
+        this.topNoticeAutoDismissTimerId = window.setTimeout(() => {
+            this.dismissTopNotice();
+        }, 3500);
+    }
+
+    private isErrorNotice(message: string): boolean {
+        return this.errorMessagePattern.test(message);
+    }
+
+    private clearTopNoticeAutoDismissTimer(): void {
+        if (this.topNoticeAutoDismissTimerId !== null) {
+            window.clearTimeout(this.topNoticeAutoDismissTimerId);
+            this.topNoticeAutoDismissTimerId = null;
+        }
     }
 
     shouldRenderProfileChipImage(imageUrl?: string | null): boolean {

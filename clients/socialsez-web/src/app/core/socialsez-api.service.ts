@@ -23,6 +23,7 @@ import {
     ProfileDto,
     ReelDto,
     RegisterRequest,
+    SafetyStatusDto,
     SetMessageReactionRequest,
     SetReactionRequest,
     StoryDto,
@@ -233,7 +234,7 @@ export class SocialSezApiService {
     }
 
     getPublicPost(postId: string): Observable<PostDto> {
-        return this.http.get<PostDto>(`${this.baseUrl}/posts/${encodeURIComponent(postId)}/public`).pipe(timeout(15000));
+        return this.http.get<PostDto>(`${this.baseUrl}/posts/${encodeURIComponent(postId)}/public`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
     searchPosts(query: string, take = 25): Observable<PostDto[]> {
@@ -272,15 +273,15 @@ export class SocialSezApiService {
 
     getPublicStoriesByAuthorHandle(handle: string): Observable<StoryGroupDto> {
         const normalized = handle.trim().toLowerCase();
-        return this.http.get<StoryGroupDto>(`${this.baseUrl}/stories/by-author/${encodeURIComponent(normalized)}/public`).pipe(timeout(15000));
+        return this.http.get<StoryGroupDto>(`${this.baseUrl}/stories/by-author/${encodeURIComponent(normalized)}/public`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
     getPublicReel(reelId: string): Observable<ReelDto> {
-        return this.http.get<ReelDto>(`${this.baseUrl}/reels/${encodeURIComponent(reelId)}/public`).pipe(timeout(15000));
+        return this.http.get<ReelDto>(`${this.baseUrl}/reels/${encodeURIComponent(reelId)}/public`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
     getPublicStory(storyId: string): Observable<StoryDto> {
-        return this.http.get<StoryDto>(`${this.baseUrl}/stories/${encodeURIComponent(storyId)}/public`).pipe(timeout(15000));
+        return this.http.get<StoryDto>(`${this.baseUrl}/stories/${encodeURIComponent(storyId)}/public`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
     toggleReelLike(reelId: string): Observable<ReelDto> {
@@ -333,6 +334,34 @@ export class SocialSezApiService {
 
     getFollowSuggestions(takePerGroup = 10): Observable<FollowSuggestionsDto> {
         return this.withAutoRefresh(() => this.http.get<FollowSuggestionsDto>(`${this.baseUrl}/follows/suggestions?takePerGroup=${takePerGroup}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getSafetyStatus(targetProfileId: string): Observable<SafetyStatusDto> {
+        return this.withAutoRefresh(() => this.http.get<SafetyStatusDto>(`${this.baseUrl}/safety/status?targetProfileId=${encodeURIComponent(targetProfileId)}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getBlockedProfiles(take = 100): Observable<ProfileDto[]> {
+        return this.withAutoRefresh(() => this.http.get<ProfileDto[]>(`${this.baseUrl}/safety/blocked?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    blockProfile(targetProfileId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/safety/block`, { targetProfileId }, { headers: this.authHeaders() }));
+    }
+
+    unblockProfile(targetProfileId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/safety/block?targetProfileId=${encodeURIComponent(targetProfileId)}`, { headers: this.authHeaders() }));
+    }
+
+    muteProfile(targetProfileId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/safety/mute`, { targetProfileId }, { headers: this.authHeaders() }));
+    }
+
+    unmuteProfile(targetProfileId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/safety/mute?targetProfileId=${encodeURIComponent(targetProfileId)}`, { headers: this.authHeaders() }));
+    }
+
+    reportProfile(targetProfileId: string, reason: string, details?: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/safety/report`, { targetProfileId, reason, details }, { headers: this.authHeaders() }));
     }
 
     updateMyProfile(request: UpdateProfileRequest): Observable<ProfileDto> {
@@ -411,5 +440,9 @@ export class SocialSezApiService {
 
     private authHeaders(): HttpHeaders {
         return new HttpHeaders({ Authorization: `Bearer ${this.token}` });
+    }
+
+    private optionalAuthHeaders(): HttpHeaders | undefined {
+        return this.token ? this.authHeaders() : undefined;
     }
 }

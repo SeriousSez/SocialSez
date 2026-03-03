@@ -374,6 +374,7 @@ public class ReelService(SocialSezContext dbContext) : IReelService
 
         take = Math.Clamp(take, 1, 100);
         var nowUtc = DateTime.UtcNow;
+        var blockedProfileIds = await GetBlockedProfileIdsAsync(profileId, cancellationToken);
 
         var followedIds = await dbContext.Follows
             .AsNoTracking()
@@ -382,6 +383,13 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             .ToListAsync(cancellationToken);
 
         followedIds.Add(profileId);
+        if (blockedProfileIds.Count > 0)
+        {
+            followedIds = followedIds
+                .Where(id => !blockedProfileIds.Contains(id))
+                .ToList();
+        }
+
         var followedSet = followedIds.ToHashSet();
 
         if (mode == FeedMode.Following)
@@ -467,7 +475,8 @@ public class ReelService(SocialSezContext dbContext) : IReelService
                 .ThenInclude(comment => comment.Author)
             .Include(x => x.Comments)
                 .ThenInclude(comment => comment.Likes)
-            .Where(x => followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
+            .Where(x => (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
+                && !blockedProfileIds.Contains(x.AuthorId))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(Math.Clamp(take * 35, 100, 1400))
             .ToArrayAsync(cancellationToken);
@@ -512,6 +521,7 @@ public class ReelService(SocialSezContext dbContext) : IReelService
         }
 
         take = Math.Clamp(take, 1, 100);
+        var blockedProfileIds = await GetBlockedProfileIdsAsync(profileId, cancellationToken);
 
         var followedIds = await dbContext.Follows
             .AsNoTracking()
@@ -520,6 +530,12 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             .ToListAsync(cancellationToken);
 
         followedIds.Add(profileId);
+        if (blockedProfileIds.Count > 0)
+        {
+            followedIds = followedIds
+                .Where(id => !blockedProfileIds.Contains(id))
+                .ToList();
+        }
 
         var reels = await dbContext.Reels
             .AsNoTracking()
@@ -529,7 +545,9 @@ public class ReelService(SocialSezContext dbContext) : IReelService
                 .ThenInclude(comment => comment.Author)
             .Include(x => x.Comments)
                 .ThenInclude(comment => comment.Likes)
-            .Where(x => x.Author.Handle == normalizedHandle && (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate))
+            .Where(x => x.Author.Handle == normalizedHandle
+                && (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
+                && !blockedProfileIds.Contains(x.AuthorId))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
             .ToArrayAsync(cancellationToken);
@@ -539,7 +557,7 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             .ToArray();
     }
 
-    public async Task<ReelDto?> GetPublicByIdAsync(Guid reelId, CancellationToken cancellationToken = default)
+    public async Task<ReelDto?> GetPublicByIdAsync(Guid reelId, Guid? viewerId = null, CancellationToken cancellationToken = default)
     {
         await EnsureReelSchemaAsync(cancellationToken);
 
@@ -553,7 +571,21 @@ public class ReelService(SocialSezContext dbContext) : IReelService
                 .ThenInclude(comment => comment.Likes)
             .FirstOrDefaultAsync(x => x.Id == reelId, cancellationToken);
 
-        return reel is null ? null : MapToReelDto(reel, Guid.Empty);
+        if (reel is null)
+        {
+            return null;
+        }
+
+        if (viewerId.HasValue)
+        {
+            var blockedProfileIds = await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken);
+            if (blockedProfileIds.Contains(reel.AuthorId))
+            {
+                return null;
+            }
+        }
+
+        return MapToReelDto(reel, viewerId ?? Guid.Empty);
     }
 
     public async Task<IReadOnlyCollection<ReelDto>> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, int take = 25, CancellationToken cancellationToken = default)
@@ -575,6 +607,15 @@ public class ReelService(SocialSezContext dbContext) : IReelService
         if (author is null)
         {
             return Array.Empty<ReelDto>();
+        }
+
+        if (viewerId.HasValue)
+        {
+            var blockedProfileIds = await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken);
+            if (blockedProfileIds.Contains(author.Id))
+            {
+                return Array.Empty<ReelDto>();
+            }
         }
 
         var canViewPrivate = false;
@@ -608,6 +649,25 @@ public class ReelService(SocialSezContext dbContext) : IReelService
         return reels
             .Select(reel => MapToReelDto(reel, mapProfileId))
             .ToArray();
+    }
+
+    private async Task<HashSet<Guid>> GetBlockedProfileIdsAsync(Guid viewerId, CancellationToken cancellationToken)
+    {
+        var blockedByViewer = await dbContext.UserBlocks
+            .AsNoTracking()
+            .Where(x => x.BlockerId == viewerId)
+            .Select(x => x.BlockedId)
+            .ToListAsync(cancellationToken);
+
+        var blockingViewer = await dbContext.UserBlocks
+            .AsNoTracking()
+            .Where(x => x.BlockedId == viewerId)
+            .Select(x => x.BlockerId)
+            .ToListAsync(cancellationToken);
+
+        return blockedByViewer
+            .Concat(blockingViewer)
+            .ToHashSet();
     }
 
     private static ReelDto MapToReelDto(Reel reel, Guid profileId)

@@ -248,10 +248,10 @@
 }
 
 .reaction-btn.bubble-icon {
-    --bubble-bg: #f8fafc;
-    --bubble-bg-hover: #e2e8f0;
-    --bubble-border: #cbd5e1;
-    --bubble-fg: #0f172a;
+    --bubble-bg: var(--color-surface-muted);
+    --bubble-bg-hover: var(--color-surface-alt);
+    --bubble-border: var(--color-border);
+    --bubble-fg: var(--color-text);
     width: 34px;
     height: 34px;
     min-width: 34px;

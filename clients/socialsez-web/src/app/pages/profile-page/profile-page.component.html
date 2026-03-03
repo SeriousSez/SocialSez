@@ -2,14 +2,20 @@
     <ng-container *ngIf="profile as profile; else noProfileState">
         <ng-container *ngIf="!loading; else profileOverviewSkeleton">
             <header class="profile-hero">
-                <a class="hero-image-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)" [attr.aria-label]="viewedProfileHasActiveStory ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
+                <a *ngIf="!isBlockedView; else blockedProfileImage" class="hero-image-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)"
+                    [attr.aria-label]="viewedProfileHasActiveStory ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
                     <img class="hero-image" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" [src]="avatarImageUrl" (error)="onHeroImageError()" [alt]="profile.displayName + ' avatar'" />
                 </a>
+                <ng-template #blockedProfileImage>
+                    <div class="hero-image hero-image-blocked" aria-hidden="true">
+                        <i class="fa-duotone fa-light fa-ban" aria-hidden="true"></i>
+                    </div>
+                </ng-template>
 
                 <div class="hero-copy">
                     <h2>{{ profile.displayName }}</h2>
                     <p class="handle">@{{ profile.handle }}</p>
-                    <p class="bio">
+                    <p class="bio" *ngIf="!isBlockedView; else blockedBio">
                         <ng-container *ngIf="profile.bio.trim(); else emptyBio">
                             <ng-container *ngFor="let segment of parseBioSegments(profile.bio)">
                                 <a *ngIf="segment.url; else plainBioText" class="bio-link" [href]="segment.url" target="_blank" rel="noopener noreferrer" (click)="openBioLink(segment.url, $event)">{{ segment.text }}</a>
@@ -18,8 +24,25 @@
                         </ng-container>
                         <ng-template #emptyBio>No bio yet.</ng-template>
                     </p>
+                    <ng-template #blockedBio>
+                        <p class="bio">Bio hidden because this profile is blocked.</p>
+                    </ng-template>
                     <p class="joined">Joined {{ profile.createdAtUtc | date:'mediumDate' }}</p>
-                    <div class="hero-stats" aria-label="Profile stats">
+                    <div class="trust-signals" *ngIf="!isBlockedView" aria-label="Profile trust signals">
+                        <span class="trust-pill" [class.is-private]="profile.isPrivate">
+                            <i class="fa-duotone fa-light" [class.fa-lock]="profile.isPrivate" [class.fa-globe]="!profile.isPrivate" aria-hidden="true"></i>
+                            {{ profile.isPrivate ? 'Private profile' : 'Public profile' }}
+                        </span>
+                        <span class="trust-pill" *ngIf="isEstablishedAccount">
+                            <i class="fa-duotone fa-light fa-shield-check" aria-hidden="true"></i>
+                            Established member
+                        </span>
+                        <span class="trust-pill" *ngIf="lastActivityAtUtc as lastActiveAtUtc">
+                            <i class="fa-duotone fa-light fa-clock" aria-hidden="true"></i>
+                            Active {{ lastActiveAtUtc | date:'mediumDate' }}
+                        </span>
+                    </div>
+                    <div class="hero-stats" *ngIf="!isBlockedView" aria-label="Profile stats">
                         <span><strong>{{ totalPosts }}</strong> posts</span>
                         <span><strong>{{ totalFollowers }}</strong> followers</span>
                         <span><strong>{{ totalFollowing }}</strong> following</span>
@@ -42,17 +65,30 @@
                     </ng-container>
                     <ng-template #followActions>
                         <div class="hero-actions-follow">
-                            <ng-container *ngIf="session.isAuthenticated(); else guestFollowActions">
-                                <button type="button" (click)="toggleFollow()" [disabled]="followState === 'loading'" [class.ghost]="isFollowing && followState === 'idle'" [class.is-loading]="followState === 'loading'" [class.is-success]="followState === 'success'"
-                                    [class.is-failure]="followState === 'failure'">{{ followButtonLabel }}</button>
-                            </ng-container>
                             <ng-template #guestFollowActions>
                                 <a class="ghost" routerLink="/auth">Sign in to follow</a>
                             </ng-template>
 
-                            <button type="button" class="hero-icon-link" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? 'Profile link copied' : 'Copy profile link'" [attr.title]="profileLinkCopied ? 'Copied' : 'Copy profile link'">
-                                <i class="fa-duotone" [class.fa-light]="!profileLinkCopied" [class.fa-solid]="profileLinkCopied" [class.fa-share-nodes]="!profileLinkCopied" [class.fa-check]="profileLinkCopied" aria-hidden="true"></i>
-                            </button>
+                            <ng-container *ngIf="session.isAuthenticated(); else guestFollowActions">
+                                <button type="button" (click)="toggleFollow()" [disabled]="followState === 'loading' || isBlockedView" [class.ghost]="isFollowing && followState === 'idle'" [class.is-loading]="followState === 'loading'" [class.is-success]="followState === 'success'"
+                                    [class.is-failure]="followState === 'failure'">{{ followButtonLabel }}</button>
+
+                                <button type="button" class="hero-icon-link" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? 'Profile link copied' : 'Copy profile link'" [attr.title]="profileLinkCopied ? 'Copied' : 'Copy profile link'">
+                                    <i class="fa-duotone" [class.fa-light]="!profileLinkCopied" [class.fa-solid]="profileLinkCopied" [class.fa-share-nodes]="!profileLinkCopied" [class.fa-check]="profileLinkCopied" aria-hidden="true"></i>
+                                </button>
+
+                                <div class="profile-safety-menu" [class.open]="profileSafetyMenuOpen">
+                                    <button type="button" class="profile-safety-trigger" (click)="toggleProfileSafetyMenu($event)" [disabled]="blockingProfile || mutingProfile || reportingProfile" aria-label="Open profile safety options" title="More options">
+                                        <span aria-hidden="true">•••</span>
+                                    </button>
+
+                                    <div class="profile-safety-dropdown" *ngIf="profileSafetyMenuOpen">
+                                        <button type="button" (click)="onSafetyActionSelected('mute')" [disabled]="mutingProfile || blockingProfile || reportingProfile">{{ mutingProfile ? 'Working...' : (isMuted ? 'Unmute' : 'Mute') }}</button>
+                                        <button type="button" (click)="onSafetyActionSelected('block')" [disabled]="blockingProfile || mutingProfile || reportingProfile">{{ blockingProfile ? 'Working...' : (isBlocked ? 'Unblock' : 'Block') }}</button>
+                                        <button type="button" (click)="onSafetyActionSelected('report')" [disabled]="reportingProfile || blockingProfile || mutingProfile">{{ reportingProfile ? 'Reporting...' : 'Report' }}</button>
+                                    </div>
+                                </div>
+                            </ng-container>
                         </div>
 
                         <p class="status" *ngIf="followRequiresApproval && !isFollowing">Private profile</p>
@@ -62,7 +98,7 @@
 
             <p class="status" *ngIf="isPrivateLockedView"><i class="fa-duotone fa-light fa-lock" aria-hidden="true"></i>This profile is private. Follow and wait for approval to see posts.</p>
 
-            <app-segmented-tabs class="profile-tabs" [tabs]="contentTabs" [activeTab]="activeTab" ariaLabel="Profile content tabs" [fullWidthOnMobile]="true" (activeTabChange)="onActiveTabChanged($event)"></app-segmented-tabs>
+            <app-segmented-tabs *ngIf="!isBlockedView" class="profile-tabs" [tabs]="contentTabs" [activeTab]="activeTab" ariaLabel="Profile content tabs" [fullWidthOnMobile]="true" (activeTabChange)="onActiveTabChanged($event)"></app-segmented-tabs>
         </ng-container>
 
         <ng-template #profileOverviewSkeleton>
@@ -255,12 +291,14 @@
             <span class="dot dot-b"></span>
             <span class="dot dot-c"></span>
         </div>
+        <h4 *ngIf="isBlockedView">Profile blocked</h4>
+        <p *ngIf="isBlockedView">{{ blockedViewStatusMessage }}</p>
         <h4 *ngIf="isPrivateLockedView">Private profile</h4>
         <p *ngIf="isPrivateLockedView">No posts visible until this private profile approves your follow request.</p>
-        <h4 *ngIf="isOwnProfile && !isPrivateLockedView">No posts yet</h4>
-        <p *ngIf="isOwnProfile && !isPrivateLockedView">Start sharing from Compose.</p>
-        <h4 *ngIf="!isOwnProfile && !isPrivateLockedView">No posts yet</h4>
-        <p *ngIf="!isOwnProfile && !isPrivateLockedView">This profile has not posted anything yet.</p>
+        <h4 *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">No posts yet</h4>
+        <p *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">Start sharing from Compose.</p>
+        <h4 *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">No posts yet</h4>
+        <p *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">This profile has not posted anything yet.</p>
     </section>
 </ng-template>
 
@@ -271,16 +309,18 @@
             <span class="dot dot-b"></span>
             <span class="dot dot-c"></span>
         </div>
+        <h4 *ngIf="isBlockedView">Profile blocked</h4>
+        <p *ngIf="isBlockedView">Reels are hidden while this profile is blocked.</p>
         <h4 *ngIf="isPrivateLockedView">Private profile</h4>
         <p *ngIf="isPrivateLockedView">No reels visible until this private profile approves your follow request.</p>
-        <h4 *ngIf="isOwnProfile && !isPrivateLockedView">No reels yet</h4>
-        <p *ngIf="isOwnProfile && !isPrivateLockedView">Create one from your profile.</p>
-        <h4 *ngIf="!isOwnProfile && !isPrivateLockedView">No reels yet</h4>
-        <p *ngIf="!isOwnProfile && !isPrivateLockedView">This profile has not shared any reels yet.</p>
+        <h4 *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">No reels yet</h4>
+        <p *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">Create one from your profile.</p>
+        <h4 *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">No reels yet</h4>
+        <p *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">This profile has not shared any reels yet.</p>
     </section>
 </ng-template>
 
-<app-feed-story-viewer [activeStory]="activeStory" [activeStoryGroup]="activeStoryGroup" [activeStoryIndex]="activeStoryIndex" [storyCount]="activeStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousStory" [hasNextStory]="hasNextStory"
+<app-feed-story-viewer *ngIf="!isBlockedView" [activeStory]="activeStory" [activeStoryGroup]="activeStoryGroup" [activeStoryIndex]="activeStoryIndex" [storyCount]="activeStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousStory" [hasNextStory]="hasNextStory"
     [liked]="activeStory ? isStoryLiked(activeStory.id) : false" [sendingReply]="sendingStoryReply" [sharingStory]="sharingStoryMessage" [canDelete]="canDeleteActiveStory" [deletingStory]="deletingStory" [errorMessage]="storyViewerError" (closed)="closeStoryViewer()" (previous)="showPreviousStory()"
     (next)="showNextStory()" (replySubmitted)="sendStoryReply($event)" (likeToggled)="toggleStoryLike($event)" (shareRequested)="shareStoryAsMessage($event)" (deleteRequested)="requestDeleteStory($event)">
 </app-feed-story-viewer>
@@ -298,6 +338,10 @@
 <app-confirm-modal [open]="!!pendingDeleteStoryId" title="Delete story" message="Delete this story? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingStory" (cancel)="cancelDeleteStory()" (confirm)="confirmDeleteStory()">
 </app-confirm-modal>
 
+<app-confirm-modal [open]="showBlockModal" title="Block profile" [message]="'Block @' + (viewedProfile?.handle ?? 'this profile') + '? This removes follow connections.'" confirmText="Block" cancelText="Cancel" confirmClass="danger" [busy]="blockingProfile" (cancel)="closeBlockModal()"
+    (confirm)="confirmBlockProfile()">
+</app-confirm-modal>
+
 <app-share-post-modal [open]="!!pendingSharePost && pendingShareTarget === 'feed'" [post]="pendingSharePost" [target]="'feed'" [busy]="!!sharingPostId" [initialText]="shareNote" (cancel)="cancelShareModal()" (confirm)="submitShare($event)">
 </app-share-post-modal>
 
@@ -306,3 +350,5 @@
 
 <app-share-reel-message-modal [open]="!!pendingShareReel" [reel]="pendingShareReel" [busy]="!!sharingReelId" (cancel)="cancelReelShareModal()" (confirm)="submitReelShareAsMessage($event)">
 </app-share-reel-message-modal>
+
+<app-report-modal [open]="showReportModal" [busy]="reportingProfile" [profileHandle]="viewedProfile?.handle ?? ''" (cancel)="closeReportModal()" (submitReport)="submitProfileReport($event)"></app-report-modal>

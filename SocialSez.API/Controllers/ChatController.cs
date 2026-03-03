@@ -107,6 +107,10 @@ public class ChatController(IChatService chatService, IHubContext<ChatHub> chatH
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("messages/{messageId:guid}")]

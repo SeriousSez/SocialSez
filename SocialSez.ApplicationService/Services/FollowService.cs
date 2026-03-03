@@ -15,6 +15,16 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
             return new FollowActionResultDto(FollowActionStatuses.Invalid);
         }
 
+        var isBlockedRelationship = await dbContext.UserBlocks.AnyAsync(
+            x => (x.BlockerId == followerId && x.BlockedId == followedId)
+                || (x.BlockerId == followedId && x.BlockedId == followerId),
+            cancellationToken);
+
+        if (isBlockedRelationship)
+        {
+            return new FollowActionResultDto(FollowActionStatuses.Invalid);
+        }
+
         var exists = await dbContext.Follows.AnyAsync(
             x => x.FollowerId == followerId && x.FollowedId == followedId,
             cancellationToken);
@@ -305,10 +315,12 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
     public async Task<FollowSuggestionsDto> GetSuggestionsAsync(Guid followerId, int takePerGroup = 10, CancellationToken cancellationToken = default)
     {
         var normalizedTake = Math.Clamp(takePerGroup, 1, 20);
+        var blockedProfileIds = await GetBlockedProfileIdsAsync(followerId, cancellationToken);
 
         var following = await dbContext.Follows
             .AsNoTracking()
             .Where(x => x.FollowerId == followerId)
+            .Where(x => !blockedProfileIds.Contains(x.FollowedId))
             .Include(x => x.Followed)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(normalizedTake)
@@ -330,6 +342,13 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
             .Distinct()
             .ToListAsync(cancellationToken);
 
+        if (blockedProfileIds.Count > 0)
+        {
+            followingIds = followingIds
+                .Where(id => !blockedProfileIds.Contains(id))
+                .ToList();
+        }
+
         if (followingIds.Count == 0)
         {
             return new FollowSuggestionsDto(following, Array.Empty<ProfileDto>());
@@ -339,6 +358,7 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
             .AsNoTracking()
             .Where(x => followingIds.Contains(x.FollowerId))
             .Where(x => x.FollowedId != followerId && !followingIds.Contains(x.FollowedId))
+            .Where(x => !blockedProfileIds.Contains(x.FollowedId))
             .GroupBy(x => x.FollowedId)
             .Select(group => new
             {
@@ -360,6 +380,7 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
         var candidateProfiles = await dbContext.UserProfiles
             .AsNoTracking()
             .Where(x => candidateIds.Contains(x.Id))
+            .Where(x => !blockedProfileIds.Contains(x.Id))
             .Select(x => new ProfileDto(
                 x.Id,
                 x.Handle,
@@ -380,5 +401,24 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
             .ToList();
 
         return new FollowSuggestionsDto(following, orderedRelevant);
+    }
+
+    private async Task<HashSet<Guid>> GetBlockedProfileIdsAsync(Guid viewerId, CancellationToken cancellationToken)
+    {
+        var blockedByViewer = await dbContext.UserBlocks
+            .AsNoTracking()
+            .Where(x => x.BlockerId == viewerId)
+            .Select(x => x.BlockedId)
+            .ToListAsync(cancellationToken);
+
+        var blockingViewer = await dbContext.UserBlocks
+            .AsNoTracking()
+            .Where(x => x.BlockedId == viewerId)
+            .Select(x => x.BlockerId)
+            .ToListAsync(cancellationToken);
+
+        return blockedByViewer
+            .Concat(blockingViewer)
+            .ToHashSet();
     }
 }

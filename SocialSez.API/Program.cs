@@ -394,6 +394,62 @@ using (var scope = app.Services.CreateScope())
             ON Notifications (RecipientId, IsRead, CreatedAtUtc);
             """);
 
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS UserBlocks (
+                BlockerId TEXT NOT NULL,
+                BlockedId TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                PRIMARY KEY (BlockerId, BlockedId),
+                FOREIGN KEY (BlockerId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT,
+                FOREIGN KEY (BlockedId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_UserBlocks_BlockedId
+            ON UserBlocks (BlockedId);
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS UserMutes (
+                MuterId TEXT NOT NULL,
+                MutedId TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                PRIMARY KEY (MuterId, MutedId),
+                FOREIGN KEY (MuterId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT,
+                FOREIGN KEY (MutedId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_UserMutes_MutedId
+            ON UserMutes (MutedId);
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS UserReports (
+                Id TEXT NOT NULL PRIMARY KEY,
+                ReporterId TEXT NOT NULL,
+                TargetProfileId TEXT NOT NULL,
+                Reason TEXT NOT NULL,
+                Details TEXT NULL,
+                Status TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                FOREIGN KEY (ReporterId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT,
+                FOREIGN KEY (TargetProfileId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_UserReports_TargetProfileId_CreatedAtUtc
+            ON UserReports (TargetProfileId, CreatedAtUtc);
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS IX_UserReports_ReporterId_CreatedAtUtc
+            ON UserReports (ReporterId, CreatedAtUtc);
+            """);
+
             var columnExists = dbContext.Database
                 .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('UserProfiles') WHERE name = 'IsPrivate'")
                 .ToList()
@@ -441,6 +497,41 @@ using (var scope = app.Services.CreateScope())
 
         if (dbContext.Database.IsMySql())
         {
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS UserBlocks (
+                BlockerId char(36) NOT NULL,
+                BlockedId char(36) NOT NULL,
+                CreatedAtUtc datetime(6) NOT NULL,
+                PRIMARY KEY (BlockerId, BlockedId),
+                KEY IX_UserBlocks_BlockedId (BlockedId)
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS UserMutes (
+                MuterId char(36) NOT NULL,
+                MutedId char(36) NOT NULL,
+                CreatedAtUtc datetime(6) NOT NULL,
+                PRIMARY KEY (MuterId, MutedId),
+                KEY IX_UserMutes_MutedId (MutedId)
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS UserReports (
+                Id char(36) NOT NULL,
+                ReporterId char(36) NOT NULL,
+                TargetProfileId char(36) NOT NULL,
+                Reason varchar(100) NOT NULL,
+                Details varchar(1000) NULL,
+                Status varchar(24) NOT NULL,
+                CreatedAtUtc datetime(6) NOT NULL,
+                PRIMARY KEY (Id),
+                KEY IX_UserReports_TargetProfileId_CreatedAtUtc (TargetProfileId, CreatedAtUtc),
+                KEY IX_UserReports_ReporterId_CreatedAtUtc (ReporterId, CreatedAtUtc)
+            );
+            """);
+
             var handleCooldownColumnExists = dbContext.Database
                 .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'UserProfiles' AND COLUMN_NAME = 'LastHandleChangeAtUtc' LIMIT 1;")
                 .ToList()

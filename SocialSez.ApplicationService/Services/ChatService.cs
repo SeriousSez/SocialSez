@@ -53,6 +53,11 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             throw new ArgumentException("You cannot create a direct conversation with yourself.", nameof(request));
         }
 
+        if (await HasBlockedRelationshipAsync(profileId, request.OtherProfileId, cancellationToken))
+        {
+            throw new InvalidOperationException("You cannot message this user because one of you has blocked the other.");
+        }
+
         var profileIds = new[] { profileId, request.OtherProfileId };
         var profileCount = await dbContext.UserProfiles.CountAsync(x => profileIds.Contains(x.Id), cancellationToken);
         if (profileCount != 2)
@@ -142,6 +147,22 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             throw new InvalidOperationException("One or more selected members do not exist.");
         }
 
+        var otherMemberIds = memberIds
+            .Where(id => id != profileId)
+            .ToArray();
+
+        var hasBlockedMember = otherMemberIds.Length > 0 && await dbContext.UserBlocks
+            .AsNoTracking()
+            .AnyAsync(x =>
+                (x.BlockerId == profileId && otherMemberIds.Contains(x.BlockedId))
+                || (x.BlockedId == profileId && otherMemberIds.Contains(x.BlockerId)),
+                cancellationToken);
+
+        if (hasBlockedMember)
+        {
+            throw new InvalidOperationException("You cannot create a group with users that are blocked.");
+        }
+
         var conversationId = Guid.NewGuid();
 
         var conversation = new ChatConversation
@@ -200,9 +221,49 @@ public class ChatService(SocialSezContext dbContext) : IChatService
 
     public async Task<ChatMessageDto?> SendMessageAsync(Guid profileId, Guid conversationId, CreateChatMessageRequest request, CancellationToken cancellationToken = default)
     {
-        if (!await IsMemberAsync(profileId, conversationId, cancellationToken))
+        var conversation = await dbContext.ChatConversations
+            .AsNoTracking()
+            .Include(x => x.Members)
+            .FirstOrDefaultAsync(x => x.Id == conversationId, cancellationToken);
+
+        if (conversation is null || !conversation.Members.Any(x => x.ProfileId == profileId))
         {
             return null;
+        }
+
+        if (!conversation.IsGroup)
+        {
+            var otherProfileId = conversation.Members
+                .Where(x => x.ProfileId != profileId)
+                .Select(x => x.ProfileId)
+                .FirstOrDefault();
+
+            if (otherProfileId != Guid.Empty && await HasBlockedRelationshipAsync(profileId, otherProfileId, cancellationToken))
+            {
+                throw new InvalidOperationException("You cannot send messages because one of you has blocked the other.");
+            }
+        }
+        else
+        {
+            var otherProfileIds = conversation.Members
+                .Where(x => x.ProfileId != profileId)
+                .Select(x => x.ProfileId)
+                .ToArray();
+
+            if (otherProfileIds.Length > 0)
+            {
+                var hasBlockedParticipant = await dbContext.UserBlocks
+                    .AsNoTracking()
+                    .AnyAsync(x =>
+                        (x.BlockerId == profileId && otherProfileIds.Contains(x.BlockedId))
+                        || (x.BlockedId == profileId && otherProfileIds.Contains(x.BlockerId)),
+                        cancellationToken);
+
+                if (hasBlockedParticipant)
+                {
+                    throw new InvalidOperationException("You cannot send messages because one or more participants are in a blocked relationship with you.");
+                }
+            }
         }
 
         var content = request.Content?.Trim() ?? string.Empty;
@@ -350,6 +411,16 @@ public class ChatService(SocialSezContext dbContext) : IChatService
         return await dbContext.ChatConversationMembers
             .AsNoTracking()
             .AnyAsync(x => x.ConversationId == conversationId && x.ProfileId == profileId, cancellationToken);
+    }
+
+    private async Task<bool> HasBlockedRelationshipAsync(Guid leftProfileId, Guid rightProfileId, CancellationToken cancellationToken)
+    {
+        return await dbContext.UserBlocks
+            .AsNoTracking()
+            .AnyAsync(x =>
+                (x.BlockerId == leftProfileId && x.BlockedId == rightProfileId)
+                || (x.BlockerId == rightProfileId && x.BlockedId == leftProfileId),
+                cancellationToken);
     }
 
     private static string NormalizeReactionType(string value)

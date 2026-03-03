@@ -873,7 +873,7 @@
 
 .shared-reel-viewer-menu {
     position: absolute;
-    top: 80px;
+    top: 50px;
     right: 10px;
     z-index: 4;
     min-width: 150px;
@@ -1809,6 +1809,10 @@
         width: min(96vw, 520px);
         height: auto;
     }
+
+    .shared-reel-viewer-menu {
+        top: 80px;
+    }
 }
 
 @media (max-width: 680px) {
@@ -1981,6 +1985,9 @@
         max-height: none;
     }
 
+    .shared-reel-viewer-menu {
+        top: 80px;
+    }
 }
 
 @keyframes chat-placeholder-slide-mobile {

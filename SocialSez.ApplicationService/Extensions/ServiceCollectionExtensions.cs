@@ -20,6 +20,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IFollowService, FollowService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<ISafetyService, SafetyService>();
         return services;
     }
 }
