@@ -1,0 +1,53 @@
+<section class="shared-page">
+    <header class="shared-head">
+        <h2>Shared Community Post</h2>
+        <a routerLink="/auth" *ngIf="!session.isAuthenticated()">Sign in</a>
+    </header>
+
+    <article class="shared-card" *ngIf="loading">
+        <p>Loading community post...</p>
+    </article>
+
+    <article class="shared-card" *ngIf="notFound && !loading">
+        <h3>Post unavailable</h3>
+        <p>This community post was removed or the link is invalid.</p>
+    </article>
+
+    <article class="shared-card" *ngIf="error && !loading && !notFound">
+        <h3>Something went wrong</h3>
+        <p>{{ error }}</p>
+    </article>
+
+    <article class="shared-card" *ngIf="post as item">
+        <header class="meta-row">
+            <div class="author-meta">
+                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
+                <ng-template #authorInitial>
+                    <div class="author-avatar">{{ (item.authorHandle[0] || '?') | uppercase }}</div>
+                </ng-template>
+                <div>
+                    <strong>@{{ item.authorHandle }}</strong>
+                    <p>{{ item.createdAtUtc | date:'medium' }}</p>
+                </div>
+            </div>
+            <button type="button" class="ghost" (click)="copyLinkAsync()">Copy link</button>
+        </header>
+
+        <p class="content" *ngIf="item.content as content">{{ content }}</p>
+
+        <ng-container *ngIf="item.imageUrl as mediaUrl">
+            <img class="media" [src]="mediaUrl" loading="eager" decoding="async" alt="Shared community post media" />
+        </ng-container>
+
+        <section class="poll" *ngIf="item.poll as poll">
+            <h4>{{ poll.question }}</h4>
+            <div class="poll-options">
+                <div class="poll-option" *ngFor="let option of poll.options">
+                    <span>{{ option.text }}</span>
+                    <strong>{{ option.voteCount }}</strong>
+                </div>
+            </div>
+            <p class="meta">{{ poll.totalVotes }} votes</p>
+        </section>
+    </article>
+</section>

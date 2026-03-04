@@ -502,6 +502,14 @@ export class SessionService {
         return normalized;
     }
 
+    async updateCommunityAsync(communityId: string, name: string, description: string | null, imageUrl: string | null, isPrivate: boolean): Promise<CommunityDto> {
+        const updated = await firstValueFrom(this.api.updateCommunity(communityId, name, description, imageUrl, isPrivate));
+        const normalized = this.normalizeCommunity(updated);
+        this.message = 'Community updated.';
+        this.emitAppChange('profile');
+        return normalized;
+    }
+
     async getCommunityByIdAsync(communityId: string, members = 20): Promise<CommunityDto | null> {
         try {
             const community = await firstValueFrom(this.api.getCommunityById(communityId, members));
@@ -555,6 +563,12 @@ export class SessionService {
         this.message = 'Posted to community.';
         this.emitAppChange('posts');
         return this.normalizeCommunityPost(created);
+    }
+
+    async deleteCommunityPostAsync(communityId: string, postId: string): Promise<void> {
+        await firstValueFrom(this.api.deleteCommunityPost(communityId, postId));
+        this.message = 'Post deleted.';
+        this.emitAppChange('posts');
     }
 
     async loadCommunityPostsAsync(communityId: string, query?: string, take = 50): Promise<CommunityPostDto[]> {

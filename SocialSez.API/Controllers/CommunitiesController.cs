@@ -127,12 +127,40 @@ public class CommunitiesController(ICommunityService communityService) : Control
         }
     }
 
+    [Authorize]
+    [HttpDelete("{communityId:guid}/posts/{postId:guid}")]
+    public async Task<ActionResult> DeletePost(Guid communityId, Guid postId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var deleted = await communityService.DeletePostAsync(communityId, postId, profileId, cancellationToken);
+            return deleted ? NoContent() : NotFound();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
     [HttpGet("{communityId:guid}/posts")]
     public async Task<ActionResult<IReadOnlyCollection<CommunityPostDto>>> GetPosts(Guid communityId, [FromQuery] string? q, [FromQuery] int take = 50, CancellationToken cancellationToken = default)
     {
         var viewerId = TryGetOptionalProfileId();
         var posts = await communityService.GetPostsAsync(communityId, viewerId, q, take, cancellationToken);
         return Ok(posts);
+    }
+
+    [HttpGet("posts/{postId:guid}/shared")]
+    public async Task<ActionResult<CommunityPostDto>> GetSharedPostById(Guid postId, CancellationToken cancellationToken = default)
+    {
+        var viewerId = TryGetOptionalProfileId();
+        var post = await communityService.GetPostByIdAsync(postId, viewerId, cancellationToken);
+        return post is null ? NotFound() : Ok(post);
     }
 
     [Authorize]

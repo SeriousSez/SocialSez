@@ -35,6 +35,7 @@ export const routes: Routes = [
     { path: 'notifications/requests', loadComponent: () => import('./pages/notification-requests-page/notification-requests-page.component').then(module => module.NotificationRequestsPageComponent), canActivate: [authGuard] },
     { path: 'settings', loadComponent: () => import('./pages/settings-page/settings-page.component').then(module => module.SettingsPageComponent), canActivate: [authGuard] },
     { path: 'shared/post/:id', loadComponent: () => import('./pages/shared-post-page/shared-post-page.component').then(module => module.SharedPostPageComponent) },
+    { path: 'shared/community-post/:id', loadComponent: () => import('./pages/shared-community-post-page/shared-community-post-page.component').then(module => module.SharedCommunityPostPageComponent) },
     { path: 'shared/reel/:id', loadComponent: () => import('./pages/shared-reel-page/shared-reel-page.component').then(module => module.SharedReelPageComponent) },
     { path: 'shared/story/:id', loadComponent: () => import('./pages/shared-story-page/shared-story-page.component').then(module => module.SharedStoryPageComponent) },
     { path: '**', redirectTo: 'feed' }

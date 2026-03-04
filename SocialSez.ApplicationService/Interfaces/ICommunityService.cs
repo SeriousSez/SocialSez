@@ -13,6 +13,8 @@ public interface ICommunityService
     Task<CommunityDto?> JoinAsync(Guid communityId, Guid profileId, CancellationToken cancellationToken = default);
     Task<bool> LeaveAsync(Guid communityId, Guid profileId, CancellationToken cancellationToken = default);
     Task<CommunityPostDto?> CreatePostAsync(Guid communityId, CreateCommunityPostRequest request, CancellationToken cancellationToken = default);
+    Task<CommunityPostDto?> GetPostByIdAsync(Guid postId, Guid? viewerProfileId, CancellationToken cancellationToken = default);
+    Task<bool> DeletePostAsync(Guid communityId, Guid postId, Guid profileId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<CommunityPostDto>> GetPostsAsync(Guid communityId, Guid? viewerProfileId, string? query = null, int take = 50, CancellationToken cancellationToken = default);
     Task<CommunityPostDto?> SavePostAsync(Guid communityId, Guid postId, Guid profileId, CancellationToken cancellationToken = default);
     Task<bool> UnsavePostAsync(Guid communityId, Guid postId, Guid profileId, CancellationToken cancellationToken = default);

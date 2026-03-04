@@ -380,6 +380,81 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         return created is null ? null : MapPost(created, request.AuthorId);
     }
 
+    public async Task<CommunityPostDto?> GetPostByIdAsync(Guid postId, Guid? viewerProfileId, CancellationToken cancellationToken = default)
+    {
+        await EnsureCommunitySchemaAsync(cancellationToken);
+
+        var post = await dbContext.CommunityPosts
+            .AsNoTracking()
+            .Include(x => x.Community)
+                .ThenInclude(x => x.Members)
+            .Include(x => x.Author)
+            .Include(x => x.SavedBy)
+            .Include(x => x.Poll)
+                .ThenInclude(x => x.Options)
+                    .ThenInclude(x => x.Votes)
+            .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
+
+        if (post is null)
+        {
+            return null;
+        }
+
+        var isMember = viewerProfileId.HasValue && post.Community.Members.Any(x => x.ProfileId == viewerProfileId.Value);
+        if (post.Community.IsPrivate && !isMember)
+        {
+            return null;
+        }
+
+        return MapPost(post, viewerProfileId);
+    }
+
+    public async Task<bool> DeletePostAsync(Guid communityId, Guid postId, Guid profileId, CancellationToken cancellationToken = default)
+    {
+        await EnsureCommunitySchemaAsync(cancellationToken);
+
+        var post = await dbContext.CommunityPosts
+            .Include(x => x.Community)
+                .ThenInclude(x => x.Members)
+            .Include(x => x.Author)
+            .FirstOrDefaultAsync(x => x.Id == postId && x.CommunityId == communityId, cancellationToken);
+
+        if (post is null)
+        {
+            return false;
+        }
+
+        var isPostOwner = post.AuthorId == profileId;
+        var membership = post.Community.Members.FirstOrDefault(x => x.ProfileId == profileId);
+        var isCommunityManager = membership is not null
+            && (string.Equals(membership.Role, "Owner", StringComparison.Ordinal)
+                || string.Equals(membership.Role, "Admin", StringComparison.Ordinal));
+
+        if (!isPostOwner && !isCommunityManager)
+        {
+            throw new UnauthorizedAccessException("You can only delete your own posts or posts in communities you manage.");
+        }
+
+        if (!isPostOwner)
+        {
+            dbContext.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = post.AuthorId,
+                ActorId = profileId,
+                Type = "CommunityPostDeleted",
+                Message = $"Your community post was removed by /{post.Community.Slug} moderators.",
+                ReferenceId = post.Id.ToString(),
+                IsRead = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        dbContext.CommunityPosts.Remove(post);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     public async Task<IReadOnlyCollection<CommunityPostDto>> GetPostsAsync(Guid communityId, Guid? viewerProfileId, string? query = null, int take = 50, CancellationToken cancellationToken = default)
     {
         await EnsureCommunitySchemaAsync(cancellationToken);

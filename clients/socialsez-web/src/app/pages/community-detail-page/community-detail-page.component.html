@@ -1,15 +1,25 @@
-<section class="page" *ngIf="community as activeCommunity; else missingCommunity">
+<section class="page" *ngIf="community as activeCommunity; else communityState">
     <header class="community-head card">
         <img class="community-cover" *ngIf="activeCommunity.imageUrl" [src]="activeCommunity.imageUrl" alt="Community image" />
         <div>
             <h2>{{ activeCommunity.name }}</h2>
             <p class="meta">/{{ activeCommunity.slug }} · {{ activeCommunity.memberCount }} members · {{ activeCommunity.isPrivate ? 'Private' : 'Public' }}</p>
-            <p class="meta" *ngIf="activeCommunity.description">{{ activeCommunity.description }}</p>
+            <p class="meta community-description" *ngIf="activeCommunity.description" [innerHTML]="activeCommunity.description"></p>
             <a class="meta" [routerLink]="['/users', activeCommunity.createdByHandle]">Created by @{{ activeCommunity.createdByHandle }}</a>
         </div>
         <div class="community-head-actions">
-            <button type="button" *ngIf="canPost" (click)="openCreatePostModal()">Create post</button>
             <button type="button" *ngIf="!activeCommunity.joinedByMe && !activeCommunity.isPrivate" (click)="joinCommunityAsync()" [disabled]="joining">{{ joining ? 'Joining…' : 'Join' }}</button>
+            <button type="button" *ngIf="activeCommunity.joinedByMe" (click)="leaveCommunityAsync()" [disabled]="leaving">{{ leaving ? 'Leaving…' : 'Leave' }}</button>
+            <button type="button" class="ghost community-action-icon" *ngIf="canEditCommunity" (click)="openEditCommunityModal()" aria-label="Edit community" title="Edit community">
+                <i class="fa-duotone fa-pen-to-square" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="ghost community-action-icon" *ngIf="canPost" (click)="openCreatePostModal()" aria-label="Create post" title="Create post">
+                <i class="fa-duotone fa-square-plus" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="ghost community-action-icon" (click)="shareCommunityAsync()" [attr.aria-label]="copiedCommunityLink ? 'Community link copied' : 'Copy community link'" [attr.title]="copiedCommunityLink ? 'Copied' : 'Copy community link'">
+                <i *ngIf="!copiedCommunityLink" class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
+                <i *ngIf="copiedCommunityLink" class="fa-duotone fa-solid fa-check" aria-hidden="true"></i>
+            </button>
         </div>
     </header>
 
@@ -30,10 +40,23 @@
     </section>
 
     <section class="post-list">
-        <p class="meta" *ngIf="loading">Loading posts...</p>
+        <section class="community-post-skeleton" *ngIf="loading" aria-label="Loading community posts">
+            <article class="community-post-skeleton-card" *ngFor="let _ of [1, 2, 3]">
+                <div class="community-post-skeleton-head">
+                    <app-skeleton width="30px" height="30px" radius="999px"></app-skeleton>
+                    <div class="community-post-skeleton-meta">
+                        <app-skeleton width="130px" height="12px"></app-skeleton>
+                        <app-skeleton width="95px" height="10px"></app-skeleton>
+                    </div>
+                </div>
+                <app-skeleton width="92%" height="12px"></app-skeleton>
+                <app-skeleton width="74%" height="12px"></app-skeleton>
+                <app-skeleton width="100%" height="160px" radius="12px"></app-skeleton>
+            </article>
+        </section>
         <p class="meta" *ngIf="!loading && !posts.length">{{ postSearchQuery ? 'No posts match this search.' : 'No posts yet.' }}</p>
 
-        <article class="post-item card" *ngFor="let post of posts; trackBy: trackByPostId">
+        <article class="post-item card" *ngFor="let post of posts; trackBy: trackByPostId" [attr.id]="'post-' + post.id">
             <header class="post-head">
                 <div class="post-author">
                     <img class="post-author-image" *ngIf="post.authorImageUrl" [src]="post.authorImageUrl" alt="Author image" />
@@ -67,17 +90,53 @@
             </section>
 
             <footer class="post-actions">
-                <button type="button" class="ghost" (click)="toggleSavePostAsync(post)" [disabled]="togglingSavePostId === post.id">
-                    {{ post.isSavedByMe ? 'Saved' : 'Save' }}
+                <button type="button" class="icon-button" [class.saved-active]="post.isSavedByMe" (click)="toggleSavePostAsync(post)" [disabled]="togglingSavePostId === post.id" [attr.aria-label]="post.isSavedByMe ? 'Unsave post' : 'Save post'" [attr.title]="post.isSavedByMe ? 'Saved' : 'Save'">
+                    <i class="fa-duotone fa-bookmark" [class.fa-light]="!post.isSavedByMe" [class.fa-solid]="post.isSavedByMe" aria-hidden="true"></i>
                 </button>
-                <span class="meta">{{ post.poll ? (post.poll.totalVotes + ' poll votes') : 'Community post' }}</span>
-                <button type="button" class="ghost">Share</button>
+                <button type="button" class="icon-button" (click)="sharePostAsync(post)" [attr.aria-label]="copiedPostLinkId === post.id ? 'Post link copied' : 'Copy post link'" [attr.title]="copiedPostLinkId === post.id ? 'Copied' : 'Copy link'">
+                    <i *ngIf="copiedPostLinkId !== post.id" class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
+                    <i *ngIf="copiedPostLinkId === post.id" class="fa-duotone fa-solid fa-check" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="icon-button danger" *ngIf="canDeletePost(post)" (click)="requestDeletePost(post)" [disabled]="deletingPostId === post.id" aria-label="Delete post" title="Delete post">
+                    <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
+                </button>
             </footer>
         </article>
     </section>
-
-    <p class="status" [class.is-success]="statusTone === 'success'" *ngIf="status">{{ status }}</p>
 </section>
+
+<app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
+</app-confirm-modal>
+
+<div class="compose-modal" *ngIf="editCommunityModalOpen" role="dialog" aria-modal="true" aria-label="Edit community" (click)="closeEditCommunityModal()">
+    <section class="compose-modal-card" (click)="$event.stopPropagation()">
+        <header class="compose-modal-head">
+            <h3>Edit community</h3>
+            <button type="button" class="close" (click)="closeEditCommunityModal()" [disabled]="updatingCommunity" aria-label="Close edit community modal">✕</button>
+        </header>
+
+        <label>
+            Name
+            <input type="text" [(ngModel)]="updateCommunityName" maxlength="80" placeholder="Community name" [disabled]="updatingCommunity" />
+        </label>
+
+        <label>
+            Information
+            <textarea class="edit-community-information" [(ngModel)]="updateCommunityInformation" rows="3" maxlength="400" placeholder="Describe this community" [disabled]="updatingCommunity"></textarea>
+        </label>
+
+        <label>
+            Image
+            <input type="file" accept="image/*" (change)="onUpdateCommunityImageSelected($event)" [disabled]="updatingCommunity" />
+        </label>
+        <img class="composer-preview" *ngIf="updateCommunityImagePreviewUrl" [src]="updateCommunityImagePreviewUrl" alt="Community image preview" />
+
+        <div class="actions">
+            <button type="button" class="ghost" (click)="closeEditCommunityModal()" [disabled]="updatingCommunity">Cancel</button>
+            <button type="button" (click)="submitCommunityUpdateAsync()" [disabled]="updatingCommunity">{{ updatingCommunity ? 'Saving…' : 'Save' }}</button>
+        </div>
+    </section>
+</div>
 
 <div class="compose-modal" *ngIf="createPostModalOpen" role="dialog" aria-modal="true" aria-label="Create community post" (click)="closeCreatePostModal()">
     <section class="compose-modal-card" (click)="$event.stopPropagation()">
@@ -120,6 +179,50 @@
         </div>
     </section>
 </div>
+
+<ng-template #communityState>
+    <section class="page" *ngIf="loading; else missingCommunity">
+        <section class="card community-head-skeleton" aria-label="Loading community">
+            <app-skeleton width="72px" height="72px" radius="12px"></app-skeleton>
+            <div class="community-head-skeleton-copy">
+                <app-skeleton width="260px" height="18px"></app-skeleton>
+                <app-skeleton width="340px" height="12px"></app-skeleton>
+                <app-skeleton width="300px" height="12px"></app-skeleton>
+                <app-skeleton width="160px" height="12px"></app-skeleton>
+            </div>
+            <div class="community-head-skeleton-actions">
+                <app-skeleton width="36px" height="36px" radius="10px"></app-skeleton>
+                <app-skeleton width="36px" height="36px" radius="10px"></app-skeleton>
+                <app-skeleton width="36px" height="36px" radius="10px"></app-skeleton>
+            </div>
+        </section>
+
+        <section class="card feed-head" aria-label="Loading community feed">
+            <app-skeleton width="170px" height="18px"></app-skeleton>
+            <app-skeleton width="240px" height="12px"></app-skeleton>
+            <div class="feed-search">
+                <app-skeleton width="100%" height="38px" radius="10px"></app-skeleton>
+                <app-skeleton width="84px" height="38px" radius="10px"></app-skeleton>
+                <app-skeleton width="84px" height="38px" radius="10px"></app-skeleton>
+            </div>
+        </section>
+
+        <section class="community-post-skeleton" aria-label="Loading community posts">
+            <article class="community-post-skeleton-card" *ngFor="let _ of [1, 2, 3]">
+                <div class="community-post-skeleton-head">
+                    <app-skeleton width="30px" height="30px" radius="999px"></app-skeleton>
+                    <div class="community-post-skeleton-meta">
+                        <app-skeleton width="130px" height="12px"></app-skeleton>
+                        <app-skeleton width="95px" height="10px"></app-skeleton>
+                    </div>
+                </div>
+                <app-skeleton width="92%" height="12px"></app-skeleton>
+                <app-skeleton width="74%" height="12px"></app-skeleton>
+                <app-skeleton width="100%" height="160px" radius="12px"></app-skeleton>
+            </article>
+        </section>
+    </section>
+</ng-template>
 
 <ng-template #missingCommunity>
     <section class="page">

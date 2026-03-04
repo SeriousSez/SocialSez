@@ -1,0 +1,96 @@
+.shared-page {
+    width: min(760px, 100%);
+    margin: 0 auto;
+    padding: 16px;
+    display: grid;
+    gap: 12px;
+}
+
+.shared-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.shared-card {
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+}
+
+.meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.author-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.author-meta p {
+    margin: 2px 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.84rem;
+}
+
+.author-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+    display: grid;
+    place-items: center;
+    background: var(--color-surface-muted);
+    color: var(--color-text-muted);
+    font-weight: 700;
+}
+
+.content {
+    margin: 0;
+    white-space: pre-wrap;
+    line-height: 1.4;
+}
+
+.media {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+}
+
+.poll {
+    display: grid;
+    gap: 8px;
+}
+
+.poll h4 {
+    margin: 0;
+}
+
+.poll-options {
+    display: grid;
+    gap: 8px;
+}
+
+.poll-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-muted);
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.meta {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.84rem;
+}

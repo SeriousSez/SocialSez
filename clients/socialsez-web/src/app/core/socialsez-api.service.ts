@@ -240,6 +240,10 @@ export class SocialSezApiService {
         return this.http.get<PostDto>(`${this.baseUrl}/posts/${encodeURIComponent(postId)}/public`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
+    getSharedCommunityPost(postId: string): Observable<CommunityPostDto> {
+        return this.http.get<CommunityPostDto>(`${this.baseUrl}/communities/posts/${encodeURIComponent(postId)}/shared`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
     searchPosts(query: string, take = 25): Observable<PostDto[]> {
         return this.withAutoRefresh(() => this.http.get<PostDto[]>(`${this.baseUrl}/posts/search?q=${encodeURIComponent(query)}&take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
@@ -447,6 +451,10 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<CommunityDto>(`${this.baseUrl}/communities`, { name, description, imageUrl, isPrivate }, { headers: this.authHeaders() }));
     }
 
+    updateCommunity(communityId: string, name: string, description: string | null, imageUrl: string | null, isPrivate: boolean): Observable<CommunityDto> {
+        return this.withAutoRefresh(() => this.http.put<CommunityDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}`, { name, description, imageUrl, isPrivate }, { headers: this.authHeaders() }));
+    }
+
     getCommunityById(communityId: string, members = 20): Observable<CommunityDto> {
         return this.http.get<CommunityDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}?members=${members}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
@@ -486,6 +494,10 @@ export class SocialSezApiService {
             pollQuestion,
             pollOptions
         }, { headers: this.authHeaders() }));
+    }
+
+    deleteCommunityPost(communityId: string, postId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/posts/${encodeURIComponent(postId)}`, { headers: this.authHeaders() }));
     }
 
     getCommunityPosts(communityId: string, query?: string, take = 50): Observable<CommunityPostDto[]> {
