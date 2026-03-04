@@ -287,6 +287,10 @@
                                                 <span>Edit</span>
                                                 <i class="fa-duotone fa-light fa-pencil" aria-hidden="true"></i>
                                             </button>
+                                            <button type="button" *ngIf="canReportMessage(message)" (click)="openMessageReport(message, $event)">
+                                                <span>Report</span>
+                                                <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
+                                            </button>
                                             <button type="button" (click)="copyMessageText(message, $event)">
                                                 <span>Copy</span>
                                                 <i class="fa-duotone fa-light fa-copy" aria-hidden="true"></i>
@@ -473,8 +477,9 @@
             </button>
             <div class="shared-reel-viewer-menu" *ngIf="sharedReelSettingsMenuOpen">
                 <button type="button" (click)="toggleActiveSharedReelSound()">{{ activeSharedReelMuted ? 'Unmute reel' : 'Mute reel' }}</button>
-                <button type="button" (click)="startActiveSharedReelCaptionEdit()" [disabled]="!canManageActiveSharedReel || updatingSharedReel || deletingSharedReel">Edit reel</button>
-                <button type="button" class="danger" (click)="requestDeleteActiveSharedReel()" [disabled]="!canManageActiveSharedReel || updatingSharedReel || deletingSharedReel">
+                <button type="button" *ngIf="canReportActiveSharedReel" (click)="requestReportActiveSharedReel()">Report reel</button>
+                <button type="button" *ngIf="canManageActiveSharedReel" (click)="startActiveSharedReelCaptionEdit()" [disabled]="updatingSharedReel || deletingSharedReel">Edit reel</button>
+                <button type="button" class="danger" *ngIf="canManageActiveSharedReel" (click)="requestDeleteActiveSharedReel()" [disabled]="updatingSharedReel || deletingSharedReel">
                     {{ deletingSharedReel ? 'Deleting…' : 'Delete reel' }}
                 </button>
             </div>
@@ -558,6 +563,9 @@
                                             </button>
                                             <span class="viewer-comment-like-count" *ngIf="(comment.likeCount ?? 0) > 0">{{ comment.likeCount }}</span>
                                             <button type="button" class="viewer-comment-reply" (click)="replyToActiveSharedReelComment(comment, $event)">Reply</button>
+                                            <button type="button" class="viewer-comment-action" *ngIf="canReportActiveSharedReelComment(comment)" (click)="requestReportActiveSharedReelComment(comment, $event)" aria-label="Report comment">
+                                                <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
+                                            </button>
                                         </div>
                                     </ng-container>
                                 </article>
@@ -650,6 +658,9 @@
                                         </button>
                                         <span class="viewer-comment-like-count" *ngIf="(comment.likeCount ?? 0) > 0">{{ comment.likeCount }}</span>
                                         <button type="button" class="viewer-comment-reply" (mousedown)="replyToActiveSharedReelComment(comment, $event)">Reply</button>
+                                        <button type="button" class="viewer-comment-action" *ngIf="canReportActiveSharedReelComment(comment)" (mousedown)="requestReportActiveSharedReelComment(comment, $event)" aria-label="Report comment">
+                                            <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
+                                        </button>
                                         <button type="button" class="viewer-comment-action danger" *ngIf="canDeleteActiveSharedReelComment(comment)" (mousedown)="requestDeleteActiveSharedReelComment(comment, $event)" aria-label="Delete comment">
                                             <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
                                         </button>
@@ -693,9 +704,9 @@
     </app-confirm-modal>
 
     <app-feed-story-viewer [activeStory]="activeSharedStory" [activeStoryGroup]="activeSharedStoryGroup" [activeStoryIndex]="activeSharedStoryIndex" [storyCount]="activeSharedStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousSharedStory" [hasNextStory]="hasNextSharedStory"
-        [liked]="activeSharedStory ? isActiveSharedStoryLiked(activeSharedStory.id) : false" [sendingReply]="sendingSharedStoryReply" [sharingStory]="sharingSharedStoryMessage" [canDelete]="canDeleteActiveSharedStory" [deletingStory]="deletingSharedStory" [errorMessage]="sharedStoryViewerError"
-        (closed)="closeSharedStoryViewer()" (previous)="showPreviousSharedStory()" (next)="showNextSharedStory()" (replySubmitted)="sendSharedStoryReply($event)" (likeToggled)="toggleSharedStoryLike($event)" (shareRequested)="openSharedStoryShareModal($event)"
-        (deleteRequested)="requestDeleteActiveSharedStory($event)">
+        [liked]="activeSharedStory ? isActiveSharedStoryLiked(activeSharedStory.id) : false" [sendingReply]="sendingSharedStoryReply" [sharingStory]="sharingSharedStoryMessage" [canDelete]="canDeleteActiveSharedStory" [deletingStory]="deletingSharedStory" [canReport]="canReportActiveSharedStory"
+        [reportingStory]="reportingContent" [errorMessage]="sharedStoryViewerError" (closed)="closeSharedStoryViewer()" (previous)="showPreviousSharedStory()" (next)="showNextSharedStory()" (replySubmitted)="sendSharedStoryReply($event)" (likeToggled)="toggleSharedStoryLike($event)"
+        (shareRequested)="openSharedStoryShareModal($event)" (deleteRequested)="requestDeleteActiveSharedStory($event)" (reportRequested)="requestReportActiveSharedStory($event)">
     </app-feed-story-viewer>
 
     <app-confirm-modal [open]="!!pendingDeleteSharedStoryId" title="Delete story" message="Delete this story? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingSharedStory" (cancel)="cancelDeleteActiveSharedStory()"
@@ -708,4 +719,6 @@
 
     <app-share-reel-message-modal [open]="!!pendingShareReelFromViewer" [reel]="pendingShareReelFromViewer" [busy]="!!sharingSharedReelId" (cancel)="cancelActiveSharedReelShareModal()" (confirm)="submitActiveSharedReelShareAsMessage($event)"></app-share-reel-message-modal>
     <app-share-reel-message-modal [open]="!!pendingShareStoryFromViewer" [reel]="pendingShareStoryAsReel" [contentKind]="'story'" [busy]="!!sharingSharedStoryId" (cancel)="cancelSharedStoryShareModal()" (confirm)="submitSharedStoryShareAsMessage($event)"></app-share-reel-message-modal>
+
+    <app-report-modal [open]="showContentReportModal" [busy]="reportingContent" [profileHandle]="pendingContentReportTarget?.handle ?? ''" (cancel)="closeContentReportModal()" (submitReport)="submitContentReport($event)"></app-report-modal>
 </section>

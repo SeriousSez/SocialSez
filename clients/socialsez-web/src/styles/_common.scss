@@ -14,6 +14,11 @@
     box-shadow: 0 10px 24px -22px var(--color-primary);
 }
 
+.status.is-success {
+    color: var(--color-success);
+    border-left-color: var(--color-success);
+}
+
 .error {
     margin: 0;
     color: var(--color-error-text);

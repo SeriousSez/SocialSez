@@ -28,6 +28,13 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
     public DbSet<UserMute> UserMutes => Set<UserMute>();
     public DbSet<UserReport> UserReports => Set<UserReport>();
+    public DbSet<Community> Communities => Set<Community>();
+    public DbSet<CommunityMember> CommunityMembers => Set<CommunityMember>();
+    public DbSet<CommunityPost> CommunityPosts => Set<CommunityPost>();
+    public DbSet<CommunityPoll> CommunityPolls => Set<CommunityPoll>();
+    public DbSet<CommunityPollOption> CommunityPollOptions => Set<CommunityPollOption>();
+    public DbSet<CommunityPollVote> CommunityPollVotes => Set<CommunityPollVote>();
+    public DbSet<CommunitySavedPost> CommunitySavedPosts => Set<CommunitySavedPost>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -444,8 +451,169 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
                 .HasForeignKey(x => x.TargetProfileId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne(x => x.TargetPost)
+                .WithMany()
+                .HasForeignKey(x => x.TargetPostId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.TargetReel)
+                .WithMany()
+                .HasForeignKey(x => x.TargetReelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.TargetStory)
+                .WithMany()
+                .HasForeignKey(x => x.TargetStoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.TargetComment)
+                .WithMany()
+                .HasForeignKey(x => x.TargetCommentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.TargetReelComment)
+                .WithMany()
+                .HasForeignKey(x => x.TargetReelCommentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.TargetMessage)
+                .WithMany()
+                .HasForeignKey(x => x.TargetMessageId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasIndex(x => new { x.TargetProfileId, x.CreatedAtUtc });
             entity.HasIndex(x => new { x.ReporterId, x.CreatedAtUtc });
+            entity.HasIndex(x => new { x.TargetPostId, x.CreatedAtUtc });
+            entity.HasIndex(x => new { x.TargetReelId, x.CreatedAtUtc });
+            entity.HasIndex(x => new { x.TargetStoryId, x.CreatedAtUtc });
+            entity.HasIndex(x => new { x.TargetCommentId, x.CreatedAtUtc });
+            entity.HasIndex(x => new { x.TargetReelCommentId, x.CreatedAtUtc });
+            entity.HasIndex(x => new { x.TargetMessageId, x.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<Community>(entity =>
+        {
+            entity.ToTable("Communities");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Slug).HasMaxLength(60).IsRequired();
+            entity.Property(x => x.Name).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(600);
+            entity.Property(x => x.ImageUrl).HasMaxLength(1024);
+            entity.Property(x => x.IsPrivate).HasDefaultValue(false);
+
+            entity.HasOne(x => x.CreatedByProfile)
+                .WithMany(x => x.CreatedCommunities)
+                .HasForeignKey(x => x.CreatedByProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.Slug).IsUnique();
+            entity.HasIndex(x => x.CreatedAtUtc);
+        });
+
+        modelBuilder.Entity<CommunityMember>(entity =>
+        {
+            entity.ToTable("CommunityMembers");
+            entity.HasKey(x => new { x.CommunityId, x.ProfileId });
+            entity.Property(x => x.Role).HasMaxLength(24).IsRequired();
+
+            entity.HasOne(x => x.Community)
+                .WithMany(x => x.Members)
+                .HasForeignKey(x => x.CommunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.CommunityMemberships)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.ProfileId);
+            entity.HasIndex(x => new { x.CommunityId, x.Role });
+        });
+
+        modelBuilder.Entity<CommunityPost>(entity =>
+        {
+            entity.ToTable("CommunityPosts");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Content).HasMaxLength(5000);
+            entity.Property(x => x.ImageUrl).HasMaxLength(1024);
+
+            entity.HasOne(x => x.Community)
+                .WithMany(x => x.Posts)
+                .HasForeignKey(x => x.CommunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Author)
+                .WithMany(x => x.CommunityPosts)
+                .HasForeignKey(x => x.AuthorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => new { x.CommunityId, x.CreatedAtUtc });
+            entity.HasIndex(x => x.AuthorId);
+        });
+
+        modelBuilder.Entity<CommunityPoll>(entity =>
+        {
+            entity.ToTable("CommunityPolls");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Question).HasMaxLength(280).IsRequired();
+
+            entity.HasOne(x => x.Post)
+                .WithOne(x => x.Poll)
+                .HasForeignKey<CommunityPoll>(x => x.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.PostId).IsUnique();
+        });
+
+        modelBuilder.Entity<CommunityPollOption>(entity =>
+        {
+            entity.ToTable("CommunityPollOptions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Text).HasMaxLength(160).IsRequired();
+
+            entity.HasOne(x => x.Poll)
+                .WithMany(x => x.Options)
+                .HasForeignKey(x => x.PollId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.PollId);
+        });
+
+        modelBuilder.Entity<CommunityPollVote>(entity =>
+        {
+            entity.ToTable("CommunityPollVotes");
+            entity.HasKey(x => new { x.OptionId, x.VoterId });
+
+            entity.HasOne(x => x.Option)
+                .WithMany(x => x.Votes)
+                .HasForeignKey(x => x.OptionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Voter)
+                .WithMany(x => x.CommunityPollVotes)
+                .HasForeignKey(x => x.VoterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.VoterId);
+        });
+
+        modelBuilder.Entity<CommunitySavedPost>(entity =>
+        {
+            entity.ToTable("CommunitySavedPosts");
+            entity.HasKey(x => new { x.PostId, x.ProfileId });
+
+            entity.HasOne(x => x.Post)
+                .WithMany(x => x.SavedBy)
+                .HasForeignKey(x => x.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.SavedCommunityPosts)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.ProfileId);
+            entity.HasIndex(x => new { x.ProfileId, x.SavedAtUtc });
         });
     }
 }

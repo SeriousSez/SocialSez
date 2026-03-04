@@ -163,6 +163,11 @@
                 <i class="fa-duotone" [class.fa-light]="!copyLinkCopied" [class.fa-solid]="copyLinkCopied" [class.fa-link]="!copyLinkCopied" [class.fa-check]="copyLinkCopied" aria-hidden="true"></i>
                 <span class="action-label">{{ copyLinkCopied ? 'Copied' : 'Copy link' }}</span>
             </button>
+
+            <button class="comments-toggle" type="button" *ngIf="canReportPost()" (click)="triggerReportPost()" [disabled]="busy || !canInteract" aria-label="Report post" title="Report post">
+                <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
+                <span class="action-label">Report</span>
+            </button>
         </div>
 
         <app-comments-sheet [open]="commentsOpen" (close)="toggleComments()">
@@ -205,6 +210,9 @@
                                 <i class="fa-duotone fa-heart" [class.fa-solid]="!!comment.myReactionType" [class.fa-light]="!comment.myReactionType" aria-hidden="true"></i>
                             </button>
                             <button type="button" class="comment-reply-button" *ngIf="editingCommentId !== comment.id && canInteract" (mousedown)="onCommentReplyMouseDown(comment, $event)" (click)="onCommentReplyClick(comment, $event)">Reply</button>
+                            <button class="icon-btn" type="button" *ngIf="canReportComment(comment)" (mousedown)="requestReportComment(comment, $event)" (click)="requestReportComment(comment, $event)" aria-label="Report comment" title="Report comment">
+                                <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
+                            </button>
                             <button class="icon-btn danger" type="button" *ngIf="canDeleteComment(comment)" (mousedown)="onDeleteCommentMouseDown(comment.id, $event)" (click)="onDeleteCommentClick(comment.id, $event)" aria-label="Delete comment" title="Delete comment">
                                 <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
                             </button>

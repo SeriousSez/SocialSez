@@ -36,6 +36,13 @@ interface BioSegment {
     url?: string;
 }
 
+type ProfileContentReportTarget =
+    | { kind: 'post'; id: string; handle: string }
+    | { kind: 'reel'; id: string; handle: string }
+    | { kind: 'story'; id: string; handle: string }
+    | { kind: 'comment'; id: string; handle: string }
+    | { kind: 'reel-comment'; id: string; handle: string };
+
 @Component({
     selector: 'app-profile-page',
     standalone: true,
@@ -119,6 +126,9 @@ export class ProfilePageComponent implements OnDestroy {
     mutingProfile = false;
     reportingProfile = false;
     showReportModal = false;
+    reportingContent = false;
+    showContentReportModal = false;
+    pendingContentReportTarget: ProfileContentReportTarget | null = null;
     showBlockModal = false;
     viewedProfileHasActiveStory = false;
     viewedProfileHasUnseenStory = false;
@@ -450,6 +460,11 @@ export class ProfilePageComponent implements OnDestroy {
     get canDeleteActiveStory(): boolean {
         const story = this.activeStory;
         return !!story && !!this.currentProfileId && story.authorId === this.currentProfileId;
+    }
+
+    get canReportActiveStory(): boolean {
+        const story = this.activeStory;
+        return !!story && !!this.currentProfileId && story.authorId !== this.currentProfileId;
     }
 
     async copyProfileLinkAsync(): Promise<void> {
@@ -1600,6 +1615,112 @@ export class ProfilePageComponent implements OnDestroy {
 
     async shareStoryAsMessage(_story: StoryDto): Promise<void> {
         this.storyViewerError = 'Story sharing from profile is not available yet.';
+    }
+
+    openPostReport(post: PostDto): void {
+        if (!this.currentProfileId || post.authorId === this.currentProfileId || this.reportingContent) {
+            return;
+        }
+
+        this.pendingContentReportTarget = { kind: 'post', id: post.id, handle: post.authorHandle };
+        this.showContentReportModal = true;
+    }
+
+    openReelReport(reel: ReelDto): void {
+        if (!this.currentProfileId || reel.authorId === this.currentProfileId || this.reportingContent) {
+            return;
+        }
+
+        this.pendingContentReportTarget = { kind: 'reel', id: reel.id, handle: reel.authorHandle };
+        this.showContentReportModal = true;
+    }
+
+    openStoryReport(story: StoryDto): void {
+        if (!this.currentProfileId || story.authorId === this.currentProfileId || this.reportingContent) {
+            return;
+        }
+
+        this.pendingContentReportTarget = { kind: 'story', id: story.id, handle: story.authorHandle };
+        this.showContentReportModal = true;
+    }
+
+    openPostCommentReport(post: PostDto, commentId: string): void {
+        if (!this.currentProfileId || this.reportingContent) {
+            return;
+        }
+
+        const comment = post.comments.find(item => item.id === commentId);
+        if (!comment || comment.authorId === this.currentProfileId) {
+            return;
+        }
+
+        this.pendingContentReportTarget = { kind: 'comment', id: comment.id, handle: comment.authorHandle };
+        this.showContentReportModal = true;
+    }
+
+    openReelCommentReport(event: { reel: ReelDto; comment: { id: string; authorId: string; authorHandle: string } }): void {
+        if (!this.currentProfileId || this.reportingContent) {
+            return;
+        }
+
+        if (event.comment.authorId === this.currentProfileId) {
+            return;
+        }
+
+        this.pendingContentReportTarget = { kind: 'reel-comment', id: event.comment.id, handle: event.comment.authorHandle };
+        this.showContentReportModal = true;
+    }
+
+    closeContentReportModal(): void {
+        if (this.reportingContent) {
+            return;
+        }
+
+        this.showContentReportModal = false;
+        this.pendingContentReportTarget = null;
+    }
+
+    async submitContentReport(payload: { reason: string; details?: string }): Promise<void> {
+        const target = this.pendingContentReportTarget;
+        if (!target || this.reportingContent) {
+            return;
+        }
+
+        const reason = payload.reason.trim();
+        const details = payload.details?.trim();
+        if (!reason) {
+            return;
+        }
+
+        this.reportingContent = true;
+        this.error = '';
+        this.storyViewerError = '';
+
+        try {
+            if (target.kind === 'post') {
+                await this.session.reportPostAsync(target.id, reason, details || undefined);
+            } else if (target.kind === 'reel') {
+                await this.session.reportReelAsync(target.id, reason, details || undefined);
+            } else if (target.kind === 'story') {
+                await this.session.reportStoryAsync(target.id, reason, details || undefined);
+            } else if (target.kind === 'comment') {
+                await this.session.reportCommentAsync(target.id, reason, details || undefined);
+            } else {
+                await this.session.reportReelCommentAsync(target.id, reason, details || undefined);
+            }
+
+            this.showContentReportModal = false;
+            this.pendingContentReportTarget = null;
+        } catch {
+            const message = 'Could not submit report right now.';
+            if (target.kind === 'story') {
+                this.storyViewerError = message;
+            } else {
+                this.error = message;
+            }
+        } finally {
+            this.reportingContent = false;
+        }
     }
 
     cancelShareModal(): void {

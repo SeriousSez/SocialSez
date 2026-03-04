@@ -55,7 +55,10 @@ export class AppComponent implements OnInit, OnDestroy {
     private pendingProfileChipViewedSync = false;
     private storyStatusPollTimerId: number | null = null;
     private topNoticeAutoDismissTimerId: number | null = null;
+    private topNoticeHideTimerId: number | null = null;
+    topNoticeHiding = false;
     private dismissedTopNoticeVersion = 0;
+    private readonly topNoticeAnimationDurationMs = 400;
     private readonly updateMessagePattern = /(new\s+version|version\s+available|update\s+available)/i;
     private readonly errorMessagePattern = /(error|failed|could not|unable to|invalid|denied|forbidden|unauthorized|not found|expired)/i;
 
@@ -160,6 +163,7 @@ export class AppComponent implements OnInit, OnDestroy {
         }
 
         this.clearTopNoticeAutoDismissTimer();
+        this.clearTopNoticeHideTimer();
     }
 
     @HostListener('window:storage', ['$event'])
@@ -227,8 +231,18 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     dismissTopNotice(): void {
+        if (!this.showTopNotice || this.topNoticeHiding) {
+            return;
+        }
+
         this.clearTopNoticeAutoDismissTimer();
-        this.dismissedTopNoticeVersion = this.session.messageVersion;
+        this.clearTopNoticeHideTimer();
+        this.topNoticeHiding = true;
+        this.topNoticeHideTimerId = window.setTimeout(() => {
+            this.dismissedTopNoticeVersion = this.session.messageVersion;
+            this.topNoticeHiding = false;
+            this.clearTopNoticeHideTimer();
+        }, this.topNoticeAnimationDurationMs);
     }
 
     onTopNoticeAction(): void {
@@ -241,6 +255,11 @@ export class AppComponent implements OnInit, OnDestroy {
 
     private onTopNoticeMessageChanged(): void {
         this.clearTopNoticeAutoDismissTimer();
+
+        if (this.topNoticeHiding) {
+            this.clearTopNoticeHideTimer();
+            this.topNoticeHiding = false;
+        }
 
         if (!this.showTopNotice || this.isErrorNotice(this.topNoticeMessage)) {
             return;
@@ -259,6 +278,13 @@ export class AppComponent implements OnInit, OnDestroy {
         if (this.topNoticeAutoDismissTimerId !== null) {
             window.clearTimeout(this.topNoticeAutoDismissTimerId);
             this.topNoticeAutoDismissTimerId = null;
+        }
+    }
+
+    private clearTopNoticeHideTimer(): void {
+        if (this.topNoticeHideTimerId !== null) {
+            window.clearTimeout(this.topNoticeHideTimerId);
+            this.topNoticeHideTimerId = null;
         }
     }
 

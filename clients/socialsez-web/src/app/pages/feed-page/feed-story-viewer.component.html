@@ -24,10 +24,19 @@
                 <span class="story-age">{{ formatStoryAge(story.createdAtUtc) }}</span>
             </div>
             <div class="story-head-actions">
-                <button type="button" *ngIf="canDelete" class="story-delete-action" (click)="onDeleteClick()" [disabled]="deletingStory" [attr.aria-label]="deletingStory ? 'Deleting story' : 'Delete story'">{{ deletingStory ? '…' : '🗑' }}</button>
-                <button type="button" *ngIf="isVideoStory(story.mediaUrl)" (click)="toggleStoryMute()" [attr.aria-label]="muteLabel">{{ muteIcon }}</button>
-                <button type="button" (click)="togglePause()" [attr.aria-label]="pauseLabel">{{ pauseIcon }}</button>
-                <button type="button" (click)="close()" aria-label="Close story">✕</button>
+                <button type="button" *ngIf="canDelete" class="story-delete-action" (click)="onDeleteClick()" [disabled]="deletingStory" [attr.aria-label]="deletingStory ? 'Deleting story' : 'Delete story'">
+                    <i class="fa-duotone" [class.fa-solid]="deletingStory" [class.fa-light]="!deletingStory" [class.fa-spinner-third]="deletingStory" [class.fa-spin]="deletingStory" [class.fa-trash]="!deletingStory" aria-hidden="true"></i>
+                </button>
+                <button type="button" *ngIf="canReport" class="story-delete-action" (click)="onReportClick()" [disabled]="reportingStory" [attr.aria-label]="reportingStory ? 'Reporting story' : 'Report story'">
+                    <i class="fa-duotone" [class.fa-solid]="reportingStory" [class.fa-light]="!reportingStory" [class.fa-spinner-third]="reportingStory" [class.fa-spin]="reportingStory" [class.fa-flag]="!reportingStory" aria-hidden="true"></i>
+                </button>
+                <button type="button" *ngIf="isVideoStory(story.mediaUrl)" (click)="toggleStoryMute()" [attr.aria-label]="muteLabel">
+                    <i class="fa-duotone" [class.fa-light]="true" [class.fa-volume-xmark]="storyMuted" [class.fa-volume-high]="!storyMuted" aria-hidden="true"></i>
+                </button>
+                <button type="button" (click)="togglePause()" [attr.aria-label]="pauseLabel">
+                    <i class="fa-duotone" [class.fa-light]="true" [class.fa-play]="paused" [class.fa-pause]="!paused" aria-hidden="true"></i>
+                </button>
+                <button type="button" (click)="close()" aria-label="Close story"><i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i></button>
             </div>
         </header>
 

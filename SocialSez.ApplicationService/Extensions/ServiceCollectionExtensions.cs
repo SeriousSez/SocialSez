@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFollowService, FollowService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<ISafetyService, SafetyService>();
+        services.AddScoped<ICommunityService, CommunityService>();
         return services;
     }
 }

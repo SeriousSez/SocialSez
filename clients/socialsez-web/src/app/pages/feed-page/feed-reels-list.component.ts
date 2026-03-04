@@ -21,6 +21,11 @@ export interface ReelCommentDeleteEvent {
     comment: ReelCommentDto;
 }
 
+export interface ReelCommentReportEvent {
+    reel: ReelDto;
+    comment: ReelCommentDto;
+}
+
 @Component({
     selector: 'app-feed-reels-list',
     standalone: true,
@@ -48,7 +53,9 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     @Output() commentAdded = new EventEmitter<ReelCommentCreateEvent>();
     @Output() reelCommentUpdated = new EventEmitter<ReelCommentUpdateEvent>();
     @Output() reelCommentDeleteRequested = new EventEmitter<ReelCommentDeleteEvent>();
+    @Output() reelCommentReportRequested = new EventEmitter<ReelCommentReportEvent>();
     @Output() shareRequested = new EventEmitter<ReelDto>();
+    @Output() reportRequested = new EventEmitter<ReelDto>();
     @Output() reelUpdated = new EventEmitter<{ reel: ReelDto; caption: string }>();
     @Output() reelDeleted = new EventEmitter<ReelDto>();
     @Output() authorAvatarClicked = new EventEmitter<string>();
@@ -59,6 +66,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     editingReelCommentId: string | null = null;
     editingReelCommentDraft = '';
     copiedReelLinkId: string | null = null;
+    reelSettingsMenuReelId: string | null = null;
     private intersectionObserver: IntersectionObserver | null = null;
     private readonly reelVisibility = new Map<string, number>();
     private readonly mutedReelIds = new Set<string>();
@@ -129,6 +137,10 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
             }
         }
 
+        if (this.reelSettingsMenuReelId && !currentIds.has(this.reelSettingsMenuReelId)) {
+            this.reelSettingsMenuReelId = null;
+        }
+
         window.setTimeout(() => {
             this.selectMostVisibleReel();
             this.syncPlaybackState();
@@ -162,6 +174,40 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         }
 
         this.shareRequested.emit(reel);
+    }
+
+    onReportReel(reel: ReelDto): void {
+        if (!this.canReportReel(reel)) {
+            return;
+        }
+
+        this.reportRequested.emit(reel);
+    }
+
+    canReportReel(reel: ReelDto): boolean {
+        return this.canInteract && !this.canManageReel(reel);
+    }
+
+    toggleReelSettingsMenu(reel: ReelDto, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.reelSettingsMenuReelId = this.reelSettingsMenuReelId === reel.id ? null : reel.id;
+    }
+
+    isReelSettingsMenuOpen(reel: ReelDto): boolean {
+        return this.reelSettingsMenuReelId === reel.id;
+    }
+
+    closeReelSettingsMenu(): void {
+        this.reelSettingsMenuReelId = null;
+    }
+
+    reportReelFromMenu(reel: ReelDto, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.onReportReel(reel);
+        this.closeReelSettingsMenu();
     }
 
     async onCopyReelLink(reel: ReelDto): Promise<void> {
@@ -367,6 +413,14 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         return comment.authorId === this.viewerProfileId || reel.authorId === this.viewerProfileId;
     }
 
+    canReportReelComment(comment: ReelCommentDto): boolean {
+        if (!this.viewerProfileId || !this.canInteract) {
+            return false;
+        }
+
+        return comment.authorId !== this.viewerProfileId;
+    }
+
     startReelCommentEdit(comment: ReelCommentDto, event: MouseEvent): void {
         event.preventDefault();
         event.stopPropagation();
@@ -430,6 +484,17 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.editingReelCommentId === comment.id) {
             this.cancelReelCommentEdit();
         }
+    }
+
+    requestReportReelComment(reel: ReelDto, comment: ReelCommentDto, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!this.canReportReelComment(comment)) {
+            return;
+        }
+
+        this.reelCommentReportRequested.emit({ reel, comment });
     }
 
     onDeleteReelCommentMouseDown(reel: ReelDto, comment: ReelCommentDto, event: MouseEvent): void {

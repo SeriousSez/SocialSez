@@ -28,15 +28,23 @@ import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { SegmentedTabItem, SegmentedTabsComponent } from '../../shared/segmented-tabs/segmented-tabs.component';
 import { CreateContentMenuComponent } from '../../shared/create-content-menu/create-content-menu.component';
+import { ReportModalComponent } from '../../shared/report-modal/report-modal.component';
 
 interface StoryTrimPreviewOption {
     previewUrl: string;
 }
 
+type FeedReportTarget =
+    | { kind: 'post'; id: string; handle: string }
+    | { kind: 'reel'; id: string; handle: string }
+    | { kind: 'story'; id: string; handle: string }
+    | { kind: 'comment'; id: string; handle: string }
+    | { kind: 'reel-comment'; id: string; handle: string };
+
 @Component({
     selector: 'app-feed-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, PostCardComponent, PostComposerComponent, ReelComposerModalComponent, FeedReelsListComponent, FeedStoryViewerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, ConfirmModalComponent, SkeletonComponent, SegmentedTabsComponent, CreateContentMenuComponent],
+    imports: [CommonModule, RouterLink, PostCardComponent, PostComposerComponent, ReelComposerModalComponent, FeedReelsListComponent, FeedStoryViewerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, ConfirmModalComponent, SkeletonComponent, SegmentedTabsComponent, CreateContentMenuComponent, ReportModalComponent],
     templateUrl: './feed-page.component.html',
     styleUrl: './feed-page.component.scss'
 })
@@ -82,6 +90,9 @@ export class FeedPageComponent implements OnDestroy {
     sharingPostId: string | null = null;
     sharingReelId: string | null = null;
     sharingStoryId: string | null = null;
+    reportingContent = false;
+    showContentReportModal = false;
+    pendingReportTarget: FeedReportTarget | null = null;
     pendingSharePost: PostDto | null = null;
     pendingShareReel: ReelDto | null = null;
     pendingShareStory: StoryDto | null = null;
@@ -232,6 +243,11 @@ export class FeedPageComponent implements OnDestroy {
     get canDeleteActiveStory(): boolean {
         const story = this.activeStory;
         return !!story && !!this.currentProfileId && story.authorId === this.currentProfileId;
+    }
+
+    get canReportActiveStory(): boolean {
+        const story = this.activeStory;
+        return !!story && !!this.currentProfileId && story.authorId !== this.currentProfileId;
     }
 
     trackPostById(_: number, post: PostDto): string {
@@ -910,6 +926,115 @@ export class FeedPageComponent implements OnDestroy {
         }
 
         this.storyViewerError = '';
+    }
+
+    openPostReport(post: PostDto): void {
+        if (!this.currentProfileId || post.authorId === this.currentProfileId || this.reportingContent) {
+            return;
+        }
+
+        this.pendingReportTarget = { kind: 'post', id: post.id, handle: post.authorHandle };
+        this.showContentReportModal = true;
+    }
+
+    openReelReport(reel: ReelDto): void {
+        if (!this.currentProfileId || reel.authorId === this.currentProfileId || this.reportingContent) {
+            return;
+        }
+
+        this.pendingReportTarget = { kind: 'reel', id: reel.id, handle: reel.authorHandle };
+        this.showContentReportModal = true;
+    }
+
+    openStoryReport(story: StoryDto): void {
+        if (!this.currentProfileId || story.authorId === this.currentProfileId || this.reportingContent) {
+            return;
+        }
+
+        this.pendingReportTarget = { kind: 'story', id: story.id, handle: story.authorHandle };
+        this.showContentReportModal = true;
+    }
+
+    openPostCommentReport(post: PostDto, commentId: string): void {
+        if (!this.currentProfileId || this.reportingContent) {
+            return;
+        }
+
+        const comment = post.comments.find(item => item.id === commentId);
+        if (!comment || comment.authorId === this.currentProfileId) {
+            return;
+        }
+
+        this.pendingReportTarget = { kind: 'comment', id: comment.id, handle: comment.authorHandle };
+        this.showContentReportModal = true;
+    }
+
+    openReelCommentReport(event: { reel: ReelDto; comment: { id: string; authorId: string; authorHandle: string } }): void {
+        if (!this.currentProfileId || this.reportingContent) {
+            return;
+        }
+
+        if (event.comment.authorId === this.currentProfileId) {
+            return;
+        }
+
+        this.pendingReportTarget = { kind: 'reel-comment', id: event.comment.id, handle: event.comment.authorHandle };
+        this.showContentReportModal = true;
+    }
+
+    closeContentReportModal(): void {
+        if (this.reportingContent) {
+            return;
+        }
+
+        this.showContentReportModal = false;
+        this.pendingReportTarget = null;
+    }
+
+    async submitContentReport(payload: { reason: string; details?: string }): Promise<void> {
+        const target = this.pendingReportTarget;
+        if (!target || this.reportingContent) {
+            return;
+        }
+
+        const reason = payload.reason.trim();
+        const details = payload.details?.trim();
+        if (!reason) {
+            return;
+        }
+
+        this.reportingContent = true;
+        this.error = '';
+        this.reelsError = '';
+        this.storyViewerError = '';
+
+        try {
+            if (target.kind === 'post') {
+                await this.session.reportPostAsync(target.id, reason, details || undefined);
+            } else if (target.kind === 'reel') {
+                await this.session.reportReelAsync(target.id, reason, details || undefined);
+            } else if (target.kind === 'story') {
+                await this.session.reportStoryAsync(target.id, reason, details || undefined);
+            } else if (target.kind === 'comment') {
+                await this.session.reportCommentAsync(target.id, reason, details || undefined);
+            } else {
+                await this.session.reportReelCommentAsync(target.id, reason, details || undefined);
+            }
+
+            this.showContentReportModal = false;
+            this.pendingReportTarget = null;
+        } catch {
+            const message = 'Could not submit report right now.';
+            if (target.kind === 'post' || target.kind === 'comment') {
+                this.error = message;
+            } else if (target.kind === 'reel' || target.kind === 'reel-comment') {
+                this.reelsError = message;
+            } else {
+                this.storyViewerError = message;
+            }
+        } finally {
+            this.reportingContent = false;
+        }
     }
 
     cancelStoryShareModal(): void {

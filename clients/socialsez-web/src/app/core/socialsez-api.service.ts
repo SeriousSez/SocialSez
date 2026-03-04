@@ -6,6 +6,9 @@ import {
     AuthResponse,
     ChatConversationDto,
     ChatMessageDto,
+    CommunityDto,
+    CommunityPollDto,
+    CommunityPostDto,
     CreateChatMessageRequest,
     CreateDirectConversationRequest,
     CreateGroupConversationRequest,
@@ -364,6 +367,30 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/safety/report`, { targetProfileId, reason, details }, { headers: this.authHeaders() }));
     }
 
+    reportPost(targetPostId: string, reason: string, details?: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/safety/report/post`, { targetPostId, reason, details }, { headers: this.authHeaders() }));
+    }
+
+    reportReel(targetReelId: string, reason: string, details?: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/safety/report/reel`, { targetReelId, reason, details }, { headers: this.authHeaders() }));
+    }
+
+    reportStory(targetStoryId: string, reason: string, details?: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/safety/report/story`, { targetStoryId, reason, details }, { headers: this.authHeaders() }));
+    }
+
+    reportComment(targetCommentId: string, reason: string, details?: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/safety/report/comment`, { targetCommentId, reason, details }, { headers: this.authHeaders() }));
+    }
+
+    reportReelComment(targetReelCommentId: string, reason: string, details?: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/safety/report/reel-comment`, { targetReelCommentId, reason, details }, { headers: this.authHeaders() }));
+    }
+
+    reportMessage(targetMessageId: string, reason: string, details?: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/safety/report/message`, { targetMessageId, reason, details }, { headers: this.authHeaders() }));
+    }
+
     updateMyProfile(request: UpdateProfileRequest): Observable<ProfileDto> {
         return this.withAutoRefresh(() => this.http.put<ProfileDto>(`${this.baseUrl}/profiles/me`, request, { headers: this.authHeaders() }));
     }
@@ -414,6 +441,69 @@ export class SocialSezApiService {
 
     clearMessageReaction(messageId: string): Observable<ChatMessageDto> {
         return this.withAutoRefresh(() => this.http.delete<ChatMessageDto>(`${this.baseUrl}/chat/messages/${messageId}/reaction`, { headers: this.authHeaders() }));
+    }
+
+    createCommunity(name: string, description: string | null, imageUrl: string | null, isPrivate: boolean): Observable<CommunityDto> {
+        return this.withAutoRefresh(() => this.http.post<CommunityDto>(`${this.baseUrl}/communities`, { name, description, imageUrl, isPrivate }, { headers: this.authHeaders() }));
+    }
+
+    getCommunityById(communityId: string, members = 20): Observable<CommunityDto> {
+        return this.http.get<CommunityDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}?members=${members}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    getCommunityBySlug(slug: string, members = 20): Observable<CommunityDto> {
+        return this.http.get<CommunityDto>(`${this.baseUrl}/communities/slug/${encodeURIComponent(slug)}?members=${members}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    getMyCommunities(take = 50): Observable<CommunityDto[]> {
+        return this.withAutoRefresh(() => this.http.get<CommunityDto[]>(`${this.baseUrl}/communities/mine?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    discoverCommunities(query?: string, take = 50): Observable<CommunityDto[]> {
+        const q = query?.trim();
+        const queryString = q ? `q=${encodeURIComponent(q)}&` : '';
+        return this.http.get<CommunityDto[]>(`${this.baseUrl}/communities/discover?${queryString}take=${take}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    joinCommunity(communityId: string): Observable<CommunityDto> {
+        return this.withAutoRefresh(() => this.http.post<CommunityDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/join`, {}, { headers: this.authHeaders() }));
+    }
+
+    leaveCommunity(communityId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/leave`, {}, { headers: this.authHeaders() }));
+    }
+
+    createCommunityPost(
+        communityId: string,
+        content: string | null,
+        imageUrl: string | null,
+        pollQuestion: string | null,
+        pollOptions: string[] | null
+    ): Observable<CommunityPostDto> {
+        return this.withAutoRefresh(() => this.http.post<CommunityPostDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/posts`, {
+            content,
+            imageUrl,
+            pollQuestion,
+            pollOptions
+        }, { headers: this.authHeaders() }));
+    }
+
+    getCommunityPosts(communityId: string, query?: string, take = 50): Observable<CommunityPostDto[]> {
+        const q = query?.trim();
+        const queryString = q ? `q=${encodeURIComponent(q)}&` : '';
+        return this.http.get<CommunityPostDto[]>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/posts?${queryString}take=${take}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    saveCommunityPost(communityId: string, postId: string): Observable<CommunityPostDto> {
+        return this.withAutoRefresh(() => this.http.post<CommunityPostDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/posts/${encodeURIComponent(postId)}/save`, {}, { headers: this.authHeaders() }));
+    }
+
+    unsaveCommunityPost(communityId: string, postId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/posts/${encodeURIComponent(postId)}/save`, { headers: this.authHeaders() }));
+    }
+
+    voteCommunityPoll(communityId: string, pollId: string, optionId: string): Observable<CommunityPollDto> {
+        return this.withAutoRefresh(() => this.http.post<CommunityPollDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/polls/${encodeURIComponent(pollId)}/vote`, { optionId }, { headers: this.authHeaders() }));
     }
 
     isAuthenticated(): boolean {

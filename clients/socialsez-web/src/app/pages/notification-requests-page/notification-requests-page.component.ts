@@ -15,6 +15,7 @@ export class NotificationRequestsPageComponent {
     requests: FollowRequestDto[] = [];
     loading = false;
     status = '';
+    statusTone: 'neutral' | 'success' | 'error' = 'neutral';
 
     constructor(private readonly session: SessionService) {
         void this.loadRequests();
@@ -22,32 +23,48 @@ export class NotificationRequestsPageComponent {
 
     async loadRequests(): Promise<void> {
         this.loading = true;
-        this.status = '';
+        this.resetStatus();
 
         try {
             this.requests = await this.session.loadIncomingFollowRequestsAsync();
         } catch {
             this.status = 'Could not load follow requests.';
+            this.statusTone = 'error';
         } finally {
             this.loading = false;
         }
     }
 
     async approveRequest(followerId: string): Promise<void> {
+        this.resetStatus();
+
         try {
             await this.session.approveFollowRequestAsync(followerId);
             this.requests = this.requests.filter(x => x.followerId !== followerId);
+            this.status = 'Follow request approved.';
+            this.statusTone = 'success';
         } catch {
             this.status = 'Could not approve request.';
+            this.statusTone = 'error';
         }
     }
 
     async declineRequest(followerId: string): Promise<void> {
+        this.resetStatus();
+
         try {
             await this.session.declineFollowRequestAsync(followerId);
             this.requests = this.requests.filter(x => x.followerId !== followerId);
+            this.status = 'Follow request declined.';
+            this.statusTone = 'success';
         } catch {
             this.status = 'Could not decline request.';
+            this.statusTone = 'error';
         }
+    }
+
+    private resetStatus(): void {
+        this.status = '';
+        this.statusTone = 'neutral';
     }
 }

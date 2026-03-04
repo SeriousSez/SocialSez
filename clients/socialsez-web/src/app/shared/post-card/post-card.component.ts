@@ -95,11 +95,13 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     @Output() addComment = new EventEmitter<AddCommentPayload>();
     @Output() updateComment = new EventEmitter<CommentUpdatePayload>();
     @Output() deleteComment = new EventEmitter<string>();
+    @Output() reportComment = new EventEmitter<CommentDto>();
     @Output() setCommentReaction = new EventEmitter<CommentReactionPayload>();
     @Output() clearCommentReaction = new EventEmitter<string>();
     @Output() shareToFeed = new EventEmitter<void>();
     @Output() shareToChat = new EventEmitter<void>();
     @Output() copyLink = new EventEmitter<void>();
+    @Output() reportPost = new EventEmitter<void>();
 
     readonly reactionOptions = [
         { type: 'Like', emoji: '👍' },
@@ -386,6 +388,14 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         return comment.authorId === this.viewerProfileId || this.post.authorId === this.viewerProfileId;
     }
 
+    canReportComment(comment: CommentDto): boolean {
+        if (!this.viewerProfileId || !this.canInteract) {
+            return false;
+        }
+
+        return comment.authorId !== this.viewerProfileId;
+    }
+
     getCommentReplyCount(rootCommentId: string): number {
         const comments = this.post?.comments ?? [];
         if (!comments.length) {
@@ -507,6 +517,17 @@ export class PostCardComponent implements OnChanges, OnDestroy {
 
     removeComment(commentId: string): void {
         this.pendingDeleteCommentId = commentId;
+    }
+
+    requestReportComment(comment: CommentDto, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!this.canReportComment(comment)) {
+            return;
+        }
+
+        this.reportComment.emit(comment);
     }
 
     onDeleteCommentMouseDown(commentId: string, event: MouseEvent): void {
@@ -994,6 +1015,18 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         }
 
         this.shareToChat.emit();
+    }
+
+    canReportPost(): boolean {
+        return !!this.viewerProfileId && this.post.authorId !== this.viewerProfileId;
+    }
+
+    triggerReportPost(): void {
+        if (!this.canInteract || this.busy || !this.canReportPost()) {
+            return;
+        }
+
+        this.reportPost.emit();
     }
 
     async triggerCopyLink(): Promise<void> {

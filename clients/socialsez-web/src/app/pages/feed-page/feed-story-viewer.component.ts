@@ -24,6 +24,8 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     @Input() sharingStory = false;
     @Input() canDelete = false;
     @Input() deletingStory = false;
+    @Input() canReport = false;
+    @Input() reportingStory = false;
     @Input() errorMessage = '';
 
     @ViewChild('storyVideoEl') private readonly storyVideoRef?: ElementRef<HTMLVideoElement>;
@@ -35,6 +37,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     @Output() likeToggled = new EventEmitter<StoryDto>();
     @Output() shareRequested = new EventEmitter<StoryDto>();
     @Output() deleteRequested = new EventEmitter<StoryDto>();
+    @Output() reportRequested = new EventEmitter<StoryDto>();
 
     replyDraft = '';
     paused = false;
@@ -269,6 +272,14 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         }
 
         this.deleteRequested.emit(this.activeStory);
+    }
+
+    onReportClick(): void {
+        if (!this.activeStory || !this.canReport || this.reportingStory) {
+            return;
+        }
+
+        this.reportRequested.emit(this.activeStory);
     }
 
     get storySegments(): number[] {

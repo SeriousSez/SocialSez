@@ -24,14 +24,23 @@
                 <strong>Video unavailable</strong>
                 <p>This reel could not be decoded in this browser.</p>
             </div>
-            <div class="reel-frame-actions" *ngIf="canShowOwnerActions(reel) && !isEditingReel(reel.id)">
-                <button type="button" class="reel-frame-action" (click)="startReelEdit(reel); $event.stopPropagation()" [disabled]="!!updatingReelId || !!deletingReelId" aria-label="Edit reel">
+            <div class="reel-frame-actions" *ngIf="!isEditingReel(reel.id) && (canShowOwnerActions(reel) || canReportReel(reel))">
+                <button type="button" class="reel-frame-action" *ngIf="canShowOwnerActions(reel)" (click)="startReelEdit(reel); closeReelSettingsMenu(); $event.stopPropagation()" [disabled]="!!updatingReelId || !!deletingReelId" aria-label="Edit reel">
                     <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="reel-frame-action danger" (click)="requestReelDelete(reel); $event.stopPropagation()" [disabled]="!!updatingReelId || !!deletingReelId" aria-label="Delete reel">
+                <button type="button" class="reel-frame-action danger" *ngIf="canShowOwnerActions(reel)" (click)="requestReelDelete(reel); closeReelSettingsMenu(); $event.stopPropagation()" [disabled]="!!updatingReelId || !!deletingReelId" aria-label="Delete reel">
                     <i class="fa-duotone" [class.fa-light]="deletingReelId !== reel.id" [class.fa-solid]="deletingReelId === reel.id" [class.fa-trash]="deletingReelId !== reel.id" [class.fa-spinner-third]="deletingReelId === reel.id" [class.fa-spin]="deletingReelId === reel.id"
                         aria-hidden="true"></i>
                 </button>
+                <button type="button" class="reel-frame-action" *ngIf="canReportReel(reel)" (click)="toggleReelSettingsMenu(reel, $event)" [attr.aria-expanded]="isReelSettingsMenuOpen(reel)" aria-label="Reel options">
+                    <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
+                </button>
+                <div class="reel-frame-menu" *ngIf="isReelSettingsMenuOpen(reel)" (click)="$event.stopPropagation()">
+                    <button type="button" class="reel-frame-menu-item danger" *ngIf="canReportReel(reel)" (click)="reportReelFromMenu(reel, $event)">
+                        <span>Report reel</span>
+                        <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
             <button type="button" class="reel-volume" (click)="toggleMute($event, reel.id)" [disabled]="isReelVideoUnavailable(reel.id)" [attr.aria-label]="isReelMuted(reel.id) ? 'Unmute reel' : 'Mute reel'">
                 {{ isReelMuted(reel.id) ? '🔇' : '🔊' }}
@@ -110,6 +119,9 @@
                             </button>
                             <span class="comment-like-count" *ngIf="comment.likeCount > 0">{{ comment.likeCount }}</span>
                             <button type="button" class="reel-comment-reply" *ngIf="canInteract" (mousedown)="onReelCommentReplyMouseDown(reel.id, comment, $event)" (click)="onReelCommentReplyClick(reel.id, comment, $event)">Reply</button>
+                            <button type="button" class="reel-comment-action" *ngIf="canReportReelComment(comment)" (mousedown)="requestReportReelComment(reel, comment, $event)" (click)="requestReportReelComment(reel, comment, $event)" aria-label="Report comment">
+                                <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
+                            </button>
                             <!-- <button type="button" class="reel-comment-action" *ngIf="canEditReelComment(comment)" (mousedown)="onReelCommentEditMouseDown(comment, $event)" (click)="onReelCommentEditClick(comment, $event)" aria-label="Edit comment">
                                 <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
                             </button> -->

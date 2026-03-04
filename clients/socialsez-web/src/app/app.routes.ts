@@ -25,6 +25,8 @@ export const routes: Routes = [
     { path: 'feed', loadComponent: () => import('./pages/feed-page/feed-page.component').then(module => module.FeedPageComponent), canActivate: [authGuard] },
     { path: 'compose', loadComponent: () => import('./pages/compose-page/compose-page.component').then(module => module.ComposePageComponent), canActivate: [authGuard] },
     { path: 'discover', loadComponent: () => import('./pages/discover-page/discover-page.component').then(module => module.DiscoverPageComponent) },
+    { path: 'communities', loadComponent: () => import('./pages/communities-page/communities-page.component').then(module => module.CommunitiesPageComponent), canActivate: [authGuard] },
+    { path: 'communities/:slug', loadComponent: () => import('./pages/community-detail-page/community-detail-page.component').then(module => module.CommunityDetailPageComponent), canActivate: [authGuard] },
     { path: 'chat', loadComponent: () => import('./pages/chat-page/chat-page.component').then(module => module.ChatPageComponent), canActivate: [authGuard] },
     { path: 'hashtags/:tag', loadComponent: () => import('./pages/hashtag-page/hashtag-page.component').then(module => module.HashtagPageComponent) },
     { path: 'profile', loadComponent: () => import('./pages/profile-page/profile-page.component').then(module => module.ProfilePageComponent), canActivate: [authGuard] },

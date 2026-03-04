@@ -106,9 +106,129 @@ public class SafetyController(ISafetyService safetyService) : ControllerBase
         return success ? NoContent() : BadRequest(new { message = "Could not submit report." });
     }
 
+    [Authorize]
+    [HttpPost("report/post")]
+    public async Task<ActionResult> ReportPost([FromBody] ReportPostRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var success = await safetyService.ReportPostAsync(
+            profileId,
+            request.TargetPostId,
+            new ReportContentRequestDto(request.Reason, request.Details),
+            cancellationToken);
+
+        return success ? NoContent() : BadRequest(new { message = "Could not submit report." });
+    }
+
+    [Authorize]
+    [HttpPost("report/reel")]
+    public async Task<ActionResult> ReportReel([FromBody] ReportReelRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var success = await safetyService.ReportReelAsync(
+            profileId,
+            request.TargetReelId,
+            new ReportContentRequestDto(request.Reason, request.Details),
+            cancellationToken);
+
+        return success ? NoContent() : BadRequest(new { message = "Could not submit report." });
+    }
+
+    [Authorize]
+    [HttpPost("report/story")]
+    public async Task<ActionResult> ReportStory([FromBody] ReportStoryRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var success = await safetyService.ReportStoryAsync(
+            profileId,
+            request.TargetStoryId,
+            new ReportContentRequestDto(request.Reason, request.Details),
+            cancellationToken);
+
+        return success ? NoContent() : BadRequest(new { message = "Could not submit report." });
+    }
+
+    [Authorize]
+    [HttpPost("report/comment")]
+    public async Task<ActionResult> ReportComment([FromBody] ReportCommentRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var success = await safetyService.ReportCommentAsync(
+            profileId,
+            request.TargetCommentId,
+            new ReportContentRequestDto(request.Reason, request.Details),
+            cancellationToken);
+
+        return success ? NoContent() : BadRequest(new { message = "Could not submit report." });
+    }
+
+    [Authorize]
+    [HttpPost("report/reel-comment")]
+    public async Task<ActionResult> ReportReelComment([FromBody] ReportReelCommentRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var success = await safetyService.ReportReelCommentAsync(
+            profileId,
+            request.TargetReelCommentId,
+            new ReportContentRequestDto(request.Reason, request.Details),
+            cancellationToken);
+
+        return success ? NoContent() : BadRequest(new { message = "Could not submit report." });
+    }
+
+    [Authorize]
+    [HttpPost("report/message")]
+    public async Task<ActionResult> ReportMessage([FromBody] ReportMessageRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var success = await safetyService.ReportMessageAsync(
+            profileId,
+            request.TargetMessageId,
+            new ReportContentRequestDto(request.Reason, request.Details),
+            cancellationToken);
+
+        return success ? NoContent() : BadRequest(new { message = "Could not submit report." });
+    }
+
     public sealed record TargetProfileRequest(Guid TargetProfileId);
 
     public sealed record ReportRequest(Guid TargetProfileId, string Reason, string? Details);
+
+    public sealed record ReportPostRequest(Guid TargetPostId, string Reason, string? Details);
+
+    public sealed record ReportReelRequest(Guid TargetReelId, string Reason, string? Details);
+
+    public sealed record ReportStoryRequest(Guid TargetStoryId, string Reason, string? Details);
+
+    public sealed record ReportCommentRequest(Guid TargetCommentId, string Reason, string? Details);
+
+    public sealed record ReportReelCommentRequest(Guid TargetReelCommentId, string Reason, string? Details);
+
+    public sealed record ReportMessageRequest(Guid TargetMessageId, string Reason, string? Details);
 
     private bool TryGetProfileId(out Guid profileId)
     {

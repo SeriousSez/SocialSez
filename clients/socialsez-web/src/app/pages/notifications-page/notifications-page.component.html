@@ -31,5 +31,5 @@
         </article>
     </section>
 
-    <p class="status" *ngIf="status">{{ status }}</p>
+    <p class="status" [class.is-success]="statusTone === 'success'" *ngIf="status">{{ status }}</p>
 </section>

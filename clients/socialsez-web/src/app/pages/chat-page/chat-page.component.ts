@@ -19,6 +19,7 @@ import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.
 import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
 import { ChatSearchModalComponent } from '../../shared/chat-search-modal/chat-search-modal.component';
 import { ReactionPickerComponent } from '../../shared/reaction-picker/reaction-picker.component';
+import { ReportModalComponent } from '../../shared/report-modal/report-modal.component';
 import { ShareReelMessageModalComponent, ShareReelMessageSubmit } from '../../shared/share-reel-message-modal/share-reel-message-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { environment } from '../../../environments/environment';
@@ -56,10 +57,16 @@ interface MessageReactionDetailEntry {
     reactionType: string;
 }
 
+type ChatReportTarget =
+    | { kind: 'message'; id: string; handle: string }
+    | { kind: 'reel'; id: string; handle: string }
+    | { kind: 'story'; id: string; handle: string }
+    | { kind: 'reel-comment'; id: string; handle: string };
+
 @Component({
     selector: 'app-chat-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent, ShareReelMessageModalComponent, FeedStoryViewerComponent, ConfirmModalComponent],
+    imports: [CommonModule, FormsModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent, ShareReelMessageModalComponent, FeedStoryViewerComponent, ConfirmModalComponent, ReportModalComponent],
     templateUrl: './chat-page.component.html',
     styleUrl: './chat-page.component.scss',
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
@@ -132,6 +139,9 @@ export class ChatPageComponent implements OnDestroy {
     loadingProfileSuggestions = false;
     chatSearchModalOpen = false;
     searchUsersError = '';
+    reportingContent = false;
+    showContentReportModal = false;
+    pendingContentReportTarget: ChatReportTarget | null = null;
 
     selectedConversationId: string | null = null;
     selectedConversation: ChatConversationDto | null = null;
@@ -518,6 +528,16 @@ export class ChatPageComponent implements OnDestroy {
         return this.isGuid(story.id);
     }
 
+    get canReportActiveSharedStory(): boolean {
+        const story = this.activeSharedStory;
+        const myProfileId = this.currentProfileId;
+        if (!story || !myProfileId) {
+            return false;
+        }
+
+        return story.authorId !== myProfileId;
+    }
+
     async loadConversations(): Promise<void> {
         this.loadingConversations = true;
         this.status = '';
@@ -883,6 +903,15 @@ export class ChatPageComponent implements OnDestroy {
         return !!message;
     }
 
+    canReportMessage(message: ChatMessageDto): boolean {
+        const myProfileId = this.currentProfileId;
+        if (!myProfileId) {
+            return false;
+        }
+
+        return message.authorProfileId !== myProfileId;
+    }
+
     isMessageActionsOpen(message: ChatMessageDto): boolean {
         return this.messageActionsMessageId === message.id;
     }
@@ -909,7 +938,10 @@ export class ChatPageComponent implements OnDestroy {
 
         const trigger = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
         const triggerRect = trigger?.getBoundingClientRect();
-        const menuOptionCount = this.canEditMessage(message) ? 2 : 1;
+        const menuOptionCount =
+            (this.canEditMessage(message) ? 1 : 0)
+            + (this.canReportMessage(message) ? 1 : 0)
+            + 1;
         const menuHeaderHeight = 29;
         const estimatedMenuHeight = menuOptionCount * 36 + menuHeaderHeight + 10;
         const edgeGap = 8;
@@ -980,6 +1012,21 @@ export class ChatPageComponent implements OnDestroy {
     beginMessageEditFromMenu(message: ChatMessageDto, event: Event): void {
         this.closeMessageActions(event);
         this.startEditingMessage(message, event);
+    }
+
+    openMessageReport(message: ChatMessageDto, event: Event): void {
+        this.closeMessageActions(event);
+
+        if (!this.canReportMessage(message) || this.reportingContent) {
+            return;
+        }
+
+        this.pendingContentReportTarget = {
+            kind: 'message',
+            id: message.id,
+            handle: message.authorHandle
+        };
+        this.showContentReportModal = true;
     }
 
     async copyMessageText(message: ChatMessageDto, event: Event): Promise<void> {
@@ -1813,6 +1860,19 @@ export class ChatPageComponent implements OnDestroy {
         this.pendingDeleteSharedStoryId = story.id;
     }
 
+    requestReportActiveSharedStory(story: StoryDto): void {
+        if (!this.canReportActiveSharedStory || this.reportingContent) {
+            return;
+        }
+
+        this.pendingContentReportTarget = {
+            kind: 'story',
+            id: story.id,
+            handle: story.authorHandle
+        };
+        this.showContentReportModal = true;
+    }
+
     cancelDeleteActiveSharedStory(): void {
         if (this.deletingSharedStory) {
             return;
@@ -1918,6 +1978,56 @@ export class ChatPageComponent implements OnDestroy {
             likedByMe: false,
             comments: []
         };
+    }
+
+    closeContentReportModal(): void {
+        if (this.reportingContent) {
+            return;
+        }
+
+        this.showContentReportModal = false;
+        this.pendingContentReportTarget = null;
+    }
+
+    async submitContentReport(payload: { reason: string; details?: string }): Promise<void> {
+        const target = this.pendingContentReportTarget;
+        if (!target || this.reportingContent) {
+            return;
+        }
+
+        const reason = payload.reason.trim();
+        const details = payload.details?.trim();
+        if (!reason) {
+            return;
+        }
+
+        this.reportingContent = true;
+        this.status = '';
+        this.sharedStoryViewerError = '';
+
+        try {
+            if (target.kind === 'message') {
+                await this.session.reportMessageAsync(target.id, reason, details || undefined);
+            } else if (target.kind === 'reel') {
+                await this.session.reportReelAsync(target.id, reason, details || undefined);
+            } else if (target.kind === 'story') {
+                await this.session.reportStoryAsync(target.id, reason, details || undefined);
+            } else {
+                await this.session.reportReelCommentAsync(target.id, reason, details || undefined);
+            }
+
+            this.showContentReportModal = false;
+            this.pendingContentReportTarget = null;
+        } catch {
+            const message = 'Could not submit report right now.';
+            if (target.kind === 'story') {
+                this.sharedStoryViewerError = message;
+            } else {
+                this.status = message;
+            }
+        } finally {
+            this.reportingContent = false;
+        }
     }
 
     closeSharedReelViewer(): void {
@@ -2045,6 +2155,12 @@ export class ChatPageComponent implements OnDestroy {
         return !!reel?.id && !!myProfileId && reel.authorId === myProfileId;
     }
 
+    get canReportActiveSharedReel(): boolean {
+        const reel = this.activeSharedReelResolved;
+        const myProfileId = this.currentProfileId;
+        return !!reel?.id && !!myProfileId && reel.authorId !== myProfileId;
+    }
+
     toggleSharedReelSettingsMenu(event: MouseEvent): void {
         event.preventDefault();
         event.stopPropagation();
@@ -2116,6 +2232,21 @@ export class ChatPageComponent implements OnDestroy {
         }
 
         this.pendingDeleteSharedReelId = reel.id;
+        this.sharedReelSettingsMenuOpen = false;
+    }
+
+    requestReportActiveSharedReel(): void {
+        const reel = this.activeSharedReelResolved;
+        if (!reel?.id || !this.canReportActiveSharedReel || this.reportingContent) {
+            return;
+        }
+
+        this.pendingContentReportTarget = {
+            kind: 'reel',
+            id: reel.id,
+            handle: reel.authorHandle
+        };
+        this.showContentReportModal = true;
         this.sharedReelSettingsMenuOpen = false;
     }
 
@@ -2430,6 +2561,31 @@ export class ChatPageComponent implements OnDestroy {
         if (this.editingSharedReelCommentId === comment.id) {
             this.cancelActiveSharedReelCommentEdit();
         }
+    }
+
+    canReportActiveSharedReelComment(comment: SharedReelCommentPreview): boolean {
+        const myHandle = (this.session.profile?.handle ?? '').trim().toLowerCase();
+        if (!myHandle) {
+            return false;
+        }
+
+        return (comment.authorHandle ?? '').trim().toLowerCase() !== myHandle;
+    }
+
+    requestReportActiveSharedReelComment(comment: SharedReelCommentPreview, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.canReportActiveSharedReelComment(comment) || this.reportingContent) {
+            return;
+        }
+
+        this.pendingContentReportTarget = {
+            kind: 'reel-comment',
+            id: comment.id,
+            handle: comment.authorHandle
+        };
+        this.showContentReportModal = true;
+        this.sharedReelSettingsMenuOpen = false;
     }
 
     cancelDeleteActiveSharedReelComment(): void {

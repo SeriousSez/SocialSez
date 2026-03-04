@@ -6,6 +6,9 @@ import {
     AuthResponse,
     ChatConversationDto,
     ChatMessageDto,
+    CommunityDto,
+    CommunityPollDto,
+    CommunityPostDto,
     FeedMode,
     FollowActionResultDto,
     FollowRequestDto,
@@ -423,6 +426,42 @@ export class SessionService {
         this.emitAppChange('profile');
     }
 
+    async reportPostAsync(targetPostId: string, reason: string, details?: string): Promise<void> {
+        await firstValueFrom(this.api.reportPost(targetPostId, reason, details));
+        this.message = 'Report submitted.';
+        this.emitAppChange('profile');
+    }
+
+    async reportReelAsync(targetReelId: string, reason: string, details?: string): Promise<void> {
+        await firstValueFrom(this.api.reportReel(targetReelId, reason, details));
+        this.message = 'Report submitted.';
+        this.emitAppChange('profile');
+    }
+
+    async reportStoryAsync(targetStoryId: string, reason: string, details?: string): Promise<void> {
+        await firstValueFrom(this.api.reportStory(targetStoryId, reason, details));
+        this.message = 'Report submitted.';
+        this.emitAppChange('profile');
+    }
+
+    async reportCommentAsync(targetCommentId: string, reason: string, details?: string): Promise<void> {
+        await firstValueFrom(this.api.reportComment(targetCommentId, reason, details));
+        this.message = 'Report submitted.';
+        this.emitAppChange('profile');
+    }
+
+    async reportReelCommentAsync(targetReelCommentId: string, reason: string, details?: string): Promise<void> {
+        await firstValueFrom(this.api.reportReelComment(targetReelCommentId, reason, details));
+        this.message = 'Report submitted.';
+        this.emitAppChange('profile');
+    }
+
+    async reportMessageAsync(targetMessageId: string, reason: string, details?: string): Promise<void> {
+        await firstValueFrom(this.api.reportMessage(targetMessageId, reason, details));
+        this.message = 'Report submitted.';
+        this.emitAppChange('profile');
+    }
+
     async isFollowingAsync(followedId: string): Promise<boolean> {
         const response = await this.getFollowStatusAsync(followedId);
         return response.isFollowing;
@@ -453,6 +492,90 @@ export class SessionService {
     async declineFollowRequestAsync(followerId: string): Promise<void> {
         await firstValueFrom(this.api.declineFollowRequest(followerId));
         this.emitAppChange('notifications');
+    }
+
+    async createCommunityAsync(name: string, description: string | null, imageUrl: string | null, isPrivate: boolean): Promise<CommunityDto> {
+        const created = await firstValueFrom(this.api.createCommunity(name, description, imageUrl, isPrivate));
+        const normalized = this.normalizeCommunity(created);
+        this.message = 'Community created.';
+        this.emitAppChange('profile');
+        return normalized;
+    }
+
+    async getCommunityByIdAsync(communityId: string, members = 20): Promise<CommunityDto | null> {
+        try {
+            const community = await firstValueFrom(this.api.getCommunityById(communityId, members));
+            return this.normalizeCommunity(community);
+        } catch {
+            return null;
+        }
+    }
+
+    async getCommunityBySlugAsync(slug: string, members = 20): Promise<CommunityDto | null> {
+        try {
+            const community = await firstValueFrom(this.api.getCommunityBySlug(slug, members));
+            return this.normalizeCommunity(community);
+        } catch {
+            return null;
+        }
+    }
+
+    async loadMyCommunitiesAsync(take = 50): Promise<CommunityDto[]> {
+        const communities = await firstValueFrom(this.api.getMyCommunities(take));
+        return communities.map(community => this.normalizeCommunity(community));
+    }
+
+    async discoverCommunitiesAsync(query?: string, take = 50): Promise<CommunityDto[]> {
+        const communities = await firstValueFrom(this.api.discoverCommunities(query, take));
+        return communities.map(community => this.normalizeCommunity(community));
+    }
+
+    async joinCommunityAsync(communityId: string): Promise<CommunityDto> {
+        const joined = await firstValueFrom(this.api.joinCommunity(communityId));
+        const normalized = this.normalizeCommunity(joined);
+        this.message = 'Joined community.';
+        this.emitAppChange('profile');
+        return normalized;
+    }
+
+    async leaveCommunityAsync(communityId: string): Promise<void> {
+        await firstValueFrom(this.api.leaveCommunity(communityId));
+        this.message = 'Left community.';
+        this.emitAppChange('profile');
+    }
+
+    async createCommunityPostAsync(
+        communityId: string,
+        content: string | null,
+        imageUrl: string | null,
+        pollQuestion: string | null,
+        pollOptions: string[] | null
+    ): Promise<CommunityPostDto> {
+        const created = await firstValueFrom(this.api.createCommunityPost(communityId, content, imageUrl, pollQuestion, pollOptions));
+        this.message = 'Posted to community.';
+        this.emitAppChange('posts');
+        return this.normalizeCommunityPost(created);
+    }
+
+    async loadCommunityPostsAsync(communityId: string, query?: string, take = 50): Promise<CommunityPostDto[]> {
+        const posts = await firstValueFrom(this.api.getCommunityPosts(communityId, query, take));
+        return posts.map(post => this.normalizeCommunityPost(post));
+    }
+
+    async saveCommunityPostAsync(communityId: string, postId: string): Promise<CommunityPostDto> {
+        const saved = await firstValueFrom(this.api.saveCommunityPost(communityId, postId));
+        this.message = 'Post saved.';
+        return this.normalizeCommunityPost(saved);
+    }
+
+    async unsaveCommunityPostAsync(communityId: string, postId: string): Promise<void> {
+        await firstValueFrom(this.api.unsaveCommunityPost(communityId, postId));
+        this.message = 'Post removed from saved.';
+    }
+
+    async voteCommunityPollAsync(communityId: string, pollId: string, optionId: string): Promise<CommunityPollDto> {
+        const poll = await firstValueFrom(this.api.voteCommunityPoll(communityId, pollId, optionId));
+        return this.normalizeCommunityPoll(poll);
     }
 
     async loadNotificationsAsync(take = 50): Promise<NotificationDto[]> {
@@ -573,6 +696,33 @@ export class SessionService {
                 ...comment,
                 authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
             }))
+        };
+    }
+
+    private normalizeCommunity(community: CommunityDto): CommunityDto {
+        return {
+            ...community,
+            imageUrl: this.normalizeMediaUrl(community.imageUrl),
+            members: (community.members ?? []).map(member => ({
+                ...member,
+                imageUrl: this.normalizeMediaUrl(member.imageUrl)
+            }))
+        };
+    }
+
+    private normalizeCommunityPost(post: CommunityPostDto): CommunityPostDto {
+        return {
+            ...post,
+            authorImageUrl: this.normalizeMediaUrl(post.authorImageUrl),
+            imageUrl: this.normalizeMediaUrl(post.imageUrl),
+            poll: post.poll ? this.normalizeCommunityPoll(post.poll) : undefined
+        };
+    }
+
+    private normalizeCommunityPoll(poll: CommunityPollDto): CommunityPollDto {
+        return {
+            ...poll,
+            options: (poll.options ?? []).map(option => ({ ...option }))
         };
     }
 

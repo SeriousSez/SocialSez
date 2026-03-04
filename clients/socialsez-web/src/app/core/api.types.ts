@@ -271,3 +271,55 @@ export interface ChatMessageDto {
     reactions: ReactionSummaryDto[];
     reactionDetails: PostReactionDetailDto[];
 }
+
+export interface CommunityMemberDto {
+    profileId: string;
+    handle: string;
+    imageUrl?: string;
+    role: string;
+    joinedAtUtc: string;
+}
+
+export interface CommunityDto {
+    id: string;
+    slug: string;
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    isPrivate: boolean;
+    createdByProfileId: string;
+    createdByHandle: string;
+    createdAtUtc: string;
+    memberCount: number;
+    joinedByMe: boolean;
+    myRole?: string;
+    members: CommunityMemberDto[];
+}
+
+export interface CommunityPollOptionDto {
+    id: string;
+    text: string;
+    voteCount: number;
+    votedByMe: boolean;
+}
+
+export interface CommunityPollDto {
+    id: string;
+    question: string;
+    totalVotes: number;
+    hasVotedByMe: boolean;
+    options: CommunityPollOptionDto[];
+}
+
+export interface CommunityPostDto {
+    id: string;
+    communityId: string;
+    authorId: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    content?: string;
+    imageUrl?: string;
+    createdAtUtc: string;
+    isSavedByMe: boolean;
+    poll?: CommunityPollDto;
+}

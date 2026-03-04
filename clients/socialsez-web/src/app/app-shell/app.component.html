@@ -1,6 +1,6 @@
 <a class="skip-link" href="#main-content">Skip to content</a>
 
-<section class="top-notice" *ngIf="showTopNotice" [attr.role]="isTopNoticeError ? 'alert' : 'status'" [attr.aria-live]="isTopNoticeError ? 'assertive' : 'polite'" aria-atomic="true">
+<section class="top-notice" [class.is-error]="isTopNoticeError" [class.is-hiding]="topNoticeHiding" *ngIf="showTopNotice" [attr.role]="isTopNoticeError ? 'alert' : 'status'" [attr.aria-live]="isTopNoticeError ? 'assertive' : 'polite'" aria-atomic="true">
     <span class="top-notice-icon" [class.is-error]="isTopNoticeError" aria-hidden="true">
         <i class="fa-duotone fa-light" [class.fa-circle-check]="!isTopNoticeError" [class.fa-circle-exclamation]="isTopNoticeError" aria-hidden="true"></i>
     </span>
@@ -40,6 +40,7 @@
             <a class="tab-feed" routerLink="/feed" routerLinkActive="active"><i class="fa-duotone fa-light fa-house" aria-hidden="true"></i><span>Feed</span></a>
             <a class="tab-compose" routerLink="/compose" routerLinkActive="active"><i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i><span>Compose</span></a>
             <a class="tab-discover" routerLink="/discover" routerLinkActive="active"><i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i><span>Discover</span></a>
+            <a class="tab-communities" routerLink="/communities" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-users" aria-hidden="true"></i><span>Communities</span></a>
             <a class="tab-chat" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i><span>Chat</span></a>
             <a class="tab-notifications" routerLink="/notifications" routerLinkActive="active" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-bell" aria-hidden="true"></i>
@@ -131,6 +132,10 @@
     <a class="mobile-footer-tab" routerLink="/discover" routerLinkActive="active">
         <i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i>
         <span>Discover</span>
+    </a>
+    <a class="mobile-footer-tab" routerLink="/communities" routerLinkActive="active" *ngIf="session.isAuthenticated()">
+        <i class="fa-duotone fa-light fa-users" aria-hidden="true"></i>
+        <span>Groups</span>
     </a>
     <a class="mobile-footer-tab" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()">
         <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>

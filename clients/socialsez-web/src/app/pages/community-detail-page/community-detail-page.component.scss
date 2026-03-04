@@ -1,0 +1,275 @@
+.community-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+}
+
+.community-head-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.community-cover {
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.community-head h2,
+.card h3 {
+    margin: 0;
+}
+
+.meta {
+    margin: 4px 0 0;
+}
+
+.feed-head {
+    gap: 4px;
+}
+
+.feed-search {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+}
+
+.post-list {
+    display: grid;
+    gap: 10px;
+}
+
+textarea {
+    width: 100%;
+}
+
+.composer-preview,
+.post-image {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    object-fit: cover;
+}
+
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.poll-editor {
+    display: grid;
+    gap: 8px;
+}
+
+.poll-option-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.status.is-success {
+    color: var(--color-success);
+    border-left-color: var(--color-success);
+}
+
+.post-item {
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+    border-top: 1px solid var(--color-border);
+}
+
+.post-item:last-child {
+    border-bottom: none;
+}
+
+.post-context {
+    margin: 2px 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.84rem;
+}
+
+.post-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.post-author {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.post-author-image,
+.post-author-fallback {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+}
+
+.post-author-image {
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+}
+
+.post-author-fallback {
+    display: grid;
+    place-items: center;
+    background: var(--color-border);
+    color: var(--color-text-muted);
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.post-badges {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.post-badge {
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.74rem;
+    color: var(--color-text-muted);
+}
+
+.post-title {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.35;
+    white-space: pre-wrap;
+}
+
+.post-image-frame {
+    display: grid;
+    place-items: center;
+    background: var(--color-border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.post-image {
+    display: block;
+    width: auto;
+    max-width: min(560px, 100%);
+    max-height: 720px;
+    margin: 0 auto;
+    border: 0;
+    border-radius: 0;
+}
+
+.post-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-top: 1px solid var(--color-border);
+    padding-top: 8px;
+}
+
+.poll h4 {
+    margin: 0;
+}
+
+.poll-options {
+    display: grid;
+    gap: 8px;
+}
+
+.poll-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.poll-option.selected {
+    border-color: var(--color-accent);
+}
+
+.compose-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.62);
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    z-index: 220;
+}
+
+.compose-modal-card {
+    width: min(560px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #dbe4f0;
+    box-shadow: 0 30px 60px -38px #020617;
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+}
+
+.compose-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.compose-modal-head h3 {
+    margin: 0;
+}
+
+.close {
+    border: 0;
+    background: transparent;
+    color: #475569;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: none;
+    transform: none;
+}
+
+.close:hover {
+    color: #0f172a;
+}
+
+@media (max-width: 760px) {
+    .community-head {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+    }
+
+    .community-head-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .feed-search {
+        grid-template-columns: 1fr;
+    }
+
+    .post-head {
+        flex-direction: column;
+    }
+
+    .post-actions {
+        flex-wrap: wrap;
+    }
+}

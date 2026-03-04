@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SocialSez.Infrastructure;
 
@@ -11,9 +12,11 @@ using SocialSez.Infrastructure;
 namespace SocialSez.Infrastructure.Migrations
 {
     [DbContext(typeof(SocialSezContext))]
-    partial class SocialSezContextModelSnapshot : ModelSnapshot
+    [Migration("20260303180321_AddCommunityPostsAndPolls")]
+    partial class AddCommunityPostsAndPolls
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -383,26 +386,6 @@ namespace SocialSez.Infrastructure.Migrations
                     b.HasIndex("CommunityId", "CreatedAtUtc");
 
                     b.ToTable("CommunityPosts", (string)null);
-                });
-
-            modelBuilder.Entity("SocialSez.Domain.Entities.CommunitySavedPost", b =>
-                {
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("ProfileId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("SavedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("PostId", "ProfileId");
-
-                    b.HasIndex("ProfileId");
-
-                    b.HasIndex("ProfileId", "SavedAtUtc");
-
-                    b.ToTable("CommunitySavedPosts", (string)null);
                 });
 
             modelBuilder.Entity("SocialSez.Domain.Entities.Follow", b =>
@@ -1066,25 +1049,6 @@ namespace SocialSez.Infrastructure.Migrations
                     b.Navigation("Community");
                 });
 
-            modelBuilder.Entity("SocialSez.Domain.Entities.CommunitySavedPost", b =>
-                {
-                    b.HasOne("SocialSez.Domain.Entities.CommunityPost", "Post")
-                        .WithMany("SavedBy")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SocialSez.Domain.Entities.UserProfile", "Profile")
-                        .WithMany("SavedCommunityPosts")
-                        .HasForeignKey("ProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Post");
-
-                    b.Navigation("Profile");
-                });
-
             modelBuilder.Entity("SocialSez.Domain.Entities.Follow", b =>
                 {
                     b.HasOne("SocialSez.Domain.Entities.UserProfile", "Followed")
@@ -1388,8 +1352,6 @@ namespace SocialSez.Infrastructure.Migrations
             modelBuilder.Entity("SocialSez.Domain.Entities.CommunityPost", b =>
                 {
                     b.Navigation("Poll");
-
-                    b.Navigation("SavedBy");
                 });
 
             modelBuilder.Entity("SocialSez.Domain.Entities.Post", b =>
@@ -1469,8 +1431,6 @@ namespace SocialSez.Infrastructure.Migrations
                     b.Navigation("ReportsFiled");
 
                     b.Navigation("ReportsReceived");
-
-                    b.Navigation("SavedCommunityPosts");
 
                     b.Navigation("SentFollowRequests");
 

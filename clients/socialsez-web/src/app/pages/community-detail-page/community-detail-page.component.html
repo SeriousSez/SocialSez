@@ -1,0 +1,131 @@
+<section class="page" *ngIf="community as activeCommunity; else missingCommunity">
+    <header class="community-head card">
+        <img class="community-cover" *ngIf="activeCommunity.imageUrl" [src]="activeCommunity.imageUrl" alt="Community image" />
+        <div>
+            <h2>{{ activeCommunity.name }}</h2>
+            <p class="meta">/{{ activeCommunity.slug }} · {{ activeCommunity.memberCount }} members · {{ activeCommunity.isPrivate ? 'Private' : 'Public' }}</p>
+            <p class="meta" *ngIf="activeCommunity.description">{{ activeCommunity.description }}</p>
+            <a class="meta" [routerLink]="['/users', activeCommunity.createdByHandle]">Created by @{{ activeCommunity.createdByHandle }}</a>
+        </div>
+        <div class="community-head-actions">
+            <button type="button" *ngIf="canPost" (click)="openCreatePostModal()">Create post</button>
+            <button type="button" *ngIf="!activeCommunity.joinedByMe && !activeCommunity.isPrivate" (click)="joinCommunityAsync()" [disabled]="joining">{{ joining ? 'Joining…' : 'Join' }}</button>
+        </div>
+    </header>
+
+    <ng-template #joinPrompt>
+        <section class="card" *ngIf="!canPost">
+            <p class="meta">Join this community to create posts.</p>
+        </section>
+    </ng-template>
+
+    <section class="card feed-head">
+        <h3>Community Feed</h3>
+        <p class="meta">Posts from members in /{{ activeCommunity.slug }}</p>
+        <form class="feed-search" (ngSubmit)="searchPostsAsync()">
+            <input type="search" name="postSearchQuery" [(ngModel)]="postSearchQuery" placeholder="Search posts in this community" />
+            <button type="submit" class="ghost" [disabled]="loading">Search</button>
+            <button type="button" class="ghost" [disabled]="loading || !postSearchQuery" (click)="clearSearchAsync()">Clear</button>
+        </form>
+    </section>
+
+    <section class="post-list">
+        <p class="meta" *ngIf="loading">Loading posts...</p>
+        <p class="meta" *ngIf="!loading && !posts.length">{{ postSearchQuery ? 'No posts match this search.' : 'No posts yet.' }}</p>
+
+        <article class="post-item card" *ngFor="let post of posts; trackBy: trackByPostId">
+            <header class="post-head">
+                <div class="post-author">
+                    <img class="post-author-image" *ngIf="post.authorImageUrl" [src]="post.authorImageUrl" alt="Author image" />
+                    <span class="post-author-fallback" *ngIf="!post.authorImageUrl">{{ post.authorHandle.charAt(0) | uppercase }}</span>
+                    <div>
+                        <strong>u/{{ post.authorHandle }}</strong>
+                        <p class="meta">/{{ activeCommunity.slug }} · {{ post.createdAtUtc | date:'short' }}</p>
+                    </div>
+                </div>
+                <div class="post-badges">
+                    <span class="post-badge" *ngIf="post.imageUrl">Image</span>
+                    <span class="post-badge" *ngIf="post.poll">Poll</span>
+                </div>
+            </header>
+
+            <h4 class="post-title" *ngIf="post.content">{{ post.content }}</h4>
+
+            <div class="post-image-frame" *ngIf="post.imageUrl">
+                <img class="post-image" [src]="post.imageUrl" alt="Post image" />
+            </div>
+
+            <section class="poll" *ngIf="post.poll as poll">
+                <h4>{{ poll.question }}</h4>
+                <div class="poll-options">
+                    <button type="button" *ngFor="let option of poll.options" class="ghost poll-option" [class.selected]="option.votedByMe" (click)="votePollAsync(post.id, poll.id, option.id)" [disabled]="votingPollId === poll.id || !canPost">
+                        <span>{{ option.text }}</span>
+                        <strong>{{ option.voteCount }}</strong>
+                    </button>
+                </div>
+                <p class="meta">{{ poll.totalVotes }} votes</p>
+            </section>
+
+            <footer class="post-actions">
+                <button type="button" class="ghost" (click)="toggleSavePostAsync(post)" [disabled]="togglingSavePostId === post.id">
+                    {{ post.isSavedByMe ? 'Saved' : 'Save' }}
+                </button>
+                <span class="meta">{{ post.poll ? (post.poll.totalVotes + ' poll votes') : 'Community post' }}</span>
+                <button type="button" class="ghost">Share</button>
+            </footer>
+        </article>
+    </section>
+
+    <p class="status" [class.is-success]="statusTone === 'success'" *ngIf="status">{{ status }}</p>
+</section>
+
+<div class="compose-modal" *ngIf="createPostModalOpen" role="dialog" aria-modal="true" aria-label="Create community post" (click)="closeCreatePostModal()">
+    <section class="compose-modal-card" (click)="$event.stopPropagation()">
+        <header class="compose-modal-head">
+            <h3>Create post</h3>
+            <button type="button" class="close" (click)="closeCreatePostModal()" [disabled]="posting" aria-label="Close create post modal">✕</button>
+        </header>
+
+        <textarea [(ngModel)]="composerContent" (ngModelChange)="onComposerChanged()" rows="4" placeholder="Share your thoughts..."></textarea>
+
+        <label>
+            Add image
+            <input type="file" accept="image/*" (change)="onComposerImageSelected($event)" [disabled]="posting" />
+        </label>
+        <img class="composer-preview" *ngIf="composerImagePreviewUrl" [src]="composerImagePreviewUrl" alt="Post image preview" />
+
+        <label class="toggle">
+            <input type="checkbox" [(ngModel)]="enablePoll" (ngModelChange)="onComposerChanged()" />
+            Add poll
+        </label>
+
+        <div class="poll-editor" *ngIf="enablePoll">
+            <label>
+                Question
+                <input [(ngModel)]="pollQuestion" (ngModelChange)="onComposerChanged()" placeholder="Ask the community..." maxlength="280" />
+            </label>
+            <label *ngFor="let option of pollOptions; index as i">
+                Option {{ i + 1 }}
+                <div class="poll-option-row">
+                    <input [(ngModel)]="pollOptions[i]" (ngModelChange)="onComposerChanged()" maxlength="160" placeholder="Option text" />
+                    <button type="button" class="ghost" (click)="removePollOption(i)" [disabled]="pollOptions.length <= 2">Remove</button>
+                </div>
+            </label>
+            <button type="button" class="ghost" (click)="addPollOption()" [disabled]="pollOptions.length >= 6">Add option</button>
+        </div>
+
+        <div class="actions">
+            <button type="button" class="ghost" (click)="closeCreatePostModal()" [disabled]="posting">Cancel</button>
+            <button type="button" (click)="submitPostAsync()" [disabled]="posting">{{ posting ? 'Posting…' : 'Post' }}</button>
+        </div>
+    </section>
+</div>
+
+<ng-template #missingCommunity>
+    <section class="page">
+        <section class="card">
+            <h2>Community</h2>
+            <p class="meta">{{ status || 'Community not found.' }}</p>
+        </section>
+    </section>
+</ng-template>
