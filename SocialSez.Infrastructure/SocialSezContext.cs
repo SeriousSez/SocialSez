@@ -31,6 +31,9 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<Community> Communities => Set<Community>();
     public DbSet<CommunityMember> CommunityMembers => Set<CommunityMember>();
     public DbSet<CommunityPost> CommunityPosts => Set<CommunityPost>();
+    public DbSet<CommunityPostImage> CommunityPostImages => Set<CommunityPostImage>();
+    public DbSet<CommunityPostComment> CommunityPostComments => Set<CommunityPostComment>();
+    public DbSet<CommunityPostVote> CommunityPostVotes => Set<CommunityPostVote>();
     public DbSet<CommunityPoll> CommunityPolls => Set<CommunityPoll>();
     public DbSet<CommunityPollOption> CommunityPollOptions => Set<CommunityPollOption>();
     public DbSet<CommunityPollVote> CommunityPollVotes => Set<CommunityPollVote>();
@@ -534,6 +537,8 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
         {
             entity.ToTable("CommunityPosts");
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.Title).HasMaxLength(220);
+            entity.Property(x => x.LinkUrl).HasMaxLength(2048);
             entity.Property(x => x.Content).HasMaxLength(5000);
             entity.Property(x => x.ImageUrl).HasMaxLength(1024);
 
@@ -549,6 +554,67 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
 
             entity.HasIndex(x => new { x.CommunityId, x.CreatedAtUtc });
             entity.HasIndex(x => x.AuthorId);
+        });
+
+        modelBuilder.Entity<CommunityPostImage>(entity =>
+        {
+            entity.ToTable("CommunityPostImages");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Url).HasMaxLength(1024).IsRequired();
+            entity.Property(x => x.SortOrder).HasDefaultValue(0);
+
+            entity.HasOne(x => x.Post)
+                .WithMany(x => x.Images)
+                .HasForeignKey(x => x.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.PostId, x.SortOrder });
+        });
+
+        modelBuilder.Entity<CommunityPostComment>(entity =>
+        {
+            entity.ToTable("CommunityPostComments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Content).HasMaxLength(500).IsRequired();
+
+            entity.HasOne(x => x.Post)
+                .WithMany(x => x.Comments)
+                .HasForeignKey(x => x.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Author)
+                .WithMany()
+                .HasForeignKey(x => x.AuthorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.ParentComment)
+                .WithMany()
+                .HasForeignKey(x => x.ParentCommentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => new { x.PostId, x.CreatedAtUtc });
+            entity.HasIndex(x => x.AuthorId);
+            entity.HasIndex(x => x.ParentCommentId);
+        });
+
+        modelBuilder.Entity<CommunityPostVote>(entity =>
+        {
+            entity.ToTable("CommunityPostVotes");
+            entity.HasKey(x => new { x.PostId, x.ProfileId });
+            entity.Property(x => x.Type).HasMaxLength(16).IsRequired();
+
+            entity.HasOne(x => x.Post)
+                .WithMany(x => x.Votes)
+                .HasForeignKey(x => x.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.CommunityPostVotes)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.PostId, x.Type });
+            entity.HasIndex(x => x.ProfileId);
         });
 
         modelBuilder.Entity<CommunityPoll>(entity =>

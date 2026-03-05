@@ -1,0 +1,875 @@
+import { CommonModule } from '@angular/common';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+    selector: 'app-rich-text-editor, app-comment-editor',
+    standalone: true,
+    imports: [CommonModule, FormsModule],
+    templateUrl: './rich-text-editor.component.html',
+    styleUrl: './rich-text-editor.component.scss'
+})
+export class RichTextEditorComponent implements OnChanges, AfterViewInit {
+    @ViewChild('richEditor') richEditor?: ElementRef<HTMLDivElement>;
+
+    @Input() placeholder = 'Join the conversation';
+    @Input() submitLabel = 'Comment';
+    @Input() submittingLabel = 'Posting...';
+    @Input() submitting = false;
+    @Input() errorMessage = '';
+    @Input() collapsed = false;
+    @Input() showModeToggle = true;
+    @Input() initialContent = '';
+    @Input() initialContentIsHtml = false;
+    @Input() resetToken = 0;
+
+    @Output() submitted = new EventEmitter<string>();
+    @Output() cancelled = new EventEmitter<void>();
+
+    expanded = !this.collapsed;
+    editorMode: 'markdown' | 'rich' = 'rich';
+    markdownDraft = '';
+
+    isBoldCommandActive = false;
+    isItalicCommandActive = false;
+    isLinkCommandActive = false;
+    isUnorderedListCommandActive = false;
+    isOrderedListCommandActive = false;
+    isQuoteCommandActive = false;
+    isSpoilerCommandActive = false;
+
+    private readonly defaultSpoilerPlaceholder = '|';
+    private lastAppliedInitial = '';
+
+    constructor(
+        private readonly cdr: ChangeDetectorRef,
+        private readonly ngZone: NgZone
+    ) {
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['collapsed'] && !changes['collapsed'].firstChange) {
+            this.expanded = !this.collapsed;
+        }
+
+        if (changes['resetToken'] && !changes['resetToken'].firstChange) {
+            this.resetComposer();
+        }
+
+        if (changes['initialContent']) {
+            const next = this.initialContent ?? '';
+            if (next !== this.lastAppliedInitial) {
+                this.applyInitialContent(next);
+                this.lastAppliedInitial = next;
+            }
+        }
+    }
+
+    ngAfterViewInit(): void {
+        const next = this.initialContent ?? '';
+        if (!next) {
+            return;
+        }
+
+        this.applyInitialContent(next);
+        this.lastAppliedInitial = next;
+        this.refreshView();
+    }
+
+    get canSubmit(): boolean {
+        return !!this.getContent();
+    }
+
+    expand(): void {
+        this.expanded = true;
+    }
+
+    onCancel(): void {
+        if (this.submitting) {
+            return;
+        }
+
+        this.resetComposer();
+        this.cancelled.emit();
+    }
+
+    onSubmit(): void {
+        if (this.submitting) {
+            return;
+        }
+
+        const content = this.getContent();
+        if (!content) {
+            return;
+        }
+
+        this.submitted.emit(content);
+    }
+
+    async toggleEditorMode(): Promise<void> {
+        if (this.editorMode === 'markdown') {
+            const markdown = this.markdownDraft;
+            this.editorMode = 'rich';
+            this.resetRichCommandStates();
+            this.expanded = true;
+            this.refreshView();
+            await Promise.resolve();
+            if (this.richEditor) {
+                this.richEditor.nativeElement.innerHTML = this.markdownToRichHtml(markdown);
+                this.richEditor.nativeElement.focus();
+                this.updateRichCommandStates();
+            }
+            return;
+        }
+
+        this.markdownDraft = this.readRichText();
+        this.editorMode = 'markdown';
+        this.resetRichCommandStates();
+        this.refreshView();
+    }
+
+    applyRichCommand(command: 'bold' | 'italic' | 'insertUnorderedList' | 'insertOrderedList' | 'formatBlock' | 'createLink' | 'spoiler'): void {
+        if (this.editorMode !== 'rich') {
+            return;
+        }
+
+        if (command === 'spoiler') {
+            const selection = window.getSelection();
+            if (!selection || !selection.rangeCount) {
+                return;
+            }
+
+            const editor = this.richEditor?.nativeElement;
+            if (!editor) {
+                return;
+            }
+
+            const activeSpoiler = this.findActiveSpoilerNode(selection.anchorNode, editor);
+            if (activeSpoiler && this.isSpoilerCommandActive) {
+                this.unwrapSpoilerKeepingText(activeSpoiler, selection);
+                this.updateRichCommandStates();
+                this.refreshView();
+                return;
+            }
+
+            const selectedText = selection.toString() ?? '';
+            const hasSelectedText = selectedText.length > 0;
+            const spoilerText = hasSelectedText ? selectedText : this.defaultSpoilerPlaceholder;
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+
+            const spoiler = document.createElement('span');
+            spoiler.className = 'compose-spoiler';
+            spoiler.setAttribute('data-spoiler', 'true');
+            spoiler.textContent = spoilerText;
+
+            range.insertNode(spoiler);
+            this.ensureSpaceAfterInlineNode(spoiler);
+            if (hasSelectedText) {
+                this.placeCaretAtEndOfNode(spoiler);
+            } else {
+                this.selectNodeContents(spoiler);
+            }
+            this.updateRichCommandStates();
+            this.refreshView();
+            return;
+        }
+
+        if (command === 'createLink') {
+            const url = prompt('Enter URL');
+            if (!url) {
+                return;
+            }
+
+            document.execCommand('createLink', false, url.trim());
+            this.refreshView();
+            return;
+        }
+
+        if (command === 'formatBlock') {
+            const selection = window.getSelection();
+            const editor = this.richEditor?.nativeElement;
+            const activeQuote = selection && editor
+                ? this.findAncestorTag(selection.anchorNode, editor, 'BLOCKQUOTE')
+                : null;
+
+            if (activeQuote) {
+                this.unwrapQuoteKeepingText(activeQuote, selection);
+                this.updateRichCommandStates();
+                this.refreshView();
+                return;
+            }
+
+            const usedAngleBrackets = document.execCommand('formatBlock', false, '<blockquote>');
+            if (!usedAngleBrackets) {
+                const usedPlainTag = document.execCommand('formatBlock', false, 'blockquote');
+                if (!usedPlainTag) {
+                    const selectedText = window.getSelection()?.toString().trim() ?? '';
+                    const fallbackHtml = selectedText
+                        ? `<blockquote>${selectedText}</blockquote>`
+                        : '<blockquote><br></blockquote>';
+                    document.execCommand('insertHTML', false, fallbackHtml);
+                }
+            }
+
+            this.updateRichCommandStates();
+            this.refreshView();
+            return;
+        }
+
+        document.execCommand(command, false);
+        this.updateRichCommandStates();
+        this.refreshView();
+    }
+
+    onRichEditorKeydown(event: KeyboardEvent): void {
+        if (this.editorMode !== 'rich') {
+            return;
+        }
+
+        if (event.key === 'Backspace' || event.key === 'Delete') {
+            setTimeout(() => this.cleanupEmptyComposeSpoilers(), 0);
+        }
+
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount || !selection.isCollapsed) {
+            return;
+        }
+
+        const editor = this.richEditor?.nativeElement;
+        if (!editor) {
+            return;
+        }
+
+        const spoiler = this.findAncestorWithClass(selection.anchorNode, editor, 'compose-spoiler');
+        if (spoiler && this.isSpoilerEffectivelyEmpty(spoiler) && this.isPlainTypingKey(event)) {
+            event.preventDefault();
+            this.unwrapEmptySpoilerAndInsertText(spoiler, event.key);
+            return;
+        }
+
+        if (spoiler && this.isCaretAtEndOfNode(selection, spoiler)) {
+            if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+                event.preventDefault();
+                this.placeCaretAfterInlineNode(spoiler);
+                this.updateRichCommandStates();
+                return;
+            }
+        }
+
+        if (event.key !== 'ArrowRight' && event.key !== 'ArrowDown') {
+            return;
+        }
+
+        const quote = this.findAncestorTag(selection.anchorNode, editor, 'BLOCKQUOTE');
+        if (!quote || !this.isCaretAtEndOfNode(selection, quote)) {
+            return;
+        }
+
+        const exitPoint = this.ensureExitPointAfterNode(quote, editor);
+        if (!exitPoint) {
+            return;
+        }
+
+        event.preventDefault();
+        this.placeCaretAtStart(exitPoint);
+    }
+
+    onRichEditorInput(): void {
+        this.normalizeComposeSpoilerSpans();
+        this.cleanupEmptyComposeSpoilers();
+        this.updateRichCommandStates();
+    }
+
+    onRichEditorFocus(): void {
+        this.updateRichCommandStates();
+    }
+
+    onRichEditorKeyup(): void {
+        this.updateRichCommandStates();
+    }
+
+    onRichEditorMouseup(): void {
+        setTimeout(() => this.updateRichCommandStates(), 0);
+    }
+
+    onRichToolbarMouseDown(event: MouseEvent): void {
+        const target = event.target as HTMLElement | null;
+        if (!target?.closest('button')) {
+            return;
+        }
+
+        event.preventDefault();
+        this.richEditor?.nativeElement.focus();
+    }
+
+    onRichToolbarPointerDown(event: PointerEvent): void {
+        const target = event.target as HTMLElement | null;
+        if (!target?.closest('button')) {
+            return;
+        }
+
+        event.preventDefault();
+        this.richEditor?.nativeElement.focus();
+    }
+
+    onRichEditorMousedown(event: MouseEvent): void {
+        if (this.editorMode !== 'rich') {
+            return;
+        }
+
+        const editor = this.richEditor?.nativeElement;
+        if (!editor || event.target !== editor) {
+            return;
+        }
+
+        const lastElement = editor.lastElementChild;
+        if (!lastElement || lastElement.tagName !== 'BLOCKQUOTE') {
+            return;
+        }
+
+        const exitPoint = this.ensureExitPointAfterNode(lastElement, editor);
+        if (!exitPoint) {
+            return;
+        }
+
+        event.preventDefault();
+        this.placeCaretAtStart(exitPoint);
+        this.updateRichCommandStates();
+    }
+
+    private resetComposer(): void {
+        this.markdownDraft = '';
+        this.editorMode = 'rich';
+        this.resetRichCommandStates();
+        if (this.richEditor) {
+            this.richEditor.nativeElement.innerHTML = '';
+        }
+
+        this.expanded = !this.collapsed;
+        this.refreshView();
+    }
+
+    private applyInitialContent(content: string): void {
+        if (this.initialContentIsHtml) {
+            const editorHtml = this.storageHtmlToEditorHtml(content);
+            this.markdownDraft = this.editorHtmlToText(editorHtml);
+            if (this.editorMode === 'rich' && this.richEditor) {
+                this.richEditor.nativeElement.innerHTML = editorHtml;
+            }
+            return;
+        }
+
+        this.markdownDraft = content;
+        if (this.editorMode === 'rich' && this.richEditor) {
+            this.richEditor.nativeElement.innerHTML = this.markdownToRichHtml(content);
+        }
+    }
+
+    private storageHtmlToEditorHtml(content: string): string {
+        return (content ?? '').replace(/\|\|([\s\S]+?)\|\|/g, (_match, spoilerText) =>
+            `<span class="compose-spoiler" data-spoiler="true">${spoilerText}</span>`);
+    }
+
+    private editorHtmlToText(editorHtml: string): string {
+        const working = document.createElement('div');
+        working.innerHTML = editorHtml;
+
+        const spoilerNodes = working.querySelectorAll('span');
+        for (const node of spoilerNodes) {
+            if (!(node instanceof HTMLElement) || !this.isSpoilerLikeElement(node)) {
+                continue;
+            }
+
+            const text = (node.textContent ?? '').trim();
+            const replacement = document.createTextNode(text ? `||${text}||` : '');
+            node.parentNode?.replaceChild(replacement, node);
+        }
+
+        const raw = working.innerText ?? '';
+        return raw
+            .replace(/\u200B/g, '')
+            .replace(/\u00A0/g, ' ')
+            .replace(/\r/g, '')
+            .trim();
+    }
+
+    private getContent(): string {
+        if (this.editorMode === 'markdown') {
+            return this.markdownDraft.trim();
+        }
+
+        const serialized = this.readRichContent();
+        return this.hasMeaningfulSerializedContent(serialized) ? serialized : '';
+    }
+
+    private hasMeaningfulSerializedContent(serialized: string): boolean {
+        if (!serialized.trim()) {
+            return false;
+        }
+
+        const probe = document.createElement('div');
+        probe.innerHTML = serialized;
+        const text = (probe.textContent ?? '')
+            .replace(/\u00A0/g, ' ')
+            .replace(/\u200B/g, '')
+            .trim();
+
+        return text.length > 0;
+    }
+
+    private readRichContent(): string {
+        const source = this.richEditor?.nativeElement;
+        if (!source) {
+            return '';
+        }
+
+        const working = document.createElement('div');
+        working.innerHTML = source.innerHTML;
+
+        const markerNodes = working.querySelectorAll('span[data-caret-marker="true"]');
+        for (const marker of markerNodes) {
+            marker.remove();
+        }
+
+        const spoilerNodes = working.querySelectorAll('span');
+        for (const node of spoilerNodes) {
+            if (!(node instanceof HTMLElement) || !this.isSpoilerLikeElement(node)) {
+                continue;
+            }
+
+            const text = (node.textContent ?? '').trim();
+            const replacement = document.createTextNode(text ? `||${text}||` : '');
+            node.parentNode?.replaceChild(replacement, node);
+        }
+
+        return working.innerHTML.trim();
+    }
+
+    private readRichText(): string {
+        const source = this.richEditor?.nativeElement;
+        if (!source) {
+            return '';
+        }
+
+        const working = document.createElement('div');
+        working.innerHTML = source.innerHTML;
+        const spoilerNodes = working.querySelectorAll('span');
+        for (const node of spoilerNodes) {
+            if (!(node instanceof HTMLElement) || !this.isSpoilerLikeElement(node)) {
+                continue;
+            }
+
+            const text = (node.textContent ?? '').trim();
+            const replacement = document.createTextNode(text ? `||${text}||` : '');
+            node.parentNode?.replaceChild(replacement, node);
+        }
+
+        const raw = working.innerText ?? '';
+        return raw
+            .replace(/\u200B/g, '')
+            .replace(/\u00A0/g, ' ')
+            .replace(/\r/g, '')
+            .trim();
+    }
+
+    private markdownToRichHtml(markdown: string): string {
+        const escaped = markdown
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        const withSpoilers = escaped.replace(/\|\|([\s\S]+?)\|\|/g, (_match, spoilerText) =>
+            `<span class="compose-spoiler" data-spoiler="true">${spoilerText}</span>`);
+
+        return withSpoilers.replace(/\n/g, '<br>');
+    }
+
+    private findAncestorTag(node: Node | null, boundary: HTMLElement, tagName: string): HTMLElement | null {
+        let cursor: Node | null = node;
+        while (cursor && cursor !== boundary) {
+            if (cursor instanceof HTMLElement && cursor.tagName === tagName) {
+                return cursor;
+            }
+
+            cursor = cursor.parentNode;
+        }
+
+        return null;
+    }
+
+    private findAncestorWithClass(node: Node | null, boundary: HTMLElement, className: string): HTMLElement | null {
+        let cursor: Node | null = node;
+        while (cursor && cursor !== boundary) {
+            if (cursor instanceof HTMLElement && cursor.classList.contains(className)) {
+                return cursor;
+            }
+
+            cursor = cursor.parentNode;
+        }
+
+        return null;
+    }
+
+    private isCaretAtEndOfNode(selection: Selection, node: Node): boolean {
+        if (!selection.rangeCount) {
+            return false;
+        }
+
+        const caret = selection.getRangeAt(0);
+        const end = document.createRange();
+        end.selectNodeContents(node);
+        end.collapse(false);
+
+        return caret.compareBoundaryPoints(Range.START_TO_START, end) === 0
+            && caret.compareBoundaryPoints(Range.END_TO_END, end) === 0;
+    }
+
+    private ensureExitPointAfterNode(node: Element, editor: HTMLElement): HTMLElement | null {
+        let next = node.nextElementSibling as HTMLElement | null;
+        while (next && next.tagName === 'BLOCKQUOTE') {
+            next = next.nextElementSibling as HTMLElement | null;
+        }
+
+        if (next) {
+            return next;
+        }
+
+        const paragraph = document.createElement('p');
+        paragraph.appendChild(document.createElement('br'));
+        editor.insertBefore(paragraph, node.nextSibling);
+        return paragraph;
+    }
+
+    private placeCaretAtStart(node: HTMLElement): void {
+        const selection = window.getSelection();
+        if (!selection) {
+            return;
+        }
+
+        this.richEditor?.nativeElement.focus();
+        const range = document.createRange();
+        range.setStart(node, 0);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    private placeCaretAfterInlineNode(node: Node): Text | null {
+        const anchor = this.ensureTextAnchorAfterInlineNode(node);
+        if (!anchor) {
+            return null;
+        }
+
+        const offset = anchor.textContent?.length ?? 0;
+        this.placeCaretAtTextOffset(anchor, offset);
+        return anchor;
+    }
+
+    private ensureTextAnchorAfterInlineNode(node: Node): Text | null {
+        const parent = node.parentNode;
+        if (!parent) {
+            return null;
+        }
+
+        const next = node.nextSibling;
+        if (next instanceof Text) {
+            return next;
+        }
+
+        const anchor = document.createTextNode('');
+        parent.insertBefore(anchor, next);
+        return anchor;
+    }
+
+    private ensureSpaceAfterInlineNode(node: Node): Text | null {
+        const anchor = this.ensureTextAnchorAfterInlineNode(node);
+        if (!anchor) {
+            return null;
+        }
+
+        if (!anchor.textContent || anchor.textContent.length === 0) {
+            anchor.textContent = '\u00A0';
+            return anchor;
+        }
+
+        return anchor;
+    }
+
+    private isPlainTypingKey(event: KeyboardEvent): boolean {
+        return event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey;
+    }
+
+    private isSpoilerEffectivelyEmpty(spoiler: HTMLElement): boolean {
+        const value = (spoiler.textContent ?? '')
+            .replace(/\uFEFF/g, '')
+            .replace(/\u2060/g, '')
+            .replace(/\u00A0/g, '')
+            .replace(/\u200B/g, '')
+            .trim();
+        return value.length === 0;
+    }
+
+    private cleanupEmptyComposeSpoilers(): void {
+        if (this.editorMode !== 'rich') {
+            return;
+        }
+
+        const editor = this.richEditor?.nativeElement;
+        if (!editor) {
+            return;
+        }
+
+        const selection = window.getSelection();
+        const activeNode = selection?.anchorNode ?? null;
+        const spoilerNodes = Array.from(editor.querySelectorAll('span'));
+
+        for (const spoilerNode of spoilerNodes) {
+            if (!(spoilerNode instanceof HTMLElement) || !this.isSpoilerLikeElement(spoilerNode) || !this.isSpoilerEffectivelyEmpty(spoilerNode)) {
+                continue;
+            }
+
+            const wasActive = !!activeNode && spoilerNode.contains(activeNode);
+            const anchor = this.ensureTextAnchorAfterInlineNode(spoilerNode);
+            spoilerNode.remove();
+
+            if (wasActive && anchor) {
+                this.placeCaretAtTextOffset(anchor, 0);
+            }
+        }
+    }
+
+    private normalizeComposeSpoilerSpans(): void {
+        const editor = this.richEditor?.nativeElement;
+        if (!editor) {
+            return;
+        }
+
+        const spans = Array.from(editor.querySelectorAll('span'));
+        for (const span of spans) {
+            if (!(span instanceof HTMLElement) || !this.isSpoilerLikeElement(span)) {
+                continue;
+            }
+
+            span.classList.add('compose-spoiler');
+            span.setAttribute('data-spoiler', 'true');
+            span.style.backgroundColor = '';
+        }
+    }
+
+    private isSpoilerLikeElement(element: HTMLElement): boolean {
+        if (element.classList.contains('compose-spoiler')) {
+            return true;
+        }
+
+        if (element.getAttribute('data-spoiler') === 'true') {
+            return true;
+        }
+
+        const inlineBg = (element.style.backgroundColor || '').replace(/\s+/g, '').toLowerCase();
+        return inlineBg === 'rgb(183,192,203)' || inlineBg === '#b7c0cb' || inlineBg === 'rgba(183,192,203,1)';
+    }
+
+    private findActiveSpoilerNode(node: Node | null, boundary: HTMLElement): HTMLElement | null {
+        let cursor: Node | null = node;
+        while (cursor && cursor !== boundary) {
+            if (cursor instanceof HTMLElement && this.isSpoilerLikeElement(cursor)) {
+                return cursor;
+            }
+
+            cursor = cursor.parentNode;
+        }
+
+        return null;
+    }
+
+    private unwrapEmptySpoilerAndInsertText(spoiler: HTMLElement, text: string): void {
+        const anchor = this.ensureTextAnchorAfterInlineNode(spoiler);
+        spoiler.remove();
+
+        if (!anchor) {
+            document.execCommand('insertText', false, text);
+            return;
+        }
+
+        anchor.insertData(0, text);
+        this.placeCaretAtTextOffset(anchor, text.length);
+    }
+
+    private unwrapSpoilerKeepingText(spoiler: HTMLElement, selection: Selection): void {
+        const text = spoiler.textContent ?? '';
+        if (text === this.defaultSpoilerPlaceholder) {
+            const anchor = this.ensureTextAnchorAfterInlineNode(spoiler);
+            spoiler.remove();
+
+            if (!anchor) {
+                return;
+            }
+
+            if (anchor.textContent?.startsWith('\u00A0')) {
+                anchor.deleteData(0, 1);
+            }
+
+            this.placeCaretAtTextOffset(anchor, 0);
+            return;
+        }
+
+        const parent = spoiler.parentNode;
+        if (!parent) {
+            return;
+        }
+
+        const caretOffset = this.getSelectionOffsetInsideNode(selection, spoiler);
+        const replacement = document.createTextNode(text);
+        parent.replaceChild(replacement, spoiler);
+
+        this.placeCaretAtTextOffset(replacement, Math.min(caretOffset, replacement.length));
+    }
+
+    private unwrapQuoteKeepingText(quote: HTMLElement, selection: Selection | null): void {
+        const parent = quote.parentNode;
+        if (!parent) {
+            return;
+        }
+
+        let marker: HTMLElement | null = null;
+        if (selection?.rangeCount && selection.anchorNode && quote.contains(selection.anchorNode)) {
+            marker = document.createElement('span');
+            marker.setAttribute('data-caret-marker', 'true');
+            marker.style.display = 'inline-block';
+            marker.style.width = '0';
+            marker.style.overflow = 'hidden';
+
+            const markerRange = selection.getRangeAt(0).cloneRange();
+            markerRange.collapse(true);
+            markerRange.insertNode(marker);
+        }
+
+        const fragment = document.createDocumentFragment();
+        while (quote.firstChild) {
+            fragment.appendChild(quote.firstChild);
+        }
+
+        parent.replaceChild(fragment, quote);
+
+        if (!marker) {
+            return;
+        }
+
+        const activeSelection = window.getSelection();
+        if (!activeSelection || !marker.parentNode) {
+            marker.remove();
+            return;
+        }
+
+        const range = document.createRange();
+        range.setStartBefore(marker);
+        range.collapse(true);
+        activeSelection.removeAllRanges();
+        activeSelection.addRange(range);
+        marker.remove();
+    }
+
+    private getSelectionOffsetInsideNode(selection: Selection, node: Node): number {
+        if (!selection.rangeCount || !selection.isCollapsed) {
+            return node.textContent?.length ?? 0;
+        }
+
+        const range = selection.getRangeAt(0).cloneRange();
+        const probe = document.createRange();
+        probe.selectNodeContents(node);
+        probe.setEnd(range.endContainer, range.endOffset);
+        return probe.toString().length;
+    }
+
+    private updateRichCommandStates(): void {
+        if (this.editorMode !== 'rich') {
+            this.resetRichCommandStates();
+            return;
+        }
+
+        const editor = this.richEditor?.nativeElement;
+        const selection = window.getSelection();
+        if (!editor || !selection || !selection.rangeCount) {
+            this.resetRichCommandStates();
+            return;
+        }
+
+        const anchorNode = selection.anchorNode;
+        if (!anchorNode || !editor.contains(anchorNode)) {
+            this.resetRichCommandStates();
+            return;
+        }
+
+        this.isBoldCommandActive = this.queryCommandStateSafe('bold');
+        this.isItalicCommandActive = this.queryCommandStateSafe('italic');
+        this.isUnorderedListCommandActive = this.queryCommandStateSafe('insertUnorderedList');
+        this.isOrderedListCommandActive = this.queryCommandStateSafe('insertOrderedList');
+        this.isLinkCommandActive = !!this.findAncestorTag(anchorNode, editor, 'A');
+        this.isQuoteCommandActive = !!this.findAncestorTag(anchorNode, editor, 'BLOCKQUOTE');
+        this.isSpoilerCommandActive = !!this.findActiveSpoilerNode(anchorNode, editor);
+    }
+
+    private queryCommandStateSafe(command: string): boolean {
+        try {
+            return !!document.queryCommandState(command);
+        } catch {
+            return false;
+        }
+    }
+
+    private resetRichCommandStates(): void {
+        this.isBoldCommandActive = false;
+        this.isItalicCommandActive = false;
+        this.isLinkCommandActive = false;
+        this.isUnorderedListCommandActive = false;
+        this.isOrderedListCommandActive = false;
+        this.isQuoteCommandActive = false;
+        this.isSpoilerCommandActive = false;
+    }
+
+    private placeCaretAtEndOfNode(node: Node): void {
+        const selection = window.getSelection();
+        if (!selection) {
+            return;
+        }
+
+        this.richEditor?.nativeElement.focus();
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    private selectNodeContents(node: Node): void {
+        const selection = window.getSelection();
+        if (!selection) {
+            return;
+        }
+
+        this.richEditor?.nativeElement.focus();
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    private placeCaretAtTextOffset(textNode: Text, offset: number): void {
+        const selection = window.getSelection();
+        if (!selection) {
+            return;
+        }
+
+        this.richEditor?.nativeElement.focus();
+        const range = document.createRange();
+        range.setStart(textNode, Math.max(0, Math.min(offset, textNode.length)));
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    private refreshView(): void {
+        this.ngZone.run(() => this.cdr.detectChanges());
+    }
+}

@@ -1,0 +1,35 @@
+<div class="comment-compose-shell" [class.expanded]="expanded" (click)="expand()">
+    <div class="comment-compose-top" *ngIf="expanded && editorMode === 'rich'">
+        <div class="rich-toolbar" (mousedown)="onRichToolbarMouseDown($event)" (pointerdown)="onRichToolbarPointerDown($event)">
+            <button type="button" class="ghost" [class.is-active]="isBoldCommandActive" (click)="applyRichCommand('bold')"><i class="fa-duotone fa-light fa-bold" aria-hidden="true"></i></button>
+            <button type="button" class="ghost" [class.is-active]="isItalicCommandActive" (click)="applyRichCommand('italic')"><i class="fa-duotone fa-light fa-italic" aria-hidden="true"></i></button>
+            <button type="button" class="ghost" [class.is-active]="isLinkCommandActive" (click)="applyRichCommand('createLink')"><i class="fa-duotone fa-light fa-link" aria-hidden="true"></i></button>
+            <button type="button" class="ghost" [class.is-active]="isUnorderedListCommandActive" (click)="applyRichCommand('insertUnorderedList')"><i class="fa-duotone fa-light fa-list" aria-hidden="true"></i></button>
+            <button type="button" class="ghost" [class.is-active]="isOrderedListCommandActive" (click)="applyRichCommand('insertOrderedList')"><i class="fa-duotone fa-light fa-list-ol" aria-hidden="true"></i></button>
+            <button type="button" class="ghost" [class.is-active]="isSpoilerCommandActive" (click)="applyRichCommand('spoiler')" aria-label="Spoiler" title="Spoiler">
+                <i class="fa-duotone fa-light fa-eye-slash" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="ghost" [class.is-active]="isQuoteCommandActive" (click)="applyRichCommand('formatBlock')" aria-label="Quote" title="Quote">
+                <i class="fa-duotone fa-light fa-quote-left" aria-hidden="true"></i>
+            </button>
+        </div>
+    </div>
+
+    <textarea *ngIf="editorMode === 'markdown'" name="editorMarkdownDraft" rows="3" [(ngModel)]="markdownDraft" [placeholder]="placeholder" (focus)="expand()"></textarea>
+
+    <div *ngIf="editorMode === 'rich'" #richEditor class="rich-editor" contenteditable="true" [attr.data-placeholder]="placeholder" (focus)="expand(); onRichEditorFocus()" (keydown)="onRichEditorKeydown($event)" (keyup)="onRichEditorKeyup()" (input)="onRichEditorInput()"
+        (mouseup)="onRichEditorMouseup()" (mousedown)="onRichEditorMousedown($event)"></div>
+
+    <div class="comment-actions" *ngIf="expanded">
+        <p class="meta" *ngIf="errorMessage">{{ errorMessage }}</p>
+        <div class="comment-primary-actions">
+            <button *ngIf="showModeToggle" type="button" class="ghost mode-toggle-icon" (click)="toggleEditorMode()" [attr.aria-label]="editorMode === 'rich' ? 'Switch to Markdown editor' : 'Switch to Rich Text editor'"
+                [attr.title]="editorMode === 'rich' ? 'Switch to Markdown editor' : 'Switch to Rich Text editor'">
+                <i *ngIf="editorMode === 'markdown'" class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+                <i *ngIf="editorMode === 'rich'" class="fa-duotone fa-light fa-code" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="ghost" (click)="$event.stopPropagation(); onCancel()" [disabled]="submitting">Cancel</button>
+            <button type="button" (click)="onSubmit()" [disabled]="submitting || !canSubmit">{{ submitting ? submittingLabel : submitLabel }}</button>
+        </div>
+    </div>
+</div>

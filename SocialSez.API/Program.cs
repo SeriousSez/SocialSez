@@ -450,6 +450,119 @@ using (var scope = app.Services.CreateScope())
             ON UserReports (ReporterId, CreatedAtUtc);
             """);
 
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS Communities (
+                Id TEXT NOT NULL PRIMARY KEY,
+                CreatedByProfileId TEXT NOT NULL,
+                Slug TEXT NOT NULL,
+                Name TEXT NOT NULL,
+                Description TEXT NULL,
+                ImageUrl TEXT NULL,
+                IsPrivate INTEGER NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                FOREIGN KEY (CreatedByProfileId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_Communities_Slug ON Communities (Slug);");
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_Communities_CreatedAtUtc ON Communities (CreatedAtUtc);");
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS CommunityMembers (
+                CommunityId TEXT NOT NULL,
+                ProfileId TEXT NOT NULL,
+                Role TEXT NOT NULL,
+                JoinedAtUtc TEXT NOT NULL,
+                PRIMARY KEY (CommunityId, ProfileId),
+                FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
+                FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunityMembers_ProfileId ON CommunityMembers (ProfileId);");
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunityMembers_CommunityId_Role ON CommunityMembers (CommunityId, Role);");
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS CommunityPosts (
+                Id TEXT NOT NULL PRIMARY KEY,
+                CommunityId TEXT NOT NULL,
+                AuthorId TEXT NOT NULL,
+                Content TEXT NULL,
+                ImageUrl TEXT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
+                FOREIGN KEY (AuthorId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunityPosts_CommunityId_CreatedAtUtc ON CommunityPosts (CommunityId, CreatedAtUtc);");
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunityPosts_AuthorId ON CommunityPosts (AuthorId);");
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS CommunityPostComments (
+                Id TEXT NOT NULL PRIMARY KEY,
+                PostId TEXT NOT NULL,
+                AuthorId TEXT NOT NULL,
+                Content TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE,
+                FOREIGN KEY (AuthorId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunityPostComments_PostId_CreatedAtUtc ON CommunityPostComments (PostId, CreatedAtUtc);");
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunityPostComments_AuthorId ON CommunityPostComments (AuthorId);");
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS CommunityPolls (
+                Id TEXT NOT NULL PRIMARY KEY,
+                PostId TEXT NOT NULL,
+                Question TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_CommunityPolls_PostId ON CommunityPolls (PostId);");
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS CommunityPollOptions (
+                Id TEXT NOT NULL PRIMARY KEY,
+                PollId TEXT NOT NULL,
+                Text TEXT NOT NULL,
+                FOREIGN KEY (PollId) REFERENCES CommunityPolls (Id) ON DELETE CASCADE
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunityPollOptions_PollId ON CommunityPollOptions (PollId);");
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS CommunityPollVotes (
+                OptionId TEXT NOT NULL,
+                VoterId TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                PRIMARY KEY (OptionId, VoterId),
+                FOREIGN KEY (OptionId) REFERENCES CommunityPollOptions (Id) ON DELETE CASCADE,
+                FOREIGN KEY (VoterId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunityPollVotes_VoterId ON CommunityPollVotes (VoterId);");
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS CommunitySavedPosts (
+                PostId TEXT NOT NULL,
+                ProfileId TEXT NOT NULL,
+                SavedAtUtc TEXT NOT NULL,
+                PRIMARY KEY (PostId, ProfileId),
+                FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE,
+                FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunitySavedPosts_ProfileId ON CommunitySavedPosts (ProfileId);");
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunitySavedPosts_ProfileId_SavedAtUtc ON CommunitySavedPosts (ProfileId, SavedAtUtc);");
+
             var columnExists = dbContext.Database
                 .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('UserProfiles') WHERE name = 'IsPrivate'")
                 .ToList()

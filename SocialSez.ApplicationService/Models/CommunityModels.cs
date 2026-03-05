@@ -6,10 +6,35 @@ public sealed record UpdateCommunityRequest(string Name, string? Description, st
 
 public sealed record CreateCommunityPostRequest(
     Guid AuthorId,
+    string? Title,
+    string? LinkUrl,
     string? Content,
-    string? ImageUrl,
+    IReadOnlyCollection<string>? ImageUrls,
     string? PollQuestion,
     IReadOnlyCollection<string>? PollOptions);
+
+public sealed record UpdateCommunityPostRequest(
+    Guid ActorId,
+    string? Title,
+    string? LinkUrl,
+    string? Content,
+    IReadOnlyCollection<string>? ImageUrls,
+    string? PollQuestion,
+    IReadOnlyCollection<string>? PollOptions,
+    bool ClearPoll);
+
+public sealed record CreateCommunityPostCommentRequest(
+    Guid AuthorId,
+    string Content,
+    Guid? ParentCommentId = null);
+
+public sealed record UpdateCommunityPostCommentRequest(
+    Guid ActorId,
+    string Content);
+
+public sealed record VoteCommunityPostRequest(
+    Guid VoterId,
+    string? VoteType);
 
 public sealed record VoteCommunityPollRequest(Guid VoterId, Guid OptionId);
 
@@ -26,17 +51,34 @@ public sealed record CommunityPollDto(
     bool HasVotedByMe,
     IReadOnlyCollection<CommunityPollOptionDto> Options);
 
+public sealed record CommunityPostCommentDto(
+    Guid Id,
+    Guid PostId,
+    Guid? ParentCommentId,
+    Guid AuthorId,
+    string AuthorHandle,
+    string? AuthorImageUrl,
+    string Content,
+    DateTime CreatedAtUtc);
+
 public sealed record CommunityPostDto(
     Guid Id,
     Guid CommunityId,
     Guid AuthorId,
     string AuthorHandle,
     string? AuthorImageUrl,
+    string? Title,
+    string? LinkUrl,
     string? Content,
     string? ImageUrl,
+    IReadOnlyCollection<string> ImageUrls,
     DateTime CreatedAtUtc,
+    int UpvoteCount,
+    int DownvoteCount,
+    string? MyVoteType,
     bool IsSavedByMe,
-    CommunityPollDto? Poll);
+    CommunityPollDto? Poll,
+    IReadOnlyCollection<CommunityPostCommentDto> Comments);
 
 public sealed record CommunityMemberDto(
     Guid ProfileId,

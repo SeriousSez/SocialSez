@@ -13,6 +13,11 @@ public interface ICommunityService
     Task<CommunityDto?> JoinAsync(Guid communityId, Guid profileId, CancellationToken cancellationToken = default);
     Task<bool> LeaveAsync(Guid communityId, Guid profileId, CancellationToken cancellationToken = default);
     Task<CommunityPostDto?> CreatePostAsync(Guid communityId, CreateCommunityPostRequest request, CancellationToken cancellationToken = default);
+    Task<CommunityPostDto?> UpdatePostAsync(Guid communityId, Guid postId, UpdateCommunityPostRequest request, CancellationToken cancellationToken = default);
+    Task<CommunityPostDto?> AddCommentAsync(Guid communityId, Guid postId, CreateCommunityPostCommentRequest request, CancellationToken cancellationToken = default);
+    Task<CommunityPostDto?> UpdateCommentAsync(Guid communityId, Guid postId, Guid commentId, UpdateCommunityPostCommentRequest request, CancellationToken cancellationToken = default);
+    Task<CommunityPostDto?> DeleteCommentAsync(Guid communityId, Guid postId, Guid commentId, Guid actorId, CancellationToken cancellationToken = default);
+    Task<CommunityPostDto?> VotePostAsync(Guid communityId, Guid postId, VoteCommunityPostRequest request, CancellationToken cancellationToken = default);
     Task<CommunityPostDto?> GetPostByIdAsync(Guid postId, Guid? viewerProfileId, CancellationToken cancellationToken = default);
     Task<bool> DeletePostAsync(Guid communityId, Guid postId, Guid profileId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<CommunityPostDto>> GetPostsAsync(Guid communityId, Guid? viewerProfileId, string? query = null, int take = 50, CancellationToken cancellationToken = default);

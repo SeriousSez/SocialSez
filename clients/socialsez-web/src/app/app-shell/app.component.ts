@@ -3,10 +3,11 @@ import { Component, DestroyRef, HostListener, OnDestroy, OnInit, inject, isDevMo
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
-import { HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
+import { filter, firstValueFrom } from 'rxjs';
+import { CommunityDto, HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
 import { SharedReelCommentPreview } from '../core/shared-reel.utils';
 import { SessionNoticeEntry, SessionService } from '../core/session.service';
+import { SocialSezApiService } from '../core/socialsez-api.service';
 import { MessagesDockComponent } from './messages-dock.component';
 import { FeedStoryViewerComponent } from '../pages/feed-page/feed-story-viewer.component';
 
@@ -36,7 +37,9 @@ export class AppComponent implements OnInit, OnDestroy {
     searchText = '';
     trendingHashtags: HashtagSearchResultDto[] = [];
     loadingTrending = false;
+    loadingRightRailCommunity = false;
     unreadNotificationsCount = 0;
+    rightRailCommunity: CommunityDto | null = null;
     profileChipHasStory = false;
     profileChipHasUnseenStory = false;
     profileChipFirstStoryId: string | null = null;
@@ -64,7 +67,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     private readonly destroyRef = inject(DestroyRef);
 
-    constructor(public readonly session: SessionService, private readonly router: Router) { }
+    constructor(public readonly session: SessionService, private readonly router: Router, private readonly api: SocialSezApiService) { }
 
     get topNoticeMessage(): string {
         return this.session.message?.trim() ?? '';
@@ -146,10 +149,13 @@ export class AppComponent implements OnInit, OnDestroy {
             .subscribe(() => {
                 if (!this.session.isAuthenticated()) {
                     this.unreadNotificationsCount = 0;
-                    return;
                 }
 
-                void this.loadUnreadNotificationsCountAsync();
+                if (this.session.isAuthenticated()) {
+                    void this.loadUnreadNotificationsCountAsync();
+                }
+
+                void this.loadRightRailCommunityAsync();
             });
 
         void this.initializeAsync();
@@ -180,6 +186,30 @@ export class AppComponent implements OnInit, OnDestroy {
         await this.loadTrendingHashtags();
         await this.refreshProfileChipStoryStatus();
         await this.loadUnreadNotificationsCountAsync();
+        await this.loadRightRailCommunityAsync();
+    }
+
+    private async loadRightRailCommunityAsync(): Promise<void> {
+        const sharedCommunityPostMatch = this.router.url.match(/^\/shared\/community-post\/([^?#/]+)/i);
+        const postId = sharedCommunityPostMatch?.[1]?.trim();
+
+        if (!postId) {
+            this.rightRailCommunity = null;
+            this.loadingRightRailCommunity = false;
+            return;
+        }
+
+        this.loadingRightRailCommunity = true;
+        this.rightRailCommunity = null;
+
+        try {
+            const post = await firstValueFrom(this.api.getSharedCommunityPost(postId));
+            this.rightRailCommunity = await firstValueFrom(this.api.getCommunityById(post.communityId));
+        } catch {
+            this.rightRailCommunity = null;
+        } finally {
+            this.loadingRightRailCommunity = false;
+        }
     }
 
     private applyThemePreference(): void {

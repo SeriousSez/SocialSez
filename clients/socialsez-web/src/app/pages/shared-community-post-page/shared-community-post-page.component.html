@@ -1,9 +1,4 @@
 <section class="shared-page">
-    <header class="shared-head">
-        <h2>Shared Community Post</h2>
-        <a routerLink="/auth" *ngIf="!session.isAuthenticated()">Sign in</a>
-    </header>
-
     <article class="shared-card" *ngIf="loading">
         <p>Loading community post...</p>
     </article>
@@ -18,25 +13,37 @@
         <p>{{ error }}</p>
     </article>
 
-    <article class="shared-card" *ngIf="post as item">
+    <section class="shared-layout" *ngIf="post as item">
         <header class="meta-row">
             <div class="author-meta">
-                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
-                <ng-template #authorInitial>
-                    <div class="author-avatar">{{ (item.authorHandle[0] || '?') | uppercase }}</div>
+                <img class="author-avatar" *ngIf="community?.imageUrl; else communityInitial" [src]="community?.imageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Community image" />
+                <ng-template #communityInitial>
+                    <div class="author-avatar">{{ ((community?.name || community?.slug || '?')[0] || '?') | uppercase }}</div>
                 </ng-template>
                 <div>
-                    <strong>@{{ item.authorHandle }}</strong>
-                    <p>{{ item.createdAtUtc | date:'medium' }}</p>
+                    <p class="post-context">
+                        <a class="community-link" *ngIf="community?.slug as slug" [routerLink]="['/communities', slug]">/{{ slug }}</a>
+                        <span *ngIf="!community?.slug">/community</span>
+                        <span> · {{ item.createdAtUtc | date:'short' }}</span>
+                    </p>
+                    <p class="post-author">{{ item.authorHandle }}</p>
                 </div>
             </div>
-            <button type="button" class="ghost" (click)="copyLinkAsync()">Copy link</button>
+            <button type="button" class="ghost share-link-button" (click)="copyLinkAsync()" [attr.aria-label]="copiedLink ? 'Community post link copied' : 'Copy community post link'" [attr.title]="copiedLink ? 'Copied' : 'Copy link'">
+                <i *ngIf="!copiedLink" class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
+                <i *ngIf="copiedLink" class="fa-duotone fa-solid fa-check" aria-hidden="true"></i>
+                <span>{{ copiedLink ? 'Copied' : 'Share' }}</span>
+            </button>
         </header>
 
-        <p class="content" *ngIf="item.content as content">{{ content }}</p>
+        <h1 class="post-title">{{ postTitle }}</h1>
+        <a class="post-link" *ngIf="primaryPostLink as link" [href]="link" target="_blank" rel="noopener noreferrer">{{ link }}</a>
+        <p class="content" *ngIf="postBody as body">{{ body }}</p>
 
         <ng-container *ngIf="item.imageUrl as mediaUrl">
-            <img class="media" [src]="mediaUrl" loading="eager" decoding="async" alt="Shared community post media" />
+            <div class="media-frame">
+                <img class="media" [src]="mediaUrl" loading="eager" decoding="async" alt="Shared community post media" (click)="openImageFullscreen(mediaUrl)" />
+            </div>
         </ng-container>
 
         <section class="poll" *ngIf="item.poll as poll">
@@ -49,5 +56,127 @@
             </div>
             <p class="meta">{{ poll.totalVotes }} votes</p>
         </section>
-    </article>
+
+        <footer class="post-actions">
+            <button type="button" class="vote-button" [class.active]="isPostUpvoted" (click)="togglePostUpvoteAsync()" [disabled]="votingPost" aria-label="Upvote post" title="Upvote">
+                <i class="fa-duotone fa-light fa-arrow-up" aria-hidden="true"></i>
+            </button>
+            <span class="vote-score" [class.positive]="postVoteScore > 0" [class.negative]="postVoteScore < 0">{{ postVoteScore }}</span>
+            <button type="button" class="vote-button" [class.active]="isPostDownvoted" (click)="togglePostDownvoteAsync()" [disabled]="votingPost" aria-label="Downvote post" title="Downvote">
+                <i class="fa-duotone fa-light fa-arrow-down" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="comment-button" aria-label="Comments" title="Comments">
+                <i class="fa-duotone fa-light fa-comment" aria-hidden="true"></i>
+                <span>{{ item.comments.length }}</span>
+            </button>
+            <button type="button" class="icon-button" [class.saved-active]="item.isSavedByMe" (click)="toggleSavePostAsync()" [disabled]="togglingSavePost" [attr.aria-label]="item.isSavedByMe ? 'Unsave post' : 'Save post'" [attr.title]="item.isSavedByMe ? 'Saved' : 'Save'">
+                <i class="fa-duotone fa-bookmark" [class.fa-light]="!item.isSavedByMe" [class.fa-solid]="item.isSavedByMe" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="icon-button" (click)="copyLinkAsync()" [attr.aria-label]="copiedLink ? 'Post link copied' : 'Copy post link'" [attr.title]="copiedLink ? 'Copied' : 'Copy link'">
+                <i *ngIf="!copiedLink" class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
+                <i *ngIf="copiedLink" class="fa-duotone fa-solid fa-check" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="icon-button" *ngIf="canManagePost" (click)="editPostAsync()" [disabled]="updatingPost" aria-label="Edit post" title="Edit post">
+                <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="icon-button danger" *ngIf="canManagePost" (click)="deletePostAsync()" [disabled]="deletingPost" aria-label="Delete post" title="Delete post">
+                <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
+            </button>
+        </footer>
+
+        <section class="comments-card">
+            <app-rich-text-editor *ngIf="session.isAuthenticated()" [placeholder]="'Join the conversation'" [submitLabel]="'Comment'" [submittingLabel]="'Posting...'" [submitting]="postingComment" [errorMessage]="commentError" [collapsed]="true" [resetToken]="commentComposerResetToken"
+                (submitted)="submitCommentContentAsync($event)" (cancelled)="onTopCommentEditorCancelled()"></app-rich-text-editor>
+
+            <p class="meta" *ngIf="!session.isAuthenticated()">
+                <a routerLink="/auth">Sign in</a> to join the conversation.
+            </p>
+
+            <div class="comment-toolbar" *ngIf="item.comments.length">
+                <label class="sort-select-wrap" for="commentSortSelect">
+                    <span>Sort by:</span>
+                    <select id="commentSortSelect" name="commentSortSelect" [(ngModel)]="commentSort">
+                        <option value="best">Best</option>
+                        <option value="top">Top</option>
+                        <option value="new">New</option>
+                        <option value="controversial">Controversial</option>
+                        <option value="old">Old</option>
+                        <option value="qna">Q&amp;A</option>
+                    </select>
+                </label>
+                <div class="comment-search">
+                    <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
+                    <input type="text" [(ngModel)]="commentSearchQuery" placeholder="Search comments" aria-label="Search comments" />
+                </div>
+            </div>
+
+            <p class="meta" *ngIf="!item.comments.length">No comments yet.</p>
+            <p class="meta" *ngIf="item.comments.length && !visibleComments.length">No comments match your search.</p>
+
+            <div class="comments-list" *ngIf="threadedComments.length">
+                <article class="comment-item" *ngFor="let threadItem of threadedComments; let isLast = last; let idx = index; trackBy: trackByThreadCommentId" [class.is-reply]="threadItem.level > 0" [class.has-child]="!isLast && threadedComments[idx + 1].level > threadItem.level"
+                    [class.menu-open]="openCommentMenuId === threadItem.comment.id" [style.--thread-level]="threadItem.level" [attr.id]="'comment-' + threadItem.comment.id">
+                    <div class="comment-thread-rail" [class.last]="isLast">
+                        <img class="comment-avatar" *ngIf="threadItem.comment.authorImageUrl; else commentInitial" [src]="threadItem.comment.authorImageUrl" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
+                        <ng-template #commentInitial>
+                            <div class="comment-avatar">{{ (threadItem.comment.authorHandle[0] || '?') | uppercase }}</div>
+                        </ng-template>
+                        <span class="thread-line" aria-hidden="true"></span>
+                    </div>
+                    <div class="comment-main">
+                        <p class="comment-meta"><strong>{{ threadItem.comment.authorHandle }}</strong> · {{ threadItem.comment.createdAtUtc | date:'short' }}</p>
+                        <p class="comment-content" [innerHTML]="formatCommentContent(threadItem.comment.content)" (click)="onCommentContentClick($event)" (keydown)="onCommentContentKeydown($event)"></p>
+                        <div class="comment-footer">
+                            <button type="button" class="comment-action" [class.active]="isCommentUpvoted(threadItem.comment.id)" (click)="toggleCommentUpvote(threadItem.comment.id)" aria-label="Upvote">
+                                <i class="fa-duotone fa-light fa-arrow-up" aria-hidden="true"></i>
+                            </button>
+                            <span class="comment-score">{{ getCommentVoteScore(threadItem.comment.id) }}</span>
+                            <button type="button" class="comment-action" [class.active]="isCommentDownvoted(threadItem.comment.id)" (click)="toggleCommentDownvote(threadItem.comment.id)" aria-label="Downvote">
+                                <i class="fa-duotone fa-light fa-arrow-down" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="comment-action" (click)="openReplyComposer(threadItem.comment.id, threadItem.comment.authorHandle)" aria-label="Reply" title="Reply">
+                                <i class="fa-duotone fa-light fa-reply" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="comment-action" (click)="copyCommentLinkAsync(threadItem.comment.id)" [attr.aria-label]="copiedCommentId === threadItem.comment.id ? 'Comment link copied' : 'Share comment'"
+                                [attr.title]="copiedCommentId === threadItem.comment.id ? 'Copied' : 'Share'">
+                                <i class="fa-duotone fa-light" [class.fa-share-from-square]="copiedCommentId !== threadItem.comment.id" [class.fa-check]="copiedCommentId === threadItem.comment.id" aria-hidden="true"></i>
+                            </button>
+                            <div class="comment-menu-wrap" *ngIf="canManageComment(threadItem.comment)">
+                                <button type="button" class="comment-action" [class.active]="openCommentMenuId === threadItem.comment.id" [attr.aria-label]="'Open comment actions'" [attr.aria-expanded]="openCommentMenuId === threadItem.comment.id" [attr.title]="'More actions'"
+                                    (click)="toggleCommentMenu(threadItem.comment.id, $event)">
+                                    <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
+                                </button>
+
+                                <div class="comment-menu" *ngIf="openCommentMenuId === threadItem.comment.id" role="menu" aria-label="Comment actions">
+                                    <button type="button" class="comment-menu-item" role="menuitem" (click)="openEditComment(threadItem.comment); closeCommentMenu()" [disabled]="deletingCommentId === threadItem.comment.id">
+                                        <i class="fa-duotone fa-light" [class.fa-pen]="activeEditCommentId !== threadItem.comment.id" [class.fa-xmark]="activeEditCommentId === threadItem.comment.id" aria-hidden="true"></i>
+                                        <span>{{ activeEditCommentId === threadItem.comment.id ? 'Cancel edit' : 'Edit' }}</span>
+                                    </button>
+                                    <button type="button" class="comment-menu-item danger" role="menuitem" (click)="closeCommentMenu(); deleteCommentAsync(threadItem.comment.id)" [disabled]="deletingCommentId === threadItem.comment.id || savingCommentEdit">
+                                        <i class="fa-duotone fa-light" [class.fa-trash]="deletingCommentId !== threadItem.comment.id" [class.fa-spinner-third]="deletingCommentId === threadItem.comment.id" [class.fa-spin]="deletingCommentId === threadItem.comment.id" aria-hidden="true"></i>
+                                        <span>{{ deletingCommentId === threadItem.comment.id ? 'Deleting...' : 'Delete' }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="comment-reply-editor" *ngIf="activeEditCommentId === threadItem.comment.id">
+                            <app-rich-text-editor [placeholder]="'Edit your comment'" [submitLabel]="'Save'" [submittingLabel]="'Saving...'" [submitting]="savingCommentEdit" [errorMessage]="commentActionError" [collapsed]="false" [initialContent]="editCommentDraft" [initialContentIsHtml]="true"
+                                (submitted)="submitEditCommentContentAsync(threadItem.comment.id, $event)" (cancelled)="cancelEditComment()"></app-rich-text-editor>
+                        </div>
+
+                        <div class="comment-reply-editor" *ngIf="activeReplyCommentId === threadItem.comment.id">
+                            <app-rich-text-editor [placeholder]="'Reply to u/' + (activeReplyHandle || threadItem.comment.authorHandle)" [submitLabel]="'Comment'" [submittingLabel]="'Posting...'" [submitting]="postingReply" [errorMessage]="replyError" [collapsed]="false"
+                                [initialContent]="'@' + (activeReplyHandle || threadItem.comment.authorHandle) + ' '" [resetToken]="replyComposerResetToken" (submitted)="submitReplyContentAsync(threadItem.comment.id, $event)" (cancelled)="cancelReplyComposer()"></app-rich-text-editor>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </section>
 </section>
+
+<div class="image-lightbox" *ngIf="fullscreenImageUrl as imageUrl" role="dialog" aria-modal="true" aria-label="Image preview" (click)="closeImageFullscreen()">
+    <button type="button" class="image-lightbox-close" aria-label="Close image preview" (click)="$event.stopPropagation(); closeImageFullscreen()">×</button>
+    <img [src]="imageUrl" alt="Fullscreen post image" (click)="$event.stopPropagation()" />
+</div>

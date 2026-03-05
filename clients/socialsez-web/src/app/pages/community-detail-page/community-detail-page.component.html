@@ -56,7 +56,7 @@
         </section>
         <p class="meta" *ngIf="!loading && !posts.length">{{ postSearchQuery ? 'No posts match this search.' : 'No posts yet.' }}</p>
 
-        <article class="post-item card" *ngFor="let post of posts; trackBy: trackByPostId" [attr.id]="'post-' + post.id">
+        <article class="post-item card" *ngFor="let post of posts; trackBy: trackByPostId" [attr.id]="'post-' + post.id" role="button" tabindex="0" (click)="openPostAsync(post.id)" (keydown)="onPostCardKeydown($event, post.id)">
             <header class="post-head">
                 <div class="post-author">
                     <img class="post-author-image" *ngIf="post.authorImageUrl" [src]="post.authorImageUrl" alt="Author image" />
@@ -72,16 +72,18 @@
                 </div>
             </header>
 
-            <h4 class="post-title" *ngIf="post.content">{{ post.content }}</h4>
+            <h4 class="post-title">{{ post.title || 'Untitled post' }}</h4>
+            <a class="post-link" *ngIf="getPostPrimaryLink(post) as link" [href]="link" target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()">{{ link }}</a>
+            <p class="post-body" *ngIf="post.content">{{ post.content }}</p>
 
             <div class="post-image-frame" *ngIf="post.imageUrl">
-                <img class="post-image" [src]="post.imageUrl" alt="Post image" />
+                <img class="post-image" [src]="post.imageUrl" alt="Post image" (click)="openImageFullscreen(post.imageUrl, $event)" />
             </div>
 
             <section class="poll" *ngIf="post.poll as poll">
                 <h4>{{ poll.question }}</h4>
                 <div class="poll-options">
-                    <button type="button" *ngFor="let option of poll.options" class="ghost poll-option" [class.selected]="option.votedByMe" (click)="votePollAsync(post.id, poll.id, option.id)" [disabled]="votingPollId === poll.id || !canPost">
+                    <button type="button" *ngFor="let option of poll.options" class="ghost poll-option" [class.selected]="option.votedByMe" (click)="$event.stopPropagation(); votePollAsync(post.id, poll.id, option.id)" [disabled]="votingPollId === poll.id || !canPost">
                         <span>{{ option.text }}</span>
                         <strong>{{ option.voteCount }}</strong>
                     </button>
@@ -90,14 +92,29 @@
             </section>
 
             <footer class="post-actions">
-                <button type="button" class="icon-button" [class.saved-active]="post.isSavedByMe" (click)="toggleSavePostAsync(post)" [disabled]="togglingSavePostId === post.id" [attr.aria-label]="post.isSavedByMe ? 'Unsave post' : 'Save post'" [attr.title]="post.isSavedByMe ? 'Saved' : 'Save'">
+                <button type="button" class="vote-button" [class.active]="isUpvoted(post.id)" (click)="toggleUpvote(post.id, $event)" [disabled]="votingPostId === post.id" aria-label="Upvote post" title="Upvote">
+                    <i class="fa-duotone fa-light fa-arrow-up" aria-hidden="true"></i>
+                </button>
+                <span class="vote-score" [class.positive]="getVoteScore(post.id) > 0" [class.negative]="getVoteScore(post.id) < 0">{{ getVoteScore(post.id) }}</span>
+                <button type="button" class="vote-button" [class.active]="isDownvoted(post.id)" (click)="toggleDownvote(post.id, $event)" [disabled]="votingPostId === post.id" aria-label="Downvote post" title="Downvote">
+                    <i class="fa-duotone fa-light fa-arrow-down" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="comment-button" (click)="openPostFromCommentAction(post.id, $event)" aria-label="Open comments" title="Open comments">
+                    <i class="fa-duotone fa-light fa-comment" aria-hidden="true"></i>
+                    <span>{{ post.comments.length }}</span>
+                </button>
+                <button type="button" class="icon-button" [class.saved-active]="post.isSavedByMe" (click)="$event.stopPropagation(); toggleSavePostAsync(post)" [disabled]="togglingSavePostId === post.id" [attr.aria-label]="post.isSavedByMe ? 'Unsave post' : 'Save post'"
+                    [attr.title]="post.isSavedByMe ? 'Saved' : 'Save'">
                     <i class="fa-duotone fa-bookmark" [class.fa-light]="!post.isSavedByMe" [class.fa-solid]="post.isSavedByMe" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="icon-button" (click)="sharePostAsync(post)" [attr.aria-label]="copiedPostLinkId === post.id ? 'Post link copied' : 'Copy post link'" [attr.title]="copiedPostLinkId === post.id ? 'Copied' : 'Copy link'">
+                <button type="button" class="icon-button" (click)="$event.stopPropagation(); sharePostAsync(post)" [attr.aria-label]="copiedPostLinkId === post.id ? 'Post link copied' : 'Copy post link'" [attr.title]="copiedPostLinkId === post.id ? 'Copied' : 'Copy link'">
                     <i *ngIf="copiedPostLinkId !== post.id" class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
                     <i *ngIf="copiedPostLinkId === post.id" class="fa-duotone fa-solid fa-check" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="icon-button danger" *ngIf="canDeletePost(post)" (click)="requestDeletePost(post)" [disabled]="deletingPostId === post.id" aria-label="Delete post" title="Delete post">
+                <button type="button" class="icon-button" *ngIf="canEditPost(post)" (click)="$event.stopPropagation(); openEditPostModal(post)" [disabled]="updatingPost && editingPostId === post.id" aria-label="Edit post" title="Edit post">
+                    <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="icon-button danger" *ngIf="canDeletePost(post)" (click)="$event.stopPropagation(); requestDeletePost(post)" [disabled]="deletingPostId === post.id" aria-label="Delete post" title="Delete post">
                     <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
                 </button>
             </footer>
@@ -107,6 +124,81 @@
 
 <app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
 </app-confirm-modal>
+
+<div class="image-lightbox" *ngIf="fullscreenImageUrl as imageUrl" role="dialog" aria-modal="true" aria-label="Image preview" (click)="closeImageFullscreen()">
+    <button type="button" class="image-lightbox-close" aria-label="Close image preview" (click)="$event.stopPropagation(); closeImageFullscreen()">×</button>
+    <img [src]="imageUrl" alt="Fullscreen post image" (click)="$event.stopPropagation()" />
+</div>
+
+<div class="compose-modal" *ngIf="editPostModalOpen" role="dialog" aria-modal="true" aria-label="Edit community post" (click)="closeEditPostModal()">
+    <section class="compose-modal-card" (click)="$event.stopPropagation()">
+        <header class="compose-modal-head">
+            <h3>Edit post</h3>
+            <button type="button" class="close" (click)="closeEditPostModal()" [disabled]="updatingPost" aria-label="Close edit post modal">✕</button>
+        </header>
+
+        <label>
+            Title
+            <input type="text" [(ngModel)]="editPostTitle" maxlength="220" placeholder="Add a title" [disabled]="updatingPost" />
+        </label>
+
+        <nav class="composer-tabs" aria-label="Edit post type">
+            <button type="button" [class.active]="isEditPostTab('text')" (click)="setEditPostTab('text')">Text</button>
+            <button type="button" [class.active]="isEditPostTab('media')" (click)="setEditPostTab('media')">Images &amp; Video</button>
+            <button type="button" [class.active]="isEditPostTab('link')" (click)="setEditPostTab('link')">Link</button>
+            <button type="button" [class.active]="isEditPostTab('poll')" (click)="setEditPostTab('poll')">Poll</button>
+        </nav>
+
+        <textarea *ngIf="isEditPostTab('text') || isEditPostTab('poll')" [(ngModel)]="editPostContent" rows="4" maxlength="5000" placeholder="Update your post..." [disabled]="updatingPost"></textarea>
+
+        <section class="composer-media" *ngIf="isEditPostTab('media') || isEditPostTab('link')">
+            <label *ngIf="isEditPostTab('link')">
+                Link URL
+                <input type="url" [(ngModel)]="editPostLinkUrl" maxlength="2048" placeholder="https://example.com" [disabled]="updatingPost" />
+            </label>
+
+            <label *ngIf="isEditPostTab('media')">
+                Add images (up to 10)
+                <input type="file" accept="image/*" multiple (change)="onEditPostImagesSelected($event)" [disabled]="updatingPost || editPostImageEntries.length >= 10" />
+            </label>
+
+            <div class="composer-carousel" *ngIf="isEditPostTab('media') && activeEditPostImagePreviewUrl as activePreview">
+                <button type="button" class="carousel-nav" (click)="showPreviousEditPostImage()" [disabled]="!canMoveEditPostImageBack" aria-label="Previous image">‹</button>
+                <img class="composer-preview" [src]="activePreview" alt="Selected edit image preview" />
+                <button type="button" class="carousel-nav" (click)="showNextEditPostImage()" [disabled]="!canMoveEditPostImageForward" aria-label="Next image">›</button>
+            </div>
+
+            <div class="composer-thumbs" *ngIf="isEditPostTab('media') && editPostImageEntries.length">
+                <button type="button" class="composer-thumb" *ngFor="let entry of editPostImageEntries; index as i" [class.active]="i === editPostActiveImageIndex" (click)="setActiveEditPostImage(i)">
+                    <img [src]="entry.url" [alt]="'Image ' + (i + 1)" />
+                </button>
+                <button type="button" class="ghost" (click)="removeEditPostImage(editPostActiveImageIndex)" [disabled]="updatingPost">Remove current</button>
+            </div>
+
+            <textarea [(ngModel)]="editPostMediaContent" rows="4" maxlength="5000" placeholder="Add optional body text..." [disabled]="updatingPost"></textarea>
+        </section>
+
+        <div class="poll-editor" *ngIf="isEditPostTab('poll')">
+            <label>
+                Question
+                <input [(ngModel)]="editPollQuestion" placeholder="Ask the community..." maxlength="280" [disabled]="updatingPost" />
+            </label>
+            <label *ngFor="let option of editPollOptions; index as i">
+                Option {{ i + 1 }}
+                <div class="poll-option-row">
+                    <input [(ngModel)]="editPollOptions[i]" maxlength="160" placeholder="Option text" [disabled]="updatingPost" />
+                    <button type="button" class="ghost" (click)="removeEditPollOption(i)" [disabled]="updatingPost || editPollOptions.length <= 2">Remove</button>
+                </div>
+            </label>
+            <button type="button" class="ghost" (click)="addEditPollOption()" [disabled]="updatingPost || editPollOptions.length >= 6">Add option</button>
+        </div>
+
+        <div class="actions">
+            <button type="button" class="ghost" (click)="closeEditPostModal()" [disabled]="updatingPost">Cancel</button>
+            <button type="button" (click)="submitPostUpdateAsync()" [disabled]="updatingPost">{{ updatingPost ? 'Saving…' : 'Save changes' }}</button>
+        </div>
+    </section>
+</div>
 
 <div class="compose-modal" *ngIf="editCommunityModalOpen" role="dialog" aria-modal="true" aria-label="Edit community" (click)="closeEditCommunityModal()">
     <section class="compose-modal-card" (click)="$event.stopPropagation()">
@@ -145,20 +237,48 @@
             <button type="button" class="close" (click)="closeCreatePostModal()" [disabled]="posting" aria-label="Close create post modal">✕</button>
         </header>
 
-        <textarea [(ngModel)]="composerContent" (ngModelChange)="onComposerChanged()" rows="4" placeholder="Share your thoughts..."></textarea>
-
         <label>
-            Add image
-            <input type="file" accept="image/*" (change)="onComposerImageSelected($event)" [disabled]="posting" />
-        </label>
-        <img class="composer-preview" *ngIf="composerImagePreviewUrl" [src]="composerImagePreviewUrl" alt="Post image preview" />
-
-        <label class="toggle">
-            <input type="checkbox" [(ngModel)]="enablePoll" (ngModelChange)="onComposerChanged()" />
-            Add poll
+            Title
+            <input type="text" [(ngModel)]="composerTitle" (ngModelChange)="onComposerChanged()" maxlength="220" placeholder="Add a title" [disabled]="posting" />
         </label>
 
-        <div class="poll-editor" *ngIf="enablePoll">
+        <nav class="composer-tabs" aria-label="Post type">
+            <button type="button" [class.active]="isComposerTab('text')" (click)="setComposerTab('text')">Text</button>
+            <button type="button" [class.active]="isComposerTab('media')" (click)="setComposerTab('media')">Images &amp; Video</button>
+            <button type="button" [class.active]="isComposerTab('link')" (click)="setComposerTab('link')">Link</button>
+            <button type="button" [class.active]="isComposerTab('poll')" (click)="setComposerTab('poll')">Poll</button>
+        </nav>
+
+        <textarea *ngIf="isComposerTab('text') || isComposerTab('poll')" [(ngModel)]="composerContent" (ngModelChange)="onComposerChanged()" rows="4" placeholder="Share your thoughts..."></textarea>
+
+        <section class="composer-media" *ngIf="isComposerTab('media') || isComposerTab('link')">
+            <label *ngIf="isComposerTab('link')">
+                Link URL
+                <input type="url" [(ngModel)]="composerLinkUrl" (ngModelChange)="onComposerChanged()" maxlength="2048" placeholder="https://example.com" [disabled]="posting" />
+            </label>
+
+            <label *ngIf="isComposerTab('media')">
+                Add images (up to 10)
+                <input type="file" accept="image/*" multiple (change)="onComposerImagesSelected($event)" [disabled]="posting || composerImageFiles.length >= 10" />
+            </label>
+
+            <div class="composer-carousel" *ngIf="isComposerTab('media') && activeComposerImagePreviewUrl as activePreview">
+                <button type="button" class="carousel-nav" (click)="showPreviousComposerImage()" [disabled]="!canMoveComposerImageBack" aria-label="Previous image">‹</button>
+                <img class="composer-preview" [src]="activePreview" alt="Selected post image preview" />
+                <button type="button" class="carousel-nav" (click)="showNextComposerImage()" [disabled]="!canMoveComposerImageForward" aria-label="Next image">›</button>
+            </div>
+
+            <div class="composer-thumbs" *ngIf="isComposerTab('media') && composerImagePreviewUrls.length">
+                <button type="button" class="composer-thumb" *ngFor="let preview of composerImagePreviewUrls; index as i" [class.active]="i === composerActiveImageIndex" (click)="setActiveComposerImage(i)">
+                    <img [src]="preview" [alt]="'Image ' + (i + 1)" />
+                </button>
+                <button type="button" class="ghost" (click)="removeComposerImage(composerActiveImageIndex)" [disabled]="posting">Remove current</button>
+            </div>
+
+            <textarea [(ngModel)]="composerMediaContent" (ngModelChange)="onComposerChanged()" rows="4" placeholder="Add optional body text..."></textarea>
+        </section>
+
+        <div class="poll-editor" *ngIf="isComposerTab('poll')">
             <label>
                 Question
                 <input [(ngModel)]="pollQuestion" (ngModelChange)="onComposerChanged()" placeholder="Ask the community..." maxlength="280" />

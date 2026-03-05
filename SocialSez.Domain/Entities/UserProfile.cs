@@ -29,6 +29,7 @@ public class UserProfile
     public ICollection<Community> CreatedCommunities { get; set; } = new List<Community>();
     public ICollection<CommunityMember> CommunityMemberships { get; set; } = new List<CommunityMember>();
     public ICollection<CommunityPost> CommunityPosts { get; set; } = new List<CommunityPost>();
+    public ICollection<CommunityPostVote> CommunityPostVotes { get; set; } = new List<CommunityPostVote>();
     public ICollection<CommunitySavedPost> SavedCommunityPosts { get; set; } = new List<CommunitySavedPost>();
     public ICollection<CommunityPollVote> CommunityPollVotes { get; set; } = new List<CommunityPollVote>();
     public ICollection<ProfileFollowRequest> ReceivedFollowRequests { get; set; } = new List<ProfileFollowRequest>();

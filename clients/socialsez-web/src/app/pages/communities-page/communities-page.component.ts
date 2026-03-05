@@ -14,6 +14,7 @@ import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
     styleUrl: './communities-page.component.scss'
 })
 export class CommunitiesPageComponent {
+    activeTab: 'mine' | 'discover' = 'mine';
     myCommunities: CommunityDto[] = [];
     discoverCommunities: CommunityDto[] = [];
 

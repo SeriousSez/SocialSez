@@ -13,50 +13,59 @@
     </header>
 
     <section class="card">
-        <h3>My communities</h3>
-        <p class="meta" *ngIf="loading">Loading communities...</p>
-        <p class="meta" *ngIf="!loading && !myCommunities.length">You have not joined any communities yet.</p>
-
-        <article class="community-row" *ngFor="let community of myCommunities; trackBy: trackByCommunityId">
-            <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
-            <div>
-                <strong><a [routerLink]="['/communities', community.slug]">{{ community.name }}</a></strong>
-                <p class="meta">/{{ community.slug }} · {{ community.memberCount }} members · {{ community.isPrivate ? 'Private' : 'Public' }}</p>
-                <p class="meta" *ngIf="community.description">{{ community.description }}</p>
-                <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
-            </div>
-            <div class="actions">
-                <span class="meta" *ngIf="community.myRole">{{ community.myRole }}</span>
-                <button type="button" class="ghost" (click)="leaveCommunityAsync(community)" [disabled]="busyCommunityId === community.id">{{ busyCommunityId === community.id ? 'Leaving…' : 'Leave' }}</button>
-            </div>
-        </article>
-    </section>
-
-    <section class="card">
-        <h3>Discover communities</h3>
-        <div class="search-row">
-            <input [(ngModel)]="query" placeholder="Search communities" (keydown.enter)="searchDiscoverAsync()" />
-            <button type="button" class="ghost" (click)="searchDiscoverAsync()" [disabled]="loading">Search</button>
+        <div class="tabs" role="tablist" aria-label="Communities views">
+            <button type="button" class="tab-button" role="tab" id="communities-tab-mine" [attr.aria-selected]="activeTab === 'mine'" [attr.aria-controls]="'communities-panel-mine'" [class.active]="activeTab === 'mine'" (click)="activeTab = 'mine'">
+                My communities
+            </button>
+            <button type="button" class="tab-button" role="tab" id="communities-tab-discover" [attr.aria-selected]="activeTab === 'discover'" [attr.aria-controls]="'communities-panel-discover'" [class.active]="activeTab === 'discover'" (click)="activeTab = 'discover'">
+                Discover communities
+            </button>
         </div>
 
-        <p class="meta" *ngIf="loading">Searching communities...</p>
-        <p class="meta" *ngIf="!loading && !discoverCommunities.length">No communities found.</p>
+        <section class="tab-panel" role="tabpanel" id="communities-panel-mine" aria-labelledby="communities-tab-mine" *ngIf="activeTab === 'mine'">
+            <p class="meta" *ngIf="loading">Loading communities...</p>
+            <p class="meta" *ngIf="!loading && !myCommunities.length && statusTone !== 'error'">You have not joined any communities yet.</p>
 
-        <article class="community-row" *ngFor="let community of discoverCommunities; trackBy: trackByCommunityId">
-            <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
-            <div>
-                <strong><a [routerLink]="['/communities', community.slug]">{{ community.name }}</a></strong>
-                <p class="meta">/{{ community.slug }} · {{ community.memberCount }} members · {{ community.isPrivate ? 'Private' : 'Public' }}</p>
-                <p class="meta" *ngIf="community.description">{{ community.description }}</p>
-                <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
+            <article class="community-row" *ngFor="let community of myCommunities; trackBy: trackByCommunityId">
+                <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
+                <div>
+                    <strong><a [routerLink]="['/communities', community.slug]">{{ community.name }}</a></strong>
+                    <p class="meta">/{{ community.slug }} · {{ community.memberCount }} members · {{ community.isPrivate ? 'Private' : 'Public' }}</p>
+                    <p class="meta" *ngIf="community.description">{{ community.description }}</p>
+                    <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
+                </div>
+                <div class="actions">
+                    <span class="meta" *ngIf="community.myRole">{{ community.myRole }}</span>
+                    <button type="button" class="ghost" (click)="leaveCommunityAsync(community)" [disabled]="busyCommunityId === community.id">{{ busyCommunityId === community.id ? 'Leaving…' : 'Leave' }}</button>
+                </div>
+            </article>
+        </section>
+
+        <section class="tab-panel" role="tabpanel" id="communities-panel-discover" aria-labelledby="communities-tab-discover" *ngIf="activeTab === 'discover'">
+            <div class="search-row">
+                <input [(ngModel)]="query" placeholder="Search communities" (keydown.enter)="searchDiscoverAsync()" />
+                <button type="button" class="ghost" (click)="searchDiscoverAsync()" [disabled]="loading">Search</button>
             </div>
-            <div class="actions">
-                <span class="meta" *ngIf="community.joinedByMe">Joined</span>
-                <button type="button" (click)="joinCommunityAsync(community)" [disabled]="community.joinedByMe || busyCommunityId === community.id">
-                    {{ busyCommunityId === community.id ? 'Joining…' : (community.joinedByMe ? 'Joined' : 'Join') }}
-                </button>
-            </div>
-        </article>
+
+            <p class="meta" *ngIf="loading">Searching communities...</p>
+            <p class="meta" *ngIf="!loading && !discoverCommunities.length && statusTone !== 'error'">No communities found.</p>
+
+            <article class="community-row" *ngFor="let community of discoverCommunities; trackBy: trackByCommunityId">
+                <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
+                <div>
+                    <strong><a [routerLink]="['/communities', community.slug]">{{ community.name }}</a></strong>
+                    <p class="meta">/{{ community.slug }} · {{ community.memberCount }} members · {{ community.isPrivate ? 'Private' : 'Public' }}</p>
+                    <p class="meta" *ngIf="community.description">{{ community.description }}</p>
+                    <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
+                </div>
+                <div class="actions">
+                    <span class="meta" *ngIf="community.joinedByMe">Joined</span>
+                    <button type="button" (click)="joinCommunityAsync(community)" [disabled]="community.joinedByMe || busyCommunityId === community.id">
+                        {{ busyCommunityId === community.id ? 'Joining…' : (community.joinedByMe ? 'Joined' : 'Join') }}
+                    </button>
+                </div>
+            </article>
+        </section>
     </section>
 
     <p class="status" [class.is-success]="statusTone === 'success'" *ngIf="status">{{ status }}</p>

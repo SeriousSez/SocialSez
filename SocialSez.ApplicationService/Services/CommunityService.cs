@@ -9,6 +9,9 @@ namespace SocialSez.ApplicationService.Services;
 
 public class CommunityService(SocialSezContext dbContext) : ICommunityService
 {
+    private const int MaxCommunityCommentLength = 500;
+    private const string UpvoteType = "Upvote";
+    private const string DownvoteType = "Downvote";
     private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
     private static volatile bool communitySchemaInitialized;
 
@@ -325,13 +328,16 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         }
 
         var content = NormalizePostContent(request.Content);
-        var imageUrl = NormalizeImageUrl(request.ImageUrl);
+        var title = NormalizePostTitle(request.Title);
+        var linkUrl = NormalizeLinkUrl(request.LinkUrl);
+        var imageUrls = NormalizePostImageUrls(request.ImageUrls);
+        var imageUrl = imageUrls.FirstOrDefault();
         var pollQuestion = NormalizePollQuestion(request.PollQuestion);
         var pollOptions = NormalizePollOptions(request.PollOptions);
 
-        if (string.IsNullOrWhiteSpace(content) && string.IsNullOrWhiteSpace(imageUrl) && string.IsNullOrWhiteSpace(pollQuestion))
+        if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(content) && string.IsNullOrWhiteSpace(linkUrl) && imageUrls.Count == 0 && string.IsNullOrWhiteSpace(pollQuestion))
         {
-            throw new ArgumentException("Post content, image, or poll is required.", nameof(request));
+            throw new ArgumentException("Post title, content, link, image, or poll is required.", nameof(request));
         }
 
         if (!string.IsNullOrWhiteSpace(pollQuestion) && pollOptions.Count < 2)
@@ -344,10 +350,18 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             Id = Guid.NewGuid(),
             CommunityId = communityId,
             AuthorId = request.AuthorId,
+            Title = title,
+            LinkUrl = linkUrl,
             Content = content,
             ImageUrl = imageUrl,
             CreatedAtUtc = DateTime.UtcNow,
-            Author = author
+            Author = author,
+            Images = imageUrls.Select((url, index) => new CommunityPostImage
+            {
+                Id = Guid.NewGuid(),
+                Url = url,
+                SortOrder = index
+            }).ToArray()
         };
 
         if (!string.IsNullOrWhiteSpace(pollQuestion))
@@ -372,12 +386,353 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         var created = await dbContext.CommunityPosts
             .AsNoTracking()
             .Include(x => x.Author)
+            .Include(x => x.Images)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Votes)
             .Include(x => x.Poll)
                 .ThenInclude(x => x.Options)
                     .ThenInclude(x => x.Votes)
             .FirstOrDefaultAsync(x => x.Id == post.Id, cancellationToken);
 
         return created is null ? null : MapPost(created, request.AuthorId);
+    }
+
+    public async Task<CommunityPostDto?> AddCommentAsync(Guid communityId, Guid postId, CreateCommunityPostCommentRequest request, CancellationToken cancellationToken = default)
+    {
+        await EnsureCommunitySchemaAsync(cancellationToken);
+
+        var post = await dbContext.CommunityPosts
+            .Include(x => x.Community)
+                .ThenInclude(x => x.Members)
+            .Include(x => x.Author)
+            .Include(x => x.Images)
+            .Include(x => x.SavedBy)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Votes)
+            .Include(x => x.Poll)
+                .ThenInclude(x => x.Options)
+                    .ThenInclude(x => x.Votes)
+            .FirstOrDefaultAsync(x => x.Id == postId && x.CommunityId == communityId, cancellationToken);
+
+        if (post is null)
+        {
+            return null;
+        }
+
+        var isMember = post.Community.Members.Any(x => x.ProfileId == request.AuthorId);
+        if (!isMember)
+        {
+            throw new UnauthorizedAccessException("Join the community before commenting.");
+        }
+
+        var author = await dbContext.UserProfiles.FirstOrDefaultAsync(x => x.Id == request.AuthorId, cancellationToken);
+        if (author is null)
+        {
+            throw new InvalidOperationException("Comment author does not exist.");
+        }
+
+        var content = NormalizeCommentContent(request.Content);
+
+        if (request.ParentCommentId.HasValue)
+        {
+            var parentExists = post.Comments.Any(x => x.Id == request.ParentCommentId.Value);
+            if (!parentExists)
+            {
+                throw new InvalidOperationException("Reply target comment does not exist on this post.");
+            }
+        }
+
+        var comment = new CommunityPostComment
+        {
+            Id = Guid.NewGuid(),
+            PostId = postId,
+            ParentCommentId = request.ParentCommentId,
+            AuthorId = request.AuthorId,
+            Content = content,
+            CreatedAtUtc = DateTime.UtcNow,
+            Author = author
+        };
+
+        dbContext.CommunityPostComments.Add(comment);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return MapPost(post, request.AuthorId);
+    }
+
+    public async Task<CommunityPostDto?> UpdateCommentAsync(Guid communityId, Guid postId, Guid commentId, UpdateCommunityPostCommentRequest request, CancellationToken cancellationToken = default)
+    {
+        await EnsureCommunitySchemaAsync(cancellationToken);
+
+        var post = await dbContext.CommunityPosts
+            .Include(x => x.Community)
+                .ThenInclude(x => x.Members)
+            .Include(x => x.Author)
+            .Include(x => x.Images)
+            .Include(x => x.SavedBy)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Votes)
+            .Include(x => x.Poll)
+                .ThenInclude(x => x.Options)
+                    .ThenInclude(x => x.Votes)
+            .FirstOrDefaultAsync(x => x.Id == postId && x.CommunityId == communityId, cancellationToken);
+
+        if (post is null)
+        {
+            return null;
+        }
+
+        var comment = post.Comments.FirstOrDefault(x => x.Id == commentId);
+        if (comment is null)
+        {
+            return null;
+        }
+
+        if (comment.AuthorId != request.ActorId)
+        {
+            throw new UnauthorizedAccessException("You can only edit your own comments.");
+        }
+
+        comment.Content = NormalizeCommentContent(request.Content);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return MapPost(post, request.ActorId);
+    }
+
+    public async Task<CommunityPostDto?> DeleteCommentAsync(Guid communityId, Guid postId, Guid commentId, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        await EnsureCommunitySchemaAsync(cancellationToken);
+
+        var post = await dbContext.CommunityPosts
+            .Include(x => x.Community)
+                .ThenInclude(x => x.Members)
+            .Include(x => x.Author)
+            .Include(x => x.Images)
+            .Include(x => x.SavedBy)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Votes)
+            .Include(x => x.Poll)
+                .ThenInclude(x => x.Options)
+                    .ThenInclude(x => x.Votes)
+            .FirstOrDefaultAsync(x => x.Id == postId && x.CommunityId == communityId, cancellationToken);
+
+        if (post is null)
+        {
+            return null;
+        }
+
+        var comment = post.Comments.FirstOrDefault(x => x.Id == commentId);
+        if (comment is null)
+        {
+            return null;
+        }
+
+        if (comment.AuthorId != actorId)
+        {
+            throw new UnauthorizedAccessException("You can only delete your own comments.");
+        }
+
+        dbContext.CommunityPostComments.Remove(comment);
+        post.Comments.Remove(comment);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return MapPost(post, actorId);
+    }
+
+    public async Task<CommunityPostDto?> UpdatePostAsync(Guid communityId, Guid postId, UpdateCommunityPostRequest request, CancellationToken cancellationToken = default)
+    {
+        await EnsureCommunitySchemaAsync(cancellationToken);
+
+        var post = await dbContext.CommunityPosts
+            .Include(x => x.Community)
+                .ThenInclude(x => x.Members)
+            .Include(x => x.Author)
+            .Include(x => x.Images)
+            .Include(x => x.SavedBy)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Votes)
+            .Include(x => x.Poll)
+                .ThenInclude(x => x.Options)
+                    .ThenInclude(x => x.Votes)
+            .FirstOrDefaultAsync(x => x.Id == postId && x.CommunityId == communityId, cancellationToken);
+
+        if (post is null)
+        {
+            return null;
+        }
+
+        if (post.AuthorId != request.ActorId)
+        {
+            throw new UnauthorizedAccessException("You can only edit your own posts.");
+        }
+
+        var title = NormalizePostTitle(request.Title);
+        var content = NormalizePostContent(request.Content);
+        var linkUrl = NormalizeLinkUrl(request.LinkUrl);
+        var pollQuestion = NormalizePollQuestion(request.PollQuestion);
+        var pollOptions = NormalizePollOptions(request.PollOptions);
+
+        post.Title = title;
+        post.Content = content;
+        post.LinkUrl = linkUrl;
+
+        if (request.ImageUrls is not null)
+        {
+            var imageUrls = NormalizePostImageUrls(request.ImageUrls);
+            dbContext.CommunityPostImages.RemoveRange(post.Images);
+            post.Images = imageUrls.Select((url, index) => new CommunityPostImage
+            {
+                Id = Guid.NewGuid(),
+                PostId = post.Id,
+                Url = url,
+                SortOrder = index
+            }).ToArray();
+        }
+
+        if (!string.IsNullOrWhiteSpace(pollQuestion))
+        {
+            if (post.Poll is null)
+            {
+                if (pollOptions.Count < 2)
+                {
+                    throw new ArgumentException("Polls require at least two options.", nameof(request));
+                }
+
+                post.Poll = new CommunityPoll
+                {
+                    Id = Guid.NewGuid(),
+                    PostId = post.Id,
+                    Question = pollQuestion,
+                    CreatedAtUtc = DateTime.UtcNow,
+                    Options = pollOptions.Select(option => new CommunityPollOption
+                    {
+                        Id = Guid.NewGuid(),
+                        Text = option
+                    }).ToArray()
+                };
+            }
+            else
+            {
+                var hasVotes = post.Poll.Options.SelectMany(x => x.Votes).Any();
+                if (hasVotes)
+                {
+                    throw new ArgumentException("Poll cannot be edited after voting has started.", nameof(request));
+                }
+
+                if (pollOptions.Count < 2)
+                {
+                    throw new ArgumentException("Polls require at least two options.", nameof(request));
+                }
+
+                post.Poll.Question = pollQuestion;
+                dbContext.CommunityPollOptions.RemoveRange(post.Poll.Options);
+                post.Poll.Options = pollOptions.Select(option => new CommunityPollOption
+                {
+                    Id = Guid.NewGuid(),
+                    PollId = post.Poll.Id,
+                    Text = option
+                }).ToArray();
+            }
+        }
+        else if (request.ClearPoll && post.Poll is not null)
+        {
+            var hasVotes = post.Poll.Options.SelectMany(x => x.Votes).Any();
+            if (hasVotes)
+            {
+                throw new ArgumentException("Poll cannot be removed after voting has started.", nameof(request));
+            }
+
+            dbContext.CommunityPolls.Remove(post.Poll);
+            post.Poll = null;
+        }
+
+        var hasPoll = post.Poll is not null;
+        var hasImages = request.ImageUrls is not null
+            ? post.Images.Count > 0
+            : post.Images.Any(x => !string.IsNullOrWhiteSpace(x.Url));
+
+        if (string.IsNullOrWhiteSpace(post.Title)
+            && string.IsNullOrWhiteSpace(post.Content)
+            && string.IsNullOrWhiteSpace(post.LinkUrl)
+            && !hasImages
+            && !hasPoll)
+        {
+            throw new ArgumentException("Post title, content, link, image, or poll is required.", nameof(request));
+        }
+
+        post.ImageUrl = post.Images
+            .OrderBy(x => x.SortOrder)
+            .Select(x => x.Url)
+            .FirstOrDefault(url => !string.IsNullOrWhiteSpace(url));
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return MapPost(post, request.ActorId);
+    }
+
+    public async Task<CommunityPostDto?> VotePostAsync(Guid communityId, Guid postId, VoteCommunityPostRequest request, CancellationToken cancellationToken = default)
+    {
+        await EnsureCommunitySchemaAsync(cancellationToken);
+
+        var post = await dbContext.CommunityPosts
+            .Include(x => x.Community)
+                .ThenInclude(x => x.Members)
+            .Include(x => x.Author)
+            .Include(x => x.Images)
+            .Include(x => x.SavedBy)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Votes)
+            .Include(x => x.Poll)
+                .ThenInclude(x => x.Options)
+                    .ThenInclude(x => x.Votes)
+            .FirstOrDefaultAsync(x => x.Id == postId && x.CommunityId == communityId, cancellationToken);
+
+        if (post is null)
+        {
+            return null;
+        }
+
+        var isMember = post.Community.Members.Any(x => x.ProfileId == request.VoterId);
+        if (!isMember)
+        {
+            throw new UnauthorizedAccessException("Join the community before voting.");
+        }
+
+        var normalizedVoteType = NormalizeVoteType(request.VoteType);
+        var existingVote = post.Votes.FirstOrDefault(x => x.ProfileId == request.VoterId);
+
+        if (normalizedVoteType is null)
+        {
+            if (existingVote is not null)
+            {
+                post.Votes.Remove(existingVote);
+                dbContext.CommunityPostVotes.Remove(existingVote);
+            }
+        }
+        else if (existingVote is null)
+        {
+            post.Votes.Add(new CommunityPostVote
+            {
+                PostId = post.Id,
+                ProfileId = request.VoterId,
+                Type = normalizedVoteType,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else if (string.Equals(existingVote.Type, normalizedVoteType, StringComparison.OrdinalIgnoreCase))
+        {
+            post.Votes.Remove(existingVote);
+            dbContext.CommunityPostVotes.Remove(existingVote);
+        }
+        else
+        {
+            existingVote.Type = normalizedVoteType;
+            existingVote.CreatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return MapPost(post, request.VoterId);
     }
 
     public async Task<CommunityPostDto?> GetPostByIdAsync(Guid postId, Guid? viewerProfileId, CancellationToken cancellationToken = default)
@@ -389,7 +744,11 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             .Include(x => x.Community)
                 .ThenInclude(x => x.Members)
             .Include(x => x.Author)
+            .Include(x => x.Images)
             .Include(x => x.SavedBy)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Votes)
             .Include(x => x.Poll)
                 .ThenInclude(x => x.Options)
                     .ThenInclude(x => x.Votes)
@@ -482,7 +841,11 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             .AsNoTracking()
             .Where(x => x.CommunityId == communityId)
             .Include(x => x.Author)
+            .Include(x => x.Images)
             .Include(x => x.SavedBy)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Votes)
             .Include(x => x.Poll)
                 .ThenInclude(x => x.Options)
                     .ThenInclude(x => x.Votes)
@@ -492,7 +855,9 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         {
             var lowered = normalizedQuery.ToLowerInvariant();
             postsQuery = postsQuery.Where(x =>
-                (x.Content != null && x.Content.ToLower().Contains(lowered))
+                (x.Title != null && x.Title.ToLower().Contains(lowered))
+                || (x.LinkUrl != null && x.LinkUrl.ToLower().Contains(lowered))
+                || (x.Content != null && x.Content.ToLower().Contains(lowered))
                 || x.Author.Handle.ToLower().Contains(lowered)
                 || (x.Poll != null && x.Poll.Question.ToLower().Contains(lowered))
                 || (x.Poll != null && x.Poll.Options.Any(option => option.Text.ToLower().Contains(lowered))));
@@ -516,7 +881,11 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             .Include(x => x.Community)
                 .ThenInclude(x => x.Members)
             .Include(x => x.Author)
+            .Include(x => x.Images)
             .Include(x => x.SavedBy)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Votes)
             .Include(x => x.Poll)
                 .ThenInclude(x => x.Options)
                     .ThenInclude(x => x.Votes)
@@ -691,6 +1060,97 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         return normalized;
     }
 
+    private static string? NormalizePostTitle(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return null;
+        }
+
+        var normalized = title.Trim();
+        if (normalized.Length > 220)
+        {
+            throw new ArgumentException("Post title cannot exceed 220 characters.", nameof(title));
+        }
+
+        return normalized;
+    }
+
+    private static string? NormalizeLinkUrl(string? linkUrl)
+    {
+        if (string.IsNullOrWhiteSpace(linkUrl))
+        {
+            return null;
+        }
+
+        var normalized = linkUrl.Trim();
+        if (normalized.Length > 2048)
+        {
+            throw new ArgumentException("Link url cannot exceed 2048 characters.", nameof(linkUrl));
+        }
+
+        if (!Uri.TryCreate(normalized, UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new ArgumentException("Link url must be a valid http or https URL.", nameof(linkUrl));
+        }
+
+        return normalized;
+    }
+
+    private static IReadOnlyCollection<string> NormalizePostImageUrls(IReadOnlyCollection<string>? imageUrls)
+    {
+        if (imageUrls is null)
+        {
+            return Array.Empty<string>();
+        }
+
+        return imageUrls
+            .Select(url => NormalizeImageUrl(url))
+            .Where(url => !string.IsNullOrWhiteSpace(url))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(10)
+            .Cast<string>()
+            .ToArray();
+    }
+
+    private static string NormalizeCommentContent(string? content)
+    {
+        var normalized = content?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            throw new ArgumentException("Comment content is required.", nameof(content));
+        }
+
+        if (normalized.Length > MaxCommunityCommentLength)
+        {
+            throw new ArgumentException($"Comment content cannot exceed {MaxCommunityCommentLength} characters.", nameof(content));
+        }
+
+        return normalized;
+    }
+
+    private static string? NormalizeVoteType(string? voteType)
+    {
+        if (string.IsNullOrWhiteSpace(voteType))
+        {
+            return null;
+        }
+
+        var normalized = voteType.Trim();
+        if (string.Equals(normalized, UpvoteType, StringComparison.OrdinalIgnoreCase))
+        {
+            return UpvoteType;
+        }
+
+        if (string.Equals(normalized, DownvoteType, StringComparison.OrdinalIgnoreCase))
+        {
+            return DownvoteType;
+        }
+
+        throw new ArgumentException("Vote type must be 'Upvote' or 'Downvote'.", nameof(voteType));
+    }
+
     private static string? NormalizePollQuestion(string? question)
     {
         if (string.IsNullOrWhiteSpace(question))
@@ -811,6 +1271,29 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
     private static CommunityPostDto MapPost(CommunityPost post, Guid? viewerProfileId)
     {
         var isSavedByMe = viewerProfileId.HasValue && post.SavedBy.Any(x => x.ProfileId == viewerProfileId.Value);
+        var upvoteCount = post.Votes.Count(x => string.Equals(x.Type, UpvoteType, StringComparison.OrdinalIgnoreCase));
+        var downvoteCount = post.Votes.Count(x => string.Equals(x.Type, DownvoteType, StringComparison.OrdinalIgnoreCase));
+        var myVoteType = viewerProfileId.HasValue
+            ? post.Votes.FirstOrDefault(x => x.ProfileId == viewerProfileId.Value)?.Type
+            : null;
+        var comments = post.Comments
+            .OrderBy(x => x.CreatedAtUtc)
+            .Select(comment => new CommunityPostCommentDto(
+                comment.Id,
+                comment.PostId,
+                comment.ParentCommentId,
+                comment.AuthorId,
+                comment.Author.Handle,
+                comment.Author.ImageUrl,
+                comment.Content,
+                comment.CreatedAtUtc))
+            .ToArray();
+        var imageUrls = post.Images
+            .OrderBy(x => x.SortOrder)
+            .Select(x => x.Url)
+            .Where(url => !string.IsNullOrWhiteSpace(url))
+            .ToArray();
+        var primaryImageUrl = imageUrls.FirstOrDefault() ?? post.ImageUrl;
 
         return new CommunityPostDto(
             post.Id,
@@ -818,11 +1301,18 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             post.AuthorId,
             post.Author.Handle,
             post.Author.ImageUrl,
+            post.Title,
+            post.LinkUrl,
             post.Content,
-            post.ImageUrl,
+            primaryImageUrl,
+            imageUrls,
             post.CreatedAtUtc,
+            upvoteCount,
+            downvoteCount,
+            myVoteType,
             isSavedByMe,
-            post.Poll is null ? null : MapPoll(post.Poll, viewerProfileId));
+                post.Poll is null ? null : MapPoll(post.Poll, viewerProfileId),
+                comments);
     }
 
     private static CommunityPollDto MapPoll(CommunityPoll poll, Guid? viewerProfileId)
@@ -849,7 +1339,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
 
     private async Task EnsureCommunitySchemaAsync(CancellationToken cancellationToken)
     {
-        if (communitySchemaInitialized || !dbContext.Database.IsSqlite())
+        if (communitySchemaInitialized)
         {
             return;
         }
@@ -862,111 +1352,348 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
                 return;
             }
 
-            await dbContext.Database.ExecuteSqlRawAsync("""
-            CREATE TABLE IF NOT EXISTS Communities (
-                Id TEXT NOT NULL PRIMARY KEY,
-                CreatedByProfileId TEXT NOT NULL,
-                Slug TEXT NOT NULL,
-                Name TEXT NOT NULL,
-                Description TEXT NULL,
-                ImageUrl TEXT NULL,
-                IsPrivate INTEGER NOT NULL,
-                CreatedAtUtc TEXT NOT NULL,
-                FOREIGN KEY (CreatedByProfileId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
-            );
-            """, cancellationToken);
-
-            try
+            if (dbContext.Database.IsSqlite())
             {
-                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Communities ADD COLUMN ImageUrl TEXT NULL;", cancellationToken);
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS Communities (
+                    Id TEXT NOT NULL PRIMARY KEY,
+                    CreatedByProfileId TEXT NOT NULL,
+                    Slug TEXT NOT NULL,
+                    Name TEXT NOT NULL,
+                    Description TEXT NULL,
+                    ImageUrl TEXT NULL,
+                    IsPrivate INTEGER NOT NULL,
+                    CreatedAtUtc TEXT NOT NULL,
+                    FOREIGN KEY (CreatedByProfileId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+                );
+                """, cancellationToken);
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Communities ADD COLUMN ImageUrl TEXT NULL;", cancellationToken);
+                }
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                {
+                }
+
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE UNIQUE INDEX IF NOT EXISTS IX_Communities_Slug ON Communities (Slug);", cancellationToken);
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_Communities_CreatedAtUtc ON Communities (CreatedAtUtc);", cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS CommunityMembers (
+                    CommunityId TEXT NOT NULL,
+                    ProfileId TEXT NOT NULL,
+                    Role TEXT NOT NULL,
+                    JoinedAtUtc TEXT NOT NULL,
+                    PRIMARY KEY (CommunityId, ProfileId),
+                    FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
+                    FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityMembers_ProfileId ON CommunityMembers (ProfileId);", cancellationToken);
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityMembers_CommunityId_Role ON CommunityMembers (CommunityId, Role);", cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS CommunityPosts (
+                    Id TEXT NOT NULL PRIMARY KEY,
+                    CommunityId TEXT NOT NULL,
+                    AuthorId TEXT NOT NULL,
+                    Title TEXT NULL,
+                    LinkUrl TEXT NULL,
+                    Content TEXT NULL,
+                    ImageUrl TEXT NULL,
+                    CreatedAtUtc TEXT NOT NULL,
+                    FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
+                    FOREIGN KEY (AuthorId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+                );
+                """, cancellationToken);
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE CommunityPosts ADD COLUMN Title TEXT NULL;", cancellationToken);
+                }
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                {
+                }
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE CommunityPosts ADD COLUMN LinkUrl TEXT NULL;", cancellationToken);
+                }
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                {
+                }
+
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPosts_CommunityId_CreatedAtUtc ON CommunityPosts (CommunityId, CreatedAtUtc);", cancellationToken);
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPosts_AuthorId ON CommunityPosts (AuthorId);", cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS CommunityPostImages (
+                    Id TEXT NOT NULL PRIMARY KEY,
+                    PostId TEXT NOT NULL,
+                    Url TEXT NOT NULL,
+                    SortOrder INTEGER NOT NULL DEFAULT 0,
+                    FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostImages_PostId_SortOrder ON CommunityPostImages (PostId, SortOrder);", cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS CommunityPostComments (
+                    Id TEXT NOT NULL PRIMARY KEY,
+                    PostId TEXT NOT NULL,
+                    ParentCommentId TEXT NULL,
+                    AuthorId TEXT NOT NULL,
+                    Content TEXT NOT NULL,
+                    CreatedAtUtc TEXT NOT NULL,
+                    FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE,
+                    FOREIGN KEY (ParentCommentId) REFERENCES CommunityPostComments (Id) ON DELETE RESTRICT,
+                    FOREIGN KEY (AuthorId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+                );
+                """, cancellationToken);
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE CommunityPostComments ADD COLUMN ParentCommentId TEXT NULL;", cancellationToken);
+                }
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                {
+                }
+
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostComments_PostId_CreatedAtUtc ON CommunityPostComments (PostId, CreatedAtUtc);", cancellationToken);
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostComments_AuthorId ON CommunityPostComments (AuthorId);", cancellationToken);
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostComments_ParentCommentId ON CommunityPostComments (ParentCommentId);", cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS CommunityPostVotes (
+                    PostId TEXT NOT NULL,
+                    ProfileId TEXT NOT NULL,
+                    Type TEXT NOT NULL,
+                    CreatedAtUtc TEXT NOT NULL,
+                    PRIMARY KEY (PostId, ProfileId),
+                    FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE,
+                    FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostVotes_PostId_Type ON CommunityPostVotes (PostId, Type);", cancellationToken);
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostVotes_ProfileId ON CommunityPostVotes (ProfileId);", cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS CommunityPolls (
+                    Id TEXT NOT NULL PRIMARY KEY,
+                    PostId TEXT NOT NULL,
+                    Question TEXT NOT NULL,
+                    CreatedAtUtc TEXT NOT NULL,
+                    FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE UNIQUE INDEX IF NOT EXISTS IX_CommunityPolls_PostId ON CommunityPolls (PostId);", cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS CommunityPollOptions (
+                    Id TEXT NOT NULL PRIMARY KEY,
+                    PollId TEXT NOT NULL,
+                    Text TEXT NOT NULL,
+                    FOREIGN KEY (PollId) REFERENCES CommunityPolls (Id) ON DELETE CASCADE
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPollOptions_PollId ON CommunityPollOptions (PollId);", cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS CommunityPollVotes (
+                    OptionId TEXT NOT NULL,
+                    VoterId TEXT NOT NULL,
+                    CreatedAtUtc TEXT NOT NULL,
+                    PRIMARY KEY (OptionId, VoterId),
+                    FOREIGN KEY (OptionId) REFERENCES CommunityPollOptions (Id) ON DELETE CASCADE,
+                    FOREIGN KEY (VoterId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPollVotes_VoterId ON CommunityPollVotes (VoterId);", cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS CommunitySavedPosts (
+                    PostId TEXT NOT NULL,
+                    ProfileId TEXT NOT NULL,
+                    SavedAtUtc TEXT NOT NULL,
+                    PRIMARY KEY (PostId, ProfileId),
+                    FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE,
+                    FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunitySavedPosts_ProfileId ON CommunitySavedPosts (ProfileId);", cancellationToken);
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunitySavedPosts_ProfileId_SavedAtUtc ON CommunitySavedPosts (ProfileId, SavedAtUtc);", cancellationToken);
             }
-            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+            else if (dbContext.Database.IsMySql())
             {
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `Communities` (
+                    `Id` char(36) NOT NULL,
+                    `CreatedByProfileId` char(36) NOT NULL,
+                    `Slug` varchar(60) NOT NULL,
+                    `Name` varchar(120) NOT NULL,
+                    `Description` varchar(600) NULL,
+                    `ImageUrl` varchar(1024) NULL,
+                    `IsPrivate` tinyint(1) NOT NULL,
+                    `CreatedAtUtc` datetime(6) NOT NULL,
+                    PRIMARY KEY (`Id`),
+                    UNIQUE KEY `IX_Communities_Slug` (`Slug`),
+                    KEY `IX_Communities_CreatedAtUtc` (`CreatedAtUtc`)
+                );
+                """, cancellationToken);
+
+                var communityImageColumnExists = await dbContext.Database
+                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Communities' AND COLUMN_NAME = 'ImageUrl' LIMIT 1")
+                    .AnyAsync(cancellationToken);
+
+                if (!communityImageColumnExists)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Communities` ADD COLUMN `ImageUrl` varchar(1024) NULL;", cancellationToken);
+                }
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `CommunityMembers` (
+                    `CommunityId` char(36) NOT NULL,
+                    `ProfileId` char(36) NOT NULL,
+                    `Role` varchar(24) NOT NULL,
+                    `JoinedAtUtc` datetime(6) NOT NULL,
+                    PRIMARY KEY (`CommunityId`, `ProfileId`),
+                    KEY `IX_CommunityMembers_ProfileId` (`ProfileId`),
+                    KEY `IX_CommunityMembers_CommunityId_Role` (`CommunityId`, `Role`)
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `CommunityPosts` (
+                    `Id` char(36) NOT NULL,
+                    `CommunityId` char(36) NOT NULL,
+                    `AuthorId` char(36) NOT NULL,
+                    `Title` varchar(220) NULL,
+                    `LinkUrl` varchar(2048) NULL,
+                    `Content` varchar(5000) NULL,
+                    `ImageUrl` varchar(1024) NULL,
+                    `CreatedAtUtc` datetime(6) NOT NULL,
+                    PRIMARY KEY (`Id`),
+                    KEY `IX_CommunityPosts_CommunityId_CreatedAtUtc` (`CommunityId`, `CreatedAtUtc`),
+                    KEY `IX_CommunityPosts_AuthorId` (`AuthorId`)
+                );
+                """, cancellationToken);
+
+                var postTitleColumnExists = await dbContext.Database
+                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPosts' AND COLUMN_NAME = 'Title' LIMIT 1")
+                    .AnyAsync(cancellationToken);
+
+                if (!postTitleColumnExists)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPosts` ADD COLUMN `Title` varchar(220) NULL;", cancellationToken);
+                }
+
+                var postLinkUrlColumnExists = await dbContext.Database
+                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPosts' AND COLUMN_NAME = 'LinkUrl' LIMIT 1")
+                    .AnyAsync(cancellationToken);
+
+                if (!postLinkUrlColumnExists)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPosts` ADD COLUMN `LinkUrl` varchar(2048) NULL;", cancellationToken);
+                }
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `CommunityPostImages` (
+                    `Id` char(36) NOT NULL,
+                    `PostId` char(36) NOT NULL,
+                    `Url` varchar(1024) NOT NULL,
+                    `SortOrder` int NOT NULL DEFAULT 0,
+                    PRIMARY KEY (`Id`),
+                    KEY `IX_CommunityPostImages_PostId_SortOrder` (`PostId`, `SortOrder`)
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `CommunityPostComments` (
+                    `Id` char(36) NOT NULL,
+                    `PostId` char(36) NOT NULL,
+                    `ParentCommentId` char(36) NULL,
+                    `AuthorId` char(36) NOT NULL,
+                    `Content` varchar(500) NOT NULL,
+                    `CreatedAtUtc` datetime(6) NOT NULL,
+                    PRIMARY KEY (`Id`),
+                    KEY `IX_CommunityPostComments_PostId_CreatedAtUtc` (`PostId`, `CreatedAtUtc`),
+                    KEY `IX_CommunityPostComments_AuthorId` (`AuthorId`),
+                    KEY `IX_CommunityPostComments_ParentCommentId` (`ParentCommentId`)
+                );
+                """, cancellationToken);
+
+                var commentParentColumnExists = await dbContext.Database
+                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPostComments' AND COLUMN_NAME = 'ParentCommentId' LIMIT 1")
+                    .AnyAsync(cancellationToken);
+
+                if (!commentParentColumnExists)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPostComments` ADD COLUMN `ParentCommentId` char(36) NULL;", cancellationToken);
+                }
+
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `CommunityPostVotes` (
+                    `PostId` char(36) NOT NULL,
+                    `ProfileId` char(36) NOT NULL,
+                    `Type` varchar(16) NOT NULL,
+                    `CreatedAtUtc` datetime(6) NOT NULL,
+                    PRIMARY KEY (`PostId`, `ProfileId`),
+                    KEY `IX_CommunityPostVotes_PostId_Type` (`PostId`, `Type`),
+                    KEY `IX_CommunityPostVotes_ProfileId` (`ProfileId`)
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `CommunityPolls` (
+                    `Id` char(36) NOT NULL,
+                    `PostId` char(36) NOT NULL,
+                    `Question` varchar(280) NOT NULL,
+                    `CreatedAtUtc` datetime(6) NOT NULL,
+                    PRIMARY KEY (`Id`),
+                    UNIQUE KEY `IX_CommunityPolls_PostId` (`PostId`)
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `CommunityPollOptions` (
+                    `Id` char(36) NOT NULL,
+                    `PollId` char(36) NOT NULL,
+                    `Text` varchar(160) NOT NULL,
+                    PRIMARY KEY (`Id`),
+                    KEY `IX_CommunityPollOptions_PollId` (`PollId`)
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `CommunityPollVotes` (
+                    `OptionId` char(36) NOT NULL,
+                    `VoterId` char(36) NOT NULL,
+                    `CreatedAtUtc` datetime(6) NOT NULL,
+                    PRIMARY KEY (`OptionId`, `VoterId`),
+                    KEY `IX_CommunityPollVotes_VoterId` (`VoterId`)
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `CommunitySavedPosts` (
+                    `PostId` char(36) NOT NULL,
+                    `ProfileId` char(36) NOT NULL,
+                    `SavedAtUtc` datetime(6) NOT NULL,
+                    PRIMARY KEY (`PostId`, `ProfileId`),
+                    KEY `IX_CommunitySavedPosts_ProfileId` (`ProfileId`),
+                    KEY `IX_CommunitySavedPosts_ProfileId_SavedAtUtc` (`ProfileId`, `SavedAtUtc`)
+                );
+                """, cancellationToken);
             }
-
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE UNIQUE INDEX IF NOT EXISTS IX_Communities_Slug ON Communities (Slug);", cancellationToken);
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_Communities_CreatedAtUtc ON Communities (CreatedAtUtc);", cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("""
-            CREATE TABLE IF NOT EXISTS CommunityMembers (
-                CommunityId TEXT NOT NULL,
-                ProfileId TEXT NOT NULL,
-                Role TEXT NOT NULL,
-                JoinedAtUtc TEXT NOT NULL,
-                PRIMARY KEY (CommunityId, ProfileId),
-                FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
-                FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
-            );
-            """, cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityMembers_ProfileId ON CommunityMembers (ProfileId);", cancellationToken);
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityMembers_CommunityId_Role ON CommunityMembers (CommunityId, Role);", cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("""
-            CREATE TABLE IF NOT EXISTS CommunityPosts (
-                Id TEXT NOT NULL PRIMARY KEY,
-                CommunityId TEXT NOT NULL,
-                AuthorId TEXT NOT NULL,
-                Content TEXT NULL,
-                ImageUrl TEXT NULL,
-                CreatedAtUtc TEXT NOT NULL,
-                FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
-                FOREIGN KEY (AuthorId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
-            );
-            """, cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPosts_CommunityId_CreatedAtUtc ON CommunityPosts (CommunityId, CreatedAtUtc);", cancellationToken);
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPosts_AuthorId ON CommunityPosts (AuthorId);", cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("""
-            CREATE TABLE IF NOT EXISTS CommunityPolls (
-                Id TEXT NOT NULL PRIMARY KEY,
-                PostId TEXT NOT NULL,
-                Question TEXT NOT NULL,
-                CreatedAtUtc TEXT NOT NULL,
-                FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE
-            );
-            """, cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE UNIQUE INDEX IF NOT EXISTS IX_CommunityPolls_PostId ON CommunityPolls (PostId);", cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("""
-            CREATE TABLE IF NOT EXISTS CommunityPollOptions (
-                Id TEXT NOT NULL PRIMARY KEY,
-                PollId TEXT NOT NULL,
-                Text TEXT NOT NULL,
-                FOREIGN KEY (PollId) REFERENCES CommunityPolls (Id) ON DELETE CASCADE
-            );
-            """, cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPollOptions_PollId ON CommunityPollOptions (PollId);", cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("""
-            CREATE TABLE IF NOT EXISTS CommunityPollVotes (
-                OptionId TEXT NOT NULL,
-                VoterId TEXT NOT NULL,
-                CreatedAtUtc TEXT NOT NULL,
-                PRIMARY KEY (OptionId, VoterId),
-                FOREIGN KEY (OptionId) REFERENCES CommunityPollOptions (Id) ON DELETE CASCADE,
-                FOREIGN KEY (VoterId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
-            );
-            """, cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPollVotes_VoterId ON CommunityPollVotes (VoterId);", cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("""
-            CREATE TABLE IF NOT EXISTS CommunitySavedPosts (
-                PostId TEXT NOT NULL,
-                ProfileId TEXT NOT NULL,
-                SavedAtUtc TEXT NOT NULL,
-                PRIMARY KEY (PostId, ProfileId),
-                FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE,
-                FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
-            );
-            """, cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunitySavedPosts_ProfileId ON CommunitySavedPosts (ProfileId);", cancellationToken);
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunitySavedPosts_ProfileId_SavedAtUtc ON CommunitySavedPosts (ProfileId, SavedAtUtc);", cancellationToken);
 
             communitySchemaInitialized = true;
         }

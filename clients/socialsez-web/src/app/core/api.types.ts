@@ -317,9 +317,27 @@ export interface CommunityPostDto {
     authorId: string;
     authorHandle: string;
     authorImageUrl?: string;
+    title?: string;
+    linkUrl?: string;
     content?: string;
     imageUrl?: string;
+    imageUrls?: string[];
     createdAtUtc: string;
+    upvoteCount: number;
+    downvoteCount: number;
+    myVoteType?: string;
     isSavedByMe: boolean;
     poll?: CommunityPollDto;
+    comments: CommunityPostCommentDto[];
+}
+
+export interface CommunityPostCommentDto {
+    id: string;
+    postId: string;
+    parentCommentId?: string;
+    authorId: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    content: string;
+    createdAtUtc: string;
 }

@@ -204,6 +204,21 @@ h1 {
     color: #6b7280;
 }
 
+.community-rail-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.community-rail-link {
+    display: inline-flex;
+    margin-top: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
 .topbar {
     display: flex;
     justify-content: space-between;

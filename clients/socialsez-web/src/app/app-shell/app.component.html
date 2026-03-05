@@ -118,6 +118,17 @@
                 </li>
             </ul>
         </div>
+        <div class="side-card" *ngIf="loadingRightRailCommunity || rightRailCommunity">
+            <h3>Community</h3>
+            <p class="hint" *ngIf="loadingRightRailCommunity">Loading community info...</p>
+            <ng-container *ngIf="!loadingRightRailCommunity && rightRailCommunity as community">
+                <p class="community-rail-name">{{ community.name }}</p>
+                <p class="hint">/{{ community.slug }}</p>
+                <p class="hint" *ngIf="community.description">{{ community.description }}</p>
+                <p class="hint">{{ community.memberCount }} members</p>
+                <a class="community-rail-link" [routerLink]="['/communities', community.slug]">Go to community</a>
+            </ng-container>
+        </div>
         <!-- <p class="hint" *ngIf="showDebug && session.nextSilentRefreshAt">
             [debug] Next silent refresh: {{ session.nextSilentRefreshAt | date:'mediumTime' }}
         </p> -->

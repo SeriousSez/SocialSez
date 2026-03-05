@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SocialSez.ApplicationService.Interfaces;
@@ -8,7 +9,7 @@ namespace SocialSez.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CommunitiesController(ICommunityService communityService) : ControllerBase
+public class CommunitiesController(ICommunityService communityService, ILogger<CommunitiesController> logger) : ControllerBase
 {
     [Authorize]
     [HttpPost]
@@ -55,6 +56,21 @@ public class CommunitiesController(ICommunityService communityService) : Control
         catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            var message = ex.InnerException?.Message ?? ex.Message;
+            logger.LogWarning(ex, "Failed to update community {CommunityId} due to database update error.", communityId);
+            return BadRequest(new { message });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error while updating community {CommunityId}.", communityId);
+            return BadRequest(new { message = "Unable to update post right now. Please try again." });
         }
     }
 
@@ -108,10 +124,38 @@ public class CommunitiesController(ICommunityService communityService) : Control
         {
             var created = await communityService.CreatePostAsync(
                 communityId,
-                new CreateCommunityPostRequest(profileId, request.Content, request.ImageUrl, request.PollQuestion, request.PollOptions),
+                new CreateCommunityPostRequest(profileId, request.Title, request.LinkUrl, request.Content, request.ImageUrls, request.PollQuestion, request.PollOptions),
                 cancellationToken);
 
             return created is null ? NotFound() : Ok(created);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("{communityId:guid}/posts/{postId:guid}/vote")]
+    public async Task<ActionResult<CommunityPostDto>> VotePost(Guid communityId, Guid postId, [FromBody] VoteCommunityPostBody request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await communityService.VotePostAsync(communityId, postId, new VoteCommunityPostRequest(profileId, request.VoteType), cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
         }
         catch (UnauthorizedAccessException)
         {
@@ -140,6 +184,107 @@ public class CommunitiesController(ICommunityService communityService) : Control
         {
             var deleted = await communityService.DeletePostAsync(communityId, postId, profileId, cancellationToken);
             return deleted ? NoContent() : NotFound();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [Authorize]
+    [HttpPut("{communityId:guid}/posts/{postId:guid}")]
+    public async Task<ActionResult<CommunityPostDto>> UpdatePost(Guid communityId, Guid postId, [FromBody] UpdateCommunityPostBody request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await communityService.UpdatePostAsync(
+                communityId,
+                postId,
+                new UpdateCommunityPostRequest(profileId, request.Title, request.LinkUrl, request.Content, request.ImageUrls, request.PollQuestion, request.PollOptions, request.ClearPoll),
+                cancellationToken);
+
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("{communityId:guid}/posts/{postId:guid}/comments")]
+    public async Task<ActionResult<CommunityPostDto>> AddComment(Guid communityId, Guid postId, [FromBody] CreateCommunityPostCommentBody request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await communityService.AddCommentAsync(communityId, postId, new CreateCommunityPostCommentRequest(profileId, request.Content, request.ParentCommentId), cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpPut("{communityId:guid}/posts/{postId:guid}/comments/{commentId:guid}")]
+    public async Task<ActionResult<CommunityPostDto>> UpdateComment(Guid communityId, Guid postId, Guid commentId, [FromBody] UpdateCommunityPostCommentBody request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await communityService.UpdateCommentAsync(communityId, postId, commentId, new UpdateCommunityPostCommentRequest(profileId, request.Content), cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpDelete("{communityId:guid}/posts/{postId:guid}/comments/{commentId:guid}")]
+    public async Task<ActionResult<CommunityPostDto>> DeleteComment(Guid communityId, Guid postId, Guid commentId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await communityService.DeleteCommentAsync(communityId, postId, commentId, profileId, cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
         }
         catch (UnauthorizedAccessException)
         {
@@ -262,7 +407,11 @@ public class CommunitiesController(ICommunityService communityService) : Control
 
     public sealed record CreateCommunityBody(string Name, string? Description, string? ImageUrl, bool IsPrivate);
     public sealed record UpdateCommunityBody(string Name, string? Description, string? ImageUrl, bool IsPrivate);
-    public sealed record CreateCommunityPostBody(string? Content, string? ImageUrl, string? PollQuestion, IReadOnlyCollection<string>? PollOptions);
+    public sealed record CreateCommunityPostBody(string? Title, string? LinkUrl, string? Content, IReadOnlyCollection<string>? ImageUrls, string? PollQuestion, IReadOnlyCollection<string>? PollOptions);
+    public sealed record UpdateCommunityPostBody(string? Title, string? LinkUrl, string? Content, IReadOnlyCollection<string>? ImageUrls, string? PollQuestion, IReadOnlyCollection<string>? PollOptions, bool ClearPoll);
+    public sealed record CreateCommunityPostCommentBody(string Content, Guid? ParentCommentId = null);
+    public sealed record UpdateCommunityPostCommentBody(string Content);
+    public sealed record VoteCommunityPostBody(string? VoteType);
     public sealed record VoteCommunityPollBody(Guid OptionId);
 
     private bool TryGetProfileId(out Guid profileId)

@@ -554,21 +554,66 @@ export class SessionService {
 
     async createCommunityPostAsync(
         communityId: string,
+        title: string | null,
+        linkUrl: string | null,
         content: string | null,
-        imageUrl: string | null,
+        imageUrls: string[] | null,
         pollQuestion: string | null,
         pollOptions: string[] | null
     ): Promise<CommunityPostDto> {
-        const created = await firstValueFrom(this.api.createCommunityPost(communityId, content, imageUrl, pollQuestion, pollOptions));
+        const created = await firstValueFrom(this.api.createCommunityPost(communityId, title, linkUrl, content, imageUrls, pollQuestion, pollOptions));
         this.message = 'Posted to community.';
         this.emitAppChange('posts');
         return this.normalizeCommunityPost(created);
+    }
+
+    async addCommunityPostCommentAsync(communityId: string, postId: string, content: string, parentCommentId?: string | null): Promise<CommunityPostDto> {
+        const updated = await firstValueFrom(this.api.addCommunityPostComment(communityId, postId, content, parentCommentId ?? null));
+        this.message = 'Comment posted.';
+        this.emitAppChange('posts');
+        return this.normalizeCommunityPost(updated);
+    }
+
+    async updateCommunityPostCommentAsync(communityId: string, postId: string, commentId: string, content: string): Promise<CommunityPostDto> {
+        const updated = await firstValueFrom(this.api.updateCommunityPostComment(communityId, postId, commentId, content));
+        this.message = 'Comment updated.';
+        this.emitAppChange('posts');
+        return this.normalizeCommunityPost(updated);
+    }
+
+    async deleteCommunityPostCommentAsync(communityId: string, postId: string, commentId: string): Promise<CommunityPostDto> {
+        const updated = await firstValueFrom(this.api.deleteCommunityPostComment(communityId, postId, commentId));
+        this.message = 'Comment deleted.';
+        this.emitAppChange('posts');
+        return this.normalizeCommunityPost(updated);
+    }
+
+    async voteCommunityPostAsync(communityId: string, postId: string, voteType?: 'Upvote' | 'Downvote'): Promise<CommunityPostDto> {
+        const updated = await firstValueFrom(this.api.voteCommunityPost(communityId, postId, voteType));
+        return this.normalizeCommunityPost(updated);
     }
 
     async deleteCommunityPostAsync(communityId: string, postId: string): Promise<void> {
         await firstValueFrom(this.api.deleteCommunityPost(communityId, postId));
         this.message = 'Post deleted.';
         this.emitAppChange('posts');
+    }
+
+    async updateCommunityPostAsync(
+        communityId: string,
+        postId: string,
+        title: string | null,
+        linkUrl: string | null,
+        content: string | null,
+        imageUrls: string[] | null = null,
+        pollQuestion: string | null = null,
+        pollOptions: string[] | null = null,
+        clearPoll = false
+    ): Promise<CommunityPostDto> {
+        const updated = await firstValueFrom(this.api.updateCommunityPost(communityId, postId, title, linkUrl, content, imageUrls, pollQuestion, pollOptions, clearPoll));
+        this.message = 'Post updated.';
+        this.emitAppChange('posts');
+        return this.normalizeCommunityPost(updated);
     }
 
     async loadCommunityPostsAsync(communityId: string, query?: string, take = 50): Promise<CommunityPostDto[]> {
@@ -729,7 +774,14 @@ export class SessionService {
             ...post,
             authorImageUrl: this.normalizeMediaUrl(post.authorImageUrl),
             imageUrl: this.normalizeMediaUrl(post.imageUrl),
-            poll: post.poll ? this.normalizeCommunityPoll(post.poll) : undefined
+            imageUrls: (post.imageUrls ?? [])
+                .map(url => this.normalizeMediaUrl(url))
+                .filter((url): url is string => !!url),
+            poll: post.poll ? this.normalizeCommunityPoll(post.poll) : undefined,
+            comments: (post.comments ?? []).map(comment => ({
+                ...comment,
+                authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
+            }))
         };
     }
 
