@@ -82,12 +82,14 @@
                         <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
                     </button>
                     <div class="post-image-frame">
-                        <img *ngIf="isPostImageAnimating(post) && getPostOutgoingImageUrl(post) as outgoingUrl" class="post-image post-image-layer post-image-outgoing" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'"
-                            [src]="outgoingUrl" alt="Post image" (click)="openImageFullscreen(post, outgoingUrl, $event)" />
-                        <ng-container *ngFor="let currentUrl of [activeImageUrl]; trackBy: trackByMediaUrl">
-                            <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl" alt="Post image"
-                                (click)="openImageFullscreen(post, currentUrl, $event)" />
-                        </ng-container>
+                        <div class="post-image-stack">
+                            <img *ngIf="isPostImageAnimating(post) && getPostOutgoingImageUrl(post) as outgoingUrl" class="post-image post-image-layer post-image-outgoing" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'"
+                                [src]="outgoingUrl" alt="Post image" (click)="openImageFullscreen(post, outgoingUrl, $event)" />
+                            <ng-container *ngFor="let currentUrl of [activeImageUrl]; trackBy: trackByMediaUrl">
+                                <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl" alt="Post image"
+                                    (click)="openImageFullscreen(post, currentUrl, $event)" />
+                            </ng-container>
+                        </div>
                     </div>
                     <button type="button" class="post-image-nav" (click)="showNextPostImage(post, $event)" [disabled]="!canMovePostImageForward(post)" aria-label="Next image" title="Next image">
                         <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
@@ -95,12 +97,14 @@
                 </div>
 
                 <div class="post-image-frame" *ngIf="getPostMediaUrls(post).length <= 1">
-                    <img *ngIf="isPostImageAnimating(post) && getPostOutgoingImageUrl(post) as outgoingUrl" class="post-image post-image-layer post-image-outgoing" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'"
-                        [src]="outgoingUrl" alt="Post image" (click)="openImageFullscreen(post, outgoingUrl, $event)" />
-                    <ng-container *ngFor="let currentUrl of [activeImageUrl]; trackBy: trackByMediaUrl">
-                        <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl" alt="Post image"
-                            (click)="openImageFullscreen(post, currentUrl, $event)" />
-                    </ng-container>
+                    <div class="post-image-stack">
+                        <img *ngIf="isPostImageAnimating(post) && getPostOutgoingImageUrl(post) as outgoingUrl" class="post-image post-image-layer post-image-outgoing" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'"
+                            [src]="outgoingUrl" alt="Post image" (click)="openImageFullscreen(post, outgoingUrl, $event)" />
+                        <ng-container *ngFor="let currentUrl of [activeImageUrl]; trackBy: trackByMediaUrl">
+                            <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl" alt="Post image"
+                                (click)="openImageFullscreen(post, currentUrl, $event)" />
+                        </ng-container>
+                    </div>
                 </div>
 
                 <div class="post-image-thumbs" *ngIf="getPostMediaUrls(post).length > 1">
