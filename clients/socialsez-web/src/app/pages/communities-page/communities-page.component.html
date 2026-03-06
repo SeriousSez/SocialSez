@@ -23,22 +23,38 @@
         </div>
 
         <section class="tab-panel" role="tabpanel" id="communities-panel-mine" aria-labelledby="communities-tab-mine" *ngIf="activeTab === 'mine'">
-            <p class="meta" *ngIf="loading">Loading communities...</p>
-            <p class="meta" *ngIf="!loading && !myCommunities.length && statusTone !== 'error'">You have not joined any communities yet.</p>
+            <ng-container *ngIf="loading; else mineCommunitiesContent">
+                <article class="community-row community-row-skeleton" *ngFor="let row of skeletonRows">
+                    <span class="skeleton-block community-image-skeleton"></span>
+                    <div class="community-main-skeleton">
+                        <span class="skeleton-block skeleton-line skeleton-title"></span>
+                        <span class="skeleton-block skeleton-line skeleton-meta"></span>
+                        <span class="skeleton-block skeleton-line skeleton-description"></span>
+                    </div>
+                    <div class="community-actions-skeleton">
+                        <span class="skeleton-block skeleton-badge"></span>
+                        <span class="skeleton-block skeleton-button"></span>
+                    </div>
+                </article>
+            </ng-container>
+            <ng-template #mineCommunitiesContent>
+                <p class="meta" *ngIf="!isAuthenticated">Sign in or create an account to view communities you joined.</p>
+                <p class="meta" *ngIf="!loading && !myCommunities.length && statusTone !== 'error'">You have not joined any communities yet.</p>
 
-            <article class="community-row" *ngFor="let community of myCommunities; trackBy: trackByCommunityId">
-                <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
-                <div>
-                    <strong><a [routerLink]="['/communities', community.slug]">{{ community.name }}</a></strong>
-                    <p class="meta">/{{ community.slug }} · {{ community.memberCount }} members · {{ community.isPrivate ? 'Private' : 'Public' }}</p>
-                    <p class="meta" *ngIf="community.description">{{ community.description }}</p>
-                    <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
-                </div>
-                <div class="actions">
-                    <span class="meta" *ngIf="community.myRole">{{ community.myRole }}</span>
-                    <button type="button" class="ghost" (click)="leaveCommunityAsync(community)" [disabled]="busyCommunityId === community.id">{{ busyCommunityId === community.id ? 'Leaving…' : 'Leave' }}</button>
-                </div>
-            </article>
+                <article class="community-row" *ngFor="let community of myCommunities; trackBy: trackByCommunityId">
+                    <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
+                    <div>
+                        <strong><a [routerLink]="['/c', community.slug]">{{ community.name }}</a></strong>
+                        <p class="meta">/{{ community.slug }} · {{ community.memberCount }} members · {{ community.isPrivate ? 'Private' : 'Public' }}</p>
+                        <p class="meta" *ngIf="community.description">{{ community.description }}</p>
+                        <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
+                    </div>
+                    <div class="actions">
+                        <span class="meta" *ngIf="community.myRole">{{ community.myRole }}</span>
+                        <button type="button" class="ghost" (click)="leaveCommunityAsync(community)" [disabled]="busyCommunityId === community.id">{{ busyCommunityId === community.id ? 'Leaving…' : 'Leave' }}</button>
+                    </div>
+                </article>
+            </ng-template>
         </section>
 
         <section class="tab-panel" role="tabpanel" id="communities-panel-discover" aria-labelledby="communities-tab-discover" *ngIf="activeTab === 'discover'">
@@ -47,28 +63,41 @@
                 <button type="button" class="ghost" (click)="searchDiscoverAsync()" [disabled]="loading">Search</button>
             </div>
 
-            <p class="meta" *ngIf="loading">Searching communities...</p>
-            <p class="meta" *ngIf="!loading && !discoverCommunities.length && statusTone !== 'error'">No communities found.</p>
+            <ng-container *ngIf="loading; else discoverCommunitiesContent">
+                <article class="community-row community-row-skeleton" *ngFor="let row of skeletonRows">
+                    <span class="skeleton-block community-image-skeleton"></span>
+                    <div class="community-main-skeleton">
+                        <span class="skeleton-block skeleton-line skeleton-title"></span>
+                        <span class="skeleton-block skeleton-line skeleton-meta"></span>
+                        <span class="skeleton-block skeleton-line skeleton-description"></span>
+                    </div>
+                    <div class="community-actions-skeleton">
+                        <span class="skeleton-block skeleton-badge"></span>
+                        <span class="skeleton-block skeleton-button"></span>
+                    </div>
+                </article>
+            </ng-container>
+            <ng-template #discoverCommunitiesContent>
+                <p class="meta" *ngIf="!loading && !discoverCommunities.length && statusTone !== 'error'">No communities found.</p>
 
-            <article class="community-row" *ngFor="let community of discoverCommunities; trackBy: trackByCommunityId">
-                <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
-                <div>
-                    <strong><a [routerLink]="['/communities', community.slug]">{{ community.name }}</a></strong>
-                    <p class="meta">/{{ community.slug }} · {{ community.memberCount }} members · {{ community.isPrivate ? 'Private' : 'Public' }}</p>
-                    <p class="meta" *ngIf="community.description">{{ community.description }}</p>
-                    <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
-                </div>
-                <div class="actions">
-                    <span class="meta" *ngIf="community.joinedByMe">Joined</span>
-                    <button type="button" (click)="joinCommunityAsync(community)" [disabled]="community.joinedByMe || busyCommunityId === community.id">
-                        {{ busyCommunityId === community.id ? 'Joining…' : (community.joinedByMe ? 'Joined' : 'Join') }}
-                    </button>
-                </div>
-            </article>
+                <article class="community-row" *ngFor="let community of discoverCommunities; trackBy: trackByCommunityId">
+                    <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
+                    <div>
+                        <strong><a [routerLink]="['/c', community.slug]">{{ community.name }}</a></strong>
+                        <p class="meta">/{{ community.slug }} · {{ community.memberCount }} members · {{ community.isPrivate ? 'Private' : 'Public' }}</p>
+                        <p class="meta" *ngIf="community.description">{{ community.description }}</p>
+                        <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
+                    </div>
+                    <div class="actions">
+                        <span class="meta" *ngIf="community.joinedByMe">Joined</span>
+                        <button type="button" (click)="joinCommunityAsync(community)" [disabled]="community.joinedByMe || busyCommunityId === community.id">
+                            {{ busyCommunityId === community.id ? 'Joining…' : (community.joinedByMe ? 'Joined' : (isAuthenticated ? 'Join' : 'Sign in to join')) }}
+                        </button>
+                    </div>
+                </article>
+            </ng-template>
         </section>
     </section>
-
-    <p class="status" [class.is-success]="statusTone === 'success'" *ngIf="status">{{ status }}</p>
 </section>
 
 <div class="compose-modal" *ngIf="createModalOpen" role="dialog" aria-modal="true" aria-label="Create community" (click)="closeCreateModal()">
@@ -85,6 +114,10 @@
         <label>
             Description
             <textarea [(ngModel)]="createDescription" rows="3" placeholder="What is this community about?" maxlength="600"></textarea>
+        </label>
+        <label>
+            Rules
+            <textarea [(ngModel)]="createRulesText" rows="4" placeholder="One rule per line" maxlength="3000"></textarea>
         </label>
         <label>
             Community image

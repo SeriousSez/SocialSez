@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { NgZone } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { StoryDto } from '../../core/api.types';
 import { SocialSezApiService } from '../../core/socialsez-api.service';
@@ -13,7 +14,7 @@ interface SharedContentPart {
 @Component({
     selector: 'app-shared-story-page',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule],
     templateUrl: './shared-story-page.component.html',
     styleUrl: './shared-story-page.component.scss'
 })
@@ -21,11 +22,13 @@ export class SharedStoryPageComponent {
     loading = true;
     notFound = false;
     error = '';
+    copiedLink = false;
     story: StoryDto | null = null;
     hashtagClickCount = 0;
     lastClickedHashtag = '';
+    private copiedLinkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(private readonly route: ActivatedRoute, private readonly api: SocialSezApiService) {
+    constructor(private readonly route: ActivatedRoute, private readonly api: SocialSezApiService, private readonly ngZone: NgZone) {
         this.route.paramMap.subscribe(params => {
             const storyId = (params.get('id') ?? '').trim();
             void this.loadAsync(storyId);
@@ -42,8 +45,21 @@ export class SharedStoryPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/shared/story/${storyId}`;
+        const link = `${window.location.origin}/story/${storyId}`;
         await navigator.clipboard.writeText(link);
+        this.ngZone.run(() => {
+            this.copiedLink = true;
+            if (this.copiedLinkTimeoutId) {
+                clearTimeout(this.copiedLinkTimeoutId);
+            }
+
+            this.copiedLinkTimeoutId = setTimeout(() => {
+                this.ngZone.run(() => {
+                    this.copiedLink = false;
+                    this.copiedLinkTimeoutId = null;
+                });
+            }, 1800);
+        });
     }
 
     contentLines(content: string): SharedContentPart[][] {

@@ -6,6 +6,7 @@ public class CommunityMember
     public Guid ProfileId { get; set; }
     public string Role { get; set; } = "Member";
     public DateTime JoinedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime? MutedUntilUtc { get; set; }
 
     public Community Community { get; set; } = null!;
     public UserProfile Profile { get; set; } = null!;

@@ -1,9 +1,4 @@
 <section class="shared-page">
-    <header class="shared-head">
-        <h2>Shared Post</h2>
-        <a routerLink="/auth" *ngIf="!session.isAuthenticated()">Sign in</a>
-    </header>
-
     <article class="shared-card" *ngIf="loading">
         <p>Loading post...</p>
     </article>
@@ -18,7 +13,7 @@
         <p>{{ error }}</p>
     </article>
 
-    <article class="shared-card" *ngIf="post as item">
+    <article *ngIf="post as item">
         <header class="meta-row">
             <div class="author-meta">
                 <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
@@ -30,7 +25,10 @@
                     <p>{{ item.createdAtUtc | date:'medium' }}</p>
                 </div>
             </div>
-            <button type="button" class="ghost" (click)="copyLinkAsync()">Copy link</button>
+            <button type="button" class="comments-toggle" (click)="copyLinkAsync()" [attr.aria-label]="copiedLink ? 'Post link copied' : 'Copy post link'" [attr.title]="copiedLink ? 'Copied' : 'Copy link'">
+                <i class="fa-duotone" [class.fa-light]="!copiedLink" [class.fa-solid]="copiedLink" [class.fa-link]="!copiedLink" [class.fa-check]="copiedLink" aria-hidden="true"></i>
+                <span class="action-label">{{ copiedLink ? 'Copied' : 'Copy link' }}</span>
+            </button>
         </header>
 
         <p class="content" *ngIf="item.content as content">

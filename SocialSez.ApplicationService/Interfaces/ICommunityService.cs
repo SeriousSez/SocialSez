@@ -12,6 +12,8 @@ public interface ICommunityService
     Task<IReadOnlyCollection<CommunityDto>> DiscoverAsync(Guid? viewerProfileId, string? query = null, int take = 50, CancellationToken cancellationToken = default);
     Task<CommunityDto?> JoinAsync(Guid communityId, Guid profileId, CancellationToken cancellationToken = default);
     Task<bool> LeaveAsync(Guid communityId, Guid profileId, CancellationToken cancellationToken = default);
+    Task<CommunityDto?> UpdateMemberRoleAsync(Guid communityId, Guid actorProfileId, Guid memberProfileId, UpdateCommunityMemberRoleRequest request, CancellationToken cancellationToken = default);
+    Task<CommunityDto?> TimeoutMemberAsync(Guid communityId, Guid actorProfileId, Guid memberProfileId, TimeoutCommunityMemberRequest request, CancellationToken cancellationToken = default);
     Task<CommunityPostDto?> CreatePostAsync(Guid communityId, CreateCommunityPostRequest request, CancellationToken cancellationToken = default);
     Task<CommunityPostDto?> UpdatePostAsync(Guid communityId, Guid postId, UpdateCommunityPostRequest request, CancellationToken cancellationToken = default);
     Task<CommunityPostDto?> AddCommentAsync(Guid communityId, Guid postId, CreateCommunityPostCommentRequest request, CancellationToken cancellationToken = default);

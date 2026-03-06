@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { NgZone } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ReelDto } from '../../core/api.types';
 import { SocialSezApiService } from '../../core/socialsez-api.service';
@@ -13,7 +14,7 @@ interface SharedContentPart {
 @Component({
     selector: 'app-shared-reel-page',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule],
     templateUrl: './shared-reel-page.component.html',
     styleUrl: './shared-reel-page.component.scss'
 })
@@ -21,11 +22,13 @@ export class SharedReelPageComponent {
     loading = true;
     notFound = false;
     error = '';
+    copiedLink = false;
     reel: ReelDto | null = null;
     hashtagClickCount = 0;
     lastClickedHashtag = '';
+    private copiedLinkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(private readonly route: ActivatedRoute, private readonly api: SocialSezApiService) {
+    constructor(private readonly route: ActivatedRoute, private readonly api: SocialSezApiService, private readonly ngZone: NgZone) {
         this.route.paramMap.subscribe(params => {
             const reelId = (params.get('id') ?? '').trim();
             void this.loadAsync(reelId);
@@ -38,8 +41,21 @@ export class SharedReelPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/shared/reel/${reelId}`;
+        const link = `${window.location.origin}/reel/${reelId}`;
         await navigator.clipboard.writeText(link);
+        this.ngZone.run(() => {
+            this.copiedLink = true;
+            if (this.copiedLinkTimeoutId) {
+                clearTimeout(this.copiedLinkTimeoutId);
+            }
+
+            this.copiedLinkTimeoutId = setTimeout(() => {
+                this.ngZone.run(() => {
+                    this.copiedLink = false;
+                    this.copiedLinkTimeoutId = null;
+                });
+            }, 1800);
+        });
     }
 
     contentLines(content: string): SharedContentPart[][] {

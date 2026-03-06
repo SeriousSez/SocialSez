@@ -1688,7 +1688,7 @@ export class ChatPageComponent implements OnDestroy {
     openSharedPost(shared: SharedPostPreview, event: Event): void {
         event.preventDefault();
         event.stopPropagation();
-        void this.router.navigate(['/shared/post', shared.postId]);
+        void this.router.navigate(['/post', shared.postId]);
     }
 
     async openSharedReel(sharedReel: SharedReelPreview, message: ChatMessageDto, event: MouseEvent): Promise<void> {

@@ -3,7 +3,7 @@ import { ChangeDetectorRef, Component, DestroyRef, HostListener, NgZone, inject 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CommunityDto, CommunityPollDto, CommunityPostDto } from '../../core/api.types';
+import { CommunityDto, CommunityMemberDto, CommunityPollDto, CommunityPostDto, CommunityRuleDto, ProfileDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
@@ -17,6 +17,14 @@ interface EditImageEntry {
     isObjectUrl: boolean;
 }
 
+type MemberModerationAction = 'ban' | 'timeout' | 'unban';
+
+interface PendingMemberModerationAction {
+    action: MemberModerationAction;
+    profileId: string;
+    handle: string;
+}
+
 @Component({
     selector: 'app-community-detail-page',
     standalone: true,
@@ -25,6 +33,13 @@ interface EditImageEntry {
     styleUrl: './community-detail-page.component.scss'
 })
 export class CommunityDetailPageComponent {
+    readonly timeoutDurationOptions: Array<{ value: 1 | 7 | 30; label: string }> = [
+        { value: 1, label: '1 day' },
+        { value: 7, label: '7 days' },
+        { value: 30, label: '1 month' }
+    ];
+    selectedTimeoutDurationDays: 1 | 7 | 30 = 7;
+
     community: CommunityDto | null = null;
     posts: CommunityPostDto[] = [];
     postSearchQuery = '';
@@ -34,6 +49,11 @@ export class CommunityDetailPageComponent {
     createPostModalOpen = false;
     editCommunityModalOpen = false;
     editPostModalOpen = false;
+    membersModalOpen = false;
+    membersModalTab: 'members' | 'banned' = 'members';
+    membersSearchQuery = '';
+    bannedProfiles: ProfileDto[] = [];
+    loadingBannedProfiles = false;
     joining = false;
     leaving = false;
     updatingCommunity = false;
@@ -44,6 +64,9 @@ export class CommunityDetailPageComponent {
     votingPollId: string | null = null;
     votingPostId: string | null = null;
     togglingSavePostId: string | null = null;
+    updatingMemberRoleId: string | null = null;
+    pendingMemberModerationAction: PendingMemberModerationAction | null = null;
+    moderatingMemberId: string | null = null;
     copiedPostLinkId: string | null = null;
     copiedCommunityLink = false;
     fullscreenImageUrl: string | null = null;
@@ -64,6 +87,7 @@ export class CommunityDetailPageComponent {
     pollOptions: string[] = ['', ''];
     updateCommunityName = '';
     updateCommunityInformation = '';
+    updateCommunityRulesText = '';
     updateCommunityImageFile: File | null = null;
     updateCommunityImagePreviewUrl: string | null = null;
     editPostTitle = '';
@@ -94,7 +118,7 @@ export class CommunityDetailPageComponent {
         return this.communitySlug ? `socialsez.community.draft.${this.communitySlug}` : null;
     }
 
-    constructor(private readonly session: SessionService, private readonly route: ActivatedRoute, private readonly router: Router) {
+    constructor(public readonly session: SessionService, private readonly route: ActivatedRoute, private readonly router: Router) {
         this.route.paramMap
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(params => {
@@ -104,11 +128,44 @@ export class CommunityDetailPageComponent {
     }
 
     get canPost(): boolean {
-        return !!this.community?.joinedByMe;
+        return !!this.community?.joinedByMe && !this.isTimedOutInCommunity;
+    }
+
+    get isTimedOutInCommunity(): boolean {
+        const mutedUntilUtc = this.currentMember?.mutedUntilUtc;
+        if (!mutedUntilUtc) {
+            return false;
+        }
+
+        const mutedUntilMs = Date.parse(mutedUntilUtc);
+        return Number.isFinite(mutedUntilMs) && mutedUntilMs > Date.now();
+    }
+
+    get timedOutUntilText(): string {
+        const mutedUntilUtc = this.currentMember?.mutedUntilUtc;
+        if (!mutedUntilUtc) {
+            return '';
+        }
+
+        const mutedUntilDate = new Date(mutedUntilUtc);
+        if (Number.isNaN(mutedUntilDate.getTime())) {
+            return '';
+        }
+
+        return mutedUntilDate.toLocaleString();
     }
 
     get canLeave(): boolean {
         return !!this.community?.joinedByMe;
+    }
+
+    private get currentMember(): CommunityMemberDto | null {
+        const currentProfileId = this.session.profile?.id;
+        if (!currentProfileId) {
+            return null;
+        }
+
+        return this.community?.members.find(member => member.profileId.toLowerCase() === currentProfileId.toLowerCase()) ?? null;
     }
 
     get canEditCommunity(): boolean {
@@ -131,10 +188,308 @@ export class CommunityDetailPageComponent {
         return !!currentHandle && !!creatorHandle && creatorHandle === currentHandle;
     }
 
+    get canManageModerators(): boolean {
+        if (!this.community) {
+            return false;
+        }
+
+        const role = (this.community.myRole ?? '').trim().toLowerCase();
+        return role === 'owner' || role === 'admin';
+    }
+
+    get filteredMembers(): CommunityMemberDto[] {
+        const bannedProfileIds = new Set(this.bannedProfiles.map(profile => profile.id));
+        const members = this.community?.members ?? [];
+        const query = this.membersSearchQuery.trim().toLowerCase();
+
+        return members
+            .filter(member => {
+                if (bannedProfileIds.has(member.profileId)) {
+                    return false;
+                }
+
+                if (!query) {
+                    return true;
+                }
+
+                return member.handle.toLowerCase().includes(query)
+                    || member.role.toLowerCase().includes(query);
+            })
+            .slice()
+            .sort((a, b) => {
+                const roleCompare = this.memberRoleSortPriority(a.role) - this.memberRoleSortPriority(b.role);
+                if (roleCompare !== 0) {
+                    return roleCompare;
+                }
+
+                return a.handle.localeCompare(b.handle);
+            });
+    }
+
+    get elevatedMembers(): CommunityMemberDto[] {
+        return this.filteredMembers.filter(member => !this.isRegularMemberRole(member.role));
+    }
+
+    get regularMembers(): CommunityMemberDto[] {
+        return this.filteredMembers.filter(member => this.isRegularMemberRole(member.role));
+    }
+
+    get filteredBannedProfiles(): ProfileDto[] {
+        const query = this.membersSearchQuery.trim().toLowerCase();
+
+        return this.bannedProfiles
+            .filter(profile => {
+                if (!query) {
+                    return true;
+                }
+
+                return profile.handle.toLowerCase().includes(query)
+                    || profile.displayName.toLowerCase().includes(query);
+            })
+            .slice()
+            .sort((a, b) => a.handle.localeCompare(b.handle));
+    }
+
+    canPromoteToModerator(member: { profileId: string; role: string }): boolean {
+        if (!this.canManageModerators || !this.community) {
+            return false;
+        }
+
+        if (member.profileId === this.session.profile?.id) {
+            return false;
+        }
+
+        const role = (member.role ?? '').trim().toLowerCase();
+        return role === 'member';
+    }
+
+    canDemoteModerator(member: { profileId: string; role: string }): boolean {
+        if (!this.canManageModerators || !this.community) {
+            return false;
+        }
+
+        if (member.profileId === this.session.profile?.id) {
+            return false;
+        }
+
+        const role = (member.role ?? '').trim().toLowerCase();
+        return role === 'moderator';
+    }
+
+    canBanMember(member: CommunityMemberDto): boolean {
+        if (!this.canManageModerators || !this.community) {
+            return false;
+        }
+
+        if (member.profileId === this.session.profile?.id) {
+            return false;
+        }
+
+        const role = (member.role ?? '').trim().toLowerCase();
+        return role !== 'owner' && role !== 'admin';
+    }
+
+    canTimeoutMember(member: CommunityMemberDto): boolean {
+        return this.canBanMember(member);
+    }
+
+    async promoteMemberToModeratorAsync(memberProfileId: string): Promise<void> {
+        if (!this.communityId || this.updatingMemberRoleId) {
+            return;
+        }
+
+        this.updatingMemberRoleId = memberProfileId;
+        this.resetStatus();
+
+        try {
+            this.community = await this.session.updateCommunityMemberRoleAsync(this.communityId, memberProfileId, 'Moderator');
+            this.status = 'Member promoted to moderator.';
+            this.statusTone = 'success';
+        } catch (error) {
+            this.status = toUserErrorMessage(error, actionError('promote member'));
+            this.statusTone = 'error';
+        } finally {
+            this.updatingMemberRoleId = null;
+        }
+    }
+
+    async demoteModeratorAsync(memberProfileId: string): Promise<void> {
+        if (!this.communityId || this.updatingMemberRoleId) {
+            return;
+        }
+
+        this.updatingMemberRoleId = memberProfileId;
+        this.resetStatus();
+
+        try {
+            this.community = await this.session.updateCommunityMemberRoleAsync(this.communityId, memberProfileId, 'Member');
+            this.status = 'Moderator role removed.';
+            this.statusTone = 'success';
+        } catch (error) {
+            this.status = toUserErrorMessage(error, actionError('remove moderator'));
+            this.statusTone = 'error';
+        } finally {
+            this.updatingMemberRoleId = null;
+        }
+    }
+
+    requestBanMember(member: CommunityMemberDto): void {
+        if (!this.canBanMember(member) || this.moderatingMemberId) {
+            return;
+        }
+
+        this.pendingMemberModerationAction = {
+            action: 'ban',
+            profileId: member.profileId,
+            handle: member.handle
+        };
+    }
+
+    requestTimeoutMember(member: CommunityMemberDto): void {
+        if (!this.canTimeoutMember(member) || this.moderatingMemberId) {
+            return;
+        }
+
+        this.selectedTimeoutDurationDays = 7;
+
+        this.pendingMemberModerationAction = {
+            action: 'timeout',
+            profileId: member.profileId,
+            handle: member.handle
+        };
+    }
+
+    requestUnbanProfile(profile: ProfileDto): void {
+        if (!this.canManageModerators || this.moderatingMemberId) {
+            return;
+        }
+
+        this.pendingMemberModerationAction = {
+            action: 'unban',
+            profileId: profile.id,
+            handle: profile.handle
+        };
+    }
+
+    cancelMemberModerationAction(): void {
+        if (this.moderatingMemberId) {
+            return;
+        }
+
+        this.pendingMemberModerationAction = null;
+    }
+
+    async confirmMemberModerationActionAsync(): Promise<void> {
+        if (!this.pendingMemberModerationAction || this.moderatingMemberId) {
+            return;
+        }
+
+        const { action, profileId, handle } = this.pendingMemberModerationAction;
+        this.moderatingMemberId = profileId;
+        this.resetStatus();
+
+        try {
+            if (action === 'ban') {
+                await this.session.blockProfileAsync(profileId);
+                this.status = `@${handle} has been banned.`;
+
+                if (!this.bannedProfiles.some(profile => profile.id === profileId)) {
+                    this.bannedProfiles = [
+                        {
+                            id: profileId,
+                            handle,
+                            displayName: handle,
+                            bio: '',
+                            isPrivate: false,
+                            createdAtUtc: new Date(0).toISOString()
+                        },
+                        ...this.bannedProfiles
+                    ];
+                }
+            } else if (action === 'unban') {
+                await this.session.unblockProfileAsync(profileId);
+                this.status = `@${handle} has been unbanned.`;
+                this.bannedProfiles = this.bannedProfiles.filter(profile => profile.id !== profileId);
+            } else {
+                if (!this.communityId) {
+                    throw new Error('Community not loaded.');
+                }
+
+                this.community = await this.session.timeoutCommunityMemberAsync(this.communityId, profileId, this.selectedTimeoutDurationDays);
+                const timeoutLabel = this.selectedTimeoutDurationDays === 30 ? '1 month' : `${this.selectedTimeoutDurationDays} day${this.selectedTimeoutDurationDays === 1 ? '' : 's'}`;
+                this.status = `@${handle} has been timed out for ${timeoutLabel}.`;
+            }
+
+            this.statusTone = 'success';
+            this.pendingMemberModerationAction = null;
+        } catch (error) {
+            const activity = action === 'ban'
+                ? 'ban member'
+                : action === 'unban'
+                    ? 'unban member'
+                    : 'timeout member';
+            this.status = toUserErrorMessage(error, actionError(activity));
+            this.statusTone = 'error';
+        } finally {
+            this.moderatingMemberId = null;
+        }
+    }
+
+    get memberModerationModalTitle(): string {
+        if (!this.pendingMemberModerationAction) {
+            return 'Confirm action';
+        }
+
+        if (this.pendingMemberModerationAction.action === 'ban') {
+            return 'Ban user';
+        }
+
+        if (this.pendingMemberModerationAction.action === 'unban') {
+            return 'Unban user';
+        }
+
+        return 'Timeout user';
+    }
+
+    get memberModerationModalMessage(): string {
+        if (!this.pendingMemberModerationAction) {
+            return '';
+        }
+
+        const handle = this.pendingMemberModerationAction.handle;
+        if (this.pendingMemberModerationAction.action === 'ban') {
+            return `Ban @${handle}? This blocks them from your account.`;
+        }
+
+        if (this.pendingMemberModerationAction.action === 'unban') {
+            return `Unban @${handle}? This removes the block from your account.`;
+        }
+
+        const timeoutLabel = this.selectedTimeoutDurationDays === 30 ? '1 month' : `${this.selectedTimeoutDurationDays} day${this.selectedTimeoutDurationDays === 1 ? '' : 's'}`;
+        return `Timeout @${handle} for ${timeoutLabel}? During timeout they cannot post or comment in this community.`;
+    }
+
+    get memberModerationConfirmText(): string {
+        if (!this.pendingMemberModerationAction) {
+            return 'Confirm';
+        }
+
+        if (this.pendingMemberModerationAction.action === 'ban') {
+            return 'Ban user';
+        }
+
+        if (this.pendingMemberModerationAction.action === 'unban') {
+            return 'Unban user';
+        }
+
+        return 'Timeout user';
+    }
+
     async loadAsync(): Promise<void> {
         if (!this.communitySlug) {
             this.community = null;
             this.posts = [];
+            this.membersModalOpen = false;
             return;
         }
 
@@ -142,12 +497,13 @@ export class CommunityDetailPageComponent {
         this.resetStatus();
 
         try {
-            const community = await this.session.getCommunityBySlugAsync(this.communitySlug);
+            const community = await this.session.getCommunityBySlugAsync(this.communitySlug, 1000);
 
             if (!community) {
                 this.community = null;
                 this.communityId = null;
                 this.posts = [];
+                this.membersModalOpen = false;
                 this.status = 'Community was not found.';
                 this.statusTone = 'neutral';
                 return;
@@ -410,6 +766,12 @@ export class CommunityDetailPageComponent {
     }
 
     async joinCommunityAsync(): Promise<void> {
+        if (!this.session.isAuthenticated()) {
+            this.session.message = 'Please sign in or create an account to join this community.';
+            await this.router.navigate(['/auth']);
+            return;
+        }
+
         if (!this.communityId || this.joining) {
             return;
         }
@@ -456,7 +818,7 @@ export class CommunityDetailPageComponent {
             return;
         }
 
-        const communityUrl = `${window.location.origin}/communities/${encodeURIComponent(slug)}`;
+        const communityUrl = `${window.location.origin}/c/${encodeURIComponent(slug)}`;
 
         try {
             const copied = await this.copyTextToClipboardAsync(communityUrl);
@@ -498,6 +860,9 @@ export class CommunityDetailPageComponent {
 
         this.updateCommunityName = this.community.name;
         this.updateCommunityInformation = this.community.description ?? '';
+        this.updateCommunityRulesText = (this.community.rules ?? [])
+            .map(rule => rule.text)
+            .join('\n');
         this.updateCommunityImageFile = null;
         this.updateCommunityImagePreviewUrl = this.community.imageUrl ?? null;
         this.resetStatus();
@@ -510,6 +875,35 @@ export class CommunityDetailPageComponent {
         }
 
         this.editCommunityModalOpen = false;
+    }
+
+    async openMembersModal(): Promise<void> {
+        if (!this.community) {
+            return;
+        }
+
+        this.membersModalTab = 'members';
+        this.membersSearchQuery = '';
+        this.membersModalOpen = true;
+
+        if (this.canManageModerators) {
+            await this.loadBannedProfilesAsync();
+        }
+    }
+
+    closeMembersModal(): void {
+        this.membersModalTab = 'members';
+        this.membersSearchQuery = '';
+        this.pendingMemberModerationAction = null;
+        this.membersModalOpen = false;
+    }
+
+    setMembersModalTab(tab: 'members' | 'banned'): void {
+        this.membersModalTab = tab;
+        this.membersSearchQuery = '';
+        if (tab === 'banned' && this.canManageModerators && !this.loadingBannedProfiles && this.bannedProfiles.length === 0) {
+            void this.loadBannedProfilesAsync();
+        }
     }
 
     onUpdateCommunityImageSelected(event: Event): void {
@@ -545,6 +939,7 @@ export class CommunityDetailPageComponent {
                 this.communityId,
                 name,
                 this.updateCommunityInformation.trim() || null,
+                this.parseRulesText(this.updateCommunityRulesText),
                 imageUrl,
                 this.community.isPrivate
             );
@@ -558,7 +953,7 @@ export class CommunityDetailPageComponent {
             this.statusTone = 'success';
 
             if (!stringEqualsIgnoreCase(previousSlug, updated.slug)) {
-                await this.router.navigate(['/communities', updated.slug], { replaceUrl: true });
+                await this.router.navigate(['/c', updated.slug], { replaceUrl: true });
             }
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('update community'));
@@ -645,6 +1040,12 @@ export class CommunityDetailPageComponent {
     }
 
     openCreatePostModal(): void {
+        if (!this.session.isAuthenticated()) {
+            this.session.message = 'Please sign in or create an account to create a community post.';
+            void this.router.navigate(['/auth']);
+            return;
+        }
+
         if (!this.canPost) {
             return;
         }
@@ -716,7 +1117,7 @@ export class CommunityDetailPageComponent {
     }
 
     async sharePostAsync(post: CommunityPostDto): Promise<void> {
-        const postUrl = `${window.location.origin}/shared/community-post/${post.id}`;
+        const postUrl = `${window.location.origin}/cp/${post.id}`;
 
         try {
             const copied = await this.copyTextToClipboardAsync(postUrl);
@@ -752,7 +1153,7 @@ export class CommunityDetailPageComponent {
     }
 
     async openPostAsync(postId: string): Promise<void> {
-        await this.router.navigate(['/shared/community-post', postId]);
+        await this.router.navigate(['/cp', postId]);
     }
 
     onPostCardKeydown(event: KeyboardEvent, postId: string): void {
@@ -1019,13 +1420,24 @@ export class CommunityDetailPageComponent {
 
     @HostListener('document:keydown', ['$event'])
     onDocumentKeydown(event: KeyboardEvent): void {
-        if (!this.fullscreenImageUrl) {
+        if (!this.fullscreenImageUrl && !this.membersModalOpen) {
             return;
         }
 
         if (event.key === 'Escape') {
             event.preventDefault();
-            this.closeImageFullscreen();
+            if (this.fullscreenImageUrl) {
+                this.closeImageFullscreen();
+                return;
+            }
+
+            if (this.membersModalOpen) {
+                this.closeMembersModal();
+            }
+            return;
+        }
+
+        if (!this.fullscreenImageUrl) {
             return;
         }
 
@@ -1125,7 +1537,7 @@ export class CommunityDetailPageComponent {
         }
 
         const role = this.community?.myRole;
-        return role === 'Owner' || role === 'Admin';
+        return role === 'Owner' || role === 'Admin' || role === 'Moderator';
     }
 
     canEditPost(post: CommunityPostDto): boolean {
@@ -1309,6 +1721,61 @@ export class CommunityDetailPageComponent {
         return post.id;
     }
 
+    trackByMemberProfileId(_index: number, member: CommunityMemberDto): string {
+        return member.profileId;
+    }
+
+    trackByProfileId(_index: number, profile: ProfileDto): string {
+        return profile.id;
+    }
+
+    memberAvatarText(member: CommunityMemberDto): string {
+        const source = member.handle?.trim();
+        return source ? source[0].toUpperCase() : 'U';
+    }
+
+    profileAvatarText(profile: ProfileDto): string {
+        const source = profile.displayName?.trim() || profile.handle?.trim();
+        return source ? source[0].toUpperCase() : 'U';
+    }
+
+    private memberRoleSortPriority(role: string): number {
+        const normalized = (role ?? '').trim().toLowerCase();
+        if (normalized === 'owner') {
+            return 0;
+        }
+
+        if (normalized === 'moderator') {
+            return 1;
+        }
+
+        if (normalized === 'admin') {
+            return 2;
+        }
+
+        return 3;
+    }
+
+    private isRegularMemberRole(role: string): boolean {
+        return (role ?? '').trim().toLowerCase() === 'member';
+    }
+
+    private async loadBannedProfilesAsync(): Promise<void> {
+        if (this.loadingBannedProfiles || !this.canManageModerators) {
+            return;
+        }
+
+        this.loadingBannedProfiles = true;
+
+        try {
+            this.bannedProfiles = await this.session.loadBlockedProfilesAsync(500);
+        } catch {
+            this.bannedProfiles = [];
+        } finally {
+            this.loadingBannedProfiles = false;
+        }
+    }
+
     private persistDraft(): void {
         const key = this.draftStorageKey;
         if (!key) {
@@ -1481,6 +1948,14 @@ export class CommunityDetailPageComponent {
 
         this.editPostImageEntries = [];
         this.editPostActiveImageIndex = 0;
+    }
+
+    private parseRulesText(rulesText: string): CommunityRuleDto[] {
+        return (rulesText ?? '')
+            .split('\n')
+            .map(rule => rule.trim())
+            .filter(rule => !!rule)
+            .map(rule => ({ text: rule }));
     }
 
     private resetStatus(): void {

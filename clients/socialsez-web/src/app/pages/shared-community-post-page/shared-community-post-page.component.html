@@ -1,6 +1,35 @@
 <section class="shared-page">
-    <article class="shared-card" *ngIf="loading">
-        <p>Loading community post...</p>
+    <article class="shared-card community-post-loading" *ngIf="loading" aria-label="Loading community post">
+        <div class="loading-head">
+            <div class="skeleton-block skeleton-avatar"></div>
+            <div class="loading-head-copy">
+                <div class="skeleton-block skeleton-line skeleton-line-wide"></div>
+                <div class="skeleton-block skeleton-line skeleton-line-mid"></div>
+            </div>
+            <div class="skeleton-block skeleton-pill"></div>
+        </div>
+
+        <div class="skeleton-block skeleton-title"></div>
+        <div class="skeleton-block skeleton-text"></div>
+        <div class="skeleton-block skeleton-text skeleton-text-short"></div>
+        <div class="skeleton-block skeleton-media"></div>
+
+        <div class="loading-actions">
+            <div class="skeleton-block skeleton-chip"></div>
+            <div class="skeleton-block skeleton-chip"></div>
+            <div class="skeleton-block skeleton-chip"></div>
+            <div class="skeleton-block skeleton-chip"></div>
+        </div>
+
+        <div class="loading-comments">
+            <div class="loading-comment" *ngFor="let _ of [1, 2, 3]">
+                <div class="skeleton-block skeleton-avatar comment-avatar"></div>
+                <div class="loading-comment-copy">
+                    <div class="skeleton-block skeleton-line skeleton-line-mid"></div>
+                    <div class="skeleton-block skeleton-line skeleton-line-wide"></div>
+                </div>
+            </div>
+        </div>
     </article>
 
     <article class="shared-card" *ngIf="notFound && !loading">
@@ -13,7 +42,7 @@
         <p>{{ error }}</p>
     </article>
 
-    <section class="shared-layout" *ngIf="post as item">
+    <section class="shared-layout" *ngIf="!loading && post as item">
         <header class="meta-row">
             <div class="author-meta">
                 <img class="author-avatar" *ngIf="community?.imageUrl; else communityInitial" [src]="community?.imageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Community image" />
@@ -22,7 +51,7 @@
                 </ng-template>
                 <div>
                     <p class="post-context">
-                        <a class="community-link" *ngIf="community?.slug as slug" [routerLink]="['/communities', slug]">/{{ slug }}</a>
+                        <a class="community-link" *ngIf="community?.slug as slug" [routerLink]="['/c', slug]">/{{ slug }}</a>
                         <span *ngIf="!community?.slug">/community</span>
                         <span> · {{ item.createdAtUtc | date:'short' }}</span>
                     </p>
@@ -117,8 +146,16 @@
         </footer>
 
         <section class="comments-card">
-            <app-rich-text-editor *ngIf="session.isAuthenticated()" [placeholder]="'Join the conversation'" [submitLabel]="'Comment'" [submittingLabel]="'Posting...'" [submitting]="postingComment" [errorMessage]="commentError" [collapsed]="true" [resetToken]="commentComposerResetToken"
+            <app-rich-text-editor *ngIf="canCommentInCommunity" [placeholder]="'Join the conversation'" [submitLabel]="'Comment'" [submittingLabel]="'Posting...'" [submitting]="postingComment" [errorMessage]="commentError" [collapsed]="true" [resetToken]="commentComposerResetToken"
                 (submitted)="submitCommentContentAsync($event)" (cancelled)="onTopCommentEditorCancelled()"></app-rich-text-editor>
+
+            <p class="meta" *ngIf="session.isAuthenticated() && isTimedOutInCommunity">
+                You are timed out in this community until {{ timedOutUntilText || 'later' }}. Posting and commenting are disabled.
+            </p>
+
+            <p class="meta" *ngIf="session.isAuthenticated() && !isTimedOutInCommunity && !community?.joinedByMe">
+                Join this community to comment.
+            </p>
 
             <p class="meta" *ngIf="!session.isAuthenticated()">
                 <a routerLink="/auth">Sign in</a> to join the conversation.
@@ -166,7 +203,7 @@
                             <button type="button" class="comment-action" [class.active]="isCommentDownvoted(threadItem.comment.id)" (click)="toggleCommentDownvote(threadItem.comment.id)" aria-label="Downvote">
                                 <i class="fa-duotone fa-light fa-arrow-down" aria-hidden="true"></i>
                             </button>
-                            <button type="button" class="comment-action" (click)="openReplyComposer(threadItem.comment.id, threadItem.comment.authorHandle)" aria-label="Reply" title="Reply">
+                            <button type="button" class="comment-action" (click)="openReplyComposer(threadItem.comment.id, threadItem.comment.authorHandle)" [disabled]="!canCommentInCommunity" aria-label="Reply" title="Reply">
                                 <i class="fa-duotone fa-light fa-reply" aria-hidden="true"></i>
                             </button>
                             <button type="button" class="comment-action" (click)="copyCommentLinkAsync(threadItem.comment.id)" [attr.aria-label]="copiedCommentId === threadItem.comment.id ? 'Comment link copied' : 'Share comment'"
@@ -197,7 +234,7 @@
                                 (submitted)="submitEditCommentContentAsync(threadItem.comment.id, $event)" (cancelled)="cancelEditComment()"></app-rich-text-editor>
                         </div>
 
-                        <div class="comment-reply-editor" *ngIf="activeReplyCommentId === threadItem.comment.id">
+                        <div class="comment-reply-editor" *ngIf="activeReplyCommentId === threadItem.comment.id && canCommentInCommunity">
                             <app-rich-text-editor [placeholder]="'Reply to u/' + (activeReplyHandle || threadItem.comment.authorHandle)" [submitLabel]="'Comment'" [submittingLabel]="'Posting...'" [submitting]="postingReply" [errorMessage]="replyError" [collapsed]="false"
                                 [initialContent]="'@' + (activeReplyHandle || threadItem.comment.authorHandle) + ' '" [resetToken]="replyComposerResetToken" (submitted)="submitReplyContentAsync(threadItem.comment.id, $event)" (cancelled)="cancelReplyComposer()"></app-rich-text-editor>
                         </div>

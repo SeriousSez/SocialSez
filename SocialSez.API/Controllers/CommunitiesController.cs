@@ -22,7 +22,7 @@ public class CommunitiesController(ICommunityService communityService, ILogger<C
 
         try
         {
-            var created = await communityService.CreateAsync(profileId, new CreateCommunityRequest(request.Name, request.Description, request.ImageUrl, request.IsPrivate), cancellationToken);
+            var created = await communityService.CreateAsync(profileId, new CreateCommunityRequest(request.Name, request.Description, request.Rules, request.ImageUrl, request.IsPrivate), cancellationToken);
             return Ok(created);
         }
         catch (ArgumentException ex)
@@ -46,7 +46,7 @@ public class CommunitiesController(ICommunityService communityService, ILogger<C
 
         try
         {
-            var updated = await communityService.UpdateAsync(communityId, profileId, new UpdateCommunityRequest(request.Name, request.Description, request.ImageUrl, request.IsPrivate), cancellationToken);
+            var updated = await communityService.UpdateAsync(communityId, profileId, new UpdateCommunityRequest(request.Name, request.Description, request.Rules, request.ImageUrl, request.IsPrivate), cancellationToken);
             return updated is null ? NotFound() : Ok(updated);
         }
         catch (UnauthorizedAccessException)
@@ -109,6 +109,62 @@ public class CommunitiesController(ICommunityService communityService, ILogger<C
         var viewerId = TryGetOptionalProfileId();
         var community = await communityService.GetBySlugAsync(slug, viewerId, members, cancellationToken);
         return community is null ? NotFound() : Ok(community);
+    }
+
+    [Authorize]
+    [HttpPut("{communityId:guid}/members/{memberProfileId:guid}/role")]
+    public async Task<ActionResult<CommunityDto>> UpdateMemberRole(Guid communityId, Guid memberProfileId, [FromBody] UpdateCommunityMemberRoleBody request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await communityService.UpdateMemberRoleAsync(communityId, profileId, memberProfileId, new UpdateCommunityMemberRoleRequest(request.Role), cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("{communityId:guid}/members/{memberProfileId:guid}/timeout")]
+    public async Task<ActionResult<CommunityDto>> TimeoutMember(Guid communityId, Guid memberProfileId, [FromBody] TimeoutCommunityMemberBody request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await communityService.TimeoutMemberAsync(communityId, profileId, memberProfileId, new TimeoutCommunityMemberRequest(request.DurationDays), cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [Authorize]
@@ -421,8 +477,10 @@ public class CommunitiesController(ICommunityService communityService, ILogger<C
         }
     }
 
-    public sealed record CreateCommunityBody(string Name, string? Description, string? ImageUrl, bool IsPrivate);
-    public sealed record UpdateCommunityBody(string Name, string? Description, string? ImageUrl, bool IsPrivate);
+    public sealed record CreateCommunityBody(string Name, string? Description, IReadOnlyCollection<CommunityRuleDto>? Rules, string? ImageUrl, bool IsPrivate);
+    public sealed record UpdateCommunityBody(string Name, string? Description, IReadOnlyCollection<CommunityRuleDto>? Rules, string? ImageUrl, bool IsPrivate);
+    public sealed record UpdateCommunityMemberRoleBody(string Role);
+    public sealed record TimeoutCommunityMemberBody(int DurationDays);
     public sealed record CreateCommunityPostBody(string? Title, string? LinkUrl, string? Content, IReadOnlyCollection<string>? ImageUrls, string? PollQuestion, IReadOnlyCollection<string>? PollOptions);
     public sealed record UpdateCommunityPostBody(string? Title, string? LinkUrl, string? Content, IReadOnlyCollection<string>? ImageUrls, string? PollQuestion, IReadOnlyCollection<string>? PollOptions, bool ClearPoll);
     public sealed record CreateCommunityPostCommentBody(string Content, Guid? ParentCommentId = null);

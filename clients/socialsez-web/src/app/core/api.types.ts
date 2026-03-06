@@ -278,6 +278,12 @@ export interface CommunityMemberDto {
     imageUrl?: string;
     role: string;
     joinedAtUtc: string;
+    mutedUntilUtc?: string;
+}
+
+export interface CommunityRuleDto {
+    text: string;
+    description?: string;
 }
 
 export interface CommunityDto {
@@ -285,6 +291,7 @@ export interface CommunityDto {
     slug: string;
     name: string;
     description?: string;
+    rules: CommunityRuleDto[];
     imageUrl?: string;
     isPrivate: boolean;
     createdByProfileId: string;

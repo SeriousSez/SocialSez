@@ -320,8 +320,17 @@ export class SettingsPageComponent implements OnDestroy {
 
         try {
             const cropped = await this.buildCroppedAvatarFileAsync();
-            this.imageUrl = await this.session.uploadImageAsync(cropped);
-            this.session.message = 'Image uploaded. Save profile to apply it.';
+            const uploadedUrl = await this.session.uploadImageAsync(cropped);
+            this.imageUrl = uploadedUrl;
+
+            await this.session.updateProfileAsync({
+                displayName: this.displayName,
+                handle: this.handle,
+                bio: this.bio,
+                imageUrl: uploadedUrl
+            });
+
+            this.session.message = 'Profile image updated.';
             this.closeAvatarModal(true);
         } catch (error) {
             this.session.message = toUserErrorMessage(error, actionError('upload image'));

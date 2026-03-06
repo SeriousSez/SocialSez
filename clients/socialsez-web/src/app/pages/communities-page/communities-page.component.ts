@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { CommunityDto } from '../../core/api.types';
+import { Router, RouterLink } from '@angular/router';
+import { CommunityDto, CommunityRuleDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
 
@@ -21,18 +21,28 @@ export class CommunitiesPageComponent {
     query = '';
     createName = '';
     createDescription = '';
+    createRulesText = '';
     createIsPrivate = false;
     createImageFile: File | null = null;
     createImagePreviewUrl: string | null = null;
 
     loading = false;
+    readonly skeletonRows = [0, 1, 2, 3];
     creating = false;
     createModalOpen = false;
     busyCommunityId: string | null = null;
     status = '';
     statusTone: 'neutral' | 'success' | 'error' = 'neutral';
 
-    constructor(private readonly session: SessionService) {
+    get isAuthenticated(): boolean {
+        return this.session.isAuthenticated();
+    }
+
+    constructor(public readonly session: SessionService, private readonly router: Router) {
+        if (!this.session.isAuthenticated()) {
+            this.activeTab = 'discover';
+        }
+
         void this.loadAsync();
     }
 
@@ -41,13 +51,13 @@ export class CommunitiesPageComponent {
         this.resetStatus();
 
         try {
-            const [mine, discover] = await Promise.all([
-                this.session.loadMyCommunitiesAsync(),
-                this.session.discoverCommunitiesAsync(this.query)
-            ]);
+            this.discoverCommunities = await this.session.discoverCommunitiesAsync(this.query);
 
-            this.myCommunities = mine;
-            this.discoverCommunities = discover;
+            if (this.session.isAuthenticated()) {
+                this.myCommunities = await this.session.loadMyCommunitiesAsync();
+            } else {
+                this.myCommunities = [];
+            }
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('load communities'));
             this.statusTone = 'error';
@@ -71,6 +81,10 @@ export class CommunitiesPageComponent {
     }
 
     async createCommunityAsync(): Promise<void> {
+        if (this.requireAuthForAction('create a community')) {
+            return;
+        }
+
         const name = this.createName.trim();
         if (!name || this.creating) {
             return;
@@ -88,6 +102,7 @@ export class CommunitiesPageComponent {
             const created = await this.session.createCommunityAsync(
                 name,
                 this.createDescription.trim() || null,
+                this.parseRulesText(this.createRulesText),
                 imageUrl,
                 this.createIsPrivate
             );
@@ -100,6 +115,7 @@ export class CommunitiesPageComponent {
 
             this.createName = '';
             this.createDescription = '';
+            this.createRulesText = '';
             this.createIsPrivate = false;
             this.createImageFile = null;
             this.createImagePreviewUrl = null;
@@ -135,6 +151,10 @@ export class CommunitiesPageComponent {
     }
 
     async joinCommunityAsync(community: CommunityDto): Promise<void> {
+        if (this.requireAuthForAction('join communities')) {
+            return;
+        }
+
         if (this.busyCommunityId) {
             return;
         }
@@ -157,6 +177,10 @@ export class CommunitiesPageComponent {
     }
 
     async leaveCommunityAsync(community: CommunityDto): Promise<void> {
+        if (this.requireAuthForAction('leave communities')) {
+            return;
+        }
+
         if (this.busyCommunityId) {
             return;
         }
@@ -185,5 +209,23 @@ export class CommunitiesPageComponent {
     private resetStatus(): void {
         this.status = '';
         this.statusTone = 'neutral';
+    }
+
+    private parseRulesText(rulesText: string): CommunityRuleDto[] {
+        return (rulesText ?? '')
+            .split('\n')
+            .map(rule => rule.trim())
+            .filter(rule => !!rule)
+            .map(rule => ({ text: rule }));
+    }
+
+    private requireAuthForAction(action: string): boolean {
+        if (this.session.isAuthenticated()) {
+            return false;
+        }
+
+        this.session.message = `Please sign in or create an account to ${action}.`;
+        void this.router.navigate(['/auth']);
+        return true;
     }
 }

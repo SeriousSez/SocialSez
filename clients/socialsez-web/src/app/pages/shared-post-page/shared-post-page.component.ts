@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { NgZone } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { PostDto } from '../../core/api.types';
 import { SocialSezApiService } from '../../core/socialsez-api.service';
@@ -14,7 +15,7 @@ interface SharedContentPart {
 @Component({
     selector: 'app-shared-post-page',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule],
     templateUrl: './shared-post-page.component.html',
     styleUrl: './shared-post-page.component.scss'
 })
@@ -22,11 +23,13 @@ export class SharedPostPageComponent {
     loading = true;
     notFound = false;
     error = '';
+    copiedLink = false;
     post: PostDto | null = null;
     hashtagClickCount = 0;
     lastClickedHashtag = '';
+    private copiedLinkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(private readonly route: ActivatedRoute, private readonly api: SocialSezApiService, public readonly session: SessionService) {
+    constructor(private readonly route: ActivatedRoute, private readonly api: SocialSezApiService, public readonly session: SessionService, private readonly ngZone: NgZone) {
         this.route.paramMap.subscribe(params => {
             const postId = (params.get('id') ?? '').trim();
             void this.loadAsync(postId);
@@ -43,8 +46,21 @@ export class SharedPostPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/shared/post/${postId}`;
+        const link = `${window.location.origin}/post/${postId}`;
         await navigator.clipboard.writeText(link);
+        this.ngZone.run(() => {
+            this.copiedLink = true;
+            if (this.copiedLinkTimeoutId) {
+                clearTimeout(this.copiedLinkTimeoutId);
+            }
+
+            this.copiedLinkTimeoutId = setTimeout(() => {
+                this.ngZone.run(() => {
+                    this.copiedLink = false;
+                    this.copiedLinkTimeoutId = null;
+                });
+            }, 1800);
+        });
     }
 
     contentLines(content: string): SharedContentPart[][] {

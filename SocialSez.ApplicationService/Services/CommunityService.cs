@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.Sqlite;
+using System.Text.Json;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 using SocialSez.Domain.Entities;
@@ -12,6 +13,11 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
     private const int MaxCommunityCommentLength = 500;
     private const string UpvoteType = "Upvote";
     private const string DownvoteType = "Downvote";
+    private const string OwnerRole = "Owner";
+    private const string AdminRole = "Admin";
+    private const string ModeratorRole = "Moderator";
+    private const string MemberRole = "Member";
+    private static readonly int[] AllowedTimeoutDays = [1, 7, 30];
     private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
     private static volatile bool communitySchemaInitialized;
 
@@ -27,6 +33,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
 
         var name = NormalizeName(request.Name);
         var description = NormalizeDescription(request.Description);
+        var rules = NormalizeCommunityRules(request.Rules);
         var imageUrl = NormalizeImageUrl(request.ImageUrl);
         var slug = await BuildUniqueSlugAsync(name, cancellationToken);
 
@@ -37,6 +44,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             Slug = slug,
             Name = name,
             Description = description,
+            RulesJson = SerializeCommunityRules(rules),
             ImageUrl = imageUrl,
             IsPrivate = request.IsPrivate,
             CreatedAtUtc = DateTime.UtcNow,
@@ -47,7 +55,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         {
             CommunityId = community.Id,
             ProfileId = creatorProfileId,
-            Role = "Owner",
+            Role = OwnerRole,
             JoinedAtUtc = DateTime.UtcNow,
             Profile = creator
         };
@@ -76,13 +84,14 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         }
 
         var actorMembership = community.Members.FirstOrDefault(x => x.ProfileId == actorProfileId);
-        if (actorMembership is null || (!string.Equals(actorMembership.Role, "Owner", StringComparison.Ordinal) && !string.Equals(actorMembership.Role, "Admin", StringComparison.Ordinal)))
+        if (actorMembership is null || !CanManageCommunity(actorMembership.Role))
         {
             throw new UnauthorizedAccessException("Only owners or admins can update a community.");
         }
 
         var name = NormalizeName(request.Name);
         var description = NormalizeDescription(request.Description);
+        var rules = NormalizeCommunityRules(request.Rules);
         var imageUrl = NormalizeImageUrl(request.ImageUrl);
 
         if (!string.Equals(community.Name, name, StringComparison.Ordinal))
@@ -92,6 +101,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
 
         community.Name = name;
         community.Description = description;
+        community.RulesJson = SerializeCommunityRules(rules);
         community.ImageUrl = imageUrl;
         community.IsPrivate = request.IsPrivate;
 
@@ -103,7 +113,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
     {
         await EnsureCommunitySchemaAsync(cancellationToken);
 
-        var normalizedMemberTake = Math.Clamp(memberTake, 1, 100);
+        var normalizedMemberTake = Math.Clamp(memberTake, 1, 1000);
 
         var community = await dbContext.Communities
             .Include(x => x.CreatedByProfile)
@@ -135,7 +145,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             return null;
         }
 
-        var normalizedMemberTake = Math.Clamp(memberTake, 1, 100);
+        var normalizedMemberTake = Math.Clamp(memberTake, 1, 1000);
 
         var community = await dbContext.Communities
             .Include(x => x.CreatedByProfile)
@@ -260,7 +270,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             {
                 CommunityId = communityId,
                 ProfileId = profileId,
-                Role = "Member",
+                Role = MemberRole,
                 JoinedAtUtc = DateTime.UtcNow,
                 Profile = profile
             });
@@ -290,8 +300,8 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             return false;
         }
 
-        var isOwner = string.Equals(membership.Role, "Owner", StringComparison.Ordinal);
-        var ownerCount = community.Members.Count(x => string.Equals(x.Role, "Owner", StringComparison.Ordinal));
+        var isOwner = string.Equals(membership.Role, OwnerRole, StringComparison.Ordinal);
+        var ownerCount = community.Members.Count(x => string.Equals(x.Role, OwnerRole, StringComparison.Ordinal));
         if (isOwner && ownerCount <= 1)
         {
             throw new InvalidOperationException("Transfer ownership before leaving this community.");
@@ -300,6 +310,94 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         dbContext.CommunityMembers.Remove(membership);
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    public async Task<CommunityDto?> UpdateMemberRoleAsync(Guid communityId, Guid actorProfileId, Guid memberProfileId, UpdateCommunityMemberRoleRequest request, CancellationToken cancellationToken = default)
+    {
+        await EnsureCommunitySchemaAsync(cancellationToken);
+
+        var community = await dbContext.Communities
+            .Include(x => x.CreatedByProfile)
+            .Include(x => x.Members)
+                .ThenInclude(x => x.Profile)
+            .FirstOrDefaultAsync(x => x.Id == communityId, cancellationToken);
+
+        if (community is null)
+        {
+            return null;
+        }
+
+        var actorMembership = community.Members.FirstOrDefault(x => x.ProfileId == actorProfileId);
+        if (actorMembership is null || !CanManageCommunity(actorMembership.Role))
+        {
+            throw new UnauthorizedAccessException("Only owners or admins can manage moderators.");
+        }
+
+        var member = community.Members.FirstOrDefault(x => x.ProfileId == memberProfileId);
+        if (member is null)
+        {
+            throw new InvalidOperationException("User is not a member of this community.");
+        }
+
+        if (member.ProfileId == actorProfileId)
+        {
+            throw new InvalidOperationException("You cannot change your own role.");
+        }
+
+        if (string.Equals(member.Role, OwnerRole, StringComparison.Ordinal) || string.Equals(member.Role, AdminRole, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Owner/Admin roles cannot be changed with this action.");
+        }
+
+        var normalizedRole = NormalizeManageableMemberRole(request.Role);
+        member.Role = normalizedRole;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return MapCommunity(community, actorProfileId, includeMembers: true, memberTake: 20);
+    }
+
+    public async Task<CommunityDto?> TimeoutMemberAsync(Guid communityId, Guid actorProfileId, Guid memberProfileId, TimeoutCommunityMemberRequest request, CancellationToken cancellationToken = default)
+    {
+        await EnsureCommunitySchemaAsync(cancellationToken);
+
+        var community = await dbContext.Communities
+            .Include(x => x.CreatedByProfile)
+            .Include(x => x.Members)
+                .ThenInclude(x => x.Profile)
+            .FirstOrDefaultAsync(x => x.Id == communityId, cancellationToken);
+
+        if (community is null)
+        {
+            return null;
+        }
+
+        var actorMembership = community.Members.FirstOrDefault(x => x.ProfileId == actorProfileId);
+        if (actorMembership is null || !CanManageCommunity(actorMembership.Role))
+        {
+            throw new UnauthorizedAccessException("Only owners or admins can timeout members.");
+        }
+
+        var member = community.Members.FirstOrDefault(x => x.ProfileId == memberProfileId);
+        if (member is null)
+        {
+            throw new InvalidOperationException("User is not a member of this community.");
+        }
+
+        if (member.ProfileId == actorProfileId)
+        {
+            throw new InvalidOperationException("You cannot timeout yourself.");
+        }
+
+        if (string.Equals(member.Role, OwnerRole, StringComparison.Ordinal) || string.Equals(member.Role, AdminRole, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Owner/Admin accounts cannot be timed out with this action.");
+        }
+
+        var durationDays = NormalizeTimeoutDurationDays(request.DurationDays);
+        member.MutedUntilUtc = DateTime.UtcNow.AddDays(durationDays);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return MapCommunity(community, actorProfileId, includeMembers: true, memberTake: 20);
     }
 
     public async Task<CommunityPostDto?> CreatePostAsync(Guid communityId, CreateCommunityPostRequest request, CancellationToken cancellationToken = default)
@@ -315,10 +413,15 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             return null;
         }
 
-        var isMember = community.Members.Any(x => x.ProfileId == request.AuthorId);
-        if (!isMember)
+        var membership = community.Members.FirstOrDefault(x => x.ProfileId == request.AuthorId);
+        if (membership is null)
         {
             throw new UnauthorizedAccessException("Join the community before posting.");
+        }
+
+        if (IsMemberTimedOut(membership))
+        {
+            throw new UnauthorizedAccessException("You are currently timed out in this community and cannot create posts.");
         }
 
         var author = await dbContext.UserProfiles.FirstOrDefaultAsync(x => x.Id == request.AuthorId, cancellationToken);
@@ -421,10 +524,15 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             return null;
         }
 
-        var isMember = post.Community.Members.Any(x => x.ProfileId == request.AuthorId);
-        if (!isMember)
+        var membership = post.Community.Members.FirstOrDefault(x => x.ProfileId == request.AuthorId);
+        if (membership is null)
         {
             throw new UnauthorizedAccessException("Join the community before commenting.");
+        }
+
+        if (IsMemberTimedOut(membership))
+        {
+            throw new UnauthorizedAccessException("You are currently timed out in this community and cannot comment.");
         }
 
         var author = await dbContext.UserProfiles.FirstOrDefaultAsync(x => x.Id == request.AuthorId, cancellationToken);
@@ -792,8 +900,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         var isPostOwner = post.AuthorId == profileId;
         var membership = post.Community.Members.FirstOrDefault(x => x.ProfileId == profileId);
         var isCommunityManager = membership is not null
-            && (string.Equals(membership.Role, "Owner", StringComparison.Ordinal)
-                || string.Equals(membership.Role, "Admin", StringComparison.Ordinal));
+            && CanModerateCommunityContent(membership.Role);
 
         if (!isPostOwner && !isCommunityManager)
         {
@@ -1173,6 +1280,40 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         throw new ArgumentException("Vote type must be 'Upvote' or 'Downvote'.", nameof(voteType));
     }
 
+    private static string NormalizeManageableMemberRole(string? role)
+    {
+        var normalized = role?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            throw new ArgumentException("Role is required.", nameof(role));
+        }
+
+        if (string.Equals(normalized, MemberRole, StringComparison.OrdinalIgnoreCase))
+        {
+            return MemberRole;
+        }
+
+        if (string.Equals(normalized, ModeratorRole, StringComparison.OrdinalIgnoreCase))
+        {
+            return ModeratorRole;
+        }
+
+        throw new ArgumentException("Role must be 'Member' or 'Moderator'.", nameof(role));
+    }
+
+    private static bool CanManageCommunity(string? role)
+    {
+        return string.Equals(role, OwnerRole, StringComparison.Ordinal)
+            || string.Equals(role, AdminRole, StringComparison.Ordinal);
+    }
+
+    private static bool CanModerateCommunityContent(string? role)
+    {
+        return string.Equals(role, OwnerRole, StringComparison.Ordinal)
+            || string.Equals(role, AdminRole, StringComparison.Ordinal)
+            || string.Equals(role, ModeratorRole, StringComparison.Ordinal);
+    }
+
     private static string? NormalizePollQuestion(string? question)
     {
         if (string.IsNullOrWhiteSpace(question))
@@ -1270,7 +1411,8 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
                     member.Profile.Handle,
                     member.Profile.ImageUrl,
                     member.Role,
-                    member.JoinedAtUtc))
+                    member.JoinedAtUtc,
+                    member.MutedUntilUtc))
                 .ToArray();
         }
 
@@ -1279,6 +1421,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             community.Slug,
             community.Name,
             community.Description,
+            ParseCommunityRules(community.RulesJson),
             community.ImageUrl,
             community.IsPrivate,
             community.CreatedByProfileId,
@@ -1383,12 +1526,21 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
                     Slug TEXT NOT NULL,
                     Name TEXT NOT NULL,
                     Description TEXT NULL,
+                    RulesJson TEXT NULL,
                     ImageUrl TEXT NULL,
                     IsPrivate INTEGER NOT NULL,
                     CreatedAtUtc TEXT NOT NULL,
                     FOREIGN KEY (CreatedByProfileId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
                 );
                 """, cancellationToken);
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Communities ADD COLUMN RulesJson TEXT NULL;", cancellationToken);
+                }
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                {
+                }
 
                 try
                 {
@@ -1407,11 +1559,20 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
                     ProfileId TEXT NOT NULL,
                     Role TEXT NOT NULL,
                     JoinedAtUtc TEXT NOT NULL,
+                    MutedUntilUtc TEXT NULL,
                     PRIMARY KEY (CommunityId, ProfileId),
                     FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
                     FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
                 );
                 """, cancellationToken);
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE CommunityMembers ADD COLUMN MutedUntilUtc TEXT NULL;", cancellationToken);
+                }
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                {
+                }
 
                 await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityMembers_ProfileId ON CommunityMembers (ProfileId);", cancellationToken);
                 await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityMembers_CommunityId_Role ON CommunityMembers (CommunityId, Role);", cancellationToken);
@@ -1562,6 +1723,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
                     `Slug` varchar(60) NOT NULL,
                     `Name` varchar(120) NOT NULL,
                     `Description` varchar(600) NULL,
+                    `RulesJson` longtext NULL,
                     `ImageUrl` varchar(1024) NULL,
                     `IsPrivate` tinyint(1) NOT NULL,
                     `CreatedAtUtc` datetime(6) NOT NULL,
@@ -1580,17 +1742,36 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
                     await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Communities` ADD COLUMN `ImageUrl` varchar(1024) NULL;", cancellationToken);
                 }
 
+                var communityRulesColumnExists = await dbContext.Database
+                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Communities' AND COLUMN_NAME = 'RulesJson' LIMIT 1")
+                    .AnyAsync(cancellationToken);
+
+                if (!communityRulesColumnExists)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Communities` ADD COLUMN `RulesJson` longtext NULL;", cancellationToken);
+                }
+
                 await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `CommunityMembers` (
                     `CommunityId` char(36) NOT NULL,
                     `ProfileId` char(36) NOT NULL,
                     `Role` varchar(24) NOT NULL,
                     `JoinedAtUtc` datetime(6) NOT NULL,
+                    `MutedUntilUtc` datetime(6) NULL,
                     PRIMARY KEY (`CommunityId`, `ProfileId`),
                     KEY `IX_CommunityMembers_ProfileId` (`ProfileId`),
                     KEY `IX_CommunityMembers_CommunityId_Role` (`CommunityId`, `Role`)
                 );
                 """, cancellationToken);
+
+                var memberMutedUntilColumnExists = await dbContext.Database
+                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityMembers' AND COLUMN_NAME = 'MutedUntilUtc' LIMIT 1")
+                    .AnyAsync(cancellationToken);
+
+                if (!memberMutedUntilColumnExists)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityMembers` ADD COLUMN `MutedUntilUtc` datetime(6) NULL;", cancellationToken);
+                }
 
                 await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `CommunityPosts` (
@@ -1723,5 +1904,122 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         {
             SchemaInitLock.Release();
         }
+    }
+
+    private static IReadOnlyCollection<CommunityRuleDto> NormalizeCommunityRules(IReadOnlyCollection<CommunityRuleDto>? rules)
+    {
+        if (rules is null || rules.Count == 0)
+        {
+            return Array.Empty<CommunityRuleDto>();
+        }
+
+        var normalizedRules = new List<CommunityRuleDto>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var rule in rules)
+        {
+            var text = rule.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                continue;
+            }
+
+            if (text.Length > 220)
+            {
+                text = text[..220].Trim();
+            }
+
+            var description = string.IsNullOrWhiteSpace(rule.Description)
+                ? null
+                : rule.Description.Trim();
+
+            if (!string.IsNullOrEmpty(description) && description.Length > 1200)
+            {
+                description = description[..1200].Trim();
+            }
+
+            var key = $"{text}|{description}";
+            if (!seen.Add(key))
+            {
+                continue;
+            }
+
+            normalizedRules.Add(new CommunityRuleDto(text, description));
+            if (normalizedRules.Count >= 20)
+            {
+                break;
+            }
+        }
+
+        return normalizedRules;
+    }
+
+    private static IReadOnlyCollection<CommunityRuleDto> NormalizeLegacyCommunityRules(IReadOnlyCollection<string>? rules)
+    {
+        if (rules is null || rules.Count == 0)
+        {
+            return Array.Empty<CommunityRuleDto>();
+        }
+
+        return rules
+            .Select(rule => rule?.Trim() ?? string.Empty)
+            .Where(rule => !string.IsNullOrWhiteSpace(rule))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(20)
+            .Select(rule => rule.Length > 220 ? rule[..220].Trim() : rule)
+            .Where(rule => !string.IsNullOrWhiteSpace(rule))
+            .Select(rule => new CommunityRuleDto(rule, null))
+            .ToArray();
+    }
+
+    private static string? SerializeCommunityRules(IReadOnlyCollection<CommunityRuleDto> rules)
+    {
+        if (rules.Count == 0)
+        {
+            return null;
+        }
+
+        return JsonSerializer.Serialize(rules);
+    }
+
+    private static IReadOnlyCollection<CommunityRuleDto> ParseCommunityRules(string? rulesJson)
+    {
+        if (string.IsNullOrWhiteSpace(rulesJson))
+        {
+            return Array.Empty<CommunityRuleDto>();
+        }
+
+        try
+        {
+            var parsed = JsonSerializer.Deserialize<List<CommunityRuleDto>>(rulesJson);
+            return NormalizeCommunityRules(parsed);
+        }
+        catch
+        {
+            try
+            {
+                var legacyParsed = JsonSerializer.Deserialize<List<string>>(rulesJson);
+                return NormalizeLegacyCommunityRules(legacyParsed);
+            }
+            catch
+            {
+                return Array.Empty<CommunityRuleDto>();
+            }
+        }
+    }
+
+    private static bool IsMemberTimedOut(CommunityMember member)
+    {
+        return member.MutedUntilUtc.HasValue && member.MutedUntilUtc.Value > DateTime.UtcNow;
+    }
+
+    private static int NormalizeTimeoutDurationDays(int durationDays)
+    {
+        if (AllowedTimeoutDays.Contains(durationDays))
+        {
+            return durationDays;
+        }
+
+        throw new ArgumentException("Timeout duration must be one of: 1, 7, or 30 days.", nameof(durationDays));
     }
 }

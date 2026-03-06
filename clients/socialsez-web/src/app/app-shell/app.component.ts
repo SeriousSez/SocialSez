@@ -4,12 +4,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, firstValueFrom } from 'rxjs';
-import { CommunityDto, HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
+import { CommunityDto, CommunityRuleDto, HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
 import { SharedReelCommentPreview } from '../core/shared-reel.utils';
 import { SessionNoticeEntry, SessionService } from '../core/session.service';
 import { SocialSezApiService } from '../core/socialsez-api.service';
 import { MessagesDockComponent } from './messages-dock.component';
 import { FeedStoryViewerComponent } from '../pages/feed-page/feed-story-viewer.component';
+import { CommunityInfoRailComponent } from './community-info-rail.component';
 
 interface DockReelModalState {
     reelId?: string;
@@ -27,7 +28,7 @@ interface DockReelModalState {
 
 @Component({
     selector: 'app-root',
-    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, MessagesDockComponent, FeedStoryViewerComponent],
+    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, MessagesDockComponent, FeedStoryViewerComponent, CommunityInfoRailComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
@@ -38,6 +39,7 @@ export class AppComponent implements OnInit, OnDestroy {
     trendingHashtags: HashtagSearchResultDto[] = [];
     loadingTrending = false;
     loadingRightRailCommunity = false;
+    savingRightRailRules = false;
     unreadNotificationsCount = 0;
     rightRailCommunity: CommunityDto | null = null;
     profileChipHasStory = false;
@@ -119,6 +121,26 @@ export class AppComponent implements OnInit, OnDestroy {
         return !!conversation?.trim();
     }
 
+    get isCommunityPageRoute(): boolean {
+        return /^\/communities(\/|$)/i.test(this.router.url)
+            || /^\/c\//i.test(this.router.url)
+            || /^\/cp\//i.test(this.router.url);
+    }
+
+    get canEditRightRailCommunityRules(): boolean {
+        if (!this.rightRailCommunity || !this.session.isAuthenticated()) {
+            return false;
+        }
+
+        const role = (this.rightRailCommunity.myRole ?? '').trim().toLowerCase();
+        if (role === 'owner' || role === 'admin') {
+            return true;
+        }
+
+        const currentProfileId = this.session.profile?.id;
+        return !!currentProfileId && currentProfileId === this.rightRailCommunity.createdByProfileId;
+    }
+
     ngOnInit(): void {
         this.applyThemePreference();
 
@@ -190,10 +212,14 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     private async loadRightRailCommunityAsync(): Promise<void> {
-        const sharedCommunityPostMatch = this.router.url.match(/^\/shared\/community-post\/([^?#/]+)/i);
+        const communityRouteMatch = this.router.url.match(/^\/c\/([^?#/]+)/i)
+            ?? this.router.url.match(/^\/communities\/([^?#/]+)/i);
+        const communitySlug = communityRouteMatch?.[1]?.trim();
+        const sharedCommunityPostMatch = this.router.url.match(/^\/cp\/([^?#/]+)/i)
+            ?? this.router.url.match(/^\/shared\/community-post\/([^?#/]+)/i);
         const postId = sharedCommunityPostMatch?.[1]?.trim();
 
-        if (!postId) {
+        if (!communitySlug && !postId) {
             this.rightRailCommunity = null;
             this.loadingRightRailCommunity = false;
             return;
@@ -203,12 +229,69 @@ export class AppComponent implements OnInit, OnDestroy {
         this.rightRailCommunity = null;
 
         try {
+            if (communitySlug) {
+                this.rightRailCommunity = await this.session.getCommunityBySlugAsync(communitySlug);
+                return;
+            }
+
+            if (!postId) {
+                this.rightRailCommunity = null;
+                return;
+            }
+
             const post = await firstValueFrom(this.api.getSharedCommunityPost(postId));
-            this.rightRailCommunity = await firstValueFrom(this.api.getCommunityById(post.communityId));
+            this.rightRailCommunity = await this.session.getCommunityByIdAsync(post.communityId);
         } catch {
             this.rightRailCommunity = null;
         } finally {
             this.loadingRightRailCommunity = false;
+        }
+    }
+
+    async saveRightRailRulesAsync(rules: CommunityRuleDto[]): Promise<void> {
+        const community = this.rightRailCommunity;
+        if (!community || !this.canEditRightRailCommunityRules || this.savingRightRailRules) {
+            return;
+        }
+
+        const normalizedRules = rules
+            .map(rule => ({
+                text: (rule.text ?? '').trim(),
+                description: rule.description?.trim() || undefined
+            }))
+            .filter(rule => !!rule.text);
+
+        this.savingRightRailRules = true;
+        try {
+            const updated = await this.session.updateCommunityAsync(
+                community.id,
+                community.name,
+                community.description ?? null,
+                normalizedRules,
+                community.imageUrl ?? null,
+                community.isPrivate
+            );
+
+            const updatedRules = (updated.rules ?? [])
+                .map(rule => ({
+                    text: (rule.text ?? '').trim(),
+                    description: rule.description?.trim() || undefined
+                }))
+                .filter(rule => !!rule.text);
+            const requestedKey = normalizedRules.map(rule => `${rule.text}|${rule.description ?? ''}`).join('\n').toLowerCase();
+            const updatedKey = updatedRules.map(rule => `${rule.text}|${rule.description ?? ''}`).join('\n').toLowerCase();
+
+            if (requestedKey !== updatedKey) {
+                this.session.message = 'Rules were not saved by the server. Please refresh API and try again.';
+                return;
+            }
+
+            this.rightRailCommunity = updated;
+            this.session.message = 'Community rules updated.';
+        } catch {
+            this.session.message = 'Unable to save community rules right now.';
+        } finally {
+            this.savingRightRailRules = false;
         }
     }
 

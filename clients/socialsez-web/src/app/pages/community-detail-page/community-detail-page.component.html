@@ -3,7 +3,7 @@
         <img class="community-cover" *ngIf="activeCommunity.imageUrl" [src]="activeCommunity.imageUrl" alt="Community image" />
         <div>
             <h2>{{ activeCommunity.name }}</h2>
-            <p class="meta">/{{ activeCommunity.slug }} · {{ activeCommunity.memberCount }} members · {{ activeCommunity.isPrivate ? 'Private' : 'Public' }}</p>
+            <p class="meta">/{{ activeCommunity.slug }} · <button type="button" class="community-members-trigger" (click)="openMembersModal()">{{ activeCommunity.memberCount }} members</button> · {{ activeCommunity.isPrivate ? 'Private' : 'Public' }}</p>
             <p class="meta community-description" *ngIf="activeCommunity.description" [innerHTML]="activeCommunity.description"></p>
             <a class="meta" [routerLink]="['/users', activeCommunity.createdByHandle]">Created by @{{ activeCommunity.createdByHandle }}</a>
         </div>
@@ -23,11 +23,11 @@
         </div>
     </header>
 
-    <ng-template #joinPrompt>
-        <section class="card" *ngIf="!canPost">
-            <p class="meta">Join this community to create posts.</p>
-        </section>
-    </ng-template>
+    <section class="card" *ngIf="!canPost">
+        <p class="meta" *ngIf="!session.isAuthenticated()">Sign in or create an account to create posts and comment in this community.</p>
+        <p class="meta" *ngIf="session.isAuthenticated() && !isTimedOutInCommunity">Join this community to create posts.</p>
+        <p class="meta" *ngIf="isTimedOutInCommunity">You are timed out in this community until {{ timedOutUntilText || 'later' }}. Posting and commenting are disabled.</p>
+    </section>
 
     <section class="card feed-head">
         <h3>Community Feed</h3>
@@ -170,6 +170,143 @@
     </button>
 </div>
 
+<div class="compose-modal" *ngIf="membersModalOpen && community as activeCommunity" role="dialog" aria-modal="true" aria-label="Community members" (click)="closeMembersModal()">
+    <section class="compose-modal-card members-modal-card" (click)="$event.stopPropagation()">
+        <header class="compose-modal-head">
+            <h3>Members</h3>
+            <button type="button" class="close" (click)="closeMembersModal()" aria-label="Close members modal">✕</button>
+        </header>
+
+        <div class="members-modal-tabs" role="tablist" aria-label="Community moderation views" *ngIf="canManageModerators">
+            <button type="button" class="members-modal-tab" role="tab" [attr.aria-selected]="membersModalTab === 'members'" [class.active]="membersModalTab === 'members'" (click)="setMembersModalTab('members')">
+                Members
+            </button>
+            <button type="button" class="members-modal-tab" role="tab" [attr.aria-selected]="membersModalTab === 'banned'" [class.active]="membersModalTab === 'banned'" (click)="setMembersModalTab('banned')">
+                Banned users
+            </button>
+        </div>
+
+        <div class="members-modal-body">
+            <div class="members-search-row">
+                <input [(ngModel)]="membersSearchQuery" [placeholder]="membersModalTab === 'banned' ? 'Search banned users by name or @handle' : 'Search members by @handle or role'" [attr.aria-label]="membersModalTab === 'banned' ? 'Search banned users' : 'Search members'" />
+            </div>
+
+            <p class="members-modal-hint" *ngIf="membersModalTab === 'members'">{{ activeCommunity.memberCount }} members in /{{ activeCommunity.slug }}</p>
+            <p class="members-modal-hint" *ngIf="membersModalTab === 'banned'">Manage users banned from your account while moderating /{{ activeCommunity.slug }}</p>
+
+            <div class="community-members-groups" *ngIf="membersModalTab === 'members' && filteredMembers.length; else noMembersState">
+                <div class="community-members-group community-members-group-elevated" *ngIf="elevatedMembers.length">
+                    <article class="community-member-row" *ngFor="let member of elevatedMembers; trackBy: trackByMemberProfileId">
+                        <a class="community-member-link" [routerLink]="['/users', member.handle]" (click)="closeMembersModal()">
+                            <span class="community-member-avatar" *ngIf="!member.imageUrl">{{ memberAvatarText(member) }}</span>
+                            <img class="community-member-avatar" *ngIf="member.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Member avatar" />
+                            <span class="community-member-meta">
+                                <strong>{{ member.handle }}</strong>
+                                <small>@{{ member.handle }}</small>
+                            </span>
+                        </a>
+
+                        <div class="community-member-controls">
+                            <span class="community-member-role" [class.role-moderator]="member.role === 'Moderator'">{{ member.role }}</span>
+                            <div class="community-member-actions" *ngIf="canManageModerators">
+                                <button type="button" class="icon-button" *ngIf="canPromoteToModerator(member)" (click)="promoteMemberToModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Make moderator"
+                                    title="Make moderator">
+                                    <i class="fa-duotone fa-light fa-user-shield" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="icon-button" *ngIf="canDemoteModerator(member)" (click)="demoteModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Remove moderator"
+                                    title="Remove moderator">
+                                    <i class="fa-duotone fa-light fa-user-minus" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="icon-button" *ngIf="canTimeoutMember(member)" (click)="requestTimeoutMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Timeout user" title="Timeout user">
+                                    <i class="fa-duotone fa-light fa-clock" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="icon-button danger" *ngIf="canBanMember(member)" (click)="requestBanMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Ban user" title="Ban user">
+                                    <i class="fa-duotone fa-light fa-ban" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="community-members-group" *ngIf="regularMembers.length">
+                    <article class="community-member-row" *ngFor="let member of regularMembers; trackBy: trackByMemberProfileId">
+                        <a class="community-member-link" [routerLink]="['/users', member.handle]" (click)="closeMembersModal()">
+                            <span class="community-member-avatar" *ngIf="!member.imageUrl">{{ memberAvatarText(member) }}</span>
+                            <img class="community-member-avatar" *ngIf="member.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Member avatar" />
+                            <span class="community-member-meta">
+                                <strong>{{ member.handle }}</strong>
+                                <small>@{{ member.handle }}</small>
+                            </span>
+                        </a>
+
+                        <div class="community-member-controls">
+                            <span class="community-member-role" [class.role-moderator]="member.role === 'Moderator'">{{ member.role }}</span>
+                            <div class="community-member-actions" *ngIf="canManageModerators">
+                                <button type="button" class="icon-button" *ngIf="canPromoteToModerator(member)" (click)="promoteMemberToModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Make moderator"
+                                    title="Make moderator">
+                                    <i class="fa-duotone fa-light fa-user-shield" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="icon-button" *ngIf="canDemoteModerator(member)" (click)="demoteModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Remove moderator"
+                                    title="Remove moderator">
+                                    <i class="fa-duotone fa-light fa-user-minus" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="icon-button" *ngIf="canTimeoutMember(member)" (click)="requestTimeoutMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Timeout user" title="Timeout user">
+                                    <i class="fa-duotone fa-light fa-clock" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="icon-button danger" *ngIf="canBanMember(member)" (click)="requestBanMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Ban user" title="Ban user">
+                                    <i class="fa-duotone fa-light fa-ban" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
+            <div class="community-members-list" *ngIf="membersModalTab === 'banned' && filteredBannedProfiles.length">
+                <article class="community-member-row" *ngFor="let profile of filteredBannedProfiles; trackBy: trackByProfileId">
+                    <a class="community-member-link" [routerLink]="['/users', profile.handle]" (click)="closeMembersModal()">
+                        <span class="community-member-avatar" *ngIf="!profile.imageUrl">{{ profileAvatarText(profile) }}</span>
+                        <img class="community-member-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Banned user avatar" />
+                        <span class="community-member-meta">
+                            <strong>{{ profile.displayName }}</strong>
+                            <small>@{{ profile.handle }}</small>
+                        </span>
+                    </a>
+
+                    <div class="community-member-controls">
+                        <span class="community-member-role role-banned">Banned</span>
+                        <div class="community-member-actions" *ngIf="canManageModerators">
+                            <button type="button" class="icon-button" (click)="requestUnbanProfile(profile)" [disabled]="moderatingMemberId === profile.id" aria-label="Unban user" title="Unban user">
+                                <i class="fa-duotone fa-light fa-user-check" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <ng-template #noMembersState>
+                <p class="members-modal-hint" *ngIf="membersModalTab === 'members' && activeCommunity.members.length && membersSearchQuery.trim()">No members matched your search.</p>
+                <p class="members-modal-hint" *ngIf="membersModalTab === 'members' && !activeCommunity.members.length">No members to show yet.</p>
+                <p class="members-modal-hint" *ngIf="membersModalTab === 'banned' && loadingBannedProfiles">Loading banned users...</p>
+                <p class="members-modal-hint" *ngIf="membersModalTab === 'banned' && !loadingBannedProfiles && filteredBannedProfiles.length === 0 && membersSearchQuery.trim()">No banned users matched your search.</p>
+                <p class="members-modal-hint" *ngIf="membersModalTab === 'banned' && !loadingBannedProfiles && bannedProfiles.length === 0 && !membersSearchQuery.trim()">No banned users.</p>
+            </ng-template>
+        </div>
+    </section>
+</div>
+
+<app-confirm-modal [open]="!!pendingMemberModerationAction" [title]="memberModerationModalTitle" [message]="memberModerationModalMessage" [confirmText]="memberModerationConfirmText" cancelText="Cancel" [confirmClass]="pendingMemberModerationAction?.action === 'ban' ? 'danger' : ''"
+    [busy]="!!moderatingMemberId" [busyText]="'Working…'" (cancel)="cancelMemberModerationAction()" (confirm)="confirmMemberModerationActionAsync()">
+    <div class="member-timeout-options" *ngIf="pendingMemberModerationAction?.action === 'timeout'">
+        <p class="member-timeout-options-label">Timeout length</p>
+        <div class="member-timeout-options-row">
+            <button type="button" class="ghost member-timeout-option" *ngFor="let option of timeoutDurationOptions" [class.active]="selectedTimeoutDurationDays === option.value" [disabled]="!!moderatingMemberId" (click)="selectedTimeoutDurationDays = option.value">
+                {{ option.label }}
+            </button>
+        </div>
+    </div>
+</app-confirm-modal>
+
 <div class="compose-modal" *ngIf="editPostModalOpen" role="dialog" aria-modal="true" aria-label="Edit community post" (click)="closeEditPostModal()">
     <section class="compose-modal-card" (click)="$event.stopPropagation()">
         <header class="compose-modal-head">
@@ -255,6 +392,11 @@
         <label>
             Information
             <textarea class="edit-community-information" [(ngModel)]="updateCommunityInformation" rows="3" maxlength="400" placeholder="Describe this community" [disabled]="updatingCommunity"></textarea>
+        </label>
+
+        <label>
+            Rules
+            <textarea class="edit-community-rules" [(ngModel)]="updateCommunityRulesText" rows="5" maxlength="3000" placeholder="One rule per line" [disabled]="updatingCommunity"></textarea>
         </label>
 
         <label>

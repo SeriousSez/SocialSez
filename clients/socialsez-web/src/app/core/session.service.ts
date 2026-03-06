@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import {
     AuthResponse,
     ChatConversationDto,
+    CommunityRuleDto,
     ChatMessageDto,
     CommunityDto,
     CommunityPollDto,
@@ -494,16 +495,16 @@ export class SessionService {
         this.emitAppChange('notifications');
     }
 
-    async createCommunityAsync(name: string, description: string | null, imageUrl: string | null, isPrivate: boolean): Promise<CommunityDto> {
-        const created = await firstValueFrom(this.api.createCommunity(name, description, imageUrl, isPrivate));
+    async createCommunityAsync(name: string, description: string | null, rules: CommunityRuleDto[] | null, imageUrl: string | null, isPrivate: boolean): Promise<CommunityDto> {
+        const created = await firstValueFrom(this.api.createCommunity(name, description, rules, imageUrl, isPrivate));
         const normalized = this.normalizeCommunity(created);
         this.message = 'Community created.';
         this.emitAppChange('profile');
         return normalized;
     }
 
-    async updateCommunityAsync(communityId: string, name: string, description: string | null, imageUrl: string | null, isPrivate: boolean): Promise<CommunityDto> {
-        const updated = await firstValueFrom(this.api.updateCommunity(communityId, name, description, imageUrl, isPrivate));
+    async updateCommunityAsync(communityId: string, name: string, description: string | null, rules: CommunityRuleDto[] | null, imageUrl: string | null, isPrivate: boolean): Promise<CommunityDto> {
+        const updated = await firstValueFrom(this.api.updateCommunity(communityId, name, description, rules, imageUrl, isPrivate));
         const normalized = this.normalizeCommunity(updated);
         this.message = 'Community updated.';
         this.emitAppChange('profile');
@@ -550,6 +551,22 @@ export class SessionService {
         await firstValueFrom(this.api.leaveCommunity(communityId));
         this.message = 'Left community.';
         this.emitAppChange('profile');
+    }
+
+    async updateCommunityMemberRoleAsync(communityId: string, memberProfileId: string, role: 'Member' | 'Moderator'): Promise<CommunityDto> {
+        const updated = await firstValueFrom(this.api.updateCommunityMemberRole(communityId, memberProfileId, role));
+        const normalized = this.normalizeCommunity(updated);
+        this.message = role === 'Moderator' ? 'Member promoted to moderator.' : 'Moderator role removed.';
+        this.emitAppChange('profile');
+        return normalized;
+    }
+
+    async timeoutCommunityMemberAsync(communityId: string, memberProfileId: string, durationDays: 1 | 7 | 30): Promise<CommunityDto> {
+        const updated = await firstValueFrom(this.api.timeoutCommunityMember(communityId, memberProfileId, durationDays));
+        const normalized = this.normalizeCommunity(updated);
+        this.message = `Member timed out for ${durationDays} day${durationDays === 1 ? '' : 's'}.`;
+        this.emitAppChange('profile');
+        return normalized;
     }
 
     async createCommunityPostAsync(
@@ -761,6 +778,18 @@ export class SessionService {
     private normalizeCommunity(community: CommunityDto): CommunityDto {
         return {
             ...community,
+            rules: (community.rules ?? [])
+                .map(rule => {
+                    const candidate = rule as unknown as CommunityRuleDto | string;
+                    if (typeof candidate === 'string') {
+                        return { text: candidate.trim() } as CommunityRuleDto;
+                    }
+
+                    const text = (candidate.text ?? '').trim();
+                    const description = candidate.description?.trim() || undefined;
+                    return { text, description } as CommunityRuleDto;
+                })
+                .filter(rule => !!rule.text),
             imageUrl: this.normalizeMediaUrl(community.imageUrl),
             members: (community.members ?? []).map(member => ({
                 ...member,
@@ -826,25 +855,51 @@ export class SessionService {
             return undefined;
         }
 
-        if (trimmed.startsWith('data:')) {
-            return trimmed;
+        // Some APIs may return Windows-style paths (e.g. uploads\avatars\x.jpg).
+        // Normalize to URL-style separators before resolution.
+        let normalizedInput = trimmed.replace(/\\+/g, '/');
+
+        // Recover URL paths from absolute filesystem values like:
+        // C:/repo/SocialSez.API/wwwroot/uploads/images/file.jpg
+        // /var/app/wwwroot/uploads/images/file.jpg
+        const lowerInput = normalizedInput.toLowerCase();
+        const wwwrootUploadsIndex = lowerInput.indexOf('/wwwroot/uploads/');
+        if (wwwrootUploadsIndex >= 0) {
+            normalizedInput = normalizedInput.slice(wwwrootUploadsIndex + '/wwwroot'.length);
+        } else {
+            const uploadsIndex = lowerInput.indexOf('/uploads/');
+            if (uploadsIndex > 0) {
+                normalizedInput = normalizedInput.slice(uploadsIndex);
+            }
         }
 
-        if (trimmed.startsWith('/')) {
-            return this.apiOrigin ? `${this.apiOrigin}${trimmed}` : trimmed;
+        if (normalizedInput.toLowerCase().startsWith('wwwroot/uploads/')) {
+            normalizedInput = normalizedInput.slice('wwwroot'.length);
         }
 
-        if (!/^https?:\/\//i.test(trimmed)) {
+        if (normalizedInput.toLowerCase().startsWith('uploads/')) {
+            normalizedInput = `/${normalizedInput}`;
+        }
+
+        if (normalizedInput.startsWith('data:')) {
+            return normalizedInput;
+        }
+
+        if (normalizedInput.startsWith('/')) {
+            return this.apiOrigin ? `${this.apiOrigin}${normalizedInput}` : normalizedInput;
+        }
+
+        if (!/^https?:\/\//i.test(normalizedInput)) {
             if (this.apiOrigin) {
-                const normalizedRelative = trimmed.replace(/^\/+/, '');
+                const normalizedRelative = normalizedInput.replace(/^\/+/, '');
                 return `${this.apiOrigin}/${normalizedRelative}`;
             }
 
-            return trimmed;
+            return normalizedInput;
         }
 
         try {
-            const parsed = new URL(trimmed);
+            const parsed = new URL(normalizedInput);
             if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
                 return undefined;
             }
@@ -859,7 +914,7 @@ export class SessionService {
 
             return parsed.toString();
         } catch {
-            return trimmed;
+            return normalizedInput;
         }
     }
 

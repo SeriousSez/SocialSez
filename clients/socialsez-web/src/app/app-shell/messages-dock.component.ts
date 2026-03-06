@@ -795,7 +795,7 @@ export class MessagesDockComponent {
         event.preventDefault();
         event.stopPropagation();
         this.open = false;
-        void this.router.navigate(['/shared/post', shared.postId]);
+        void this.router.navigate(['/post', shared.postId]);
     }
 
     openSharedStory(sharedStory: SharedStoryPreview, message: ChatMessageDto, event: Event): void {

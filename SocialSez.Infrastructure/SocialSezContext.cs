@@ -501,6 +501,7 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
             entity.Property(x => x.Slug).HasMaxLength(60).IsRequired();
             entity.Property(x => x.Name).HasMaxLength(120).IsRequired();
             entity.Property(x => x.Description).HasMaxLength(600);
+            entity.Property(x => x.RulesJson).HasMaxLength(8000);
             entity.Property(x => x.ImageUrl).HasMaxLength(1024);
             entity.Property(x => x.IsPrivate).HasDefaultValue(false);
 
@@ -518,6 +519,7 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
             entity.ToTable("CommunityMembers");
             entity.HasKey(x => new { x.CommunityId, x.ProfileId });
             entity.Property(x => x.Role).HasMaxLength(24).IsRequired();
+            entity.Property(x => x.MutedUntilUtc);
 
             entity.HasOne(x => x.Community)
                 .WithMany(x => x.Members)

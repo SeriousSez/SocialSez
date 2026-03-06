@@ -48,6 +48,31 @@ p {
     gap: 10px;
 }
 
+.comments-toggle {
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #0f172a;
+    height: 34px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.comments-toggle:hover {
+    background: #e2e8f0;
+    transform: none;
+    box-shadow: none;
+}
+
+.comments-toggle:active {
+    transform: none;
+    box-shadow: none;
+}
+
 .author-avatar {
     width: 40px;
     height: 40px;
@@ -120,6 +145,16 @@ p {
         color: var(--color-text);
     }
 
+    .comments-toggle {
+        border-color: var(--color-border);
+        background: var(--color-surface-muted);
+        color: var(--color-text);
+    }
+
+    .comments-toggle:hover {
+        background: var(--color-surface-alt);
+    }
+
     .media {
         border-color: var(--color-border);
     }
@@ -152,5 +187,9 @@ p {
 
     .media {
         max-height: 56dvh;
+    }
+
+    .action-label {
+        display: none;
     }
 }

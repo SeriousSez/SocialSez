@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import {
     AuthResponse,
     ChatConversationDto,
+    CommunityRuleDto,
     ChatMessageDto,
     CommunityDto,
     CommunityPollDto,
@@ -447,12 +448,12 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.delete<ChatMessageDto>(`${this.baseUrl}/chat/messages/${messageId}/reaction`, { headers: this.authHeaders() }));
     }
 
-    createCommunity(name: string, description: string | null, imageUrl: string | null, isPrivate: boolean): Observable<CommunityDto> {
-        return this.withAutoRefresh(() => this.http.post<CommunityDto>(`${this.baseUrl}/communities`, { name, description, imageUrl, isPrivate }, { headers: this.authHeaders() }));
+    createCommunity(name: string, description: string | null, rules: CommunityRuleDto[] | null, imageUrl: string | null, isPrivate: boolean): Observable<CommunityDto> {
+        return this.withAutoRefresh(() => this.http.post<CommunityDto>(`${this.baseUrl}/communities`, { name, description, rules, imageUrl, isPrivate }, { headers: this.authHeaders() }));
     }
 
-    updateCommunity(communityId: string, name: string, description: string | null, imageUrl: string | null, isPrivate: boolean): Observable<CommunityDto> {
-        return this.withAutoRefresh(() => this.http.put<CommunityDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}`, { name, description, imageUrl, isPrivate }, { headers: this.authHeaders() }));
+    updateCommunity(communityId: string, name: string, description: string | null, rules: CommunityRuleDto[] | null, imageUrl: string | null, isPrivate: boolean): Observable<CommunityDto> {
+        return this.withAutoRefresh(() => this.http.put<CommunityDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}`, { name, description, rules, imageUrl, isPrivate }, { headers: this.authHeaders() }));
     }
 
     getCommunityById(communityId: string, members = 20): Observable<CommunityDto> {
@@ -479,6 +480,14 @@ export class SocialSezApiService {
 
     leaveCommunity(communityId: string): Observable<void> {
         return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/leave`, {}, { headers: this.authHeaders() }));
+    }
+
+    updateCommunityMemberRole(communityId: string, memberProfileId: string, role: 'Member' | 'Moderator'): Observable<CommunityDto> {
+        return this.withAutoRefresh(() => this.http.put<CommunityDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberProfileId)}/role`, { role }, { headers: this.authHeaders() }));
+    }
+
+    timeoutCommunityMember(communityId: string, memberProfileId: string, durationDays: 1 | 7 | 30): Observable<CommunityDto> {
+        return this.withAutoRefresh(() => this.http.post<CommunityDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberProfileId)}/timeout`, { durationDays }, { headers: this.authHeaders() }));
     }
 
     createCommunityPost(

@@ -40,7 +40,7 @@
             <a class="tab-feed" routerLink="/feed" routerLinkActive="active"><i class="fa-duotone fa-light fa-house" aria-hidden="true"></i><span>Feed</span></a>
             <a class="tab-compose" routerLink="/compose" routerLinkActive="active"><i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i><span>Compose</span></a>
             <a class="tab-discover" routerLink="/discover" routerLinkActive="active"><i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i><span>Discover</span></a>
-            <a class="tab-communities" routerLink="/communities" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-users" aria-hidden="true"></i><span>Communities</span></a>
+            <a class="tab-communities" routerLink="/communities" routerLinkActive="active"><i class="fa-duotone fa-light fa-users" aria-hidden="true"></i><span>Communities</span></a>
             <a class="tab-chat" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i><span>Chat</span></a>
             <a class="tab-notifications" routerLink="/notifications" routerLinkActive="active" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-bell" aria-hidden="true"></i>
@@ -91,44 +91,37 @@
     </section>
 
     <aside class="right-rail">
-        <div class="side-card">
-            <h3>Now</h3>
-            <p>Build, post, discover and follow in one flow.</p>
-        </div>
-        <div class="side-card">
-            <h3>Trending</h3>
-            <p class="hint" *ngIf="loadingTrending">Loading hashtags...</p>
-            <ul *ngIf="!loadingTrending && trendingHashtags.length">
-                <li *ngFor="let hashtag of trendingHashtags">
-                    <a [routerLink]="['/hashtags', hashtag.tag]">#{{ hashtag.tag }}</a>
-                    <span class="trend-count">{{ hashtag.count }}</span>
-                </li>
-            </ul>
-            <p class="hint" *ngIf="!loadingTrending && !trendingHashtags.length">No trending hashtags yet.</p>
-        </div>
-        <div class="side-card">
-            <h3>Recent activity</h3>
-            <p class="hint" *ngIf="!noticeHistoryPreview.length">No recent notifications.</p>
-            <ul *ngIf="noticeHistoryPreview.length" aria-label="Recent app notifications">
-                <li *ngFor="let entry of noticeHistoryPreview; trackBy: trackNoticeById">
-                    <span class="notice-history-row">
-                        <span class="notice-history-message" [class.is-error]="entry.isError">{{ entry.message }}</span>
-                        <span class="trend-count">{{ entry.createdAtUtc | date:'shortTime' }}</span>
-                    </span>
-                </li>
-            </ul>
-        </div>
-        <div class="side-card" *ngIf="loadingRightRailCommunity || rightRailCommunity">
-            <h3>Community</h3>
-            <p class="hint" *ngIf="loadingRightRailCommunity">Loading community info...</p>
-            <ng-container *ngIf="!loadingRightRailCommunity && rightRailCommunity as community">
-                <p class="community-rail-name">{{ community.name }}</p>
-                <p class="hint">/{{ community.slug }}</p>
-                <p class="hint" *ngIf="community.description">{{ community.description }}</p>
-                <p class="hint">{{ community.memberCount }} members</p>
-                <a class="community-rail-link" [routerLink]="['/communities', community.slug]">Go to community</a>
-            </ng-container>
-        </div>
+        <ng-container *ngIf="!isCommunityPageRoute">
+            <div class="side-card">
+                <h3>Now</h3>
+                <p>Build, post, discover and follow in one flow.</p>
+            </div>
+            <div class="side-card">
+                <h3>Trending</h3>
+                <p class="hint" *ngIf="loadingTrending">Loading hashtags...</p>
+                <ul *ngIf="!loadingTrending && trendingHashtags.length">
+                    <li *ngFor="let hashtag of trendingHashtags">
+                        <a [routerLink]="['/hashtags', hashtag.tag]">#{{ hashtag.tag }}</a>
+                        <span class="trend-count">{{ hashtag.count }}</span>
+                    </li>
+                </ul>
+                <p class="hint" *ngIf="!loadingTrending && !trendingHashtags.length">No trending hashtags yet.</p>
+            </div>
+            <div class="side-card">
+                <h3>Recent activity</h3>
+                <p class="hint" *ngIf="!noticeHistoryPreview.length">No recent notifications.</p>
+                <ul *ngIf="noticeHistoryPreview.length" aria-label="Recent app notifications">
+                    <li *ngFor="let entry of noticeHistoryPreview; trackBy: trackNoticeById">
+                        <span class="notice-history-row">
+                            <span class="notice-history-message" [class.is-error]="entry.isError">{{ entry.message }}</span>
+                            <span class="trend-count">{{ entry.createdAtUtc | date:'shortTime' }}</span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </ng-container>
+
+        <app-community-info-rail *ngIf="isCommunityPageRoute" [community]="rightRailCommunity" [loading]="loadingRightRailCommunity" [canEditRules]="canEditRightRailCommunityRules" [savingRules]="savingRightRailRules" (rulesSaved)="saveRightRailRulesAsync($event)"></app-community-info-rail>
         <!-- <p class="hint" *ngIf="showDebug && session.nextSilentRefreshAt">
             [debug] Next silent refresh: {{ session.nextSilentRefreshAt | date:'mediumTime' }}
         </p> -->
@@ -144,7 +137,7 @@
         <i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i>
         <span>Discover</span>
     </a>
-    <a class="mobile-footer-tab" routerLink="/communities" routerLinkActive="active" *ngIf="session.isAuthenticated()">
+    <a class="mobile-footer-tab" routerLink="/communities" routerLinkActive="active">
         <i class="fa-duotone fa-light fa-users" aria-hidden="true"></i>
         <span>Groups</span>
     </a>

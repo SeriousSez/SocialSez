@@ -1,0 +1,228 @@
+:host {
+    display: block;
+}
+
+.side-card.community-info-rail {
+    background: #fff;
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.side-card.community-info-rail h3 {
+    margin: 0 0 6px;
+}
+
+.side-card.community-info-rail p,
+.side-card.community-info-rail li {
+    color: #475569;
+}
+
+.community-info-rail {
+    display: grid;
+    gap: 10px;
+}
+
+.community-identity {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 10px;
+}
+
+.community-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.community-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.community-rules {
+    display: grid;
+    gap: 8px;
+}
+
+.community-rules-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.community-rules-head h4 {
+    margin: 0;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+}
+
+.community-rules ol {
+    margin: 0;
+    padding-left: 22px;
+    display: grid;
+    gap: 8px;
+}
+
+.community-rules li {
+    font-size: 0.9rem;
+    line-height: 1.35;
+    display: list-item;
+}
+
+.community-rules li::marker {
+    color: #64748b;
+    font-weight: 600;
+}
+
+.rule-toggle {
+    width: 100%;
+    border: 0;
+    padding: 4px 4px;
+    background: transparent;
+    font: inherit;
+    line-height: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    text-align: left;
+    cursor: default;
+}
+
+.rule-toggle.expandable {
+    cursor: pointer;
+}
+
+.rule-toggle:hover,
+.rule-toggle:focus,
+.rule-toggle:focus-visible,
+.rule-toggle:active {
+    box-shadow: none;
+    transform: none;
+    background: transparent;
+    outline: none;
+}
+
+.rule-toggle.expandable:hover,
+.rule-toggle.expandable:focus-visible {
+    background: rgba(15, 23, 42, 0.06);
+    border-radius: 6px;
+}
+
+.rule-toggle.expandable:focus:not(:hover):not(:focus-visible) {
+    background: transparent;
+}
+
+.rule-text {
+    margin: 0;
+    font-weight: 400;
+    color: #0f172a;
+}
+
+.rule-chevron {
+    font-size: 0.95rem;
+    line-height: 1;
+    color: #64748b;
+    transition: transform 140ms ease;
+}
+
+.rule-chevron.expanded {
+    transform: rotate(180deg);
+}
+
+.rule-description {
+    margin: 4px 0 0;
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: #475569;
+    line-height: 1.35;
+    white-space: pre-wrap;
+}
+
+.rule-description-wrap {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 220ms ease, opacity 180ms ease;
+}
+
+.rule-description-wrap.expanded {
+    max-height: 220px;
+    opacity: 1;
+}
+
+.rules-editor {
+    display: grid;
+    gap: 8px;
+}
+
+.rule-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}
+
+.rule-fields {
+    display: grid;
+    gap: 6px;
+}
+
+.rule-row input {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    padding: 7px 9px;
+}
+
+.rule-row textarea {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    padding: 7px 9px;
+    resize: vertical;
+}
+
+.rules-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.community-edit {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface-muted);
+    color: var(--color-text);
+    padding: 6px 9px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.community-edit.primary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-text-on-dark);
+}
+
+.community-edit.danger {
+    color: #b91c1c;
+}
+
+.community-link {
+    display: inline-flex;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+}

@@ -1,8 +1,16 @@
 namespace SocialSez.ApplicationService.Models;
 
-public sealed record CreateCommunityRequest(string Name, string? Description, string? ImageUrl, bool IsPrivate);
+public sealed record CreateCommunityRequest(string Name, string? Description, IReadOnlyCollection<CommunityRuleDto>? Rules, string? ImageUrl, bool IsPrivate);
 
-public sealed record UpdateCommunityRequest(string Name, string? Description, string? ImageUrl, bool IsPrivate);
+public sealed record UpdateCommunityRequest(string Name, string? Description, IReadOnlyCollection<CommunityRuleDto>? Rules, string? ImageUrl, bool IsPrivate);
+
+public sealed record UpdateCommunityMemberRoleRequest(string Role);
+
+public sealed record TimeoutCommunityMemberRequest(int DurationDays);
+
+public sealed record CommunityRuleDto(
+    string Text,
+    string? Description);
 
 public sealed record CreateCommunityPostRequest(
     Guid AuthorId,
@@ -85,13 +93,15 @@ public sealed record CommunityMemberDto(
     string Handle,
     string? ImageUrl,
     string Role,
-    DateTime JoinedAtUtc);
+    DateTime JoinedAtUtc,
+    DateTime? MutedUntilUtc);
 
 public sealed record CommunityDto(
     Guid Id,
     string Slug,
     string Name,
     string? Description,
+    IReadOnlyCollection<CommunityRuleDto> Rules,
     string? ImageUrl,
     bool IsPrivate,
     Guid CreatedByProfileId,

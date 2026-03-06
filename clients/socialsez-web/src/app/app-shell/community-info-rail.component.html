@@ -1,0 +1,55 @@
+<div class="side-card community-info-rail" *ngIf="loading || community">
+    <h3>Community</h3>
+
+    <p class="hint" *ngIf="loading">Loading community info...</p>
+
+    <ng-container *ngIf="!loading && community as activeCommunity">
+        <div class="community-identity">
+            <img *ngIf="activeCommunity.imageUrl" class="community-avatar" [src]="activeCommunity.imageUrl" alt="Community image" />
+            <div>
+                <p class="community-name">{{ activeCommunity.name }}</p>
+                <p class="hint">/{{ activeCommunity.slug }} · {{ activeCommunity.memberCount }} members</p>
+            </div>
+        </div>
+
+        <p class="hint" *ngIf="activeCommunity.description">{{ activeCommunity.description }}</p>
+
+        <section class="community-rules">
+            <div class="community-rules-head">
+                <h4>Rules</h4>
+                <button type="button" class="community-edit" *ngIf="canEditRules && !editingRules" (click)="startRulesEdit()">Edit</button>
+            </div>
+
+            <ol *ngIf="!editingRules && activeCommunity.rules.length">
+                <li *ngFor="let rule of activeCommunity.rules; index as i">
+                    <button type="button" class="rule-toggle" [class.expandable]="!!rule.description" (click)="rule.description && toggleRuleExpanded(i)" [attr.aria-expanded]="rule.description ? isRuleExpanded(i) : null" [disabled]="!rule.description"
+                        [attr.aria-label]="rule.description ? (isRuleExpanded(i) ? 'Collapse rule details' : 'Expand rule details') : null">
+                        <span class="rule-text">{{ rule.text }}</span>
+                        <span class="rule-chevron" *ngIf="rule.description" [class.expanded]="isRuleExpanded(i)">▾</span>
+                    </button>
+                    <div class="rule-description-wrap" *ngIf="rule.description" [class.expanded]="isRuleExpanded(i)">
+                        <p class="rule-description">{{ rule.description }}</p>
+                    </div>
+                </li>
+            </ol>
+            <p class="hint" *ngIf="!editingRules && !activeCommunity.rules.length">No rules yet.</p>
+
+            <div class="rules-editor" *ngIf="editingRules">
+                <label *ngFor="let rule of editableRules; index as i; trackBy: trackRuleByIndex" class="rule-row">
+                    <div class="rule-fields">
+                        <input type="text" [(ngModel)]="editableRules[i].text" maxlength="220" [disabled]="savingRules" placeholder="Rule title" />
+                        <textarea [(ngModel)]="editableRules[i].description" rows="2" maxlength="1200" [disabled]="savingRules" placeholder="Optional description"></textarea>
+                    </div>
+                    <button type="button" class="community-edit danger" (click)="removeRule(i)" [disabled]="savingRules || editableRules.length <= 1">Remove</button>
+                </label>
+                <div class="rules-actions">
+                    <button type="button" class="community-edit" (click)="addRule()" [disabled]="savingRules || editableRules.length >= 20">Add rule</button>
+                    <button type="button" class="community-edit" (click)="cancelRulesEdit()" [disabled]="savingRules">Cancel</button>
+                    <button type="button" class="community-edit primary" (click)="saveRules()" [disabled]="!canSaveRules()">{{ savingRules ? 'Saving...' : 'Save' }}</button>
+                </div>
+            </div>
+        </section>
+
+        <a class="community-link" [routerLink]="['/c', activeCommunity.slug]">Go to community</a>
+    </ng-container>
+</div>

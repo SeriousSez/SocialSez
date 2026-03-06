@@ -25,8 +25,8 @@ export const routes: Routes = [
     { path: 'feed', loadComponent: () => import('./pages/feed-page/feed-page.component').then(module => module.FeedPageComponent), canActivate: [authGuard] },
     { path: 'compose', loadComponent: () => import('./pages/compose-page/compose-page.component').then(module => module.ComposePageComponent), canActivate: [authGuard] },
     { path: 'discover', loadComponent: () => import('./pages/discover-page/discover-page.component').then(module => module.DiscoverPageComponent) },
-    { path: 'communities', loadComponent: () => import('./pages/communities-page/communities-page.component').then(module => module.CommunitiesPageComponent), canActivate: [authGuard] },
-    { path: 'communities/:slug', loadComponent: () => import('./pages/community-detail-page/community-detail-page.component').then(module => module.CommunityDetailPageComponent), canActivate: [authGuard] },
+    { path: 'communities', loadComponent: () => import('./pages/communities-page/communities-page.component').then(module => module.CommunitiesPageComponent) },
+    { path: 'c/:slug', loadComponent: () => import('./pages/community-detail-page/community-detail-page.component').then(module => module.CommunityDetailPageComponent) },
     { path: 'chat', loadComponent: () => import('./pages/chat-page/chat-page.component').then(module => module.ChatPageComponent), canActivate: [authGuard] },
     { path: 'hashtags/:tag', loadComponent: () => import('./pages/hashtag-page/hashtag-page.component').then(module => module.HashtagPageComponent) },
     { path: 'profile', loadComponent: () => import('./pages/profile-page/profile-page.component').then(module => module.ProfilePageComponent), canActivate: [authGuard] },
@@ -34,9 +34,16 @@ export const routes: Routes = [
     { path: 'notifications', loadComponent: () => import('./pages/notifications-page/notifications-page.component').then(module => module.NotificationsPageComponent), canActivate: [authGuard] },
     { path: 'notifications/requests', loadComponent: () => import('./pages/notification-requests-page/notification-requests-page.component').then(module => module.NotificationRequestsPageComponent), canActivate: [authGuard] },
     { path: 'settings', loadComponent: () => import('./pages/settings-page/settings-page.component').then(module => module.SettingsPageComponent), canActivate: [authGuard] },
-    { path: 'shared/post/:id', loadComponent: () => import('./pages/shared-post-page/shared-post-page.component').then(module => module.SharedPostPageComponent) },
-    { path: 'shared/community-post/:id', loadComponent: () => import('./pages/shared-community-post-page/shared-community-post-page.component').then(module => module.SharedCommunityPostPageComponent) },
-    { path: 'shared/reel/:id', loadComponent: () => import('./pages/shared-reel-page/shared-reel-page.component').then(module => module.SharedReelPageComponent) },
-    { path: 'shared/story/:id', loadComponent: () => import('./pages/shared-story-page/shared-story-page.component').then(module => module.SharedStoryPageComponent) },
+    { path: 'post/:id', loadComponent: () => import('./pages/shared-post-page/shared-post-page.component').then(module => module.SharedPostPageComponent) },
+    { path: 'cp/:id', loadComponent: () => import('./pages/shared-community-post-page/shared-community-post-page.component').then(module => module.SharedCommunityPostPageComponent) },
+    { path: 'reel/:id', loadComponent: () => import('./pages/shared-reel-page/shared-reel-page.component').then(module => module.SharedReelPageComponent) },
+    { path: 'story/:id', loadComponent: () => import('./pages/shared-story-page/shared-story-page.component').then(module => module.SharedStoryPageComponent) },
+
+    // Back-compat redirects for existing shared links.
+    { path: 'communities/:slug', redirectTo: 'c/:slug', pathMatch: 'full' },
+    { path: 'shared/post/:id', redirectTo: 'post/:id', pathMatch: 'full' },
+    { path: 'shared/community-post/:id', redirectTo: 'cp/:id', pathMatch: 'full' },
+    { path: 'shared/reel/:id', redirectTo: 'reel/:id', pathMatch: 'full' },
+    { path: 'shared/story/:id', redirectTo: 'story/:id', pathMatch: 'full' },
     { path: '**', redirectTo: 'feed' }
 ];

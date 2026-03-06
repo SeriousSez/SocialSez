@@ -106,7 +106,7 @@ export class SharedCommunityPostPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/shared/community-post/${postId}`;
+        const link = `${window.location.origin}/cp/${postId}`;
         const copied = await this.copyTextToClipboardAsync(link);
         if (!copied) {
             return;
@@ -127,7 +127,43 @@ export class SharedCommunityPostPageComponent {
     }
 
     get canSubmitComment(): boolean {
-        return !!this.getTopCommentContent();
+        return this.canCommentInCommunity && !!this.getTopCommentContent();
+    }
+
+    get canCommentInCommunity(): boolean {
+        if (!this.session.isAuthenticated()) {
+            return false;
+        }
+
+        if (!this.community?.joinedByMe) {
+            return false;
+        }
+
+        return !this.isTimedOutInCommunity;
+    }
+
+    get isTimedOutInCommunity(): boolean {
+        const mutedUntilUtc = this.currentViewerMembership?.mutedUntilUtc;
+        if (!mutedUntilUtc) {
+            return false;
+        }
+
+        const mutedUntilMs = Date.parse(mutedUntilUtc);
+        return Number.isFinite(mutedUntilMs) && mutedUntilMs > Date.now();
+    }
+
+    get timedOutUntilText(): string {
+        const mutedUntilUtc = this.currentViewerMembership?.mutedUntilUtc;
+        if (!mutedUntilUtc) {
+            return '';
+        }
+
+        const mutedUntilDate = new Date(mutedUntilUtc);
+        if (Number.isNaN(mutedUntilDate.getTime())) {
+            return '';
+        }
+
+        return mutedUntilDate.toLocaleString();
     }
 
     get postTitle(): string {
@@ -422,7 +458,10 @@ export class SharedCommunityPostPageComponent {
 
     async submitCommentAsync(): Promise<void> {
         const currentPost = this.post;
-        if (!currentPost || this.postingComment || this.postingReply) {
+        if (!currentPost || this.postingComment || this.postingReply || !this.canCommentInCommunity) {
+            if (this.isTimedOutInCommunity) {
+                this.commentError = `You are timed out in this community until ${this.timedOutUntilText || 'later'}.`;
+            }
             return;
         }
 
@@ -606,7 +645,10 @@ export class SharedCommunityPostPageComponent {
     }
 
     openReplyComposer(commentId: string, authorHandle: string): void {
-        if (this.postingReply) {
+        if (this.postingReply || !this.canCommentInCommunity) {
+            if (this.isTimedOutInCommunity) {
+                this.replyError = `You are timed out in this community until ${this.timedOutUntilText || 'later'}.`;
+            }
             return;
         }
 
@@ -733,7 +775,10 @@ export class SharedCommunityPostPageComponent {
 
     async submitReplyAsync(commentId: string): Promise<void> {
         const currentPost = this.post;
-        if (!currentPost || this.postingReply || this.activeReplyCommentId !== commentId) {
+        if (!currentPost || this.postingReply || this.activeReplyCommentId !== commentId || !this.canCommentInCommunity) {
+            if (this.isTimedOutInCommunity) {
+                this.replyError = `You are timed out in this community until ${this.timedOutUntilText || 'later'}.`;
+            }
             return;
         }
 
@@ -1142,7 +1187,7 @@ export class SharedCommunityPostPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/shared/community-post/${postId}#comment-${commentId}`;
+        const link = `${window.location.origin}/cp/${postId}#comment-${commentId}`;
         const copied = await this.copyTextToClipboardAsync(link);
         if (!copied) {
             return;
@@ -1219,6 +1264,15 @@ export class SharedCommunityPostPageComponent {
         return mediaUrl;
     }
 
+    private get currentViewerMembership(): CommunityDto['members'][number] | null {
+        const viewerProfileId = this.session.profile?.id;
+        if (!viewerProfileId) {
+            return null;
+        }
+
+        return this.community?.members.find(member => member.profileId.toLowerCase() === viewerProfileId.toLowerCase()) ?? null;
+    }
+
     private async loadAsync(postId: string): Promise<void> {
         this.loading = true;
         this.notFound = false;
@@ -1259,7 +1313,7 @@ export class SharedCommunityPostPageComponent {
             this.postImageAnimating = false;
 
             try {
-                this.community = await firstValueFrom(this.api.getCommunityById(loadedPost.communityId));
+                this.community = await firstValueFrom(this.api.getCommunityById(loadedPost.communityId, 1000));
             } catch {
                 this.community = null;
             }
