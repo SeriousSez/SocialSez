@@ -983,23 +983,39 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             .SelectMany(x => x.Votes)
             .FirstOrDefault(x => x.VoterId == request.VoterId);
 
-        if (existingVote is not null && existingVote.OptionId != selectedOption.Id)
+        if (existingVote is not null)
         {
             dbContext.CommunityPollVotes.Remove(existingVote);
+
+            // Clicking the same option toggles the vote off.
+            if (existingVote.OptionId == selectedOption.Id)
+            {
+                await dbContext.SaveChangesAsync(cancellationToken);
+                var refreshedPollAfterRemove = await dbContext.CommunityPolls
+                    .AsNoTracking()
+                    .Include(x => x.Options)
+                        .ThenInclude(x => x.Votes)
+                    .FirstOrDefaultAsync(x => x.Id == pollId, cancellationToken);
+
+                return refreshedPollAfterRemove is null ? null : MapPoll(refreshedPollAfterRemove, request.VoterId);
+            }
         }
 
-        if (existingVote is null || existingVote.OptionId != selectedOption.Id)
+        selectedOption.Votes.Add(new CommunityPollVote
         {
-            selectedOption.Votes.Add(new CommunityPollVote
-            {
-                OptionId = selectedOption.Id,
-                VoterId = request.VoterId,
-                CreatedAtUtc = DateTime.UtcNow
-            });
-        }
+            OptionId = selectedOption.Id,
+            VoterId = request.VoterId,
+            CreatedAtUtc = DateTime.UtcNow
+        });
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return MapPoll(poll, request.VoterId);
+        var refreshedPoll = await dbContext.CommunityPolls
+            .AsNoTracking()
+            .Include(x => x.Options)
+                .ThenInclude(x => x.Votes)
+            .FirstOrDefaultAsync(x => x.Id == pollId, cancellationToken);
+
+        return refreshedPoll is null ? null : MapPoll(refreshedPoll, request.VoterId);
     }
 
     private static string NormalizeName(string? name)

@@ -316,16 +316,26 @@
     background: var(--color-surface-muted);
     color: var(--color-text);
     border-radius: 10px;
-    padding: 7px 10px;
-    font-size: 0.9rem;
-    line-height: 1.25;
+    padding: 8px 10px;
     transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+    cursor: pointer;
+}
+
+.poll-option:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .poll-option.selected {
     border-color: var(--color-accent);
     background: var(--color-accent);
     color: var(--color-text-on-dark);
+}
+
+.poll .meta {
+    margin: 4px 0 0;
+    color: inherit;
+    font-size: inherit;
 }
 
 .post-actions {

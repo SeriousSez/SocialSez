@@ -38,6 +38,7 @@ export class SharedCommunityPostPageComponent {
     copiedLink = false;
     postingComment = false;
     votingPost = false;
+    votingPollId: string | null = null;
     togglingSavePost = false;
     updatingPost = false;
     editPostModalOpen = false;
@@ -277,6 +278,29 @@ export class SharedCommunityPostPageComponent {
 
         const nextVote = this.isPostDownvoted ? undefined : 'Downvote';
         await this.votePostAsync(nextVote);
+    }
+
+    async votePollAsync(pollId: string, optionId: string): Promise<void> {
+        const item = this.post;
+        if (!item || this.votingPollId) {
+            return;
+        }
+
+        this.votingPollId = pollId;
+        this.error = '';
+
+        try {
+            const updatedPoll = await this.session.voteCommunityPollAsync(item.communityId, pollId, optionId);
+            this.post = {
+                ...item,
+                poll: updatedPoll
+            };
+        } catch (error) {
+            this.error = this.extractApiErrorMessage(error, 'Unable to vote on poll right now.');
+        } finally {
+            this.votingPollId = null;
+            this.refreshView();
+        }
     }
 
     async toggleSavePostAsync(): Promise<void> {

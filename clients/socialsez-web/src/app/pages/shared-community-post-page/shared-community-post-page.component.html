@@ -81,10 +81,10 @@
         <section class="poll" *ngIf="item.poll as poll">
             <h4>{{ poll.question }}</h4>
             <div class="poll-options">
-                <div class="poll-option" [class.selected]="option.votedByMe" *ngFor="let option of poll.options">
+                <button type="button" class="poll-option" [class.selected]="option.votedByMe" *ngFor="let option of poll.options" [disabled]="votingPollId === poll.id" (click)="votePollAsync(poll.id, option.id)">
                     <span>{{ option.text }}</span>
                     <span *ngIf="shouldShowPollResults(poll)">{{ option.voteCount }} ({{ getPollOptionPercentage(poll, option.voteCount) }}%)</span>
-                </div>
+                </button>
             </div>
             <p class="meta" *ngIf="shouldShowPollResults(poll)">{{ poll.totalVotes }} votes</p>
         </section>
