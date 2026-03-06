@@ -3,7 +3,9 @@ import { ChangeDetectorRef, Component, ElementRef, HostListener, NgZone, ViewChi
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { CommunityDto, CommunityPostDto } from '../../core/api.types';
+import { environment } from '../../../environments/environment';
+import { CommunityDto, CommunityPollDto, CommunityPostDto } from '../../core/api.types';
+import { CommunityPostEditorModalComponent, CommunityPostEditorSavePayload } from '../../shared/community-post-editor-modal/community-post-editor-modal.component';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
 import { SocialSezApiService } from '../../core/socialsez-api.service';
 import { SessionService } from '../../core/session.service';
@@ -21,7 +23,7 @@ interface CommentThreadNode {
 @Component({
     selector: 'app-shared-community-post-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, RichTextEditorComponent],
+    imports: [CommonModule, FormsModule, RouterLink, RichTextEditorComponent, CommunityPostEditorModalComponent],
     templateUrl: './shared-community-post-page.component.html',
     styleUrl: './shared-community-post-page.component.scss'
 })
@@ -38,6 +40,7 @@ export class SharedCommunityPostPageComponent {
     votingPost = false;
     togglingSavePost = false;
     updatingPost = false;
+    editPostModalOpen = false;
     deletingPost = false;
     commentComposerExpanded = false;
     commentEditorMode: 'markdown' | 'rich' = 'rich';
@@ -67,6 +70,11 @@ export class SharedCommunityPostPageComponent {
     openCommentMenuId: string | null = null;
     commentActionError = '';
     fullscreenImageUrl: string | null = null;
+    fullscreenImageIndex = 0;
+    postActiveImageIndex = 0;
+    postImageSlideDirection: 'next' | 'prev' = 'next';
+    postOutgoingImageUrl: string | null = null;
+    postImageAnimating = false;
     copiedCommentId: string | null = null;
     private readonly defaultSpoilerPlaceholder = '|';
     private readonly commentVoteById = new Map<string, -1 | 0 | 1>();
@@ -74,6 +82,9 @@ export class SharedCommunityPostPageComponent {
     private readonly recentCommentSignatures = new Map<string, number>();
     private copiedLinkTimeoutId: ReturnType<typeof setTimeout> | null = null;
     private copiedCommentTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    private postImageAnimationTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    private readonly postImageAnimationMs = 320;
+    private readonly apiOrigin = this.resolveApiOrigin();
 
     constructor(
         private readonly route: ActivatedRoute,
@@ -131,6 +142,42 @@ export class SharedCommunityPostPageComponent {
         return content || null;
     }
 
+    get postMediaUrls(): string[] {
+        const item = this.post;
+        if (!item) {
+            return [];
+        }
+
+        const fromArray = (item.imageUrls ?? [])
+            .map(url => url?.trim())
+            .filter((url): url is string => !!url);
+
+        if (fromArray.length > 0) {
+            return fromArray;
+        }
+
+        const single = item.imageUrl?.trim();
+        return single ? [single] : [];
+    }
+
+    get activePostMediaUrl(): string | null {
+        const mediaUrls = this.postMediaUrls;
+        if (!mediaUrls.length) {
+            return null;
+        }
+
+        const safeIndex = Math.min(Math.max(this.postActiveImageIndex, 0), mediaUrls.length - 1);
+        return mediaUrls[safeIndex] ?? null;
+    }
+
+    get canMovePostImageBack(): boolean {
+        return this.postActiveImageIndex > 0;
+    }
+
+    get canMovePostImageForward(): boolean {
+        return this.postActiveImageIndex < this.postMediaUrls.length - 1;
+    }
+
     get primaryPostLink(): string | null {
         const linkUrl = this.post?.linkUrl?.trim();
         if (linkUrl) {
@@ -144,6 +191,23 @@ export class SharedCommunityPostPageComponent {
 
         const match = content.match(/https?:\/\/[^\s)]+/i);
         return match?.[0] ?? null;
+    }
+
+    shouldShowPollResults(poll: CommunityPollDto): boolean {
+        if (poll.hasVotedByMe) {
+            return true;
+        }
+
+        return (poll.options ?? []).some(option => option.votedByMe);
+    }
+
+    getPollOptionPercentage(poll: CommunityPollDto, voteCount: number): number {
+        const totalVotes = poll.totalVotes ?? 0;
+        if (totalVotes <= 0) {
+            return 0;
+        }
+
+        return Math.round((voteCount / totalVotes) * 100);
     }
 
     get postVoteScore(): number {
@@ -177,6 +241,32 @@ export class SharedCommunityPostPageComponent {
 
         const nextVote = this.isPostUpvoted ? undefined : 'Upvote';
         await this.votePostAsync(nextVote);
+    }
+
+    showPreviousPostImage(): void {
+        if (!this.canMovePostImageBack) {
+            return;
+        }
+
+        this.transitionToPostImage(this.postActiveImageIndex - 1, 'prev');
+    }
+
+    showNextPostImage(): void {
+        if (!this.canMovePostImageForward) {
+            return;
+        }
+
+        this.transitionToPostImage(this.postActiveImageIndex + 1, 'next');
+    }
+
+    setActivePostImage(index: number): void {
+        const mediaUrls = this.postMediaUrls;
+        if (index < 0 || index >= mediaUrls.length) {
+            return;
+        }
+
+        const direction: 'next' | 'prev' = index > this.postActiveImageIndex ? 'next' : 'prev';
+        this.transitionToPostImage(index, direction);
     }
 
     async togglePostDownvoteAsync(): Promise<void> {
@@ -213,35 +303,50 @@ export class SharedCommunityPostPageComponent {
         }
     }
 
-    async editPostAsync(): Promise<void> {
+    editPostAsync(): void {
         const item = this.post;
         if (!item || !this.canManagePost || this.updatingPost) {
             return;
         }
 
-        const nextContent = prompt('Edit post content', item.content ?? '');
-        if (nextContent === null) {
+        this.editPostModalOpen = true;
+        this.error = '';
+        this.refreshView();
+    }
+
+    closeEditPostModal(): void {
+        if (this.updatingPost) {
             return;
         }
 
-        const normalizedContent = nextContent.trim() || null;
+        this.editPostModalOpen = false;
+        this.refreshView();
+    }
+
+    async submitPostEditAsync(payload: CommunityPostEditorSavePayload): Promise<void> {
+        const item = this.post;
+        if (!item || !this.canManagePost || this.updatingPost) {
+            return;
+        }
+
         this.updatingPost = true;
         this.error = '';
         try {
             const updated = await this.session.updateCommunityPostAsync(
                 item.communityId,
                 item.id,
-                item.title ?? null,
-                item.linkUrl ?? null,
-                normalizedContent,
-                item.imageUrls ?? null,
-                item.poll?.question ?? null,
-                item.poll?.options.map(option => option.text) ?? null,
-                false
+                payload.title,
+                payload.linkUrl,
+                payload.content,
+                payload.imageUrls,
+                payload.pollQuestion,
+                payload.pollOptions,
+                payload.clearPoll
             );
-            this.post = updated;
-        } catch {
-            this.error = 'Unable to update post right now.';
+            this.post = this.normalizeSharedPost(updated);
+            this.editPostModalOpen = false;
+        } catch (error) {
+            this.error = this.extractApiErrorMessage(error, 'Unable to update post right now.');
         } finally {
             this.updatingPost = false;
             this.refreshView();
@@ -665,7 +770,30 @@ export class SharedCommunityPostPageComponent {
 
     @HostListener('document:keydown.escape')
     onDocumentEscape(): void {
+        if (this.fullscreenImageUrl) {
+            this.closeImageFullscreen();
+            return;
+        }
+
         this.closeCommentMenu();
+    }
+
+    @HostListener('document:keydown', ['$event'])
+    onDocumentKeydown(event: KeyboardEvent): void {
+        if (!this.fullscreenImageUrl) {
+            return;
+        }
+
+        if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            this.showPreviousFullscreenImage();
+            return;
+        }
+
+        if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            this.showNextFullscreenImage();
+        }
     }
 
     get visibleComments(): CommunityPostDto['comments'] {
@@ -1011,11 +1139,47 @@ export class SharedCommunityPostPageComponent {
     }
 
     openImageFullscreen(imageUrl: string): void {
-        this.fullscreenImageUrl = imageUrl;
+        const mediaUrls = this.postMediaUrls;
+        if (!mediaUrls.length) {
+            this.fullscreenImageUrl = imageUrl;
+            this.fullscreenImageIndex = 0;
+            return;
+        }
+
+        const clickedIndex = mediaUrls.findIndex(url => url === imageUrl);
+        this.fullscreenImageIndex = clickedIndex >= 0 ? clickedIndex : this.postActiveImageIndex;
+        this.fullscreenImageUrl = mediaUrls[this.fullscreenImageIndex] ?? imageUrl;
+    }
+
+    get canMoveFullscreenImageBack(): boolean {
+        return this.fullscreenImageIndex > 0;
+    }
+
+    get canMoveFullscreenImageForward(): boolean {
+        return this.fullscreenImageIndex < this.postMediaUrls.length - 1;
+    }
+
+    showPreviousFullscreenImage(): void {
+        if (!this.canMoveFullscreenImageBack) {
+            return;
+        }
+
+        this.fullscreenImageIndex -= 1;
+        this.fullscreenImageUrl = this.postMediaUrls[this.fullscreenImageIndex] ?? this.fullscreenImageUrl;
+    }
+
+    showNextFullscreenImage(): void {
+        if (!this.canMoveFullscreenImageForward) {
+            return;
+        }
+
+        this.fullscreenImageIndex += 1;
+        this.fullscreenImageUrl = this.postMediaUrls[this.fullscreenImageIndex] ?? this.fullscreenImageUrl;
     }
 
     closeImageFullscreen(): void {
         this.fullscreenImageUrl = null;
+        this.fullscreenImageIndex = 0;
         this.refreshView();
     }
 
@@ -1027,12 +1191,24 @@ export class SharedCommunityPostPageComponent {
         return item.comment.id;
     }
 
+    trackByMediaUrl(_index: number, mediaUrl: string): string {
+        return mediaUrl;
+    }
+
     private async loadAsync(postId: string): Promise<void> {
         this.loading = true;
         this.notFound = false;
         this.error = '';
         this.post = null;
         this.community = null;
+        this.postActiveImageIndex = 0;
+        this.postImageSlideDirection = 'next';
+        this.postOutgoingImageUrl = null;
+        this.postImageAnimating = false;
+        if (this.postImageAnimationTimeoutId) {
+            clearTimeout(this.postImageAnimationTimeoutId);
+            this.postImageAnimationTimeoutId = null;
+        }
         this.commentDraft = '';
         this.richCommentDraftHtml = '';
         this.commentError = '';
@@ -1052,7 +1228,11 @@ export class SharedCommunityPostPageComponent {
 
         try {
             const loadedPost = await firstValueFrom(this.api.getSharedCommunityPost(postId));
-            this.post = loadedPost;
+            this.post = this.normalizeSharedPost(loadedPost);
+            this.postActiveImageIndex = 0;
+            this.postImageSlideDirection = 'next';
+            this.postOutgoingImageUrl = null;
+            this.postImageAnimating = false;
 
             try {
                 this.community = await firstValueFrom(this.api.getCommunityById(loadedPost.communityId));
@@ -1572,6 +1752,123 @@ export class SharedCommunityPostPageComponent {
 
     private refreshView(): void {
         this.ngZone.run(() => this.cdr.detectChanges());
+    }
+
+    private extractApiErrorMessage(error: unknown, fallback: string): string {
+        if (typeof error === 'object' && error !== null) {
+            const err = error as { error?: { message?: string }; message?: string };
+            const apiMessage = err.error?.message?.trim();
+            if (apiMessage) {
+                return apiMessage;
+            }
+
+            const topMessage = err.message?.trim();
+            if (topMessage) {
+                return topMessage;
+            }
+        }
+
+        return fallback;
+    }
+
+    private transitionToPostImage(nextIndex: number, direction: 'next' | 'prev'): void {
+        const mediaUrls = this.postMediaUrls;
+        if (!mediaUrls.length) {
+            return;
+        }
+
+        const safeNextIndex = Math.min(Math.max(nextIndex, 0), mediaUrls.length - 1);
+        if (safeNextIndex === this.postActiveImageIndex) {
+            return;
+        }
+
+        const currentUrl = this.activePostMediaUrl;
+        this.postImageSlideDirection = direction;
+
+        if (!currentUrl) {
+            this.postActiveImageIndex = safeNextIndex;
+            return;
+        }
+
+        if (this.postImageAnimationTimeoutId) {
+            clearTimeout(this.postImageAnimationTimeoutId);
+            this.postImageAnimationTimeoutId = null;
+        }
+
+        this.postOutgoingImageUrl = currentUrl;
+        this.postImageAnimating = true;
+        this.postActiveImageIndex = safeNextIndex;
+
+        this.postImageAnimationTimeoutId = setTimeout(() => {
+            this.postImageAnimating = false;
+            this.postOutgoingImageUrl = null;
+            this.postImageAnimationTimeoutId = null;
+            this.refreshView();
+        }, this.postImageAnimationMs);
+
+        this.refreshView();
+    }
+
+    private normalizeSharedPost(post: CommunityPostDto): CommunityPostDto {
+        const normalizedImageUrls = (post.imageUrls ?? [])
+            .map(url => this.normalizeMediaUrl(url))
+            .filter((url): url is string => !!url);
+
+        const normalizedPrimaryImage = this.normalizeMediaUrl(post.imageUrl);
+
+        return {
+            ...post,
+            authorImageUrl: this.normalizeMediaUrl(post.authorImageUrl),
+            imageUrl: normalizedPrimaryImage ?? normalizedImageUrls[0],
+            imageUrls: normalizedImageUrls,
+            comments: (post.comments ?? []).map(comment => ({
+                ...comment,
+                authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
+            }))
+        };
+    }
+
+    private normalizeMediaUrl(value?: string | null): string | undefined {
+        const trimmed = value?.trim();
+        if (!trimmed) {
+            return undefined;
+        }
+
+        if (trimmed.startsWith('data:')) {
+            return trimmed;
+        }
+
+        if (trimmed.startsWith('/')) {
+            return this.apiOrigin ? `${this.apiOrigin}${trimmed}` : trimmed;
+        }
+
+        if (!/^https?:\/\//i.test(trimmed)) {
+            if (this.apiOrigin) {
+                const normalizedRelative = trimmed.replace(/^\/+/, '');
+                return `${this.apiOrigin}/${normalizedRelative}`;
+            }
+
+            return trimmed;
+        }
+
+        try {
+            const parsed = new URL(trimmed);
+            if (this.apiOrigin && (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1' || parsed.hostname === '0.0.0.0')) {
+                return `${this.apiOrigin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+            }
+
+            return parsed.toString();
+        } catch {
+            return trimmed;
+        }
+    }
+
+    private resolveApiOrigin(): string {
+        try {
+            return new URL(environment.apiBaseUrl).origin;
+        } catch {
+            return '';
+        }
     }
 
     private shouldSkipDuplicate(signature: string): boolean {

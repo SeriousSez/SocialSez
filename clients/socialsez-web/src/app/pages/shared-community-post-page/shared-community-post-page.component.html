@@ -40,21 +40,53 @@
         <a class="post-link" *ngIf="primaryPostLink as link" [href]="link" target="_blank" rel="noopener noreferrer">{{ link }}</a>
         <p class="content" *ngIf="postBody as body">{{ body }}</p>
 
-        <ng-container *ngIf="item.imageUrl as mediaUrl">
-            <div class="media-frame">
-                <img class="media" [src]="mediaUrl" loading="eager" decoding="async" alt="Shared community post media" (click)="openImageFullscreen(mediaUrl)" />
+        <ng-container *ngIf="activePostMediaUrl as mediaUrl">
+            <div class="post-media-carousel" *ngIf="postMediaUrls.length > 1">
+                <button type="button" class="post-media-nav" (click)="showPreviousPostImage()" [disabled]="!canMovePostImageBack" aria-label="Previous image" title="Previous image">
+                    <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
+                </button>
+                <div class="media-frame">
+                    <div class="media-stack">
+                        <img *ngIf="postImageAnimating && postOutgoingImageUrl as outgoingUrl" class="media media-layer media-outgoing" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="outgoingUrl" loading="eager" decoding="async"
+                            alt="Shared community post media" (click)="openImageFullscreen(outgoingUrl)" />
+                        <ng-container *ngFor="let currentUrl of [mediaUrl]; trackBy: trackByMediaUrl">
+                            <img class="media media-layer media-current" [class.media-incoming]="postImageAnimating" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="currentUrl" loading="eager" decoding="async"
+                                alt="Shared community post media" (click)="openImageFullscreen(currentUrl)" />
+                        </ng-container>
+                    </div>
+                </div>
+                <button type="button" class="post-media-nav" (click)="showNextPostImage()" [disabled]="!canMovePostImageForward" aria-label="Next image" title="Next image">
+                    <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="media-frame" *ngIf="postMediaUrls.length <= 1">
+                <div class="media-stack">
+                    <img *ngIf="postImageAnimating && postOutgoingImageUrl as outgoingUrl" class="media media-layer media-outgoing" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="outgoingUrl" loading="eager" decoding="async"
+                        alt="Shared community post media" (click)="openImageFullscreen(outgoingUrl)" />
+                    <ng-container *ngFor="let currentUrl of [mediaUrl]; trackBy: trackByMediaUrl">
+                        <img class="media media-layer media-current" [class.media-incoming]="postImageAnimating" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="currentUrl" loading="eager" decoding="async"
+                            alt="Shared community post media" (click)="openImageFullscreen(currentUrl)" />
+                    </ng-container>
+                </div>
+            </div>
+
+            <div class="post-media-thumbs" *ngIf="postMediaUrls.length > 1">
+                <button type="button" class="post-media-thumb" *ngFor="let previewUrl of postMediaUrls; index as i; trackBy: trackByMediaUrl" [class.active]="i === postActiveImageIndex" (click)="setActivePostImage(i)">
+                    <img [src]="previewUrl" [alt]="'Image ' + (i + 1)" />
+                </button>
             </div>
         </ng-container>
 
         <section class="poll" *ngIf="item.poll as poll">
             <h4>{{ poll.question }}</h4>
             <div class="poll-options">
-                <div class="poll-option" *ngFor="let option of poll.options">
+                <div class="poll-option" [class.selected]="option.votedByMe" *ngFor="let option of poll.options">
                     <span>{{ option.text }}</span>
-                    <strong>{{ option.voteCount }}</strong>
+                    <span *ngIf="shouldShowPollResults(poll)">{{ option.voteCount }} ({{ getPollOptionPercentage(poll, option.voteCount) }}%)</span>
                 </div>
             </div>
-            <p class="meta">{{ poll.totalVotes }} votes</p>
+            <p class="meta" *ngIf="shouldShowPollResults(poll)">{{ poll.totalVotes }} votes</p>
         </section>
 
         <footer class="post-actions">
@@ -174,9 +206,16 @@
             </div>
         </section>
     </section>
+    <app-community-post-edit-modal [open]="editPostModalOpen" [post]="post" [busy]="updatingPost" [errorMessage]="error" (cancel)="closeEditPostModal()" (save)="submitPostEditAsync($event)"></app-community-post-edit-modal>
 </section>
 
 <div class="image-lightbox" *ngIf="fullscreenImageUrl as imageUrl" role="dialog" aria-modal="true" aria-label="Image preview" (click)="closeImageFullscreen()">
     <button type="button" class="image-lightbox-close" aria-label="Close image preview" (click)="$event.stopPropagation(); closeImageFullscreen()">×</button>
+    <button type="button" class="image-lightbox-nav prev" *ngIf="postMediaUrls.length > 1" [disabled]="!canMoveFullscreenImageBack" aria-label="Previous image" title="Previous image" (click)="$event.stopPropagation(); showPreviousFullscreenImage()">
+        <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
+    </button>
     <img [src]="imageUrl" alt="Fullscreen post image" (click)="$event.stopPropagation()" />
+    <button type="button" class="image-lightbox-nav next" *ngIf="postMediaUrls.length > 1" [disabled]="!canMoveFullscreenImageForward" aria-label="Next image" title="Next image" (click)="$event.stopPropagation(); showNextFullscreenImage()">
+        <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
+    </button>
 </div>

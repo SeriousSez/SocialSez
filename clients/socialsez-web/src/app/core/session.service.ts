@@ -834,6 +834,15 @@ export class SessionService {
             return this.apiOrigin ? `${this.apiOrigin}${trimmed}` : trimmed;
         }
 
+        if (!/^https?:\/\//i.test(trimmed)) {
+            if (this.apiOrigin) {
+                const normalizedRelative = trimmed.replace(/^\/+/, '');
+                return `${this.apiOrigin}/${normalizedRelative}`;
+            }
+
+            return trimmed;
+        }
+
         try {
             const parsed = new URL(trimmed);
             if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
@@ -850,7 +859,7 @@ export class SessionService {
 
             return parsed.toString();
         } catch {
-            return undefined;
+            return trimmed;
         }
     }
 

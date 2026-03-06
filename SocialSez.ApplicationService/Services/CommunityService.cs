@@ -580,14 +580,17 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         if (request.ImageUrls is not null)
         {
             var imageUrls = NormalizePostImageUrls(request.ImageUrls);
-            dbContext.CommunityPostImages.RemoveRange(post.Images);
-            post.Images = imageUrls.Select((url, index) => new CommunityPostImage
+            post.Images.Clear();
+            foreach (var (url, index) in imageUrls.Select((value, i) => (value, i)))
             {
-                Id = Guid.NewGuid(),
-                PostId = post.Id,
-                Url = url,
-                SortOrder = index
-            }).ToArray();
+                post.Images.Add(new CommunityPostImage
+                {
+                    Id = Guid.NewGuid(),
+                    PostId = post.Id,
+                    Url = url,
+                    SortOrder = index
+                });
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(pollQuestion))
@@ -626,13 +629,16 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
                 }
 
                 post.Poll.Question = pollQuestion;
-                dbContext.CommunityPollOptions.RemoveRange(post.Poll.Options);
-                post.Poll.Options = pollOptions.Select(option => new CommunityPollOption
+                post.Poll.Options.Clear();
+                foreach (var option in pollOptions)
                 {
-                    Id = Guid.NewGuid(),
-                    PollId = post.Poll.Id,
-                    Text = option
-                }).ToArray();
+                    post.Poll.Options.Add(new CommunityPollOption
+                    {
+                        Id = Guid.NewGuid(),
+                        PollId = post.Poll.Id,
+                        Text = option
+                    });
+                }
             }
         }
         else if (request.ClearPoll && post.Poll is not null)
@@ -643,7 +649,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
                 throw new ArgumentException("Poll cannot be removed after voting has started.", nameof(request));
             }
 
-            dbContext.CommunityPolls.Remove(post.Poll);
+            post.Poll.Options.Clear();
             post.Poll = null;
         }
 

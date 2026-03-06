@@ -218,6 +218,22 @@ public class CommunitiesController(ICommunityService communityService, ILogger<C
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning(ex, "Invalid operation while updating community post {PostId} in community {CommunityId}.", postId, communityId);
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            var message = ex.InnerException?.Message ?? ex.Message;
+            logger.LogWarning(ex, "Database update error while updating community post {PostId} in community {CommunityId}.", postId, communityId);
+            return BadRequest(new { message });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error while updating community post {PostId} in community {CommunityId}.", postId, communityId);
+            return BadRequest(new { message = "Unable to update post right now. Please try again." });
+        }
     }
 
     [Authorize]

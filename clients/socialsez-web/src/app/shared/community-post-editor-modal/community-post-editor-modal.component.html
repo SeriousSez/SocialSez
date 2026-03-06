@@ -1,0 +1,72 @@
+<div class="compose-modal" *ngIf="open" role="dialog" aria-modal="true" aria-label="Edit community post" (click)="onCancel()">
+    <section class="compose-modal-card" (click)="$event.stopPropagation()">
+        <header class="compose-modal-head">
+            <h3>Edit post</h3>
+            <button type="button" class="close" (click)="onCancel()" [disabled]="busy" aria-label="Close edit post modal">✕</button>
+        </header>
+
+        <label>
+            Title
+            <input type="text" [(ngModel)]="title" maxlength="220" placeholder="Add a title" [disabled]="isBusy" />
+        </label>
+
+        <nav class="composer-tabs" aria-label="Edit post type">
+            <button type="button" [class.active]="tab === 'text'" (click)="setTab('text')">Text</button>
+            <button type="button" [class.active]="tab === 'media'" (click)="setTab('media')">Images &amp; Video</button>
+            <button type="button" [class.active]="tab === 'link'" (click)="setTab('link')">Link</button>
+            <button type="button" [class.active]="tab === 'poll'" (click)="setTab('poll')">Poll</button>
+        </nav>
+
+        <textarea *ngIf="tab === 'text' || tab === 'poll'" [(ngModel)]="content" rows="4" maxlength="5000" placeholder="Update your post..." [disabled]="isBusy"></textarea>
+
+        <section class="composer-media" *ngIf="tab === 'media' || tab === 'link'">
+            <label *ngIf="tab === 'link'">
+                Link URL
+                <input type="url" [(ngModel)]="linkUrl" maxlength="2048" placeholder="https://example.com" [disabled]="isBusy" />
+            </label>
+
+            <label *ngIf="tab === 'media'">
+                Add images (up to 10)
+                <input type="file" accept="image/*" multiple (change)="onEditPostImagesSelected($event)" [disabled]="isBusy || editPostImageEntries.length >= 10" />
+            </label>
+
+            <div class="composer-carousel" *ngIf="tab === 'media' && activeEditPostImagePreviewUrl as activePreview">
+                <button type="button" class="carousel-nav" (click)="showPreviousEditPostImage()" [disabled]="!canMoveEditPostImageBack" aria-label="Previous image">‹</button>
+                <img class="composer-preview" [src]="activePreview" alt="Selected edit image preview" />
+                <button type="button" class="carousel-nav" (click)="showNextEditPostImage()" [disabled]="!canMoveEditPostImageForward" aria-label="Next image">›</button>
+            </div>
+
+            <div class="composer-thumbs" *ngIf="tab === 'media' && editPostImageEntries.length">
+                <button type="button" class="composer-thumb" *ngFor="let entry of editPostImageEntries; index as i" [class.active]="i === editPostActiveImageIndex" (click)="setActiveEditPostImage(i)">
+                    <img [src]="entry.url" [alt]="'Image ' + (i + 1)" />
+                </button>
+                <button type="button" class="ghost" (click)="removeEditPostImage(editPostActiveImageIndex)" [disabled]="isBusy">Remove current</button>
+            </div>
+
+            <textarea [(ngModel)]="mediaContent" rows="4" maxlength="5000" placeholder="Add optional body text..." [disabled]="isBusy"></textarea>
+        </section>
+
+        <div class="poll-editor" *ngIf="tab === 'poll'">
+            <label>
+                Question
+                <input [(ngModel)]="pollQuestion" placeholder="Ask the community..." maxlength="280" [disabled]="isBusy" />
+            </label>
+            <label *ngFor="let option of pollOptions; index as i">
+                Option {{ i + 1 }}
+                <div class="poll-option-row">
+                    <input [(ngModel)]="pollOptions[i]" maxlength="160" placeholder="Option text" [disabled]="isBusy" />
+                    <button type="button" class="ghost" (click)="removePollOption(i)" [disabled]="isBusy || pollOptions.length <= 2">Remove</button>
+                </div>
+            </label>
+            <button type="button" class="ghost" (click)="addPollOption()" [disabled]="isBusy || pollOptions.length >= 6">Add option</button>
+        </div>
+
+        <p class="meta error" *ngIf="validationError">{{ validationError }}</p>
+        <p class="meta error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+        <div class="actions">
+            <button type="button" class="ghost" (click)="onCancel()" [disabled]="isBusy">Cancel</button>
+            <button type="button" (click)="onSave()" [disabled]="isBusy">{{ isBusy ? 'Saving…' : 'Save changes' }}</button>
+        </div>
+    </section>
+</div>

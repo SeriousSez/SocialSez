@@ -67,7 +67,7 @@
                     </div>
                 </div>
                 <div class="post-badges">
-                    <span class="post-badge" *ngIf="post.imageUrl">Image</span>
+                    <span class="post-badge" *ngIf="getPostMediaUrls(post).length">Image</span>
                     <span class="post-badge" *ngIf="post.poll">Poll</span>
                 </div>
             </header>
@@ -76,19 +76,49 @@
             <a class="post-link" *ngIf="getPostPrimaryLink(post) as link" [href]="link" target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()">{{ link }}</a>
             <p class="post-body" *ngIf="post.content">{{ post.content }}</p>
 
-            <div class="post-image-frame" *ngIf="post.imageUrl">
-                <img class="post-image" [src]="post.imageUrl" alt="Post image" (click)="openImageFullscreen(post.imageUrl, $event)" />
-            </div>
+            <ng-container *ngIf="getActivePostImageUrl(post) as activeImageUrl">
+                <div class="post-image-carousel" *ngIf="getPostMediaUrls(post).length > 1">
+                    <button type="button" class="post-image-nav" (click)="showPreviousPostImage(post, $event)" [disabled]="!canMovePostImageBack(post)" aria-label="Previous image" title="Previous image">
+                        <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <div class="post-image-frame">
+                        <img *ngIf="isPostImageAnimating(post) && getPostOutgoingImageUrl(post) as outgoingUrl" class="post-image post-image-layer post-image-outgoing" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'"
+                            [src]="outgoingUrl" alt="Post image" (click)="openImageFullscreen(post, outgoingUrl, $event)" />
+                        <ng-container *ngFor="let currentUrl of [activeImageUrl]; trackBy: trackByMediaUrl">
+                            <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl" alt="Post image"
+                                (click)="openImageFullscreen(post, currentUrl, $event)" />
+                        </ng-container>
+                    </div>
+                    <button type="button" class="post-image-nav" (click)="showNextPostImage(post, $event)" [disabled]="!canMovePostImageForward(post)" aria-label="Next image" title="Next image">
+                        <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <div class="post-image-frame" *ngIf="getPostMediaUrls(post).length <= 1">
+                    <img *ngIf="isPostImageAnimating(post) && getPostOutgoingImageUrl(post) as outgoingUrl" class="post-image post-image-layer post-image-outgoing" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'"
+                        [src]="outgoingUrl" alt="Post image" (click)="openImageFullscreen(post, outgoingUrl, $event)" />
+                    <ng-container *ngFor="let currentUrl of [activeImageUrl]; trackBy: trackByMediaUrl">
+                        <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl" alt="Post image"
+                            (click)="openImageFullscreen(post, currentUrl, $event)" />
+                    </ng-container>
+                </div>
+
+                <div class="post-image-thumbs" *ngIf="getPostMediaUrls(post).length > 1">
+                    <button type="button" class="post-image-thumb" *ngFor="let previewUrl of getPostMediaUrls(post); index as i; trackBy: trackByMediaUrl" [class.active]="i === getPostActiveImageIndex(post)" (click)="setActivePostImage(post, i, $event)">
+                        <img [src]="previewUrl" [alt]="'Image ' + (i + 1)" />
+                    </button>
+                </div>
+            </ng-container>
 
             <section class="poll" *ngIf="post.poll as poll">
                 <h4>{{ poll.question }}</h4>
                 <div class="poll-options">
-                    <button type="button" *ngFor="let option of poll.options" class="ghost poll-option" [class.selected]="option.votedByMe" (click)="$event.stopPropagation(); votePollAsync(post.id, poll.id, option.id)" [disabled]="votingPollId === poll.id || !canPost">
+                    <button type="button" *ngFor="let option of poll.options" class="poll-option" [class.selected]="option.votedByMe" (click)="$event.stopPropagation(); votePollAsync(post.id, poll.id, option.id)" [disabled]="votingPollId === poll.id || !canPost">
                         <span>{{ option.text }}</span>
-                        <strong>{{ option.voteCount }}</strong>
+                        <span *ngIf="shouldShowPollResults(poll)">{{ option.voteCount }} ({{ getPollOptionPercentage(poll, option.voteCount) }}%)</span>
                     </button>
                 </div>
-                <p class="meta">{{ poll.totalVotes }} votes</p>
+                <p class="meta" *ngIf="shouldShowPollResults(poll)">{{ poll.totalVotes }} votes</p>
             </section>
 
             <footer class="post-actions">
@@ -127,7 +157,13 @@
 
 <div class="image-lightbox" *ngIf="fullscreenImageUrl as imageUrl" role="dialog" aria-modal="true" aria-label="Image preview" (click)="closeImageFullscreen()">
     <button type="button" class="image-lightbox-close" aria-label="Close image preview" (click)="$event.stopPropagation(); closeImageFullscreen()">×</button>
+    <button type="button" class="image-lightbox-nav prev" *ngIf="fullscreenImageUrls.length > 1" [disabled]="!canMoveFullscreenImageBack" aria-label="Previous image" title="Previous image" (click)="showPreviousFullscreenImage($event)">
+        <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
+    </button>
     <img [src]="imageUrl" alt="Fullscreen post image" (click)="$event.stopPropagation()" />
+    <button type="button" class="image-lightbox-nav next" *ngIf="fullscreenImageUrls.length > 1" [disabled]="!canMoveFullscreenImageForward" aria-label="Next image" title="Next image" (click)="showNextFullscreenImage($event)">
+        <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
+    </button>
 </div>
 
 <div class="compose-modal" *ngIf="editPostModalOpen" role="dialog" aria-modal="true" aria-label="Edit community post" (click)="closeEditPostModal()">
@@ -249,7 +285,7 @@
             <button type="button" [class.active]="isComposerTab('poll')" (click)="setComposerTab('poll')">Poll</button>
         </nav>
 
-        <textarea *ngIf="isComposerTab('text') || isComposerTab('poll')" [(ngModel)]="composerContent" (ngModelChange)="onComposerChanged()" rows="4" placeholder="Share your thoughts..."></textarea>
+        <textarea *ngIf="isComposerTab('text')" [(ngModel)]="composerContent" (ngModelChange)="onComposerChanged()" rows="4" placeholder="Share your thoughts..."></textarea>
 
         <section class="composer-media" *ngIf="isComposerTab('media') || isComposerTab('link')">
             <label *ngIf="isComposerTab('link')">
@@ -258,7 +294,7 @@
             </label>
 
             <label *ngIf="isComposerTab('media')">
-                Add images (up to 10)
+                Attach images (up to 10)
                 <input type="file" accept="image/*" multiple (change)="onComposerImagesSelected($event)" [disabled]="posting || composerImageFiles.length >= 10" />
             </label>
 
@@ -277,6 +313,9 @@
 
             <textarea [(ngModel)]="composerMediaContent" (ngModelChange)="onComposerChanged()" rows="4" placeholder="Add optional body text..."></textarea>
         </section>
+
+        <p class="meta" *ngIf="!isComposerTab('media') && composerImagePreviewUrls.length">{{ composerImagePreviewUrls.length }} image(s) attached in Images &amp; Video tab.</p>
+        <p class="meta" *ngIf="!isComposerTab('link') && composerLinkUrl.trim()">Link attached in Link tab.</p>
 
         <div class="poll-editor" *ngIf="isComposerTab('poll')">
             <label>
