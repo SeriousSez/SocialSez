@@ -1,0 +1,75 @@
+.blog-shell {
+    --blog-font: Georgia, serif;
+    --blog-accent: #ea580c;
+    --blog-bg: #fff7ed;
+    --blog-surface: #ffffff;
+
+    background: radial-gradient(circle at 20% 8%, #fff 0%, var(--blog-bg) 44%, #ffedd5 100%);
+    border-radius: 18px;
+    padding: 14px;
+}
+
+.post {
+    max-width: 920px;
+    margin: 0 auto;
+    display: grid;
+    gap: 12px;
+    font-family: var(--blog-font);
+    color: #111827;
+}
+
+.post-head {
+    background: var(--blog-surface);
+    border: 1px solid color-mix(in srgb, var(--blog-accent) 20%, #e2e8f0);
+    border-radius: 16px;
+    padding: 14px;
+}
+
+.back-link {
+    text-decoration: none;
+    color: var(--blog-accent);
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.post-head h1,
+.meta {
+    margin: 8px 0 0;
+}
+
+.meta {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.cover {
+    width: 100%;
+    max-height: 420px;
+    object-fit: cover;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+}
+
+.content {
+    white-space: pre-wrap;
+    line-height: 1.7;
+    background: var(--blog-surface);
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.tags span {
+    background: color-mix(in srgb, var(--blog-accent) 12%, #fff);
+    color: #9a3412;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 12px;
+}

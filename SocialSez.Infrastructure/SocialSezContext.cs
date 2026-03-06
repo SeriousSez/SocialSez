@@ -38,6 +38,8 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<CommunityPollOption> CommunityPollOptions => Set<CommunityPollOption>();
     public DbSet<CommunityPollVote> CommunityPollVotes => Set<CommunityPollVote>();
     public DbSet<CommunitySavedPost> CommunitySavedPosts => Set<CommunitySavedPost>();
+    public DbSet<Blog> Blogs => Set<Blog>();
+    public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -682,6 +684,51 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
 
             entity.HasIndex(x => x.ProfileId);
             entity.HasIndex(x => new { x.ProfileId, x.SavedAtUtc });
+        });
+
+        modelBuilder.Entity<Blog>(entity =>
+        {
+            entity.ToTable("Blogs");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Slug).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.Title).HasMaxLength(160).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(1000);
+            entity.Property(x => x.ThemeConfigJson).HasMaxLength(12000);
+            entity.Property(x => x.IsPublic).HasDefaultValue(true);
+
+            entity.HasOne(x => x.OwnerProfile)
+                .WithMany(x => x.Blogs)
+                .HasForeignKey(x => x.OwnerProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.OwnerProfileId, x.Slug }).IsUnique();
+            entity.HasIndex(x => new { x.OwnerProfileId, x.UpdatedAtUtc });
+        });
+
+        modelBuilder.Entity<BlogPost>(entity =>
+        {
+            entity.ToTable("BlogPosts");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Slug).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.Title).HasMaxLength(220).IsRequired();
+            entity.Property(x => x.Content).HasMaxLength(200000).IsRequired();
+            entity.Property(x => x.Excerpt).HasMaxLength(800);
+            entity.Property(x => x.CoverImageUrl).HasMaxLength(2048);
+            entity.Property(x => x.TagsJson).HasMaxLength(4000);
+            entity.Property(x => x.IsPublished).HasDefaultValue(false);
+
+            entity.HasOne(x => x.Blog)
+                .WithMany(x => x.Posts)
+                .HasForeignKey(x => x.BlogId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.AuthorProfile)
+                .WithMany(x => x.BlogPosts)
+                .HasForeignKey(x => x.AuthorProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => new { x.BlogId, x.Slug }).IsUnique();
+            entity.HasIndex(x => new { x.BlogId, x.IsPublished, x.PublishedAtUtc });
         });
     }
 }

@@ -1,0 +1,172 @@
+.head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.head h2 {
+    margin: 0;
+}
+
+.head p {
+    margin: 6px 0 0;
+    color: #64748b;
+}
+
+.back-link {
+    text-decoration: none;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 8px 12px;
+    background: #fff;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.studio {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 14px;
+}
+
+.sidebar,
+.card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px;
+}
+
+.blog-list,
+.post-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.blog-chip,
+.post-chip {
+    border: 1px solid #dbeafe;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: left;
+    display: grid;
+    gap: 2px;
+}
+
+.blog-chip.active,
+.post-chip.active {
+    border-color: #0ea5e9;
+    background: #e0f2fe;
+}
+
+.blog-chip small,
+.post-chip small {
+    color: #64748b;
+}
+
+.editor {
+    display: grid;
+    gap: 12px;
+}
+
+.card {
+    display: grid;
+    gap: 8px;
+}
+
+.card h3,
+.card h4 {
+    margin: 0;
+}
+
+.card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+}
+
+input,
+textarea {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 9px 11px;
+    font: inherit;
+    background: #fff;
+    color: #0f172a;
+}
+
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.checkbox input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.save-btn,
+.new-btn {
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #0284c7;
+    color: #fff;
+}
+
+.form-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.new-btn {
+    background: #f97316;
+}
+
+.danger-btn {
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #dc2626;
+    color: #fff;
+}
+
+.muted {
+    margin: 0;
+    color: #64748b;
+}
+
+@media (max-width: 960px) {
+    .studio {
+        grid-template-columns: 1fr;
+    }
+
+    .theme-grid {
+        grid-template-columns: 1fr;
+    }
+}

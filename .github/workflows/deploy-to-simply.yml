@@ -110,6 +110,29 @@ jobs:
             --output ${{ env.PUBLISH_PATH }}
           echo "publish_path=${{ env.PUBLISH_PATH }}" >> $env:GITHUB_OUTPUT
 
+      - name: Validate published production config
+        shell: pwsh
+        run: |
+          $configPath = Join-Path "${{ env.PUBLISH_PATH }}" "appsettings.Production.json"
+
+          if (-not (Test-Path $configPath)) {
+            throw "appsettings.Production.json was not found in publish output: $configPath"
+          }
+
+          $raw = Get-Content -Path $configPath -Raw
+          if ([string]::IsNullOrWhiteSpace($raw)) {
+            throw "appsettings.Production.json is empty."
+          }
+
+          $json = $raw | ConvertFrom-Json
+          $mysql = $json.ConnectionStrings.MySql
+
+          if ([string]::IsNullOrWhiteSpace($mysql)) {
+            throw "Published appsettings.Production.json has empty ConnectionStrings.MySql."
+          }
+
+          Write-Host "Published config validation passed. ConnectionStrings.MySql is populated."
+
       - name: Upload API artifact
         uses: actions/upload-artifact@v4
         with:

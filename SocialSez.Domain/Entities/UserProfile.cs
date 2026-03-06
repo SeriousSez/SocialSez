@@ -32,6 +32,8 @@ public class UserProfile
     public ICollection<CommunityPostVote> CommunityPostVotes { get; set; } = new List<CommunityPostVote>();
     public ICollection<CommunitySavedPost> SavedCommunityPosts { get; set; } = new List<CommunitySavedPost>();
     public ICollection<CommunityPollVote> CommunityPollVotes { get; set; } = new List<CommunityPollVote>();
+    public ICollection<Blog> Blogs { get; set; } = new List<Blog>();
+    public ICollection<BlogPost> BlogPosts { get; set; } = new List<BlogPost>();
     public ICollection<ProfileFollowRequest> ReceivedFollowRequests { get; set; } = new List<ProfileFollowRequest>();
     public ICollection<ProfileFollowRequest> SentFollowRequests { get; set; } = new List<ProfileFollowRequest>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();

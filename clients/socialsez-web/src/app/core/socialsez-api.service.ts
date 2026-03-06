@@ -4,6 +4,9 @@ import { Observable, catchError, of, switchMap, tap, throwError, timeout } from 
 import { environment } from '../../environments/environment';
 import {
     AuthResponse,
+    BlogDto,
+    BlogPostDto,
+    BlogThemeConfigDto,
     ChatConversationDto,
     CommunityRuleDto,
     ChatMessageDto,
@@ -216,6 +219,50 @@ export class SocialSezApiService {
         const formData = new FormData();
         formData.append('file', file);
         return this.withAutoRefresh(() => this.http.post<UploadImageResponse>(`${this.baseUrl}/uploads/images`, formData, { headers: this.authHeaders() }).pipe(timeout(20000)));
+    }
+
+    getMyBlogs(): Observable<BlogDto[]> {
+        return this.withAutoRefresh(() => this.http.get<BlogDto[]>(`${this.baseUrl}/blogs/mine`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getBlogsByAuthorHandle(handle: string): Observable<BlogDto[]> {
+        return this.http.get<BlogDto[]>(`${this.baseUrl}/blogs/by-author/${encodeURIComponent(handle)}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    getBlogByAuthorAndSlug(handle: string, blogSlug: string): Observable<BlogDto> {
+        return this.http.get<BlogDto>(`${this.baseUrl}/blogs/${encodeURIComponent(handle)}/${encodeURIComponent(blogSlug)}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    getBlogPosts(handle: string, blogSlug: string): Observable<BlogPostDto[]> {
+        return this.http.get<BlogPostDto[]>(`${this.baseUrl}/blogs/${encodeURIComponent(handle)}/${encodeURIComponent(blogSlug)}/posts`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    getBlogPost(handle: string, blogSlug: string, postSlug: string): Observable<BlogPostDto> {
+        return this.http.get<BlogPostDto>(`${this.baseUrl}/blogs/${encodeURIComponent(handle)}/${encodeURIComponent(blogSlug)}/posts/${encodeURIComponent(postSlug)}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    createBlog(title: string, description: string | null, slug: string | null, isPublic: boolean, theme: BlogThemeConfigDto | null): Observable<BlogDto> {
+        return this.withAutoRefresh(() => this.http.post<BlogDto>(`${this.baseUrl}/blogs`, { title, description, slug, isPublic, theme }, { headers: this.authHeaders() }));
+    }
+
+    updateBlog(blogId: string, title: string, description: string | null, slug: string | null, isPublic: boolean, theme: BlogThemeConfigDto | null): Observable<BlogDto> {
+        return this.withAutoRefresh(() => this.http.put<BlogDto>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}`, { title, description, slug, isPublic, theme }, { headers: this.authHeaders() }));
+    }
+
+    deleteBlog(blogId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}`, { headers: this.authHeaders() }));
+    }
+
+    createBlogPost(blogId: string, title: string, content: string, excerpt: string | null, coverImageUrl: string | null, tags: string[] | null, isPublished: boolean, slug: string | null): Observable<BlogPostDto> {
+        return this.withAutoRefresh(() => this.http.post<BlogPostDto>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}/posts`, { title, content, excerpt, coverImageUrl, tags, isPublished, slug }, { headers: this.authHeaders() }));
+    }
+
+    updateBlogPost(blogId: string, postId: string, title: string, content: string, excerpt: string | null, coverImageUrl: string | null, tags: string[] | null, isPublished: boolean, slug: string | null): Observable<BlogPostDto> {
+        return this.withAutoRefresh(() => this.http.put<BlogPostDto>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}/posts/${encodeURIComponent(postId)}`, { title, content, excerpt, coverImageUrl, tags, isPublished, slug }, { headers: this.authHeaders() }));
+    }
+
+    deleteBlogPost(blogId: string, postId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}/posts/${encodeURIComponent(postId)}`, { headers: this.authHeaders() }));
     }
 
     getFeed(take = 25, mode: FeedMode = 'for-you'): Observable<PostDto[]> {

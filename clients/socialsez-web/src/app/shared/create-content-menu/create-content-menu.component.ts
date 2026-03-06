@@ -15,6 +15,7 @@ export class CreateContentMenuComponent {
     @Output() createPost = new EventEmitter<void>();
     @Output() createReel = new EventEmitter<void>();
     @Output() createStory = new EventEmitter<void>();
+    @Output() createBlog = new EventEmitter<void>();
     private toggleHandledByPointer = false;
 
     onTogglePointerDown(event: PointerEvent): void {
@@ -43,5 +44,9 @@ export class CreateContentMenuComponent {
 
     onCreateStory(): void {
         this.createStory.emit();
+    }
+
+    onCreateBlog(): void {
+        this.createBlog.emit();
     }
 }

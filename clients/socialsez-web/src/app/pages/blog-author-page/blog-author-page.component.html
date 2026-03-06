@@ -1,0 +1,27 @@
+<section class="page">
+    <header class="head">
+        <div>
+            <h2>@{{ handle }} blogs</h2>
+            <p>Explore published blogs by this creator.</p>
+        </div>
+        <div class="actions">
+            <a class="link-btn" routerLink="/feed">Feed</a>
+            <a class="link-btn" routerLink="/blogs/studio" *ngIf="isCurrentViewer">Blog Studio</a>
+        </div>
+    </header>
+
+    <p class="error" *ngIf="!loading && error">{{ error }}</p>
+    <p class="muted" *ngIf="loading">Loading blogs...</p>
+
+    <div class="grid" *ngIf="!loading && !error && blogs.length; else emptyState">
+        <a class="card" *ngFor="let blog of blogs; trackBy: trackBlog" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">
+            <h3>{{ blog.title }}</h3>
+            <p *ngIf="blog.description">{{ blog.description }}</p>
+            <small>{{ blog.isPublic ? 'Public' : 'Private' }} · Updated {{ blog.updatedAtUtc | date:'mediumDate' }}</small>
+        </a>
+    </div>
+
+    <ng-template #emptyState>
+        <p class="muted" *ngIf="!loading && !error">No visible blogs yet.</p>
+    </ng-template>
+</section>

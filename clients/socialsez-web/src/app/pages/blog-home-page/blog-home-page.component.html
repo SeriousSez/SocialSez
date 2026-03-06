@@ -1,0 +1,36 @@
+<section class="page blog-shell" [ngStyle]="themeStyles">
+    <style *ngIf="customCss" [textContent]="customCss"></style>
+
+    <p class="error" *ngIf="!loading && error">{{ error }}</p>
+    <p class="muted" *ngIf="loading">Loading blog...</p>
+
+    <div class="blog" *ngIf="!loading && !error && blog as currentBlog">
+        <header class="blog-head" [class.center]="headerLayoutClass === 'center'">
+            <h1>{{ currentBlog.title }}</h1>
+            <p *ngIf="currentBlog.description">{{ currentBlog.description }}</p>
+            <div class="head-links">
+                <a [routerLink]="['/blogs', currentBlog.ownerHandle]">More by @{{ currentBlog.ownerHandle }}</a>
+                <a [routerLink]="['/blogs', 'studio']" *ngIf="currentBlog.isOwner">Edit in Studio</a>
+            </div>
+        </header>
+
+        <section class="post-list" [class.grid]="postLayoutClass === 'grid'" [class.stack]="postLayoutClass !== 'grid'">
+            <article class="post-card" *ngFor="let post of posts; trackBy: trackPost">
+                <img *ngIf="post.coverImageUrl" [src]="post.coverImageUrl" [alt]="post.title" />
+                <h2>
+                    <a [routerLink]="['/blogs', currentBlog.ownerHandle, currentBlog.slug, post.slug]">{{ post.title }}</a>
+                </h2>
+                <p *ngIf="post.excerpt">{{ post.excerpt }}</p>
+                <div class="meta">
+                    <span>{{ (post.publishedAtUtc ?? post.updatedAtUtc) | date:'mediumDate' }}</span>
+                    <span *ngIf="!post.isPublished" class="draft">Draft</span>
+                </div>
+                <div class="tags" *ngIf="post.tags.length">
+                    <span *ngFor="let tag of post.tags">#{{ tag }}</span>
+                </div>
+            </article>
+        </section>
+
+        <p class="muted" *ngIf="!posts.length">No posts yet.</p>
+    </div>
+</section>

@@ -4,6 +4,9 @@ import { ReplaySubject, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
     AuthResponse,
+    BlogDto,
+    BlogPostDto,
+    BlogThemeConfigDto,
     ChatConversationDto,
     CommunityRuleDto,
     ChatMessageDto,
@@ -569,6 +572,67 @@ export class SessionService {
         return normalized;
     }
 
+    async createBlogAsync(title: string, description: string | null, slug: string | null, isPublic: boolean, theme: BlogThemeConfigDto | null): Promise<BlogDto> {
+        const created = await firstValueFrom(this.api.createBlog(title, description, slug, isPublic, theme));
+        return this.normalizeBlog(created);
+    }
+
+    async updateBlogAsync(blogId: string, title: string, description: string | null, slug: string | null, isPublic: boolean, theme: BlogThemeConfigDto | null): Promise<BlogDto> {
+        const updated = await firstValueFrom(this.api.updateBlog(blogId, title, description, slug, isPublic, theme));
+        return this.normalizeBlog(updated);
+    }
+
+    async deleteBlogAsync(blogId: string): Promise<void> {
+        await firstValueFrom(this.api.deleteBlog(blogId));
+    }
+
+    async loadMyBlogsAsync(): Promise<BlogDto[]> {
+        const blogs = await firstValueFrom(this.api.getMyBlogs());
+        return blogs.map(blog => this.normalizeBlog(blog));
+    }
+
+    async loadBlogsByAuthorHandleAsync(handle: string): Promise<BlogDto[]> {
+        const blogs = await firstValueFrom(this.api.getBlogsByAuthorHandle(handle));
+        return blogs.map(blog => this.normalizeBlog(blog));
+    }
+
+    async loadBlogByAuthorAndSlugAsync(handle: string, blogSlug: string): Promise<BlogDto | null> {
+        try {
+            const blog = await firstValueFrom(this.api.getBlogByAuthorAndSlug(handle, blogSlug));
+            return this.normalizeBlog(blog);
+        } catch {
+            return null;
+        }
+    }
+
+    async createBlogPostAsync(blogId: string, title: string, content: string, excerpt: string | null, coverImageUrl: string | null, tags: string[] | null, isPublished: boolean, slug: string | null): Promise<BlogPostDto> {
+        const created = await firstValueFrom(this.api.createBlogPost(blogId, title, content, excerpt, coverImageUrl, tags, isPublished, slug));
+        return this.normalizeBlogPost(created);
+    }
+
+    async updateBlogPostAsync(blogId: string, postId: string, title: string, content: string, excerpt: string | null, coverImageUrl: string | null, tags: string[] | null, isPublished: boolean, slug: string | null): Promise<BlogPostDto> {
+        const updated = await firstValueFrom(this.api.updateBlogPost(blogId, postId, title, content, excerpt, coverImageUrl, tags, isPublished, slug));
+        return this.normalizeBlogPost(updated);
+    }
+
+    async deleteBlogPostAsync(blogId: string, postId: string): Promise<void> {
+        await firstValueFrom(this.api.deleteBlogPost(blogId, postId));
+    }
+
+    async loadBlogPostsAsync(handle: string, blogSlug: string): Promise<BlogPostDto[]> {
+        const posts = await firstValueFrom(this.api.getBlogPosts(handle, blogSlug));
+        return posts.map(post => this.normalizeBlogPost(post));
+    }
+
+    async loadBlogPostAsync(handle: string, blogSlug: string, postSlug: string): Promise<BlogPostDto | null> {
+        try {
+            const post = await firstValueFrom(this.api.getBlogPost(handle, blogSlug, postSlug));
+            return this.normalizeBlogPost(post);
+        } catch {
+            return null;
+        }
+    }
+
     async createCommunityPostAsync(
         communityId: string,
         title: string | null,
@@ -811,6 +875,25 @@ export class SessionService {
                 ...comment,
                 authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
             }))
+        };
+    }
+
+    private normalizeBlog(blog: BlogDto): BlogDto {
+        return {
+            ...blog,
+            ownerHandle: (blog.ownerHandle ?? '').trim().toLowerCase(),
+            theme: {
+                ...blog.theme,
+                customCss: blog.theme?.customCss ?? undefined
+            }
+        };
+    }
+
+    private normalizeBlogPost(post: BlogPostDto): BlogPostDto {
+        return {
+            ...post,
+            authorHandle: (post.authorHandle ?? '').trim().toLowerCase(),
+            coverImageUrl: this.normalizeMediaUrl(post.coverImageUrl)
         };
     }
 

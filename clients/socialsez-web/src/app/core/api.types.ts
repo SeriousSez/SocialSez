@@ -286,6 +286,49 @@ export interface CommunityRuleDto {
     description?: string;
 }
 
+export interface BlogThemeConfigDto {
+    fontFamily?: string;
+    accentColor?: string;
+    backgroundColor?: string;
+    surfaceColor?: string;
+    headerLayout?: string;
+    postListLayout?: string;
+    customCss?: string;
+}
+
+export interface BlogDto {
+    id: string;
+    ownerProfileId: string;
+    ownerHandle: string;
+    slug: string;
+    title: string;
+    description?: string;
+    isPublic: boolean;
+    theme: BlogThemeConfigDto;
+    createdAtUtc: string;
+    updatedAtUtc: string;
+    isOwner: boolean;
+}
+
+export interface BlogPostDto {
+    id: string;
+    blogId: string;
+    blogSlug: string;
+    authorProfileId: string;
+    authorHandle: string;
+    slug: string;
+    title: string;
+    content: string;
+    excerpt?: string;
+    coverImageUrl?: string;
+    tags: string[];
+    isPublished: boolean;
+    createdAtUtc: string;
+    updatedAtUtc: string;
+    publishedAtUtc?: string;
+    isOwner: boolean;
+}
+
 export interface CommunityDto {
     id: string;
     slug: string;

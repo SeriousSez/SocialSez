@@ -1,0 +1,129 @@
+<section class="page">
+    <header class="head">
+        <div>
+            <h2>Blog Studio</h2>
+            <p>Build and customize your blog, then publish posts.</p>
+        </div>
+        <a routerLink="/feed" class="back-link">Back to Feed</a>
+    </header>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+
+    <section class="studio" *ngIf="!loading">
+        <aside class="sidebar">
+            <button class="new-btn" type="button" (click)="startNewBlog()">+ New Blog</button>
+
+            <div class="blog-list" *ngIf="blogs.length; else noBlogs">
+                <button type="button" class="blog-chip" *ngFor="let blog of blogs; trackBy: trackBlog" [class.active]="blog.id === selectedBlogId" (click)="selectBlogAsync(blog.id)">
+                    <span>{{ blog.title }}</span>
+                    <small>@{{ blog.ownerHandle }}/{{ blog.slug }}</small>
+                </button>
+            </div>
+
+            <ng-template #noBlogs>
+                <p class="muted">No blogs yet. Create your first one.</p>
+            </ng-template>
+        </aside>
+
+        <div class="editor">
+            <section class="card">
+                <h3>{{ selectedBlog ? 'Edit Blog' : 'Create Blog' }}</h3>
+
+                <label>Title</label>
+                <input type="text" [(ngModel)]="blogForm.title" maxlength="160" placeholder="My design notes" />
+
+                <label>Description</label>
+                <textarea rows="3" [(ngModel)]="blogForm.description" maxlength="1000" placeholder="What this blog is about"></textarea>
+
+                <label>Slug</label>
+                <input type="text" [(ngModel)]="blogForm.slug" maxlength="80" placeholder="design-notes" />
+
+                <label class="checkbox">
+                    <input type="checkbox" [(ngModel)]="blogForm.isPublic" />
+                    Public blog
+                </label>
+
+                <h4>Theme</h4>
+                <div class="theme-grid">
+                    <div>
+                        <label>Font family</label>
+                        <input type="text" [(ngModel)]="blogForm.fontFamily" placeholder="Georgia, serif" />
+                    </div>
+                    <div>
+                        <label>Accent color</label>
+                        <input type="text" [(ngModel)]="blogForm.accentColor" placeholder="#ea580c" />
+                    </div>
+                    <div>
+                        <label>Background color</label>
+                        <input type="text" [(ngModel)]="blogForm.backgroundColor" placeholder="#fff7ed" />
+                    </div>
+                    <div>
+                        <label>Surface color</label>
+                        <input type="text" [(ngModel)]="blogForm.surfaceColor" placeholder="#ffffff" />
+                    </div>
+                    <div>
+                        <label>Header layout</label>
+                        <input type="text" [(ngModel)]="blogForm.headerLayout" placeholder="center" />
+                    </div>
+                    <div>
+                        <label>Post list layout</label>
+                        <input type="text" [(ngModel)]="blogForm.postListLayout" placeholder="grid" />
+                    </div>
+                </div>
+
+                <label>Custom CSS</label>
+                <textarea rows="5" [(ngModel)]="blogForm.customCss" maxlength="12000" placeholder=".post-card { border-radius: 20px; }"></textarea>
+
+                <div class="form-actions">
+                    <button class="save-btn" type="button" [disabled]="savingBlog || deletingBlog" (click)="saveBlogAsync()">{{ savingBlog ? 'Saving...' : 'Save Blog' }}</button>
+                    <button class="danger-btn" type="button" *ngIf="selectedBlog" [disabled]="savingBlog || deletingBlog" (click)="deleteSelectedBlogAsync()">{{ deletingBlog ? 'Deleting...' : 'Delete Blog' }}</button>
+                </div>
+            </section>
+
+            <section class="card" *ngIf="selectedBlog as blog">
+                <div class="card-head">
+                    <h3>Posts for {{ blog.title }}</h3>
+                    <button class="new-btn" type="button" (click)="startNewPost()">+ New Post</button>
+                </div>
+
+                <p class="error" *ngIf="postError">{{ postError }}</p>
+                <p class="muted" *ngIf="loadingPosts">Loading posts...</p>
+
+                <div class="post-list" *ngIf="!loadingPosts && posts.length">
+                    <button type="button" class="post-chip" *ngFor="let post of posts; trackBy: trackPost" [class.active]="post.id === editingPostId" (click)="editPost(post)">
+                        <span>{{ post.title }}</span>
+                        <small>{{ post.isPublished ? 'Published' : 'Draft' }}</small>
+                    </button>
+                </div>
+
+                <label>Post title</label>
+                <input type="text" [(ngModel)]="postForm.title" maxlength="220" placeholder="How I redesigned my profile page" />
+
+                <label>Post slug</label>
+                <input type="text" [(ngModel)]="postForm.slug" maxlength="120" placeholder="profile-redesign" />
+
+                <label>Excerpt</label>
+                <textarea rows="2" [(ngModel)]="postForm.excerpt" maxlength="800" placeholder="A short teaser for listings"></textarea>
+
+                <label>Cover image URL</label>
+                <input type="text" [(ngModel)]="postForm.coverImageUrl" maxlength="2048" placeholder="/uploads/images/post-cover.jpg" />
+
+                <label>Tags (comma separated)</label>
+                <input type="text" [(ngModel)]="postForm.tags" placeholder="ui, angular, personal" />
+
+                <label>Content</label>
+                <textarea rows="10" [(ngModel)]="postForm.content" maxlength="200000" placeholder="Write your article content here"></textarea>
+
+                <label class="checkbox">
+                    <input type="checkbox" [(ngModel)]="postForm.isPublished" />
+                    Published
+                </label>
+
+                <div class="form-actions">
+                    <button class="save-btn" type="button" [disabled]="savingPost || deletingPost" (click)="savePostAsync()">{{ savingPost ? 'Saving...' : (editingPostId ? 'Update Post' : 'Create Post') }}</button>
+                    <button class="danger-btn" type="button" *ngIf="editingPostId" [disabled]="savingPost || deletingPost" (click)="deleteEditingPostAsync()">{{ deletingPost ? 'Deleting...' : 'Delete Post' }}</button>
+                </div>
+            </section>
+        </div>
+    </section>
+</section>

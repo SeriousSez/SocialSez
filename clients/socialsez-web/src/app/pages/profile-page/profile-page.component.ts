@@ -685,6 +685,15 @@ export class ProfilePageComponent implements OnDestroy {
         this.showReelComposer = true;
     }
 
+    openBlogStudio(): void {
+        if (!this.isOwnProfile) {
+            return;
+        }
+
+        this.createMenuOpen = false;
+        void this.router.navigate(['/blogs/studio']);
+    }
+
     onReelComposerClosed(): void {
         this.showReelComposer = false;
     }

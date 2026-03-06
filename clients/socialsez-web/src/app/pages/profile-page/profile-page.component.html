@@ -52,7 +52,7 @@
                 <div class="hero-actions">
                     <ng-container *ngIf="isOwnProfile; else followActions">
                         <div class="hero-actions-own">
-                            <app-create-content-menu [open]="createMenuOpen" (toggle)="toggleCreateMenu($event)" (createPost)="openComposer()" (createReel)="openReelComposer()" (createStory)="openStoryComposer()"></app-create-content-menu>
+                            <app-create-content-menu [open]="createMenuOpen" (toggle)="toggleCreateMenu($event)" (createPost)="openComposer()" (createReel)="openReelComposer()" (createStory)="openStoryComposer()" (createBlog)="openBlogStudio()"></app-create-content-menu>
 
                             <button type="button" class="hero-icon-link" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? 'Profile link copied' : 'Copy profile link'" [attr.title]="profileLinkCopied ? 'Copied' : 'Copy profile link'">
                                 <i class="fa-duotone" [class.fa-light]="!profileLinkCopied" [class.fa-solid]="profileLinkCopied" [class.fa-share-nodes]="!profileLinkCopied" [class.fa-check]="profileLinkCopied" aria-hidden="true"></i>
