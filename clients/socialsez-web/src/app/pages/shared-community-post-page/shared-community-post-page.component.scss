@@ -168,19 +168,19 @@
 }
 
 .media-current.media-incoming.slide-next {
-    animation: post-media-in-next 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    animation: post-media-in-next 320ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 .media-current.media-incoming.slide-prev {
-    animation: post-media-in-prev 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    animation: post-media-in-prev 320ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 .media-outgoing.slide-next {
-    animation: post-media-out-next 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    animation: post-media-out-next 320ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 .media-outgoing.slide-prev {
-    animation: post-media-out-prev 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    animation: post-media-out-prev 320ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 .post-media-carousel {

@@ -407,19 +407,19 @@ textarea {
 }
 
 .post-image-current.post-image-incoming.slide-next {
-    animation: post-image-in-next 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    animation: post-image-in-next 320ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 .post-image-current.post-image-incoming.slide-prev {
-    animation: post-image-in-prev 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    animation: post-image-in-prev 320ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 .post-image-outgoing.slide-next {
-    animation: post-image-out-next 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    animation: post-image-out-next 320ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 .post-image-outgoing.slide-prev {
-    animation: post-image-out-prev 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    animation: post-image-out-prev 320ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 .post-image-thumbs {
