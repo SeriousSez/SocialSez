@@ -86,8 +86,8 @@
                             <img *ngIf="isPostImageAnimating(post) && getPostOutgoingImageUrl(post) as outgoingUrl" class="post-image post-image-layer post-image-outgoing" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'"
                                 [src]="outgoingUrl" alt="Post image" (click)="openImageFullscreen(post, outgoingUrl, $event)" />
                             <ng-container *ngFor="let currentUrl of [activeImageUrl]; trackBy: trackByMediaUrl">
-                                <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl" alt="Post image"
-                                    (click)="openImageFullscreen(post, currentUrl, $event)" />
+                                <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl"
+                                    alt="Post image" (click)="openImageFullscreen(post, currentUrl, $event)" />
                             </ng-container>
                         </div>
                     </div>
