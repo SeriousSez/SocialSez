@@ -719,15 +719,23 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
         {
             var imageUrls = NormalizePostImageUrls(request.ImageUrls);
 
-            // Use set-based delete to avoid tracked collection concurrency mismatches.
+            // Detach tracked image rows first so SaveChanges does not try to persist stale entries
+            // that were already removed by ExecuteDeleteAsync.
+            foreach (var existingImage in post.Images.ToArray())
+            {
+                dbContext.Entry(existingImage).State = EntityState.Detached;
+            }
+
+            post.Images.Clear();
+
             await dbContext.CommunityPostImages
                 .Where(x => x.PostId == post.Id)
                 .ExecuteDeleteAsync(cancellationToken);
 
-            post.Images = new List<CommunityPostImage>();
+            var updatedImages = new List<CommunityPostImage>();
             foreach (var (url, index) in imageUrls.Select((value, i) => (value, i)))
             {
-                post.Images.Add(new CommunityPostImage
+                updatedImages.Add(new CommunityPostImage
                 {
                     Id = Guid.NewGuid(),
                     PostId = post.Id,
@@ -735,6 +743,13 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                     SortOrder = index
                 });
             }
+
+            if (updatedImages.Count > 0)
+            {
+                await dbContext.CommunityPostImages.AddRangeAsync(updatedImages, cancellationToken);
+            }
+
+            post.Images = updatedImages;
         }
 
         if (!string.IsNullOrWhiteSpace(pollQuestion))
