@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommentDto, PostDto, PostReactionDetailDto, ProfileDto } from '../../core/api.types';
@@ -142,6 +142,9 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     mentionTarget: 'post-edit' | 'comment-new' | 'comment-edit' | null = null;
     mentionTargetCommentId: string | null = null;
     copyLinkCopied = false;
+    fullscreenImageUrl: string | null = null;
+    fullscreenImageUrls: string[] = [];
+    fullscreenImageIndex = 0;
     private readonly expandedCommentReplyRootIds = new Set<string>();
     private mentionRangeStart = -1;
     private mentionRangeEnd = -1;
@@ -150,6 +153,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     private reactionsModalCloseTimerId: number | null = null;
     private reactionsModalResizeTimerId: number | null = null;
     private mentionSearchToken = 0;
+    private activePostImageIndex = 0;
     private readonly pointerHandledActionKeys = new Map<string, number>();
     @ViewChild('reactionsModalList') private reactionsModalListRef?: ElementRef<HTMLDivElement>;
 
@@ -194,6 +198,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         this.commentsOpen = PostCardComponent.OpenCommentPostIds.has(nextPostId);
         this.replyingToCommentId = null;
         this.expandedCommentReplyRootIds.clear();
+        this.activePostImageIndex = 0;
 
     }
 
@@ -987,6 +992,177 @@ export class PostCardComponent implements OnChanges, OnDestroy {
 
         const fallback = this.post?.imageUrl?.trim();
         return fallback ? [fallback] : [];
+    }
+
+    hasOnlyImageMedia(mediaUrls: string[]): boolean {
+        return mediaUrls.length > 0 && mediaUrls.every(url => !this.isVideoMedia(url));
+    }
+
+    activePostImageUrl(mediaUrls: string[]): string | null {
+        if (!mediaUrls.length) {
+            return null;
+        }
+
+        return mediaUrls[this.normalizeActivePostImageIndex(mediaUrls)] ?? null;
+    }
+
+    getPostActiveImageIndex(mediaUrls: string[]): number {
+        return this.normalizeActivePostImageIndex(mediaUrls);
+    }
+
+    canMovePostImageBack(mediaUrls: string[]): boolean {
+        return this.normalizeActivePostImageIndex(mediaUrls) > 0;
+    }
+
+    canMovePostImageForward(mediaUrls: string[]): boolean {
+        if (!mediaUrls.length) {
+            return false;
+        }
+
+        return this.normalizeActivePostImageIndex(mediaUrls) < mediaUrls.length - 1;
+    }
+
+    showPreviousPostImage(mediaUrls: string[], event?: Event): void {
+        event?.stopPropagation();
+        const currentIndex = this.normalizeActivePostImageIndex(mediaUrls);
+        if (currentIndex <= 0) {
+            return;
+        }
+
+        this.activePostImageIndex = currentIndex - 1;
+    }
+
+    showNextPostImage(mediaUrls: string[], event?: Event): void {
+        event?.stopPropagation();
+        const currentIndex = this.normalizeActivePostImageIndex(mediaUrls);
+        if (currentIndex >= mediaUrls.length - 1) {
+            return;
+        }
+
+        this.activePostImageIndex = currentIndex + 1;
+    }
+
+    setActivePostImage(mediaUrls: string[], index: number, event?: Event): void {
+        event?.stopPropagation();
+        if (!mediaUrls.length) {
+            this.activePostImageIndex = 0;
+            return;
+        }
+
+        this.activePostImageIndex = Math.min(Math.max(index, 0), mediaUrls.length - 1);
+    }
+
+    openImageFullscreen(mediaUrls: string[], imageUrl: string, event: Event): void {
+        event.stopPropagation();
+        if (!mediaUrls.length) {
+            this.fullscreenImageUrls = [];
+            this.fullscreenImageIndex = 0;
+            this.fullscreenImageUrl = imageUrl;
+            return;
+        }
+
+        const clickedIndex = mediaUrls.findIndex(url => url === imageUrl);
+        const fallbackIndex = this.getPostActiveImageIndex(mediaUrls);
+        this.fullscreenImageIndex = clickedIndex >= 0 ? clickedIndex : fallbackIndex;
+        this.fullscreenImageUrls = mediaUrls;
+        this.fullscreenImageUrl = mediaUrls[this.fullscreenImageIndex] ?? imageUrl;
+    }
+
+    get canMoveFullscreenImageBack(): boolean {
+        return this.fullscreenImageIndex > 0;
+    }
+
+    get canMoveFullscreenImageForward(): boolean {
+        return this.fullscreenImageIndex < this.fullscreenImageUrls.length - 1;
+    }
+
+    showPreviousFullscreenImage(event?: Event): void {
+        event?.stopPropagation();
+        if (!this.canMoveFullscreenImageBack) {
+            return;
+        }
+
+        this.fullscreenImageIndex -= 1;
+        this.fullscreenImageUrl = this.fullscreenImageUrls[this.fullscreenImageIndex] ?? this.fullscreenImageUrl;
+    }
+
+    showNextFullscreenImage(event?: Event): void {
+        event?.stopPropagation();
+        if (!this.canMoveFullscreenImageForward) {
+            return;
+        }
+
+        this.fullscreenImageIndex += 1;
+        this.fullscreenImageUrl = this.fullscreenImageUrls[this.fullscreenImageIndex] ?? this.fullscreenImageUrl;
+    }
+
+    closeImageFullscreen(): void {
+        this.fullscreenImageUrl = null;
+        this.fullscreenImageUrls = [];
+        this.fullscreenImageIndex = 0;
+    }
+
+    postMediaGridClass(mediaUrls: string[]): string {
+        const count = mediaUrls.length;
+        if (count <= 2) {
+            return 'count-2';
+        }
+
+        if (count === 3) {
+            return 'count-3';
+        }
+
+        return 'count-4';
+    }
+
+    visiblePostMediaUrls(mediaUrls: string[]): string[] {
+        if (mediaUrls.length <= 4) {
+            return mediaUrls;
+        }
+
+        return mediaUrls.slice(0, 4);
+    }
+
+    hiddenPostMediaCount(mediaUrls: string[]): number {
+        return Math.max(0, mediaUrls.length - 4);
+    }
+
+    @HostListener('document:keydown', ['$event'])
+    onDocumentKeydown(event: KeyboardEvent): void {
+        if (!this.fullscreenImageUrl) {
+            return;
+        }
+
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            this.closeImageFullscreen();
+            return;
+        }
+
+        if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            this.showPreviousFullscreenImage();
+            return;
+        }
+
+        if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            this.showNextFullscreenImage();
+        }
+    }
+
+    private normalizeActivePostImageIndex(mediaUrls: string[]): number {
+        if (!mediaUrls.length) {
+            this.activePostImageIndex = 0;
+            return 0;
+        }
+
+        const normalized = Math.min(Math.max(this.activePostImageIndex, 0), mediaUrls.length - 1);
+        if (normalized !== this.activePostImageIndex) {
+            this.activePostImageIndex = normalized;
+        }
+
+        return normalized;
     }
 
     navigateToHashtag(hashtag: string, event: MouseEvent): void {
