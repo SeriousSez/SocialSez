@@ -9,7 +9,7 @@ namespace SocialSez.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CommunitiesController(ICommunityService communityService, ILogger<CommunitiesController> logger) : ControllerBase
+public class CommunitiesController(ICommunityService communityService, ISafetyService safetyService, ILogger<CommunitiesController> logger) : ControllerBase
 {
     [Authorize]
     [HttpPost]
@@ -186,6 +186,26 @@ public class CommunitiesController(ICommunityService communityService, ILogger<C
 
         try
         {
+            var scan = await safetyService.ScanContentAsync(
+                profileId,
+                new ContentModerationScanRequestDto(
+                    request.Content,
+                    request.LinkUrl,
+                    communityId,
+                    null,
+                    "CommunityPost"),
+                cancellationToken);
+
+            if (scan.IsThrottled)
+            {
+                return StatusCode(StatusCodes.Status429TooManyRequests, new
+                {
+                    message = "Posting is temporarily throttled for safety. Please wait and try again.",
+                    retryAfterSeconds = scan.RecommendedRetryAfterSeconds,
+                    moderation = scan
+                });
+            }
+
             var created = await communityService.CreatePostAsync(
                 communityId,
                 new CreateCommunityPostRequest(profileId, request.Title, request.LinkUrl, request.Content, request.MediaContent, request.ImageUrls, request.PollQuestion, request.PollOptions),

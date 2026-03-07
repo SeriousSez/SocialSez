@@ -24,6 +24,31 @@ public class SafetyController(ISafetyService safetyService) : ControllerBase
     }
 
     [Authorize]
+    [HttpGet("reputation")]
+    public async Task<ActionResult<ReputationScoreDto>> GetReputation([FromQuery] Guid profileId, CancellationToken cancellationToken)
+    {
+        var reputation = await safetyService.GetReputationScoreAsync(profileId, cancellationToken);
+        return reputation is null ? NotFound() : Ok(reputation);
+    }
+
+    [Authorize]
+    [HttpPost("scan")]
+    public async Task<ActionResult<ContentModerationScanResultDto>> Scan([FromBody] ScanRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await safetyService.ScanContentAsync(
+            profileId,
+            new ContentModerationScanRequestDto(request.Content, request.LinkUrl, request.CommunityId, request.SourceEntityId, request.SourceType),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [Authorize]
     [HttpGet("blocked")]
     public async Task<ActionResult<IReadOnlyCollection<ProfileDto>>> GetBlocked([FromQuery] int take = 100, CancellationToken cancellationToken = default)
     {
@@ -214,6 +239,260 @@ public class SafetyController(ISafetyService safetyService) : ControllerBase
         return success ? NoContent() : BadRequest(new { message = "Could not submit report." });
     }
 
+    [Authorize]
+    [HttpGet("moderation-queue")]
+    public async Task<ActionResult<IReadOnlyCollection<ModerationQueueItemDto>>> GetModerationQueue(
+        [FromQuery] Guid? communityId,
+        [FromQuery] string? status = "Open",
+        [FromQuery] int take = 100,
+        CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var items = await safetyService.GetModerationQueueAsync(profileId, communityId, status, take, cancellationToken);
+            return Ok(items);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("moderation-queue/{queueItemId:guid}/resolve")]
+    public async Task<ActionResult<ModerationQueueItemDto>> ResolveModerationQueueItem(Guid queueItemId, [FromBody] ResolveModerationQueueItemRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var resolved = await safetyService.ResolveModerationQueueItemAsync(
+                queueItemId,
+                profileId,
+                new ResolveModerationQueueItemRequestDto(request.Resolution, request.ResolutionNote),
+                cancellationToken);
+
+            return resolved is null ? NotFound() : Ok(resolved);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpGet("community/{communityId:guid}/settings")]
+    public async Task<ActionResult<CommunityModerationSettingsDto>> GetCommunitySettings(Guid communityId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var settings = await safetyService.GetCommunityModerationSettingsAsync(communityId, profileId, cancellationToken);
+            return settings is null ? NotFound() : Ok(settings);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [Authorize]
+    [HttpPut("community/{communityId:guid}/settings")]
+    public async Task<ActionResult<CommunityModerationSettingsDto>> UpdateCommunitySettings(Guid communityId, [FromBody] UpdateCommunityModerationSettingsRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await safetyService.UpdateCommunityModerationSettingsAsync(
+                communityId,
+                profileId,
+                new UpdateCommunityModerationSettingsRequestDto(
+                    request.RulePreset,
+                    request.AutoModerationEnabled,
+                    request.SpamThreshold,
+                    request.LinkRiskThreshold,
+                    request.KeywordFilters),
+                cancellationToken);
+
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpGet("community/{communityId:guid}/shadow-mutes")]
+    public async Task<ActionResult<IReadOnlyCollection<CommunityShadowMuteDto>>> GetCommunityShadowMutes(Guid communityId, [FromQuery] int take = 100, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var mutes = await safetyService.GetCommunityShadowMutesAsync(communityId, profileId, take, cancellationToken);
+            return Ok(mutes);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [Authorize]
+    [HttpPost("community/{communityId:guid}/shadow-mutes")]
+    public async Task<ActionResult<CommunityShadowMuteDto>> AddCommunityShadowMute(Guid communityId, [FromBody] CreateCommunityShadowMuteRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var mute = await safetyService.AddCommunityShadowMuteAsync(
+                communityId,
+                profileId,
+                new CreateCommunityShadowMuteRequestDto(request.TargetProfileId, request.Reason, request.ExpiresAtUtc),
+                cancellationToken);
+
+            return mute is null ? NotFound() : Ok(mute);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpDelete("community/{communityId:guid}/shadow-mutes")]
+    public async Task<ActionResult> RemoveCommunityShadowMute(Guid communityId, [FromQuery] Guid targetProfileId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var removed = await safetyService.RemoveCommunityShadowMuteAsync(communityId, profileId, targetProfileId, cancellationToken);
+            return removed ? NoContent() : NotFound();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [Authorize]
+    [HttpPost("community/{communityId:guid}/ban-appeals")]
+    public async Task<ActionResult<CommunityBanAppealDto>> SubmitCommunityBanAppeal(Guid communityId, [FromBody] CreateCommunityBanAppealRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var appeal = await safetyService.SubmitCommunityBanAppealAsync(communityId, profileId, new CreateCommunityBanAppealRequestDto(request.Reason), cancellationToken);
+            return appeal is null ? NotFound() : Ok(appeal);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpGet("community/{communityId:guid}/ban-appeals")]
+    public async Task<ActionResult<IReadOnlyCollection<CommunityBanAppealDto>>> GetCommunityBanAppeals(Guid communityId, [FromQuery] string? status = null, [FromQuery] int take = 100, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var appeals = await safetyService.GetCommunityBanAppealsAsync(communityId, profileId, status, take, cancellationToken);
+            return Ok(appeals);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("community/{communityId:guid}/ban-appeals/{appealId:guid}/resolve")]
+    public async Task<ActionResult<CommunityBanAppealDto>> ResolveCommunityBanAppeal(Guid communityId, Guid appealId, [FromBody] ResolveCommunityBanAppealRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var resolved = await safetyService.ResolveCommunityBanAppealAsync(
+                communityId,
+                profileId,
+                appealId,
+                new ResolveCommunityBanAppealRequestDto(request.Approved, request.ResolutionNote),
+                cancellationToken);
+
+            return resolved is null ? NotFound() : Ok(resolved);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
     public sealed record TargetProfileRequest(Guid TargetProfileId);
 
     public sealed record ReportRequest(Guid TargetProfileId, string Reason, string? Details);
@@ -229,6 +508,18 @@ public class SafetyController(ISafetyService safetyService) : ControllerBase
     public sealed record ReportReelCommentRequest(Guid TargetReelCommentId, string Reason, string? Details);
 
     public sealed record ReportMessageRequest(Guid TargetMessageId, string Reason, string? Details);
+
+    public sealed record ScanRequest(string? Content, string? LinkUrl, Guid? CommunityId, Guid? SourceEntityId, string? SourceType);
+
+    public sealed record ResolveModerationQueueItemRequest(string Resolution, string? ResolutionNote);
+
+    public sealed record UpdateCommunityModerationSettingsRequest(string RulePreset, bool AutoModerationEnabled, int SpamThreshold, int LinkRiskThreshold, IReadOnlyCollection<string>? KeywordFilters);
+
+    public sealed record CreateCommunityShadowMuteRequest(Guid TargetProfileId, string? Reason, DateTime? ExpiresAtUtc);
+
+    public sealed record CreateCommunityBanAppealRequest(string Reason);
+
+    public sealed record ResolveCommunityBanAppealRequest(bool Approved, string? ResolutionNote);
 
     private bool TryGetProfileId(out Guid profileId)
     {

@@ -28,8 +28,12 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
     public DbSet<UserMute> UserMutes => Set<UserMute>();
     public DbSet<UserReport> UserReports => Set<UserReport>();
+    public DbSet<ModerationQueueItem> ModerationQueueItems => Set<ModerationQueueItem>();
     public DbSet<Community> Communities => Set<Community>();
     public DbSet<CommunityMember> CommunityMembers => Set<CommunityMember>();
+    public DbSet<CommunityModerationSetting> CommunityModerationSettings => Set<CommunityModerationSetting>();
+    public DbSet<CommunityShadowMute> CommunityShadowMutes => Set<CommunityShadowMute>();
+    public DbSet<CommunityBanAppeal> CommunityBanAppeals => Set<CommunityBanAppeal>();
     public DbSet<CommunityPost> CommunityPosts => Set<CommunityPost>();
     public DbSet<CommunityPostImage> CommunityPostImages => Set<CommunityPostImage>();
     public DbSet<CommunityPostComment> CommunityPostComments => Set<CommunityPostComment>();
@@ -515,6 +519,43 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
             entity.HasIndex(x => new { x.TargetMessageId, x.CreatedAtUtc });
         });
 
+        modelBuilder.Entity<ModerationQueueItem>(entity =>
+        {
+            entity.ToTable("ModerationQueueItems");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.SourceType).HasMaxLength(40).IsRequired();
+            entity.Property(x => x.TriggerType).HasMaxLength(40).IsRequired();
+            entity.Property(x => x.LinkUrl).HasMaxLength(2048);
+            entity.Property(x => x.MatchedKeyword).HasMaxLength(80);
+            entity.Property(x => x.ContentSnippet).HasMaxLength(500);
+            entity.Property(x => x.Status).HasMaxLength(24).IsRequired();
+            entity.Property(x => x.Resolution).HasMaxLength(32);
+            entity.Property(x => x.ResolutionNote).HasMaxLength(1000);
+
+            entity.HasOne(x => x.Community)
+                .WithMany()
+                .HasForeignKey(x => x.CommunityId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(x => x.Reporter)
+                .WithMany()
+                .HasForeignKey(x => x.ReporterId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(x => x.TargetProfile)
+                .WithMany()
+                .HasForeignKey(x => x.TargetProfileId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(x => x.ReviewedByProfile)
+                .WithMany()
+                .HasForeignKey(x => x.ReviewedByProfileId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(x => new { x.CommunityId, x.Status, x.CreatedAtUtc });
+            entity.HasIndex(x => new { x.Status, x.CreatedAtUtc });
+        });
+
         modelBuilder.Entity<Community>(entity =>
         {
             entity.ToTable("Communities");
@@ -554,6 +595,71 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
 
             entity.HasIndex(x => x.ProfileId);
             entity.HasIndex(x => new { x.CommunityId, x.Role });
+        });
+
+        modelBuilder.Entity<CommunityModerationSetting>(entity =>
+        {
+            entity.ToTable("CommunityModerationSettings");
+            entity.HasKey(x => x.CommunityId);
+            entity.Property(x => x.RulePreset).HasMaxLength(24).IsRequired();
+            entity.Property(x => x.KeywordFiltersJson).HasMaxLength(4000);
+
+            entity.HasOne(x => x.Community)
+                .WithOne()
+                .HasForeignKey<CommunityModerationSetting>(x => x.CommunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CommunityShadowMute>(entity =>
+        {
+            entity.ToTable("CommunityShadowMutes");
+            entity.HasKey(x => new { x.CommunityId, x.ProfileId });
+            entity.Property(x => x.Reason).HasMaxLength(300);
+
+            entity.HasOne(x => x.Community)
+                .WithMany()
+                .HasForeignKey(x => x.CommunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Profile)
+                .WithMany()
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.CreatedByProfile)
+                .WithMany()
+                .HasForeignKey(x => x.CreatedByProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.ProfileId);
+            entity.HasIndex(x => new { x.CommunityId, x.ExpiresAtUtc });
+        });
+
+        modelBuilder.Entity<CommunityBanAppeal>(entity =>
+        {
+            entity.ToTable("CommunityBanAppeals");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Reason).HasMaxLength(1000).IsRequired();
+            entity.Property(x => x.Status).HasMaxLength(24).IsRequired();
+            entity.Property(x => x.ResolutionNote).HasMaxLength(1000);
+
+            entity.HasOne(x => x.Community)
+                .WithMany()
+                .HasForeignKey(x => x.CommunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Profile)
+                .WithMany()
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.ReviewedByProfile)
+                .WithMany()
+                .HasForeignKey(x => x.ReviewedByProfileId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(x => new { x.CommunityId, x.Status, x.CreatedAtUtc });
+            entity.HasIndex(x => new { x.ProfileId, x.CreatedAtUtc });
         });
 
         modelBuilder.Entity<CommunityPost>(entity =>
