@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
 import { BlogDto, BlogPostDto, CommunityDto, CommunityPostDto, HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryGroupDto } from '../../core/api.types';
+import { buildDiscoverySuggestions, canonicalizeTopicOrTag, expandDiscoveryTerms, matchesDiscoveryValue, rankByDiscoveryQuery, scoreDiscoveryFields, scoreDiscoveryText } from '../../core/discovery-search.util';
 import { executePostShareAction, executePostShareToChat } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
 import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
@@ -69,6 +70,8 @@ export class DiscoverPageComponent implements OnDestroy {
         { value: 'hashtags', label: 'Hashtags' },
         { value: 'users', label: 'Users' }
     ];
+    suggestions: string[] = [];
+    private suggestionSeedTags: string[] = [];
 
     private loadInFlight = false;
     private reloadQueued = false;
@@ -100,6 +103,7 @@ export class DiscoverPageComponent implements OnDestroy {
                     this.selectedScope = 'all';
                     this.clearResults();
                     this.status = '';
+                    this.updateSuggestions();
                     void this.loadRecommendedNonFollowingReels();
                     this.cdr.detectChanges();
                     return;
@@ -109,9 +113,12 @@ export class DiscoverPageComponent implements OnDestroy {
                 this.query = query;
                 this.selectedScope = type;
                 this.recommendedReels = [];
+                this.updateSuggestions();
                 void this.runSearch(query);
                 this.cdr.detectChanges();
             });
+
+        void this.primeSuggestionTags();
 
         this.session.appChanges$
             .pipe(
@@ -139,7 +146,18 @@ export class DiscoverPageComponent implements OnDestroy {
             this.query = target.value;
         }
 
+        this.updateSuggestions();
         this.onQueryChanged();
+    }
+
+    selectSuggestion(value: string): void {
+        this.query = value;
+        this.updateSuggestions();
+        void this.search();
+    }
+
+    get showSuggestions(): boolean {
+        return !!this.query.trim() && !this.loading && this.suggestions.length > 0;
     }
 
     onQueryChanged(): void {
@@ -638,14 +656,36 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     async openBlogAsync(blog: BlogDto, event?: Event): Promise<void> {
-        if (event) {
-            const target = event.target as HTMLElement | null;
-            if (target?.closest('a,button,input,textarea,select,label')) {
-                return;
-            }
+        if (this.shouldSkipCardNavigation(event)) {
+            return;
         }
 
         await this.router.navigate(['/blogs', blog.ownerHandle, blog.slug]);
+    }
+
+    async openCommunityAsync(community: CommunityDto, event?: Event): Promise<void> {
+        if (this.shouldSkipCardNavigation(event)) {
+            return;
+        }
+
+        await this.router.navigate(['/c', community.slug]);
+    }
+
+    async openCommunityPostAsync(post: CommunityPostDto, event?: Event): Promise<void> {
+        if (this.shouldSkipCardNavigation(event)) {
+            return;
+        }
+
+        await this.router.navigate(['/cp', post.id]);
+    }
+
+    private shouldSkipCardNavigation(event?: Event): boolean {
+        if (!event) {
+            return false;
+        }
+
+        const target = event.target as HTMLElement | null;
+        return !!target?.closest('a,button,input,textarea,select,label');
     }
 
     private async runSearch(query: string): Promise<void> {
@@ -743,6 +783,8 @@ export class DiscoverPageComponent implements OnDestroy {
                         }
                     }
 
+                    this.updateSuggestions();
+
                     if (!this.hasAnyResults) {
                         this.status = 'No results found.';
                     }
@@ -781,6 +823,24 @@ export class DiscoverPageComponent implements OnDestroy {
         this.communityResults = [];
         this.communityPostResults = [];
         this.blogResults = [];
+    }
+
+    private async primeSuggestionTags(): Promise<void> {
+        try {
+            const tags = await this.session.loadTrendingHashtagsAsync(25);
+            this.suggestionSeedTags = tags.map(item => item.tag).filter(tag => !!tag);
+        } catch {
+            this.suggestionSeedTags = [];
+        } finally {
+            this.updateSuggestions();
+        }
+    }
+
+    private updateSuggestions(): void {
+        this.suggestions = buildDiscoverySuggestions(this.query, [
+            ...this.suggestionSeedTags,
+            ...this.hashtagResults.map(item => item.tag)
+        ]);
     }
 
     private async loadRecommendedNonFollowingReels(): Promise<void> {
@@ -845,10 +905,23 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     private async loadHashtagsWithFallback(query: string): Promise<HashtagSearchResultDto[]> {
+        const expandedTerms = expandDiscoveryTerms(query);
+
         try {
             const results = await this.session.searchHashtagsAsync(query);
             if (results.length) {
-                return results;
+                const normalized = this.mergeHashtagResults(
+                    results
+                        .map(item => ({ tag: canonicalizeTopicOrTag(item.tag), count: item.count }))
+                        .filter(item => !!item.tag),
+                    []
+                );
+
+                if (!expandedTerms.length) {
+                    return normalized;
+                }
+
+                return normalized.filter(item => matchesDiscoveryValue(item.tag, expandedTerms));
             }
         } catch {
             // Fall through to multi-source fallback.
@@ -878,8 +951,8 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     private async extractHashtagsFromBlogPostsFallback(query: string): Promise<HashtagSearchResultDto[]> {
-        const normalized = query.trim().replace(/^#/, '').toLowerCase();
-        if (!normalized) {
+        const expandedTerms = expandDiscoveryTerms(query);
+        if (!expandedTerms.length) {
             return [];
         }
 
@@ -908,12 +981,12 @@ export class DiscoverPageComponent implements OnDestroy {
                 const uniqueTags = new Set<string>();
 
                 for (const tag of post.tags ?? []) {
-                    const normalizedTag = (tag ?? '').trim().replace(/^#/, '');
+                    const normalizedTag = canonicalizeTopicOrTag(tag);
                     if (!normalizedTag) {
                         continue;
                     }
 
-                    if (!normalizedTag.toLowerCase().includes(normalized)) {
+                    if (!matchesDiscoveryValue(normalizedTag, expandedTerms)) {
                         continue;
                     }
 
@@ -921,14 +994,14 @@ export class DiscoverPageComponent implements OnDestroy {
                 }
 
                 for (const tag of this.extractHashtagsFromText(post.title)) {
-                    if (tag.toLowerCase().includes(normalized)) {
-                        uniqueTags.add(tag);
+                    if (matchesDiscoveryValue(tag, expandedTerms)) {
+                        uniqueTags.add(canonicalizeTopicOrTag(tag));
                     }
                 }
 
                 for (const tag of this.extractHashtagsFromText(post.excerpt)) {
-                    if (tag.toLowerCase().includes(normalized)) {
-                        uniqueTags.add(tag);
+                    if (matchesDiscoveryValue(tag, expandedTerms)) {
+                        uniqueTags.add(canonicalizeTopicOrTag(tag));
                     }
                 }
 
@@ -944,8 +1017,8 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     private async loadBlogsByHashtagFallback(query: string): Promise<BlogDto[]> {
-        const normalized = query.trim().replace(/^#/, '').toLowerCase();
-        if (!normalized) {
+        const expandedTerms = expandDiscoveryTerms(query);
+        if (!expandedTerms.length) {
             return [];
         }
 
@@ -971,7 +1044,7 @@ export class DiscoverPageComponent implements OnDestroy {
                 continue;
             }
 
-            const hasMatch = result.value.some(post => this.blogPostMatchesHashtagQuery(post, normalized));
+            const hasMatch = result.value.some(post => this.blogPostMatchesHashtagQuery(post, expandedTerms));
             if (!hasMatch) {
                 continue;
             }
@@ -985,16 +1058,16 @@ export class DiscoverPageComponent implements OnDestroy {
         return blogs.filter(blog => matchedBlogIds.has(blog.id));
     }
 
-    private blogPostMatchesHashtagQuery(post: BlogPostDto, normalizedQuery: string): boolean {
+    private blogPostMatchesHashtagQuery(post: BlogPostDto, expandedTerms: ReadonlyArray<string>): boolean {
         for (const tag of post.tags ?? []) {
-            const normalizedTag = (tag ?? '').trim().replace(/^#/, '').toLowerCase();
-            if (normalizedTag.includes(normalizedQuery)) {
+            const normalizedTag = canonicalizeTopicOrTag(tag);
+            if (matchesDiscoveryValue(normalizedTag, expandedTerms)) {
                 return true;
             }
         }
 
-        return this.extractHashtagsFromText(post.title).some(tag => tag.toLowerCase().includes(normalizedQuery))
-            || this.extractHashtagsFromText(post.excerpt).some(tag => tag.toLowerCase().includes(normalizedQuery));
+        return this.extractHashtagsFromText(post.title).some(tag => matchesDiscoveryValue(tag, expandedTerms))
+            || this.extractHashtagsFromText(post.excerpt).some(tag => matchesDiscoveryValue(tag, expandedTerms));
     }
 
     private extractHashtagsFromText(value: string | null | undefined): string[] {
@@ -1010,7 +1083,7 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     private extractHashtagsFromPosts(posts: ReadonlyArray<PostDto>, query: string): HashtagSearchResultDto[] {
-        const normalized = query.trim().replace(/^#/, '').toLowerCase();
+        const expandedTerms = expandDiscoveryTerms(query);
         const hashtagRegex = /#[\p{L}\p{N}_-]+/gu;
         const counts = new Map<string, number>();
 
@@ -1026,11 +1099,11 @@ export class DiscoverPageComponent implements OnDestroy {
                     continue;
                 }
 
-                if (normalized && !rawTag.toLowerCase().includes(normalized)) {
+                if (expandedTerms.length && !matchesDiscoveryValue(rawTag, expandedTerms)) {
                     continue;
                 }
 
-                uniqueTags.add(rawTag);
+                uniqueTags.add(canonicalizeTopicOrTag(rawTag));
             }
 
             for (const tag of uniqueTags) {
@@ -1044,7 +1117,7 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     private extractHashtagsFromReels(reels: ReadonlyArray<ReelDto>, query: string): HashtagSearchResultDto[] {
-        const normalized = query.trim().replace(/^#/, '').toLowerCase();
+        const expandedTerms = expandDiscoveryTerms(query);
         const hashtagRegex = /#[\p{L}\p{N}_-]+/gu;
         const counts = new Map<string, number>();
 
@@ -1062,11 +1135,11 @@ export class DiscoverPageComponent implements OnDestroy {
                         continue;
                     }
 
-                    if (normalized && !rawTag.toLowerCase().includes(normalized)) {
+                    if (expandedTerms.length && !matchesDiscoveryValue(rawTag, expandedTerms)) {
                         continue;
                     }
 
-                    uniqueTags.add(rawTag);
+                    uniqueTags.add(canonicalizeTopicOrTag(rawTag));
                 }
 
                 for (const tag of uniqueTags) {
@@ -1102,7 +1175,7 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     private extractHashtagsFromTextCandidates(candidates: ReadonlyArray<string | null | undefined>, query: string): HashtagSearchResultDto[] {
-        const normalized = query.trim().replace(/^#/, '').toLowerCase();
+        const expandedTerms = expandDiscoveryTerms(query);
         const hashtagRegex = /#[\p{L}\p{N}_-]+/gu;
         const counts = new Map<string, number>();
 
@@ -1118,11 +1191,11 @@ export class DiscoverPageComponent implements OnDestroy {
                     continue;
                 }
 
-                if (normalized && !rawTag.toLowerCase().includes(normalized)) {
+                if (expandedTerms.length && !matchesDiscoveryValue(rawTag, expandedTerms)) {
                     continue;
                 }
 
-                uniqueTags.add(rawTag);
+                uniqueTags.add(canonicalizeTopicOrTag(rawTag));
             }
 
             for (const tag of uniqueTags) {
@@ -1171,8 +1244,8 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     private async searchReelsAsync(query: string): Promise<ReelDto[]> {
-        const term = query.trim().toLowerCase();
-        if (!term) {
+        const expandedTerms = expandDiscoveryTerms(query);
+        if (!expandedTerms.length) {
             return [];
         }
 
@@ -1193,7 +1266,7 @@ export class DiscoverPageComponent implements OnDestroy {
             }
         }
 
-        const matches = (value: string | null | undefined): boolean => (value ?? '').toLowerCase().includes(term);
+        const matches = (value: string | null | undefined): boolean => matchesDiscoveryValue(value, expandedTerms);
         const reelMatches = Array.from(deduped.values()).filter(reel =>
             matches(reel.authorHandle)
             || matches(reel.caption)
@@ -1243,132 +1316,61 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     private rankProfiles(profiles: ReadonlyArray<ProfileDto>, query: string): ProfileDto[] {
-        const term = query.trim().toLowerCase();
-        if (!term) {
-            return [...profiles];
-        }
-
-        const score = (profile: ProfileDto): number => {
-            const handle = profile.handle.toLowerCase();
-            const displayName = profile.displayName.toLowerCase();
-            let rank = 0;
-
-            if (handle === term) {
-                rank += 120;
-            } else if (handle.startsWith(term)) {
-                rank += 90;
-            } else if (handle.includes(term)) {
-                rank += 55;
-            }
-
-            if (displayName === term) {
-                rank += 70;
-            } else if (displayName.startsWith(term)) {
-                rank += 45;
-            } else if (displayName.includes(term)) {
-                rank += 25;
-            }
-
-            return rank;
-        };
-
-        return [...profiles].sort((left, right) =>
-            score(right) - score(left)
-            || left.handle.localeCompare(right.handle));
+        return rankByDiscoveryQuery(profiles, {
+            query,
+            score: (profile, expandedTerms) => scoreDiscoveryFields(expandedTerms, [
+                { value: profile.handle, weight: 1.2 },
+                { value: profile.displayName, weight: 1.0 },
+                { value: profile.bio, weight: 0.4 }
+            ]),
+            onEmptyQuery: items => [...items],
+            tieBreaker: (left, right) => left.handle.localeCompare(right.handle)
+        });
     }
 
     private rankPosts(posts: ReadonlyArray<PostDto>, query: string): PostDto[] {
-        const term = query.trim().toLowerCase();
-        if (!term) {
-            return [...posts];
-        }
-
-        const score = (post: PostDto): number => {
-            const content = (post.content ?? '').toLowerCase();
-            const author = (post.authorHandle ?? '').toLowerCase();
-            let rank = 0;
-
-            if (author === term) {
-                rank += 60;
-            } else if (author.startsWith(term)) {
-                rank += 40;
-            } else if (author.includes(term)) {
-                rank += 25;
-            }
-
-            if (content.startsWith(term)) {
-                rank += 75;
-            } else if (content.includes(term)) {
-                rank += 50;
-            }
-
-            return rank;
-        };
-
-        return [...posts].sort((left, right) =>
-            score(right) - score(left)
-            || Date.parse(right.createdAtUtc) - Date.parse(left.createdAtUtc));
+        return rankByDiscoveryQuery(posts, {
+            query,
+            score: (post, expandedTerms) => {
+                const textRank = scoreDiscoveryFields(expandedTerms, [
+                    { value: post.authorHandle, weight: 0.8 },
+                    { value: post.content, weight: 1.0 }
+                ]);
+                const engagementRank = post.likeCount * 2 + post.comments.length * 3;
+                return textRank + engagementRank;
+            },
+            onEmptyQuery: items => [...items],
+            tieBreaker: (left, right) => Date.parse(right.createdAtUtc) - Date.parse(left.createdAtUtc)
+        });
     }
 
     private rankReels(reels: ReadonlyArray<ReelDto>, query: string): ReelDto[] {
-        const term = query.trim().toLowerCase();
-        if (!term) {
-            return [...reels];
-        }
-
-        const score = (reel: ReelDto): number => {
-            const author = (reel.authorHandle ?? '').toLowerCase();
-            const caption = (reel.caption ?? '').toLowerCase();
-            const commentsText = reel.comments.map(comment => `${comment.authorHandle} ${comment.content}`).join(' ').toLowerCase();
-            let rank = 0;
-
-            if (author === term) {
-                rank += 80;
-            } else if (author.startsWith(term)) {
-                rank += 55;
-            } else if (author.includes(term)) {
-                rank += 30;
-            }
-
-            if (caption.startsWith(term)) {
-                rank += 65;
-            } else if (caption.includes(term)) {
-                rank += 40;
-            }
-
-            if (commentsText.includes(term)) {
-                rank += 20;
-            }
-
-            return rank;
-        };
-
-        return [...reels].sort((left, right) =>
-            score(right) - score(left)
-            || Date.parse(right.createdAtUtc) - Date.parse(left.createdAtUtc));
+        return rankByDiscoveryQuery(reels, {
+            query,
+            score: (reel, expandedTerms) => {
+                const commentsText = reel.comments.map(comment => `${comment.authorHandle} ${comment.content}`).join(' ');
+                const textRank = scoreDiscoveryFields(expandedTerms, [
+                    { value: reel.authorHandle, weight: 0.8 },
+                    { value: reel.caption, weight: 1.0 },
+                    { value: commentsText, weight: 0.5 }
+                ]);
+                const engagementRank = reel.likeCount * 2 + reel.comments.length * 3;
+                return textRank + engagementRank;
+            },
+            onEmptyQuery: items => [...items],
+            tieBreaker: (left, right) => Date.parse(right.createdAtUtc) - Date.parse(left.createdAtUtc)
+        });
     }
 
     private rankHashtags(tags: ReadonlyArray<HashtagSearchResultDto>, query: string): HashtagSearchResultDto[] {
-        const term = query.trim().replace(/^#/, '').toLowerCase();
-        if (!term) {
+        const expandedTerms = expandDiscoveryTerms(query);
+        if (!expandedTerms.length) {
             return [...tags];
         }
 
         const score = (tag: HashtagSearchResultDto): number => {
-            const normalizedTag = tag.tag.toLowerCase();
-            if (normalizedTag === term) {
-                return 1000 + tag.count;
-            }
-
-            if (normalizedTag.startsWith(term)) {
-                return 500 + tag.count;
-            }
-
-            if (normalizedTag.includes(term)) {
-                return 200 + tag.count;
-            }
-
-            return tag.count;
+            const canonical = canonicalizeTopicOrTag(tag.tag);
+            return scoreDiscoveryText(canonical, expandedTerms) * 3 + tag.count;
         };
 
         return [...tags].sort((left, right) =>
@@ -1377,133 +1379,55 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     private rankCommunities(communities: ReadonlyArray<CommunityDto>, query: string): CommunityDto[] {
-        const term = query.trim().toLowerCase();
-        if (!term) {
-            return [...communities];
-        }
-
-        const score = (community: CommunityDto): number => {
-            const name = (community.name ?? '').toLowerCase();
-            const slug = (community.slug ?? '').toLowerCase();
-            const description = (community.description ?? '').toLowerCase();
-            let rank = 0;
-
-            if (name === term) {
-                rank += 120;
-            } else if (name.startsWith(term)) {
-                rank += 80;
-            } else if (name.includes(term)) {
-                rank += 45;
-            }
-
-            if (slug === term) {
-                rank += 90;
-            } else if (slug.startsWith(term)) {
-                rank += 65;
-            } else if (slug.includes(term)) {
-                rank += 35;
-            }
-
-            if (description.includes(term)) {
-                rank += 20;
-            }
-
-            rank += Math.min(community.memberCount, 1000) / 25;
-            return rank;
-        };
-
-        return [...communities].sort((left, right) =>
-            score(right) - score(left)
-            || right.memberCount - left.memberCount
-            || left.name.localeCompare(right.name));
+        return rankByDiscoveryQuery(communities, {
+            query,
+            score: (community, expandedTerms) => {
+                const textRank = scoreDiscoveryFields(expandedTerms, [
+                    { value: community.name, weight: 1.0 },
+                    { value: community.slug, weight: 1.0 },
+                    { value: community.description, weight: 0.7 }
+                ]);
+                const engagementRank = Math.min(community.memberCount, 1200) / 20;
+                return textRank + engagementRank;
+            },
+            onEmptyQuery: items => [...items],
+            tieBreaker: (left, right) => right.memberCount - left.memberCount || left.name.localeCompare(right.name)
+        });
     }
 
     private rankCommunityPosts(posts: ReadonlyArray<CommunityPostDto>, query: string): CommunityPostDto[] {
-        const term = query.trim().toLowerCase();
-        if (!term) {
-            return [...posts];
-        }
-
-        const score = (post: CommunityPostDto): number => {
-            const title = (post.title ?? '').toLowerCase();
-            const content = (post.content ?? '').toLowerCase();
-            const author = (post.authorHandle ?? '').toLowerCase();
-            let rank = 0;
-
-            if (title === term) {
-                rank += 110;
-            } else if (title.startsWith(term)) {
-                rank += 75;
-            } else if (title.includes(term)) {
-                rank += 45;
-            }
-
-            if (content.includes(term)) {
-                rank += 35;
-            }
-
-            if (author === term) {
-                rank += 30;
-            } else if (author.startsWith(term)) {
-                rank += 20;
-            } else if (author.includes(term)) {
-                rank += 10;
-            }
-
-            rank += Math.min(post.upvoteCount, 500) / 15;
-            return rank;
-        };
-
-        return [...posts].sort((left, right) =>
-            score(right) - score(left)
-            || Date.parse(right.createdAtUtc) - Date.parse(left.createdAtUtc));
+        return rankByDiscoveryQuery(posts, {
+            query,
+            score: (post, expandedTerms) => {
+                const textRank = scoreDiscoveryFields(expandedTerms, [
+                    { value: post.title, weight: 1.0 },
+                    { value: post.content, weight: 1.0 },
+                    { value: post.authorHandle, weight: 0.6 }
+                ]);
+                const engagementRank = Math.min(post.upvoteCount, 500) / 12 + post.comments.length * 2;
+                return textRank + engagementRank;
+            },
+            onEmptyQuery: items => [...items],
+            tieBreaker: (left, right) => Date.parse(right.createdAtUtc) - Date.parse(left.createdAtUtc)
+        });
     }
 
     private rankBlogs(blogs: ReadonlyArray<BlogDto>, query: string): BlogDto[] {
-        const term = query.trim().toLowerCase();
-        if (!term) {
-            return [...blogs];
-        }
-
-        const score = (blog: BlogDto): number => {
-            const title = (blog.title ?? '').toLowerCase();
-            const slug = (blog.slug ?? '').toLowerCase();
-            const description = (blog.description ?? '').toLowerCase();
-            const owner = (blog.ownerHandle ?? '').toLowerCase();
-            let rank = 0;
-
-            if (title === term) {
-                rank += 120;
-            } else if (title.startsWith(term)) {
-                rank += 85;
-            } else if (title.includes(term)) {
-                rank += 50;
-            }
-
-            if (slug.startsWith(term)) {
-                rank += 40;
-            } else if (slug.includes(term)) {
-                rank += 20;
-            }
-
-            if (description.includes(term)) {
-                rank += 25;
-            }
-
-            if (owner === term) {
-                rank += 45;
-            } else if (owner.startsWith(term)) {
-                rank += 30;
-            } else if (owner.includes(term)) {
-                rank += 15;
-            }
-
-            return rank;
-        };
-
-        return [...blogs].sort((left, right) =>
-            score(right) - score(left)
-            || Date.parse(right.updatedAtUtc) - Date.parse(left.updatedAtUtc));
+        return rankByDiscoveryQuery(blogs, {
+            query,
+            score: (blog, expandedTerms) => {
+                const textRank = scoreDiscoveryFields(expandedTerms, [
+                    { value: blog.title, weight: 1.0 },
+                    { value: blog.slug, weight: 0.85 },
+                    { value: blog.description, weight: 0.7 },
+                    { value: blog.ownerHandle, weight: 0.6 }
+                ]);
+                const recencyBoost = Math.max(0, 80 - ((Date.now() - Date.parse(blog.updatedAtUtc)) / (1000 * 60 * 60 * 24 * 3)));
+                return textRank + recencyBoost;
+            },
+            onEmptyQuery: items => [...items],
+            tieBreaker: (left, right) => Date.parse(right.updatedAtUtc) - Date.parse(left.updatedAtUtc)
+        });
     }
 
     private async runPostMutation(postId: string, work: () => Promise<PostDto>, failureMessage: string): Promise<void> {

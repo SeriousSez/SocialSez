@@ -1,5 +1,5 @@
 import { CommonModule, NgStyle } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BlogDto, BlogPostDto } from '../../core/api.types';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
@@ -28,7 +28,8 @@ export class BlogPostPageComponent {
 
     constructor(
         private readonly route: ActivatedRoute,
-        private readonly session: SessionService
+        private readonly session: SessionService,
+        private readonly cdr: ChangeDetectorRef
     ) {
         this.route.paramMap.subscribe(paramMap => {
             this.handle = (paramMap.get('handle') ?? '').trim().toLowerCase();
@@ -66,6 +67,7 @@ export class BlogPostPageComponent {
         if (!this.handle || !this.blogSlug || !this.postSlug) {
             this.error = 'Blog post was not found.';
             this.loading = false;
+            this.cdr.detectChanges();
             return;
         }
 
@@ -100,6 +102,7 @@ export class BlogPostPageComponent {
         } finally {
             if (loadVersion === this.loadVersion) {
                 this.loading = false;
+                this.cdr.detectChanges();
             }
         }
     }

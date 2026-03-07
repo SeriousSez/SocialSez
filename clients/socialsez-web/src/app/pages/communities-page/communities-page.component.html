@@ -67,8 +67,14 @@
 
         <section class="tab-panel" role="tabpanel" id="communities-panel-discover" aria-labelledby="communities-tab-discover" *ngIf="activeTab === 'discover'">
             <div class="search-row">
-                <input [(ngModel)]="query" placeholder="Search communities" (keydown.enter)="searchDiscoverAsync()" />
+                <input [(ngModel)]="query" placeholder="Search communities" (input)="onDiscoverQueryInput()" (keydown.enter)="searchDiscoverAsync()" />
+                <button type="button" class="ghost" (click)="clearDiscoverQueryAsync()" *ngIf="query.trim().length">Clear</button>
                 <button type="button" class="ghost" (click)="searchDiscoverAsync()" [disabled]="loading">Search</button>
+            </div>
+
+            <div class="suggestions-row" *ngIf="suggestions.length">
+                <span class="suggestions-label">Try:</span>
+                <button type="button" class="suggestion-pill" *ngFor="let suggestion of suggestions" (click)="applySuggestionAsync(suggestion)">#{{ suggestion }}</button>
             </div>
 
             <ng-container *ngIf="loading; else discoverCommunitiesContent">

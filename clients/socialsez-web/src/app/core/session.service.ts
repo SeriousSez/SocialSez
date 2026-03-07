@@ -979,6 +979,10 @@ export class SessionService {
             normalizedInput = `/${normalizedInput}`;
         }
 
+        if (/^\/uploads\/images\/[0-9a-f-]{36}$/i.test(normalizedInput)) {
+            normalizedInput = `/api${normalizedInput}`;
+        }
+
         if (normalizedInput.startsWith('data:')) {
             return normalizedInput;
         }

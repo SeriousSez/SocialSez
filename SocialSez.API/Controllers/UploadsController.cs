@@ -55,13 +55,15 @@ public class UploadsController(SocialSezContext dbContext) : ControllerBase
         dbContext.UploadedImages.Add(image);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var relativePath = $"/api/uploads/images/{image.Id:D}";
+        var pathBase = Request.PathBase.HasValue ? Request.PathBase.Value : string.Empty;
+        var relativePath = $"{pathBase}/api/uploads/images/{image.Id:D}";
         var url = $"{Request.Scheme}://{Request.Host}{relativePath}";
         return Ok(new UploadImageResponse(url));
     }
 
     [AllowAnonymous]
     [HttpGet("images/{id:guid}")]
+    [HttpGet("/uploads/images/{id:guid}")]
     public async Task<IActionResult> GetImage(Guid id, CancellationToken cancellationToken)
     {
         var image = await dbContext.UploadedImages

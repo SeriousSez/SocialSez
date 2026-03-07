@@ -23,6 +23,22 @@ label {
     width: 100%;
 }
 
+.search-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.suggestion-pill {
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 700;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
 .card {
     display: grid;
     gap: 8px;

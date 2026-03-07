@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using SocialSez.ApplicationService.Interfaces;
@@ -9,10 +10,11 @@ using SocialSez.Infrastructure;
 
 namespace SocialSez.ApplicationService.Services;
 
-public class BlogService(SocialSezContext dbContext) : IBlogService
+public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) : IBlogService
 {
     private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
     private static volatile bool schemaInitialized;
+    private static readonly TimeSpan SearchCacheTtl = TimeSpan.FromSeconds(30);
 
     public async Task<BlogDto> CreateAsync(Guid ownerProfileId, CreateBlogRequest request, CancellationToken cancellationToken = default)
     {
@@ -43,6 +45,7 @@ public class BlogService(SocialSezContext dbContext) : IBlogService
 
         dbContext.Blogs.Add(blog);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpBlog();
 
         return MapBlog(blog, ownerProfileId);
     }
@@ -77,6 +80,7 @@ public class BlogService(SocialSezContext dbContext) : IBlogService
         blog.UpdatedAtUtc = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpBlog();
         return MapBlog(blog, ownerProfileId);
     }
 
@@ -99,21 +103,46 @@ public class BlogService(SocialSezContext dbContext) : IBlogService
         await EnsureBlogSchemaAsync(cancellationToken);
 
         var resolvedTake = Math.Clamp(take, 1, 200);
-        var normalizedQuery = NormalizeSearchQuery(query);
+        var normalizedQuery = DiscoverySearchBackend.NormalizeQuery(query);
+        var expandedTerms = DiscoverySearchBackend.ExpandTerms(normalizedQuery);
+        var candidateTake = Math.Clamp(resolvedTake * 4, resolvedTake, 320);
 
-        var blogsQuery = dbContext.Blogs
-            .AsNoTracking()
-            .Include(x => x.OwnerProfile)
-            .Where(x => x.IsPublic || (viewerProfileId.HasValue && x.OwnerProfileId == viewerProfileId.Value));
+        var cacheKey = $"blog:discover:v3:blogv={SearchCacheVersionStamp.BlogVersion}:viewer={viewerProfileId?.ToString() ?? "anon"}:q={normalizedQuery ?? string.Empty}:take={resolvedTake}";
+        return await SearchResultCache.GetOrCreateAsync(memoryCache, cacheKey, SearchCacheTtl, async () =>
+        {
+            var blogsQuery = dbContext.Blogs
+                .AsNoTracking()
+                .Include(x => x.OwnerProfile)
+                .Where(x => x.IsPublic || (viewerProfileId.HasValue && x.OwnerProfileId == viewerProfileId.Value));
 
-        blogsQuery = ApplyBlogSearch(blogsQuery, normalizedQuery);
+            var candidates = await blogsQuery
+                .OrderByDescending(x => x.UpdatedAtUtc)
+                .Take(candidateTake)
+                .ToArrayAsync(cancellationToken);
 
-        var blogs = await blogsQuery
-            .OrderByDescending(x => x.UpdatedAtUtc)
-            .Take(resolvedTake)
-            .ToArrayAsync(cancellationToken);
+            var blogs = expandedTerms.Count > 0
+                ? candidates
+                    .Select(blog => new
+                    {
+                        Blog = blog,
+                        Score = DiscoverySearchBackend.ScoreFields(expandedTerms,
+                            (blog.Title, 1.7),
+                            (blog.Slug, 1.2),
+                            (blog.OwnerProfile.Handle, 1.0),
+                            (blog.Description, 1.3))
+                    })
+                    .Where(x => x.Score > 0)
+                    .OrderByDescending(x => x.Score)
+                    .ThenByDescending(x => x.Blog.UpdatedAtUtc)
+                    .Take(resolvedTake)
+                    .Select(x => x.Blog)
+                    .ToArray()
+                : candidates
+                    .Take(resolvedTake)
+                    .ToArray();
 
-        return blogs.Select(blog => MapBlog(blog, viewerProfileId)).ToArray();
+            return blogs.Select(blog => MapBlog(blog, viewerProfileId)).ToArray();
+        });
     }
 
     public async Task<IReadOnlyCollection<BlogDto>> GetFollowingAsync(Guid viewerProfileId, string? query = null, int take = 60, CancellationToken cancellationToken = default)
@@ -121,26 +150,51 @@ public class BlogService(SocialSezContext dbContext) : IBlogService
         await EnsureBlogSchemaAsync(cancellationToken);
 
         var resolvedTake = Math.Clamp(take, 1, 200);
-        var normalizedQuery = NormalizeSearchQuery(query);
+        var normalizedQuery = DiscoverySearchBackend.NormalizeQuery(query);
+        var expandedTerms = DiscoverySearchBackend.ExpandTerms(normalizedQuery);
+        var candidateTake = Math.Clamp(resolvedTake * 4, resolvedTake, 320);
 
-        var followedProfileIds = dbContext.Follows
-            .AsNoTracking()
-            .Where(x => x.FollowerId == viewerProfileId)
-            .Select(x => x.FollowedId);
+        var cacheKey = $"blog:following:v3:blogv={SearchCacheVersionStamp.BlogVersion}:viewer={viewerProfileId}:q={normalizedQuery ?? string.Empty}:take={resolvedTake}";
+        return await SearchResultCache.GetOrCreateAsync(memoryCache, cacheKey, SearchCacheTtl, async () =>
+        {
+            var followedProfileIds = dbContext.Follows
+                .AsNoTracking()
+                .Where(x => x.FollowerId == viewerProfileId)
+                .Select(x => x.FollowedId);
 
-        var blogsQuery = dbContext.Blogs
-            .AsNoTracking()
-            .Include(x => x.OwnerProfile)
-            .Where(x => x.IsPublic && followedProfileIds.Contains(x.OwnerProfileId));
+            var blogsQuery = dbContext.Blogs
+                .AsNoTracking()
+                .Include(x => x.OwnerProfile)
+                .Where(x => x.IsPublic && followedProfileIds.Contains(x.OwnerProfileId));
 
-        blogsQuery = ApplyBlogSearch(blogsQuery, normalizedQuery);
+            var candidates = await blogsQuery
+                .OrderByDescending(x => x.UpdatedAtUtc)
+                .Take(candidateTake)
+                .ToArrayAsync(cancellationToken);
 
-        var blogs = await blogsQuery
-            .OrderByDescending(x => x.UpdatedAtUtc)
-            .Take(resolvedTake)
-            .ToArrayAsync(cancellationToken);
+            var blogs = expandedTerms.Count > 0
+                ? candidates
+                    .Select(blog => new
+                    {
+                        Blog = blog,
+                        Score = DiscoverySearchBackend.ScoreFields(expandedTerms,
+                            (blog.Title, 1.7),
+                            (blog.Slug, 1.2),
+                            (blog.OwnerProfile.Handle, 1.0),
+                            (blog.Description, 1.3))
+                    })
+                    .Where(x => x.Score > 0)
+                    .OrderByDescending(x => x.Score)
+                    .ThenByDescending(x => x.Blog.UpdatedAtUtc)
+                    .Take(resolvedTake)
+                    .Select(x => x.Blog)
+                    .ToArray()
+                : candidates
+                    .Take(resolvedTake)
+                    .ToArray();
 
-        return blogs.Select(blog => MapBlog(blog, viewerProfileId)).ToArray();
+            return blogs.Select(blog => MapBlog(blog, viewerProfileId)).ToArray();
+        });
     }
 
     public async Task<IReadOnlyCollection<BlogDto>> GetByOwnerHandleAsync(string handle, Guid? viewerProfileId = null, CancellationToken cancellationToken = default)
@@ -255,6 +309,7 @@ public class BlogService(SocialSezContext dbContext) : IBlogService
         blog.UpdatedAtUtc = nowUtc;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpBlog();
         return MapPost(post, blog, author, authorProfileId);
     }
 
@@ -302,6 +357,7 @@ public class BlogService(SocialSezContext dbContext) : IBlogService
         post.Blog.UpdatedAtUtc = post.UpdatedAtUtc;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpBlog();
         return MapPost(post, post.Blog, post.AuthorProfile, authorProfileId);
     }
 
@@ -324,6 +380,7 @@ public class BlogService(SocialSezContext dbContext) : IBlogService
 
         dbContext.Blogs.Remove(blog);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpBlog();
         return true;
     }
 
@@ -348,6 +405,7 @@ public class BlogService(SocialSezContext dbContext) : IBlogService
         dbContext.BlogPosts.Remove(post);
         post.Blog.UpdatedAtUtc = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpBlog();
         return true;
     }
 
@@ -584,32 +642,6 @@ public class BlogService(SocialSezContext dbContext) : IBlogService
     private static string NormalizeHandle(string? value)
     {
         return (value ?? string.Empty).Trim().ToLowerInvariant();
-    }
-
-    private static string? NormalizeSearchQuery(string? query)
-    {
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            return null;
-        }
-
-        var normalized = query.Trim();
-        return normalized.Length > 120 ? normalized[..120].Trim() : normalized;
-    }
-
-    private static IQueryable<Blog> ApplyBlogSearch(IQueryable<Blog> query, string? search)
-    {
-        if (string.IsNullOrWhiteSpace(search))
-        {
-            return query;
-        }
-
-        var like = $"%{search}%";
-        return query.Where(x =>
-            EF.Functions.Like(x.Title, like)
-            || (x.Description != null && EF.Functions.Like(x.Description, like))
-            || EF.Functions.Like(x.Slug, like)
-            || EF.Functions.Like(x.OwnerProfile.Handle, like));
     }
 
     private static string BuildSlugFallback(string source, string fallback)

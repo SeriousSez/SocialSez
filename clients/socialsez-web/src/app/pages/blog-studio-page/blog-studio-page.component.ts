@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { BlogDto, BlogPostDto, BlogThemeConfigDto } from '../../core/api.types';
 import { renderMarkdownToHtml } from '../../core/markdown.util';
 import { SessionService } from '../../core/session.service';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 interface BlogFormState {
     title: string;
@@ -45,7 +46,7 @@ type BlogEditorSection = 'blog' | 'posts';
 @Component({
     selector: 'app-blog-studio-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink, SkeletonComponent],
     templateUrl: './blog-studio-page.component.html',
     styleUrl: './blog-studio-page.component.scss'
 })

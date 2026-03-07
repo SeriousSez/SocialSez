@@ -115,3 +115,87 @@
 .hashtag:hover {
     text-decoration: underline;
 }
+
+.post-skeleton {
+    --skeleton-base: #e2e8f0;
+    --skeleton-highlight: #f1f5f9;
+    max-width: none;
+    margin: 0;
+}
+
+:host-context(.theme-dark) .post-skeleton {
+    --skeleton-base: #0f172a;
+    --skeleton-highlight: #1e293b;
+}
+
+.post-skeleton .post-head,
+.post-skeleton .content {
+    display: grid;
+    gap: 10px;
+}
+
+.skeleton-line,
+.skeleton-pill,
+.skeleton-hero {
+    display: block;
+    background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 50%, var(--skeleton-base) 75%);
+    background-size: 240% 100%;
+    animation: blog-skeleton-shimmer 1.25s ease-in-out infinite;
+}
+
+.skeleton-line {
+    width: 100%;
+    height: 14px;
+    border-radius: 8px;
+}
+
+.skeleton-back {
+    width: 132px;
+    height: 12px;
+}
+
+.skeleton-title {
+    width: min(72%, 560px);
+    height: 36px;
+    border-radius: 10px;
+}
+
+.skeleton-meta {
+    width: min(48%, 360px);
+    height: 13px;
+}
+
+.skeleton-pill {
+    width: 86px;
+    height: 22px;
+    border-radius: 999px;
+}
+
+.skeleton-hero {
+    width: 100%;
+    height: clamp(220px, 42vw, 420px);
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+}
+
+.skeleton-paragraph.short {
+    width: 92%;
+}
+
+.skeleton-paragraph.shorter {
+    width: 86%;
+}
+
+.skeleton-paragraph.shortest {
+    width: 76%;
+}
+
+@keyframes blog-skeleton-shimmer {
+    0% {
+        background-position: 100% 0;
+    }
+
+    100% {
+        background-position: -100% 0;
+    }
+}

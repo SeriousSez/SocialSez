@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommunityDto, CommunityMemberDto, CommunityPollDto, CommunityPostDto, CommunityRuleDto, ProfileDto } from '../../core/api.types';
+import { rankByDiscoveryQuery, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { SessionService } from '../../core/session.service';
 import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
@@ -200,31 +201,29 @@ export class CommunityDetailPageComponent {
 
     get filteredMembers(): CommunityMemberDto[] {
         const bannedProfileIds = new Set(this.bannedProfiles.map(profile => profile.id));
-        const members = this.community?.members ?? [];
-        const query = this.membersSearchQuery.trim().toLowerCase();
+        const members = (this.community?.members ?? []).filter(member => !bannedProfileIds.has(member.profileId));
 
-        return members
-            .filter(member => {
-                if (bannedProfileIds.has(member.profileId)) {
-                    return false;
-                }
-
-                if (!query) {
-                    return true;
-                }
-
-                return member.handle.toLowerCase().includes(query)
-                    || member.role.toLowerCase().includes(query);
-            })
-            .slice()
-            .sort((a, b) => {
+        return rankByDiscoveryQuery(members, {
+            query: this.membersSearchQuery,
+            minScore: 0,
+            score: (member, expandedTerms) => this.memberSearchScore(member, expandedTerms),
+            onEmptyQuery: items => [...items].sort((a, b) => {
                 const roleCompare = this.memberRoleSortPriority(a.role) - this.memberRoleSortPriority(b.role);
                 if (roleCompare !== 0) {
                     return roleCompare;
                 }
 
                 return a.handle.localeCompare(b.handle);
-            });
+            }),
+            tieBreaker: (a, b) => {
+                const roleCompare = this.memberRoleSortPriority(a.role) - this.memberRoleSortPriority(b.role);
+                if (roleCompare !== 0) {
+                    return roleCompare;
+                }
+
+                return a.handle.localeCompare(b.handle);
+            }
+        });
     }
 
     get elevatedMembers(): CommunityMemberDto[] {
@@ -236,19 +235,13 @@ export class CommunityDetailPageComponent {
     }
 
     get filteredBannedProfiles(): ProfileDto[] {
-        const query = this.membersSearchQuery.trim().toLowerCase();
-
-        return this.bannedProfiles
-            .filter(profile => {
-                if (!query) {
-                    return true;
-                }
-
-                return profile.handle.toLowerCase().includes(query)
-                    || profile.displayName.toLowerCase().includes(query);
-            })
-            .slice()
-            .sort((a, b) => a.handle.localeCompare(b.handle));
+        return rankByDiscoveryQuery(this.bannedProfiles, {
+            query: this.membersSearchQuery,
+            minScore: 0,
+            score: (profile, expandedTerms) => this.profileSearchScore(profile, expandedTerms),
+            onEmptyQuery: items => [...items].sort((a, b) => a.handle.localeCompare(b.handle)),
+            tieBreaker: (a, b) => a.handle.localeCompare(b.handle)
+        });
     }
 
     canPromoteToModerator(member: { profileId: string; role: string }): boolean {
@@ -511,7 +504,7 @@ export class CommunityDetailPageComponent {
             }
 
             this.communityId = community.id;
-            const posts = await this.session.loadCommunityPostsAsync(community.id, this.postSearchQuery);
+            const posts = await this.loadCommunityPostsForSearchAsync(community.id, this.postSearchQuery);
 
             this.community = community;
             this.posts = posts;
@@ -1074,7 +1067,7 @@ export class CommunityDetailPageComponent {
         this.resetStatus();
 
         try {
-            this.posts = await this.session.loadCommunityPostsAsync(this.communityId, this.postSearchQuery);
+            this.posts = await this.loadCommunityPostsForSearchAsync(this.communityId, this.postSearchQuery);
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('search posts'));
             this.statusTone = 'error';
@@ -1961,6 +1954,61 @@ export class CommunityDetailPageComponent {
             .map(rule => rule.trim())
             .filter(rule => !!rule)
             .map(rule => ({ text: rule }));
+    }
+
+    private memberSearchScore(member: CommunityMemberDto, expandedTerms: ReadonlyArray<string>): number {
+        return scoreDiscoveryFields(expandedTerms, [
+            { value: member.handle, weight: 1.4 },
+            { value: member.role, weight: 1.0 }
+        ]);
+    }
+
+    private profileSearchScore(profile: ProfileDto, expandedTerms: ReadonlyArray<string>): number {
+        return scoreDiscoveryFields(expandedTerms, [
+            { value: profile.handle, weight: 1.4 },
+            { value: profile.displayName, weight: 1.3 },
+            { value: profile.bio, weight: 1.0 }
+        ]);
+    }
+
+    private postSearchScore(post: CommunityPostDto, expandedTerms: ReadonlyArray<string>): number {
+        return scoreDiscoveryFields(expandedTerms, [
+            { value: post.title, weight: 1.8 },
+            { value: post.content, weight: 1.4 },
+            { value: post.authorHandle, weight: 1.0 },
+            { value: post.linkUrl, weight: 1.1 }
+        ]);
+    }
+
+    private rankCommunityPosts(posts: ReadonlyArray<CommunityPostDto>, query: string): CommunityPostDto[] {
+        return rankByDiscoveryQuery(posts, {
+            query,
+            minScore: 0,
+            score: (post, expandedTerms) => this.postSearchScore(post, expandedTerms),
+            onEmptyQuery: items => [...items],
+            tieBreaker: (left, right) => this.toTimestamp(right.createdAtUtc) - this.toTimestamp(left.createdAtUtc)
+        });
+    }
+
+    private async loadCommunityPostsForSearchAsync(communityId: string, query: string): Promise<CommunityPostDto[]> {
+        const trimmed = query.trim();
+        if (!trimmed) {
+            return await this.session.loadCommunityPostsAsync(communityId, undefined);
+        }
+
+        const directMatches = await this.session.loadCommunityPostsAsync(communityId, trimmed);
+        const rankedDirect = this.rankCommunityPosts(directMatches, trimmed);
+        if (rankedDirect.length > 0) {
+            return rankedDirect;
+        }
+
+        const allPosts = await this.session.loadCommunityPostsAsync(communityId, undefined);
+        return this.rankCommunityPosts(allPosts, trimmed);
+    }
+
+    private toTimestamp(value: string): number {
+        const parsed = Date.parse(value);
+        return Number.isNaN(parsed) ? 0 : parsed;
     }
 
     private resetStatus(): void {

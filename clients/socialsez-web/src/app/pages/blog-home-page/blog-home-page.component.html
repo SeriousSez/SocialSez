@@ -2,7 +2,27 @@
     <style *ngIf="customCss" [textContent]="customCss"></style>
 
     <p class="error" *ngIf="!loading && error">{{ error }}</p>
-    <p class="muted" *ngIf="loading">Loading blog...</p>
+    <div class="blog" *ngIf="loading" aria-label="Loading blog">
+        <header class="blog-head">
+            <app-skeleton width="40%" height="30px"></app-skeleton>
+            <app-skeleton width="92%" height="14px"></app-skeleton>
+            <app-skeleton width="82%" height="14px"></app-skeleton>
+            <div class="head-links">
+                <app-skeleton width="150px" height="13px"></app-skeleton>
+                <app-skeleton width="110px" height="13px"></app-skeleton>
+            </div>
+        </header>
+
+        <section class="post-list stack">
+            <article class="post-card" *ngFor="let _ of [1, 2, 3]">
+                <app-skeleton width="100%" height="180px" radius="10px"></app-skeleton>
+                <app-skeleton width="70%" height="22px"></app-skeleton>
+                <app-skeleton width="96%" height="13px"></app-skeleton>
+                <app-skeleton width="84%" height="13px"></app-skeleton>
+                <app-skeleton width="42%" height="12px"></app-skeleton>
+            </article>
+        </section>
+    </div>
 
     <div class="blog" *ngIf="!loading && !error && blog as currentBlog">
         <header class="blog-head" [class.center]="headerLayoutClass === 'center'">

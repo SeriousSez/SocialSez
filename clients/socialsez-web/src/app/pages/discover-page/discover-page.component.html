@@ -6,6 +6,10 @@
         </label>
     </div>
 
+    <div class="search-suggestions" *ngIf="showSuggestions">
+        <button type="button" class="suggestion-pill" *ngFor="let suggestion of suggestions" (click)="selectSuggestion(suggestion)">#{{ suggestion }}</button>
+    </div>
+
     <div class="scope-tabs" *ngIf="query.trim()">
         <button *ngFor="let scope of scopes" type="button" [class.active]="selectedScope === scope.value" (click)="changeScope(scope.value)">{{ scope.label }}</button>
     </div>
@@ -99,7 +103,8 @@
 
         <section class="section" *ngIf="showCommunitiesSection && communityResults.length">
             <h3>Communities</h3>
-            <article class="card" *ngFor="let community of communityResults">
+            <article class="card clickable-card" *ngFor="let community of communityResults" role="link" tabindex="0" (click)="openCommunityAsync(community, $event)" (keydown.enter)="openCommunityAsync(community, $event)"
+                (keydown.space)="$event.preventDefault(); openCommunityAsync(community, $event)">
                 <div class="identity">
                     <img class="avatar" *ngIf="community.imageUrl; else communityInitial" [src]="community.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Community image" />
                     <ng-template #communityInitial>
@@ -114,7 +119,7 @@
 
         <section class="section" *ngIf="showCommunityPostsSection && communityPostResults.length">
             <h3>Community Posts</h3>
-            <article class="card" *ngFor="let post of communityPostResults">
+            <article class="card clickable-card" *ngFor="let post of communityPostResults" role="link" tabindex="0" (click)="openCommunityPostAsync(post, $event)" (keydown.enter)="openCommunityPostAsync(post, $event)" (keydown.space)="$event.preventDefault(); openCommunityPostAsync(post, $event)">
                 <h4>
                     <a class="user-link" [routerLink]="['/cp', post.id]">{{ post.title || 'View community post' }}</a>
                 </h4>

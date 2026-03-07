@@ -9,6 +9,40 @@
 
     <p class="error" *ngIf="error">{{ error }}</p>
 
+    <section class="studio" *ngIf="loading" aria-label="Loading blog studio">
+        <section class="library card">
+            <div class="library-head">
+                <div>
+                    <app-skeleton width="130px" height="20px"></app-skeleton>
+                    <app-skeleton width="240px" height="12px"></app-skeleton>
+                </div>
+                <app-skeleton width="96px" height="34px" radius="10px"></app-skeleton>
+            </div>
+
+            <div class="blog-list">
+                <app-skeleton *ngFor="let _ of [1, 2, 3, 4]" width="100%" height="56px" radius="10px"></app-skeleton>
+            </div>
+        </section>
+
+        <div class="editor">
+            <section class="card">
+                <div class="card-head">
+                    <app-skeleton width="120px" height="20px"></app-skeleton>
+                    <app-skeleton width="70px" height="28px" radius="8px"></app-skeleton>
+                </div>
+
+                <app-skeleton width="92px" height="12px"></app-skeleton>
+                <app-skeleton width="100%" height="38px" radius="10px"></app-skeleton>
+
+                <app-skeleton width="108px" height="12px"></app-skeleton>
+                <app-skeleton width="100%" height="90px" radius="10px"></app-skeleton>
+
+                <app-skeleton width="100%" height="44px" radius="10px"></app-skeleton>
+                <app-skeleton width="100%" height="44px" radius="10px"></app-skeleton>
+            </section>
+        </div>
+    </section>
+
     <section class="studio" *ngIf="!loading">
         <section class="library card">
             <div class="library-head">
@@ -123,7 +157,9 @@
                     </div>
 
                     <p class="error" *ngIf="postError">{{ postError }}</p>
-                    <p class="muted" *ngIf="loadingPosts">Loading posts...</p>
+                    <div class="post-list" *ngIf="loadingPosts" aria-label="Loading blog posts">
+                        <app-skeleton *ngFor="let _ of [1, 2, 3, 4]" width="100%" height="54px" radius="10px"></app-skeleton>
+                    </div>
 
                     <div class="post-list" *ngIf="!loadingPosts && posts.length">
                         <button type="button" class="post-chip" *ngFor="let post of posts; trackBy: trackPost" [class.active]="post.id === editingPostId" (click)="editPost(post)">

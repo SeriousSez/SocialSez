@@ -26,6 +26,7 @@ builder.Services.Configure<FormOptions>(options =>
 });
 
 builder.Services.AddSocialSezInfrastructure(builder.Configuration);
+builder.Services.AddMemoryCache();
 builder.Services.AddSocialSezApplication();
 builder.Services.AddSignalR();
 

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Caching.Memory;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 using SocialSez.Domain.Entities;
@@ -9,7 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace SocialSez.ApplicationService.Services;
 
-public class PostService(SocialSezContext dbContext) : IPostService
+public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) : IPostService
 {
     private const string LikeReactionType = "Like";
     private const int MaxPostContentLength = 3000;
@@ -20,6 +21,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
     };
     private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
     private static volatile bool postSchemaInitialized;
+    private static readonly TimeSpan SearchCacheTtl = TimeSpan.FromSeconds(30);
 
     public async Task<PostDto> CreateAsync(CreatePostRequest request, CancellationToken cancellationToken = default)
     {
@@ -55,6 +57,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         dbContext.Posts.Add(post);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpPost();
 
         return new PostDto(
             post.Id,
@@ -124,6 +127,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         dbContext.Comments.Add(comment);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpPost();
         return MapToPostDto(post, request.AuthorId);
     }
 
@@ -165,6 +169,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         comment.Content = content;
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpPost();
         return MapToPostDto(post, profileId);
     }
 
@@ -224,6 +229,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         dbContext.Comments.RemoveRange(commentsToDelete);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpPost();
         return MapToPostDto(post, profileId);
     }
 
@@ -275,6 +281,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpPost();
         return MapToPostDto(post, profileId);
     }
 
@@ -308,6 +315,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
         {
             dbContext.CommentReactions.Remove(existingReaction);
             await dbContext.SaveChangesAsync(cancellationToken);
+            SearchCacheVersionStamp.BumpPost();
         }
 
         return MapToPostDto(post, profileId);
@@ -344,6 +352,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         post.Content = content;
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpPost();
 
         var hydratedPost = await dbContext.Posts
             .AsNoTracking()
@@ -374,6 +383,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
 
         dbContext.Posts.Remove(post);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpPost();
         return true;
     }
 
@@ -417,6 +427,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpPost();
         return MapToPostDto(post, profileId);
     }
 
@@ -462,6 +473,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpPost();
         return MapToPostDto(post, profileId);
     }
 
@@ -489,6 +501,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
         {
             dbContext.PostReactions.Remove(existingReaction);
             await dbContext.SaveChangesAsync(cancellationToken);
+            SearchCacheVersionStamp.BumpPost();
         }
 
         return MapToPostDto(post, profileId);
@@ -646,42 +659,62 @@ public class PostService(SocialSezContext dbContext) : IPostService
     {
         await EnsurePostSchemaAsync(cancellationToken);
 
-        var normalizedQuery = query.Trim().ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(normalizedQuery))
+        var normalizedQuery = DiscoverySearchBackend.NormalizeQuery(query);
+        var expandedTerms = DiscoverySearchBackend.ExpandTerms(normalizedQuery);
+        if (expandedTerms.Count == 0)
         {
             return Array.Empty<PostDto>();
         }
 
         take = Math.Clamp(take, 1, 100);
+        var candidateTake = Math.Clamp(take * 4, take, 320);
 
-        var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
-        var blockedProfileIds = viewerId.HasValue
-            ? await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken)
-            : null;
+        var cacheKey = $"post:search:v3:pv={SearchCacheVersionStamp.PostVersion}:viewer={viewerId?.ToString() ?? "anon"}:q={normalizedQuery ?? string.Empty}:take={take}";
+        return await SearchResultCache.GetOrCreateAsync(memoryCache, cacheKey, SearchCacheTtl, async () =>
+        {
+            var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
+            var blockedProfileIds = viewerId.HasValue
+                ? await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken)
+                : null;
 
-        var posts = await dbContext.Posts
-            .AsNoTracking()
-            .Include(x => x.Author)
-            .Include(x => x.Comments)
-                .ThenInclude(x => x.Author)
-            .Include(x => x.Comments)
-                .ThenInclude(x => x.Reactions)
-            .Include(x => x.Reactions)
-                .ThenInclude(x => x.Profile)
-            .Where(x =>
-                (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
-                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId))
-                &&
-                ((!string.IsNullOrWhiteSpace(x.Content) && x.Content.ToLower().Contains(normalizedQuery)) ||
-                x.Author.Handle.Contains(normalizedQuery)))
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(take)
-            .ToArrayAsync(cancellationToken);
+            var posts = await dbContext.Posts
+                .AsNoTracking()
+                .Include(x => x.Author)
+                .Include(x => x.Comments)
+                    .ThenInclude(x => x.Author)
+                .Include(x => x.Comments)
+                    .ThenInclude(x => x.Reactions)
+                .Include(x => x.Reactions)
+                    .ThenInclude(x => x.Profile)
+                .Where(x =>
+                    (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
+                    && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .Take(candidateTake)
+                .ToArrayAsync(cancellationToken);
 
-        var mapProfileId = viewerId ?? Guid.Empty;
-        return posts
-            .Select(post => MapToPostDto(post, mapProfileId))
-            .ToArray();
+            posts = posts
+                .Select(post => new
+                {
+                    Post = post,
+                    Score = DiscoverySearchBackend.ScoreFields(expandedTerms,
+                        (post.Author.Handle, 0.8),
+                        (post.Content, 1.0))
+                        + (post.Reactions.Count * 2d)
+                        + (post.Comments.Count * 3d)
+                })
+                .Where(x => x.Score > 0)
+                .OrderByDescending(x => x.Score)
+                .ThenByDescending(x => x.Post.CreatedAtUtc)
+                .Take(take)
+                .Select(x => x.Post)
+                .ToArray();
+
+            var mapProfileId = viewerId ?? Guid.Empty;
+            return posts
+                .Select(post => MapToPostDto(post, mapProfileId))
+                .ToArray();
+        });
     }
 
     public async Task<IReadOnlyCollection<HashtagSearchResultDto>> GetTrendingHashtagsAsync(int take = 10, Guid? viewerId = null, CancellationToken cancellationToken = default)
@@ -1355,3 +1388,4 @@ public class PostService(SocialSezContext dbContext) : IPostService
         }
     }
 }
+

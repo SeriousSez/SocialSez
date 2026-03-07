@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Caching.Memory;
 using System.Text.Json;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
@@ -8,7 +9,7 @@ using SocialSez.Infrastructure;
 
 namespace SocialSez.ApplicationService.Services;
 
-public class CommunityService(SocialSezContext dbContext) : ICommunityService
+public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCache) : ICommunityService
 {
     private const int MaxCommunityCommentLength = 500;
     private const string UpvoteType = "Upvote";
@@ -20,6 +21,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
     private static readonly int[] AllowedTimeoutDays = [1, 7, 30];
     private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
     private static volatile bool communitySchemaInitialized;
+    private static readonly TimeSpan SearchCacheTtl = TimeSpan.FromSeconds(30);
 
     public async Task<CommunityDto> CreateAsync(Guid creatorProfileId, CreateCommunityRequest request, CancellationToken cancellationToken = default)
     {
@@ -64,6 +66,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
 
         dbContext.Communities.Add(community);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
 
         return MapCommunity(community, creatorProfileId, includeMembers: true, memberTake: 20);
     }
@@ -106,6 +109,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         community.IsPrivate = request.IsPrivate;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         return MapCommunity(community, actorProfileId, includeMembers: true, memberTake: 20);
     }
 
@@ -207,34 +211,52 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         await EnsureCommunitySchemaAsync(cancellationToken);
 
         var normalizedTake = Math.Clamp(take, 1, 100);
-        var normalizedQuery = query?.Trim();
+        var normalizedQuery = DiscoverySearchBackend.NormalizeQuery(query);
+        var expandedTerms = DiscoverySearchBackend.ExpandTerms(normalizedQuery);
+        var candidateTake = Math.Clamp(normalizedTake * 4, normalizedTake, 320);
 
-        var communitiesQuery = dbContext.Communities
-            .AsNoTracking()
-            .Include(x => x.CreatedByProfile)
-            .Include(x => x.Members)
-                .ThenInclude(x => x.Profile)
-            .Where(x => !x.IsPrivate)
-            .AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(normalizedQuery))
+        var cacheKey = $"community:discover:v3:cv={SearchCacheVersionStamp.CommunityVersion}:viewer={viewerProfileId?.ToString() ?? "anon"}:q={normalizedQuery ?? string.Empty}:take={normalizedTake}";
+        return await SearchResultCache.GetOrCreateAsync(memoryCache, cacheKey, SearchCacheTtl, async () =>
         {
-            var lowered = normalizedQuery.ToLowerInvariant();
-            communitiesQuery = communitiesQuery.Where(x =>
-                x.Name.ToLower().Contains(lowered) ||
-                x.Slug.ToLower().Contains(lowered) ||
-                (x.Description != null && x.Description.ToLower().Contains(lowered)));
-        }
+            var communitiesQuery = dbContext.Communities
+                .AsNoTracking()
+                .Include(x => x.CreatedByProfile)
+                .Include(x => x.Members)
+                    .ThenInclude(x => x.Profile)
+                .Where(x => !x.IsPrivate)
+                .AsQueryable();
 
-        var communities = await communitiesQuery
-            .OrderByDescending(x => x.Members.Count)
-            .ThenByDescending(x => x.CreatedAtUtc)
-            .Take(normalizedTake)
-            .ToListAsync(cancellationToken);
+            var candidates = await communitiesQuery
+                .OrderByDescending(x => x.Members.Count)
+                .ThenByDescending(x => x.CreatedAtUtc)
+                .Take(candidateTake)
+                .ToListAsync(cancellationToken);
 
-        return communities
-            .Select(x => MapCommunity(x, viewerProfileId, includeMembers: false, memberTake: 0))
-            .ToArray();
+            var communities = expandedTerms.Count > 0
+                ? candidates
+                    .Select(community => new
+                    {
+                        Community = community,
+                        Score = DiscoverySearchBackend.ScoreFields(expandedTerms,
+                            (community.Name, 1.8),
+                            (community.Slug, 1.4),
+                            (community.Description, 1.2),
+                            (community.CreatedByProfile.Handle, 1.0))
+                            + Math.Min(community.Members.Count, 1200) / 20d
+                    })
+                    .Where(x => x.Score > 0)
+                    .OrderByDescending(x => x.Score)
+                    .ThenByDescending(x => x.Community.Members.Count)
+                    .ThenBy(x => x.Community.Name)
+                    .Take(normalizedTake)
+                    .Select(x => x.Community)
+                    .ToList()
+                : candidates.Take(normalizedTake).ToList();
+
+            return communities
+                .Select(x => MapCommunity(x, viewerProfileId, includeMembers: false, memberTake: 0))
+                .ToArray();
+        });
     }
 
     public async Task<CommunityDto?> JoinAsync(Guid communityId, Guid profileId, CancellationToken cancellationToken = default)
@@ -276,6 +298,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             });
 
             await dbContext.SaveChangesAsync(cancellationToken);
+            SearchCacheVersionStamp.BumpCommunity();
         }
 
         return MapCommunity(community, profileId, includeMembers: true, memberTake: 20);
@@ -309,6 +332,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
 
         dbContext.CommunityMembers.Remove(membership);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         return true;
     }
 
@@ -353,6 +377,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         member.Role = normalizedRole;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         return MapCommunity(community, actorProfileId, includeMembers: true, memberTake: 20);
     }
 
@@ -397,6 +422,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         member.MutedUntilUtc = DateTime.UtcNow.AddDays(durationDays);
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         return MapCommunity(community, actorProfileId, includeMembers: true, memberTake: 20);
     }
 
@@ -485,6 +511,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
 
         dbContext.CommunityPosts.Add(post);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
 
         var created = await dbContext.CommunityPosts
             .AsNoTracking()
@@ -565,6 +592,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
 
         dbContext.CommunityPostComments.Add(comment);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         return MapPost(post, request.AuthorId);
     }
 
@@ -604,6 +632,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
 
         comment.Content = NormalizeCommentContent(request.Content);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         return MapPost(post, request.ActorId);
     }
 
@@ -644,6 +673,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         dbContext.CommunityPostComments.Remove(comment);
         post.Comments.Remove(comment);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         return MapPost(post, actorId);
     }
 
@@ -781,6 +811,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             .FirstOrDefault(url => !string.IsNullOrWhiteSpace(url));
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         return MapPost(post, request.ActorId);
     }
 
@@ -846,6 +877,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         return MapPost(post, request.VoterId);
     }
 
@@ -924,6 +956,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
 
         dbContext.CommunityPosts.Remove(post);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         return true;
     }
 
@@ -948,42 +981,59 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         }
 
         var normalizedTake = Math.Clamp(take, 1, 100);
-        var normalizedQuery = query?.Trim();
+        var normalizedQuery = DiscoverySearchBackend.NormalizeQuery(query);
+        var expandedTerms = DiscoverySearchBackend.ExpandTerms(normalizedQuery);
+        var candidateTake = Math.Clamp(normalizedTake * 4, normalizedTake, 320);
 
-        var postsQuery = dbContext.CommunityPosts
-            .AsNoTracking()
-            .Where(x => x.CommunityId == communityId)
-            .Include(x => x.Author)
-            .Include(x => x.Images)
-            .Include(x => x.SavedBy)
-            .Include(x => x.Comments)
-                .ThenInclude(x => x.Author)
-            .Include(x => x.Votes)
-            .Include(x => x.Poll)
-                .ThenInclude(x => x.Options)
-                    .ThenInclude(x => x.Votes)
-            .AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(normalizedQuery))
+        var cacheKey = $"community:posts:v3:cv={SearchCacheVersionStamp.CommunityVersion}:community={communityId}:viewer={viewerProfileId?.ToString() ?? "anon"}:q={normalizedQuery ?? string.Empty}:take={normalizedTake}";
+        return await SearchResultCache.GetOrCreateAsync(memoryCache, cacheKey, SearchCacheTtl, async () =>
         {
-            var lowered = normalizedQuery.ToLowerInvariant();
-            postsQuery = postsQuery.Where(x =>
-                (x.Title != null && x.Title.ToLower().Contains(lowered))
-                || (x.LinkUrl != null && x.LinkUrl.ToLower().Contains(lowered))
-                || (x.Content != null && x.Content.ToLower().Contains(lowered))
-                || x.Author.Handle.ToLower().Contains(lowered)
-                || (x.Poll != null && x.Poll.Question.ToLower().Contains(lowered))
-                || (x.Poll != null && x.Poll.Options.Any(option => option.Text.ToLower().Contains(lowered))));
-        }
+            var postsQuery = dbContext.CommunityPosts
+                .AsNoTracking()
+                .Where(x => x.CommunityId == communityId)
+                .Include(x => x.Author)
+                .Include(x => x.Images)
+                .Include(x => x.SavedBy)
+                .Include(x => x.Comments)
+                    .ThenInclude(x => x.Author)
+                .Include(x => x.Votes)
+                .Include(x => x.Poll)
+                    .ThenInclude(x => x.Options)
+                        .ThenInclude(x => x.Votes)
+                .AsQueryable();
 
-        var posts = await postsQuery
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(normalizedTake)
-            .ToArrayAsync(cancellationToken);
+            var candidates = await postsQuery
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .Take(candidateTake)
+                .ToArrayAsync(cancellationToken);
 
-        return posts
-            .Select(post => MapPost(post, viewerProfileId))
-            .ToArray();
+            var posts = expandedTerms.Count > 0
+                ? candidates
+                    .Select(post => new
+                    {
+                        Post = post,
+                        Score = DiscoverySearchBackend.ScoreFields(expandedTerms,
+                            (post.Title, 1.0),
+                            (post.Content, 1.0),
+                            (post.LinkUrl, 0.8),
+                            (post.Author.Handle, 0.8),
+                            (post.Poll?.Question, 0.9),
+                            (string.Join(' ', post.Poll?.Options.Select(option => option.Text) ?? []), 0.7))
+                            + Math.Min(post.Votes.Count(vote => string.Equals(vote.Type, UpvoteType, StringComparison.OrdinalIgnoreCase)), 500) / 12d
+                            + (post.Comments.Count * 2d)
+                    })
+                    .Where(x => x.Score > 0)
+                    .OrderByDescending(x => x.Score)
+                    .ThenByDescending(x => x.Post.CreatedAtUtc)
+                    .Take(normalizedTake)
+                    .Select(x => x.Post)
+                    .ToArray()
+                : candidates.Take(normalizedTake).ToArray();
+
+            return posts
+                .Select(post => MapPost(post, viewerProfileId))
+                .ToArray();
+        });
     }
 
     public async Task<IReadOnlyCollection<CommunityPostDto>> SearchPostsAsync(Guid? viewerProfileId, string? query = null, int take = 50, CancellationToken cancellationToken = default)
@@ -991,42 +1041,62 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         await EnsureCommunitySchemaAsync(cancellationToken);
 
         var normalizedTake = Math.Clamp(take, 1, 100);
-        var normalizedQuery = query?.Trim();
+        var normalizedQuery = DiscoverySearchBackend.NormalizeQuery(query);
+        var expandedTerms = DiscoverySearchBackend.ExpandTerms(normalizedQuery);
+        var candidateTake = Math.Clamp(normalizedTake * 4, normalizedTake, 320);
 
-        if (string.IsNullOrWhiteSpace(normalizedQuery))
+        if (expandedTerms.Count == 0)
         {
             return Array.Empty<CommunityPostDto>();
         }
 
-        var lowered = normalizedQuery.ToLowerInvariant();
         var viewerId = viewerProfileId.GetValueOrDefault();
 
-        var postsQuery = dbContext.CommunityPosts
-            .AsNoTracking()
-            .Where(x => !x.Community.IsPrivate || (viewerProfileId.HasValue && x.Community.Members.Any(member => member.ProfileId == viewerId)))
-            .Where(x =>
-                (x.Title != null && x.Title.ToLower().Contains(lowered))
-                || (x.LinkUrl != null && x.LinkUrl.ToLower().Contains(lowered))
-                || (x.Content != null && x.Content.ToLower().Contains(lowered))
-                || x.Author.Handle.ToLower().Contains(lowered)
-                || x.Community.Name.ToLower().Contains(lowered)
-                || x.Community.Slug.ToLower().Contains(lowered)
-                || (x.Poll != null && x.Poll.Question.ToLower().Contains(lowered))
-                || (x.Poll != null && x.Poll.Options.Any(option => option.Text.ToLower().Contains(lowered))))
-            .Include(x => x.Author)
-            .Include(x => x.Images)
-            .Include(x => x.SavedBy)
-            .Include(x => x.Comments)
-                .ThenInclude(x => x.Author)
-            .Include(x => x.Votes)
-            .Include(x => x.Poll)
-                .ThenInclude(x => x.Options)
-                    .ThenInclude(x => x.Votes)
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(normalizedTake);
+        var cacheKey = $"community:search-posts:v3:cv={SearchCacheVersionStamp.CommunityVersion}:viewer={viewerProfileId?.ToString() ?? "anon"}:q={normalizedQuery ?? string.Empty}:take={normalizedTake}";
+        return await SearchResultCache.GetOrCreateAsync(memoryCache, cacheKey, SearchCacheTtl, async () =>
+        {
+            var candidates = await dbContext.CommunityPosts
+                .AsNoTracking()
+                .Where(x => !x.Community.IsPrivate || (viewerProfileId.HasValue && x.Community.Members.Any(member => member.ProfileId == viewerId)))
+                .Include(x => x.Community)
+                .Include(x => x.Author)
+                .Include(x => x.Images)
+                .Include(x => x.SavedBy)
+                .Include(x => x.Comments)
+                    .ThenInclude(x => x.Author)
+                .Include(x => x.Votes)
+                .Include(x => x.Poll)
+                    .ThenInclude(x => x.Options)
+                        .ThenInclude(x => x.Votes)
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .Take(candidateTake)
+                .ToArrayAsync(cancellationToken);
 
-        var posts = await postsQuery.ToArrayAsync(cancellationToken);
-        return posts.Select(post => MapPost(post, viewerProfileId)).ToArray();
+            var posts = candidates
+                .Select(post => new
+                {
+                    Post = post,
+                    Score = DiscoverySearchBackend.ScoreFields(expandedTerms,
+                        (post.Title, 1.0),
+                        (post.Content, 1.0),
+                        (post.LinkUrl, 0.8),
+                        (post.Author.Handle, 0.8),
+                        (post.Community?.Name, 0.8),
+                        (post.Community?.Slug, 0.8),
+                        (post.Poll?.Question, 0.9),
+                        (string.Join(' ', post.Poll?.Options.Select(option => option.Text) ?? []), 0.7))
+                        + Math.Min(post.Votes.Count(vote => string.Equals(vote.Type, UpvoteType, StringComparison.OrdinalIgnoreCase)), 500) / 12d
+                        + (post.Comments.Count * 2d)
+                })
+                .Where(x => x.Score > 0)
+                .OrderByDescending(x => x.Score)
+                .ThenByDescending(x => x.Post.CreatedAtUtc)
+                .Take(normalizedTake)
+                .Select(x => x.Post)
+                .ToArray();
+
+            return posts.Select(post => MapPost(post, viewerProfileId)).ToArray();
+        });
     }
 
     public async Task<CommunityPostDto?> SavePostAsync(Guid communityId, Guid postId, Guid profileId, CancellationToken cancellationToken = default)
@@ -1069,6 +1139,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             });
 
             await dbContext.SaveChangesAsync(cancellationToken);
+            SearchCacheVersionStamp.BumpCommunity();
         }
 
         return MapPost(post, profileId);
@@ -1097,6 +1168,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
 
         dbContext.CommunitySavedPosts.Remove(saved);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         return true;
     }
 
@@ -1141,6 +1213,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             if (existingVote.OptionId == selectedOption.Id)
             {
                 await dbContext.SaveChangesAsync(cancellationToken);
+                SearchCacheVersionStamp.BumpCommunity();
                 var refreshedPollAfterRemove = await dbContext.CommunityPolls
                     .AsNoTracking()
                     .Include(x => x.Options)
@@ -1159,6 +1232,7 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpCommunity();
         var refreshedPoll = await dbContext.CommunityPolls
             .AsNoTracking()
             .Include(x => x.Options)

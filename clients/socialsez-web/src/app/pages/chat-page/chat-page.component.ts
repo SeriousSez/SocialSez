@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, PostReactionDetailDto, ProfileDto, ReactionSummaryDto, ReelCommentDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
+import { expandDiscoveryTerms, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { ChatRealtimeService } from '../../core/chat-realtime.service';
 import { ReelInteractionsService } from '../../core/reel-interactions.service';
 import { executeReelShareToChat } from '../../core/reel-share-to-chat.utils';
@@ -468,35 +469,25 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     get visibleMessages(): ChatMessageDto[] {
-        const query = this.messageSearchQuery.trim().toLowerCase();
-        if (!query) {
+        const expandedTerms = expandDiscoveryTerms(this.messageSearchQuery);
+        if (!expandedTerms.length) {
             return this.messages;
         }
 
         return this.messages.filter(message =>
-            this.messageSearchIndex(message.content).includes(query)
-            || message.authorHandle.toLowerCase().includes(query));
+            this.messageSearchScore(message, expandedTerms) > 0);
     }
 
     get filteredConversations(): ChatConversationDto[] {
-        const query = this.searchUsersQuery.trim().toLowerCase();
+        const expandedTerms = expandDiscoveryTerms(this.searchUsersQuery);
         const withMessages = this.conversations.filter(conversation => !!conversation.lastMessage?.id);
-        if (!query) {
+        if (!expandedTerms.length) {
             return withMessages;
         }
 
         const currentProfileId = this.currentProfileId;
         return withMessages.filter(conversation => {
-            const title = this.conversationTitle(conversation).toLowerCase();
-            const participantPool = conversation.participants.filter(participant => participant.profileId !== currentProfileId);
-            const participants = (participantPool.length ? participantPool : conversation.participants)
-                .map(participant => `${participant.displayName} ${participant.handle}`.toLowerCase())
-                .join(' ');
-            const lastMessage = conversation.lastMessage?.content?.toLowerCase() ?? '';
-
-            return title.includes(query)
-                || participants.includes(query)
-                || lastMessage.includes(query);
+            return this.conversationSearchScore(conversation, expandedTerms, currentProfileId) > 0;
         });
     }
 
@@ -4676,6 +4667,7 @@ export class ChatPageComponent implements OnDestroy {
         }
 
         try {
+            const expandedTerms = expandDiscoveryTerms(currentQuery);
             const profiles = await this.session.searchProfilesAsync(currentQuery);
             if (this.modalSearchUsersQuery.trim() !== currentQuery) {
                 return;
@@ -4685,17 +4677,19 @@ export class ChatPageComponent implements OnDestroy {
             const myId = myProfile?.id ?? null;
             const myHandle = myProfile?.handle?.toLowerCase() ?? null;
 
-            this.filteredProfiles = profiles.filter(profile => {
-                if (myId && profile.id === myId) {
-                    return false;
-                }
+            this.filteredProfiles = profiles
+                .filter(profile => {
+                    if (myId && profile.id === myId) {
+                        return false;
+                    }
 
-                if (myHandle && profile.handle.toLowerCase() === myHandle) {
-                    return false;
-                }
+                    if (myHandle && profile.handle.toLowerCase() === myHandle) {
+                        return false;
+                    }
 
-                return true;
-            });
+                    return !expandedTerms.length || this.profileSearchScore(profile, expandedTerms) > 0;
+                })
+                .sort((left, right) => this.profileSearchScore(right, expandedTerms) - this.profileSearchScore(left, expandedTerms));
             this.searchUsersError = '';
         } catch {
             if (this.modalSearchUsersQuery.trim() !== currentQuery) {
@@ -4740,5 +4734,35 @@ export class ChatPageComponent implements OnDestroy {
                 this.loadingProfileSuggestions = false;
             }
         }
+    }
+
+    private messageSearchScore(message: ChatMessageDto, expandedTerms: ReadonlyArray<string>): number {
+        return scoreDiscoveryFields(expandedTerms, [
+            { value: this.messageSearchIndex(message.content), weight: 1.6 },
+            { value: message.authorHandle, weight: 1.0 }
+        ]);
+    }
+
+    private conversationSearchScore(conversation: ChatConversationDto, expandedTerms: ReadonlyArray<string>, currentProfileId: string | null): number {
+        const title = this.conversationTitle(conversation);
+        const participantPool = conversation.participants.filter(participant => participant.profileId !== currentProfileId);
+        const participants = (participantPool.length ? participantPool : conversation.participants)
+            .map(participant => `${participant.displayName} ${participant.handle}`)
+            .join(' ');
+        const lastMessage = conversation.lastMessage?.content ?? '';
+
+        return scoreDiscoveryFields(expandedTerms, [
+            { value: title, weight: 1.5 },
+            { value: participants, weight: 1.2 },
+            { value: lastMessage, weight: 1.0 }
+        ]);
+    }
+
+    private profileSearchScore(profile: ProfileDto, expandedTerms: ReadonlyArray<string>): number {
+        return scoreDiscoveryFields(expandedTerms, [
+            { value: profile.displayName, weight: 1.4 },
+            { value: profile.handle, weight: 1.2 },
+            { value: profile.bio, weight: 1.0 }
+        ]);
     }
 }

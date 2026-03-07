@@ -3,7 +3,9 @@ import { AfterViewInit, Component, ElementRef, HostListener, NgZone, OnDestroy, 
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { BlogDto } from '../../core/api.types';
+import { buildDiscoverySuggestions, DISCOVERY_TOPICS, rankByDiscoveryQuery, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { SessionService } from '../../core/session.service';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 type BlogsTab = 'all' | 'following' | 'mine';
 type BlogSort = 'updated' | 'created' | 'title';
@@ -11,7 +13,7 @@ type BlogSort = 'updated' | 'created' | 'title';
 @Component({
     selector: 'app-blogs-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink, SkeletonComponent],
     templateUrl: './blogs-page.component.html',
     styleUrl: './blogs-page.component.scss'
 })
@@ -32,6 +34,8 @@ export class BlogsPageComponent {
     readonly pageSize = 18;
     visibleCount = 18;
     loadingMore = false;
+    suggestions: string[] = [];
+    private readonly suggestionSeed = new Set<string>(DISCOVERY_TOPICS.map(topic => topic.canonical));
     private queryDebounceTimerId: number | null = null;
 
     @ViewChild('infiniteSentinel')
@@ -95,6 +99,8 @@ export class BlogsPageComponent {
                 void this.runSearchAsync();
             });
         }, 220);
+
+        this.refreshSuggestions();
     }
 
     async clearSearchAsync(): Promise<void> {
@@ -103,6 +109,19 @@ export class BlogsPageComponent {
         }
 
         this.searchText = '';
+        this.refreshSuggestions();
+        this.resetPagination();
+        await this.loadAsync();
+    }
+
+    async applySuggestionAsync(suggestion: string): Promise<void> {
+        const next = suggestion.trim();
+        if (!next) {
+            return;
+        }
+
+        this.searchText = next;
+        this.refreshSuggestions();
         this.resetPagination();
         await this.loadAsync();
     }
@@ -146,28 +165,23 @@ export class BlogsPageComponent {
             await this.session.bootstrapAsync();
 
             const query = this.searchText.trim();
+            const backendQuery = query || undefined;
             let loadedBlogs: BlogDto[] = [];
 
             if (this.activeTab === 'all') {
-                loadedBlogs = await this.session.discoverBlogsAsync(query || undefined, 80);
+                loadedBlogs = await this.session.discoverBlogsAsync(backendQuery, 120);
             } else if (!this.session.isAuthenticated()) {
                 loadedBlogs = [];
                 this.error = 'Sign in to view this tab.';
             } else if (this.activeTab === 'following') {
-                loadedBlogs = await this.session.loadFollowingBlogsAsync(query || undefined, 80);
+                loadedBlogs = await this.session.loadFollowingBlogsAsync(backendQuery, 120);
             } else {
                 loadedBlogs = await this.session.loadMyBlogsAsync();
-                if (query) {
-                    const q = query.toLowerCase();
-                    loadedBlogs = loadedBlogs.filter(blog =>
-                        blog.title.toLowerCase().includes(q)
-                        || (blog.description ?? '').toLowerCase().includes(q)
-                        || blog.slug.toLowerCase().includes(q)
-                        || blog.ownerHandle.toLowerCase().includes(q));
-                }
             }
 
-            this.blogs = loadedBlogs;
+            this.rememberSuggestionSeed(loadedBlogs);
+            this.blogs = this.rankAndFilterBlogs(loadedBlogs, query);
+            this.refreshSuggestions();
         } catch {
             this.blogs = [];
             this.error = 'Could not load blogs right now.';
@@ -294,5 +308,53 @@ export class BlogsPageComponent {
     private toTimestamp(value: string): number {
         const parsed = Date.parse(value);
         return Number.isNaN(parsed) ? 0 : parsed;
+    }
+
+    private rankAndFilterBlogs(blogs: ReadonlyArray<BlogDto>, query: string): BlogDto[] {
+        return rankByDiscoveryQuery(blogs, {
+            query,
+            minScore: 0,
+            score: (blog, expandedTerms) => this.blogSearchScore(blog, expandedTerms),
+            onEmptyQuery: items => [...items],
+            tieBreaker: (left, right) => this.toTimestamp(right.updatedAtUtc) - this.toTimestamp(left.updatedAtUtc)
+        });
+    }
+
+    private blogSearchScore(blog: BlogDto, expandedTerms: ReadonlyArray<string>): number {
+        return scoreDiscoveryFields(expandedTerms, [
+            { value: blog.title, weight: 1.7 },
+            { value: blog.slug, weight: 1.2 },
+            { value: blog.ownerHandle, weight: 1.0 },
+            { value: blog.description ?? '', weight: 1.3 }
+        ]);
+    }
+
+    private rememberSuggestionSeed(blogs: ReadonlyArray<BlogDto>): void {
+        for (const blog of blogs.slice(0, 64)) {
+            this.addSeed(blog.slug);
+            this.addSeed(blog.ownerHandle);
+
+            for (const token of blog.title.split(/[^\p{L}\p{N}_-]+/u)) {
+                this.addSeed(token);
+            }
+
+            const description = blog.description ?? '';
+            for (const token of description.split(/[^\p{L}\p{N}_-]+/u)) {
+                this.addSeed(token);
+            }
+        }
+    }
+
+    private addSeed(value: string): void {
+        const token = value.trim().toLowerCase();
+        if (token.length < 3 || token.length > 32) {
+            return;
+        }
+
+        this.suggestionSeed.add(token);
+    }
+
+    private refreshSuggestions(): void {
+        this.suggestions = buildDiscoverySuggestions(this.searchText, Array.from(this.suggestionSeed), 8);
     }
 }

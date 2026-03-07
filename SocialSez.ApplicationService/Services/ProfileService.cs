@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System.Text.RegularExpressions;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
@@ -7,9 +8,10 @@ using SocialSez.Infrastructure;
 
 namespace SocialSez.ApplicationService.Services;
 
-public class ProfileService(SocialSezContext dbContext) : IProfileService
+public class ProfileService(SocialSezContext dbContext, IMemoryCache memoryCache) : IProfileService
 {
     private static readonly TimeSpan HandleChangeCooldown = TimeSpan.FromDays(30);
+    private static readonly TimeSpan SearchCacheTtl = TimeSpan.FromSeconds(30);
 
     public async Task<ProfileDto> CreateAsync(CreateProfileRequest request, CancellationToken cancellationToken = default)
     {
@@ -38,6 +40,7 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
 
         dbContext.UserProfiles.Add(profile);
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpProfile();
 
         return ToDto(profile, true);
     }
@@ -119,59 +122,80 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
 
     public async Task<IReadOnlyCollection<ProfileDto>> SearchAsync(string query, Guid? viewerId = null, int take = 20, CancellationToken cancellationToken = default)
     {
-        var normalizedQuery = query.Trim().ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(normalizedQuery))
+        var normalizedQuery = DiscoverySearchBackend.NormalizeQuery(query);
+        var expandedTerms = DiscoverySearchBackend.ExpandTerms(normalizedQuery);
+        if (expandedTerms.Count == 0)
         {
             return Array.Empty<ProfileDto>();
         }
 
         take = Math.Clamp(take, 1, 100);
-        HashSet<Guid>? blockedProfileIds = null;
-        if (viewerId.HasValue)
+        var candidateTake = Math.Clamp(take * 4, take, 320);
+        var cacheKey = $"profile:search:v3:rv={SearchCacheVersionStamp.ProfileVersion}:viewer={viewerId?.ToString() ?? "anon"}:q={normalizedQuery ?? string.Empty}:take={take}";
+        return await SearchResultCache.GetOrCreateAsync(memoryCache, cacheKey, SearchCacheTtl, async () =>
         {
-            blockedProfileIds = await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken);
-        }
-
-        var profilesQuery = dbContext.UserProfiles
-            .AsNoTracking()
-            .Where(x => x.Handle.Contains(normalizedQuery) || x.DisplayName.ToLower().Contains(normalizedQuery));
-
-        if (viewerId.HasValue && blockedProfileIds is not null && blockedProfileIds.Count > 0)
-        {
-            profilesQuery = profilesQuery.Where(x => !blockedProfileIds.Contains(x.Id));
-        }
-
-        if (!viewerId.HasValue)
-        {
-            profilesQuery = profilesQuery.Where(x => !x.IsPrivate);
-        }
-
-        var profiles = await profilesQuery
-            .OrderBy(x => x.Handle)
-            .Take(take)
-            .ToArrayAsync(cancellationToken);
-
-        HashSet<Guid>? followedIds = null;
-        if (viewerId.HasValue)
-        {
-            var followedList = await dbContext.Follows
-                .AsNoTracking()
-                .Where(x => x.FollowerId == viewerId.Value)
-                .Select(x => x.FollowedId)
-                .ToListAsync(cancellationToken);
-
-            followedIds = followedList.ToHashSet();
-        }
-
-        return profiles
-            .Select(profile =>
+            HashSet<Guid>? blockedProfileIds = null;
+            if (viewerId.HasValue)
             {
-                var canViewPrivateInfo = !profile.IsPrivate
-                    || (viewerId.HasValue && (viewerId.Value == profile.Id || (followedIds?.Contains(profile.Id) ?? false)));
+                blockedProfileIds = await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken);
+            }
 
-                return ToDto(profile, canViewPrivateInfo);
-            })
-            .ToArray();
+            var profilesQuery = dbContext.UserProfiles
+                .AsNoTracking();
+
+            if (viewerId.HasValue && blockedProfileIds is not null && blockedProfileIds.Count > 0)
+            {
+                profilesQuery = profilesQuery.Where(x => !blockedProfileIds.Contains(x.Id));
+            }
+
+            if (!viewerId.HasValue)
+            {
+                profilesQuery = profilesQuery.Where(x => !x.IsPrivate);
+            }
+
+            var candidates = await profilesQuery
+                .OrderBy(x => x.Handle)
+                .Take(candidateTake)
+                .ToArrayAsync(cancellationToken);
+
+            HashSet<Guid>? followedIds = null;
+            if (viewerId.HasValue)
+            {
+                var followedList = await dbContext.Follows
+                    .AsNoTracking()
+                    .Where(x => x.FollowerId == viewerId.Value)
+                    .Select(x => x.FollowedId)
+                    .ToListAsync(cancellationToken);
+
+                followedIds = followedList.ToHashSet();
+            }
+
+            var profiles = candidates
+                .Select(profile => new
+                {
+                    Profile = profile,
+                    Score = DiscoverySearchBackend.ScoreFields(expandedTerms,
+                        (profile.Handle, 1.2),
+                        (profile.DisplayName, 1.0),
+                        (profile.Bio, 0.4))
+                })
+                .Where(x => x.Score > 0)
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.Profile.Handle)
+                .Take(take)
+                .Select(x => x.Profile)
+                .ToArray();
+
+            return profiles
+                .Select(profile =>
+                {
+                    var canViewPrivateInfo = !profile.IsPrivate
+                        || (viewerId.HasValue && (viewerId.Value == profile.Id || (followedIds?.Contains(profile.Id) ?? false)));
+
+                    return ToDto(profile, canViewPrivateInfo);
+                })
+                .ToArray();
+        });
     }
 
     private async Task<HashSet<Guid>> GetBlockedProfileIdsAsync(Guid viewerId, CancellationToken cancellationToken)
@@ -242,6 +266,7 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
         profile.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpProfile();
 
         return ToDto(profile, true);
     }
@@ -256,6 +281,7 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
 
         profile.IsPrivate = request.IsPrivate;
         await dbContext.SaveChangesAsync(cancellationToken);
+        SearchCacheVersionStamp.BumpProfile();
         return ToDto(profile, true);
     }
 
@@ -316,3 +342,4 @@ public class ProfileService(SocialSezContext dbContext) : IProfileService
         return Regex.Replace(normalized, "\\s+", "-");
     }
 }
+

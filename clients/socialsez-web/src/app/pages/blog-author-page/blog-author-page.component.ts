@@ -3,11 +3,12 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BlogDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 @Component({
     selector: 'app-blog-author-page',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, SkeletonComponent],
     templateUrl: './blog-author-page.component.html',
     styleUrl: './blog-author-page.component.scss'
 })

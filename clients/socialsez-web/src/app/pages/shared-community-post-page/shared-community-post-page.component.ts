@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CommunityDto, CommunityPollDto, CommunityPostDto } from '../../core/api.types';
+import { expandDiscoveryTerms, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { CommunityPostEditorModalComponent, CommunityPostEditorSavePayload } from '../../shared/community-post-editor-modal/community-post-editor-modal.component';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
@@ -872,11 +873,9 @@ export class SharedCommunityPostPageComponent {
 
     get visibleComments(): CommunityPostDto['comments'] {
         const comments = this.post?.comments ?? [];
-        const normalizedQuery = this.commentSearchQuery.trim().toLowerCase();
-        const filtered = normalizedQuery
-            ? comments.filter(comment =>
-                comment.content.toLowerCase().includes(normalizedQuery)
-                || comment.authorHandle.toLowerCase().includes(normalizedQuery))
+        const expandedTerms = expandDiscoveryTerms(this.commentSearchQuery);
+        const filtered = expandedTerms.length
+            ? comments.filter(comment => this.commentSearchScore(comment, expandedTerms) > 0)
             : comments;
 
         return [...filtered].sort((a, b) => {
@@ -914,6 +913,13 @@ export class SharedCommunityPostPageComponent {
                 }
             }
         });
+    }
+
+    private commentSearchScore(comment: CommunityPostDto['comments'][number], expandedTerms: ReadonlyArray<string>): number {
+        return scoreDiscoveryFields(expandedTerms, [
+            { value: comment.content, weight: 1.5 },
+            { value: comment.authorHandle, weight: 1.0 }
+        ]);
     }
 
     get threadedComments(): CommentThreadItem[] {

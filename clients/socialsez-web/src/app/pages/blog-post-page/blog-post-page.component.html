@@ -2,7 +2,31 @@
     <style *ngIf="customCss" [textContent]="customCss"></style>
 
     <p class="error" *ngIf="!loading && error">{{ error }}</p>
-    <p class="muted" *ngIf="loading">Loading blog post...</p>
+    <article class="post post-skeleton" *ngIf="loading" aria-label="Loading blog post">
+        <header class="post-head">
+            <span class="skeleton-line skeleton-back"></span>
+            <span class="skeleton-line skeleton-title"></span>
+            <span class="skeleton-line skeleton-meta"></span>
+            <div class="tags">
+                <span class="skeleton-pill"></span>
+                <span class="skeleton-pill"></span>
+                <span class="skeleton-pill"></span>
+            </div>
+        </header>
+
+        <div class="skeleton-hero" aria-hidden="true"></div>
+
+        <div class="content">
+            <span class="skeleton-line skeleton-paragraph"></span>
+            <span class="skeleton-line skeleton-paragraph short"></span>
+            <span class="skeleton-line skeleton-paragraph"></span>
+            <span class="skeleton-line skeleton-paragraph shorter"></span>
+            <span class="skeleton-line skeleton-paragraph"></span>
+            <span class="skeleton-line skeleton-paragraph short"></span>
+            <span class="skeleton-line skeleton-paragraph"></span>
+            <span class="skeleton-line skeleton-paragraph shortest"></span>
+        </div>
+    </article>
 
     <article class="post" *ngIf="!loading && !error && post as item">
         <header class="post-head">

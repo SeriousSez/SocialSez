@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommunityDto, CommunityRuleDto } from '../../core/api.types';
+import { buildDiscoverySuggestions, DISCOVERY_TOPICS, rankByDiscoveryQuery, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { SessionService } from '../../core/session.service';
 import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
@@ -14,12 +15,16 @@ import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
     templateUrl: './communities-page.component.html',
     styleUrl: './communities-page.component.scss'
 })
-export class CommunitiesPageComponent {
+export class CommunitiesPageComponent implements OnDestroy {
     activeTab: 'mine' | 'discover' = 'mine';
     myCommunities: CommunityDto[] = [];
     discoverCommunities: CommunityDto[] = [];
+    discoverSourceCommunities: CommunityDto[] = [];
 
     query = '';
+    suggestions: string[] = [];
+    private readonly suggestionSeed = new Set<string>(DISCOVERY_TOPICS.map(topic => topic.canonical));
+    private queryDebounceTimerId: number | null = null;
     createName = '';
     createDescription = '';
     createRulesText = '';
@@ -52,7 +57,8 @@ export class CommunitiesPageComponent {
         this.resetStatus();
 
         try {
-            this.discoverCommunities = await this.session.discoverCommunitiesAsync(this.query);
+            const backendQuery = this.query.trim() || undefined;
+            this.applyDiscoverResults(await this.session.discoverCommunitiesAsync(backendQuery, 120));
 
             if (this.session.isAuthenticated()) {
                 this.myCommunities = await this.session.loadMyCommunitiesAsync();
@@ -72,13 +78,48 @@ export class CommunitiesPageComponent {
         this.resetStatus();
 
         try {
-            this.discoverCommunities = await this.session.discoverCommunitiesAsync(this.query);
+            const backendQuery = this.query.trim() || undefined;
+            this.applyDiscoverResults(await this.session.discoverCommunitiesAsync(backendQuery, 120));
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('search communities'));
             this.statusTone = 'error';
         } finally {
             this.loading = false;
         }
+    }
+
+    onDiscoverQueryInput(): void {
+        if (this.queryDebounceTimerId !== null) {
+            window.clearTimeout(this.queryDebounceTimerId);
+            this.queryDebounceTimerId = null;
+        }
+
+        this.refreshSuggestions();
+        this.queryDebounceTimerId = window.setTimeout(() => {
+            this.queryDebounceTimerId = null;
+            void this.searchDiscoverAsync();
+        }, 220);
+    }
+
+    async clearDiscoverQueryAsync(): Promise<void> {
+        if (!this.query.trim()) {
+            return;
+        }
+
+        this.query = '';
+        this.refreshSuggestions();
+        await this.searchDiscoverAsync();
+    }
+
+    async applySuggestionAsync(suggestion: string): Promise<void> {
+        const next = suggestion.trim();
+        if (!next) {
+            return;
+        }
+
+        this.query = next;
+        this.refreshSuggestions();
+        await this.searchDiscoverAsync();
     }
 
     async createCommunityAsync(): Promise<void> {
@@ -111,7 +152,8 @@ export class CommunitiesPageComponent {
             this.myCommunities = [created, ...this.myCommunities.filter(item => item.id !== created.id)];
 
             if (!created.isPrivate) {
-                this.discoverCommunities = [created, ...this.discoverCommunities.filter(item => item.id !== created.id)];
+                this.discoverSourceCommunities = [created, ...this.discoverSourceCommunities.filter(item => item.id !== created.id)];
+                this.discoverCommunities = this.filterAndRankDiscover(this.discoverSourceCommunities, this.query);
             }
 
             this.createName = '';
@@ -166,7 +208,8 @@ export class CommunitiesPageComponent {
         try {
             const joined = await this.session.joinCommunityAsync(community.id);
             this.myCommunities = [joined, ...this.myCommunities.filter(item => item.id !== joined.id)];
-            this.discoverCommunities = this.discoverCommunities.map(item => item.id === joined.id ? joined : item);
+            this.discoverSourceCommunities = this.discoverSourceCommunities.map(item => item.id === joined.id ? joined : item);
+            this.discoverCommunities = this.filterAndRankDiscover(this.discoverSourceCommunities, this.query);
             this.status = 'Joined community.';
             this.statusTone = 'success';
         } catch (error) {
@@ -192,7 +235,8 @@ export class CommunitiesPageComponent {
         try {
             await this.session.leaveCommunityAsync(community.id);
             this.myCommunities = this.myCommunities.filter(item => item.id !== community.id);
-            this.discoverCommunities = this.discoverCommunities.map(item => item.id === community.id ? { ...item, joinedByMe: false, myRole: undefined } : item);
+            this.discoverSourceCommunities = this.discoverSourceCommunities.map(item => item.id === community.id ? { ...item, joinedByMe: false, myRole: undefined } : item);
+            this.discoverCommunities = this.filterAndRankDiscover(this.discoverSourceCommunities, this.query);
             this.status = 'Left community.';
             this.statusTone = 'success';
         } catch (error) {
@@ -205,6 +249,13 @@ export class CommunitiesPageComponent {
 
     trackByCommunityId(_index: number, community: CommunityDto): string {
         return community.id;
+    }
+
+    ngOnDestroy(): void {
+        if (this.queryDebounceTimerId !== null) {
+            window.clearTimeout(this.queryDebounceTimerId);
+            this.queryDebounceTimerId = null;
+        }
     }
 
     splitHashtagText(content: string | null | undefined): HashtagTextPart[][] {
@@ -232,5 +283,55 @@ export class CommunitiesPageComponent {
         this.session.message = `Please sign in or create an account to ${action}.`;
         void this.router.navigate(['/auth']);
         return true;
+    }
+
+    private applyDiscoverResults(communities: CommunityDto[]): void {
+        this.discoverSourceCommunities = communities;
+        this.rememberSuggestionSeed(communities);
+        this.discoverCommunities = this.filterAndRankDiscover(communities, this.query);
+        this.refreshSuggestions();
+    }
+
+    private filterAndRankDiscover(communities: ReadonlyArray<CommunityDto>, query: string): CommunityDto[] {
+        return rankByDiscoveryQuery(communities, {
+            query,
+            minScore: 0,
+            score: (community, expandedTerms) => this.communitySearchScore(community, expandedTerms),
+            onEmptyQuery: items => [...items].sort((left, right) => right.memberCount - left.memberCount || left.name.localeCompare(right.name)),
+            tieBreaker: (left, right) => right.memberCount - left.memberCount || left.name.localeCompare(right.name)
+        });
+    }
+
+    private communitySearchScore(community: CommunityDto, expandedTerms: ReadonlyArray<string>): number {
+        return scoreDiscoveryFields(expandedTerms, [
+            { value: community.name, weight: 1.8 },
+            { value: community.slug, weight: 1.4 },
+            { value: community.description ?? '', weight: 1.2 },
+            { value: community.createdByHandle, weight: 1.0 }
+        ]);
+    }
+
+    private rememberSuggestionSeed(communities: ReadonlyArray<CommunityDto>): void {
+        for (const community of communities.slice(0, 80)) {
+            this.addSeed(community.slug);
+            this.addSeed(community.name);
+            this.addSeed(community.createdByHandle);
+            this.addSeed(community.description ?? '');
+        }
+    }
+
+    private addSeed(value: string): void {
+        for (const token of value.split(/[^\p{L}\p{N}_-]+/u)) {
+            const normalized = token.trim().toLowerCase();
+            if (normalized.length < 3 || normalized.length > 32) {
+                continue;
+            }
+
+            this.suggestionSeed.add(normalized);
+        }
+    }
+
+    private refreshSuggestions(): void {
+        this.suggestions = buildDiscoverySuggestions(this.query, Array.from(this.suggestionSeed), 8);
     }
 }

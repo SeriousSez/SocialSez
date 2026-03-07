@@ -11,7 +11,14 @@
     </header>
 
     <p class="error" *ngIf="!loading && error">{{ error }}</p>
-    <p class="muted" *ngIf="loading">Loading blogs...</p>
+    <div class="grid" *ngIf="loading" aria-label="Loading author blogs">
+        <article class="card" *ngFor="let _ of [1, 2, 3, 4]">
+            <app-skeleton width="58%" height="18px"></app-skeleton>
+            <app-skeleton width="96%" height="13px"></app-skeleton>
+            <app-skeleton width="85%" height="13px"></app-skeleton>
+            <app-skeleton width="52%" height="12px"></app-skeleton>
+        </article>
+    </div>
 
     <div class="grid" *ngIf="!loading && !error && blogs.length; else emptyState">
         <a class="card" *ngFor="let blog of blogs; trackBy: trackBlog" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">

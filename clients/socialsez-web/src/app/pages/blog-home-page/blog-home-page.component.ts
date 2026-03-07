@@ -1,15 +1,16 @@
 import { CommonModule, NgStyle } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BlogDto, BlogPostDto } from '../../core/api.types';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { SessionService } from '../../core/session.service';
 import { LazyImageComponent } from '../../shared/lazy-image/lazy-image.component';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 @Component({
     selector: 'app-blog-home-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, NgStyle, LazyImageComponent],
+    imports: [CommonModule, RouterLink, NgStyle, LazyImageComponent, SkeletonComponent],
     templateUrl: './blog-home-page.component.html',
     styleUrl: './blog-home-page.component.scss'
 })
@@ -25,7 +26,8 @@ export class BlogHomePageComponent {
     constructor(
         private readonly route: ActivatedRoute,
         private readonly session: SessionService,
-        private readonly router: Router
+        private readonly router: Router,
+        private readonly cdr: ChangeDetectorRef
     ) {
         this.route.paramMap.subscribe(paramMap => {
             this.handle = (paramMap.get('handle') ?? '').trim().toLowerCase();
@@ -62,6 +64,7 @@ export class BlogHomePageComponent {
         if (!this.handle || !this.blogSlug) {
             this.error = 'Blog was not found.';
             this.loading = false;
+            this.cdr.detectChanges();
             return;
         }
 
@@ -98,6 +101,7 @@ export class BlogHomePageComponent {
         } finally {
             if (loadVersion === this.loadVersion) {
                 this.loading = false;
+                this.cdr.detectChanges();
             }
         }
     }
