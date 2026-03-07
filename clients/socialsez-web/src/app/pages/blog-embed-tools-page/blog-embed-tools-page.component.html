@@ -1,0 +1,33 @@
+<section class="embed-tools-shell" [ngStyle]="themeStyles">
+    <article class="embed-tools-card" *ngIf="loading" aria-label="Loading embed tools">
+        <p class="meta">Loading embed tools...</p>
+    </article>
+
+    <article class="embed-tools-card error" *ngIf="!loading && error">
+        <p>{{ error }}</p>
+        <a [routerLink]="postUrl" *ngIf="postUrl">Back to post</a>
+    </article>
+
+    <article class="embed-tools-card" *ngIf="!loading && !error && post as item">
+        <header class="head">
+            <p class="kicker">Embed Tools</p>
+            <h1>{{ item.title }}</h1>
+            <p class="meta">Preview the embed and copy the iframe snippet for any website.</p>
+        </header>
+
+        <section class="preview-block">
+            <h3>Preview</h3>
+            <iframe *ngIf="embedUrl" class="embed-preview" [src]="safeEmbedUrl" title="Blog embed preview" loading="lazy"></iframe>
+        </section>
+
+        <section class="code-block">
+            <h3>Embed Code</h3>
+            <textarea readonly [value]="embedIframeCode" aria-label="Blog embed iframe code"></textarea>
+            <div class="actions">
+                <button type="button" (click)="copyEmbedCodeAsync()">{{ copiedEmbedCode ? 'Copied' : 'Copy code' }}</button>
+                <a [href]="embedUrl" target="_blank" rel="noopener noreferrer">Open raw embed page</a>
+                <a [routerLink]="postUrl">Back to post</a>
+            </div>
+        </section>
+    </article>
+</section>

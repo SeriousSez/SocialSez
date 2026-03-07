@@ -327,6 +327,11 @@ export class FeedPageComponent implements OnDestroy {
         this.showReelComposer = true;
     }
 
+    openBlogStudio(): void {
+        this.createMenuOpen = false;
+        void this.router.navigate(['/blogs/studio']);
+    }
+
     onReelComposerClosed(): void {
         this.showReelComposer = false;
     }

@@ -9,6 +9,10 @@ public class Blog
     public string? Description { get; set; }
     public string? ThemeConfigJson { get; set; }
     public bool IsPublic { get; set; } = true;
+    public bool AllowLikes { get; set; } = true;
+    public bool AllowComments { get; set; } = true;
+    public bool AllowShares { get; set; } = true;
+    public bool AllowEmbeds { get; set; } = true;
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 

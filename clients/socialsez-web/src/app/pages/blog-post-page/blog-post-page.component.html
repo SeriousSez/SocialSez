@@ -49,5 +49,12 @@
         <app-lazy-image *ngIf="item.coverImageUrl" [src]="item.coverImageUrl" [alt]="item.title" imgClass="cover" skeletonHeight="420px" skeletonRadius="14px" loading="eager"></app-lazy-image>
 
         <div class="content" [innerHTML]="renderedPostContent"></div>
+
+        <section class="blog-actions" *ngIf="allowLikes || allowComments || allowShares || allowEmbeds">
+            <button type="button" class="ghost" *ngIf="allowLikes" disabled title="Blog likes will be enabled soon">Like</button>
+            <button type="button" class="ghost" *ngIf="allowComments" disabled title="Blog comments will be enabled soon">Comment</button>
+            <button type="button" class="ghost" *ngIf="allowShares" (click)="copyShareLinkAsync()">{{ copiedShareLink ? 'Link copied' : 'Share' }}</button>
+            <button type="button" class="ghost" *ngIf="allowEmbeds" (click)="openEmbedToolsInNewTab()">Embed</button>
+        </section>
     </article>
 </section>

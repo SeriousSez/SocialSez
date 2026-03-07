@@ -93,10 +93,10 @@
                 <div class="media-frame">
                     <div class="media-stack">
                         <img *ngIf="postImageAnimating && postOutgoingImageUrl as outgoingUrl" class="media media-layer media-outgoing" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="outgoingUrl" loading="eager" decoding="async"
-                            alt="Shared community post media" (click)="openImageFullscreen(outgoingUrl)" />
+                            alt="Shared community post media" (click)="onPostMediaCardClick(outgoingUrl)" />
                         <ng-container *ngFor="let currentUrl of [mediaUrl]; trackBy: trackByMediaUrl">
                             <img class="media media-layer media-current" [class.media-incoming]="postImageAnimating" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="currentUrl" loading="eager" decoding="async"
-                                alt="Shared community post media" (click)="openImageFullscreen(currentUrl)" />
+                                alt="Shared community post media" (click)="onPostMediaCardClick(currentUrl)" />
                         </ng-container>
                     </div>
                 </div>
@@ -108,13 +108,23 @@
             <div class="media-frame" *ngIf="postMediaUrls.length <= 1">
                 <div class="media-stack">
                     <img *ngIf="postImageAnimating && postOutgoingImageUrl as outgoingUrl" class="media media-layer media-outgoing" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="outgoingUrl" loading="eager" decoding="async"
-                        alt="Shared community post media" (click)="openImageFullscreen(outgoingUrl)" />
+                        alt="Shared community post media" (click)="onPostMediaCardClick(outgoingUrl)" />
                     <ng-container *ngFor="let currentUrl of [mediaUrl]; trackBy: trackByMediaUrl">
                         <img class="media media-layer media-current" [class.media-incoming]="postImageAnimating" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="currentUrl" loading="eager" decoding="async"
-                            alt="Shared community post media" (click)="openImageFullscreen(currentUrl)" />
+                            alt="Shared community post media" (click)="onPostMediaCardClick(currentUrl)" />
                     </ng-container>
                 </div>
             </div>
+
+            <p class="content content-caption" *ngIf="postMediaCaption as caption">
+                <ng-container *ngFor="let line of splitHashtagText(caption); let isLast = last">
+                    <ng-container *ngFor="let part of line">
+                        <a *ngIf="part.hashtag; else sharedPostCaptionText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
+                        <ng-template #sharedPostCaptionText>{{ part.text }}</ng-template>
+                    </ng-container>
+                    <br *ngIf="!isLast" />
+                </ng-container>
+            </p>
 
             <div class="post-media-thumbs" *ngIf="postMediaUrls.length > 1">
                 <button type="button" class="post-media-thumb" *ngFor="let previewUrl of postMediaUrls; index as i; trackBy: trackByMediaUrl" [class.active]="i === postActiveImageIndex" (click)="setActivePostImage(i)">

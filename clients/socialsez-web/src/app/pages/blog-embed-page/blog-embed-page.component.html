@@ -1,0 +1,27 @@
+<section class="embed-root">
+    <article class="embed-card" *ngIf="loading" aria-label="Loading blog embed">
+        <p class="embed-meta">Loading embed...</p>
+    </article>
+
+    <article class="embed-card error" *ngIf="!loading && error">
+        <p>{{ error }}</p>
+    </article>
+
+    <article class="embed-card" *ngIf="!loading && !error && post as item">
+        <a class="embed-link" [href]="postUrl" target="_blank" rel="noopener noreferrer" aria-label="Open full blog post">
+            <header class="embed-head">
+                <p class="embed-kicker">Venli Blog</p>
+                <h1>{{ item.title }}</h1>
+                <p class="embed-meta">By @{{ item.authorHandle }} · {{ (item.publishedAtUtc ?? item.updatedAtUtc) | date:'mediumDate' }}</p>
+            </header>
+
+            <img *ngIf="item.coverImageUrl" class="embed-cover" [src]="item.coverImageUrl" [alt]="item.title" />
+
+            <div class="embed-content" [innerHTML]="renderedPreviewHtml"></div>
+
+            <footer class="embed-footer">
+                <span>Read full post on Venli</span>
+            </footer>
+        </a>
+    </article>
+</section>

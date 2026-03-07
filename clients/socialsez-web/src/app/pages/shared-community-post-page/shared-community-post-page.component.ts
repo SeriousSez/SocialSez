@@ -177,8 +177,18 @@ export class SharedCommunityPostPageComponent {
     }
 
     get postBody(): string | null {
-        const content = (this.post?.content ?? '').trim();
+        const item = this.post;
+        if (!item) {
+            return null;
+        }
+
+        const content = (item.content ?? '').trim();
         return content || null;
+    }
+
+    get postMediaCaption(): string | null {
+        const caption = (this.post?.mediaContent ?? '').trim();
+        return caption || null;
     }
 
     splitHashtagText(content: string | null | undefined): HashtagTextPart[][] {
@@ -227,7 +237,7 @@ export class SharedCommunityPostPageComponent {
             return linkUrl;
         }
 
-        const content = this.postBody;
+        const content = this.postBody ?? this.postMediaCaption;
         if (!content) {
             return null;
         }
@@ -300,6 +310,20 @@ export class SharedCommunityPostPageComponent {
         }
 
         this.transitionToPostImage(this.postActiveImageIndex + 1, 'next');
+    }
+
+    onPostMediaCardClick(imageUrl: string): void {
+        const mediaUrls = this.postMediaUrls;
+        if (mediaUrls.length <= 1) {
+            this.openImageFullscreen(imageUrl);
+            return;
+        }
+
+        const nextIndex = this.postActiveImageIndex >= mediaUrls.length - 1
+            ? 0
+            : this.postActiveImageIndex + 1;
+
+        this.transitionToPostImage(nextIndex, 'next');
     }
 
     setActivePostImage(index: number): void {
@@ -404,6 +428,7 @@ export class SharedCommunityPostPageComponent {
                 payload.title,
                 payload.linkUrl,
                 payload.content,
+                payload.mediaContent,
                 payload.imageUrls,
                 payload.pollQuestion,
                 payload.pollOptions,

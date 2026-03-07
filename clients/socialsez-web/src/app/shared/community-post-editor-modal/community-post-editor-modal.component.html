@@ -51,14 +51,14 @@
                 Question
                 <input [(ngModel)]="pollQuestion" placeholder="Ask the community..." maxlength="280" [disabled]="isBusy" />
             </label>
-            <label *ngFor="let option of pollOptions; index as i">
+            <label *ngFor="let option of pollOptions; index as i; trackBy: trackByIndex">
                 Option {{ i + 1 }}
                 <div class="poll-option-row">
                     <input [(ngModel)]="pollOptions[i]" maxlength="160" placeholder="Option text" [disabled]="isBusy" />
                     <button type="button" class="ghost" (click)="removePollOption(i)" [disabled]="isBusy || pollOptions.length <= 2">Remove</button>
                 </div>
             </label>
-            <button type="button" class="ghost" (click)="addPollOption()" [disabled]="isBusy || pollOptions.length >= 6">Add option</button>
+            <button type="button" class="ghost add-options-button" (click)="addPollOption()" [disabled]="isBusy || pollOptions.length >= 6">Add option</button>
         </div>
 
         <p class="meta error" *ngIf="validationError">{{ validationError }}</p>

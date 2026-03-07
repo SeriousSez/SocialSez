@@ -17,6 +17,7 @@ public sealed record CreateCommunityPostRequest(
     string? Title,
     string? LinkUrl,
     string? Content,
+    string? MediaContent,
     IReadOnlyCollection<string>? ImageUrls,
     string? PollQuestion,
     IReadOnlyCollection<string>? PollOptions);
@@ -26,6 +27,7 @@ public sealed record UpdateCommunityPostRequest(
     string? Title,
     string? LinkUrl,
     string? Content,
+    string? MediaContent,
     IReadOnlyCollection<string>? ImageUrls,
     string? PollQuestion,
     IReadOnlyCollection<string>? PollOptions,
@@ -78,6 +80,7 @@ public sealed record CommunityPostDto(
     string? Title,
     string? LinkUrl,
     string? Content,
+    string? MediaContent,
     string? ImageUrl,
     IReadOnlyCollection<string> ImageUrls,
     DateTime CreatedAtUtc,

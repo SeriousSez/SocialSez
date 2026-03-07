@@ -87,7 +87,7 @@ public class BlogsController(IBlogService blogService) : ControllerBase
 
         try
         {
-            var created = await blogService.CreateAsync(profileId, new CreateBlogRequest(body.Title, body.Description, body.Slug, body.IsPublic, body.Theme), cancellationToken);
+            var created = await blogService.CreateAsync(profileId, new CreateBlogRequest(body.Title, body.Description, body.Slug, body.IsPublic, body.AllowLikes, body.AllowComments, body.AllowShares, body.AllowEmbeds, body.Theme), cancellationToken);
             return Ok(created);
         }
         catch (ArgumentException ex)
@@ -107,7 +107,7 @@ public class BlogsController(IBlogService blogService) : ControllerBase
 
         try
         {
-            var updated = await blogService.UpdateAsync(blogId, profileId, new UpdateBlogRequest(body.Title, body.Description, body.Slug, body.IsPublic, body.Theme), cancellationToken);
+            var updated = await blogService.UpdateAsync(blogId, profileId, new UpdateBlogRequest(body.Title, body.Description, body.Slug, body.IsPublic, body.AllowLikes, body.AllowComments, body.AllowShares, body.AllowEmbeds, body.Theme), cancellationToken);
             return updated is null ? NotFound() : Ok(updated);
         }
         catch (UnauthorizedAccessException)
@@ -234,8 +234,8 @@ public class BlogsController(IBlogService blogService) : ControllerBase
         return TryGetProfileId(out var profileId) ? profileId : null;
     }
 
-    public sealed record CreateBlogBody(string Title, string? Description, string? Slug, bool IsPublic, BlogThemeConfigDto? Theme);
-    public sealed record UpdateBlogBody(string Title, string? Description, string? Slug, bool IsPublic, BlogThemeConfigDto? Theme);
+    public sealed record CreateBlogBody(string Title, string? Description, string? Slug, bool IsPublic, bool AllowLikes = true, bool AllowComments = true, bool AllowShares = true, bool AllowEmbeds = true, BlogThemeConfigDto? Theme = null);
+    public sealed record UpdateBlogBody(string Title, string? Description, string? Slug, bool IsPublic, bool AllowLikes = true, bool AllowComments = true, bool AllowShares = true, bool AllowEmbeds = true, BlogThemeConfigDto? Theme = null);
     public sealed record CreateBlogPostBody(string Title, string Content, string? Excerpt, string? CoverImageUrl, IReadOnlyCollection<string>? Tags, bool IsPublished, string? Slug);
     public sealed record UpdateBlogPostBody(string Title, string Content, string? Excerpt, string? CoverImageUrl, IReadOnlyCollection<string>? Tags, bool IsPublished, string? Slug);
 }

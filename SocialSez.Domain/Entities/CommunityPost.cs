@@ -8,6 +8,7 @@ public class CommunityPost
     public string? Title { get; set; }
     public string? LinkUrl { get; set; }
     public string? Content { get; set; }
+    public string? MediaContent { get; set; }
     public string? ImageUrl { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 

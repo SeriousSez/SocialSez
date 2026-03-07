@@ -265,12 +265,12 @@ export class SocialSezApiService {
         return this.http.get<BlogPostDto>(`${this.baseUrl}/blogs/${encodeURIComponent(handle)}/${encodeURIComponent(blogSlug)}/posts/${encodeURIComponent(postSlug)}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
-    createBlog(title: string, description: string | null, slug: string | null, isPublic: boolean, theme: BlogThemeConfigDto | null): Observable<BlogDto> {
-        return this.withAutoRefresh(() => this.http.post<BlogDto>(`${this.baseUrl}/blogs`, { title, description, slug, isPublic, theme }, { headers: this.authHeaders() }));
+    createBlog(title: string, description: string | null, slug: string | null, isPublic: boolean, allowLikes: boolean, allowComments: boolean, allowShares: boolean, allowEmbeds: boolean, theme: BlogThemeConfigDto | null): Observable<BlogDto> {
+        return this.withAutoRefresh(() => this.http.post<BlogDto>(`${this.baseUrl}/blogs`, { title, description, slug, isPublic, allowLikes, allowComments, allowShares, allowEmbeds, theme }, { headers: this.authHeaders() }));
     }
 
-    updateBlog(blogId: string, title: string, description: string | null, slug: string | null, isPublic: boolean, theme: BlogThemeConfigDto | null): Observable<BlogDto> {
-        return this.withAutoRefresh(() => this.http.put<BlogDto>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}`, { title, description, slug, isPublic, theme }, { headers: this.authHeaders() }));
+    updateBlog(blogId: string, title: string, description: string | null, slug: string | null, isPublic: boolean, allowLikes: boolean, allowComments: boolean, allowShares: boolean, allowEmbeds: boolean, theme: BlogThemeConfigDto | null): Observable<BlogDto> {
+        return this.withAutoRefresh(() => this.http.put<BlogDto>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}`, { title, description, slug, isPublic, allowLikes, allowComments, allowShares, allowEmbeds, theme }, { headers: this.authHeaders() }));
     }
 
     deleteBlog(blogId: string): Observable<void> {
@@ -572,6 +572,7 @@ export class SocialSezApiService {
         title: string | null,
         linkUrl: string | null,
         content: string | null,
+        mediaContent: string | null,
         imageUrls: string[] | null,
         pollQuestion: string | null,
         pollOptions: string[] | null
@@ -580,6 +581,7 @@ export class SocialSezApiService {
             title,
             linkUrl,
             content,
+            mediaContent,
             imageUrls,
             pollQuestion,
             pollOptions
@@ -619,6 +621,7 @@ export class SocialSezApiService {
         title: string | null,
         linkUrl: string | null,
         content: string | null,
+        mediaContent: string | null,
         imageUrls: string[] | null,
         pollQuestion: string | null,
         pollOptions: string[] | null,
@@ -628,6 +631,7 @@ export class SocialSezApiService {
             title,
             linkUrl,
             content,
+            mediaContent,
             imageUrls,
             pollQuestion,
             pollOptions,

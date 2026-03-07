@@ -41,7 +41,8 @@
                 <p class="meta" *ngIf="!isAuthenticated">Sign in or create an account to view communities you joined.</p>
                 <p class="meta" *ngIf="!loading && !myCommunities.length && statusTone !== 'error'">You have not joined any communities yet.</p>
 
-                <article class="community-row" *ngFor="let community of myCommunities; trackBy: trackByCommunityId">
+                <article class="community-row community-row-clickable" *ngFor="let community of myCommunities; trackBy: trackByCommunityId" role="link" tabindex="0" [attr.aria-label]="'Open ' + community.name" (click)="openCommunityFromCard(community, $event)"
+                    (keydown)="onCommunityCardKeydown($event, community)">
                     <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
                     <div>
                         <strong><a [routerLink]="['/c', community.slug]">{{ community.name }}</a></strong>
@@ -94,7 +95,8 @@
             <ng-template #discoverCommunitiesContent>
                 <p class="meta" *ngIf="!loading && !discoverCommunities.length && statusTone !== 'error'">No communities found.</p>
 
-                <article class="community-row" *ngFor="let community of discoverCommunities; trackBy: trackByCommunityId">
+                <article class="community-row community-row-clickable" *ngFor="let community of discoverCommunities; trackBy: trackByCommunityId" role="link" tabindex="0" [attr.aria-label]="'Open ' + community.name" (click)="openCommunityFromCard(community, $event)"
+                    (keydown)="onCommunityCardKeydown($event, community)">
                     <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
                     <div>
                         <strong><a [routerLink]="['/c', community.slug]">{{ community.name }}</a></strong>

@@ -305,6 +305,10 @@ export interface BlogDto {
     title: string;
     description?: string;
     isPublic: boolean;
+    allowLikes: boolean;
+    allowComments: boolean;
+    allowShares: boolean;
+    allowEmbeds: boolean;
     theme: BlogThemeConfigDto;
     createdAtUtc: string;
     updatedAtUtc: string;
@@ -371,6 +375,7 @@ export interface CommunityPostDto {
     title?: string;
     linkUrl?: string;
     content?: string;
+    mediaContent?: string;
     imageUrl?: string;
     imageUrls?: string[];
     createdAtUtc: string;

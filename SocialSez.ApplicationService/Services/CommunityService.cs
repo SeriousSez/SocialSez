@@ -457,6 +457,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
         }
 
         var content = NormalizePostContent(request.Content);
+        var mediaContent = NormalizePostContent(request.MediaContent);
         var title = NormalizePostTitle(request.Title);
         var linkUrl = NormalizeLinkUrl(request.LinkUrl);
         var imageUrls = NormalizePostImageUrls(request.ImageUrls);
@@ -464,7 +465,12 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
         var pollQuestion = NormalizePollQuestion(request.PollQuestion);
         var pollOptions = NormalizePollOptions(request.PollOptions);
 
-        if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(content) && string.IsNullOrWhiteSpace(linkUrl) && imageUrls.Count == 0 && string.IsNullOrWhiteSpace(pollQuestion))
+        if (string.IsNullOrWhiteSpace(title)
+            && string.IsNullOrWhiteSpace(content)
+            && string.IsNullOrWhiteSpace(mediaContent)
+            && string.IsNullOrWhiteSpace(linkUrl)
+            && imageUrls.Count == 0
+            && string.IsNullOrWhiteSpace(pollQuestion))
         {
             throw new ArgumentException("Post title, content, link, image, or poll is required.", nameof(request));
         }
@@ -482,6 +488,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
             Title = title,
             LinkUrl = linkUrl,
             Content = content,
+            MediaContent = mediaContent,
             ImageUrl = imageUrl,
             CreatedAtUtc = DateTime.UtcNow,
             Author = author,
@@ -535,15 +542,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
         var post = await dbContext.CommunityPosts
             .Include(x => x.Community)
                 .ThenInclude(x => x.Members)
-            .Include(x => x.Author)
-            .Include(x => x.Images)
-            .Include(x => x.SavedBy)
-            .Include(x => x.Comments)
-                .ThenInclude(x => x.Author)
-            .Include(x => x.Votes)
             .Include(x => x.Poll)
-                .ThenInclude(x => x.Options)
-                    .ThenInclude(x => x.Votes)
             .FirstOrDefaultAsync(x => x.Id == postId && x.CommunityId == communityId, cancellationToken);
 
         if (post is null)
@@ -681,18 +680,11 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
     {
         await EnsureCommunitySchemaAsync(cancellationToken);
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
         var post = await dbContext.CommunityPosts
             .Include(x => x.Community)
                 .ThenInclude(x => x.Members)
-            .Include(x => x.Author)
-            .Include(x => x.Images)
-            .Include(x => x.SavedBy)
-            .Include(x => x.Comments)
-                .ThenInclude(x => x.Author)
-            .Include(x => x.Votes)
-            .Include(x => x.Poll)
-                .ThenInclude(x => x.Options)
-                    .ThenInclude(x => x.Votes)
             .FirstOrDefaultAsync(x => x.Id == postId && x.CommunityId == communityId, cancellationToken);
 
         if (post is null)
@@ -707,26 +699,24 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
 
         var title = NormalizePostTitle(request.Title);
         var content = NormalizePostContent(request.Content);
+        var mediaContent = NormalizePostContent(request.MediaContent);
         var linkUrl = NormalizeLinkUrl(request.LinkUrl);
         var pollQuestion = NormalizePollQuestion(request.PollQuestion);
         var pollOptions = NormalizePollOptions(request.PollOptions);
 
         post.Title = title;
         post.Content = content;
+        post.MediaContent = mediaContent;
         post.LinkUrl = linkUrl;
+
+        var existingPollId = await dbContext.CommunityPolls
+            .Where(x => x.PostId == post.Id)
+            .Select(x => (Guid?)x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (request.ImageUrls is not null)
         {
             var imageUrls = NormalizePostImageUrls(request.ImageUrls);
-
-            // Detach tracked image rows first so SaveChanges does not try to persist stale entries
-            // that were already removed by ExecuteDeleteAsync.
-            foreach (var existingImage in post.Images.ToArray())
-            {
-                dbContext.Entry(existingImage).State = EntityState.Detached;
-            }
-
-            post.Images.Clear();
 
             await dbContext.CommunityPostImages
                 .Where(x => x.PostId == post.Id)
@@ -749,19 +739,22 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 await dbContext.CommunityPostImages.AddRangeAsync(updatedImages, cancellationToken);
             }
 
-            post.Images = updatedImages;
+            post.ImageUrl = updatedImages
+                .OrderBy(x => x.SortOrder)
+                .Select(x => x.Url)
+                .FirstOrDefault(url => !string.IsNullOrWhiteSpace(url));
         }
 
         if (!string.IsNullOrWhiteSpace(pollQuestion))
         {
-            if (post.Poll is null)
+            if (!existingPollId.HasValue)
             {
                 if (pollOptions.Count < 2)
                 {
                     throw new ArgumentException("Polls require at least two options.", nameof(request));
                 }
 
-                post.Poll = new CommunityPoll
+                var poll = new CommunityPoll
                 {
                     Id = Guid.NewGuid(),
                     PostId = post.Id,
@@ -773,10 +766,14 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                         Text = option
                     }).ToArray()
                 };
+
+                await dbContext.CommunityPolls.AddAsync(poll, cancellationToken);
+                existingPollId = poll.Id;
             }
             else
             {
-                var hasVotes = post.Poll.Options.SelectMany(x => x.Votes).Any();
+                var hasVotes = await dbContext.CommunityPollVotes
+                    .AnyAsync(x => x.Option.PollId == existingPollId.Value, cancellationToken);
                 if (hasVotes)
                 {
                     throw new ArgumentException("Poll cannot be edited after voting has started.", nameof(request));
@@ -787,38 +784,61 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                     throw new ArgumentException("Polls require at least two options.", nameof(request));
                 }
 
-                post.Poll.Question = pollQuestion;
-                post.Poll.Options.Clear();
+                await dbContext.CommunityPollOptions
+                    .Where(x => x.PollId == existingPollId.Value)
+                    .ExecuteDeleteAsync(cancellationToken);
+
+                await dbContext.CommunityPolls
+                    .Where(x => x.Id == existingPollId.Value)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(x => x.Question, pollQuestion), cancellationToken);
+
+                var updatedOptions = new List<CommunityPollOption>();
                 foreach (var option in pollOptions)
                 {
-                    post.Poll.Options.Add(new CommunityPollOption
+                    updatedOptions.Add(new CommunityPollOption
                     {
                         Id = Guid.NewGuid(),
-                        PollId = post.Poll.Id,
+                        PollId = existingPollId.Value,
                         Text = option
                     });
                 }
+
+                if (updatedOptions.Count > 0)
+                {
+                    await dbContext.CommunityPollOptions.AddRangeAsync(updatedOptions, cancellationToken);
+                }
             }
         }
-        else if (request.ClearPoll && post.Poll is not null)
+        else if (request.ClearPoll && existingPollId.HasValue)
         {
-            var hasVotes = post.Poll.Options.SelectMany(x => x.Votes).Any();
+            var pollId = existingPollId.Value;
+            var hasVotes = await dbContext.CommunityPollVotes
+                .AnyAsync(x => x.Option.PollId == pollId, cancellationToken);
             if (hasVotes)
             {
                 throw new ArgumentException("Poll cannot be removed after voting has started.", nameof(request));
             }
 
-            post.Poll.Options.Clear();
-            post.Poll = null;
+            await dbContext.CommunityPollOptions
+                .Where(x => x.PollId == pollId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            await dbContext.CommunityPolls
+                .Where(x => x.Id == pollId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            existingPollId = null;
         }
 
-        var hasPoll = post.Poll is not null;
-        var hasImages = request.ImageUrls is not null
-            ? post.Images.Count > 0
-            : post.Images.Any(x => !string.IsNullOrWhiteSpace(x.Url));
+        var hasPoll = !string.IsNullOrWhiteSpace(pollQuestion)
+            || (!request.ClearPoll && existingPollId.HasValue);
+        var hasImages = await dbContext.CommunityPostImages
+            .AnyAsync(x => x.PostId == post.Id && !string.IsNullOrWhiteSpace(x.Url), cancellationToken);
 
         if (string.IsNullOrWhiteSpace(post.Title)
             && string.IsNullOrWhiteSpace(post.Content)
+            && string.IsNullOrWhiteSpace(post.MediaContent)
             && string.IsNullOrWhiteSpace(post.LinkUrl)
             && !hasImages
             && !hasPoll)
@@ -826,14 +846,42 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
             throw new ArgumentException("Post title, content, link, image, or poll is required.", nameof(request));
         }
 
-        post.ImageUrl = post.Images
-            .OrderBy(x => x.SortOrder)
-            .Select(x => x.Url)
-            .FirstOrDefault(url => !string.IsNullOrWhiteSpace(url));
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+            var entryTypes = ex.Entries
+                .Select(entry => entry.Metadata?.Name ?? entry.Entity.GetType().Name)
+                .Distinct()
+                .ToArray();
+
+            var details = entryTypes.Length > 0
+                ? string.Join(", ", entryTypes)
+                : "unknown";
+
+            throw new InvalidOperationException($"Concurrency conflict while updating community post. Affected entity types: {details}.", ex);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
         SearchCacheVersionStamp.BumpCommunity();
-        return MapPost(post, request.ActorId);
+
+        var updatedPost = await dbContext.CommunityPosts
+            .AsNoTracking()
+            .Include(x => x.Author)
+            .Include(x => x.Images)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Votes)
+            .Include(x => x.Poll)
+                .ThenInclude(x => x.Options)
+                    .ThenInclude(x => x.Votes)
+            .FirstOrDefaultAsync(x => x.Id == post.Id && x.CommunityId == communityId, cancellationToken);
+
+        return updatedPost is null ? null : MapPost(updatedPost, request.ActorId);
     }
 
     public async Task<CommunityPostDto?> VotePostAsync(Guid communityId, Guid postId, VoteCommunityPostRequest request, CancellationToken cancellationToken = default)
@@ -1607,6 +1655,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
             post.Title,
             post.LinkUrl,
             post.Content,
+            post.MediaContent,
             primaryImageUrl,
             imageUrls,
             post.CreatedAtUtc,
@@ -1723,6 +1772,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                     Title TEXT NULL,
                     LinkUrl TEXT NULL,
                     Content TEXT NULL,
+                    MediaContent TEXT NULL,
                     ImageUrl TEXT NULL,
                     CreatedAtUtc TEXT NOT NULL,
                     FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
@@ -1741,6 +1791,14 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 try
                 {
                     await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE CommunityPosts ADD COLUMN LinkUrl TEXT NULL;", cancellationToken);
+                }
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                {
+                }
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE CommunityPosts ADD COLUMN MediaContent TEXT NULL;", cancellationToken);
                 }
                 catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
                 {
@@ -1919,6 +1977,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                     `Title` varchar(220) NULL,
                     `LinkUrl` varchar(2048) NULL,
                     `Content` varchar(5000) NULL,
+                    `MediaContent` varchar(5000) NULL,
                     `ImageUrl` varchar(1024) NULL,
                     `CreatedAtUtc` datetime(6) NOT NULL,
                     PRIMARY KEY (`Id`),
@@ -1943,6 +2002,15 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 if (!postLinkUrlColumnExists)
                 {
                     await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPosts` ADD COLUMN `LinkUrl` varchar(2048) NULL;", cancellationToken);
+                }
+
+                var postMediaContentColumnExists = await dbContext.Database
+                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPosts' AND COLUMN_NAME = 'MediaContent' LIMIT 1")
+                    .AnyAsync(cancellationToken);
+
+                if (!postMediaContentColumnExists)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPosts` ADD COLUMN `MediaContent` varchar(5000) NULL;", cancellationToken);
                 }
 
                 await dbContext.Database.ExecuteSqlRawAsync("""

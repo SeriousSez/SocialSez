@@ -24,6 +24,7 @@ export class BlogPostPageComponent {
 
     blog: BlogDto | null = null;
     post: BlogPostDto | null = null;
+    copiedShareLink = false;
     private loadVersion = 0;
 
     constructor(
@@ -57,8 +58,74 @@ export class BlogPostPageComponent {
         return renderMarkdownToHtml(this.post?.content);
     }
 
+    get embedToolsUrl(): string {
+        if (!this.handle || !this.blogSlug || !this.postSlug || typeof window === 'undefined') {
+            return '';
+        }
+
+        const encodedHandle = encodeURIComponent(this.handle);
+        const encodedBlogSlug = encodeURIComponent(this.blogSlug);
+        const encodedPostSlug = encodeURIComponent(this.postSlug);
+        return `${window.location.origin}/blogs/${encodedHandle}/${encodedBlogSlug}/${encodedPostSlug}/embed`;
+    }
+
+    get postShareUrl(): string {
+        if (!this.handle || !this.blogSlug || !this.postSlug || typeof window === 'undefined') {
+            return '';
+        }
+
+        const encodedHandle = encodeURIComponent(this.handle);
+        const encodedBlogSlug = encodeURIComponent(this.blogSlug);
+        const encodedPostSlug = encodeURIComponent(this.postSlug);
+        return `${window.location.origin}/blogs/${encodedHandle}/${encodedBlogSlug}/${encodedPostSlug}`;
+    }
+
+    get allowLikes(): boolean {
+        return this.blog?.allowLikes !== false;
+    }
+
+    get allowComments(): boolean {
+        return this.blog?.allowComments !== false;
+    }
+
+    get allowShares(): boolean {
+        return this.blog?.allowShares !== false;
+    }
+
+    get allowEmbeds(): boolean {
+        return this.blog?.allowEmbeds !== false;
+    }
+
     splitHashtagText(content: string | null | undefined): HashtagTextPart[][] {
         return splitHashtagText(content);
+    }
+
+    openEmbedToolsInNewTab(): void {
+        const url = this.embedToolsUrl;
+        if (!url || typeof window === 'undefined') {
+            return;
+        }
+
+        window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    async copyShareLinkAsync(): Promise<void> {
+        const url = this.postShareUrl;
+        if (!url || typeof navigator === 'undefined' || !navigator.clipboard) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(url);
+            this.copiedShareLink = true;
+            window.setTimeout(() => {
+                this.copiedShareLink = false;
+                this.cdr.detectChanges();
+            }, 1800);
+            this.cdr.detectChanges();
+        } catch {
+            this.copiedShareLink = false;
+        }
     }
 
     async loadAsync(): Promise<void> {

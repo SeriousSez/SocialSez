@@ -12,6 +12,10 @@ interface BlogFormState {
     description: string;
     slug: string;
     isPublic: boolean;
+    allowLikes: boolean;
+    allowComments: boolean;
+    allowShares: boolean;
+    allowEmbeds: boolean;
     fontFamily: string;
     accentColor: string;
     backgroundColor: string;
@@ -227,10 +231,10 @@ export class BlogStudioPageComponent {
 
             let blog: BlogDto;
             if (this.selectedBlogId) {
-                blog = await this.session.updateBlogAsync(this.selectedBlogId, title, description, slug, this.blogForm.isPublic, payload);
+                blog = await this.session.updateBlogAsync(this.selectedBlogId, title, description, slug, this.blogForm.isPublic, this.blogForm.allowLikes, this.blogForm.allowComments, this.blogForm.allowShares, this.blogForm.allowEmbeds, payload);
                 this.blogs = this.blogs.map(item => item.id === blog.id ? blog : item);
             } else {
-                blog = await this.session.createBlogAsync(title, description, slug, this.blogForm.isPublic, payload);
+                blog = await this.session.createBlogAsync(title, description, slug, this.blogForm.isPublic, this.blogForm.allowLikes, this.blogForm.allowComments, this.blogForm.allowShares, this.blogForm.allowEmbeds, payload);
                 this.blogs = [blog, ...this.blogs];
             }
 
@@ -577,6 +581,10 @@ export class BlogStudioPageComponent {
         this.blogForm.description = blog.description ?? '';
         this.blogForm.slug = blog.slug;
         this.blogForm.isPublic = blog.isPublic;
+        this.blogForm.allowLikes = blog.allowLikes;
+        this.blogForm.allowComments = blog.allowComments;
+        this.blogForm.allowShares = blog.allowShares;
+        this.blogForm.allowEmbeds = blog.allowEmbeds;
         this.blogForm.fontFamily = blog.theme?.fontFamily ?? '';
         this.blogForm.accentColor = blog.theme?.accentColor ?? '';
         this.blogForm.backgroundColor = blog.theme?.backgroundColor ?? '';
@@ -623,6 +631,10 @@ export class BlogStudioPageComponent {
             description: '',
             slug: '',
             isPublic: true,
+            allowLikes: true,
+            allowComments: true,
+            allowShares: true,
+            allowEmbeds: true,
             fontFamily: '',
             accentColor: '',
             backgroundColor: '',

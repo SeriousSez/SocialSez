@@ -232,6 +232,14 @@
     font-size: 0.96rem;
 }
 
+.content-caption {
+    font-size: 0.8rem;
+    font-weight: 400;
+    font-style: italic;
+    color: color-mix(in srgb, var(--color-text-subtle) 82%, #475569 18%);
+    text-align: center;
+}
+
 .post-link {
     color: var(--color-accent);
     text-decoration: none;

@@ -91,6 +91,24 @@
                     Public blog
                 </label>
 
+                <h4>Engagement & Sharing</h4>
+                <label class="checkbox">
+                    <input type="checkbox" [(ngModel)]="blogForm.allowLikes" />
+                    Allow likes
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" [(ngModel)]="blogForm.allowComments" />
+                    Allow comments
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" [(ngModel)]="blogForm.allowShares" />
+                    Allow sharing
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" [(ngModel)]="blogForm.allowEmbeds" />
+                    Allow embedding on external websites
+                </label>
+
                 <h4>Theme</h4>
                 <div class="theme-grid">
                     <div class="theme-field">

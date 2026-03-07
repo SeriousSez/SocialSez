@@ -161,6 +161,10 @@ export class AppComponent implements OnInit, OnDestroy {
         return this.router.url.startsWith('/chat');
     }
 
+    get isEmbedRoute(): boolean {
+        return /^\/embed\//i.test(this.router.url);
+    }
+
     get isChatThreadRoute(): boolean {
         if (!this.isChatRoute) {
             return false;
@@ -171,8 +175,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     get isCommunityPageRoute(): boolean {
-        return /^\/communities(\/|$)/i.test(this.router.url)
-            || /^\/c\//i.test(this.router.url)
+        return /^\/c\//i.test(this.router.url)
             || /^\/cp\//i.test(this.router.url);
     }
 

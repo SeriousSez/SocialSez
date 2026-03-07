@@ -1,7 +1,7 @@
 <section class="page" [class.compact-layout]="compactFeedEnabled">
     <header class="page-head">
         <h2>Home Feed</h2>
-        <app-create-content-menu [open]="createMenuOpen" (toggle)="toggleCreateMenu($event)" (createPost)="openComposer()" (createReel)="openReelComposer()" (createStory)="openStoryComposer()"></app-create-content-menu>
+        <app-create-content-menu [open]="createMenuOpen" (toggle)="toggleCreateMenu($event)" (createPost)="openComposer()" (createReel)="openReelComposer()" (createStory)="openStoryComposer()" (createBlog)="openBlogStudio()"></app-create-content-menu>
     </header>
 
     <p class="upload-status" *ngIf="reelUploadStatus" [class.success]="reelUploadStatus.state === 'success'" [class.failed]="reelUploadStatus.state === 'failed'">

@@ -188,7 +188,7 @@ public class CommunitiesController(ICommunityService communityService, ILogger<C
         {
             var created = await communityService.CreatePostAsync(
                 communityId,
-                new CreateCommunityPostRequest(profileId, request.Title, request.LinkUrl, request.Content, request.ImageUrls, request.PollQuestion, request.PollOptions),
+                new CreateCommunityPostRequest(profileId, request.Title, request.LinkUrl, request.Content, request.MediaContent, request.ImageUrls, request.PollQuestion, request.PollOptions),
                 cancellationToken);
 
             return created is null ? NotFound() : Ok(created);
@@ -269,7 +269,7 @@ public class CommunitiesController(ICommunityService communityService, ILogger<C
             var updated = await communityService.UpdatePostAsync(
                 communityId,
                 postId,
-                new UpdateCommunityPostRequest(profileId, request.Title, request.LinkUrl, request.Content, request.ImageUrls, request.PollQuestion, request.PollOptions, request.ClearPoll),
+                new UpdateCommunityPostRequest(profileId, request.Title, request.LinkUrl, request.Content, request.MediaContent, request.ImageUrls, request.PollQuestion, request.PollOptions, request.ClearPoll),
                 cancellationToken);
 
             return updated is null ? NotFound() : Ok(updated);
@@ -489,8 +489,8 @@ public class CommunitiesController(ICommunityService communityService, ILogger<C
     public sealed record UpdateCommunityBody(string Name, string? Description, IReadOnlyCollection<CommunityRuleDto>? Rules, string? ImageUrl, bool IsPrivate);
     public sealed record UpdateCommunityMemberRoleBody(string Role);
     public sealed record TimeoutCommunityMemberBody(int DurationDays);
-    public sealed record CreateCommunityPostBody(string? Title, string? LinkUrl, string? Content, IReadOnlyCollection<string>? ImageUrls, string? PollQuestion, IReadOnlyCollection<string>? PollOptions);
-    public sealed record UpdateCommunityPostBody(string? Title, string? LinkUrl, string? Content, IReadOnlyCollection<string>? ImageUrls, string? PollQuestion, IReadOnlyCollection<string>? PollOptions, bool ClearPoll);
+    public sealed record CreateCommunityPostBody(string? Title, string? LinkUrl, string? Content, string? MediaContent, IReadOnlyCollection<string>? ImageUrls, string? PollQuestion, IReadOnlyCollection<string>? PollOptions);
+    public sealed record UpdateCommunityPostBody(string? Title, string? LinkUrl, string? Content, string? MediaContent, IReadOnlyCollection<string>? ImageUrls, string? PollQuestion, IReadOnlyCollection<string>? PollOptions, bool ClearPoll);
     public sealed record CreateCommunityPostCommentBody(string Content, Guid? ParentCommentId = null);
     public sealed record UpdateCommunityPostCommentBody(string Content);
     public sealed record VoteCommunityPostBody(string? VoteType);

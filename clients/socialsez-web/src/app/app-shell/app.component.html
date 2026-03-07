@@ -1,6 +1,6 @@
-<a class="skip-link" href="#main-content">Skip to content</a>
+<a class="skip-link" href="#main-content" *ngIf="!isEmbedRoute">Skip to content</a>
 
-<section class="top-notice" [class.is-error]="isTopNoticeError" [class.is-hiding]="topNoticeHiding" *ngIf="showTopNotice" [attr.role]="isTopNoticeError ? 'alert' : 'status'" [attr.aria-live]="isTopNoticeError ? 'assertive' : 'polite'" aria-atomic="true">
+<section class="top-notice" [class.is-error]="isTopNoticeError" [class.is-hiding]="topNoticeHiding" *ngIf="showTopNotice && !isEmbedRoute" [attr.role]="isTopNoticeError ? 'alert' : 'status'" [attr.aria-live]="isTopNoticeError ? 'assertive' : 'polite'" aria-atomic="true">
     <span class="top-notice-icon" [class.is-error]="isTopNoticeError" aria-hidden="true">
         <i class="fa-duotone fa-light" [class.fa-circle-check]="!isTopNoticeError" [class.fa-circle-exclamation]="isTopNoticeError" aria-hidden="true"></i>
     </span>
@@ -11,7 +11,7 @@
     <button type="button" class="top-notice-action" *ngIf="showTopNoticeAction" (click)="onTopNoticeAction()" aria-label="Dismiss notification">{{ topNoticeActionLabel }}</button>
 </section>
 
-<main class="shell" [class.chat-mode]="isChatRoute">
+<main class="shell" [class.chat-mode]="isChatRoute" *ngIf="!isEmbedRoute">
     <aside class="left-rail">
         <div class="brand">
             <img class="brand-mark" src="/assets/images/v-blue-close.png" alt="Venli logo" />
@@ -147,7 +147,7 @@
     </aside>
 </main>
 
-<nav class="mobile-footer-tabs" [class.hidden-on-chat]="isChatThreadRoute" aria-label="Primary mobile navigation">
+<nav class="mobile-footer-tabs" [class.hidden-on-chat]="isChatThreadRoute" aria-label="Primary mobile navigation" *ngIf="!isEmbedRoute">
     <a class="mobile-footer-tab" routerLink="/feed" routerLinkActive="active">
         <i class="fa-duotone fa-light fa-house" aria-hidden="true"></i>
         <span>Feed</span>
@@ -186,19 +186,23 @@
     </a>
 </nav>
 
-<app-messages-dock [visible]="showMessagesDock" (sharedMediaRequested)="onDockSharedMediaRequested($event)"></app-messages-dock>
+<app-messages-dock [visible]="showMessagesDock" (sharedMediaRequested)="onDockSharedMediaRequested($event)" *ngIf="!isEmbedRoute"></app-messages-dock>
 
 <app-feed-story-viewer [activeStory]="activeProfileChipStory" [activeStoryGroup]="profileChipStoryGroup" [activeStoryIndex]="profileChipStoryIndex" [storyCount]="profileChipStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousProfileChipStory" [hasNextStory]="hasNextProfileChipStory"
     [liked]="activeProfileChipStory ? isProfileChipStoryLiked(activeProfileChipStory.id) : false" [sendingReply]="false" [sharingStory]="false" [canDelete]="false" [deletingStory]="false" [errorMessage]="''" (closed)="closeProfileChipStoryViewer()" (previous)="showPreviousProfileChipStory()"
-    (next)="showNextProfileChipStory()" (likeToggled)="toggleProfileChipStoryLike($event)">
+    (next)="showNextProfileChipStory()" (likeToggled)="toggleProfileChipStoryLike($event)" *ngIf="!isEmbedRoute">
 </app-feed-story-viewer>
 
 <app-feed-story-viewer [activeStory]="activeDockStory" [activeStoryGroup]="dockStoryGroup" [activeStoryIndex]="dockStoryIndex" [storyCount]="dockStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousDockStory" [hasNextStory]="hasNextDockStory"
     [liked]="activeDockStory ? isDockStoryLiked(activeDockStory.id) : false" [sendingReply]="false" [sharingStory]="false" [canDelete]="false" [deletingStory]="false" [errorMessage]="''" (closed)="closeDockStoryViewer()" (previous)="showPreviousDockStory()" (next)="showNextDockStory()"
-    (likeToggled)="toggleDockStoryLike($event)">
+    (likeToggled)="toggleDockStoryLike($event)" *ngIf="!isEmbedRoute">
 </app-feed-story-viewer>
 
-<div class="shared-reel-viewer" *ngIf="dockReelModal as reel" (click)="onDockReelBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Shared reel viewer">
+<section class="embed-route-host" *ngIf="isEmbedRoute">
+    <router-outlet></router-outlet>
+</section>
+
+<div class="shared-reel-viewer" *ngIf="!isEmbedRoute && dockReelModal as reel" (click)="onDockReelBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Shared reel viewer">
     <section class="shared-reel-viewer-card">
         <button type="button" class="shared-reel-viewer-close" (click)="closeDockReelModal($event)" aria-label="Close reel viewer">
             <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>

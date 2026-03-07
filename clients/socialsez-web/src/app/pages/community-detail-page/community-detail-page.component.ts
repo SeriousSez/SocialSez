@@ -962,7 +962,8 @@ export class CommunityDetailPageComponent {
             return;
         }
 
-        const content = this.resolveComposerPostContentAny();
+        const content = this.resolveComposerTextContent();
+        const mediaContent = this.resolveComposerMediaContent();
         const title = this.composerTitle.trim() || null;
         const normalizedLink = this.normalizeOptionalHttpUrl(this.composerLinkUrl);
         if (normalizedLink.error) {
@@ -984,7 +985,7 @@ export class CommunityDetailPageComponent {
             return;
         }
 
-        if (!content && !linkUrl && selectedImages.length === 0 && !pollQuestion) {
+        if (!content && !mediaContent && !linkUrl && selectedImages.length === 0 && !pollQuestion) {
             this.status = 'Add text, image, link, or poll before posting.';
             this.statusTone = 'neutral';
             return;
@@ -1007,6 +1008,7 @@ export class CommunityDetailPageComponent {
                 title,
                 linkUrl,
                 content,
+                mediaContent,
                 imageUrls.length ? imageUrls : null,
                 pollQuestion,
                 pollOptions
@@ -1218,6 +1220,16 @@ export class CommunityDetailPageComponent {
         return match?.[0] ?? null;
     }
 
+    getPostTextBody(post: CommunityPostDto): string | null {
+        const textBody = post.content?.trim();
+        return textBody || null;
+    }
+
+    getPostMediaCaption(post: CommunityPostDto): string | null {
+        const mediaBody = post.mediaContent?.trim();
+        return mediaBody || null;
+    }
+
     getPostMediaUrls(post: CommunityPostDto): string[] {
         const fromArray = (post.imageUrls ?? [])
             .map(url => url?.trim())
@@ -1277,6 +1289,20 @@ export class CommunityDetailPageComponent {
         this.transitionPostImage(post, index + 1, 'next');
     }
 
+    onPostImageCardClick(post: CommunityPostDto, imageUrl: string, event: Event): void {
+        event.stopPropagation();
+
+        const urls = this.getPostMediaUrls(post);
+        if (urls.length <= 1) {
+            this.openImageFullscreen(post, imageUrl, event);
+            return;
+        }
+
+        const index = this.postImageIndexByPostId.get(post.id) ?? 0;
+        const nextIndex = index >= urls.length - 1 ? 0 : index + 1;
+        this.transitionPostImage(post, nextIndex, 'next');
+    }
+
     setActivePostImage(post: CommunityPostDto, index: number, event: Event): void {
         event.stopPropagation();
         if (index < 0 || index >= this.getPostMediaUrls(post).length) {
@@ -1304,6 +1330,10 @@ export class CommunityDetailPageComponent {
 
     trackByMediaUrl(_index: number, mediaUrl: string): string {
         return mediaUrl;
+    }
+
+    trackByIndex(index: number): number {
+        return index;
     }
 
     getPostImageDirection(post: CommunityPostDto): 'next' | 'prev' {
@@ -1552,8 +1582,8 @@ export class CommunityDetailPageComponent {
         this.editingPostId = post.id;
         this.editPostTitle = post.title ?? '';
         this.editPostLinkUrl = post.linkUrl ?? '';
-        this.editPostContent = '';
-        this.editPostMediaContent = '';
+        this.editPostContent = post.content ?? '';
+        this.editPostMediaContent = post.mediaContent ?? post.content ?? '';
         this.editPollQuestion = '';
         this.editPollOptions = ['', ''];
 
@@ -1567,7 +1597,6 @@ export class CommunityDetailPageComponent {
 
         if (post.poll) {
             this.editPostTab = 'poll';
-            this.editPostContent = post.content ?? '';
             this.editPollQuestion = post.poll.question;
             this.editPollOptions = post.poll.options.map(option => option.text).slice(0, 6);
             while (this.editPollOptions.length < 2) {
@@ -1575,13 +1604,10 @@ export class CommunityDetailPageComponent {
             }
         } else if ((post.imageUrls?.length ?? 0) > 0 || !!post.imageUrl) {
             this.editPostTab = 'media';
-            this.editPostMediaContent = post.content ?? '';
         } else if ((post.linkUrl ?? '').trim()) {
             this.editPostTab = 'link';
-            this.editPostMediaContent = post.content ?? '';
         } else {
             this.editPostTab = 'text';
-            this.editPostContent = post.content ?? '';
         }
 
         this.editPostModalOpen = true;
@@ -1610,7 +1636,8 @@ export class CommunityDetailPageComponent {
         }
 
         const title = this.editPostTitle.trim() || null;
-        const content = this.resolveEditPostContent();
+        const content = this.resolveEditPostTextContent();
+        const mediaContent = this.resolveEditPostMediaContent();
         const linkUrl = this.editPostTab === 'link' ? this.editPostLinkUrl.trim() || null : null;
         const pollQuestion = this.editPostTab === 'poll' ? this.editPollQuestion.trim() || null : null;
         const pollOptions = this.editPostTab === 'poll'
@@ -1626,7 +1653,7 @@ export class CommunityDetailPageComponent {
 
         const hasImages = this.editPostTab === 'media' && this.editPostImageEntries.length > 0;
 
-        if (!content && !linkUrl && !hasImages && !pollQuestion) {
+        if (!content && !mediaContent && !linkUrl && !hasImages && !pollQuestion) {
             this.status = 'Add text, image, link, or poll before saving.';
             this.statusTone = 'neutral';
             return;
@@ -1638,7 +1665,7 @@ export class CommunityDetailPageComponent {
         try {
             const imageUrls = this.editPostTab === 'media'
                 ? await this.resolveEditPostImageUrlsAsync()
-                : [];
+                : null;
 
             const updated = await this.session.updateCommunityPostAsync(
                 this.communityId,
@@ -1646,7 +1673,8 @@ export class CommunityDetailPageComponent {
                 title,
                 linkUrl,
                 content,
-                this.editPostTab === 'media' ? imageUrls : [],
+                mediaContent,
+                imageUrls,
                 pollQuestion,
                 pollOptions,
                 clearPoll
@@ -1852,26 +1880,12 @@ export class CommunityDetailPageComponent {
         }
     }
 
-    private resolveComposerPostContent(): string | null {
-        const bodySource = this.composerTab === 'text' || this.composerTab === 'poll'
-            ? this.composerContent
-            : this.composerMediaContent;
-
-        const body = bodySource.trim();
-        return body || null;
+    private resolveComposerTextContent(): string | null {
+        return this.composerContent.trim() || null;
     }
 
-    private resolveComposerPostContentAny(): string | null {
-        const primary = this.resolveComposerPostContent();
-        if (primary) {
-            return primary;
-        }
-
-        const secondary = this.composerTab === 'text' || this.composerTab === 'poll'
-            ? this.composerMediaContent.trim()
-            : this.composerContent.trim();
-
-        return secondary || null;
+    private resolveComposerMediaContent(): string | null {
+        return this.composerMediaContent.trim() || null;
     }
 
     private normalizeOptionalHttpUrl(raw: string): { value: string | null; error?: string } {
@@ -1894,13 +1908,12 @@ export class CommunityDetailPageComponent {
         }
     }
 
-    private resolveEditPostContent(): string | null {
-        const bodySource = this.editPostTab === 'text' || this.editPostTab === 'poll'
-            ? this.editPostContent
-            : this.editPostMediaContent;
+    private resolveEditPostTextContent(): string | null {
+        return this.editPostContent.trim() || null;
+    }
 
-        const body = bodySource.trim();
-        return body || null;
+    private resolveEditPostMediaContent(): string | null {
+        return this.editPostMediaContent.trim() || null;
     }
 
     private async resolveEditPostImageUrlsAsync(): Promise<string[]> {

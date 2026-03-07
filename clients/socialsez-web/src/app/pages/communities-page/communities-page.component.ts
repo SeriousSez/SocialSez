@@ -251,6 +251,23 @@ export class CommunitiesPageComponent implements OnDestroy {
         return community.id;
     }
 
+    openCommunityFromCard(community: CommunityDto, event: Event): void {
+        if (this.shouldIgnoreCardNavigation(event)) {
+            return;
+        }
+
+        void this.router.navigate(['/c', community.slug]);
+    }
+
+    onCommunityCardKeydown(event: KeyboardEvent, community: CommunityDto): void {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+
+        event.preventDefault();
+        void this.router.navigate(['/c', community.slug]);
+    }
+
     ngOnDestroy(): void {
         if (this.queryDebounceTimerId !== null) {
             window.clearTimeout(this.queryDebounceTimerId);
@@ -333,5 +350,14 @@ export class CommunitiesPageComponent implements OnDestroy {
 
     private refreshSuggestions(): void {
         this.suggestions = buildDiscoverySuggestions(this.query, Array.from(this.suggestionSeed), 8);
+    }
+
+    private shouldIgnoreCardNavigation(event: Event): boolean {
+        const target = event.target as HTMLElement | null;
+        if (!target) {
+            return false;
+        }
+
+        return !!target.closest('a, button, input, textarea, select, label, [role="button"]');
     }
 }

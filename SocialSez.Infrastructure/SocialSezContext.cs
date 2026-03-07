@@ -563,6 +563,7 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
             entity.Property(x => x.Title).HasMaxLength(220);
             entity.Property(x => x.LinkUrl).HasMaxLength(2048);
             entity.Property(x => x.Content).HasMaxLength(5000);
+            entity.Property(x => x.MediaContent).HasMaxLength(5000);
             entity.Property(x => x.ImageUrl).HasMaxLength(1024);
 
             entity.HasOne(x => x.Community)
@@ -714,6 +715,10 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
             entity.Property(x => x.Description).HasMaxLength(1000);
             entity.Property(x => x.ThemeConfigJson).HasMaxLength(12000);
             entity.Property(x => x.IsPublic).HasDefaultValue(true);
+            entity.Property(x => x.AllowLikes).HasDefaultValue(true);
+            entity.Property(x => x.AllowComments).HasDefaultValue(true);
+            entity.Property(x => x.AllowShares).HasDefaultValue(true);
+            entity.Property(x => x.AllowEmbeds).HasDefaultValue(true);
 
             entity.HasOne(x => x.OwnerProfile)
                 .WithMany(x => x.Blogs)

@@ -572,13 +572,13 @@ export class SessionService {
         return normalized;
     }
 
-    async createBlogAsync(title: string, description: string | null, slug: string | null, isPublic: boolean, theme: BlogThemeConfigDto | null): Promise<BlogDto> {
-        const created = await firstValueFrom(this.api.createBlog(title, description, slug, isPublic, theme));
+    async createBlogAsync(title: string, description: string | null, slug: string | null, isPublic: boolean, allowLikes: boolean, allowComments: boolean, allowShares: boolean, allowEmbeds: boolean, theme: BlogThemeConfigDto | null): Promise<BlogDto> {
+        const created = await firstValueFrom(this.api.createBlog(title, description, slug, isPublic, allowLikes, allowComments, allowShares, allowEmbeds, theme));
         return this.normalizeBlog(created);
     }
 
-    async updateBlogAsync(blogId: string, title: string, description: string | null, slug: string | null, isPublic: boolean, theme: BlogThemeConfigDto | null): Promise<BlogDto> {
-        const updated = await firstValueFrom(this.api.updateBlog(blogId, title, description, slug, isPublic, theme));
+    async updateBlogAsync(blogId: string, title: string, description: string | null, slug: string | null, isPublic: boolean, allowLikes: boolean, allowComments: boolean, allowShares: boolean, allowEmbeds: boolean, theme: BlogThemeConfigDto | null): Promise<BlogDto> {
+        const updated = await firstValueFrom(this.api.updateBlog(blogId, title, description, slug, isPublic, allowLikes, allowComments, allowShares, allowEmbeds, theme));
         return this.normalizeBlog(updated);
     }
 
@@ -648,11 +648,12 @@ export class SessionService {
         title: string | null,
         linkUrl: string | null,
         content: string | null,
+        mediaContent: string | null,
         imageUrls: string[] | null,
         pollQuestion: string | null,
         pollOptions: string[] | null
     ): Promise<CommunityPostDto> {
-        const created = await firstValueFrom(this.api.createCommunityPost(communityId, title, linkUrl, content, imageUrls, pollQuestion, pollOptions));
+        const created = await firstValueFrom(this.api.createCommunityPost(communityId, title, linkUrl, content, mediaContent, imageUrls, pollQuestion, pollOptions));
         this.message = 'Posted to community.';
         this.emitAppChange('posts');
         return this.normalizeCommunityPost(created);
@@ -696,12 +697,13 @@ export class SessionService {
         title: string | null,
         linkUrl: string | null,
         content: string | null,
+        mediaContent: string | null,
         imageUrls: string[] | null = null,
         pollQuestion: string | null = null,
         pollOptions: string[] | null = null,
         clearPoll = false
     ): Promise<CommunityPostDto> {
-        const updated = await firstValueFrom(this.api.updateCommunityPost(communityId, postId, title, linkUrl, content, imageUrls, pollQuestion, pollOptions, clearPoll));
+        const updated = await firstValueFrom(this.api.updateCommunityPost(communityId, postId, title, linkUrl, content, mediaContent, imageUrls, pollQuestion, pollOptions, clearPoll));
         this.message = 'Post updated.';
         this.emitAppChange('posts');
         return this.normalizeCommunityPost(updated);
@@ -906,6 +908,10 @@ export class SessionService {
         return {
             ...blog,
             ownerHandle: (blog.ownerHandle ?? '').trim().toLowerCase(),
+            allowLikes: blog.allowLikes !== false,
+            allowComments: blog.allowComments !== false,
+            allowShares: blog.allowShares !== false,
+            allowEmbeds: blog.allowEmbeds !== false,
             theme: {
                 ...blog.theme,
                 customCss: blog.theme?.customCss ?? undefined

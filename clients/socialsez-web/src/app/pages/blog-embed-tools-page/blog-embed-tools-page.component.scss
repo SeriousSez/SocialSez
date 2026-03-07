@@ -1,0 +1,130 @@
+.embed-tools-shell {
+    --blog-font: Georgia, serif;
+    --blog-accent: #ea580c;
+    --blog-bg: #fff7ed;
+    --blog-surface: #ffffff;
+
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 16px;
+    border-radius: 18px;
+    background: radial-gradient(circle at 20% 8%, #fff 0%, var(--blog-bg) 44%, #ffedd5 100%);
+}
+
+.embed-tools-card {
+    border: 1px solid color-mix(in srgb, var(--blog-accent) 22%, #dbe4f0);
+    border-radius: 14px;
+    background: var(--blog-surface);
+    padding: 14px;
+    display: grid;
+    gap: 14px;
+    font-family: var(--blog-font);
+}
+
+.embed-tools-card.error {
+    color: #991b1b;
+}
+
+.embed-tools-card.error a {
+    color: var(--blog-accent);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.embed-tools-card.error a:hover {
+    text-decoration: underline;
+}
+
+.head .kicker {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.head h1 {
+    margin: 6px 0 0;
+    font-size: clamp(1.35rem, 2.5vw, 1.9rem);
+    color: #0f172a;
+}
+
+.meta {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 0.92rem;
+}
+
+.preview-block,
+.code-block {
+    display: grid;
+    gap: 10px;
+}
+
+.preview-block h3,
+.code-block h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #0f172a;
+}
+
+.embed-preview {
+    width: 100%;
+    min-height: 560px;
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.code-block textarea {
+    width: 100%;
+    min-height: 104px;
+    resize: vertical;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.actions button {
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 13px;
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.actions a {
+    color: var(--blog-accent);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.actions a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+    .embed-tools-shell {
+        padding: 10px;
+    }
+
+    .embed-preview {
+        min-height: 420px;
+    }
+}

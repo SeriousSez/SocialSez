@@ -14,6 +14,10 @@ public sealed record CreateBlogRequest(
     string? Description,
     string? Slug,
     bool IsPublic,
+    bool AllowLikes,
+    bool AllowComments,
+    bool AllowShares,
+    bool AllowEmbeds,
     BlogThemeConfigDto? Theme);
 
 public sealed record UpdateBlogRequest(
@@ -21,6 +25,10 @@ public sealed record UpdateBlogRequest(
     string? Description,
     string? Slug,
     bool IsPublic,
+    bool AllowLikes,
+    bool AllowComments,
+    bool AllowShares,
+    bool AllowEmbeds,
     BlogThemeConfigDto? Theme);
 
 public sealed record BlogDto(
@@ -31,6 +39,10 @@ public sealed record BlogDto(
     string Title,
     string? Description,
     bool IsPublic,
+    bool AllowLikes,
+    bool AllowComments,
+    bool AllowShares,
+    bool AllowEmbeds,
     BlogThemeConfigDto Theme,
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,

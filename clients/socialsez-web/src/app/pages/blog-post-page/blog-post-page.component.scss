@@ -90,6 +90,28 @@
     font-weight: 700;
 }
 
+.blog-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.blog-actions .ghost {
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    padding: 7px 12px;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.blog-actions .ghost:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 .tags {
     display: flex;
     flex-wrap: wrap;

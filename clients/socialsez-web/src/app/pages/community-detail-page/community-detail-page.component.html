@@ -90,8 +90,8 @@
                 </ng-container>
             </h4>
             <a class="post-link" *ngIf="getPostPrimaryLink(post) as link" [href]="link" target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()">{{ link }}</a>
-            <p class="post-body" *ngIf="post.content">
-                <ng-container *ngFor="let line of splitHashtagText(post.content); let isLast = last">
+            <p class="post-body" *ngIf="getPostTextBody(post) as body">
+                <ng-container *ngFor="let line of splitHashtagText(body); let isLast = last">
                     <ng-container *ngFor="let part of line">
                         <a *ngIf="part.hashtag; else postBodyText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }" (click)="$event.stopPropagation()">{{ part.text }}</a>
                         <ng-template #postBodyText>{{ part.text }}</ng-template>
@@ -108,10 +108,10 @@
                     <div class="post-image-frame">
                         <div class="post-image-stack">
                             <img *ngIf="isPostImageAnimating(post) && getPostOutgoingImageUrl(post) as outgoingUrl" class="post-image post-image-layer post-image-outgoing" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'"
-                                [src]="outgoingUrl" alt="Post image" (click)="openImageFullscreen(post, outgoingUrl, $event)" />
+                                [src]="outgoingUrl" alt="Post image" (click)="onPostImageCardClick(post, outgoingUrl, $event)" />
                             <ng-container *ngFor="let currentUrl of [activeImageUrl]; trackBy: trackByMediaUrl">
                                 <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl"
-                                    alt="Post image" (click)="openImageFullscreen(post, currentUrl, $event)" />
+                                    alt="Post image" (click)="onPostImageCardClick(post, currentUrl, $event)" />
                             </ng-container>
                         </div>
                     </div>
@@ -123,13 +123,23 @@
                 <div class="post-image-frame" *ngIf="getPostMediaUrls(post).length <= 1">
                     <div class="post-image-stack">
                         <img *ngIf="isPostImageAnimating(post) && getPostOutgoingImageUrl(post) as outgoingUrl" class="post-image post-image-layer post-image-outgoing" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'"
-                            [src]="outgoingUrl" alt="Post image" (click)="openImageFullscreen(post, outgoingUrl, $event)" />
+                            [src]="outgoingUrl" alt="Post image" (click)="onPostImageCardClick(post, outgoingUrl, $event)" />
                         <ng-container *ngFor="let currentUrl of [activeImageUrl]; trackBy: trackByMediaUrl">
                             <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl" alt="Post image"
-                                (click)="openImageFullscreen(post, currentUrl, $event)" />
+                                (click)="onPostImageCardClick(post, currentUrl, $event)" />
                         </ng-container>
                     </div>
                 </div>
+
+                <p class="post-media-caption" *ngIf="getPostMediaCaption(post) as caption">
+                    <ng-container *ngFor="let line of splitHashtagText(caption); let isLast = last">
+                        <ng-container *ngFor="let part of line">
+                            <a *ngIf="part.hashtag; else postCaptionText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }" (click)="$event.stopPropagation()">{{ part.text }}</a>
+                            <ng-template #postCaptionText>{{ part.text }}</ng-template>
+                        </ng-container>
+                        <br *ngIf="!isLast" />
+                    </ng-container>
+                </p>
 
                 <div class="post-image-thumbs" *ngIf="getPostMediaUrls(post).length > 1">
                     <button type="button" class="post-image-thumb" *ngFor="let previewUrl of getPostMediaUrls(post); index as i; trackBy: trackByMediaUrl" [class.active]="i === getPostActiveImageIndex(post)" (click)="setActivePostImage(post, i, $event)">
@@ -384,7 +394,7 @@
                 Question
                 <input [(ngModel)]="editPollQuestion" placeholder="Ask the community..." maxlength="280" [disabled]="updatingPost" />
             </label>
-            <label *ngFor="let option of editPollOptions; index as i">
+            <label *ngFor="let option of editPollOptions; index as i; trackBy: trackByIndex">
                 Option {{ i + 1 }}
                 <div class="poll-option-row">
                     <input [(ngModel)]="editPollOptions[i]" maxlength="160" placeholder="Option text" [disabled]="updatingPost" />
@@ -492,7 +502,7 @@
                 Question
                 <input [(ngModel)]="pollQuestion" (ngModelChange)="onComposerChanged()" placeholder="Ask the community..." maxlength="280" />
             </label>
-            <label *ngFor="let option of pollOptions; index as i">
+            <label *ngFor="let option of pollOptions; index as i; trackBy: trackByIndex">
                 Option {{ i + 1 }}
                 <div class="poll-option-row">
                     <input [(ngModel)]="pollOptions[i]" (ngModelChange)="onComposerChanged()" maxlength="160" placeholder="Option text" />

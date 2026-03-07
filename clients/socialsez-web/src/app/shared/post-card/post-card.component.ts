@@ -1183,6 +1183,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         void this.router.navigate(['/users', shared.authorHandle], { fragment: `post-${shared.postId}` });
     }
 
+
     commentContentLines(content: string): PostContentPart[][] {
         return this.parseContentLines(content ?? '');
     }

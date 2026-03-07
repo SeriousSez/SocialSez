@@ -39,6 +39,10 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             Description = description,
             ThemeConfigJson = SerializeTheme(theme),
             IsPublic = request.IsPublic,
+            AllowLikes = request.AllowLikes,
+            AllowComments = request.AllowComments,
+            AllowShares = request.AllowShares,
+            AllowEmbeds = request.AllowEmbeds,
             CreatedAtUtc = nowUtc,
             UpdatedAtUtc = nowUtc
         };
@@ -75,6 +79,10 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         blog.Title = title;
         blog.Description = description;
         blog.IsPublic = request.IsPublic;
+        blog.AllowLikes = request.AllowLikes;
+        blog.AllowComments = request.AllowComments;
+        blog.AllowShares = request.AllowShares;
+        blog.AllowEmbeds = request.AllowEmbeds;
         blog.ThemeConfigJson = SerializeTheme(theme);
         blog.Slug = await BuildUniqueBlogSlugAsync(ownerProfileId, request.Slug, title, cancellationToken, blog.Id);
         blog.UpdatedAtUtc = DateTime.UtcNow;
@@ -112,8 +120,7 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         {
             var blogsQuery = dbContext.Blogs
                 .AsNoTracking()
-                .Include(x => x.OwnerProfile)
-                .Where(x => x.IsPublic || (viewerProfileId.HasValue && x.OwnerProfileId == viewerProfileId.Value));
+                .Include(x => x.OwnerProfile);
 
             var candidates = await blogsQuery
                 .OrderByDescending(x => x.UpdatedAtUtc)
@@ -165,7 +172,7 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             var blogsQuery = dbContext.Blogs
                 .AsNoTracking()
                 .Include(x => x.OwnerProfile)
-                .Where(x => x.IsPublic && followedProfileIds.Contains(x.OwnerProfileId));
+                .Where(x => followedProfileIds.Contains(x.OwnerProfileId));
 
             var candidates = await blogsQuery
                 .OrderByDescending(x => x.UpdatedAtUtc)
@@ -211,17 +218,10 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             return Array.Empty<BlogDto>();
         }
 
-        var canViewPrivate = viewerProfileId.HasValue && viewerProfileId.Value == owner.Id;
-
         var blogsQuery = dbContext.Blogs
             .AsNoTracking()
             .Include(x => x.OwnerProfile)
             .Where(x => x.OwnerProfileId == owner.Id);
-
-        if (!canViewPrivate)
-        {
-            blogsQuery = blogsQuery.Where(x => x.IsPublic);
-        }
 
         var blogs = await blogsQuery
             .OrderByDescending(x => x.UpdatedAtUtc)
@@ -248,12 +248,6 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .FirstOrDefaultAsync(x => x.OwnerProfile.Handle == normalizedHandle && x.Slug == normalizedSlug, cancellationToken);
 
         if (blog is null)
-        {
-            return null;
-        }
-
-        var isOwner = viewerProfileId.HasValue && viewerProfileId.Value == blog.OwnerProfileId;
-        if (!blog.IsPublic && !isOwner)
         {
             return null;
         }
@@ -424,10 +418,6 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         }
 
         var isOwner = viewerProfileId.HasValue && viewerProfileId.Value == blog.OwnerProfileId;
-        if (!blog.IsPublic && !isOwner)
-        {
-            return Array.Empty<BlogPostDto>();
-        }
 
         var postsQuery = dbContext.BlogPosts
             .AsNoTracking()
@@ -469,7 +459,7 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         }
 
         var isOwner = viewerProfileId.HasValue && viewerProfileId.Value == post.Blog.OwnerProfileId;
-        if ((!post.Blog.IsPublic || !post.IsPublished) && !isOwner)
+        if (!post.IsPublished && !isOwner)
         {
             return null;
         }
@@ -690,6 +680,10 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             blog.Title,
             blog.Description,
             blog.IsPublic,
+            blog.AllowLikes,
+            blog.AllowComments,
+            blog.AllowShares,
+            blog.AllowEmbeds,
             ParseTheme(blog.ThemeConfigJson),
             blog.CreatedAtUtc,
             blog.UpdatedAtUtc,
@@ -743,11 +737,47 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                     Description TEXT NULL,
                     ThemeConfigJson TEXT NULL,
                     IsPublic INTEGER NOT NULL,
+                    AllowLikes INTEGER NOT NULL DEFAULT 1,
+                    AllowComments INTEGER NOT NULL DEFAULT 1,
+                    AllowShares INTEGER NOT NULL DEFAULT 1,
+                    AllowEmbeds INTEGER NOT NULL DEFAULT 1,
                     CreatedAtUtc TEXT NOT NULL,
                     UpdatedAtUtc TEXT NOT NULL,
                     FOREIGN KEY (OwnerProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
                 );
                 """, cancellationToken);
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Blogs ADD COLUMN AllowLikes INTEGER NOT NULL DEFAULT 1;", cancellationToken);
+                }
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                {
+                }
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Blogs ADD COLUMN AllowComments INTEGER NOT NULL DEFAULT 1;", cancellationToken);
+                }
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                {
+                }
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Blogs ADD COLUMN AllowShares INTEGER NOT NULL DEFAULT 1;", cancellationToken);
+                }
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                {
+                }
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Blogs ADD COLUMN AllowEmbeds INTEGER NOT NULL DEFAULT 1;", cancellationToken);
+                }
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                {
+                }
 
                 await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_Blogs_OwnerProfileId_Slug
@@ -800,6 +830,10 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                     `Description` varchar(1000) NULL,
                     `ThemeConfigJson` longtext NULL,
                     `IsPublic` tinyint(1) NOT NULL,
+                    `AllowLikes` tinyint(1) NOT NULL DEFAULT 1,
+                    `AllowComments` tinyint(1) NOT NULL DEFAULT 1,
+                    `AllowShares` tinyint(1) NOT NULL DEFAULT 1,
+                    `AllowEmbeds` tinyint(1) NOT NULL DEFAULT 1,
                     `CreatedAtUtc` datetime(6) NOT NULL,
                     `UpdatedAtUtc` datetime(6) NOT NULL,
                     PRIMARY KEY (`Id`),
@@ -807,6 +841,42 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                     KEY `IX_Blogs_OwnerProfileId_UpdatedAtUtc` (`OwnerProfileId`, `UpdatedAtUtc`)
                 );
                 """, cancellationToken);
+
+                var allowLikesColumnExists = await dbContext.Database
+                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowLikes' LIMIT 1")
+                    .AnyAsync(cancellationToken);
+
+                if (!allowLikesColumnExists)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowLikes` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
+                }
+
+                var allowCommentsColumnExists = await dbContext.Database
+                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowComments' LIMIT 1")
+                    .AnyAsync(cancellationToken);
+
+                if (!allowCommentsColumnExists)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowComments` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
+                }
+
+                var allowSharesColumnExists = await dbContext.Database
+                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowShares' LIMIT 1")
+                    .AnyAsync(cancellationToken);
+
+                if (!allowSharesColumnExists)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowShares` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
+                }
+
+                var allowEmbedsColumnExists = await dbContext.Database
+                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowEmbeds' LIMIT 1")
+                    .AnyAsync(cancellationToken);
+
+                if (!allowEmbedsColumnExists)
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowEmbeds` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
+                }
 
                 await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `BlogPosts` (

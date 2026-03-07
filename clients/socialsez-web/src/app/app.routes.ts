@@ -20,7 +20,7 @@ const guestGuard = async () => {
 };
 
 export const routes: Routes = [
-    { path: '', pathMatch: 'full', redirectTo: 'feed' },
+    { path: '', pathMatch: 'full', redirectTo: 'blogs' },
     { path: 'auth', loadComponent: () => import('./pages/auth-page/auth-page.component').then(module => module.AuthPageComponent), canActivate: [guestGuard] },
     { path: 'feed', loadComponent: () => import('./pages/feed-page/feed-page.component').then(module => module.FeedPageComponent), canActivate: [authGuard] },
     { path: 'compose', loadComponent: () => import('./pages/compose-page/compose-page.component').then(module => module.ComposePageComponent), canActivate: [authGuard] },
@@ -36,6 +36,8 @@ export const routes: Routes = [
     { path: 'settings', loadComponent: () => import('./pages/settings-page/settings-page.component').then(module => module.SettingsPageComponent), canActivate: [authGuard] },
     { path: 'blogs', loadComponent: () => import('./pages/blogs-page/blogs-page.component').then(module => module.BlogsPageComponent) },
     { path: 'blogs/studio', loadComponent: () => import('./pages/blog-studio-page/blog-studio-page.component').then(module => module.BlogStudioPageComponent), canActivate: [authGuard] },
+    { path: 'blogs/:handle/:blogSlug/:postSlug/embed', loadComponent: () => import('./pages/blog-embed-tools-page/blog-embed-tools-page.component').then(module => module.BlogEmbedToolsPageComponent) },
+    { path: 'embed/blogs/:handle/:blogSlug/:postSlug', loadComponent: () => import('./pages/blog-embed-page/blog-embed-page.component').then(module => module.BlogEmbedPageComponent) },
     { path: 'blogs/:handle/:blogSlug/:postSlug', loadComponent: () => import('./pages/blog-post-page/blog-post-page.component').then(module => module.BlogPostPageComponent) },
     { path: 'blogs/:handle/:blogSlug', loadComponent: () => import('./pages/blog-home-page/blog-home-page.component').then(module => module.BlogHomePageComponent) },
     { path: 'blogs/:handle', loadComponent: () => import('./pages/blog-author-page/blog-author-page.component').then(module => module.BlogAuthorPageComponent) },
@@ -50,5 +52,5 @@ export const routes: Routes = [
     { path: 'shared/community-post/:id', redirectTo: 'cp/:id', pathMatch: 'full' },
     { path: 'shared/reel/:id', redirectTo: 'reel/:id', pathMatch: 'full' },
     { path: 'shared/story/:id', redirectTo: 'story/:id', pathMatch: 'full' },
-    { path: '**', redirectTo: 'feed' }
+    { path: '**', redirectTo: 'blogs' }
 ];
