@@ -3,6 +3,7 @@ import { Component, DestroyRef, HostListener, OnDestroy, OnInit, inject, isDevMo
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { SwUpdate, VersionEvent } from '@angular/service-worker';
 import { filter, firstValueFrom } from 'rxjs';
 import { CommunityDto, CommunityRuleDto, HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
 import { SharedReelCommentPreview } from '../core/shared-reel.utils';
@@ -80,38 +81,67 @@ export class AppComponent implements OnInit, OnDestroy {
     private storyStatusPollTimerId: number | null = null;
     private topNoticeAutoDismissTimerId: number | null = null;
     private topNoticeHideTimerId: number | null = null;
+    private updateCheckTimerId: number | null = null;
     topNoticeHiding = false;
     private dismissedTopNoticeVersion = 0;
     private readonly topNoticeAnimationDurationMs = 400;
     private readonly updateMessagePattern = /(new\s+version|version\s+available|update\s+available)/i;
     private readonly errorMessagePattern = /(error|failed|could not|unable to|invalid|denied|forbidden|unauthorized|not found|expired)/i;
+    private readonly updateNoticeMessage = 'New version available. Reload to update.';
+    private appUpdateAvailable = false;
+    private appUpdateVersionLabel = '';
+    private reloadingForUpdate = false;
 
     private readonly destroyRef = inject(DestroyRef);
 
-    constructor(public readonly session: SessionService, private readonly router: Router, private readonly api: SocialSezApiService) { }
+    constructor(public readonly session: SessionService, private readonly router: Router, private readonly api: SocialSezApiService, private readonly swUpdate: SwUpdate) { }
 
     get topNoticeMessage(): string {
+        if (this.appUpdateAvailable) {
+            return this.updateNoticeMessage;
+        }
+
         return this.session.message?.trim() ?? '';
     }
 
     get showTopNotice(): boolean {
+        if (this.appUpdateAvailable) {
+            return true;
+        }
+
         const message = this.topNoticeMessage;
         return !!message && this.session.messageVersion > this.dismissedTopNoticeVersion;
     }
 
     get topNoticeVersion(): string {
+        if (this.appUpdateAvailable) {
+            return this.appUpdateVersionLabel || 'Update ready';
+        }
+
         return 'v1.1.3';
     }
 
     get showTopNoticeVersion(): boolean {
+        if (this.appUpdateAvailable) {
+            return true;
+        }
+
         return this.updateMessagePattern.test(this.topNoticeMessage);
     }
 
     get isTopNoticeError(): boolean {
+        if (this.appUpdateAvailable) {
+            return false;
+        }
+
         return this.isErrorNotice(this.topNoticeMessage);
     }
 
     get topNoticeActionLabel(): string {
+        if (this.appUpdateAvailable) {
+            return this.reloadingForUpdate ? 'Reloading...' : 'Reload';
+        }
+
         return 'Dismiss';
     }
 
@@ -120,7 +150,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     get showTopNoticeAction(): boolean {
-        return this.isTopNoticeError;
+        return this.appUpdateAvailable || this.isTopNoticeError;
     }
 
     get showMessagesDock(): boolean {
@@ -262,6 +292,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.applyThemePreference();
+        this.initializeVersionUpdates();
 
         this.session.appChanges$
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -307,6 +338,11 @@ export class AppComponent implements OnInit, OnDestroy {
         if (this.storyStatusPollTimerId !== null) {
             window.clearInterval(this.storyStatusPollTimerId);
             this.storyStatusPollTimerId = null;
+        }
+
+        if (this.updateCheckTimerId !== null) {
+            window.clearInterval(this.updateCheckTimerId);
+            this.updateCheckTimerId = null;
         }
 
         this.clearTopNoticeAutoDismissTimer();
@@ -543,6 +579,11 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     onTopNoticeAction(): void {
+        if (this.appUpdateAvailable) {
+            void this.reloadForUpdateAsync();
+            return;
+        }
+
         this.dismissTopNotice();
     }
 
@@ -558,7 +599,7 @@ export class AppComponent implements OnInit, OnDestroy {
             this.topNoticeHiding = false;
         }
 
-        if (!this.showTopNotice || this.isErrorNotice(this.topNoticeMessage)) {
+        if (!this.showTopNotice || this.appUpdateAvailable || this.isErrorNotice(this.topNoticeMessage)) {
             return;
         }
 
@@ -583,6 +624,67 @@ export class AppComponent implements OnInit, OnDestroy {
             window.clearTimeout(this.topNoticeHideTimerId);
             this.topNoticeHideTimerId = null;
         }
+    }
+
+    private initializeVersionUpdates(): void {
+        if (!this.swUpdate.isEnabled) {
+            return;
+        }
+
+        this.swUpdate.versionUpdates
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(event => {
+                this.onVersionEvent(event);
+            });
+
+        void this.checkForAppUpdateAsync();
+        this.updateCheckTimerId = window.setInterval(() => {
+            void this.checkForAppUpdateAsync();
+        }, 5 * 60 * 1000);
+    }
+
+    private onVersionEvent(event: VersionEvent): void {
+        if (event.type !== 'VERSION_READY') {
+            return;
+        }
+
+        if (this.appUpdateAvailable) {
+            return;
+        }
+
+        const hash = event.latestVersion.hash?.trim() ?? '';
+        this.appUpdateVersionLabel = hash ? `build ${hash.slice(0, 8)}` : 'Update ready';
+        this.appUpdateAvailable = true;
+        this.session.message = this.updateNoticeMessage;
+    }
+
+    private async checkForAppUpdateAsync(): Promise<void> {
+        if (!this.swUpdate.isEnabled || this.appUpdateAvailable) {
+            return;
+        }
+
+        try {
+            await this.swUpdate.checkForUpdate();
+        } catch {
+            // Keep this silent to avoid noisy non-critical notices.
+        }
+    }
+
+    private async reloadForUpdateAsync(): Promise<void> {
+        if (this.reloadingForUpdate) {
+            return;
+        }
+
+        this.reloadingForUpdate = true;
+        try {
+            if (this.swUpdate.isEnabled) {
+                await this.swUpdate.activateUpdate();
+            }
+        } catch {
+            // Fallback to hard reload below.
+        }
+
+        window.location.reload();
     }
 
     shouldRenderProfileChipImage(imageUrl?: string | null): boolean {
