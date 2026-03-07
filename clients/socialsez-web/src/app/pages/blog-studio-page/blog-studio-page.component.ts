@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BlogDto, BlogPostDto, BlogThemeConfigDto } from '../../core/api.types';
+import { renderMarkdownToHtml } from '../../core/markdown.util';
 import { SessionService } from '../../core/session.service';
 
 interface BlogFormState {
@@ -27,6 +28,14 @@ interface BlogPostFormState {
     tags: string;
     content: string;
     isPublished: boolean;
+}
+
+type MarkdownToolAction = 'h2' | 'bold' | 'italic' | 'link' | 'ul' | 'ol' | 'quote' | 'inlineCode' | 'codeBlock';
+
+interface MarkdownInsertion {
+    text: string;
+    selectStart: number;
+    selectEnd: number;
 }
 
 @Component({
@@ -64,6 +73,10 @@ export class BlogStudioPageComponent {
         }
 
         return this.blogs.find(blog => blog.id === this.selectedBlogId) ?? null;
+    }
+
+    get postPreviewHtml(): string {
+        return renderMarkdownToHtml(this.postForm.content);
     }
 
     async loadAsync(): Promise<void> {
@@ -253,6 +266,26 @@ export class BlogStudioPageComponent {
         return post.id;
     }
 
+    insertMarkdown(action: MarkdownToolAction, editor: HTMLTextAreaElement): void {
+        const value = this.postForm.content;
+        const start = editor.selectionStart ?? 0;
+        const end = editor.selectionEnd ?? 0;
+        const selected = value.slice(start, end);
+        const before = value.slice(0, start);
+        const after = value.slice(end);
+
+        const insertion = this.buildMarkdownInsertion(action, selected);
+        this.postForm.content = `${before}${insertion.text}${after}`;
+
+        const selectionStart = before.length + insertion.selectStart;
+        const selectionEnd = before.length + insertion.selectEnd;
+
+        setTimeout(() => {
+            editor.focus();
+            editor.setSelectionRange(selectionStart, selectionEnd);
+        }, 0);
+    }
+
     private async loadPostsAsync(blog: BlogDto): Promise<void> {
         this.loadingPosts = true;
         this.postError = '';
@@ -264,6 +297,92 @@ export class BlogStudioPageComponent {
             this.postError = 'Could not load posts for this blog.';
         } finally {
             this.loadingPosts = false;
+        }
+    }
+
+    private buildMarkdownInsertion(action: MarkdownToolAction, selected: string): MarkdownInsertion {
+        const hasSelection = selected.length > 0;
+
+        switch (action) {
+            case 'h2': {
+                const label = hasSelection ? selected : 'Heading';
+                const text = `## ${label}`;
+                return {
+                    text,
+                    selectStart: hasSelection ? text.length : 3,
+                    selectEnd: hasSelection ? text.length : text.length
+                };
+            }
+            case 'bold': {
+                const label = hasSelection ? selected : 'bold text';
+                const text = `**${label}**`;
+                return {
+                    text,
+                    selectStart: hasSelection ? text.length : 2,
+                    selectEnd: hasSelection ? text.length : text.length - 2
+                };
+            }
+            case 'italic': {
+                const label = hasSelection ? selected : 'italic text';
+                const text = `*${label}*`;
+                return {
+                    text,
+                    selectStart: hasSelection ? text.length : 1,
+                    selectEnd: hasSelection ? text.length : text.length - 1
+                };
+            }
+            case 'inlineCode': {
+                const label = hasSelection ? selected : 'code';
+                const text = `\`${label}\``;
+                return {
+                    text,
+                    selectStart: hasSelection ? text.length : 1,
+                    selectEnd: hasSelection ? text.length : text.length - 1
+                };
+            }
+            case 'link': {
+                const label = hasSelection ? selected : 'link text';
+                const text = `[${label}](https://example.com)`;
+                const selectStart = text.indexOf('https://example.com');
+                return {
+                    text,
+                    selectStart,
+                    selectEnd: selectStart + 'https://example.com'.length
+                };
+            }
+            case 'ul': {
+                const base = hasSelection ? selected : 'list item';
+                const text = base
+                    .split('\n')
+                    .map(line => `- ${line}`)
+                    .join('\n');
+                return { text, selectStart: text.length, selectEnd: text.length };
+            }
+            case 'ol': {
+                const base = hasSelection ? selected : 'list item';
+                const text = base
+                    .split('\n')
+                    .map((line, index) => `${index + 1}. ${line}`)
+                    .join('\n');
+                return { text, selectStart: text.length, selectEnd: text.length };
+            }
+            case 'quote': {
+                const base = hasSelection ? selected : 'quote';
+                const text = base
+                    .split('\n')
+                    .map(line => `> ${line}`)
+                    .join('\n');
+                return { text, selectStart: text.length, selectEnd: text.length };
+            }
+            case 'codeBlock': {
+                const label = hasSelection ? selected : 'code here';
+                const text = `\`\`\`\n${label}\n\`\`\``;
+                const selectStart = hasSelection ? text.length : 4;
+                const selectEnd = hasSelection ? text.length : 4 + label.length;
+                return { text, selectStart, selectEnd };
+            }
+            default:
+                return { text: selected, selectStart: selected.length, selectEnd: selected.length };
         }
     }
 

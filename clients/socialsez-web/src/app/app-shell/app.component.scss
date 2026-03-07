@@ -401,12 +401,28 @@ h1 {
 }
 
 .search-row {
+    display: flex;
+    align-items: center;
     position: relative;
     border: 1px solid #c6d4e6;
     border-radius: 10px;
     background: #fcfdff;
     overflow: hidden;
     transition: 120ms ease;
+}
+
+.search-context-chip {
+    margin-left: 8px;
+    border: 1px solid #d4dbe6;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #1e3a8a;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    padding: 6px 9px;
+    white-space: nowrap;
 }
 
 .search-row:focus-within {
@@ -420,6 +436,7 @@ h1 {
     border-radius: 0;
     background: transparent;
     box-shadow: none;
+    padding-left: 10px;
     padding-right: 48px;
 }
 
@@ -893,6 +910,12 @@ label {
     .search-row {
         border-color: var(--color-border-strong);
         background: var(--color-surface-muted);
+    }
+
+    .search-context-chip {
+        border-color: var(--color-border);
+        background: rgba(59, 130, 246, 0.18);
+        color: var(--color-text);
     }
 
     .search-row:focus-within {

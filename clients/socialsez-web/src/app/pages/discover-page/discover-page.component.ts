@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
-import { HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryGroupDto } from '../../core/api.types';
+import { BlogDto, CommunityDto, CommunityPostDto, HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryGroupDto } from '../../core/api.types';
 import { executePostShareAction, executePostShareToChat } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
 import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
@@ -20,7 +20,7 @@ import { SharePostMessageModalComponent, SharePostMessageSubmit } from '../../sh
 import { SharePostModalComponent } from '../../shared/share-post-modal/share-post-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
-type SearchScope = 'all' | 'posts' | 'hashtags' | 'users' | 'reels';
+type SearchScope = 'all' | 'posts' | 'hashtags' | 'users' | 'reels' | 'communities' | 'community-posts' | 'blogs';
 
 @Component({
     selector: 'app-discover-page',
@@ -36,6 +36,9 @@ export class DiscoverPageComponent implements OnDestroy {
     postResults: PostDto[] = [];
     hashtagResults: HashtagSearchResultDto[] = [];
     reelResults: ReelDto[] = [];
+    communityResults: CommunityDto[] = [];
+    communityPostResults: CommunityPostDto[] = [];
+    blogResults: BlogDto[] = [];
     recommendedReels: ReelDto[] = [];
     recommendedProfiles: ProfileDto[] = [];
 
@@ -58,6 +61,9 @@ export class DiscoverPageComponent implements OnDestroy {
 
     readonly scopes: ReadonlyArray<{ value: SearchScope; label: string }> = [
         { value: 'all', label: 'All' },
+        { value: 'communities', label: 'Communities' },
+        { value: 'community-posts', label: 'Community posts' },
+        { value: 'blogs', label: 'Blogs' },
         { value: 'reels', label: 'Reels' },
         { value: 'posts', label: 'Posts' },
         { value: 'hashtags', label: 'Hashtags' },
@@ -207,7 +213,13 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     get hasAnyResults(): boolean {
-        return this.profileResults.length > 0 || this.reelResults.length > 0 || this.postResults.length > 0 || this.hashtagResults.length > 0;
+        return this.profileResults.length > 0
+            || this.reelResults.length > 0
+            || this.postResults.length > 0
+            || this.hashtagResults.length > 0
+            || this.communityResults.length > 0
+            || this.communityPostResults.length > 0
+            || this.blogResults.length > 0;
     }
 
     get showUsersSection(): boolean {
@@ -224,6 +236,18 @@ export class DiscoverPageComponent implements OnDestroy {
 
     get showHashtagsSection(): boolean {
         return this.selectedScope === 'all' || this.selectedScope === 'hashtags';
+    }
+
+    get showCommunitiesSection(): boolean {
+        return this.selectedScope === 'all' || this.selectedScope === 'communities';
+    }
+
+    get showCommunityPostsSection(): boolean {
+        return this.selectedScope === 'all' || this.selectedScope === 'community-posts';
+    }
+
+    get showBlogsSection(): boolean {
+        return this.selectedScope === 'all' || this.selectedScope === 'blogs';
     }
 
     get showingSearchResults(): boolean {
@@ -641,6 +665,15 @@ export class DiscoverPageComponent implements OnDestroy {
                         case 'posts':
                             this.postResults = this.rankPosts(await this.session.searchPostsAsync(query), query);
                             break;
+                        case 'communities':
+                            this.communityResults = this.rankCommunities(await this.session.discoverCommunitiesAsync(query, 60), query);
+                            break;
+                        case 'community-posts':
+                            this.communityPostResults = this.rankCommunityPosts(await this.session.searchCommunityPostsAsync(query, 60), query);
+                            break;
+                        case 'blogs':
+                            this.blogResults = this.rankBlogs(await this.session.discoverBlogsAsync(query, 60), query);
+                            break;
                         case 'hashtags': {
                             const [hashtags, reels] = await Promise.allSettled([
                                 this.loadHashtagsWithFallback(query),
@@ -655,16 +688,22 @@ export class DiscoverPageComponent implements OnDestroy {
                             break;
                         }
                         case 'all': {
-                            const [users, reels, posts, hashtags] = await Promise.allSettled([
+                            const [users, reels, posts, hashtags, communities, communityPosts, blogs] = await Promise.allSettled([
                                 this.session.searchProfilesAsync(query),
                                 this.searchReelsAsync(query),
                                 this.session.searchPostsAsync(query),
-                                this.loadHashtagsWithFallback(query)
+                                this.loadHashtagsWithFallback(query),
+                                this.session.discoverCommunitiesAsync(query, 60),
+                                this.session.searchCommunityPostsAsync(query, 60),
+                                this.session.discoverBlogsAsync(query, 60)
                             ]);
 
                             this.profileResults = users.status === 'fulfilled' ? this.rankProfiles(users.value, query) : [];
                             this.reelResults = reels.status === 'fulfilled' ? this.rankReels(reels.value, query) : [];
                             this.postResults = posts.status === 'fulfilled' ? this.rankPosts(posts.value, query) : [];
+                            this.communityResults = communities.status === 'fulfilled' ? this.rankCommunities(communities.value, query) : [];
+                            this.communityPostResults = communityPosts.status === 'fulfilled' ? this.rankCommunityPosts(communityPosts.value, query) : [];
+                            this.blogResults = blogs.status === 'fulfilled' ? this.rankBlogs(blogs.value, query) : [];
 
                             const hashtagMatches = hashtags.status === 'fulfilled' ? hashtags.value : [];
                             const reelHashtagMatches = reels.status === 'fulfilled'
@@ -672,7 +711,15 @@ export class DiscoverPageComponent implements OnDestroy {
                                 : [];
                             this.hashtagResults = this.rankHashtags(this.mergeHashtagResults(hashtagMatches, reelHashtagMatches), query);
 
-                            if (users.status === 'rejected' && reels.status === 'rejected' && posts.status === 'rejected' && hashtags.status === 'rejected') {
+                            if (
+                                users.status === 'rejected'
+                                && reels.status === 'rejected'
+                                && posts.status === 'rejected'
+                                && hashtags.status === 'rejected'
+                                && communities.status === 'rejected'
+                                && communityPosts.status === 'rejected'
+                                && blogs.status === 'rejected'
+                            ) {
                                 throw new Error('All searches failed.');
                             }
                             break;
@@ -714,6 +761,9 @@ export class DiscoverPageComponent implements OnDestroy {
         this.reelResults = [];
         this.postResults = [];
         this.hashtagResults = [];
+        this.communityResults = [];
+        this.communityPostResults = [];
+        this.blogResults = [];
     }
 
     private async loadRecommendedNonFollowingReels(): Promise<void> {
@@ -1098,6 +1148,136 @@ export class DiscoverPageComponent implements OnDestroy {
             || left.tag.localeCompare(right.tag));
     }
 
+    private rankCommunities(communities: ReadonlyArray<CommunityDto>, query: string): CommunityDto[] {
+        const term = query.trim().toLowerCase();
+        if (!term) {
+            return [...communities];
+        }
+
+        const score = (community: CommunityDto): number => {
+            const name = (community.name ?? '').toLowerCase();
+            const slug = (community.slug ?? '').toLowerCase();
+            const description = (community.description ?? '').toLowerCase();
+            let rank = 0;
+
+            if (name === term) {
+                rank += 120;
+            } else if (name.startsWith(term)) {
+                rank += 80;
+            } else if (name.includes(term)) {
+                rank += 45;
+            }
+
+            if (slug === term) {
+                rank += 90;
+            } else if (slug.startsWith(term)) {
+                rank += 65;
+            } else if (slug.includes(term)) {
+                rank += 35;
+            }
+
+            if (description.includes(term)) {
+                rank += 20;
+            }
+
+            rank += Math.min(community.memberCount, 1000) / 25;
+            return rank;
+        };
+
+        return [...communities].sort((left, right) =>
+            score(right) - score(left)
+            || right.memberCount - left.memberCount
+            || left.name.localeCompare(right.name));
+    }
+
+    private rankCommunityPosts(posts: ReadonlyArray<CommunityPostDto>, query: string): CommunityPostDto[] {
+        const term = query.trim().toLowerCase();
+        if (!term) {
+            return [...posts];
+        }
+
+        const score = (post: CommunityPostDto): number => {
+            const title = (post.title ?? '').toLowerCase();
+            const content = (post.content ?? '').toLowerCase();
+            const author = (post.authorHandle ?? '').toLowerCase();
+            let rank = 0;
+
+            if (title === term) {
+                rank += 110;
+            } else if (title.startsWith(term)) {
+                rank += 75;
+            } else if (title.includes(term)) {
+                rank += 45;
+            }
+
+            if (content.includes(term)) {
+                rank += 35;
+            }
+
+            if (author === term) {
+                rank += 30;
+            } else if (author.startsWith(term)) {
+                rank += 20;
+            } else if (author.includes(term)) {
+                rank += 10;
+            }
+
+            rank += Math.min(post.upvoteCount, 500) / 15;
+            return rank;
+        };
+
+        return [...posts].sort((left, right) =>
+            score(right) - score(left)
+            || Date.parse(right.createdAtUtc) - Date.parse(left.createdAtUtc));
+    }
+
+    private rankBlogs(blogs: ReadonlyArray<BlogDto>, query: string): BlogDto[] {
+        const term = query.trim().toLowerCase();
+        if (!term) {
+            return [...blogs];
+        }
+
+        const score = (blog: BlogDto): number => {
+            const title = (blog.title ?? '').toLowerCase();
+            const slug = (blog.slug ?? '').toLowerCase();
+            const description = (blog.description ?? '').toLowerCase();
+            const owner = (blog.ownerHandle ?? '').toLowerCase();
+            let rank = 0;
+
+            if (title === term) {
+                rank += 120;
+            } else if (title.startsWith(term)) {
+                rank += 85;
+            } else if (title.includes(term)) {
+                rank += 50;
+            }
+
+            if (slug.startsWith(term)) {
+                rank += 40;
+            } else if (slug.includes(term)) {
+                rank += 20;
+            }
+
+            if (description.includes(term)) {
+                rank += 25;
+            }
+
+            if (owner === term) {
+                rank += 45;
+            } else if (owner.startsWith(term)) {
+                rank += 30;
+            } else if (owner.includes(term)) {
+                rank += 15;
+            }
+
+            return rank;
+        };
+
+        return [...blogs].sort((left, right) =>
+            score(right) - score(left)
+            || Date.parse(right.updatedAtUtc) - Date.parse(left.updatedAtUtc));
+    }
+
     private async runPostMutation(postId: string, work: () => Promise<PostDto>, failureMessage: string): Promise<void> {
         if (this.reactingPostId === postId) {
             return;
@@ -1116,6 +1296,9 @@ export class DiscoverPageComponent implements OnDestroy {
 
     private normalizeScope(raw: string | null): SearchScope {
         switch (raw) {
+            case 'communities':
+            case 'community-posts':
+            case 'blogs':
             case 'users':
             case 'reels':
             case 'posts':

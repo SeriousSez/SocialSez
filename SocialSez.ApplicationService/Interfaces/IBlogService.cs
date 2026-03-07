@@ -7,6 +7,8 @@ public interface IBlogService
     Task<BlogDto> CreateAsync(Guid ownerProfileId, CreateBlogRequest request, CancellationToken cancellationToken = default);
     Task<BlogDto?> UpdateAsync(Guid blogId, Guid ownerProfileId, UpdateBlogRequest request, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<BlogDto>> GetMineAsync(Guid ownerProfileId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<BlogDto>> DiscoverAsync(Guid? viewerProfileId = null, string? query = null, int take = 60, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<BlogDto>> GetFollowingAsync(Guid viewerProfileId, string? query = null, int take = 60, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<BlogDto>> GetByOwnerHandleAsync(string handle, Guid? viewerProfileId = null, CancellationToken cancellationToken = default);
     Task<BlogDto?> GetByOwnerHandleAndSlugAsync(string handle, string blogSlug, Guid? viewerProfileId = null, CancellationToken cancellationToken = default);
     Task<BlogPostDto> CreatePostAsync(Guid blogId, Guid authorProfileId, CreateBlogPostRequest request, CancellationToken cancellationToken = default);

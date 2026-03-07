@@ -94,6 +94,55 @@ public class BlogService(SocialSezContext dbContext) : IBlogService
         return blogs.Select(blog => MapBlog(blog, ownerProfileId)).ToArray();
     }
 
+    public async Task<IReadOnlyCollection<BlogDto>> DiscoverAsync(Guid? viewerProfileId = null, string? query = null, int take = 60, CancellationToken cancellationToken = default)
+    {
+        await EnsureBlogSchemaAsync(cancellationToken);
+
+        var resolvedTake = Math.Clamp(take, 1, 200);
+        var normalizedQuery = NormalizeSearchQuery(query);
+
+        var blogsQuery = dbContext.Blogs
+            .AsNoTracking()
+            .Include(x => x.OwnerProfile)
+            .Where(x => x.IsPublic || (viewerProfileId.HasValue && x.OwnerProfileId == viewerProfileId.Value));
+
+        blogsQuery = ApplyBlogSearch(blogsQuery, normalizedQuery);
+
+        var blogs = await blogsQuery
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(resolvedTake)
+            .ToArrayAsync(cancellationToken);
+
+        return blogs.Select(blog => MapBlog(blog, viewerProfileId)).ToArray();
+    }
+
+    public async Task<IReadOnlyCollection<BlogDto>> GetFollowingAsync(Guid viewerProfileId, string? query = null, int take = 60, CancellationToken cancellationToken = default)
+    {
+        await EnsureBlogSchemaAsync(cancellationToken);
+
+        var resolvedTake = Math.Clamp(take, 1, 200);
+        var normalizedQuery = NormalizeSearchQuery(query);
+
+        var followedProfileIds = dbContext.Follows
+            .AsNoTracking()
+            .Where(x => x.FollowerId == viewerProfileId)
+            .Select(x => x.FollowedId);
+
+        var blogsQuery = dbContext.Blogs
+            .AsNoTracking()
+            .Include(x => x.OwnerProfile)
+            .Where(x => x.IsPublic && followedProfileIds.Contains(x.OwnerProfileId));
+
+        blogsQuery = ApplyBlogSearch(blogsQuery, normalizedQuery);
+
+        var blogs = await blogsQuery
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(resolvedTake)
+            .ToArrayAsync(cancellationToken);
+
+        return blogs.Select(blog => MapBlog(blog, viewerProfileId)).ToArray();
+    }
+
     public async Task<IReadOnlyCollection<BlogDto>> GetByOwnerHandleAsync(string handle, Guid? viewerProfileId = null, CancellationToken cancellationToken = default)
     {
         await EnsureBlogSchemaAsync(cancellationToken);
@@ -535,6 +584,32 @@ public class BlogService(SocialSezContext dbContext) : IBlogService
     private static string NormalizeHandle(string? value)
     {
         return (value ?? string.Empty).Trim().ToLowerInvariant();
+    }
+
+    private static string? NormalizeSearchQuery(string? query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return null;
+        }
+
+        var normalized = query.Trim();
+        return normalized.Length > 120 ? normalized[..120].Trim() : normalized;
+    }
+
+    private static IQueryable<Blog> ApplyBlogSearch(IQueryable<Blog> query, string? search)
+    {
+        if (string.IsNullOrWhiteSpace(search))
+        {
+            return query;
+        }
+
+        var like = $"%{search}%";
+        return query.Where(x =>
+            EF.Functions.Like(x.Title, like)
+            || (x.Description != null && EF.Functions.Like(x.Description, like))
+            || EF.Functions.Like(x.Slug, like)
+            || EF.Functions.Like(x.OwnerProfile.Handle, like));
     }
 
     private static string BuildSlugFallback(string source, string fallback)

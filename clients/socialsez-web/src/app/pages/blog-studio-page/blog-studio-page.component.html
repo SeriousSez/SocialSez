@@ -112,7 +112,22 @@
                 <input type="text" [(ngModel)]="postForm.tags" placeholder="ui, angular, personal" />
 
                 <label>Content</label>
-                <textarea rows="10" [(ngModel)]="postForm.content" maxlength="200000" placeholder="Write your article content here"></textarea>
+                <p class="muted markdown-help">Markdown supported: # heading, **bold**, *italic*, `code`, [link](https://example.com), lists, and fenced code blocks.</p>
+                <div class="markdown-toolbar" aria-label="Markdown tools">
+                    <button type="button" (click)="insertMarkdown('h2', contentEditor)">H2</button>
+                    <button type="button" (click)="insertMarkdown('bold', contentEditor)">Bold</button>
+                    <button type="button" (click)="insertMarkdown('italic', contentEditor)">Italic</button>
+                    <button type="button" (click)="insertMarkdown('link', contentEditor)">Link</button>
+                    <button type="button" (click)="insertMarkdown('ul', contentEditor)">Bullet List</button>
+                    <button type="button" (click)="insertMarkdown('ol', contentEditor)">Numbered List</button>
+                    <button type="button" (click)="insertMarkdown('quote', contentEditor)">Quote</button>
+                    <button type="button" (click)="insertMarkdown('inlineCode', contentEditor)">Inline Code</button>
+                    <button type="button" (click)="insertMarkdown('codeBlock', contentEditor)">Code Block</button>
+                </div>
+                <div class="markdown-editor">
+                    <textarea #contentEditor rows="12" [(ngModel)]="postForm.content" maxlength="200000" placeholder="Write your article content here"></textarea>
+                    <div class="markdown-preview" [innerHTML]="postPreviewHtml"></div>
+                </div>
 
                 <label class="checkbox">
                     <input type="checkbox" [(ngModel)]="postForm.isPublished" />

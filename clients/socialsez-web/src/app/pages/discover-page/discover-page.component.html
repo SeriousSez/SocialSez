@@ -2,7 +2,7 @@
     <h2>Discover</h2>
     <div class="search-row">
         <label class="search-label">Search
-            <input [(ngModel)]="query" placeholder="Search users, reels, posts, hashtags" (input)="onQueryInput($event)" />
+            <input [(ngModel)]="query" placeholder="Search users, communities, community posts, blogs, reels, posts, hashtags" (input)="onQueryInput($event)" />
         </label>
     </div>
 
@@ -94,6 +94,43 @@
                 </div>
                 <p>{{ profile.bio || 'No bio yet.' }}</p>
                 <button type="button" (click)="follow(profile)">Follow User</button>
+            </article>
+        </section>
+
+        <section class="section" *ngIf="showCommunitiesSection && communityResults.length">
+            <h3>Communities</h3>
+            <article class="card" *ngFor="let community of communityResults">
+                <div class="identity">
+                    <img class="avatar" *ngIf="community.imageUrl; else communityInitial" [src]="community.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Community image" />
+                    <ng-template #communityInitial>
+                        <div class="avatar">{{ community.name[0] || community.slug[0] }}</div>
+                    </ng-template>
+                    <h4><a class="user-link" [routerLink]="['/c', community.slug]">c/{{ community.slug }}</a></h4>
+                </div>
+                <p>{{ community.description || 'No description yet.' }}</p>
+                <div class="meta">{{ community.memberCount }} member{{ community.memberCount === 1 ? '' : 's' }}</div>
+            </article>
+        </section>
+
+        <section class="section" *ngIf="showCommunityPostsSection && communityPostResults.length">
+            <h3>Community Posts</h3>
+            <article class="card" *ngFor="let post of communityPostResults">
+                <h4>
+                    <a class="user-link" [routerLink]="['/cp', post.id]">{{ post.title || 'View community post' }}</a>
+                </h4>
+                <p>{{ post.content || post.linkUrl || 'Open this post to view details.' }}</p>
+                <div class="meta">Posted by @{{ post.authorHandle }} · {{ post.createdAtUtc | date:'short' }}</div>
+            </article>
+        </section>
+
+        <section class="section" *ngIf="showBlogsSection && blogResults.length">
+            <h3>Blogs</h3>
+            <article class="card" *ngFor="let blog of blogResults">
+                <h4>
+                    <a class="user-link" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">{{ blog.title }}</a>
+                </h4>
+                <p>{{ blog.description || 'No description yet.' }}</p>
+                <div class="meta">By @{{ blog.ownerHandle }} · Updated {{ blog.updatedAtUtc | date:'short' }}</div>
             </article>
         </section>
 

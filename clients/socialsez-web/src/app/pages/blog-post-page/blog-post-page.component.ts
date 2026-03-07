@@ -2,6 +2,7 @@ import { CommonModule, NgStyle } from '@angular/common';
 import { Component } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BlogDto, BlogPostDto } from '../../core/api.types';
+import { renderMarkdownToHtml } from '../../core/markdown.util';
 import { SessionService } from '../../core/session.service';
 
 @Component({
@@ -46,6 +47,10 @@ export class BlogPostPageComponent {
 
     get customCss(): string {
         return this.blog?.theme?.customCss ?? '';
+    }
+
+    get renderedPostContent(): string {
+        return renderMarkdownToHtml(this.post?.content);
     }
 
     async loadAsync(): Promise<void> {

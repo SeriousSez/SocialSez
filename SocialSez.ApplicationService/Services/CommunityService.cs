@@ -986,6 +986,49 @@ public class CommunityService(SocialSezContext dbContext) : ICommunityService
             .ToArray();
     }
 
+    public async Task<IReadOnlyCollection<CommunityPostDto>> SearchPostsAsync(Guid? viewerProfileId, string? query = null, int take = 50, CancellationToken cancellationToken = default)
+    {
+        await EnsureCommunitySchemaAsync(cancellationToken);
+
+        var normalizedTake = Math.Clamp(take, 1, 100);
+        var normalizedQuery = query?.Trim();
+
+        if (string.IsNullOrWhiteSpace(normalizedQuery))
+        {
+            return Array.Empty<CommunityPostDto>();
+        }
+
+        var lowered = normalizedQuery.ToLowerInvariant();
+        var viewerId = viewerProfileId.GetValueOrDefault();
+
+        var postsQuery = dbContext.CommunityPosts
+            .AsNoTracking()
+            .Where(x => !x.Community.IsPrivate || (viewerProfileId.HasValue && x.Community.Members.Any(member => member.ProfileId == viewerId)))
+            .Where(x =>
+                (x.Title != null && x.Title.ToLower().Contains(lowered))
+                || (x.LinkUrl != null && x.LinkUrl.ToLower().Contains(lowered))
+                || (x.Content != null && x.Content.ToLower().Contains(lowered))
+                || x.Author.Handle.ToLower().Contains(lowered)
+                || x.Community.Name.ToLower().Contains(lowered)
+                || x.Community.Slug.ToLower().Contains(lowered)
+                || (x.Poll != null && x.Poll.Question.ToLower().Contains(lowered))
+                || (x.Poll != null && x.Poll.Options.Any(option => option.Text.ToLower().Contains(lowered))))
+            .Include(x => x.Author)
+            .Include(x => x.Images)
+            .Include(x => x.SavedBy)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Votes)
+            .Include(x => x.Poll)
+                .ThenInclude(x => x.Options)
+                    .ThenInclude(x => x.Votes)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(normalizedTake);
+
+        var posts = await postsQuery.ToArrayAsync(cancellationToken);
+        return posts.Select(post => MapPost(post, viewerProfileId)).ToArray();
+    }
+
     public async Task<CommunityPostDto?> SavePostAsync(Guid communityId, Guid postId, Guid profileId, CancellationToken cancellationToken = default)
     {
         await EnsureCommunitySchemaAsync(cancellationToken);

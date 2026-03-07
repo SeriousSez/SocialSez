@@ -34,6 +34,7 @@ export const routes: Routes = [
     { path: 'notifications', loadComponent: () => import('./pages/notifications-page/notifications-page.component').then(module => module.NotificationsPageComponent), canActivate: [authGuard] },
     { path: 'notifications/requests', loadComponent: () => import('./pages/notification-requests-page/notification-requests-page.component').then(module => module.NotificationRequestsPageComponent), canActivate: [authGuard] },
     { path: 'settings', loadComponent: () => import('./pages/settings-page/settings-page.component').then(module => module.SettingsPageComponent), canActivate: [authGuard] },
+    { path: 'blogs', loadComponent: () => import('./pages/blogs-page/blogs-page.component').then(module => module.BlogsPageComponent) },
     { path: 'blogs/studio', loadComponent: () => import('./pages/blog-studio-page/blog-studio-page.component').then(module => module.BlogStudioPageComponent), canActivate: [authGuard] },
     { path: 'blogs/:handle/:blogSlug/:postSlug', loadComponent: () => import('./pages/blog-post-page/blog-post-page.component').then(module => module.BlogPostPageComponent) },
     { path: 'blogs/:handle/:blogSlug', loadComponent: () => import('./pages/blog-home-page/blog-home-page.component').then(module => module.BlogHomePageComponent) },

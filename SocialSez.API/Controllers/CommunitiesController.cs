@@ -95,6 +95,14 @@ public class CommunitiesController(ICommunityService communityService, ILogger<C
         return Ok(communities);
     }
 
+    [HttpGet("posts/search")]
+    public async Task<ActionResult<IReadOnlyCollection<CommunityPostDto>>> SearchPosts([FromQuery] string? q, [FromQuery] int take = 50, CancellationToken cancellationToken = default)
+    {
+        var viewerId = TryGetOptionalProfileId();
+        var posts = await communityService.SearchPostsAsync(viewerId, q, take, cancellationToken);
+        return Ok(posts);
+    }
+
     [HttpGet("{communityId:guid}")]
     public async Task<ActionResult<CommunityDto>> GetById(Guid communityId, [FromQuery] int members = 20, CancellationToken cancellationToken = default)
     {

@@ -1,0 +1,59 @@
+<section class="page blogs-page">
+    <header class="blogs-head">
+        <div>
+            <h2>Blogs</h2>
+            <p>{{ tabSubtitle }}</p>
+        </div>
+        <a class="studio-link" routerLink="/blogs/studio" *ngIf="session.isAuthenticated()">Open Blog Studio</a>
+    </header>
+
+    <div class="blogs-toolbar">
+        <div class="tabs" role="tablist" aria-label="Blog lists">
+            <button type="button" *ngFor="let tab of tabs" [class.active]="activeTab === tab.key" [attr.aria-selected]="activeTab === tab.key" (click)="selectTabAsync(tab.key)">{{ tab.label }}</button>
+        </div>
+
+        <div class="search-row">
+            <input type="text" [(ngModel)]="searchText" placeholder="Search blogs by title, slug, handle..." (keydown.enter)="runSearchAsync()" />
+            <button type="button" class="search-btn" (click)="runSearchAsync()">Search</button>
+            <button type="button" class="clear-btn" (click)="clearSearchAsync()" *ngIf="searchText.trim().length">Clear</button>
+        </div>
+
+        <div class="controls-row">
+            <label for="blog-sort">Sort</label>
+            <select id="blog-sort" [(ngModel)]="sortBy" (ngModelChange)="onSortChanged()">
+                <option value="updated">Recently updated</option>
+                <option value="created">Newest created</option>
+                <option value="title">Title A-Z</option>
+            </select>
+            <span class="result-count" *ngIf="!loading && !error">{{ visibleBlogs.length }} of {{ sortedBlogs.length }} blogs</span>
+        </div>
+    </div>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+    <p class="muted" *ngIf="loading">Loading blogs...</p>
+
+    <div class="blog-grid" *ngIf="!loading && !error && blogs.length; else emptyState">
+        <article class="blog-card" *ngFor="let blog of visibleBlogs; trackBy: trackBlog">
+            <a class="blog-title" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">{{ blog.title }}</a>
+            <p class="blog-description" *ngIf="blog.description">{{ blog.description }}</p>
+            <div class="blog-meta">
+                <a [routerLink]="['/blogs', blog.ownerHandle]">@{{ blog.ownerHandle }}</a>
+                <span>·</span>
+                <span>{{ blog.updatedAtUtc | date:'mediumDate' }}</span>
+            </div>
+            <div class="blog-state-row">
+                <span class="state-pill" [class.private]="!blog.isPublic">{{ blog.isPublic ? 'Public' : 'Private' }}</span>
+                <span class="state-pill owner" *ngIf="blog.isOwner">Owner</span>
+            </div>
+        </article>
+    </div>
+
+    <div class="infinite-status" *ngIf="!loading && !error && hasMoreBlogs">
+        <span>Scroll for more blogs...</span>
+        <div #infiniteSentinel class="infinite-sentinel" aria-hidden="true"></div>
+    </div>
+
+    <ng-template #emptyState>
+        <p class="muted" *ngIf="!loading && !error">No blogs found for this tab yet.</p>
+    </ng-template>
+</section>

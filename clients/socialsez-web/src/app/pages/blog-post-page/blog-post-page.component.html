@@ -16,6 +16,6 @@
 
         <img *ngIf="item.coverImageUrl" [src]="item.coverImageUrl" [alt]="item.title" class="cover" />
 
-        <div class="content">{{ item.content }}</div>
+        <div class="content" [innerHTML]="renderedPostContent"></div>
     </article>
 </section>

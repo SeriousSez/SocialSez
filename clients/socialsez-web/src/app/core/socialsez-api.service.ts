@@ -225,6 +225,28 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.get<BlogDto[]>(`${this.baseUrl}/blogs/mine`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
+    discoverBlogs(query?: string, take = 60): Observable<BlogDto[]> {
+        const params: string[] = [];
+        if (query && query.trim()) {
+            params.push(`q=${encodeURIComponent(query.trim())}`);
+        }
+
+        params.push(`take=${take}`);
+        const queryString = params.length > 0 ? `?${params.join('&')}` : '';
+        return this.http.get<BlogDto[]>(`${this.baseUrl}/blogs/discover${queryString}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    getFollowingBlogs(query?: string, take = 60): Observable<BlogDto[]> {
+        const params: string[] = [];
+        if (query && query.trim()) {
+            params.push(`q=${encodeURIComponent(query.trim())}`);
+        }
+
+        params.push(`take=${take}`);
+        const queryString = params.length > 0 ? `?${params.join('&')}` : '';
+        return this.withAutoRefresh(() => this.http.get<BlogDto[]>(`${this.baseUrl}/blogs/following${queryString}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
     getBlogsByAuthorHandle(handle: string): Observable<BlogDto[]> {
         return this.http.get<BlogDto[]>(`${this.baseUrl}/blogs/by-author/${encodeURIComponent(handle)}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
@@ -519,6 +541,12 @@ export class SocialSezApiService {
         const q = query?.trim();
         const queryString = q ? `q=${encodeURIComponent(q)}&` : '';
         return this.http.get<CommunityDto[]>(`${this.baseUrl}/communities/discover?${queryString}take=${take}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    searchCommunityPosts(query: string, take = 50): Observable<CommunityPostDto[]> {
+        const q = query.trim();
+        const queryString = q ? `q=${encodeURIComponent(q)}&` : '';
+        return this.http.get<CommunityPostDto[]>(`${this.baseUrl}/communities/posts/search?${queryString}take=${take}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
     joinCommunity(communityId: string): Observable<CommunityDto> {

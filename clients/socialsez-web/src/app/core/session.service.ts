@@ -591,6 +591,16 @@ export class SessionService {
         return blogs.map(blog => this.normalizeBlog(blog));
     }
 
+    async discoverBlogsAsync(query?: string, take = 60): Promise<BlogDto[]> {
+        const blogs = await firstValueFrom(this.api.discoverBlogs(query, take));
+        return blogs.map(blog => this.normalizeBlog(blog));
+    }
+
+    async loadFollowingBlogsAsync(query?: string, take = 60): Promise<BlogDto[]> {
+        const blogs = await firstValueFrom(this.api.getFollowingBlogs(query, take));
+        return blogs.map(blog => this.normalizeBlog(blog));
+    }
+
     async loadBlogsByAuthorHandleAsync(handle: string): Promise<BlogDto[]> {
         const blogs = await firstValueFrom(this.api.getBlogsByAuthorHandle(handle));
         return blogs.map(blog => this.normalizeBlog(blog));
@@ -699,6 +709,11 @@ export class SessionService {
 
     async loadCommunityPostsAsync(communityId: string, query?: string, take = 50): Promise<CommunityPostDto[]> {
         const posts = await firstValueFrom(this.api.getCommunityPosts(communityId, query, take));
+        return posts.map(post => this.normalizeCommunityPost(post));
+    }
+
+    async searchCommunityPostsAsync(query: string, take = 50): Promise<CommunityPostDto[]> {
+        const posts = await firstValueFrom(this.api.searchCommunityPosts(query, take));
         return posts.map(post => this.normalizeCommunityPost(post));
     }
 

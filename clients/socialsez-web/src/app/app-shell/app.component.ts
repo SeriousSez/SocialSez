@@ -127,6 +127,84 @@ export class AppComponent implements OnInit, OnDestroy {
             || /^\/cp\//i.test(this.router.url);
     }
 
+    get searchContextLabel(): string {
+        const url = this.router.url.toLowerCase();
+
+        if (/^\/(communities|c\/|cp\/)/.test(url)) {
+            return 'Communities';
+        }
+
+        if (/^\/blogs(\/|$)/.test(url)) {
+            return 'Blogs';
+        }
+
+        if (/^\/users\//.test(url) || /^\/profile(\/|$)/.test(url)) {
+            return 'Profiles';
+        }
+
+        if (/^\/hashtags\//.test(url)) {
+            return 'Hashtags';
+        }
+
+        if (/^\/chat(\/|$)/.test(url)) {
+            return 'Chat';
+        }
+
+        if (/^\/notifications(\/|$)/.test(url)) {
+            return 'Notifications';
+        }
+
+        if (/^\/discover(\/|$)/.test(url)) {
+            return 'Discover';
+        }
+
+        if (/^\/settings(\/|$)/.test(url)) {
+            return 'Settings';
+        }
+
+        if (/^\/compose(\/|$)/.test(url)) {
+            return 'Compose';
+        }
+
+        return 'Global';
+    }
+
+    get searchPlaceholder(): string {
+        switch (this.searchContextLabel) {
+            case 'Communities':
+                return 'Search communities, community posts, users, hashtags';
+            case 'Blogs':
+                return 'Search blogs, communities, posts, hashtags';
+            case 'Profiles':
+                return 'Search profiles, posts, reels, hashtags';
+            case 'Hashtags':
+                return 'Search hashtags, posts, reels';
+            case 'Chat':
+                return 'Search users, posts, reels, hashtags';
+            case 'Notifications':
+                return 'Search users, posts, reels, hashtags';
+            case 'Discover':
+                return 'Search users, communities, community posts, blogs, reels, posts, hashtags';
+            default:
+                return 'Search users, communities, community posts, blogs, reels, posts, hashtags';
+        }
+    }
+
+    private get searchDiscoverType(): 'all' | 'users' | 'posts' | 'hashtags' | 'reels' | 'communities' | 'community-posts' | 'blogs' {
+        switch (this.searchContextLabel) {
+            case 'Communities':
+                return 'communities';
+            case 'Blogs':
+                return 'blogs';
+            case 'Profiles':
+                return 'users';
+            case 'Hashtags':
+                return 'hashtags';
+            default:
+                return 'all';
+        }
+    }
+
     get canEditRightRailCommunityRules(): boolean {
         if (!this.rightRailCommunity || !this.session.isAuthenticated()) {
             return false;
@@ -340,7 +418,7 @@ export class AppComponent implements OnInit, OnDestroy {
             return;
         }
 
-        await this.router.navigate(['/discover'], { queryParams: { q: query, type: 'all' } });
+        await this.router.navigate(['/discover'], { queryParams: { q: query, type: this.searchDiscoverType } });
     }
 
     dismissTopNotice(): void {

@@ -161,12 +161,92 @@ textarea {
     color: #64748b;
 }
 
+.markdown-help {
+    margin-top: 0;
+    font-size: 12px;
+}
+
+.markdown-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.markdown-toolbar button {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #1e293b;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.markdown-toolbar button:hover {
+    background: #e0f2fe;
+    border-color: #0ea5e9;
+}
+
+.markdown-editor {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+
+.markdown-editor textarea {
+    min-height: 280px;
+    resize: vertical;
+}
+
+.markdown-preview {
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px;
+    background: #f8fafc;
+    color: #0f172a;
+    line-height: 1.65;
+    overflow: auto;
+    min-height: 280px;
+}
+
+.markdown-preview :first-child {
+    margin-top: 0;
+}
+
+.markdown-preview :last-child {
+    margin-bottom: 0;
+}
+
+.markdown-preview pre {
+    background: #0f172a;
+    color: #f8fafc;
+    border-radius: 8px;
+    padding: 10px;
+    overflow: auto;
+}
+
+.markdown-preview code {
+    font-family: Consolas, 'Courier New', monospace;
+}
+
+.markdown-preview blockquote {
+    margin: 0;
+    border-left: 3px solid #0ea5e9;
+    padding-left: 10px;
+    color: #334155;
+}
+
 @media (max-width: 960px) {
     .studio {
         grid-template-columns: 1fr;
     }
 
     .theme-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .markdown-editor {
         grid-template-columns: 1fr;
     }
 }

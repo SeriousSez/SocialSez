@@ -23,6 +23,27 @@ public class BlogsController(IBlogService blogService) : ControllerBase
         return Ok(blogs);
     }
 
+    [HttpGet("discover")]
+    public async Task<ActionResult<IReadOnlyCollection<BlogDto>>> Discover([FromQuery] string? q, [FromQuery] int take = 60, CancellationToken cancellationToken = default)
+    {
+        var viewerId = TryGetOptionalProfileId();
+        var blogs = await blogService.DiscoverAsync(viewerId, q, take, cancellationToken);
+        return Ok(blogs);
+    }
+
+    [Authorize]
+    [HttpGet("following")]
+    public async Task<ActionResult<IReadOnlyCollection<BlogDto>>> GetFollowing([FromQuery] string? q, [FromQuery] int take = 60, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var blogs = await blogService.GetFollowingAsync(profileId, q, take, cancellationToken);
+        return Ok(blogs);
+    }
+
     [HttpGet("by-author/{handle}")]
     public async Task<ActionResult<IReadOnlyCollection<BlogDto>>> GetByAuthorHandle(string handle, CancellationToken cancellationToken)
     {

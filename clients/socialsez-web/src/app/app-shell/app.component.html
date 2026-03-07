@@ -40,6 +40,7 @@
             <a class="tab-feed" routerLink="/feed" routerLinkActive="active"><i class="fa-duotone fa-light fa-house" aria-hidden="true"></i><span>Feed</span></a>
             <a class="tab-compose" routerLink="/compose" routerLinkActive="active"><i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i><span>Compose</span></a>
             <a class="tab-discover" routerLink="/discover" routerLinkActive="active"><i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i><span>Discover</span></a>
+            <a class="tab-blogs" routerLink="/blogs" routerLinkActive="active"><i class="fa-duotone fa-light fa-blog" aria-hidden="true"></i><span>Blogs</span></a>
             <a class="tab-communities" routerLink="/communities" routerLinkActive="active"><i class="fa-duotone fa-light fa-users" aria-hidden="true"></i><span>Communities</span></a>
             <a class="tab-chat" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i><span>Chat</span></a>
             <a class="tab-notifications" routerLink="/notifications" routerLinkActive="active" *ngIf="session.isAuthenticated()">
@@ -73,7 +74,8 @@
             <label class="search-box">
                 <span>Search</span>
                 <div class="search-row">
-                    <input placeholder="Search users, posts, reels, hashtags" [(ngModel)]="searchText" (keydown.enter)="searchNow()" />
+                    <span class="search-context-chip" [attr.aria-label]="'Search context: ' + searchContextLabel">{{ searchContextLabel }}</span>
+                    <input [placeholder]="searchPlaceholder" [(ngModel)]="searchText" (keydown.enter)="searchNow()" />
                     <button class="search-btn" type="button" (click)="searchNow()" aria-label="Search">
                         <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
                     </button>
@@ -132,6 +134,10 @@
     <a class="mobile-footer-tab" routerLink="/feed" routerLinkActive="active">
         <i class="fa-duotone fa-light fa-house" aria-hidden="true"></i>
         <span>Feed</span>
+    </a>
+    <a class="mobile-footer-tab" routerLink="/blogs" routerLinkActive="active">
+        <i class="fa-duotone fa-light fa-blog" aria-hidden="true"></i>
+        <span>Blogs</span>
     </a>
     <a class="mobile-footer-tab" routerLink="/discover" routerLinkActive="active">
         <i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i>
