@@ -40,6 +40,7 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<CommunitySavedPost> CommunitySavedPosts => Set<CommunitySavedPost>();
     public DbSet<Blog> Blogs => Set<Blog>();
     public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
+    public DbSet<UploadedImage> UploadedImages => Set<UploadedImage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -98,6 +99,24 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(x => new { x.AuthorId, x.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<UploadedImage>(entity =>
+        {
+            entity.ToTable("UploadedImages");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ContentType).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.OriginalFileName).HasMaxLength(260).IsRequired();
+            entity.Property(x => x.FileExtension).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.Content).IsRequired();
+
+            entity.HasOne(x => x.UploadedByProfile)
+                .WithMany()
+                .HasForeignKey(x => x.UploadedByProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.CreatedAtUtc);
+            entity.HasIndex(x => x.UploadedByProfileId);
         });
 
         modelBuilder.Entity<Comment>(entity =>

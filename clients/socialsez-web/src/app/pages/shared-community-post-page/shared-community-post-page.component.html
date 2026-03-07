@@ -65,9 +65,25 @@
             </button>
         </header>
 
-        <h1 class="post-title">{{ postTitle }}</h1>
+        <h1 class="post-title">
+            <ng-container *ngFor="let line of splitHashtagText(postTitle); let isLast = last">
+                <ng-container *ngFor="let part of line">
+                    <a *ngIf="part.hashtag; else sharedPostTitleText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
+                    <ng-template #sharedPostTitleText>{{ part.text }}</ng-template>
+                </ng-container>
+                <br *ngIf="!isLast" />
+            </ng-container>
+        </h1>
         <a class="post-link" *ngIf="primaryPostLink as link" [href]="link" target="_blank" rel="noopener noreferrer">{{ link }}</a>
-        <p class="content" *ngIf="postBody as body">{{ body }}</p>
+        <p class="content" *ngIf="postBody as body">
+            <ng-container *ngFor="let line of splitHashtagText(body); let isLast = last">
+                <ng-container *ngFor="let part of line">
+                    <a *ngIf="part.hashtag; else sharedPostBodyText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
+                    <ng-template #sharedPostBodyText>{{ part.text }}</ng-template>
+                </ng-container>
+                <br *ngIf="!isLast" />
+            </ng-container>
+        </p>
 
         <ng-container *ngIf="activePostMediaUrl as mediaUrl">
             <div class="post-media-carousel" *ngIf="postMediaUrls.length > 1">

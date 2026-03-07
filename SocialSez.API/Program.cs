@@ -563,6 +563,22 @@ using (var scope = app.Services.CreateScope())
             dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunitySavedPosts_ProfileId ON CommunitySavedPosts (ProfileId);");
             dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_CommunitySavedPosts_ProfileId_SavedAtUtc ON CommunitySavedPosts (ProfileId, SavedAtUtc);");
 
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS UploadedImages (
+                Id TEXT NOT NULL PRIMARY KEY,
+                UploadedByProfileId TEXT NOT NULL,
+                ContentType TEXT NOT NULL,
+                OriginalFileName TEXT NOT NULL,
+                FileExtension TEXT NOT NULL,
+                Content BLOB NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                FOREIGN KEY (UploadedByProfileId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_UploadedImages_CreatedAtUtc ON UploadedImages (CreatedAtUtc);");
+            dbContext.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_UploadedImages_UploadedByProfileId ON UploadedImages (UploadedByProfileId);");
+
             var columnExists = dbContext.Database
                 .SqlQueryRaw<int>("SELECT 1 FROM pragma_table_info('UserProfiles') WHERE name = 'IsPrivate'")
                 .ToList()
@@ -642,6 +658,21 @@ using (var scope = app.Services.CreateScope())
                 PRIMARY KEY (Id),
                 KEY IX_UserReports_TargetProfileId_CreatedAtUtc (TargetProfileId, CreatedAtUtc),
                 KEY IX_UserReports_ReporterId_CreatedAtUtc (ReporterId, CreatedAtUtc)
+            );
+            """);
+
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS UploadedImages (
+                Id char(36) NOT NULL,
+                UploadedByProfileId char(36) NOT NULL,
+                ContentType varchar(120) NOT NULL,
+                OriginalFileName varchar(260) NOT NULL,
+                FileExtension varchar(16) NOT NULL,
+                Content longblob NOT NULL,
+                CreatedAtUtc datetime(6) NOT NULL,
+                PRIMARY KEY (Id),
+                KEY IX_UploadedImages_CreatedAtUtc (CreatedAtUtc),
+                KEY IX_UploadedImages_UploadedByProfileId (UploadedByProfileId)
             );
             """);
 

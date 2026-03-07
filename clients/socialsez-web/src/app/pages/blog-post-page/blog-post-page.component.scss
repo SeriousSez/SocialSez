@@ -97,10 +97,21 @@
     margin-top: 8px;
 }
 
-.tags span {
+.tags span,
+.tags a {
     background: color-mix(in srgb, var(--blog-accent) 12%, #fff);
     color: #9a3412;
     border-radius: 999px;
     padding: 2px 8px;
     font-size: 12px;
+}
+
+.hashtag {
+    color: var(--blog-accent);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.hashtag:hover {
+    text-decoration: underline;
 }

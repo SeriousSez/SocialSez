@@ -2,13 +2,15 @@ import { CommonModule, NgStyle } from '@angular/common';
 import { Component } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BlogDto, BlogPostDto } from '../../core/api.types';
+import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { renderMarkdownToHtml } from '../../core/markdown.util';
 import { SessionService } from '../../core/session.service';
+import { LazyImageComponent } from '../../shared/lazy-image/lazy-image.component';
 
 @Component({
     selector: 'app-blog-post-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, NgStyle],
+    imports: [CommonModule, RouterLink, NgStyle, LazyImageComponent],
     templateUrl: './blog-post-page.component.html',
     styleUrl: './blog-post-page.component.scss'
 })
@@ -22,6 +24,7 @@ export class BlogPostPageComponent {
 
     blog: BlogDto | null = null;
     post: BlogPostDto | null = null;
+    private loadVersion = 0;
 
     constructor(
         private readonly route: ActivatedRoute,
@@ -53,7 +56,13 @@ export class BlogPostPageComponent {
         return renderMarkdownToHtml(this.post?.content);
     }
 
+    splitHashtagText(content: string | null | undefined): HashtagTextPart[][] {
+        return splitHashtagText(content);
+    }
+
     async loadAsync(): Promise<void> {
+        const loadVersion = ++this.loadVersion;
+
         if (!this.handle || !this.blogSlug || !this.postSlug) {
             this.error = 'Blog post was not found.';
             this.loading = false;
@@ -67,6 +76,9 @@ export class BlogPostPageComponent {
             await this.session.bootstrapAsync();
             const loadedBlog = await this.session.loadBlogByAuthorAndSlugAsync(this.handle, this.blogSlug);
             const loadedPost = await this.session.loadBlogPostAsync(this.handle, this.blogSlug, this.postSlug);
+            if (loadVersion !== this.loadVersion) {
+                return;
+            }
 
             if (!loadedBlog || !loadedPost) {
                 this.error = 'Blog post was not found or is private.';
@@ -78,11 +90,17 @@ export class BlogPostPageComponent {
             this.blog = loadedBlog;
             this.post = loadedPost;
         } catch {
+            if (loadVersion !== this.loadVersion) {
+                return;
+            }
+
             this.error = 'Could not load this blog post right now.';
             this.blog = null;
             this.post = null;
         } finally {
-            this.loading = false;
+            if (loadVersion === this.loadVersion) {
+                this.loading = false;
+            }
         }
     }
 }

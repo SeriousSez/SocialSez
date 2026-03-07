@@ -1294,7 +1294,7 @@ export class AppComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const hashtagRegex = /#[\p{L}\p{N}_]+/gu;
+        const hashtagRegex = /#[\p{L}\p{N}_-]+/gu;
         const uniqueTags = new Set<string>();
         for (const match of text.matchAll(hashtagRegex)) {
             const normalized = (match[0] ?? '').slice(1).trim();

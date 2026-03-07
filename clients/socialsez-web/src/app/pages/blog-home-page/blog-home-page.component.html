@@ -7,7 +7,15 @@
     <div class="blog" *ngIf="!loading && !error && blog as currentBlog">
         <header class="blog-head" [class.center]="headerLayoutClass === 'center'">
             <h1>{{ currentBlog.title }}</h1>
-            <p *ngIf="currentBlog.description">{{ currentBlog.description }}</p>
+            <p *ngIf="currentBlog.description">
+                <ng-container *ngFor="let line of splitHashtagText(currentBlog.description); let isLast = last">
+                    <ng-container *ngFor="let part of line">
+                        <a *ngIf="part.hashtag; else blogDescriptionText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
+                        <ng-template #blogDescriptionText>{{ part.text }}</ng-template>
+                    </ng-container>
+                    <br *ngIf="!isLast" />
+                </ng-container>
+            </p>
             <div class="head-links">
                 <a [routerLink]="['/blogs', currentBlog.ownerHandle]">More by @{{ currentBlog.ownerHandle }}</a>
                 <a [routerLink]="['/blogs', 'studio']" *ngIf="currentBlog.isOwner">Edit in Studio</a>
@@ -15,18 +23,26 @@
         </header>
 
         <section class="post-list" [class.grid]="postLayoutClass === 'grid'" [class.stack]="postLayoutClass !== 'grid'">
-            <article class="post-card" *ngFor="let post of posts; trackBy: trackPost">
-                <img *ngIf="post.coverImageUrl" [src]="post.coverImageUrl" [alt]="post.title" />
+            <article class="post-card" *ngFor="let post of posts; trackBy: trackPost" role="link" tabindex="0" (click)="openPostAsync(post, $event)" (keydown.enter)="openPostAsync(post, $event)" (keydown.space)="$event.preventDefault(); openPostAsync(post, $event)">
+                <app-lazy-image *ngIf="post.coverImageUrl" [src]="post.coverImageUrl" [alt]="post.title" skeletonHeight="180px" skeletonRadius="10px"></app-lazy-image>
                 <h2>
                     <a [routerLink]="['/blogs', currentBlog.ownerHandle, currentBlog.slug, post.slug]">{{ post.title }}</a>
                 </h2>
-                <p *ngIf="post.excerpt">{{ post.excerpt }}</p>
+                <p *ngIf="post.excerpt">
+                    <ng-container *ngFor="let line of splitHashtagText(post.excerpt); let isLast = last">
+                        <ng-container *ngFor="let part of line">
+                            <a *ngIf="part.hashtag; else postExcerptText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
+                            <ng-template #postExcerptText>{{ part.text }}</ng-template>
+                        </ng-container>
+                        <br *ngIf="!isLast" />
+                    </ng-container>
+                </p>
                 <div class="meta">
                     <span>{{ (post.publishedAtUtc ?? post.updatedAtUtc) | date:'mediumDate' }}</span>
                     <span *ngIf="!post.isPublished" class="draft">Draft</span>
                 </div>
                 <div class="tags" *ngIf="post.tags.length">
-                    <span *ngFor="let tag of post.tags">#{{ tag }}</span>
+                    <a *ngFor="let tag of post.tags" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: tag, type: 'all' }">#{{ tag }}</a>
                 </div>
             </article>
         </section>

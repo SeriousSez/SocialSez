@@ -143,6 +143,7 @@
     gap: 10px;
     box-shadow: 0 14px 34px -30px #0f172a;
     transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+    cursor: pointer;
 }
 
 .blog-card::before {
@@ -160,6 +161,11 @@
     transform: translateY(-1px);
     border-color: #b8d4f2;
     box-shadow: 0 20px 44px -32px #0f172a;
+}
+
+.blog-card:focus-visible {
+    outline: 2px solid #0ea5e9;
+    outline-offset: 2px;
 }
 
 .blog-card-head {

@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommunityDto, CommunityMemberDto, CommunityPollDto, CommunityPostDto, CommunityRuleDto, ProfileDto } from '../../core/api.types';
+import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { SessionService } from '../../core/session.service';
 import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
@@ -1719,6 +1720,10 @@ export class CommunityDetailPageComponent {
 
     trackByPostId(_index: number, post: CommunityPostDto): string {
         return post.id;
+    }
+
+    splitHashtagText(content: string | null | undefined): HashtagTextPart[][] {
+        return splitHashtagText(content);
     }
 
     trackByMemberProfileId(_index: number, member: CommunityMemberDto): string {

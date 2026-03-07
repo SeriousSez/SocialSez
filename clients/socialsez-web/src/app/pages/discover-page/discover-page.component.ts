@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
-import { BlogDto, CommunityDto, CommunityPostDto, HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryGroupDto } from '../../core/api.types';
+import { BlogDto, BlogPostDto, CommunityDto, CommunityPostDto, HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryGroupDto } from '../../core/api.types';
 import { executePostShareAction, executePostShareToChat } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
 import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
@@ -637,6 +637,17 @@ export class DiscoverPageComponent implements OnDestroy {
         await this.router.navigate(['/users', normalized]);
     }
 
+    async openBlogAsync(blog: BlogDto, event?: Event): Promise<void> {
+        if (event) {
+            const target = event.target as HTMLElement | null;
+            if (target?.closest('a,button,input,textarea,select,label')) {
+                return;
+            }
+        }
+
+        await this.router.navigate(['/blogs', blog.ownerHandle, blog.slug]);
+    }
+
     private async runSearch(query: string): Promise<void> {
         if (this.loadInFlight) {
             this.reloadQueued = true;
@@ -673,6 +684,9 @@ export class DiscoverPageComponent implements OnDestroy {
                             break;
                         case 'blogs':
                             this.blogResults = this.rankBlogs(await this.session.discoverBlogsAsync(query, 60), query);
+                            if (!this.blogResults.length) {
+                                this.blogResults = await this.loadBlogsByHashtagFallback(query);
+                            }
                             break;
                         case 'hashtags': {
                             const [hashtags, reels] = await Promise.allSettled([
@@ -704,6 +718,9 @@ export class DiscoverPageComponent implements OnDestroy {
                             this.communityResults = communities.status === 'fulfilled' ? this.rankCommunities(communities.value, query) : [];
                             this.communityPostResults = communityPosts.status === 'fulfilled' ? this.rankCommunityPosts(communityPosts.value, query) : [];
                             this.blogResults = blogs.status === 'fulfilled' ? this.rankBlogs(blogs.value, query) : [];
+                            if (!this.blogResults.length) {
+                                this.blogResults = await this.loadBlogsByHashtagFallback(query);
+                            }
 
                             const hashtagMatches = hashtags.status === 'fulfilled' ? hashtags.value : [];
                             const reelHashtagMatches = reels.status === 'fulfilled'
@@ -829,16 +846,172 @@ export class DiscoverPageComponent implements OnDestroy {
 
     private async loadHashtagsWithFallback(query: string): Promise<HashtagSearchResultDto[]> {
         try {
-            return await this.session.searchHashtagsAsync(query);
+            const results = await this.session.searchHashtagsAsync(query);
+            if (results.length) {
+                return results;
+            }
         } catch {
-            const posts = await this.session.searchPostsAsync(query);
-            return this.extractHashtagsFromPosts(posts, query);
+            // Fall through to multi-source fallback.
         }
+
+        const [posts, communityPosts, communities, blogs] = await Promise.allSettled([
+            this.session.searchPostsAsync(query),
+            this.session.searchCommunityPostsAsync(query, 60),
+            this.session.discoverCommunitiesAsync(query, 60),
+            this.session.discoverBlogsAsync(query, 60)
+        ]);
+
+        const postTags = posts.status === 'fulfilled' ? this.extractHashtagsFromPosts(posts.value, query) : [];
+        const communityPostTags = communityPosts.status === 'fulfilled' ? this.extractHashtagsFromCommunityPosts(communityPosts.value, query) : [];
+        const communityTags = communities.status === 'fulfilled' ? this.extractHashtagsFromCommunities(communities.value, query) : [];
+        const blogTags = blogs.status === 'fulfilled' ? this.extractHashtagsFromBlogs(blogs.value, query) : [];
+
+        const mergedWithPosts = this.mergeHashtagResults(postTags, communityPostTags);
+        const mergedWithCommunities = this.mergeHashtagResults(mergedWithPosts, communityTags);
+        const mergedWithBlogs = this.mergeHashtagResults(mergedWithCommunities, blogTags);
+        if (mergedWithBlogs.length) {
+            return mergedWithBlogs;
+        }
+
+        const blogPostTagMatches = await this.extractHashtagsFromBlogPostsFallback(query);
+        return this.mergeHashtagResults(mergedWithBlogs, blogPostTagMatches);
+    }
+
+    private async extractHashtagsFromBlogPostsFallback(query: string): Promise<HashtagSearchResultDto[]> {
+        const normalized = query.trim().replace(/^#/, '').toLowerCase();
+        if (!normalized) {
+            return [];
+        }
+
+        let blogs: BlogDto[] = [];
+        try {
+            blogs = await this.session.discoverBlogsAsync(undefined, 80);
+        } catch {
+            return [];
+        }
+
+        if (!blogs.length) {
+            return [];
+        }
+
+        const postsByBlog = await Promise.allSettled(
+            blogs.map(blog => this.session.loadBlogPostsAsync(blog.ownerHandle, blog.slug))
+        );
+
+        const counts = new Map<string, number>();
+        for (const result of postsByBlog) {
+            if (result.status !== 'fulfilled') {
+                continue;
+            }
+
+            for (const post of result.value) {
+                const uniqueTags = new Set<string>();
+
+                for (const tag of post.tags ?? []) {
+                    const normalizedTag = (tag ?? '').trim().replace(/^#/, '');
+                    if (!normalizedTag) {
+                        continue;
+                    }
+
+                    if (!normalizedTag.toLowerCase().includes(normalized)) {
+                        continue;
+                    }
+
+                    uniqueTags.add(normalizedTag);
+                }
+
+                for (const tag of this.extractHashtagsFromText(post.title)) {
+                    if (tag.toLowerCase().includes(normalized)) {
+                        uniqueTags.add(tag);
+                    }
+                }
+
+                for (const tag of this.extractHashtagsFromText(post.excerpt)) {
+                    if (tag.toLowerCase().includes(normalized)) {
+                        uniqueTags.add(tag);
+                    }
+                }
+
+                for (const tag of uniqueTags) {
+                    counts.set(tag, (counts.get(tag) ?? 0) + 1);
+                }
+            }
+        }
+
+        return Array.from(counts.entries())
+            .map(([tag, count]) => ({ tag, count }))
+            .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+    }
+
+    private async loadBlogsByHashtagFallback(query: string): Promise<BlogDto[]> {
+        const normalized = query.trim().replace(/^#/, '').toLowerCase();
+        if (!normalized) {
+            return [];
+        }
+
+        let blogs: BlogDto[] = [];
+        try {
+            blogs = await this.session.discoverBlogsAsync(undefined, 80);
+        } catch {
+            return [];
+        }
+
+        if (!blogs.length) {
+            return [];
+        }
+
+        const postsByBlog = await Promise.allSettled(
+            blogs.map(blog => this.session.loadBlogPostsAsync(blog.ownerHandle, blog.slug))
+        );
+
+        const matchedBlogIds = new Set<string>();
+        for (let index = 0; index < postsByBlog.length; index += 1) {
+            const result = postsByBlog[index];
+            if (result.status !== 'fulfilled') {
+                continue;
+            }
+
+            const hasMatch = result.value.some(post => this.blogPostMatchesHashtagQuery(post, normalized));
+            if (!hasMatch) {
+                continue;
+            }
+
+            const blog = blogs[index];
+            if (blog) {
+                matchedBlogIds.add(blog.id);
+            }
+        }
+
+        return blogs.filter(blog => matchedBlogIds.has(blog.id));
+    }
+
+    private blogPostMatchesHashtagQuery(post: BlogPostDto, normalizedQuery: string): boolean {
+        for (const tag of post.tags ?? []) {
+            const normalizedTag = (tag ?? '').trim().replace(/^#/, '').toLowerCase();
+            if (normalizedTag.includes(normalizedQuery)) {
+                return true;
+            }
+        }
+
+        return this.extractHashtagsFromText(post.title).some(tag => tag.toLowerCase().includes(normalizedQuery))
+            || this.extractHashtagsFromText(post.excerpt).some(tag => tag.toLowerCase().includes(normalizedQuery));
+    }
+
+    private extractHashtagsFromText(value: string | null | undefined): string[] {
+        const content = value ?? '';
+        if (!content) {
+            return [];
+        }
+
+        const hashtagRegex = /#[\p{L}\p{N}_-]+/gu;
+        return Array.from(content.matchAll(hashtagRegex))
+            .map(match => (match[0] ?? '').slice(1).trim())
+            .filter(tag => !!tag);
     }
 
     private extractHashtagsFromPosts(posts: ReadonlyArray<PostDto>, query: string): HashtagSearchResultDto[] {
         const normalized = query.trim().replace(/^#/, '').toLowerCase();
-        const hashtagRegex = /#[\p{L}\p{N}_]+/gu;
+        const hashtagRegex = /#[\p{L}\p{N}_-]+/gu;
         const counts = new Map<string, number>();
 
         for (const post of posts) {
@@ -872,7 +1045,7 @@ export class DiscoverPageComponent implements OnDestroy {
 
     private extractHashtagsFromReels(reels: ReadonlyArray<ReelDto>, query: string): HashtagSearchResultDto[] {
         const normalized = query.trim().replace(/^#/, '').toLowerCase();
-        const hashtagRegex = /#[\p{L}\p{N}_]+/gu;
+        const hashtagRegex = /#[\p{L}\p{N}_-]+/gu;
         const counts = new Map<string, number>();
 
         for (const reel of reels) {
@@ -899,6 +1072,61 @@ export class DiscoverPageComponent implements OnDestroy {
                 for (const tag of uniqueTags) {
                     counts.set(tag, (counts.get(tag) ?? 0) + 1);
                 }
+            }
+        }
+
+        return Array.from(counts.entries())
+            .map(([tag, count]) => ({ tag, count }))
+            .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+    }
+
+    private extractHashtagsFromCommunityPosts(posts: ReadonlyArray<CommunityPostDto>, query: string): HashtagSearchResultDto[] {
+        return this.extractHashtagsFromTextCandidates(
+            posts.flatMap(post => [post.title, post.content]),
+            query
+        );
+    }
+
+    private extractHashtagsFromCommunities(communities: ReadonlyArray<CommunityDto>, query: string): HashtagSearchResultDto[] {
+        return this.extractHashtagsFromTextCandidates(
+            communities.flatMap(community => [community.name, community.description]),
+            query
+        );
+    }
+
+    private extractHashtagsFromBlogs(blogs: ReadonlyArray<BlogDto>, query: string): HashtagSearchResultDto[] {
+        return this.extractHashtagsFromTextCandidates(
+            blogs.flatMap(blog => [blog.title, blog.description]),
+            query
+        );
+    }
+
+    private extractHashtagsFromTextCandidates(candidates: ReadonlyArray<string | null | undefined>, query: string): HashtagSearchResultDto[] {
+        const normalized = query.trim().replace(/^#/, '').toLowerCase();
+        const hashtagRegex = /#[\p{L}\p{N}_-]+/gu;
+        const counts = new Map<string, number>();
+
+        for (const candidate of candidates) {
+            if (!candidate) {
+                continue;
+            }
+
+            const uniqueTags = new Set<string>();
+            for (const match of candidate.matchAll(hashtagRegex)) {
+                const rawTag = match[0]?.slice(1);
+                if (!rawTag) {
+                    continue;
+                }
+
+                if (normalized && !rawTag.toLowerCase().includes(normalized)) {
+                    continue;
+                }
+
+                uniqueTags.add(rawTag);
+            }
+
+            for (const tag of uniqueTags) {
+                counts.set(tag, (counts.get(tag) ?? 0) + 1);
             }
         }
 

@@ -4,6 +4,7 @@ using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 using SocialSez.Domain.Entities;
 using SocialSez.Infrastructure;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace SocialSez.ApplicationService.Services;
@@ -12,7 +13,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
 {
     private const string LikeReactionType = "Like";
     private const int MaxPostContentLength = 3000;
-    private static readonly Regex HashtagRegex = new(@"(?<![\p{L}\p{N}_])#(?<tag>[\p{L}\p{N}_]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex HashtagRegex = new(@"(?<![\p{L}\p{N}_-])#(?<tag>[\p{L}\p{N}_-]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     private static readonly HashSet<string> AllowedReactionTypes = new(StringComparer.Ordinal)
     {
         "Like", "Love", "Laugh", "Wow", "Sad", "Angry", "PartyHorn", "Clap"
@@ -687,6 +688,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
     {
         take = Math.Clamp(take, 1, 100);
         var sinceUtc = DateTime.UtcNow.AddDays(-7);
+        var viewerHasId = viewerId.HasValue;
+        var viewerProfileId = viewerId.GetValueOrDefault();
         var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
         var blockedProfileIds = viewerId.HasValue
             ? await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken)
@@ -719,25 +722,78 @@ public class PostService(SocialSezContext dbContext) : IPostService
                 .Select(x => x.Content)
                 .ToArrayAsync(cancellationToken);
 
+        var communityPostCandidates = await dbContext.CommunityPosts
+            .AsNoTracking()
+            .Where(x =>
+                ((x.Title != null && x.Title.Contains('#')) || (x.Content != null && x.Content.Contains('#')))
+                && x.CreatedAtUtc >= sinceUtc
+                && (!x.Community.IsPrivate || (viewerHasId && x.Community.Members.Any(member => member.ProfileId == viewerProfileId)))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(2000)
+            .Select(x => new { x.Title, x.Content })
+            .ToArrayAsync(cancellationToken);
+
+        var blogPostCandidates = await dbContext.BlogPosts
+            .AsNoTracking()
+            .Where(x =>
+                x.UpdatedAtUtc >= sinceUtc
+                && (x.IsPublished || (viewerHasId && x.AuthorProfileId == viewerProfileId))
+                && (x.Blog.IsPublic || (viewerHasId && x.Blog.OwnerProfileId == viewerProfileId))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorProfileId)))
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(2000)
+            .Select(x => new { x.Title, x.Content, x.Excerpt, x.TagsJson })
+            .ToArrayAsync(cancellationToken);
+
+        var communityCandidates = await dbContext.Communities
+            .AsNoTracking()
+            .Where(x =>
+                ((x.Name != null && x.Name.Contains('#')) || (x.Description != null && x.Description.Contains('#')))
+                && (!x.IsPrivate || (viewerHasId && x.Members.Any(member => member.ProfileId == viewerProfileId))))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(1000)
+            .Select(x => new { x.Name, x.Description })
+            .ToArrayAsync(cancellationToken);
+
+        var blogCandidates = await dbContext.Blogs
+            .AsNoTracking()
+            .Where(x =>
+                ((x.Title != null && x.Title.Contains('#')) || (x.Description != null && x.Description.Contains('#')))
+                && (x.IsPublic || (viewerHasId && x.OwnerProfileId == viewerProfileId)))
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(1000)
+            .Select(x => new { x.Title, x.Description })
+            .ToArrayAsync(cancellationToken);
+
         var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var content in candidates)
         {
-            if (string.IsNullOrWhiteSpace(content))
-            {
-                continue;
-            }
+            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(content));
+        }
 
-            var distinctTagsInPost = HashtagRegex.Matches(content)
-                .Select(x => x.Groups["tag"].Value)
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+        foreach (var candidate in communityPostCandidates)
+        {
+            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Content));
+        }
 
-            foreach (var tag in distinctTagsInPost)
-            {
-                counts[tag] = counts.TryGetValue(tag, out var current) ? current + 1 : 1;
-            }
+        foreach (var candidate in blogPostCandidates)
+        {
+            var tags = ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Content, candidate.Excerpt)
+                .Concat(ExtractHashtagsFromBlogTagsJson(candidate.TagsJson))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+            IncrementHashtagCounts(counts, tags);
+        }
+
+        foreach (var candidate in communityCandidates)
+        {
+            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Name, candidate.Description));
+        }
+
+        foreach (var candidate in blogCandidates)
+        {
+            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Description));
         }
 
         return counts
@@ -757,6 +813,8 @@ public class PostService(SocialSezContext dbContext) : IPostService
         }
 
         take = Math.Clamp(take, 1, 100);
+        var viewerHasId = viewerId.HasValue;
+        var viewerProfileId = viewerId.GetValueOrDefault();
         var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
         var blockedProfileIds = viewerId.HasValue
             ? await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken)
@@ -774,30 +832,76 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Select(x => x.Content)
             .ToArrayAsync(cancellationToken);
 
+        var communityPostCandidates = await dbContext.CommunityPosts
+            .AsNoTracking()
+            .Where(x =>
+                ((x.Title != null && x.Title.Contains('#')) || (x.Content != null && x.Content.Contains('#')))
+                && (!x.Community.IsPrivate || (viewerHasId && x.Community.Members.Any(member => member.ProfileId == viewerProfileId)))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(1000)
+            .Select(x => new { x.Title, x.Content })
+            .ToArrayAsync(cancellationToken);
+
+        var blogPostCandidates = await dbContext.BlogPosts
+            .AsNoTracking()
+            .Where(x =>
+                (x.IsPublished || (viewerHasId && x.AuthorProfileId == viewerProfileId))
+                && (x.Blog.IsPublic || (viewerHasId && x.Blog.OwnerProfileId == viewerProfileId))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorProfileId)))
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(1000)
+            .Select(x => new { x.Title, x.Content, x.Excerpt, x.TagsJson })
+            .ToArrayAsync(cancellationToken);
+
+        var communityCandidates = await dbContext.Communities
+            .AsNoTracking()
+            .Where(x =>
+                ((x.Name != null && x.Name.Contains('#')) || (x.Description != null && x.Description.Contains('#')))
+                && (!x.IsPrivate || (viewerHasId && x.Members.Any(member => member.ProfileId == viewerProfileId))))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(1000)
+            .Select(x => new { x.Name, x.Description })
+            .ToArrayAsync(cancellationToken);
+
+        var blogCandidates = await dbContext.Blogs
+            .AsNoTracking()
+            .Where(x =>
+                ((x.Title != null && x.Title.Contains('#')) || (x.Description != null && x.Description.Contains('#')))
+                && (x.IsPublic || (viewerHasId && x.OwnerProfileId == viewerProfileId)))
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(1000)
+            .Select(x => new { x.Title, x.Description })
+            .ToArrayAsync(cancellationToken);
+
         var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var content in candidates)
         {
-            if (string.IsNullOrWhiteSpace(content))
-            {
-                continue;
-            }
+            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(content), normalizedQuery);
+        }
 
-            var distinctTagsInPost = HashtagRegex.Matches(content)
-                .Select(x => x.Groups["tag"].Value)
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+        foreach (var candidate in communityPostCandidates)
+        {
+            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Content), normalizedQuery);
+        }
 
-            foreach (var tag in distinctTagsInPost)
-            {
-                if (!tag.Contains(normalizedQuery, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
+        foreach (var candidate in blogPostCandidates)
+        {
+            var tags = ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Content, candidate.Excerpt)
+                .Concat(ExtractHashtagsFromBlogTagsJson(candidate.TagsJson))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+            IncrementHashtagCounts(counts, tags, normalizedQuery);
+        }
 
-                counts[tag] = counts.TryGetValue(tag, out var current) ? current + 1 : 1;
-            }
+        foreach (var candidate in communityCandidates)
+        {
+            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Name, candidate.Description), normalizedQuery);
+        }
+
+        foreach (var candidate in blogCandidates)
+        {
+            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Description), normalizedQuery);
         }
 
         return counts
@@ -1143,7 +1247,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
             return string.Empty;
         }
 
-        return Regex.IsMatch(trimmed, "^[\\p{L}\\p{N}_]+$", RegexOptions.CultureInvariant)
+        return Regex.IsMatch(trimmed, "^[\\p{L}\\p{N}_-]+$", RegexOptions.CultureInvariant)
             ? trimmed
             : string.Empty;
     }
@@ -1151,7 +1255,7 @@ public class PostService(SocialSezContext dbContext) : IPostService
     private static Regex BuildHashtagRegex(string hashtag)
     {
         var escaped = Regex.Escape(hashtag);
-        return new Regex($"(?<![\\p{{L}}\\p{{N}}_])#{escaped}(?![\\p{{L}}\\p{{N}}_])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        return new Regex($"(?<![\\p{{L}}\\p{{N}}_-])#{escaped}(?![\\p{{L}}\\p{{N}}_-])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }
 
     private static string[] ExtractHashtags(string? content)
@@ -1167,6 +1271,56 @@ public class PostService(SocialSezContext dbContext) : IPostService
             .Select(tag => tag.ToLowerInvariant())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static string[] ExtractDistinctHashtagsFromTexts(params string?[] texts)
+    {
+        if (texts.Length == 0)
+        {
+            return Array.Empty<string>();
+        }
+
+        return texts
+            .SelectMany(ExtractHashtags)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static IEnumerable<string> ExtractHashtagsFromBlogTagsJson(string? tagsJson)
+    {
+        if (string.IsNullOrWhiteSpace(tagsJson))
+        {
+            return Array.Empty<string>();
+        }
+
+        try
+        {
+            var tags = JsonSerializer.Deserialize<string[]>(tagsJson) ?? Array.Empty<string>();
+            return tags
+                .Select(NormalizeHashtag)
+                .Where(tag => !string.IsNullOrWhiteSpace(tag))
+                .Select(tag => tag.ToLowerInvariant())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch
+        {
+            return Array.Empty<string>();
+        }
+    }
+
+    private static void IncrementHashtagCounts(Dictionary<string, int> counts, IEnumerable<string> tags, string? normalizedQuery = null)
+    {
+        foreach (var tag in tags)
+        {
+            if (!string.IsNullOrEmpty(normalizedQuery)
+                && !tag.Contains(normalizedQuery, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            counts[tag] = counts.TryGetValue(tag, out var current) ? current + 1 : 1;
+        }
     }
 
     private async Task EnsurePostSchemaAsync(CancellationToken cancellationToken)

@@ -125,7 +125,7 @@
 
         <section class="section" *ngIf="showBlogsSection && blogResults.length">
             <h3>Blogs</h3>
-            <article class="card" *ngFor="let blog of blogResults">
+            <article class="card clickable-card" *ngFor="let blog of blogResults" role="link" tabindex="0" (click)="openBlogAsync(blog, $event)" (keydown.enter)="openBlogAsync(blog, $event)" (keydown.space)="$event.preventDefault(); openBlogAsync(blog, $event)">
                 <h4>
                     <a class="user-link" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">{{ blog.title }}</a>
                 </h4>

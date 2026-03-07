@@ -293,7 +293,7 @@ export class SocialSezApiService {
 
     getPostsByHashtag(hashtag: string, take = 25): Observable<PostDto[]> {
         const normalized = hashtag.trim().replace(/^#/, '');
-        return this.withAutoRefresh(() => this.http.get<PostDto[]>(`${this.baseUrl}/posts/hashtags/${encodeURIComponent(normalized)}?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+        return this.http.get<PostDto[]>(`${this.baseUrl}/posts/hashtags/${encodeURIComponent(normalized)}?take=${take}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
     getPostsByAuthorHandle(handle: string, take = 25): Observable<PostDto[]> {
@@ -315,15 +315,15 @@ export class SocialSezApiService {
     }
 
     searchPosts(query: string, take = 25): Observable<PostDto[]> {
-        return this.withAutoRefresh(() => this.http.get<PostDto[]>(`${this.baseUrl}/posts/search?q=${encodeURIComponent(query)}&take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+        return this.http.get<PostDto[]>(`${this.baseUrl}/posts/search?q=${encodeURIComponent(query)}&take=${take}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
     searchHashtags(query: string, take = 20): Observable<HashtagSearchResultDto[]> {
-        return this.withAutoRefresh(() => this.http.get<HashtagSearchResultDto[]>(`${this.baseUrl}/posts/hashtags/search?q=${encodeURIComponent(query)}&take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+        return this.http.get<HashtagSearchResultDto[]>(`${this.baseUrl}/posts/hashtags/search?q=${encodeURIComponent(query)}&take=${take}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
     getTrendingHashtags(take = 10): Observable<HashtagSearchResultDto[]> {
-        return this.withAutoRefresh(() => this.http.get<HashtagSearchResultDto[]>(`${this.baseUrl}/posts/hashtags/trending?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+        return this.http.get<HashtagSearchResultDto[]>(`${this.baseUrl}/posts/hashtags/trending?take=${take}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
     getStoryFeed(takeAuthors = 25, mode: FeedMode = 'for-you'): Observable<StoryGroupDto[]> {

@@ -67,9 +67,23 @@
     padding: 12px;
     display: grid;
     gap: 8px;
+    cursor: pointer;
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
 }
 
-.post-card img {
+.post-card:hover {
+    border-color: color-mix(in srgb, var(--blog-accent) 28%, #e2e8f0);
+    box-shadow: 0 16px 28px -26px #0f172a;
+    transform: translateY(-1px);
+}
+
+.post-card:focus-visible {
+    outline: 2px solid var(--blog-accent);
+    outline-offset: 2px;
+}
+
+.post-card img,
+.post-card app-lazy-image {
     width: 100%;
     height: 180px;
     object-fit: cover;
@@ -107,12 +121,23 @@
     gap: 6px;
 }
 
-.tags span {
+.tags span,
+.tags a {
     background: color-mix(in srgb, var(--blog-accent) 15%, #ffffff);
     color: #9a3412;
     border-radius: 999px;
     padding: 2px 8px;
     font-size: 12px;
+}
+
+.hashtag {
+    color: var(--blog-accent);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.hashtag:hover {
+    text-decoration: underline;
 }
 
 @media (max-width: 760px) {

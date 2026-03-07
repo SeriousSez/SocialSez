@@ -7,14 +7,22 @@
     <article class="post" *ngIf="!loading && !error && post as item">
         <header class="post-head">
             <a class="back-link" [routerLink]="['/blogs', handle, blogSlug]">Back to Blog</a>
-            <h1>{{ item.title }}</h1>
+            <h1>
+                <ng-container *ngFor="let line of splitHashtagText(item.title); let isLast = last">
+                    <ng-container *ngFor="let part of line">
+                        <a *ngIf="part.hashtag; else blogPostTitleText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
+                        <ng-template #blogPostTitleText>{{ part.text }}</ng-template>
+                    </ng-container>
+                    <br *ngIf="!isLast" />
+                </ng-container>
+            </h1>
             <p class="meta">By @{{ item.authorHandle }} · {{ (item.publishedAtUtc ?? item.updatedAtUtc) | date:'medium' }}</p>
             <div class="tags" *ngIf="item.tags.length">
-                <span *ngFor="let tag of item.tags">#{{ tag }}</span>
+                <a *ngFor="let tag of item.tags" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: tag, type: 'all' }">#{{ tag }}</a>
             </div>
         </header>
 
-        <img *ngIf="item.coverImageUrl" [src]="item.coverImageUrl" [alt]="item.title" class="cover" />
+        <app-lazy-image *ngIf="item.coverImageUrl" [src]="item.coverImageUrl" [alt]="item.title" imgClass="cover" skeletonHeight="420px" skeletonRadius="14px" loading="eager"></app-lazy-image>
 
         <div class="content" [innerHTML]="renderedPostContent"></div>
     </article>

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, NgZone, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { BlogDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 
@@ -49,8 +49,23 @@ export class BlogsPageComponent {
         { value: 'title', label: 'Title A-Z' }
     ];
 
-    constructor(public readonly session: SessionService) {
+    constructor(
+        public readonly session: SessionService,
+        private readonly ngZone: NgZone,
+        private readonly router: Router
+    ) {
         void this.loadAsync();
+    }
+
+    async openBlogAsync(blog: BlogDto, event?: Event): Promise<void> {
+        if (event) {
+            const target = event.target as HTMLElement | null;
+            if (target?.closest('a,button,input,textarea,select,label')) {
+                return;
+            }
+        }
+
+        await this.router.navigate(['/blogs', blog.ownerHandle, blog.slug]);
     }
 
     async selectTabAsync(tab: BlogsTab): Promise<void> {
@@ -76,7 +91,9 @@ export class BlogsPageComponent {
 
         this.queryDebounceTimerId = window.setTimeout(() => {
             this.queryDebounceTimerId = null;
-            void this.runSearchAsync();
+            this.ngZone.run(() => {
+                void this.runSearchAsync();
+            });
         }, 220);
     }
 
@@ -210,13 +227,15 @@ export class BlogsPageComponent {
 
         this.infiniteObserver = new IntersectionObserver(
             entries => {
-                if (!entries.some(entry => entry.isIntersecting) || this.loadingMore || this.loading || !this.hasMoreBlogs) {
-                    return;
-                }
+                this.ngZone.run(() => {
+                    if (!entries.some(entry => entry.isIntersecting) || this.loadingMore || this.loading || !this.hasMoreBlogs) {
+                        return;
+                    }
 
-                this.loadingMore = true;
-                this.loadMoreBlogs();
-                this.loadingMore = false;
+                    this.loadingMore = true;
+                    this.loadMoreBlogs();
+                    this.loadingMore = false;
+                });
             },
             {
                 root: null,
@@ -265,7 +284,11 @@ export class BlogsPageComponent {
     }
 
     private scheduleObserverRefresh(): void {
-        setTimeout(() => this.refreshInfiniteObserver(), 0);
+        window.setTimeout(() => {
+            this.ngZone.run(() => {
+                this.refreshInfiniteObserver();
+            });
+        }, 0);
     }
 
     private toTimestamp(value: string): number {

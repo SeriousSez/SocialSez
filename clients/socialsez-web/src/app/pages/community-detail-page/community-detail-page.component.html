@@ -4,7 +4,15 @@
         <div>
             <h2>{{ activeCommunity.name }}</h2>
             <p class="meta">/{{ activeCommunity.slug }} · <button type="button" class="community-members-trigger" (click)="openMembersModal()">{{ activeCommunity.memberCount }} members</button> · {{ activeCommunity.isPrivate ? 'Private' : 'Public' }}</p>
-            <p class="meta community-description" *ngIf="activeCommunity.description" [innerHTML]="activeCommunity.description"></p>
+            <p class="meta community-description" *ngIf="activeCommunity.description">
+                <ng-container *ngFor="let line of splitHashtagText(activeCommunity.description); let isLast = last">
+                    <ng-container *ngFor="let part of line">
+                        <a *ngIf="part.hashtag; else communityDescriptionText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
+                        <ng-template #communityDescriptionText>{{ part.text }}</ng-template>
+                    </ng-container>
+                    <br *ngIf="!isLast" />
+                </ng-container>
+            </p>
             <a class="meta" [routerLink]="['/users', activeCommunity.createdByHandle]">Created by @{{ activeCommunity.createdByHandle }}</a>
         </div>
         <div class="community-head-actions">
@@ -72,9 +80,25 @@
                 </div>
             </header>
 
-            <h4 class="post-title">{{ post.title || 'Untitled post' }}</h4>
+            <h4 class="post-title">
+                <ng-container *ngFor="let line of splitHashtagText(post.title || 'Untitled post'); let isLast = last">
+                    <ng-container *ngFor="let part of line">
+                        <a *ngIf="part.hashtag; else postTitleText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }" (click)="$event.stopPropagation()">{{ part.text }}</a>
+                        <ng-template #postTitleText>{{ part.text }}</ng-template>
+                    </ng-container>
+                    <br *ngIf="!isLast" />
+                </ng-container>
+            </h4>
             <a class="post-link" *ngIf="getPostPrimaryLink(post) as link" [href]="link" target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()">{{ link }}</a>
-            <p class="post-body" *ngIf="post.content">{{ post.content }}</p>
+            <p class="post-body" *ngIf="post.content">
+                <ng-container *ngFor="let line of splitHashtagText(post.content); let isLast = last">
+                    <ng-container *ngFor="let part of line">
+                        <a *ngIf="part.hashtag; else postBodyText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }" (click)="$event.stopPropagation()">{{ part.text }}</a>
+                        <ng-template #postBodyText>{{ part.text }}</ng-template>
+                    </ng-container>
+                    <br *ngIf="!isLast" />
+                </ng-container>
+            </p>
 
             <ng-container *ngIf="getActivePostImageUrl(post) as activeImageUrl">
                 <div class="post-image-carousel" *ngIf="getPostMediaUrls(post).length > 1">

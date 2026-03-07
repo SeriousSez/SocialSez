@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommunityDto, CommunityRuleDto } from '../../core/api.types';
+import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { SessionService } from '../../core/session.service';
 import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
 
@@ -204,6 +205,10 @@ export class CommunitiesPageComponent {
 
     trackByCommunityId(_index: number, community: CommunityDto): string {
         return community.id;
+    }
+
+    splitHashtagText(content: string | null | undefined): HashtagTextPart[][] {
+        return splitHashtagText(content);
     }
 
     private resetStatus(): void {

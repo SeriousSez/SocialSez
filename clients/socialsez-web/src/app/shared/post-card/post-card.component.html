@@ -57,13 +57,13 @@
                     <br *ngIf="!isLastLine" />
                 </ng-container>
             </div>
-            <img class="shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" alt="Shared post media" />
+            <app-lazy-image *ngIf="shared.imageUrl" imgClass="shared-post-image" [src]="shared.imageUrl" alt="Shared post media" skeletonHeight="210px" skeletonRadius="10px"></app-lazy-image>
         </article>
 
         <ng-container *ngIf="post.imageUrl as mediaUrl">
             <video class="post-media" *ngIf="isVideoMedia(mediaUrl); else imageMedia" [src]="mediaUrl" controls playsinline preload="metadata"></video>
             <ng-template #imageMedia>
-                <img class="post-image" [src]="mediaUrl" alt="Post media" />
+                <app-lazy-image imgClass="post-image" [src]="mediaUrl" alt="Post media" skeletonHeight="280px" skeletonRadius="10px"></app-lazy-image>
             </ng-template>
         </ng-container>
 

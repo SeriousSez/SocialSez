@@ -7,6 +7,7 @@ import { SharedPostPreview, extractSharedPostFromContent } from '../../core/shar
 import { SessionService } from '../../core/session.service';
 import { CommentsSheetComponent } from '../comments-sheet/comments-sheet.component';
 import { ConfirmModalComponent } from '../confirm-modal/confirm-modal.component';
+import { LazyImageComponent } from '../lazy-image/lazy-image.component';
 import { ReactionPickerComponent } from '../reaction-picker/reaction-picker.component';
 
 export interface CommentUpdatePayload {
@@ -46,7 +47,7 @@ interface ReactionDetailEntry {
 @Component({
     selector: 'app-post-card',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactionPickerComponent, ConfirmModalComponent, CommentsSheetComponent],
+    imports: [CommonModule, FormsModule, ReactionPickerComponent, ConfirmModalComponent, CommentsSheetComponent, LazyImageComponent],
     templateUrl: './post-card.component.html',
     styleUrl: './post-card.component.scss'
 })

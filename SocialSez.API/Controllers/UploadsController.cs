@@ -1,13 +1,15 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SocialSez.API.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using SocialSez.Domain.Entities;
+using SocialSez.Infrastructure;
 
 namespace SocialSez.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UploadsController(IWebHostEnvironment environment, IConfiguration configuration) : ControllerBase
+public class UploadsController(SocialSezContext dbContext) : ControllerBase
 {
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -36,20 +38,43 @@ public class UploadsController(IWebHostEnvironment environment, IConfiguration c
             return BadRequest(new { message = "Only image files are allowed (.jpg, .jpeg, .png, .webp, .gif)." });
         }
 
-        var uploadsRoot = Path.Combine(ResolveUploadsRoot(), "images");
-        Directory.CreateDirectory(uploadsRoot);
+        await using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, cancellationToken);
 
-        var safeFileName = $"{profileId:N}-{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-        var absoluteFilePath = Path.Combine(uploadsRoot, safeFileName);
-
-        await using (var stream = System.IO.File.Create(absoluteFilePath))
+        var image = new UploadedImage
         {
-            await file.CopyToAsync(stream, cancellationToken);
-        }
+            Id = Guid.NewGuid(),
+            UploadedByProfileId = profileId,
+            ContentType = NormalizeContentType(file.ContentType, extension),
+            OriginalFileName = Path.GetFileName(file.FileName),
+            FileExtension = extension.ToLowerInvariant(),
+            Content = memoryStream.ToArray(),
+            CreatedAtUtc = DateTime.UtcNow
+        };
 
-        var relativePath = $"/uploads/images/{safeFileName}";
+        dbContext.UploadedImages.Add(image);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var relativePath = $"/api/uploads/images/{image.Id:D}";
         var url = $"{Request.Scheme}://{Request.Host}{relativePath}";
         return Ok(new UploadImageResponse(url));
+    }
+
+    [AllowAnonymous]
+    [HttpGet("images/{id:guid}")]
+    public async Task<IActionResult> GetImage(Guid id, CancellationToken cancellationToken)
+    {
+        var image = await dbContext.UploadedImages
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (image is null)
+        {
+            return NotFound();
+        }
+
+        Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+        return File(image.Content, image.ContentType);
     }
 
     private bool TryGetProfileId(out Guid profileId)
@@ -60,9 +85,20 @@ public class UploadsController(IWebHostEnvironment environment, IConfiguration c
         return Guid.TryParse(raw, out profileId);
     }
 
-    private string ResolveUploadsRoot()
+    private static string NormalizeContentType(string? contentType, string extension)
     {
-        return UploadsRootResolver.Resolve(configuration, environment);
+        if (!string.IsNullOrWhiteSpace(contentType) && contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            return contentType;
+        }
+
+        return extension.ToLowerInvariant() switch
+        {
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            ".gif" => "image/gif",
+            _ => "image/jpeg"
+        };
     }
 
     public sealed record UploadImageResponse(string Url);

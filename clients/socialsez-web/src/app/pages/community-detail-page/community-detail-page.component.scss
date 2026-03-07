@@ -505,6 +505,17 @@ textarea {
     padding: 12px;
     display: grid;
     gap: 10px;
+
+    .hashtag {
+        color: #1d4ed8;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .hashtag:hover {
+        text-decoration: underline;
+    }
+
     border-top: 1px solid var(--color-border);
     cursor: pointer;
 }

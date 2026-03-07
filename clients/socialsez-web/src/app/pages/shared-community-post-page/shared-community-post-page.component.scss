@@ -663,6 +663,17 @@
     bottom: -2px;
     width: 2px;
     pointer-events: none;
+
+    .hashtag {
+        color: #1d4ed8;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .hashtag:hover {
+        text-decoration: underline;
+    }
+
     border-radius: 999px;
     background: var(--thread-line);
     z-index: 0;
