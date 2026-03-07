@@ -26,6 +26,13 @@ interface DockReelModalState {
     muted: boolean;
 }
 
+type SearchDiscoverType = 'all' | 'users' | 'posts' | 'hashtags' | 'reels' | 'communities' | 'community-posts' | 'blogs';
+
+interface SearchScopeOption {
+    value: SearchDiscoverType;
+    label: string;
+}
+
 @Component({
     selector: 'app-root',
     imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, MessagesDockComponent, FeedStoryViewerComponent, CommunityInfoRailComponent],
@@ -41,6 +48,18 @@ export class AppComponent implements OnInit, OnDestroy {
     loadingRightRailCommunity = false;
     savingRightRailRules = false;
     unreadNotificationsCount = 0;
+    searchScopePickerOpen = false;
+    manualSearchScope: SearchDiscoverType | null = null;
+    readonly searchScopeOptions: ReadonlyArray<SearchScopeOption> = [
+        { value: 'all', label: 'All results' },
+        { value: 'communities', label: 'Communities' },
+        { value: 'community-posts', label: 'Community posts' },
+        { value: 'blogs', label: 'Blogs' },
+        { value: 'users', label: 'Users' },
+        { value: 'posts', label: 'Posts' },
+        { value: 'reels', label: 'Reels' },
+        { value: 'hashtags', label: 'Hashtags' }
+    ];
     rightRailCommunity: CommunityDto | null = null;
     profileChipHasStory = false;
     profileChipHasUnseenStory = false;
@@ -170,6 +189,10 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     get searchPlaceholder(): string {
+        if (this.manualSearchScope) {
+            return this.getPlaceholderForScope(this.manualSearchScope);
+        }
+
         switch (this.searchContextLabel) {
             case 'Communities':
                 return 'Search communities, community posts, users, hashtags';
@@ -190,7 +213,21 @@ export class AppComponent implements OnInit, OnDestroy {
         }
     }
 
-    private get searchDiscoverType(): 'all' | 'users' | 'posts' | 'hashtags' | 'reels' | 'communities' | 'community-posts' | 'blogs' {
+    get searchChipLabel(): string {
+        return this.isSearchScopeOverridden
+            ? `Scope: ${this.getScopeLabel(this.activeSearchScope)}`
+            : this.searchContextLabel;
+    }
+
+    get isSearchScopeOverridden(): boolean {
+        return this.manualSearchScope !== null;
+    }
+
+    get autoSearchScopeLabel(): string {
+        return this.getScopeLabel(this.routeSearchDiscoverType);
+    }
+
+    private get routeSearchDiscoverType(): SearchDiscoverType {
         switch (this.searchContextLabel) {
             case 'Communities':
                 return 'communities';
@@ -203,6 +240,10 @@ export class AppComponent implements OnInit, OnDestroy {
             default:
                 return 'all';
         }
+    }
+
+    private get activeSearchScope(): SearchDiscoverType {
+        return this.manualSearchScope ?? this.routeSearchDiscoverType;
     }
 
     get canEditRightRailCommunityRules(): boolean {
@@ -279,6 +320,25 @@ export class AppComponent implements OnInit, OnDestroy {
         }
 
         this.applyThemePreference();
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent): void {
+        if (!this.searchScopePickerOpen) {
+            return;
+        }
+
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('.search-scope-picker')) {
+            return;
+        }
+
+        this.searchScopePickerOpen = false;
+    }
+
+    @HostListener('document:keydown.escape')
+    onDocumentEscape(): void {
+        this.searchScopePickerOpen = false;
     }
 
     private async initializeAsync(): Promise<void> {
@@ -418,7 +478,53 @@ export class AppComponent implements OnInit, OnDestroy {
             return;
         }
 
-        await this.router.navigate(['/discover'], { queryParams: { q: query, type: this.searchDiscoverType } });
+        await this.router.navigate(['/discover'], { queryParams: { q: query, type: this.activeSearchScope } });
+    }
+
+    toggleSearchScopePicker(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.searchScopePickerOpen = !this.searchScopePickerOpen;
+    }
+
+    selectSearchScope(scope: SearchDiscoverType, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.manualSearchScope = scope;
+        this.searchScopePickerOpen = false;
+    }
+
+    clearSearchScopeOverride(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.manualSearchScope = null;
+        this.searchScopePickerOpen = false;
+    }
+
+    private getScopeLabel(scope: SearchDiscoverType): string {
+        const option = this.searchScopeOptions.find(item => item.value === scope);
+        return option?.label ?? 'All results';
+    }
+
+    private getPlaceholderForScope(scope: SearchDiscoverType): string {
+        switch (scope) {
+            case 'communities':
+                return 'Search communities by name, slug, or description';
+            case 'community-posts':
+                return 'Search community posts by title, content, author';
+            case 'blogs':
+                return 'Search blogs by title, handle, or slug';
+            case 'users':
+                return 'Search users and profiles';
+            case 'posts':
+                return 'Search posts and authors';
+            case 'reels':
+                return 'Search reels by caption, comments, or author';
+            case 'hashtags':
+                return 'Search hashtags';
+            default:
+                return 'Search users, communities, community posts, blogs, reels, posts, hashtags';
+        }
     }
 
     dismissTopNotice(): void {

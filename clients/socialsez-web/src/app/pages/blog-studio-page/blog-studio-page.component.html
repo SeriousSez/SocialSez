@@ -10,8 +10,14 @@
     <p class="error" *ngIf="error">{{ error }}</p>
 
     <section class="studio" *ngIf="!loading">
-        <aside class="sidebar">
-            <button class="new-btn" type="button" (click)="startNewBlog()">+ New Blog</button>
+        <section class="library card">
+            <div class="library-head">
+                <div>
+                    <h3>Your blogs</h3>
+                    <p class="muted">Pick one to edit, or start a fresh blog.</p>
+                </div>
+                <button class="new-btn" type="button" (click)="startNewBlog()">+ New Blog</button>
+            </div>
 
             <div class="blog-list" *ngIf="blogs.length; else noBlogs">
                 <button type="button" class="blog-chip" *ngFor="let blog of blogs; trackBy: trackBlog" [class.active]="blog.id === selectedBlogId" (click)="selectBlogAsync(blog.id)">
@@ -23,11 +29,19 @@
             <ng-template #noBlogs>
                 <p class="muted">No blogs yet. Create your first one.</p>
             </ng-template>
-        </aside>
+        </section>
 
         <div class="editor">
-            <section class="card">
-                <h3>{{ selectedBlog ? 'Edit Blog' : 'Create Blog' }}</h3>
+            <div class="editor-switcher" *ngIf="showBlogEditor && selectedBlog">
+                <button type="button" [class.active]="activeEditorSection === 'blog'" (click)="openEditorSection('blog')">Edit Blog</button>
+                <button type="button" [class.active]="activeEditorSection === 'posts'" (click)="openEditorSection('posts')">Posts</button>
+            </div>
+
+            <section class="card" *ngIf="showBlogEditor && (!selectedBlog || activeEditorSection === 'blog')">
+                <div class="card-head">
+                    <h3>{{ selectedBlog ? 'Edit Blog' : 'Create Blog' }}</h3>
+                    <button class="muted-btn" type="button" (click)="closeBlogEditor()">{{ selectedBlog ? 'Close' : 'Cancel' }}</button>
+                </div>
 
                 <label>Title</label>
                 <input type="text" [(ngModel)]="blogForm.title" maxlength="160" placeholder="My design notes" />
@@ -45,29 +59,50 @@
 
                 <h4>Theme</h4>
                 <div class="theme-grid">
-                    <div>
+                    <div class="theme-field">
                         <label>Font family</label>
-                        <input type="text" [(ngModel)]="blogForm.fontFamily" placeholder="Georgia, serif" />
+                        <select [(ngModel)]="fontFamilySelection" (ngModelChange)="onFontFamilySelectionChange()">
+                            <option *ngFor="let option of fontFamilyOptions" [ngValue]="option.value">{{ option.label }}</option>
+                        </select>
+                        <input *ngIf="showCustomFontFamilyInput" type="text" [(ngModel)]="blogForm.fontFamily" placeholder="e.g. ui-serif, Cambria, serif" />
                     </div>
-                    <div>
+                    <div class="theme-field">
                         <label>Accent color</label>
-                        <input type="text" [(ngModel)]="blogForm.accentColor" placeholder="#ea580c" />
+                        <div class="color-row">
+                            <input class="color-picker" type="color" [value]="accentColorPickerValue" (input)="onAccentColorPicked($any($event.target).value)" />
+                            <input type="text" [(ngModel)]="blogForm.accentColor" placeholder="#ea580c or var(--accent)" />
+                        </div>
+                        <div class="theme-field-spacer" *ngIf="showAccentColorSpacer" aria-hidden="true"></div>
                     </div>
-                    <div>
+                    <div class="theme-field">
                         <label>Background color</label>
-                        <input type="text" [(ngModel)]="blogForm.backgroundColor" placeholder="#fff7ed" />
+                        <div class="color-row">
+                            <input class="color-picker" type="color" [value]="backgroundColorPickerValue" (input)="onBackgroundColorPicked($any($event.target).value)" />
+                            <input type="text" [(ngModel)]="blogForm.backgroundColor" placeholder="#fff7ed or var(--background)" />
+                        </div>
                     </div>
-                    <div>
+                    <div class="theme-field">
                         <label>Surface color</label>
-                        <input type="text" [(ngModel)]="blogForm.surfaceColor" placeholder="#ffffff" />
+                        <div class="color-row">
+                            <input class="color-picker" type="color" [value]="surfaceColorPickerValue" (input)="onSurfaceColorPicked($any($event.target).value)" />
+                            <input type="text" [(ngModel)]="blogForm.surfaceColor" placeholder="#ffffff or var(--surface)" />
+                        </div>
                     </div>
-                    <div>
+                    <div class="theme-field">
                         <label>Header layout</label>
-                        <input type="text" [(ngModel)]="blogForm.headerLayout" placeholder="center" />
+                        <select [(ngModel)]="headerLayoutSelection" (ngModelChange)="onHeaderLayoutSelectionChange()">
+                            <option *ngFor="let option of headerLayoutOptions" [ngValue]="option.value">{{ option.label }}</option>
+                        </select>
+                        <input *ngIf="showCustomHeaderLayoutInput" type="text" [(ngModel)]="blogForm.headerLayout" placeholder="e.g. hero-split" />
+                        <div class="theme-field-spacer" *ngIf="showHeaderLayoutSpacer" aria-hidden="true"></div>
                     </div>
-                    <div>
+                    <div class="theme-field">
                         <label>Post list layout</label>
-                        <input type="text" [(ngModel)]="blogForm.postListLayout" placeholder="grid" />
+                        <select [(ngModel)]="postListLayoutSelection" (ngModelChange)="onPostListLayoutSelectionChange()">
+                            <option *ngFor="let option of postListLayoutOptions" [ngValue]="option.value">{{ option.label }}</option>
+                        </select>
+                        <input *ngIf="showCustomPostListLayoutInput" type="text" [(ngModel)]="blogForm.postListLayout" placeholder="e.g. timeline" />
+                        <div class="theme-field-spacer" *ngIf="showPostListLayoutSpacer" aria-hidden="true"></div>
                     </div>
                 </div>
 
@@ -80,65 +115,77 @@
                 </div>
             </section>
 
-            <section class="card" *ngIf="selectedBlog as blog">
-                <div class="card-head">
-                    <h3>Posts for {{ blog.title }}</h3>
-                    <button class="new-btn" type="button" (click)="startNewPost()">+ New Post</button>
-                </div>
+            <ng-container *ngIf="showBlogEditor && activeEditorSection === 'posts' && selectedBlog as blog">
+                <section class="card">
+                    <div class="card-head">
+                        <h3>Posts for {{ blog.title }}</h3>
+                        <button class="new-btn" type="button" (click)="startNewPost()">+ New Post</button>
+                    </div>
 
-                <p class="error" *ngIf="postError">{{ postError }}</p>
-                <p class="muted" *ngIf="loadingPosts">Loading posts...</p>
+                    <p class="error" *ngIf="postError">{{ postError }}</p>
+                    <p class="muted" *ngIf="loadingPosts">Loading posts...</p>
 
-                <div class="post-list" *ngIf="!loadingPosts && posts.length">
-                    <button type="button" class="post-chip" *ngFor="let post of posts; trackBy: trackPost" [class.active]="post.id === editingPostId" (click)="editPost(post)">
-                        <span>{{ post.title }}</span>
-                        <small>{{ post.isPublished ? 'Published' : 'Draft' }}</small>
-                    </button>
-                </div>
+                    <div class="post-list" *ngIf="!loadingPosts && posts.length">
+                        <button type="button" class="post-chip" *ngFor="let post of posts; trackBy: trackPost" [class.active]="post.id === editingPostId" (click)="editPost(post)">
+                            <span>{{ post.title }}</span>
+                            <small>{{ post.isPublished ? 'Published' : 'Draft' }}</small>
+                        </button>
+                    </div>
 
-                <label>Post title</label>
-                <input type="text" [(ngModel)]="postForm.title" maxlength="220" placeholder="How I redesigned my profile page" />
+                    <label>Post title</label>
+                    <input type="text" [(ngModel)]="postForm.title" maxlength="220" placeholder="How I redesigned my profile page" />
 
-                <label>Post slug</label>
-                <input type="text" [(ngModel)]="postForm.slug" maxlength="120" placeholder="profile-redesign" />
+                    <label>Post slug</label>
+                    <input type="text" [(ngModel)]="postForm.slug" maxlength="120" placeholder="profile-redesign" />
 
-                <label>Excerpt</label>
-                <textarea rows="2" [(ngModel)]="postForm.excerpt" maxlength="800" placeholder="A short teaser for listings"></textarea>
+                    <label>Excerpt</label>
+                    <textarea rows="2" [(ngModel)]="postForm.excerpt" maxlength="800" placeholder="A short teaser for listings"></textarea>
 
-                <label>Cover image URL</label>
-                <input type="text" [(ngModel)]="postForm.coverImageUrl" maxlength="2048" placeholder="/uploads/images/post-cover.jpg" />
+                    <label>Cover image URL</label>
+                    <div class="cover-input-row">
+                        <input type="text" [(ngModel)]="postForm.coverImageUrl" maxlength="2048" placeholder="/uploads/images/post-cover.jpg" />
+                        <button type="button" class="muted-btn" [disabled]="uploadingPostCoverImage || savingPost || deletingPost" (click)="openCoverImagePicker()">
+                            {{ uploadingPostCoverImage ? 'Uploading...' : 'Upload image' }}
+                        </button>
+                    </div>
+                    <input #coverImageInput type="file" accept="image/*" (change)="onCoverImageSelected($event)" hidden />
 
-                <label>Tags (comma separated)</label>
-                <input type="text" [(ngModel)]="postForm.tags" placeholder="ui, angular, personal" />
+                    <label>Tags (comma separated)</label>
+                    <input type="text" [(ngModel)]="postForm.tags" placeholder="ui, angular, personal" />
 
-                <label>Content</label>
-                <p class="muted markdown-help">Markdown supported: # heading, **bold**, *italic*, `code`, [link](https://example.com), lists, and fenced code blocks.</p>
-                <div class="markdown-toolbar" aria-label="Markdown tools">
-                    <button type="button" (click)="insertMarkdown('h2', contentEditor)">H2</button>
-                    <button type="button" (click)="insertMarkdown('bold', contentEditor)">Bold</button>
-                    <button type="button" (click)="insertMarkdown('italic', contentEditor)">Italic</button>
-                    <button type="button" (click)="insertMarkdown('link', contentEditor)">Link</button>
-                    <button type="button" (click)="insertMarkdown('ul', contentEditor)">Bullet List</button>
-                    <button type="button" (click)="insertMarkdown('ol', contentEditor)">Numbered List</button>
-                    <button type="button" (click)="insertMarkdown('quote', contentEditor)">Quote</button>
-                    <button type="button" (click)="insertMarkdown('inlineCode', contentEditor)">Inline Code</button>
-                    <button type="button" (click)="insertMarkdown('codeBlock', contentEditor)">Code Block</button>
-                </div>
-                <div class="markdown-editor">
-                    <textarea #contentEditor rows="12" [(ngModel)]="postForm.content" maxlength="200000" placeholder="Write your article content here"></textarea>
-                    <div class="markdown-preview" [innerHTML]="postPreviewHtml"></div>
-                </div>
+                    <label>Content</label>
+                    <p class="muted markdown-help">Markdown supported: # heading, **bold**, *italic*, `code`, [link](https://example.com), lists, and fenced code blocks.</p>
+                    <div class="composer-switcher" aria-label="Post content mode">
+                        <button type="button" [class.active]="activePostComposerView === 'write'" (click)="setPostComposerView('write')">Write</button>
+                        <button type="button" [class.active]="activePostComposerView === 'preview'" (click)="setPostComposerView('preview')">Preview</button>
+                    </div>
+                    <div class="markdown-toolbar" *ngIf="activePostComposerView === 'write'" aria-label="Markdown tools">
+                        <button type="button" (click)="insertMarkdown('h2')">H2</button>
+                        <button type="button" (click)="insertMarkdown('bold')">Bold</button>
+                        <button type="button" (click)="insertMarkdown('italic')">Italic</button>
+                        <button type="button" (click)="insertMarkdown('link')">Link</button>
+                        <button type="button" (click)="insertMarkdown('ul')">Bullet List</button>
+                        <button type="button" (click)="insertMarkdown('ol')">Numbered List</button>
+                        <button type="button" (click)="insertMarkdown('quote')">Quote</button>
+                        <button type="button" (click)="insertMarkdown('inlineCode')">Inline Code</button>
+                        <button type="button" (click)="insertMarkdown('codeBlock')">Code Block</button>
+                    </div>
+                    <div class="markdown-editor">
+                        <textarea *ngIf="activePostComposerView === 'write'" #contentEditor rows="12" [(ngModel)]="postForm.content" maxlength="200000" placeholder="Write your article content here"></textarea>
+                        <div *ngIf="activePostComposerView === 'preview'" class="markdown-preview" [innerHTML]="postPreviewHtml"></div>
+                    </div>
 
-                <label class="checkbox">
-                    <input type="checkbox" [(ngModel)]="postForm.isPublished" />
-                    Published
-                </label>
+                    <label class="checkbox">
+                        <input type="checkbox" [(ngModel)]="postForm.isPublished" />
+                        Published
+                    </label>
 
-                <div class="form-actions">
-                    <button class="save-btn" type="button" [disabled]="savingPost || deletingPost" (click)="savePostAsync()">{{ savingPost ? 'Saving...' : (editingPostId ? 'Update Post' : 'Create Post') }}</button>
-                    <button class="danger-btn" type="button" *ngIf="editingPostId" [disabled]="savingPost || deletingPost" (click)="deleteEditingPostAsync()">{{ deletingPost ? 'Deleting...' : 'Delete Post' }}</button>
-                </div>
-            </section>
+                    <div class="form-actions">
+                        <button class="save-btn" type="button" [disabled]="savingPost || deletingPost || uploadingPostCoverImage" (click)="savePostAsync()">{{ savingPost ? 'Saving...' : (editingPostId ? 'Update Post' : 'Create Post') }}</button>
+                        <button class="danger-btn" type="button" *ngIf="editingPostId" [disabled]="savingPost || deletingPost || uploadingPostCoverImage" (click)="deleteEditingPostAsync()">{{ deletingPost ? 'Deleting...' : 'Delete Post' }}</button>
+                    </div>
+                </section>
+            </ng-container>
         </div>
     </section>
 </section>

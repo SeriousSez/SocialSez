@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BlogDto, BlogPostDto, BlogThemeConfigDto } from '../../core/api.types';
@@ -31,12 +31,16 @@ interface BlogPostFormState {
 }
 
 type MarkdownToolAction = 'h2' | 'bold' | 'italic' | 'link' | 'ul' | 'ol' | 'quote' | 'inlineCode' | 'codeBlock';
+type PostComposerView = 'write' | 'preview';
 
 interface MarkdownInsertion {
     text: string;
     selectStart: number;
     selectEnd: number;
 }
+
+const CUSTOM_THEME_OPTION = '__custom__';
+type BlogEditorSection = 'blog' | 'posts';
 
 @Component({
     selector: 'app-blog-studio-page',
@@ -46,10 +50,14 @@ interface MarkdownInsertion {
     styleUrl: './blog-studio-page.component.scss'
 })
 export class BlogStudioPageComponent {
+    @ViewChild('contentEditor') contentEditor?: ElementRef<HTMLTextAreaElement>;
+    @ViewChild('coverImageInput') coverImageInput?: ElementRef<HTMLInputElement>;
+
     loading = true;
     loadingPosts = false;
     savingBlog = false;
     savingPost = false;
+    uploadingPostCoverImage = false;
     deletingBlog = false;
     deletingPost = false;
     error = '';
@@ -59,9 +67,39 @@ export class BlogStudioPageComponent {
     posts: BlogPostDto[] = [];
     selectedBlogId: string | null = null;
     editingPostId: string | null = null;
+    showBlogEditor = false;
+    activeEditorSection: BlogEditorSection = 'blog';
+    activePostComposerView: PostComposerView = 'write';
 
     readonly blogForm: BlogFormState = this.createEmptyBlogForm();
     readonly postForm: BlogPostFormState = this.createEmptyPostForm();
+    fontFamilySelection = CUSTOM_THEME_OPTION;
+    headerLayoutSelection = CUSTOM_THEME_OPTION;
+    postListLayoutSelection = CUSTOM_THEME_OPTION;
+
+    readonly fontFamilyOptions: ReadonlyArray<{ value: string; label: string }> = [
+        { value: 'Georgia, serif', label: 'Georgia' },
+        { value: 'Inter, system-ui, sans-serif', label: 'Inter' },
+        { value: 'Merriweather, Georgia, serif', label: 'Merriweather' },
+        { value: 'Lora, Georgia, serif', label: 'Lora' },
+        { value: 'Source Sans 3, Inter, sans-serif', label: 'Source Sans 3' },
+        { value: CUSTOM_THEME_OPTION, label: 'Custom' }
+    ];
+
+    readonly headerLayoutOptions: ReadonlyArray<{ value: string; label: string }> = [
+        { value: 'left', label: 'Left' },
+        { value: 'center', label: 'Center' },
+        { value: 'split', label: 'Split' },
+        { value: 'minimal', label: 'Minimal' },
+        { value: CUSTOM_THEME_OPTION, label: 'Custom' }
+    ];
+
+    readonly postListLayoutOptions: ReadonlyArray<{ value: string; label: string }> = [
+        { value: 'grid', label: 'Grid' },
+        { value: 'stack', label: 'Stack' },
+        { value: 'magazine', label: 'Magazine' },
+        { value: CUSTOM_THEME_OPTION, label: 'Custom' }
+    ];
 
     constructor(private readonly session: SessionService) {
         void this.loadAsync();
@@ -79,6 +117,42 @@ export class BlogStudioPageComponent {
         return renderMarkdownToHtml(this.postForm.content);
     }
 
+    get accentColorPickerValue(): string {
+        return this.resolvePickerColor(this.blogForm.accentColor, '#ea580c');
+    }
+
+    get backgroundColorPickerValue(): string {
+        return this.resolvePickerColor(this.blogForm.backgroundColor, '#fff7ed');
+    }
+
+    get surfaceColorPickerValue(): string {
+        return this.resolvePickerColor(this.blogForm.surfaceColor, '#ffffff');
+    }
+
+    get showCustomFontFamilyInput(): boolean {
+        return this.fontFamilySelection === CUSTOM_THEME_OPTION;
+    }
+
+    get showCustomHeaderLayoutInput(): boolean {
+        return this.headerLayoutSelection === CUSTOM_THEME_OPTION;
+    }
+
+    get showCustomPostListLayoutInput(): boolean {
+        return this.postListLayoutSelection === CUSTOM_THEME_OPTION;
+    }
+
+    get showAccentColorSpacer(): boolean {
+        return this.showCustomFontFamilyInput;
+    }
+
+    get showHeaderLayoutSpacer(): boolean {
+        return !this.showCustomHeaderLayoutInput && this.showCustomPostListLayoutInput;
+    }
+
+    get showPostListLayoutSpacer(): boolean {
+        return !this.showCustomPostListLayoutInput && this.showCustomHeaderLayoutInput;
+    }
+
     async loadAsync(): Promise<void> {
         this.loading = true;
         this.error = '';
@@ -87,10 +161,10 @@ export class BlogStudioPageComponent {
             await this.session.bootstrapAsync();
             this.blogs = await this.session.loadMyBlogsAsync();
 
-            if (!this.selectedBlogId && this.blogs.length > 0) {
-                await this.selectBlogAsync(this.blogs[0].id);
-            } else if (this.selectedBlogId) {
+            if (this.selectedBlogId) {
                 await this.selectBlogAsync(this.selectedBlogId);
+            } else {
+                this.closeBlogEditor();
             }
         } catch {
             this.error = 'Could not load your blogs.';
@@ -105,6 +179,8 @@ export class BlogStudioPageComponent {
             return;
         }
 
+        this.showBlogEditor = true;
+        this.activeEditorSection = 'blog';
         this.selectedBlogId = blog.id;
         this.editingPostId = null;
         this.assignBlogForm(blog);
@@ -113,9 +189,23 @@ export class BlogStudioPageComponent {
     }
 
     startNewBlog(): void {
+        this.showBlogEditor = true;
+        this.activeEditorSection = 'blog';
         this.selectedBlogId = null;
         this.editingPostId = null;
         this.posts = [];
+        this.postError = '';
+        this.assignBlogForm(null);
+        this.resetPostForm();
+    }
+
+    closeBlogEditor(): void {
+        this.showBlogEditor = false;
+        this.activeEditorSection = 'blog';
+        this.selectedBlogId = null;
+        this.editingPostId = null;
+        this.posts = [];
+        this.postError = '';
         this.assignBlogForm(null);
         this.resetPostForm();
     }
@@ -168,11 +258,7 @@ export class BlogStudioPageComponent {
         try {
             await this.session.deleteBlogAsync(selectedBlog.id);
             this.blogs = this.blogs.filter(blog => blog.id !== selectedBlog.id);
-            this.startNewBlog();
-
-            if (this.blogs.length > 0) {
-                await this.selectBlogAsync(this.blogs[0].id);
-            }
+            this.closeBlogEditor();
         } catch {
             this.error = 'Could not delete this blog.';
         } finally {
@@ -181,6 +267,7 @@ export class BlogStudioPageComponent {
     }
 
     editPost(post: BlogPostDto): void {
+        this.activePostComposerView = 'write';
         this.editingPostId = post.id;
         this.postForm.title = post.title;
         this.postForm.slug = post.slug;
@@ -192,13 +279,52 @@ export class BlogStudioPageComponent {
     }
 
     startNewPost(): void {
+        this.activeEditorSection = 'posts';
         this.editingPostId = null;
         this.resetPostForm();
     }
 
+    openEditorSection(section: BlogEditorSection): void {
+        this.activeEditorSection = section;
+    }
+
+    setPostComposerView(view: PostComposerView): void {
+        this.activePostComposerView = view;
+    }
+
+    openCoverImagePicker(): void {
+        if (this.uploadingPostCoverImage) {
+            return;
+        }
+
+        this.coverImageInput?.nativeElement.click();
+    }
+
+    async onCoverImageSelected(event: Event): Promise<void> {
+        const target = event.target as HTMLInputElement | null;
+        const file = target?.files?.[0];
+        if (!file || this.uploadingPostCoverImage) {
+            return;
+        }
+
+        this.uploadingPostCoverImage = true;
+        this.postError = '';
+
+        try {
+            this.postForm.coverImageUrl = await this.session.uploadImageAsync(file);
+        } catch {
+            this.postError = 'Could not upload cover image.';
+        } finally {
+            this.uploadingPostCoverImage = false;
+            if (target) {
+                target.value = '';
+            }
+        }
+    }
+
     async savePostAsync(): Promise<void> {
         const selectedBlog = this.selectedBlog;
-        if (!selectedBlog || this.savingPost || this.deletingPost) {
+        if (!selectedBlog || this.savingPost || this.deletingPost || this.uploadingPostCoverImage) {
             return;
         }
 
@@ -266,7 +392,12 @@ export class BlogStudioPageComponent {
         return post.id;
     }
 
-    insertMarkdown(action: MarkdownToolAction, editor: HTMLTextAreaElement): void {
+    insertMarkdown(action: MarkdownToolAction): void {
+        const editor = this.contentEditor?.nativeElement;
+        if (!editor) {
+            return;
+        }
+
         const value = this.postForm.content;
         const start = editor.selectionStart ?? 0;
         const end = editor.selectionEnd ?? 0;
@@ -284,6 +415,54 @@ export class BlogStudioPageComponent {
             editor.focus();
             editor.setSelectionRange(selectionStart, selectionEnd);
         }, 0);
+    }
+
+    onFontFamilySelectionChange(): void {
+        if (this.fontFamilySelection === CUSTOM_THEME_OPTION) {
+            if (this.isValueFromOptions(this.blogForm.fontFamily, this.fontFamilyOptions)) {
+                this.blogForm.fontFamily = '';
+            }
+
+            return;
+        }
+
+        this.blogForm.fontFamily = this.fontFamilySelection;
+    }
+
+    onHeaderLayoutSelectionChange(): void {
+        if (this.headerLayoutSelection === CUSTOM_THEME_OPTION) {
+            if (this.isValueFromOptions(this.blogForm.headerLayout, this.headerLayoutOptions)) {
+                this.blogForm.headerLayout = '';
+            }
+
+            return;
+        }
+
+        this.blogForm.headerLayout = this.headerLayoutSelection;
+    }
+
+    onPostListLayoutSelectionChange(): void {
+        if (this.postListLayoutSelection === CUSTOM_THEME_OPTION) {
+            if (this.isValueFromOptions(this.blogForm.postListLayout, this.postListLayoutOptions)) {
+                this.blogForm.postListLayout = '';
+            }
+
+            return;
+        }
+
+        this.blogForm.postListLayout = this.postListLayoutSelection;
+    }
+
+    onAccentColorPicked(value: string): void {
+        this.blogForm.accentColor = (value ?? '').trim();
+    }
+
+    onBackgroundColorPicked(value: string): void {
+        this.blogForm.backgroundColor = (value ?? '').trim();
+    }
+
+    onSurfaceColorPicked(value: string): void {
+        this.blogForm.surfaceColor = (value ?? '').trim();
     }
 
     private async loadPostsAsync(blog: BlogDto): Promise<void> {
@@ -389,6 +568,7 @@ export class BlogStudioPageComponent {
     private assignBlogForm(blog: BlogDto | null): void {
         if (!blog) {
             Object.assign(this.blogForm, this.createEmptyBlogForm());
+            this.syncThemeSelectionsFromForm();
             return;
         }
 
@@ -403,6 +583,7 @@ export class BlogStudioPageComponent {
         this.blogForm.headerLayout = blog.theme?.headerLayout ?? '';
         this.blogForm.postListLayout = blog.theme?.postListLayout ?? '';
         this.blogForm.customCss = blog.theme?.customCss ?? '';
+        this.syncThemeSelectionsFromForm();
     }
 
     private buildThemePayload(): BlogThemeConfigDto {
@@ -431,6 +612,7 @@ export class BlogStudioPageComponent {
     }
 
     private resetPostForm(): void {
+        this.activePostComposerView = 'write';
         Object.assign(this.postForm, this.createEmptyPostForm());
     }
 
@@ -460,5 +642,39 @@ export class BlogStudioPageComponent {
             content: '',
             isPublished: true
         };
+    }
+
+    private syncThemeSelectionsFromForm(): void {
+        this.fontFamilySelection = this.findMatchingOptionOrCustom(this.blogForm.fontFamily, this.fontFamilyOptions);
+        this.headerLayoutSelection = this.findMatchingOptionOrCustom(this.blogForm.headerLayout, this.headerLayoutOptions);
+        this.postListLayoutSelection = this.findMatchingOptionOrCustom(this.blogForm.postListLayout, this.postListLayoutOptions);
+    }
+
+    private findMatchingOptionOrCustom(value: string, options: ReadonlyArray<{ value: string }>): string {
+        const normalized = value.trim().toLowerCase();
+        if (!normalized) {
+            return CUSTOM_THEME_OPTION;
+        }
+
+        const match = options.find(option => option.value !== CUSTOM_THEME_OPTION && option.value.trim().toLowerCase() === normalized);
+        return match?.value ?? CUSTOM_THEME_OPTION;
+    }
+
+    private isValueFromOptions(value: string, options: ReadonlyArray<{ value: string }>): boolean {
+        const normalized = value.trim().toLowerCase();
+        if (!normalized) {
+            return false;
+        }
+
+        return options.some(option => option.value !== CUSTOM_THEME_OPTION && option.value.trim().toLowerCase() === normalized);
+    }
+
+    private resolvePickerColor(value: string, fallback: string): string {
+        const normalized = value.trim();
+        return this.isHexColor(normalized) ? normalized : fallback;
+    }
+
+    private isHexColor(value: string): boolean {
+        return /^#(?:[\da-fA-F]{3}|[\da-fA-F]{6})$/.test(value);
     }
 }

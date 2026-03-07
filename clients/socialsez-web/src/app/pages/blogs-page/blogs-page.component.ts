@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BlogDto } from '../../core/api.types';
@@ -26,11 +26,13 @@ export class BlogsPageComponent {
     sortBy: BlogSort = 'updated';
     searchText = '';
     loading = true;
+    sortMenuOpen = false;
     error = '';
     blogs: BlogDto[] = [];
     readonly pageSize = 18;
     visibleCount = 18;
     loadingMore = false;
+    private queryDebounceTimerId: number | null = null;
 
     @ViewChild('infiniteSentinel')
     set infiniteSentinel(value: ElementRef<HTMLDivElement> | undefined) {
@@ -40,6 +42,12 @@ export class BlogsPageComponent {
 
     private sentinelRef?: ElementRef<HTMLDivElement>;
     private infiniteObserver: IntersectionObserver | null = null;
+
+    readonly sortOptions: ReadonlyArray<{ value: BlogSort; label: string }> = [
+        { value: 'updated', label: 'Recently updated' },
+        { value: 'created', label: 'Newest created' },
+        { value: 'title', label: 'Title A-Z' }
+    ];
 
     constructor(public readonly session: SessionService) {
         void this.loadAsync();
@@ -60,6 +68,18 @@ export class BlogsPageComponent {
         await this.loadAsync();
     }
 
+    onSearchInput(): void {
+        if (this.queryDebounceTimerId !== null) {
+            window.clearTimeout(this.queryDebounceTimerId);
+            this.queryDebounceTimerId = null;
+        }
+
+        this.queryDebounceTimerId = window.setTimeout(() => {
+            this.queryDebounceTimerId = null;
+            void this.runSearchAsync();
+        }, 220);
+    }
+
     async clearSearchAsync(): Promise<void> {
         if (!this.searchText.trim()) {
             return;
@@ -73,6 +93,23 @@ export class BlogsPageComponent {
     onSortChanged(): void {
         this.resetPagination();
         this.scheduleObserverRefresh();
+    }
+
+    toggleSortMenu(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.sortMenuOpen = !this.sortMenuOpen;
+    }
+
+    selectSort(value: BlogSort, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (this.sortBy !== value) {
+            this.sortBy = value;
+            this.onSortChanged();
+        }
+
+        this.sortMenuOpen = false;
     }
 
     loadMoreBlogs(): void {
@@ -138,6 +175,10 @@ export class BlogsPageComponent {
         }
     }
 
+    get currentSortLabel(): string {
+        return this.sortOptions.find(option => option.value === this.sortBy)?.label ?? 'Recently updated';
+    }
+
     get sortedBlogs(): BlogDto[] {
         const blogs = [...this.blogs];
         switch (this.sortBy) {
@@ -188,9 +229,24 @@ export class BlogsPageComponent {
     }
 
     ngOnDestroy(): void {
+        if (this.queryDebounceTimerId !== null) {
+            window.clearTimeout(this.queryDebounceTimerId);
+            this.queryDebounceTimerId = null;
+        }
+
         if (this.infiniteObserver) {
             this.infiniteObserver.disconnect();
         }
+    }
+
+    @HostListener('document:click')
+    onDocumentClick(): void {
+        this.sortMenuOpen = false;
+    }
+
+    @HostListener('document:keydown.escape')
+    onDocumentEscape(): void {
+        this.sortMenuOpen = false;
     }
 
     private refreshInfiniteObserver(): void {

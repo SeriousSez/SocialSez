@@ -407,12 +407,19 @@ h1 {
     border: 1px solid #c6d4e6;
     border-radius: 10px;
     background: #fcfdff;
-    overflow: hidden;
+    overflow: visible;
     transition: 120ms ease;
 }
 
-.search-context-chip {
+.search-scope-picker {
     margin-left: 8px;
+    position: relative;
+}
+
+.search-context-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     border: 1px solid #d4dbe6;
     border-radius: 999px;
     background: #eef2ff;
@@ -423,6 +430,59 @@ h1 {
     letter-spacing: 0.02em;
     padding: 6px 9px;
     white-space: nowrap;
+    cursor: pointer;
+}
+
+.search-context-chip.overridden {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+.search-scope-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 220px;
+    max-width: min(320px, calc(100vw - 40px));
+    display: grid;
+    gap: 4px;
+    background: #ffffff;
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.6);
+    padding: 8px;
+    z-index: 30;
+}
+
+.search-scope-option,
+.search-scope-remove {
+    border: 1px solid transparent;
+    background: transparent;
+    color: #1e293b;
+    border-radius: 8px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.search-scope-option:hover,
+.search-scope-remove:hover {
+    background: #eff6ff;
+}
+
+.search-scope-option.active {
+    background: #dbeafe;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.search-scope-remove {
+    border-top: 1px solid #e2e8f0;
+    margin-top: 2px;
+    padding-top: 10px;
+    color: #475569;
 }
 
 .search-row:focus-within {
@@ -916,6 +976,32 @@ label {
         border-color: var(--color-border);
         background: rgba(59, 130, 246, 0.18);
         color: var(--color-text);
+    }
+
+    .search-scope-menu {
+        border-color: var(--color-border);
+        background: var(--color-surface);
+        box-shadow: 0 18px 40px -30px rgba(2, 6, 23, 0.9);
+    }
+
+    .search-scope-option,
+    .search-scope-remove {
+        color: var(--color-text);
+    }
+
+    .search-scope-option:hover,
+    .search-scope-remove:hover {
+        background: rgba(59, 130, 246, 0.12);
+    }
+
+    .search-scope-option.active {
+        border-color: var(--color-border-strong);
+        background: rgba(59, 130, 246, 0.24);
+        color: var(--color-text);
+    }
+
+    .search-scope-remove {
+        border-top-color: var(--color-border);
     }
 
     .search-row:focus-within {

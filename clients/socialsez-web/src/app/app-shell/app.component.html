@@ -74,7 +74,24 @@
             <label class="search-box">
                 <span>Search</span>
                 <div class="search-row">
-                    <span class="search-context-chip" [attr.aria-label]="'Search context: ' + searchContextLabel">{{ searchContextLabel }}</span>
+                    <div class="search-scope-picker">
+                        <button class="search-context-chip" type="button" [class.overridden]="isSearchScopeOverridden" [attr.aria-label]="'Search scope: ' + searchChipLabel" [attr.aria-expanded]="searchScopePickerOpen" aria-haspopup="menu" (click)="toggleSearchScopePicker($event)">
+                            <span>{{ searchChipLabel }}</span>
+                            <i class="fa-duotone fa-light fa-chevron-down" aria-hidden="true"></i>
+                        </button>
+
+                        <div class="search-scope-menu" *ngIf="searchScopePickerOpen" role="menu" aria-label="Search scope options">
+                            <button type="button" class="search-scope-option" [class.active]="!isSearchScopeOverridden" (click)="clearSearchScopeOverride($event)">
+                                Auto ({{ autoSearchScopeLabel }})
+                            </button>
+                            <button type="button" class="search-scope-option" *ngFor="let option of searchScopeOptions" [class.active]="manualSearchScope === option.value" (click)="selectSearchScope(option.value, $event)">
+                                {{ option.label }}
+                            </button>
+                            <button type="button" class="search-scope-remove" *ngIf="isSearchScopeOverridden" (click)="clearSearchScopeOverride($event)">
+                                Remove override
+                            </button>
+                        </div>
+                    </div>
                     <input [placeholder]="searchPlaceholder" [(ngModel)]="searchText" (keydown.enter)="searchNow()" />
                     <button class="search-btn" type="button" (click)="searchNow()" aria-label="Search">
                         <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
