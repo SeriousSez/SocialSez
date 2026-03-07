@@ -125,12 +125,14 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.get<ProfileDto>(`${this.baseUrl}/profiles/me`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
-    createPost(content: string, imageFile?: File): Observable<PostDto> {
+    createPost(content: string, imageFiles?: File[]): Observable<PostDto> {
         const formData = new FormData();
         formData.append('content', content);
 
-        if (imageFile) {
-            formData.append('image', imageFile);
+        if (imageFiles?.length) {
+            for (const imageFile of imageFiles) {
+                formData.append('images', imageFile);
+            }
         }
 
         return this.withAutoRefresh(() => this.http.post<PostDto>(`${this.baseUrl}/posts`, formData, { headers: this.authHeaders() }));

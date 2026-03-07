@@ -976,6 +976,19 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         return /\.(mp4|webm|mov|m4v|ogv)(\?.*)?$/i.test(url);
     }
 
+    postMediaUrls(): string[] {
+        const urls = (this.post?.imageUrls ?? [])
+            .map(url => (url ?? '').trim())
+            .filter(url => !!url);
+
+        if (urls.length > 0) {
+            return urls;
+        }
+
+        const fallback = this.post?.imageUrl?.trim();
+        return fallback ? [fallback] : [];
+    }
+
     navigateToHashtag(hashtag: string, event: MouseEvent): void {
         event.preventDefault();
         event.stopPropagation();

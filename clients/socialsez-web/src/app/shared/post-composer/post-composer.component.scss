@@ -228,3 +228,15 @@ button:disabled {
     font-size: 0.86rem;
     color: #64748b;
 }
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+}
+
+.preview-grid .preview {
+    max-height: 180px;
+    height: 180px;
+    object-fit: cover;
+}

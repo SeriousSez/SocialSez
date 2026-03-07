@@ -60,11 +60,22 @@
             <app-lazy-image *ngIf="shared.imageUrl" imgClass="shared-post-image" [src]="shared.imageUrl" alt="Shared post media" skeletonHeight="210px" skeletonRadius="10px"></app-lazy-image>
         </article>
 
-        <ng-container *ngIf="post.imageUrl as mediaUrl">
-            <video class="post-media" *ngIf="isVideoMedia(mediaUrl); else imageMedia" [src]="mediaUrl" controls playsinline preload="metadata"></video>
-            <ng-template #imageMedia>
-                <app-lazy-image imgClass="post-image" [src]="mediaUrl" alt="Post media" skeletonHeight="280px" skeletonRadius="10px"></app-lazy-image>
-            </ng-template>
+        <ng-container *ngIf="postMediaUrls() as mediaUrls">
+            <ng-container *ngIf="mediaUrls.length === 1 && mediaUrls[0] as mediaUrl">
+                <video class="post-media" *ngIf="isVideoMedia(mediaUrl); else imageMedia" [src]="mediaUrl" controls playsinline preload="metadata"></video>
+                <ng-template #imageMedia>
+                    <app-lazy-image imgClass="post-image" [src]="mediaUrl" alt="Post media" skeletonHeight="280px" skeletonRadius="10px"></app-lazy-image>
+                </ng-template>
+            </ng-container>
+
+            <div class="post-media-grid" *ngIf="mediaUrls.length > 1">
+                <ng-container *ngFor="let mediaUrl of mediaUrls">
+                    <video class="post-media-grid-item" *ngIf="isVideoMedia(mediaUrl); else gridImageMedia" [src]="mediaUrl" controls playsinline preload="metadata"></video>
+                    <ng-template #gridImageMedia>
+                        <app-lazy-image imgClass="post-media-grid-item" [src]="mediaUrl" alt="Post media" skeletonHeight="180px" skeletonRadius="10px"></app-lazy-image>
+                    </ng-template>
+                </ng-container>
+            </div>
         </ng-container>
 
         <div class="engagement-summary">

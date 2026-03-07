@@ -148,6 +148,7 @@ export interface PostDto {
     authorImageUrl?: string;
     content: string;
     imageUrl?: string;
+    imageUrls?: string[];
     createdAtUtc: string;
     likeCount: number;
     likedByMe: boolean;

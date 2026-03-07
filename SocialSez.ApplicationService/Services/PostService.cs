@@ -7,6 +7,7 @@ using SocialSez.Domain.Entities;
 using SocialSez.Infrastructure;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace SocialSez.ApplicationService.Services;
 
@@ -34,14 +35,14 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         }
 
         var content = request.Content?.Trim() ?? string.Empty;
-        var imageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
+        var imageUrls = NormalizeImageUrls(request.ImageUrls);
 
         if (content.Length > MaxPostContentLength)
         {
             throw new ArgumentException($"Post content cannot exceed {MaxPostContentLength} characters.", nameof(request));
         }
 
-        if (string.IsNullOrWhiteSpace(content) && string.IsNullOrWhiteSpace(imageUrl))
+        if (string.IsNullOrWhiteSpace(content) && imageUrls.Length == 0)
         {
             throw new ArgumentException("Post content or image is required.", nameof(request));
         }
@@ -51,7 +52,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             Id = Guid.NewGuid(),
             AuthorId = request.AuthorId,
             Content = content,
-            ImageUrl = imageUrl,
+            ImageUrl = SerializePostMediaUrls(imageUrls),
             CreatedAtUtc = DateTime.UtcNow
         };
 
@@ -65,7 +66,8 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             author.Handle,
             author.ImageUrl,
             post.Content,
-            post.ImageUrl,
+            imageUrls.FirstOrDefault(),
+            imageUrls,
             post.CreatedAtUtc,
             0,
             false,
@@ -345,7 +347,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             throw new ArgumentException($"Post content cannot exceed {MaxPostContentLength} characters.", nameof(request));
         }
 
-        if (string.IsNullOrWhiteSpace(content) && string.IsNullOrWhiteSpace(post.ImageUrl))
+        if (string.IsNullOrWhiteSpace(content) && ParsePostMediaUrls(post.ImageUrl).Length == 0)
         {
             throw new ArgumentException("Post content is required when no image is attached.", nameof(request));
         }
@@ -1153,6 +1155,9 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
 
     private static PostDto MapToPostDto(Post post, Guid profileId)
     {
+        var imageUrls = ParsePostMediaUrls(post.ImageUrl);
+        var primaryImageUrl = imageUrls.FirstOrDefault();
+
         var comments = post.Comments
             .OrderBy(x => x.CreatedAtUtc)
             .Select(x => new CommentDto(
@@ -1205,7 +1210,8 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             post.Author.Handle,
             post.Author.ImageUrl,
             post.Content,
-            post.ImageUrl,
+            primaryImageUrl,
+            imageUrls,
             post.CreatedAtUtc,
             likeCount,
             string.Equals(myReactionType, LikeReactionType, StringComparison.OrdinalIgnoreCase),
@@ -1213,6 +1219,61 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             reactions,
             reactionDetails,
             comments);
+    }
+
+    private static string[] NormalizeImageUrls(IEnumerable<string>? imageUrls)
+    {
+        if (imageUrls is null)
+        {
+            return Array.Empty<string>();
+        }
+
+        return imageUrls
+            .Select(url => url?.Trim())
+            .Where(url => !string.IsNullOrWhiteSpace(url))
+            .Cast<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(12)
+            .ToArray();
+    }
+
+    private static string[] ParsePostMediaUrls(string? rawImageUrl)
+    {
+        var raw = rawImageUrl?.Trim();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return Array.Empty<string>();
+        }
+
+        if (raw.StartsWith("[", StringComparison.Ordinal))
+        {
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<string[]>(raw) ?? Array.Empty<string>();
+                return NormalizeImageUrls(parsed);
+            }
+            catch
+            {
+                return new[] { raw };
+            }
+        }
+
+        return new[] { raw };
+    }
+
+    private static string? SerializePostMediaUrls(IReadOnlyCollection<string> imageUrls)
+    {
+        if (imageUrls.Count == 0)
+        {
+            return null;
+        }
+
+        if (imageUrls.Count == 1)
+        {
+            return imageUrls.First();
+        }
+
+        return JsonSerializer.Serialize(imageUrls);
     }
 
     private async Task<HashSet<Guid>?> GetAllowedPrivateAuthorIdsAsync(Guid? viewerId, CancellationToken cancellationToken)

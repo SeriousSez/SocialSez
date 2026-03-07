@@ -1,15 +1,16 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SocialSez.API.Infrastructure;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
+using SocialSez.Domain.Entities;
+using SocialSez.Infrastructure;
 
 namespace SocialSez.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class StoriesController(IStoryService storyService, IWebHostEnvironment environment, IConfiguration configuration) : ControllerBase
+public class StoriesController(IStoryService storyService, SocialSezContext dbContext) : ControllerBase
 {
     [Authorize]
     [HttpPost]
@@ -132,11 +133,6 @@ public class StoriesController(IStoryService storyService, IWebHostEnvironment e
             : FeedMode.ForYou;
     }
 
-    private string ResolveUploadsRoot()
-    {
-        return UploadsRootResolver.Resolve(configuration, environment);
-    }
-
     private async Task<string> SaveMediaAsync(Guid profileId, IFormFile file, CancellationToken cancellationToken)
     {
         var extension = Path.GetExtension(file.FileName);
@@ -145,18 +141,54 @@ public class StoriesController(IStoryService storyService, IWebHostEnvironment e
             throw new ArgumentException("Allowed story media files: .jpg, .jpeg, .png, .webp, .gif, .mp4, .webm, .mov, .m4v, .ogv.");
         }
 
-        var uploadsRoot = Path.Combine(ResolveUploadsRoot(), "stories");
-        Directory.CreateDirectory(uploadsRoot);
+        await using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, cancellationToken);
 
-        var safeFileName = $"story-{profileId:N}-{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-        var absoluteFilePath = Path.Combine(uploadsRoot, safeFileName);
-
-        await using (var stream = System.IO.File.Create(absoluteFilePath))
+        var uploaded = new UploadedImage
         {
-            await file.CopyToAsync(stream, cancellationToken);
+            Id = Guid.NewGuid(),
+            UploadedByProfileId = profileId,
+            ContentType = NormalizeContentType(file.ContentType, extension),
+            OriginalFileName = Path.GetFileName(file.FileName),
+            FileExtension = extension.ToLowerInvariant(),
+            Content = memoryStream.ToArray(),
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        dbContext.UploadedImages.Add(uploaded);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return BuildUploadedMediaUrl(uploaded.Id);
+    }
+
+    private string BuildUploadedMediaUrl(Guid id)
+    {
+        var pathBase = Request.PathBase.HasValue ? Request.PathBase.Value : string.Empty;
+        var relativePath = $"{pathBase}/api/uploads/images/{id:D}";
+        return $"{Request.Scheme}://{Request.Host}{relativePath}";
+    }
+
+    private static string NormalizeContentType(string? contentType, string extension)
+    {
+        if (!string.IsNullOrWhiteSpace(contentType)
+            && (contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+                || contentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)))
+        {
+            return contentType;
         }
 
-        return $"{Request.Scheme}://{Request.Host}/uploads/stories/{safeFileName}";
+        return extension.ToLowerInvariant() switch
+        {
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            ".gif" => "image/gif",
+            ".mp4" => "video/mp4",
+            ".webm" => "video/webm",
+            ".mov" => "video/quicktime",
+            ".m4v" => "video/x-m4v",
+            ".ogv" => "video/ogg",
+            _ => "image/jpeg"
+        };
     }
 
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)

@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
+using SocialSez.Domain.Entities;
+using SocialSez.Infrastructure;
 
 namespace SocialSez.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ReelsController(IReelService reelService, IWebHostEnvironment environment) : ControllerBase
+public class ReelsController(IReelService reelService, SocialSezContext dbContext) : ControllerBase
 {
     [Authorize]
     [HttpPost]
@@ -264,18 +266,7 @@ public class ReelsController(IReelService reelService, IWebHostEnvironment envir
             throw new ArgumentException("Allowed reel video files: .mp4, .webm, .mov, .m4v, .ogv.");
         }
 
-        var uploadsRoot = Path.Combine(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"), "uploads", "reels");
-        Directory.CreateDirectory(uploadsRoot);
-
-        var safeFileName = $"reel-{profileId:N}-{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-        var absoluteFilePath = Path.Combine(uploadsRoot, safeFileName);
-
-        await using (var stream = System.IO.File.Create(absoluteFilePath))
-        {
-            await file.CopyToAsync(stream, cancellationToken);
-        }
-
-        return $"{Request.Scheme}://{Request.Host}/uploads/reels/{safeFileName}";
+        return await SaveToDatabaseAsync(profileId, file, extension, cancellationToken);
     }
 
     private async Task<string> SaveThumbnailAsync(Guid profileId, IFormFile file, CancellationToken cancellationToken)
@@ -286,18 +277,58 @@ public class ReelsController(IReelService reelService, IWebHostEnvironment envir
             throw new ArgumentException("Allowed thumbnail files: .jpg, .jpeg, .png, .webp.");
         }
 
-        var uploadsRoot = Path.Combine(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"), "uploads", "reels", "thumbs");
-        Directory.CreateDirectory(uploadsRoot);
+        return await SaveToDatabaseAsync(profileId, file, extension, cancellationToken);
+    }
 
-        var safeFileName = $"reel-thumb-{profileId:N}-{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-        var absoluteFilePath = Path.Combine(uploadsRoot, safeFileName);
+    private async Task<string> SaveToDatabaseAsync(Guid profileId, IFormFile file, string extension, CancellationToken cancellationToken)
+    {
+        await using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, cancellationToken);
 
-        await using (var stream = System.IO.File.Create(absoluteFilePath))
+        var uploaded = new UploadedImage
         {
-            await file.CopyToAsync(stream, cancellationToken);
+            Id = Guid.NewGuid(),
+            UploadedByProfileId = profileId,
+            ContentType = NormalizeContentType(file.ContentType, extension),
+            OriginalFileName = Path.GetFileName(file.FileName),
+            FileExtension = extension.ToLowerInvariant(),
+            Content = memoryStream.ToArray(),
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        dbContext.UploadedImages.Add(uploaded);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return BuildUploadedMediaUrl(uploaded.Id);
+    }
+
+    private string BuildUploadedMediaUrl(Guid id)
+    {
+        var pathBase = Request.PathBase.HasValue ? Request.PathBase.Value : string.Empty;
+        var relativePath = $"{pathBase}/api/uploads/images/{id:D}";
+        return $"{Request.Scheme}://{Request.Host}{relativePath}";
+    }
+
+    private static string NormalizeContentType(string? contentType, string extension)
+    {
+        if (!string.IsNullOrWhiteSpace(contentType)
+            && (contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+                || contentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)))
+        {
+            return contentType;
         }
 
-        return $"{Request.Scheme}://{Request.Host}/uploads/reels/thumbs/{safeFileName}";
+        return extension.ToLowerInvariant() switch
+        {
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            ".mp4" => "video/mp4",
+            ".webm" => "video/webm",
+            ".mov" => "video/quicktime",
+            ".m4v" => "video/x-m4v",
+            ".ogv" => "video/ogg",
+            _ => "image/jpeg"
+        };
     }
 
     private static readonly HashSet<string> AllowedVideoExtensions = new(StringComparer.OrdinalIgnoreCase)

@@ -1,6 +1,6 @@
 namespace SocialSez.ApplicationService.Models;
 
-public sealed record CreatePostRequest(Guid AuthorId, string? Content, string? ImageUrl);
+public sealed record CreatePostRequest(Guid AuthorId, string? Content, IReadOnlyCollection<string>? ImageUrls);
 
 public sealed record UpdatePostRequest(string? Content);
 
@@ -41,6 +41,7 @@ public sealed record PostDto(
     string? AuthorImageUrl,
     string Content,
     string? ImageUrl,
+    IReadOnlyCollection<string> ImageUrls,
     DateTime CreatedAtUtc,
     int LikeCount,
     bool LikedByMe,

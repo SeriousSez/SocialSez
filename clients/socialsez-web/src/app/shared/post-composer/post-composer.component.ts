@@ -24,16 +24,17 @@ export class PostComposerComponent implements OnDestroy {
 
     content = '';
     mediaPreviewUrl = '';
+    mediaPreviewUrls: string[] = [];
     status = '';
     uploadingMedia = false;
-    mediaKind: 'none' | 'image-croppable' | 'image-static' | 'video' = 'none';
+    mediaKind: 'none' | 'image-croppable' | 'image-static' | 'video' | 'multi-image' = 'none';
     cropOutputFormat: 'jpeg' | 'png' = 'jpeg';
 
-    selectedMediaFile: File | null = null;
+    selectedMediaFiles: File[] = [];
     mentionResults: ProfileDto[] = [];
     mentionOpen = false;
     mentionLoading = false;
-    private previewObjectUrl = '';
+    private previewObjectUrls: string[] = [];
     private croppedImageBlob: Blob | null = null;
     private croppedObjectUrl = '';
     private mentionRangeStart = -1;
@@ -104,7 +105,7 @@ export class PostComposerComponent implements OnDestroy {
     }
 
     async publish(): Promise<void> {
-        if ((!this.content.trim() && !this.selectedMediaFile) || this.uploadingMedia) {
+        if ((!this.content.trim() && this.selectedMediaFiles.length === 0) || this.uploadingMedia) {
             return;
         }
 
@@ -112,8 +113,8 @@ export class PostComposerComponent implements OnDestroy {
         this.status = '';
 
         try {
-            const mediaFile = this.buildUploadFile();
-            await this.session.createPostAsync(this.content.trim(), mediaFile ?? undefined);
+            const mediaFiles = this.buildUploadFiles();
+            await this.session.createPostAsync(this.content.trim(), mediaFiles.length > 0 ? mediaFiles : undefined);
             this.content = '';
             this.clearSelectedMedia();
             this.status = 'Posted.';
@@ -146,15 +147,58 @@ export class PostComposerComponent implements OnDestroy {
 
     onPostMediaSelected(event: Event): void {
         const input = event.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (!file) {
+        const files = Array.from(input.files ?? []);
+        if (files.length === 0) {
+            return;
+        }
+
+        const nonMediaFiles = files.filter(file => !file.type.startsWith('image/') && !file.type.startsWith('video/'));
+        if (nonMediaFiles.length > 0) {
+            this.clearSelectedMedia();
+            this.status = 'Unsupported file type selected.';
+            input.value = '';
+            return;
+        }
+
+        const videoFiles = files.filter(file => file.type.startsWith('video/'));
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+        if (videoFiles.length > 0 && files.length > 1) {
+            this.clearSelectedMedia();
+            this.status = 'Select one video or multiple images.';
+            input.value = '';
+            return;
+        }
+
+        if (imageFiles.length > 1 && videoFiles.length > 0) {
+            this.clearSelectedMedia();
+            this.status = 'Select one video or multiple images.';
+            input.value = '';
             return;
         }
 
         this.clearSelectedMedia();
-        this.selectedMediaFile = file;
-        this.previewObjectUrl = URL.createObjectURL(file);
-        this.mediaPreviewUrl = this.previewObjectUrl;
+
+        if (imageFiles.length > 1) {
+            this.selectedMediaFiles = imageFiles.slice(0, 12);
+            this.previewObjectUrls = this.selectedMediaFiles.map(file => URL.createObjectURL(file));
+            this.mediaPreviewUrls = [...this.previewObjectUrls];
+            this.mediaKind = 'multi-image';
+            this.cropOutputFormat = 'jpeg';
+            this.status = `${this.selectedMediaFiles.length} images attached.`;
+            input.value = '';
+            return;
+        }
+
+        const file = files[0];
+        if (!file) {
+            input.value = '';
+            return;
+        }
+
+        this.selectedMediaFiles = [file];
+        this.previewObjectUrls = [URL.createObjectURL(file)];
+        this.mediaPreviewUrl = this.previewObjectUrls[0] ?? '';
+        this.mediaPreviewUrls = [this.mediaPreviewUrl];
 
         if (file.type.startsWith('video/')) {
             this.mediaKind = 'video';
@@ -281,8 +325,8 @@ export class PostComposerComponent implements OnDestroy {
     }
 
     private clearSelectedMedia(): void {
-        if (this.previewObjectUrl) {
-            URL.revokeObjectURL(this.previewObjectUrl);
+        for (const objectUrl of this.previewObjectUrls) {
+            URL.revokeObjectURL(objectUrl);
         }
 
         if (this.croppedObjectUrl) {
@@ -291,25 +335,35 @@ export class PostComposerComponent implements OnDestroy {
 
         this.croppedImageBlob = null;
         this.croppedObjectUrl = '';
-        this.previewObjectUrl = '';
-        this.selectedMediaFile = null;
+        this.previewObjectUrls = [];
+        this.selectedMediaFiles = [];
         this.mediaPreviewUrl = '';
+        this.mediaPreviewUrls = [];
         this.mediaKind = 'none';
     }
 
-    private buildUploadFile(): File | undefined {
-        if (!this.selectedMediaFile) {
-            return undefined;
+    private buildUploadFiles(): File[] {
+        if (this.selectedMediaFiles.length === 0) {
+            return [];
+        }
+
+        if (this.mediaKind === 'multi-image') {
+            return [...this.selectedMediaFiles];
+        }
+
+        const primaryFile = this.selectedMediaFiles[0];
+        if (!primaryFile) {
+            return [];
         }
 
         if (this.mediaKind !== 'image-croppable' || !this.croppedImageBlob) {
-            return this.selectedMediaFile;
+            return [primaryFile];
         }
 
-        const baseName = this.selectedMediaFile.name.replace(/\.[^.]+$/, '');
+        const baseName = primaryFile.name.replace(/\.[^.]+$/, '');
         const extension = this.cropOutputFormat === 'png' ? 'png' : 'jpg';
         const mimeType = this.croppedImageBlob.type || (this.cropOutputFormat === 'png' ? 'image/png' : 'image/jpeg');
-        return new File([this.croppedImageBlob], `${baseName}-crop.${extension}`, { type: mimeType });
+        return [new File([this.croppedImageBlob], `${baseName}-crop.${extension}`, { type: mimeType })];
     }
 
     private normalizeContentLength(value: string): string {

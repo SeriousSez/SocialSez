@@ -270,8 +270,8 @@ export class SessionService {
         return profiles.map(profile => this.normalizeProfile(profile));
     }
 
-    async createPostAsync(content: string, imageFile?: File): Promise<void> {
-        await firstValueFrom(this.api.createPost(content, imageFile));
+    async createPostAsync(content: string, imageFiles?: File[]): Promise<void> {
+        await firstValueFrom(this.api.createPost(content, imageFiles));
         this.message = 'Post created.';
         this.emitAppChange('posts');
     }
@@ -814,10 +814,19 @@ export class SessionService {
     }
 
     private normalizePost(post: PostDto): PostDto {
+        const normalizedImageUrls = (post.imageUrls ?? [])
+            .map(url => this.normalizeMediaUrl(url))
+            .filter((url): url is string => !!url);
+
+        const normalizedPrimaryImage = this.normalizeMediaUrl(post.imageUrl) ?? normalizedImageUrls[0];
+
         return {
             ...post,
             authorImageUrl: this.normalizeMediaUrl(post.authorImageUrl),
-            imageUrl: this.normalizeMediaUrl(post.imageUrl),
+            imageUrl: normalizedPrimaryImage,
+            imageUrls: normalizedImageUrls.length > 0
+                ? normalizedImageUrls
+                : (normalizedPrimaryImage ? [normalizedPrimaryImage] : []),
             comments: (post.comments ?? []).map(comment => ({
                 ...comment,
                 authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)

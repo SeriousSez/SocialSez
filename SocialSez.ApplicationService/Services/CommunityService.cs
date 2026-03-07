@@ -718,7 +718,13 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
         if (request.ImageUrls is not null)
         {
             var imageUrls = NormalizePostImageUrls(request.ImageUrls);
-            post.Images.Clear();
+
+            // Use set-based delete to avoid tracked collection concurrency mismatches.
+            await dbContext.CommunityPostImages
+                .Where(x => x.PostId == post.Id)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            post.Images = new List<CommunityPostImage>();
             foreach (var (url, index) in imageUrls.Select((value, i) => (value, i)))
             {
                 post.Images.Add(new CommunityPostImage

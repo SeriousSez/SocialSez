@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
+using SocialSez.Domain.Entities;
+using SocialSez.Infrastructure;
 
 namespace SocialSez.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PostsController(IPostService postService, IWebHostEnvironment environment) : ControllerBase
+public class PostsController(IPostService postService, SocialSezContext dbContext) : ControllerBase
 {
     [Authorize]
     [HttpPost]
@@ -24,14 +26,24 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
 
         try
         {
-            string? postMediaUrl = null;
+            var postMediaUrls = new List<string>();
+
+            if (request.Images is not null)
+            {
+                foreach (var image in request.Images.Where(file => file is not null && file.Length > 0))
+                {
+                    var mediaUrl = await SaveMediaAsync(profileId, image, cancellationToken);
+                    postMediaUrls.Add(mediaUrl);
+                }
+            }
 
             if (request.Image is not null && request.Image.Length > 0)
             {
-                postMediaUrl = await SaveMediaAsync(profileId, request.Image, cancellationToken);
+                var mediaUrl = await SaveMediaAsync(profileId, request.Image, cancellationToken);
+                postMediaUrls.Add(mediaUrl);
             }
 
-            var post = await postService.CreateAsync(new CreatePostRequest(profileId, request.Content, postMediaUrl), cancellationToken);
+            var post = await postService.CreateAsync(new CreatePostRequest(profileId, request.Content, postMediaUrls), cancellationToken);
             return Ok(post);
         }
         catch (ArgumentException ex)
@@ -349,18 +361,54 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
             throw new ArgumentException("Allowed media files: .jpg, .jpeg, .png, .webp, .gif, .mp4, .webm, .mov, .m4v, .ogv.");
         }
 
-        var uploadsRoot = Path.Combine(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"), "uploads", "media");
-        Directory.CreateDirectory(uploadsRoot);
+        await using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, cancellationToken);
 
-        var safeFileName = $"post-{profileId:N}-{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-        var absoluteFilePath = Path.Combine(uploadsRoot, safeFileName);
-
-        await using (var stream = System.IO.File.Create(absoluteFilePath))
+        var uploaded = new UploadedImage
         {
-            await file.CopyToAsync(stream, cancellationToken);
+            Id = Guid.NewGuid(),
+            UploadedByProfileId = profileId,
+            ContentType = NormalizeContentType(file.ContentType, extension),
+            OriginalFileName = Path.GetFileName(file.FileName),
+            FileExtension = extension.ToLowerInvariant(),
+            Content = memoryStream.ToArray(),
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        dbContext.UploadedImages.Add(uploaded);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return BuildUploadedMediaUrl(uploaded.Id);
+    }
+
+    private string BuildUploadedMediaUrl(Guid id)
+    {
+        var pathBase = Request.PathBase.HasValue ? Request.PathBase.Value : string.Empty;
+        var relativePath = $"{pathBase}/api/uploads/images/{id:D}";
+        return $"{Request.Scheme}://{Request.Host}{relativePath}";
+    }
+
+    private static string NormalizeContentType(string? contentType, string extension)
+    {
+        if (!string.IsNullOrWhiteSpace(contentType)
+            && (contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+                || contentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)))
+        {
+            return contentType;
         }
 
-        return $"{Request.Scheme}://{Request.Host}/uploads/media/{safeFileName}";
+        return extension.ToLowerInvariant() switch
+        {
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            ".gif" => "image/gif",
+            ".mp4" => "video/mp4",
+            ".webm" => "video/webm",
+            ".mov" => "video/quicktime",
+            ".m4v" => "video/x-m4v",
+            ".ogv" => "video/ogg",
+            _ => "image/jpeg"
+        };
     }
 
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
@@ -368,7 +416,7 @@ public class PostsController(IPostService postService, IWebHostEnvironment envir
         ".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm", ".mov", ".m4v", ".ogv"
     };
 
-    public sealed record CreatePostFormRequest(string? Content, IFormFile? Image);
+    public sealed record CreatePostFormRequest(string? Content, IReadOnlyCollection<IFormFile>? Images, IFormFile? Image);
     public sealed record CreateCommentBody(string Content, Guid? ParentCommentId = null);
     public sealed record UpdateCommentBody(string Content);
 }
