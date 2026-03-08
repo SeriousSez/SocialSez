@@ -394,6 +394,37 @@ textarea:focus {
     width: 100%;
 }
 
+.custom-css-textarea {
+    min-height: 120px;
+    resize: vertical;
+    overflow: hidden;
+}
+
+.custom-css-hints {
+    border: 1px solid #dbe4f0;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: grid;
+    gap: 6px;
+}
+
+.custom-css-hints p {
+    margin: 0;
+    color: #334155;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.custom-css-hints code {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 11px;
+    background: #e2e8f0;
+    color: #0f172a;
+    border-radius: 6px;
+    padding: 1px 5px;
+}
+
 .markdown-preview {
     border: 1px solid #cbd5e1;
     border-radius: 10px;

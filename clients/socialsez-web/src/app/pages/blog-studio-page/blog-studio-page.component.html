@@ -159,7 +159,13 @@
                 </div>
 
                 <label>Custom CSS</label>
-                <textarea rows="5" [(ngModel)]="blogForm.customCss" maxlength="12000" placeholder=".post-card { border-radius: 20px; }"></textarea>
+                <div class="custom-css-hints" aria-label="Custom CSS guide">
+                    <p class="muted">Use this to style your blog pages. These selectors are supported:</p>
+                    <p><code>.blog-shell</code> page wrapper, <code>.blog-header</code> header card, <code>.subtitle</code> subtitle/meta text, <code>.post-card</code> post cards, <code>.content</code> post content body.</p>
+                    <p>Theme variables you can override in your CSS: <code>--accent</code>, <code>--background</code>, <code>--background2</code>, <code>--surface</code>, <code>--font-family</code>.</p>
+                    <p class="muted">Example: <code>.blog-shell &#123; --accent:#ff5c72; --background:#f4f7f9; --background2:#e8eff5; --surface:#ffffff; &#125;</code></p>
+                </div>
+                <textarea class="custom-css-textarea" #customCssEditor rows="5" [(ngModel)]="blogForm.customCss" maxlength="12000" (input)="autoResizeCustomCss($event)" (focus)="autoResizeCustomCss($event)" placeholder=".post-card { border-radius: 20px; }"></textarea>
 
                 <div class="form-actions">
                     <button class="save-btn" type="button" [disabled]="savingBlog || deletingBlog" (click)="saveBlogAsync()">{{ savingBlog ? 'Saving...' : 'Save Blog' }}</button>

@@ -1,6 +1,4 @@
 <section class="page blog-shell" [ngStyle]="themeStyles">
-    <style *ngIf="customCss" [textContent]="customCss"></style>
-
     <p class="error" *ngIf="!loading && error">{{ error }}</p>
     <div class="blog" *ngIf="loading" aria-label="Loading blog">
         <header class="blog-head">
@@ -25,9 +23,9 @@
     </div>
 
     <div class="blog" *ngIf="!loading && !error && blog as currentBlog">
-        <header class="blog-head" [class.center]="headerLayoutClass === 'center'">
+        <header class="blog-head blog-header" [class.center]="headerLayoutClass === 'center'">
             <h1>{{ currentBlog.title }}</h1>
-            <p *ngIf="currentBlog.description">
+            <p class="subtitle" *ngIf="currentBlog.description">
                 <ng-container *ngFor="let line of splitHashtagText(currentBlog.description); let isLast = last">
                     <ng-container *ngFor="let part of line">
                         <a *ngIf="part.hashtag; else blogDescriptionText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>

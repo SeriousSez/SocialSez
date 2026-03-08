@@ -1,14 +1,14 @@
 .embed-tools-shell {
-    --blog-font: Georgia, serif;
-    --blog-accent: #ea580c;
-    --blog-bg: #fff7ed;
-    --blog-surface: #ffffff;
+    --blog-font: var(--font-family, var(--theme-font-family, Georgia, serif));
+    --blog-accent: var(--accent, var(--theme-accent, #ea580c));
+    --blog-bg: var(--background, var(--theme-background, #fff7ed));
+    --blog-surface: var(--surface, var(--theme-surface, #ffffff));
 
     max-width: 980px;
     margin: 0 auto;
     padding: 16px;
     border-radius: 18px;
-    background: radial-gradient(circle at 20% 8%, #fff 0%, var(--blog-bg) 44%, #ffedd5 100%);
+    background: radial-gradient(circle at 20% 8%, #fff 0%, var(--blog-bg) 44%, var(--background2, var(--theme-background2, var(--blog-bg))) 100%);
 }
 
 .embed-tools-card {

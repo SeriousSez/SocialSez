@@ -1,9 +1,7 @@
 <section class="page blog-shell" [ngStyle]="themeStyles">
-    <style *ngIf="customCss" [textContent]="customCss"></style>
-
     <p class="error" *ngIf="!loading && error">{{ error }}</p>
     <article class="post post-skeleton" *ngIf="loading" aria-label="Loading blog post">
-        <header class="post-head">
+        <header class="post-head blog-header">
             <span class="skeleton-line skeleton-back"></span>
             <span class="skeleton-line skeleton-title"></span>
             <span class="skeleton-line skeleton-meta"></span>
@@ -40,7 +38,7 @@
                     <br *ngIf="!isLast" />
                 </ng-container>
             </h1>
-            <p class="meta">By @{{ item.authorHandle }} · {{ (item.publishedAtUtc ?? item.updatedAtUtc) | date:'medium' }}</p>
+            <p class="meta subtitle">By @{{ item.authorHandle }} · {{ (item.publishedAtUtc ?? item.updatedAtUtc) | date:'medium' }}</p>
             <div class="tags" *ngIf="item.tags.length">
                 <a *ngFor="let tag of item.tags" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: tag, type: 'all' }">#{{ tag }}</a>
             </div>

@@ -1,20 +1,19 @@
 import { CommonModule, NgStyle } from '@angular/common';
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BlogDto, BlogPostDto } from '../../core/api.types';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { renderMarkdownToHtml } from '../../core/markdown.util';
 import { SessionService } from '../../core/session.service';
-import { LazyImageComponent } from '../../shared/lazy-image/lazy-image.component';
 
 @Component({
     selector: 'app-blog-post-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, NgStyle, LazyImageComponent],
+    imports: [CommonModule, RouterLink, NgStyle],
     templateUrl: './blog-post-page.component.html',
     styleUrl: './blog-post-page.component.scss'
 })
-export class BlogPostPageComponent {
+export class BlogPostPageComponent implements OnDestroy {
     loading = true;
     error = '';
 
@@ -26,6 +25,8 @@ export class BlogPostPageComponent {
     post: BlogPostDto | null = null;
     copiedShareLink = false;
     private loadVersion = 0;
+    private customCssStyleEl: HTMLStyleElement | null = null;
+    private appliedCustomCss = '';
 
     constructor(
         private readonly route: ActivatedRoute,
@@ -40,13 +41,18 @@ export class BlogPostPageComponent {
         });
     }
 
+    ngOnDestroy(): void {
+        this.applyCustomCss('');
+    }
+
     get themeStyles(): Record<string, string> {
         const theme = this.blog?.theme;
         return {
-            '--blog-font': theme?.fontFamily ?? 'Georgia, serif',
-            '--blog-accent': theme?.accentColor ?? '#ea580c',
-            '--blog-bg': theme?.backgroundColor ?? '#fff7ed',
-            '--blog-surface': theme?.surfaceColor ?? '#ffffff'
+            '--theme-font-family': theme?.fontFamily ?? 'Georgia, serif',
+            '--theme-accent': theme?.accentColor ?? '#ea580c',
+            '--theme-background': theme?.backgroundColor ?? '#fff7ed',
+            '--theme-background2': theme?.backgroundColor ?? '#fff7ed',
+            '--theme-surface': theme?.surfaceColor ?? '#ffffff'
         };
     }
 
@@ -134,6 +140,7 @@ export class BlogPostPageComponent {
         if (!this.handle || !this.blogSlug || !this.postSlug) {
             this.error = 'Blog post was not found.';
             this.loading = false;
+            this.applyCustomCss('');
             this.cdr.detectChanges();
             return;
         }
@@ -153,11 +160,13 @@ export class BlogPostPageComponent {
                 this.error = 'Blog post was not found or is private.';
                 this.blog = null;
                 this.post = null;
+                this.applyCustomCss('');
                 return;
             }
 
             this.blog = loadedBlog;
             this.post = loadedPost;
+            this.applyCustomCss(this.customCss);
         } catch {
             if (loadVersion !== this.loadVersion) {
                 return;
@@ -166,11 +175,39 @@ export class BlogPostPageComponent {
             this.error = 'Could not load this blog post right now.';
             this.blog = null;
             this.post = null;
+            this.applyCustomCss('');
         } finally {
             if (loadVersion === this.loadVersion) {
                 this.loading = false;
                 this.cdr.detectChanges();
             }
         }
+    }
+
+    private applyCustomCss(css: string): void {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        const normalized = (css ?? '').trim();
+        if (normalized === this.appliedCustomCss) {
+            return;
+        }
+
+        if (!normalized) {
+            this.customCssStyleEl?.remove();
+            this.customCssStyleEl = null;
+            this.appliedCustomCss = '';
+            return;
+        }
+
+        if (!this.customCssStyleEl) {
+            this.customCssStyleEl = document.createElement('style');
+            this.customCssStyleEl.setAttribute('data-blog-custom-css', 'blog-post-page');
+            document.head.appendChild(this.customCssStyleEl);
+        }
+
+        this.customCssStyleEl.textContent = normalized;
+        this.appliedCustomCss = normalized;
     }
 }

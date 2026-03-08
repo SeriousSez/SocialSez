@@ -80,10 +80,11 @@ export class BlogEmbedToolsPageComponent {
     get themeStyles(): Record<string, string> {
         const theme = this.blog?.theme;
         return {
-            '--blog-font': theme?.fontFamily ?? 'Georgia, serif',
-            '--blog-accent': theme?.accentColor ?? '#ea580c',
-            '--blog-bg': theme?.backgroundColor ?? '#fff7ed',
-            '--blog-surface': theme?.surfaceColor ?? '#ffffff'
+            '--theme-font-family': theme?.fontFamily ?? 'Georgia, serif',
+            '--theme-accent': theme?.accentColor ?? '#ea580c',
+            '--theme-background': theme?.backgroundColor ?? '#fff7ed',
+            '--theme-background2': theme?.backgroundColor ?? '#fff7ed',
+            '--theme-surface': theme?.surfaceColor ?? '#ffffff'
         };
     }
 

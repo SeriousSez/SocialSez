@@ -1,5 +1,5 @@
 import { CommonModule, NgStyle } from '@angular/common';
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BlogDto, BlogPostDto } from '../../core/api.types';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
@@ -14,7 +14,7 @@ import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
     templateUrl: './blog-home-page.component.html',
     styleUrl: './blog-home-page.component.scss'
 })
-export class BlogHomePageComponent {
+export class BlogHomePageComponent implements OnDestroy {
     loading = true;
     error = '';
     handle = '';
@@ -22,6 +22,8 @@ export class BlogHomePageComponent {
     blog: BlogDto | null = null;
     posts: BlogPostDto[] = [];
     private loadVersion = 0;
+    private customCssStyleEl: HTMLStyleElement | null = null;
+    private appliedCustomCss = '';
 
     constructor(
         private readonly route: ActivatedRoute,
@@ -36,13 +38,18 @@ export class BlogHomePageComponent {
         });
     }
 
+    ngOnDestroy(): void {
+        this.applyCustomCss('');
+    }
+
     get themeStyles(): Record<string, string> {
         const theme = this.blog?.theme;
         return {
-            '--blog-font': theme?.fontFamily ?? 'Georgia, serif',
-            '--blog-accent': theme?.accentColor ?? '#ea580c',
-            '--blog-bg': theme?.backgroundColor ?? '#fff7ed',
-            '--blog-surface': theme?.surfaceColor ?? '#ffffff'
+            '--theme-font-family': theme?.fontFamily ?? 'Georgia, serif',
+            '--theme-accent': theme?.accentColor ?? '#ea580c',
+            '--theme-background': theme?.backgroundColor ?? '#fff7ed',
+            '--theme-background2': theme?.backgroundColor ?? '#fff7ed',
+            '--theme-surface': theme?.surfaceColor ?? '#ffffff'
         };
     }
 
@@ -64,6 +71,7 @@ export class BlogHomePageComponent {
         if (!this.handle || !this.blogSlug) {
             this.error = 'Blog was not found.';
             this.loading = false;
+            this.applyCustomCss('');
             this.cdr.detectChanges();
             return;
         }
@@ -82,10 +90,12 @@ export class BlogHomePageComponent {
                 this.error = 'Blog was not found or is private.';
                 this.blog = null;
                 this.posts = [];
+                this.applyCustomCss('');
                 return;
             }
 
             this.blog = loadedBlog;
+            this.applyCustomCss(this.customCss);
             this.posts = await this.session.loadBlogPostsAsync(this.handle, this.blogSlug);
             if (loadVersion !== this.loadVersion) {
                 return;
@@ -98,12 +108,40 @@ export class BlogHomePageComponent {
             this.error = 'Could not load this blog right now.';
             this.blog = null;
             this.posts = [];
+            this.applyCustomCss('');
         } finally {
             if (loadVersion === this.loadVersion) {
                 this.loading = false;
                 this.cdr.detectChanges();
             }
         }
+    }
+
+    private applyCustomCss(css: string): void {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        const normalized = (css ?? '').trim();
+        if (normalized === this.appliedCustomCss) {
+            return;
+        }
+
+        if (!normalized) {
+            this.customCssStyleEl?.remove();
+            this.customCssStyleEl = null;
+            this.appliedCustomCss = '';
+            return;
+        }
+
+        if (!this.customCssStyleEl) {
+            this.customCssStyleEl = document.createElement('style');
+            this.customCssStyleEl.setAttribute('data-blog-custom-css', 'blog-home-page');
+            document.head.appendChild(this.customCssStyleEl);
+        }
+
+        this.customCssStyleEl.textContent = normalized;
+        this.appliedCustomCss = normalized;
     }
 
     trackPost(_: number, post: BlogPostDto): string {

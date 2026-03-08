@@ -57,6 +57,7 @@ type BlogEditorSection = 'blog' | 'posts';
 export class BlogStudioPageComponent {
     @ViewChild('contentEditor') contentEditor?: ElementRef<HTMLTextAreaElement>;
     @ViewChild('coverImageInput') coverImageInput?: ElementRef<HTMLInputElement>;
+    @ViewChild('customCssEditor') customCssEditor?: ElementRef<HTMLTextAreaElement>;
 
     loading = true;
     loadingPosts = false;
@@ -470,6 +471,16 @@ export class BlogStudioPageComponent {
         this.blogForm.surfaceColor = (value ?? '').trim();
     }
 
+    autoResizeCustomCss(event?: Event): void {
+        const editor = (event?.target as HTMLTextAreaElement | null) ?? this.customCssEditor?.nativeElement;
+        if (!editor) {
+            return;
+        }
+
+        editor.style.height = 'auto';
+        editor.style.height = `${editor.scrollHeight}px`;
+    }
+
     private async loadPostsAsync(blog: BlogDto): Promise<void> {
         this.loadingPosts = true;
         this.postError = '';
@@ -574,6 +585,7 @@ export class BlogStudioPageComponent {
         if (!blog) {
             Object.assign(this.blogForm, this.createEmptyBlogForm());
             this.syncThemeSelectionsFromForm();
+            this.queueCustomCssResize();
             return;
         }
 
@@ -593,6 +605,11 @@ export class BlogStudioPageComponent {
         this.blogForm.postListLayout = blog.theme?.postListLayout ?? '';
         this.blogForm.customCss = blog.theme?.customCss ?? '';
         this.syncThemeSelectionsFromForm();
+        this.queueCustomCssResize();
+    }
+
+    private queueCustomCssResize(): void {
+        setTimeout(() => this.autoResizeCustomCss(), 0);
     }
 
     private buildThemePayload(): BlogThemeConfigDto {
