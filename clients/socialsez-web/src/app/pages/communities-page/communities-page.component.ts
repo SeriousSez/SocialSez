@@ -256,6 +256,11 @@ export class CommunitiesPageComponent implements OnDestroy {
         return role !== 'owner';
     }
 
+    isCommunityOwner(community: CommunityDto): boolean {
+        const role = (community.myRole ?? '').trim().toLowerCase();
+        return role === 'owner';
+    }
+
     trackByCommunityId(_index: number, community: CommunityDto): string {
         return community.id;
     }

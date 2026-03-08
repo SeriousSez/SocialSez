@@ -71,10 +71,10 @@
 
 .embed-preview {
     width: 100%;
-    min-height: 560px;
+    height: 320px;
     border: 1px solid #dbe4f0;
     border-radius: 12px;
-    background: #f8fafc;
+    background: transparent;
 }
 
 .code-block textarea {
@@ -125,6 +125,6 @@
     }
 
     .embed-preview {
-        min-height: 420px;
+        height: 280px;
     }
 }

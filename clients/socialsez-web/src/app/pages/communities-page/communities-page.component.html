@@ -105,8 +105,9 @@
                         <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
                     </div>
                     <div class="actions">
-                        <span class="meta" *ngIf="community.joinedByMe">Joined</span>
-                        <button type="button" (click)="joinCommunityAsync(community)" [disabled]="community.joinedByMe || busyCommunityId === community.id">
+                        <span class="meta" *ngIf="isCommunityOwner(community)">Owner</span>
+                        <span class="meta" *ngIf="!isCommunityOwner(community) && community.joinedByMe">Joined</span>
+                        <button type="button" *ngIf="!isCommunityOwner(community)" (click)="joinCommunityAsync(community)" [disabled]="community.joinedByMe || busyCommunityId === community.id">
                             {{ busyCommunityId === community.id ? 'Joining…' : (community.joinedByMe ? 'Joined' : (isAuthenticated ? 'Join' : 'Sign in to join')) }}
                         </button>
                     </div>

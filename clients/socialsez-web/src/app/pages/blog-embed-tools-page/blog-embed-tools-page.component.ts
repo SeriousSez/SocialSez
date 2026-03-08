@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { BlogDto, BlogPostDto } from '../../core/api.types';
@@ -23,10 +23,29 @@ export class BlogEmbedToolsPageComponent {
     blog: BlogDto | null = null;
     post: BlogPostDto | null = null;
     copiedEmbedCode = false;
+    @ViewChild('embedPreviewFrame') embedPreviewFrame?: ElementRef<HTMLIFrameElement>;
 
     private loadVersion = 0;
     private cachedSafeEmbedUrlSource = '';
     private cachedSafeEmbedUrl: SafeResourceUrl | null = null;
+    private readonly onEmbedMessage = (event: MessageEvent): void => {
+        const frame = this.embedPreviewFrame?.nativeElement;
+        if (!frame || event.source !== frame.contentWindow) {
+            return;
+        }
+
+        const data = event.data as { type?: string; height?: unknown } | null;
+        if (!data || data.type !== 'venli-blog-embed:resize') {
+            return;
+        }
+
+        const height = Number(data.height);
+        if (!Number.isFinite(height) || height <= 0) {
+            return;
+        }
+
+        frame.style.height = `${Math.max(220, Math.ceil(height))}px`;
+    };
 
     constructor(
         private readonly route: ActivatedRoute,
@@ -34,12 +53,22 @@ export class BlogEmbedToolsPageComponent {
         private readonly cdr: ChangeDetectorRef,
         private readonly sanitizer: DomSanitizer
     ) {
+        if (typeof window !== 'undefined') {
+            window.addEventListener('message', this.onEmbedMessage, false);
+        }
+
         this.route.paramMap.subscribe(paramMap => {
             this.handle = (paramMap.get('handle') ?? '').trim().toLowerCase();
             this.blogSlug = (paramMap.get('blogSlug') ?? '').trim().toLowerCase();
             this.postSlug = (paramMap.get('postSlug') ?? '').trim().toLowerCase();
             void this.loadAsync();
         });
+    }
+
+    ngOnDestroy(): void {
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('message', this.onEmbedMessage, false);
+        }
     }
 
     get embedUrl(): string {
@@ -95,7 +124,8 @@ export class BlogEmbedToolsPageComponent {
         }
 
         const safeTitle = this.post?.title?.trim() || 'Venli blog embed';
-        return `<iframe src="${src}" width="100%" height="560" style="border:0;overflow:hidden;border-radius:12px;" loading="lazy" title="${safeTitle.replace(/"/g, '&quot;')}"></iframe>`;
+        const escapedTitle = safeTitle.replace(/"/g, '&quot;');
+        return `<iframe src="${src}" width="100%" style="display:block;border:0;overflow:hidden;border-radius:12px;height:320px;" loading="lazy" title="${escapedTitle}"></iframe>\n<script>(function(){var iframe=document.currentScript&&document.currentScript.previousElementSibling;if(!iframe||iframe.tagName!=='IFRAME'){return;}function onMessage(event){if(event.source!==iframe.contentWindow){return;}var data=event.data||{};if(data.type!=='venli-blog-embed:resize'){return;}var h=Number(data.height);if(!Number.isFinite(h)||h<=0){return;}iframe.style.height=Math.max(220,Math.ceil(h))+'px';}window.addEventListener('message',onMessage,false);})();</script>`;
     }
 
     async copyEmbedCodeAsync(): Promise<void> {

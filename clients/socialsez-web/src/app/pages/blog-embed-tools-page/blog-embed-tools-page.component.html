@@ -17,7 +17,7 @@
 
         <section class="preview-block">
             <h3>Preview</h3>
-            <iframe *ngIf="embedUrl" class="embed-preview" [src]="safeEmbedUrl" title="Blog embed preview" loading="lazy"></iframe>
+            <iframe *ngIf="embedUrl" #embedPreviewFrame class="embed-preview" [src]="safeEmbedUrl" title="Blog embed preview" loading="lazy"></iframe>
         </section>
 
         <section class="code-block">
