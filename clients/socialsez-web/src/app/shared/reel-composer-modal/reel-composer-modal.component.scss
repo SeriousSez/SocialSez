@@ -558,22 +558,13 @@ button:disabled {
 
 .composer-steps {
     display: flex;
-    gap: 0.6rem;
+    gap: 12px;
     margin-bottom: 0.75rem;
+    font-size: 0.82rem;
+    color: #64748b;
+}
 
-    span {
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 999px;
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.78rem;
-        font-weight: 600;
-        letter-spacing: 0.02em;
-        padding: 0.25rem 0.65rem;
-
-        &.active {
-            background: rgba(255, 255, 255, 0.16);
-            border-color: rgba(255, 255, 255, 0.35);
-            color: #fff;
-        }
-    }
+.composer-steps span.active {
+    color: var(--color-text);
+    font-weight: 700;
 }
