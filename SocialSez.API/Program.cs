@@ -1,11 +1,14 @@
 using System.Text;
+using System.Net;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SocialSez.API.Hubs;
+using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Extensions;
 using SocialSez.Infrastructure.Extensions;
 using SocialSez.Infrastructure;
@@ -738,4 +741,299 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
+
+var spaIndexPath = Path.Combine(webRoot, "index.html");
+
+app.MapFallback(async (
+    HttpContext context,
+    IPostService postService,
+    ICommunityService communityService,
+    IReelService reelService,
+    IStoryService storyService,
+    IProfileService profileService,
+    IBlogService blogService,
+    IMemoryCache memoryCache) =>
+{
+    if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    var path = context.Request.Path.Value ?? "/";
+    if (path.StartsWith("/api", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/hubs", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/uploads", StringComparison.OrdinalIgnoreCase)
+        || Path.HasExtension(path))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    if (!File.Exists(spaIndexPath))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    var indexHtml = await memoryCache.GetOrCreateAsync($"spa-index-html::{spaIndexPath}", async entry =>
+    {
+        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+        return await File.ReadAllTextAsync(spaIndexPath, context.RequestAborted);
+    }) ?? string.Empty;
+
+    var meta = await ResolveUnfurlMetaAsync(path, context, postService, communityService, reelService, storyService, profileService, blogService, context.RequestAborted);
+    var responseHtml = InjectMetaTags(indexHtml, BuildMetaTags(meta, context, path));
+
+    context.Response.ContentType = "text/html; charset=utf-8";
+    if (!HttpMethods.IsHead(context.Request.Method))
+    {
+        await context.Response.WriteAsync(responseHtml, context.RequestAborted);
+    }
+});
+
 app.Run();
+
+static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
+    string path,
+    HttpContext context,
+    IPostService postService,
+    ICommunityService communityService,
+    IReelService reelService,
+    IStoryService storyService,
+    IProfileService profileService,
+    IBlogService blogService,
+    CancellationToken cancellationToken)
+{
+    var defaultMeta = new UnfurlMeta(
+        "Venli",
+        "Build, post, discover and follow in one flow.",
+        ToAbsoluteUrl(context, "/assets/images/v-blue-close.png"),
+        "website");
+
+    var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+    if (segments.Length == 0)
+    {
+        return defaultMeta;
+    }
+
+    try
+    {
+        if (segments.Length >= 2 && segments[0].Equals("post", StringComparison.OrdinalIgnoreCase) && Guid.TryParse(segments[1], out var postId))
+        {
+            var post = await postService.GetPublicByIdAsync(postId, null, cancellationToken);
+            if (post is null)
+            {
+                return defaultMeta;
+            }
+
+            return new UnfurlMeta(
+                $"@{post.AuthorHandle} on Venli",
+                Truncate(post.Content, 200) ?? "Shared post on Venli.",
+                ToAbsoluteUrl(context, post.ImageUrls.FirstOrDefault() ?? post.ImageUrl ?? post.AuthorImageUrl),
+                "article");
+        }
+
+        if (segments.Length >= 2 && segments[0].Equals("cp", StringComparison.OrdinalIgnoreCase) && Guid.TryParse(segments[1], out var communityPostId))
+        {
+            var communityPost = await communityService.GetPostByIdAsync(communityPostId, null, cancellationToken);
+            if (communityPost is null)
+            {
+                return defaultMeta;
+            }
+
+            var title = Truncate(communityPost.Title ?? communityPost.Content ?? communityPost.MediaContent, 160)
+                ?? $"Community post by @{communityPost.AuthorHandle}";
+            var description = Truncate(communityPost.Content ?? communityPost.MediaContent ?? communityPost.LinkUrl, 220)
+                ?? "Shared community post on Venli.";
+
+            return new UnfurlMeta(
+                title,
+                description,
+                ToAbsoluteUrl(context, communityPost.ImageUrls.FirstOrDefault() ?? communityPost.ImageUrl ?? communityPost.AuthorImageUrl),
+                "article");
+        }
+
+        if (segments.Length >= 2 && segments[0].Equals("reel", StringComparison.OrdinalIgnoreCase) && Guid.TryParse(segments[1], out var reelId))
+        {
+            var reel = await reelService.GetPublicByIdAsync(reelId, null, cancellationToken);
+            if (reel is null)
+            {
+                return defaultMeta;
+            }
+
+            return new UnfurlMeta(
+                $"Reel by @{reel.AuthorHandle}",
+                Truncate(reel.Caption, 220) ?? "Watch this reel on Venli.",
+                ToAbsoluteUrl(context, reel.ThumbnailUrl ?? reel.AuthorImageUrl),
+                "video.other");
+        }
+
+        if (segments.Length >= 2 && segments[0].Equals("story", StringComparison.OrdinalIgnoreCase) && Guid.TryParse(segments[1], out var storyId))
+        {
+            var story = await storyService.GetPublicByIdAsync(storyId, null, cancellationToken);
+            if (story is null)
+            {
+                return defaultMeta;
+            }
+
+            return new UnfurlMeta(
+                $"Story by @{story.AuthorHandle}",
+                Truncate(story.Caption, 220) ?? "View this story on Venli.",
+                ToAbsoluteUrl(context, story.MediaUrl ?? story.AuthorImageUrl),
+                "article");
+        }
+
+        if (segments.Length >= 2 && segments[0].Equals("users", StringComparison.OrdinalIgnoreCase))
+        {
+            var handle = segments[1].Trim();
+            var profile = await profileService.GetByHandleAsync(handle, null, cancellationToken);
+            if (profile is null)
+            {
+                return defaultMeta;
+            }
+
+            var displayName = string.IsNullOrWhiteSpace(profile.DisplayName) ? profile.Handle : profile.DisplayName;
+            return new UnfurlMeta(
+                $"{displayName} (@{profile.Handle}) | Venli",
+                Truncate(profile.Bio, 220) ?? $"View @{profile.Handle}'s profile on Venli.",
+                ToAbsoluteUrl(context, profile.ImageUrl),
+                "profile");
+        }
+
+        if (segments.Length >= 2 && segments[0].Equals("c", StringComparison.OrdinalIgnoreCase))
+        {
+            var slug = segments[1].Trim();
+            var community = await communityService.GetBySlugAsync(slug, null, 20, cancellationToken);
+            if (community is null)
+            {
+                return defaultMeta;
+            }
+
+            return new UnfurlMeta(
+                $"{community.Name} | Venli Community",
+                Truncate(community.Description, 220) ?? $"Join {community.Name} on Venli.",
+                ToAbsoluteUrl(context, community.ImageUrl),
+                "website");
+        }
+
+        if (segments.Length >= 2 && segments[0].Equals("blogs", StringComparison.OrdinalIgnoreCase))
+        {
+            var handle = segments[1].Trim();
+            if (handle.Equals("studio", StringComparison.OrdinalIgnoreCase))
+            {
+                return defaultMeta;
+            }
+
+            if (segments.Length >= 4)
+            {
+                var post = await blogService.GetPostBySlugAsync(handle, segments[2], segments[3], null, cancellationToken);
+                if (post is not null)
+                {
+                    return new UnfurlMeta(
+                        $"{post.Title} | @{post.AuthorHandle}",
+                        Truncate(post.Excerpt ?? post.Content, 220) ?? "Read this blog post on Venli.",
+                        ToAbsoluteUrl(context, post.CoverImageUrl),
+                        "article");
+                }
+            }
+
+            if (segments.Length >= 3)
+            {
+                var blog = await blogService.GetByOwnerHandleAndSlugAsync(handle, segments[2], null, cancellationToken);
+                if (blog is not null)
+                {
+                    return new UnfurlMeta(
+                        $"{blog.Title} | @{blog.OwnerHandle}",
+                        Truncate(blog.Description, 220) ?? $"Read @{blog.OwnerHandle}'s blog on Venli.",
+                        ToAbsoluteUrl(context, null),
+                        "website");
+                }
+            }
+
+            return new UnfurlMeta(
+                $"@{handle} blogs | Venli",
+                $"Read and follow @{handle} on Venli.",
+                defaultMeta.ImageUrl,
+                "website");
+        }
+    }
+    catch
+    {
+        // Keep default metadata when unfurl lookups fail.
+    }
+
+    return defaultMeta;
+}
+
+static string Truncate(string? value, int maxLength)
+{
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        return string.Empty;
+    }
+
+    var normalized = string.Join(' ', value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+    if (normalized.Length <= maxLength)
+    {
+        return normalized;
+    }
+
+    return $"{normalized[..Math.Max(0, maxLength - 1)].TrimEnd()}...";
+}
+
+static string ToAbsoluteUrl(HttpContext context, string? value)
+{
+    var defaultPath = "/assets/images/v-blue-close.png";
+    var normalized = string.IsNullOrWhiteSpace(value) ? defaultPath : value.Trim();
+
+    if (Uri.TryCreate(normalized, UriKind.Absolute, out var absoluteUri))
+    {
+        return absoluteUri.ToString();
+    }
+
+    if (!normalized.StartsWith('/'))
+    {
+        normalized = $"/{normalized}";
+    }
+
+    return $"{context.Request.Scheme}://{context.Request.Host}{normalized}";
+}
+
+static string BuildMetaTags(UnfurlMeta meta, HttpContext context, string path)
+{
+    var pageUrl = ToAbsoluteUrl(context, path);
+    var title = WebUtility.HtmlEncode(meta.Title);
+    var description = WebUtility.HtmlEncode(meta.Description);
+    var imageUrl = WebUtility.HtmlEncode(meta.ImageUrl);
+    var type = WebUtility.HtmlEncode(meta.Type);
+
+    var builder = new StringBuilder();
+    builder.AppendLine($"<title>{title}</title>");
+    builder.AppendLine($"<meta name=\"description\" content=\"{description}\">\n<meta property=\"og:site_name\" content=\"Venli\">\n<meta property=\"og:type\" content=\"{type}\">\n<meta property=\"og:title\" content=\"{title}\">\n<meta property=\"og:description\" content=\"{description}\">\n<meta property=\"og:url\" content=\"{WebUtility.HtmlEncode(pageUrl)}\">\n<meta property=\"og:image\" content=\"{imageUrl}\">\n<meta name=\"twitter:card\" content=\"summary_large_image\">\n<meta name=\"twitter:title\" content=\"{title}\">\n<meta name=\"twitter:description\" content=\"{description}\">\n<meta name=\"twitter:image\" content=\"{imageUrl}\">\n<meta name=\"twitter:url\" content=\"{WebUtility.HtmlEncode(pageUrl)}\">");
+    return builder.ToString();
+}
+
+static string InjectMetaTags(string html, string tags)
+{
+    if (string.IsNullOrWhiteSpace(html) || string.IsNullOrWhiteSpace(tags))
+    {
+        return html;
+    }
+
+    var headStart = html.IndexOf("<head", StringComparison.OrdinalIgnoreCase);
+    if (headStart < 0)
+    {
+        return $"{tags}\n{html}";
+    }
+
+    var headEnd = html.IndexOf('>', headStart);
+    if (headEnd < 0)
+    {
+        return $"{tags}\n{html}";
+    }
+
+    return string.Concat(html.AsSpan(0, headEnd + 1), "\n", tags, html.AsSpan(headEnd + 1));
+}
+
+sealed record UnfurlMeta(string Title, string Description, string ImageUrl, string Type);
