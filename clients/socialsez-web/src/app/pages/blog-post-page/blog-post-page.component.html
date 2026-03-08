@@ -46,7 +46,7 @@
             </div>
         </header>
 
-        <app-lazy-image *ngIf="item.coverImageUrl" [src]="item.coverImageUrl" [alt]="item.title" imgClass="cover" skeletonHeight="420px" skeletonRadius="14px" loading="eager"></app-lazy-image>
+        <img *ngIf="item.coverImageUrl" class="cover-media-img" [src]="item.coverImageUrl" [alt]="item.title" loading="eager" decoding="async" />
 
         <div class="content" [innerHTML]="renderedPostContent"></div>
 

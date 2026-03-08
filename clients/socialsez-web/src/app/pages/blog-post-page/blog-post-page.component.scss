@@ -10,7 +10,7 @@
 }
 
 .post {
-    max-width: 920px;
+    max-width: 760px;
     margin: 0 auto;
     display: grid;
     gap: 12px;
@@ -42,12 +42,15 @@
     font-size: 13px;
 }
 
-.cover {
-    width: 100%;
-    max-height: 420px;
+.cover-media-img {
+    display: block;
+    width: min(100%, 520px);
+    max-height: 300px;
+    height: auto;
     object-fit: cover;
     border-radius: 14px;
     border: 1px solid #e2e8f0;
+    margin: 0 auto;
 }
 
 .content {
@@ -56,6 +59,7 @@
     border: 1px solid #e2e8f0;
     border-radius: 14px;
     padding: 16px;
+    overflow: hidden;
 }
 
 .content :first-child {
@@ -66,7 +70,12 @@
     margin-bottom: 0;
 }
 
-.content pre {
+:host ::ng-deep .content * {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+:host ::ng-deep .content pre {
     background: #0f172a;
     color: #f8fafc;
     border-radius: 10px;
@@ -74,38 +83,78 @@
     overflow: auto;
 }
 
-.content code {
+:host ::ng-deep .content code {
     font-family: Consolas, 'Courier New', monospace;
 }
 
-.content blockquote {
+:host ::ng-deep .content blockquote {
     margin: 0;
     border-left: 4px solid var(--blog-accent);
     padding-left: 12px;
     color: #374151;
 }
 
-.content a {
+:host ::ng-deep .content a {
     color: var(--blog-accent);
     font-weight: 700;
 }
 
-.content img {
+:host ::ng-deep .content img {
     display: block;
-    width: min(100%, 760px);
-    max-height: 420px;
-    height: auto;
-    object-fit: cover;
+    width: min(100%, 340px) !important;
+    max-height: 220px !important;
+    height: auto !important;
+    object-fit: contain !important;
     margin: 1rem auto;
     border-radius: 14px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
-.content a img,
-.content figure img {
-    width: min(100%, 760px);
-    max-height: 420px;
+:host ::ng-deep .content a img,
+:host ::ng-deep .content figure img,
+:host ::ng-deep .content video,
+:host ::ng-deep .content iframe {
+    width: min(100%, 340px) !important;
+    max-height: 220px !important;
+    height: auto !important;
+    object-fit: contain !important;
+    margin: 1rem auto;
+    display: block;
+}
+
+:host ::ng-deep .content figure,
+:host ::ng-deep .content p,
+:host ::ng-deep .content div {
+    max-width: 100% !important;
+}
+
+/* Guardrails for pasted/template HTML in markdown that uses custom classes or background-image blocks */
+:host ::ng-deep .content picture,
+:host ::ng-deep .content svg,
+:host ::ng-deep .content canvas,
+:host ::ng-deep .content [class*="image"],
+:host ::ng-deep .content [class*="Image"],
+:host ::ng-deep .content [class*="media"],
+:host ::ng-deep .content [class*="Media"],
+:host ::ng-deep .content [class*="photo"],
+:host ::ng-deep .content [class*="Photo"],
+:host ::ng-deep .content [style*="background-image"] {
+    max-width: min(100%, 340px) !important;
+    max-height: 220px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    overflow: hidden !important;
+}
+
+:host ::ng-deep .content>* {
+    max-width: 100%;
+}
+
+:host ::ng-deep .content [style*="background-image"] {
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
 }
 
 .blog-actions {
@@ -242,10 +291,25 @@
 
 @media (max-width: 768px) {
 
-    .content img,
-    .content a img,
-    .content figure img {
-        max-height: 280px;
+    :host ::ng-deep .content img,
+    :host ::ng-deep .content a img,
+    :host ::ng-deep .content figure img,
+    :host ::ng-deep .content video,
+    :host ::ng-deep .content iframe {
+        max-height: 160px !important;
         border-radius: 10px;
+    }
+
+    :host ::ng-deep .content picture,
+    :host ::ng-deep .content svg,
+    :host ::ng-deep .content canvas,
+    :host ::ng-deep .content [class*="image"],
+    :host ::ng-deep .content [class*="Image"],
+    :host ::ng-deep .content [class*="media"],
+    :host ::ng-deep .content [class*="Media"],
+    :host ::ng-deep .content [class*="photo"],
+    :host ::ng-deep .content [class*="Photo"],
+    :host ::ng-deep .content [style*="background-image"] {
+        max-height: 160px !important;
     }
 }

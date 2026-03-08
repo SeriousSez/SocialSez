@@ -44,7 +44,7 @@
 
         <section class="post-list" [class.grid]="postLayoutClass === 'grid'" [class.stack]="postLayoutClass !== 'grid'">
             <article class="post-card" *ngFor="let post of posts; trackBy: trackPost" role="link" tabindex="0" (click)="openPostAsync(post, $event)" (keydown.enter)="openPostAsync(post, $event)" (keydown.space)="$event.preventDefault(); openPostAsync(post, $event)">
-                <app-lazy-image *ngIf="post.coverImageUrl" [src]="post.coverImageUrl" [alt]="post.title" skeletonHeight="180px" skeletonRadius="10px"></app-lazy-image>
+                <app-lazy-image *ngIf="post.coverImageUrl" class="post-card-cover" [src]="post.coverImageUrl" [alt]="post.title" imgClass="post-cover" skeletonHeight="220px" skeletonRadius="10px"></app-lazy-image>
                 <h2>
                     <a [routerLink]="['/blogs', currentBlog.ownerHandle, currentBlog.slug, post.slug]">{{ post.title }}</a>
                 </h2>
