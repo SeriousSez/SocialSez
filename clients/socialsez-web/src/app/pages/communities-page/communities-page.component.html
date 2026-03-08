@@ -101,12 +101,20 @@
                     <div>
                         <strong><a [routerLink]="['/c', community.slug]">{{ community.name }}</a></strong>
                         <p class="meta">/{{ community.slug }} · {{ community.memberCount }} members · {{ community.isPrivate ? 'Private' : 'Public' }}</p>
-                        <p class="meta" *ngIf="community.description">{{ community.description }}</p>
+                        <p class="meta" *ngIf="community.description">
+                            <ng-container *ngFor="let line of splitHashtagText(community.description); let isLast = last">
+                                <ng-container *ngFor="let part of line">
+                                    <a *ngIf="part.hashtag; else discoverCommunityDescriptionText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
+                                    <ng-template #discoverCommunityDescriptionText>{{ part.text }}</ng-template>
+                                </ng-container>
+                                <br *ngIf="!isLast" />
+                            </ng-container>
+                        </p>
                         <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
                     </div>
                     <div class="actions">
-                        <span class="meta" *ngIf="isCommunityOwner(community)">Owner</span>
-                        <span class="meta" *ngIf="!isCommunityOwner(community) && community.joinedByMe">Joined</span>
+                        <span class="meta community-status" *ngIf="isCommunityOwner(community)">Owner</span>
+                        <span class="meta community-status" *ngIf="!isCommunityOwner(community) && community.joinedByMe">Joined</span>
                         <button type="button" *ngIf="!isCommunityOwner(community)" (click)="joinCommunityAsync(community)" [disabled]="community.joinedByMe || busyCommunityId === community.id">
                             {{ busyCommunityId === community.id ? 'Joining…' : (community.joinedByMe ? 'Joined' : (isAuthenticated ? 'Join' : 'Sign in to join')) }}
                         </button>
