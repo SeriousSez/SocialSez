@@ -308,6 +308,10 @@ export class AppComponent implements OnInit, OnDestroy {
                 if (change === 'session' || change === 'notifications') {
                     void this.loadUnreadNotificationsCountAsync();
                 }
+
+                if ((change === 'profile' || change === 'posts' || change === 'session') && this.isCommunityPageRoute) {
+                    void this.loadRightRailCommunityAsync();
+                }
             });
 
         this.session.messageChanges$

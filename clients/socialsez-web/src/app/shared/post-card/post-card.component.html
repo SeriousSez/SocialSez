@@ -1,7 +1,7 @@
 <article class="post" [class.has-icon-actions]="showActions && !isEditing">
     <div class="post-icon-actions" *ngIf="showActions && !isEditing">
         <button class="icon-btn" type="button" (click)="startEdit.emit()" aria-label="Edit post" title="Edit post">
-            <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+            <i class="fa-duotone fa-pen" aria-hidden="true"></i>
         </button>
         <button class="icon-btn danger" type="button" (click)="deletePost.emit()" [disabled]="deleting" aria-label="Delete post" title="Delete post">
             <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>

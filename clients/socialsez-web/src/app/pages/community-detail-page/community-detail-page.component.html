@@ -19,10 +19,10 @@
             <button type="button" *ngIf="!activeCommunity.joinedByMe && !activeCommunity.isPrivate" (click)="joinCommunityAsync()" [disabled]="joining">{{ joining ? 'Joining…' : 'Join' }}</button>
             <button type="button" *ngIf="canLeave" (click)="leaveCommunityAsync()" [disabled]="leaving">{{ leaving ? 'Leaving…' : 'Leave' }}</button>
             <button type="button" class="ghost community-action-icon" *ngIf="canEditCommunity" (click)="openEditCommunityModal()" aria-label="Edit community" title="Edit community">
-                <i class="fa-duotone fa-pen-to-square" aria-hidden="true"></i>
+                <i class="fa-duotone fa-pen" aria-hidden="true"></i>
             </button>
             <button type="button" class="ghost community-action-icon" *ngIf="canPost" (click)="openCreatePostModal()" aria-label="Create post" title="Create post">
-                <i class="fa-duotone fa-square-plus" aria-hidden="true"></i>
+                <i class="fa-duotone fa-plus" aria-hidden="true"></i>
             </button>
             <button type="button" class="ghost community-action-icon" (click)="shareCommunityAsync()" [attr.aria-label]="copiedCommunityLink ? 'Community link copied' : 'Copy community link'" [attr.title]="copiedCommunityLink ? 'Copied' : 'Copy community link'">
                 <i *ngIf="!copiedCommunityLink" class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
@@ -41,9 +41,7 @@
         <h3>Community Feed</h3>
         <p class="meta">Posts from members in /{{ activeCommunity.slug }}</p>
         <form class="feed-search" (ngSubmit)="searchPostsAsync()">
-            <input type="search" name="postSearchQuery" [(ngModel)]="postSearchQuery" placeholder="Search posts in this community" />
-            <button type="submit" class="ghost" [disabled]="loading">Search</button>
-            <button type="button" class="ghost" [disabled]="loading || !postSearchQuery" (click)="clearSearchAsync()">Clear</button>
+            <input type="search" name="postSearchQuery" [(ngModel)]="postSearchQuery" (input)="onPostSearchInput()" placeholder="Search posts in this community" />
         </form>
     </section>
 
@@ -67,8 +65,8 @@
         <article class="post-item card" *ngFor="let post of posts; trackBy: trackByPostId" [attr.id]="'post-' + post.id" role="button" tabindex="0" (click)="openPostAsync(post.id)" (keydown)="onPostCardKeydown($event, post.id)">
             <header class="post-head">
                 <div class="post-author">
-                    <img class="post-author-image" *ngIf="post.authorImageUrl" [src]="post.authorImageUrl" alt="Author image" />
-                    <span class="post-author-fallback" *ngIf="!post.authorImageUrl">{{ post.authorHandle.charAt(0) | uppercase }}</span>
+                    <img class="post-author-image" *ngIf="isPostAuthorImageVisible(post)" [src]="post.authorImageUrl" (error)="markPostAuthorImageFailed(post.id)" alt="Author image" />
+                    <span class="post-author-fallback" *ngIf="!isPostAuthorImageVisible(post)">{{ post.authorHandle.charAt(0) | uppercase }}</span>
                     <div>
                         <strong>u/{{ post.authorHandle }}</strong>
                         <p class="meta">/{{ activeCommunity.slug }} · {{ post.createdAtUtc | date:'short' }}</p>
@@ -180,7 +178,7 @@
                     <i *ngIf="copiedPostLinkId === post.id" class="fa-duotone fa-solid fa-check" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="icon-button" *ngIf="canEditPost(post)" (click)="$event.stopPropagation(); openEditPostModal(post)" [disabled]="updatingPost && editingPostId === post.id" aria-label="Edit post" title="Edit post">
-                    <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+                    <i class="fa-duotone fa-pen" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="icon-button danger" *ngIf="canDeletePost(post)" (click)="$event.stopPropagation(); requestDeletePost(post)" [disabled]="deletingPostId === post.id" aria-label="Delete post" title="Delete post">
                     <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>

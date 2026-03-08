@@ -23,8 +23,51 @@ export class CommunityInfoRailComponent implements OnChanges {
     editableRules: CommunityRuleDto[] = [];
     private readonly expandedRuleIndices = new Set<number>();
     private pendingSave = false;
+    private communityImageFailed = false;
+    private readonly failedModeratorImageProfileIds = new Set<string>();
+
+    get moderators(): CommunityDto['members'] {
+        return (this.community?.members ?? [])
+            .filter(member => (member.role ?? '').trim().toLowerCase() === 'moderator')
+            .sort((a, b) => a.handle.localeCompare(b.handle));
+    }
+
+    moderatorAvatarText(handle: string | null | undefined): string {
+        const normalized = (handle ?? '').trim();
+        return normalized ? normalized.charAt(0).toUpperCase() : '?';
+    }
+
+    communityAvatarText(): string {
+        const normalized = (this.community?.name ?? '').trim();
+        return normalized ? normalized.charAt(0).toUpperCase() : 'C';
+    }
+
+    isCommunityImageVisible(): boolean {
+        return !this.communityImageFailed;
+    }
+
+    markCommunityImageFailed(): void {
+        this.communityImageFailed = true;
+    }
+
+    isModeratorImageVisible(profileId: string): boolean {
+        return !this.failedModeratorImageProfileIds.has(profileId);
+    }
+
+    markModeratorImageFailed(profileId: string): void {
+        if (!profileId) {
+            return;
+        }
+
+        this.failedModeratorImageProfileIds.add(profileId);
+    }
 
     ngOnChanges(changes: SimpleChanges): void {
+        if (changes['community']) {
+            this.communityImageFailed = false;
+            this.failedModeratorImageProfileIds.clear();
+        }
+
         if (changes['community'] && this.pendingSave) {
             this.pendingSave = false;
             this.editingRules = false;

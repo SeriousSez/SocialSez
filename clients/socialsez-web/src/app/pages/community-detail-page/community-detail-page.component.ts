@@ -107,6 +107,10 @@ export class CommunityDetailPageComponent {
     private readonly postImageAnimatingByPostId = new Set<string>();
     private readonly postImageAnimationTimeoutByPostId = new Map<string, ReturnType<typeof setTimeout>>();
     private readonly postImageAnimationMs = 320;
+    private readonly failedPostAuthorImagePostIds = new Set<string>();
+    private postSearchDebounceTimerId: number | null = null;
+    private pendingPostSearchRequested = false;
+    private lastAppliedPostSearchQuery = '';
 
     private communityId: string | null = null;
     private communitySlug: string | null = null;
@@ -488,6 +492,8 @@ export class CommunityDetailPageComponent {
         if (!this.communitySlug) {
             this.community = null;
             this.posts = [];
+            this.failedPostAuthorImagePostIds.clear();
+            this.lastAppliedPostSearchQuery = '';
             this.membersModalOpen = false;
             return;
         }
@@ -502,6 +508,8 @@ export class CommunityDetailPageComponent {
                 this.community = null;
                 this.communityId = null;
                 this.posts = [];
+                this.failedPostAuthorImagePostIds.clear();
+                this.lastAppliedPostSearchQuery = '';
                 this.membersModalOpen = false;
                 this.status = 'Community was not found.';
                 this.statusTone = 'neutral';
@@ -513,6 +521,9 @@ export class CommunityDetailPageComponent {
 
             this.community = community;
             this.posts = posts;
+            this.failedPostAuthorImagePostIds.clear();
+            this.lastAppliedPostSearchQuery = this.postSearchQuery.trim();
+            this.pendingPostSearchRequested = false;
             this.restoreDraft();
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('load community'));
@@ -1066,7 +1077,18 @@ export class CommunityDetailPageComponent {
     }
 
     async searchPostsAsync(): Promise<void> {
-        if (!this.communityId || this.loading) {
+        if (!this.communityId) {
+            return;
+        }
+
+        const normalizedQuery = this.postSearchQuery.trim();
+
+        if (this.loading) {
+            this.pendingPostSearchRequested = true;
+            return;
+        }
+
+        if (normalizedQuery === this.lastAppliedPostSearchQuery) {
             return;
         }
 
@@ -1075,16 +1097,36 @@ export class CommunityDetailPageComponent {
 
         try {
             this.posts = await this.loadCommunityPostsForSearchAsync(this.communityId, this.postSearchQuery);
+            this.failedPostAuthorImagePostIds.clear();
+            this.lastAppliedPostSearchQuery = normalizedQuery;
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('search posts'));
             this.statusTone = 'error';
         } finally {
             this.loading = false;
+
+            if (this.pendingPostSearchRequested) {
+                this.pendingPostSearchRequested = false;
+                void this.searchPostsAsync();
+            }
         }
+    }
+
+    onPostSearchInput(): void {
+        if (this.postSearchDebounceTimerId !== null) {
+            window.clearTimeout(this.postSearchDebounceTimerId);
+            this.postSearchDebounceTimerId = null;
+        }
+
+        this.postSearchDebounceTimerId = window.setTimeout(() => {
+            this.postSearchDebounceTimerId = null;
+            void this.searchPostsAsync();
+        }, 220);
     }
 
     async clearSearchAsync(): Promise<void> {
         this.postSearchQuery = '';
+        this.lastAppliedPostSearchQuery = '__force__';
         await this.searchPostsAsync();
     }
 
@@ -1746,6 +1788,18 @@ export class CommunityDetailPageComponent {
 
     trackByPostId(_index: number, post: CommunityPostDto): string {
         return post.id;
+    }
+
+    isPostAuthorImageVisible(post: CommunityPostDto): boolean {
+        return !!post.authorImageUrl && !this.failedPostAuthorImagePostIds.has(post.id);
+    }
+
+    markPostAuthorImageFailed(postId: string): void {
+        if (!postId) {
+            return;
+        }
+
+        this.failedPostAuthorImagePostIds.add(postId);
     }
 
     splitHashtagText(content: string | null | undefined): HashtagTextPart[][] {

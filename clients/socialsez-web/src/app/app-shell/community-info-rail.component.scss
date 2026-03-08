@@ -37,6 +37,15 @@
     object-fit: cover;
 }
 
+.community-avatar-placeholder {
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--color-accent) 20%, #ffffff 80%);
+    color: color-mix(in srgb, var(--color-accent) 65%, #0f172a 35%);
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
 .community-name {
     margin: 0;
     font-size: 1rem;
@@ -225,4 +234,59 @@
     font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
+}
+
+.community-moderators {
+    display: grid;
+    gap: 8px;
+}
+
+.community-moderators h4 {
+    margin: 0;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+}
+
+.moderators-list {
+    display: grid;
+    gap: 6px;
+}
+
+.moderator-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text);
+    text-decoration: none;
+    border-radius: 8px;
+    padding: 4px 6px;
+}
+
+.moderator-row:hover {
+    background: color-mix(in srgb, var(--color-surface-muted) 78%, transparent 22%);
+}
+
+.moderator-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    object-fit: cover;
+    background: #dbeafe;
+    color: #1e3a8a;
+    font-weight: 700;
+    font-size: 0.84rem;
+}
+
+.moderator-handle {
+    color: #475569;
+    min-width: 0;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

@@ -164,7 +164,7 @@
                 <i *ngIf="copiedLink" class="fa-duotone fa-solid fa-check" aria-hidden="true"></i>
             </button>
             <button type="button" class="icon-button" *ngIf="canManagePost" (click)="editPostAsync()" [disabled]="updatingPost" aria-label="Edit post" title="Edit post">
-                <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+                <i class="fa-duotone fa-pen" aria-hidden="true"></i>
             </button>
             <button type="button" class="icon-button danger" *ngIf="canManagePost" (click)="deletePostAsync()" [disabled]="deletingPost" aria-label="Delete post" title="Delete post">
                 <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>

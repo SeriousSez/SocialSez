@@ -5,7 +5,8 @@
 
     <ng-container *ngIf="!loading && community as activeCommunity">
         <div class="community-identity">
-            <img *ngIf="activeCommunity.imageUrl" class="community-avatar" [src]="activeCommunity.imageUrl" alt="Community image" />
+            <img *ngIf="activeCommunity.imageUrl && isCommunityImageVisible()" class="community-avatar" [src]="activeCommunity.imageUrl" (error)="markCommunityImageFailed()" alt="Community image" />
+            <span *ngIf="!activeCommunity.imageUrl || !isCommunityImageVisible()" class="community-avatar community-avatar-placeholder">{{ communityAvatarText() }}</span>
             <div>
                 <p class="community-name">{{ activeCommunity.name }}</p>
                 <p class="hint">/{{ activeCommunity.slug }} · {{ activeCommunity.memberCount }} members</p>
@@ -48,6 +49,22 @@
                     <button type="button" class="community-edit primary" (click)="saveRules()" [disabled]="!canSaveRules()">{{ savingRules ? 'Saving...' : 'Save' }}</button>
                 </div>
             </div>
+        </section>
+
+        <section class="community-moderators">
+            <h4>Moderators</h4>
+
+            <div class="moderators-list" *ngIf="moderators.length; else noModeratorsState">
+                <a class="moderator-row" *ngFor="let moderator of moderators" [routerLink]="['/users', moderator.handle]">
+                    <img class="moderator-avatar" *ngIf="moderator.imageUrl && isModeratorImageVisible(moderator.profileId)" [src]="moderator.imageUrl" (error)="markModeratorImageFailed(moderator.profileId)" alt="Moderator avatar" />
+                    <span class="moderator-avatar" *ngIf="!moderator.imageUrl || !isModeratorImageVisible(moderator.profileId)">{{ moderatorAvatarText(moderator.handle) }}</span>
+                    <span class="moderator-handle">u/{{ moderator.handle }}</span>
+                </a>
+            </div>
+
+            <ng-template #noModeratorsState>
+                <p class="hint">No moderators listed.</p>
+            </ng-template>
         </section>
 
         <a class="community-link" [routerLink]="['/c', activeCommunity.slug]">Go to community</a>
