@@ -90,6 +90,24 @@
     font-weight: 700;
 }
 
+.content img {
+    display: block;
+    width: min(100%, 760px);
+    max-height: 420px;
+    height: auto;
+    object-fit: cover;
+    margin: 1rem auto;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.content a img,
+.content figure img {
+    width: min(100%, 760px);
+    max-height: 420px;
+}
+
 .blog-actions {
     display: flex;
     flex-wrap: wrap;
@@ -219,5 +237,15 @@
 
     100% {
         background-position: -100% 0;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .content img,
+    .content a img,
+    .content figure img {
+        max-height: 280px;
+        border-radius: 10px;
     }
 }

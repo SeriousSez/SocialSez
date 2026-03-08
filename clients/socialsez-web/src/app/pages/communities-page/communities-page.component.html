@@ -60,7 +60,7 @@
                     </div>
                     <div class="actions">
                         <span class="meta" *ngIf="community.myRole">{{ community.myRole }}</span>
-                        <button type="button" class="ghost" (click)="leaveCommunityAsync(community)" [disabled]="busyCommunityId === community.id">{{ busyCommunityId === community.id ? 'Leaving…' : 'Leave' }}</button>
+                        <button type="button" class="ghost" *ngIf="canLeaveCommunity(community)" (click)="leaveCommunityAsync(community)" [disabled]="busyCommunityId === community.id">{{ busyCommunityId === community.id ? 'Leaving…' : 'Leave' }}</button>
                     </div>
                 </article>
             </ng-template>

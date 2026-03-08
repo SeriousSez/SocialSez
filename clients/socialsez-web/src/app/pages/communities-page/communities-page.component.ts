@@ -247,6 +247,15 @@ export class CommunitiesPageComponent implements OnDestroy {
         }
     }
 
+    canLeaveCommunity(community: CommunityDto): boolean {
+        if (!community.joinedByMe) {
+            return false;
+        }
+
+        const role = (community.myRole ?? '').trim().toLowerCase();
+        return role !== 'owner';
+    }
+
     trackByCommunityId(_index: number, community: CommunityDto): string {
         return community.id;
     }

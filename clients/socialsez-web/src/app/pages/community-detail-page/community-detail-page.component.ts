@@ -158,7 +158,12 @@ export class CommunityDetailPageComponent {
     }
 
     get canLeave(): boolean {
-        return !!this.community?.joinedByMe;
+        if (!this.community?.joinedByMe) {
+            return false;
+        }
+
+        const role = (this.community.myRole ?? '').trim().toLowerCase();
+        return role !== 'owner';
     }
 
     private get currentMember(): CommunityMemberDto | null {

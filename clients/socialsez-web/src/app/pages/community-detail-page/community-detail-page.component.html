@@ -17,7 +17,7 @@
         </div>
         <div class="community-head-actions">
             <button type="button" *ngIf="!activeCommunity.joinedByMe && !activeCommunity.isPrivate" (click)="joinCommunityAsync()" [disabled]="joining">{{ joining ? 'Joining…' : 'Join' }}</button>
-            <button type="button" *ngIf="activeCommunity.joinedByMe" (click)="leaveCommunityAsync()" [disabled]="leaving">{{ leaving ? 'Leaving…' : 'Leave' }}</button>
+            <button type="button" *ngIf="canLeave" (click)="leaveCommunityAsync()" [disabled]="leaving">{{ leaving ? 'Leaving…' : 'Leave' }}</button>
             <button type="button" class="ghost community-action-icon" *ngIf="canEditCommunity" (click)="openEditCommunityModal()" aria-label="Edit community" title="Edit community">
                 <i class="fa-duotone fa-pen-to-square" aria-hidden="true"></i>
             </button>
