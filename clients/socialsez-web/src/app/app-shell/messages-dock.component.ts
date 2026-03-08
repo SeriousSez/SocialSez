@@ -19,6 +19,15 @@ interface ParsedDockMessage {
     sharedPost?: SharedPostPreview;
     sharedReel?: SharedReelPreview;
     sharedStory?: SharedStoryPreview;
+    unfurlUrl?: string;
+}
+
+interface DockUnfurlPreview {
+    unfurlUrl: string;
+    targetUrl: string;
+    title: string;
+    description: string;
+    imageUrl?: string;
 }
 
 interface DockMediaRequest {
@@ -60,6 +69,7 @@ export class MessagesDockComponent {
     @Input() visible = false;
     @Output() sharedMediaRequested = new EventEmitter<DockMediaRequest>();
     readonly avatarFallbackUrl = '/assets/images/avatar-fallback.svg';
+    private static readonly UnfurlPrefix = '/api/unfurl/';
     private readonly apiOrigin = this.resolveApiOrigin();
     private readonly messageGapForTimeBreakMs = 30 * 60 * 1000;
     private readonly messageGapForCompactMs = 5 * 60 * 1000;
@@ -153,6 +163,8 @@ export class MessagesDockComponent {
     newChatSuggestedRelevantProfiles: ProfileDto[] = [];
     loadingSharedReelDetails = false;
     private readonly unavailableSharedReelKeys = new Set<string>();
+    private readonly unfurlPreviewByUrl = new Map<string, DockUnfurlPreview>();
+    private readonly pendingUnfurlPreviewUrls = new Set<string>();
     private newChatSearchProfilesDebounceId: number | null = null;
 
     @ViewChild('dockImageInput')
@@ -284,6 +296,7 @@ export class MessagesDockComponent {
             const loaded = await this.session.loadChatMessagesAsync(conversation.id);
             this.messages = [...loaded].sort((left, right) => left.createdAtUtc.localeCompare(right.createdAtUtc));
             void this.prefetchUnavailableSharedReelsFromMessages(loaded);
+            void this.prefetchUnfurlPreviewsFromMessages(loaded, true);
         } catch {
             this.messages = [];
             this.status = 'Could not load messages.';
@@ -291,6 +304,7 @@ export class MessagesDockComponent {
             this.loadingMessages = false;
             if (this.messages.length && !this.status) {
                 this.scrollThreadToBottomOnNextRender();
+                window.setTimeout(() => this.scrollThreadToBottomOnNextRender(), 350);
             }
         }
     }
@@ -615,6 +629,7 @@ export class MessagesDockComponent {
         let sharedPost: SharedPostPreview | undefined;
         let sharedReel: SharedReelPreview | undefined;
         let sharedStory: SharedStoryPreview | undefined;
+        let unfurlUrl: string | undefined;
 
         for (const rawLine of lines) {
             const line = rawLine.trim();
@@ -701,23 +716,52 @@ export class MessagesDockComponent {
             }
         }
 
+        if (!imageUrl && !gifUrl && !sharedReel) {
+            const normalized = this.normalizedMediaUrl(text);
+            if (normalized) {
+                if (this.isGifUrl(normalized)) {
+                    gifUrl = normalized;
+                } else if (this.isImageUrl(normalized)) {
+                    imageUrl = normalized;
+                } else if (this.isVideoUrl(normalized)) {
+                    sharedReel = {
+                        videoUrl: normalized
+                    };
+                } else if (this.isUnfurlUrl(normalized)) {
+                    unfurlUrl = normalized;
+                }
+            }
+        }
+
+        if (!unfurlUrl && !sharedStory && !sharedReel && !imageUrl && !gifUrl) {
+            const inlineUnfurlUrl = this.extractUnfurlUrlFromText(text);
+            if (inlineUnfurlUrl) {
+                unfurlUrl = inlineUnfurlUrl;
+            }
+        }
+
+        if (unfurlUrl && text === unfurlUrl) {
+            text = '';
+        }
+
         return {
             text,
             imageUrl,
             gifUrl,
             sharedPost,
             sharedReel,
-            sharedStory
+            sharedStory,
+            unfurlUrl
         };
     }
 
     messageVariant(content: string): 'default' | 'shared-only' | 'media-only' {
         const parsed = this.parsedMessage(content);
-        if ((parsed.sharedPost || parsed.sharedReel || parsed.sharedStory) && !parsed.text && !parsed.imageUrl && !parsed.gifUrl) {
+        if ((parsed.sharedPost || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl) && !parsed.text && !parsed.imageUrl && !parsed.gifUrl) {
             return 'shared-only';
         }
 
-        if (!parsed.text && !parsed.sharedPost && !parsed.sharedReel && !parsed.sharedStory && (!!parsed.imageUrl || !!parsed.gifUrl)) {
+        if (!parsed.text && !parsed.sharedPost && !parsed.sharedReel && !parsed.sharedStory && !parsed.unfurlUrl && (!!parsed.imageUrl || !!parsed.gifUrl)) {
             return 'media-only';
         }
 
@@ -1127,6 +1171,7 @@ export class MessagesDockComponent {
                 .sort((left, right) => left.createdAtUtc.localeCompare(right.createdAtUtc));
             this.scrollThreadToBottomOnNextRender();
             void this.prefetchUnavailableSharedReelsFromMessages([updated]);
+            void this.prefetchUnfurlPreviewsFromMessages([updated]);
             return;
         }
 
@@ -1134,6 +1179,24 @@ export class MessagesDockComponent {
         next[index] = updated;
         this.messages = next;
         void this.prefetchUnavailableSharedReelsFromMessages([updated]);
+        void this.prefetchUnfurlPreviewsFromMessages([updated]);
+    }
+
+    getUnfurlPreview(unfurlUrl: string): DockUnfurlPreview | null {
+        return this.unfurlPreviewByUrl.get(unfurlUrl) ?? null;
+    }
+
+    isUnfurlPreviewLoading(unfurlUrl: string): boolean {
+        return this.pendingUnfurlPreviewUrls.has(unfurlUrl) && !this.unfurlPreviewByUrl.has(unfurlUrl);
+    }
+
+    openUnfurledLink(unfurlUrl: string, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const preview = this.unfurlPreviewByUrl.get(unfurlUrl);
+        const targetUrl = preview?.targetUrl ?? this.resolveTargetFromUnfurlUrl(unfurlUrl) ?? unfurlUrl;
+        this.navigateToUrl(targetUrl);
     }
 
     private async prefetchUnavailableSharedReelsFromMessages(messages: ReadonlyArray<ChatMessageDto>): Promise<void> {
@@ -1170,14 +1233,88 @@ export class MessagesDockComponent {
         }
     }
 
+    private async prefetchUnfurlPreviewsFromMessages(messages: ReadonlyArray<ChatMessageDto>, keepBottomOnComplete = false): Promise<void> {
+        const unfurlUrls = new Set<string>();
+
+        for (const message of messages) {
+            const parsed = this.parsedMessage(message.content);
+            if (parsed.unfurlUrl) {
+                unfurlUrls.add(parsed.unfurlUrl);
+            }
+        }
+
+        if (!unfurlUrls.size) {
+            return;
+        }
+
+        await Promise.allSettled(
+            Array.from(unfurlUrls).map(url => this.ensureUnfurlPreviewAsync(url))
+        );
+
+        if (keepBottomOnComplete && this.activeConversation?.id) {
+            this.scrollThreadToBottomOnNextRender();
+        }
+    }
+
+    private async ensureUnfurlPreviewAsync(unfurlUrl: string): Promise<void> {
+        if (!this.isUnfurlUrl(unfurlUrl)
+            || this.unfurlPreviewByUrl.has(unfurlUrl)
+            || this.pendingUnfurlPreviewUrls.has(unfurlUrl)) {
+            return;
+        }
+
+        this.pendingUnfurlPreviewUrls.add(unfurlUrl);
+
+        try {
+            const fallbackTarget = this.resolveTargetFromUnfurlUrl(unfurlUrl) ?? unfurlUrl;
+            let preview: DockUnfurlPreview = {
+                unfurlUrl,
+                targetUrl: fallbackTarget,
+                title: this.buildUnfurlTitleFromTarget(fallbackTarget),
+                description: 'Open shared link'
+            };
+
+            const response = await fetch(unfurlUrl);
+            if (response.ok) {
+                const html = await response.text();
+                const title = this.extractMetaContent(html, 'property', 'og:title')
+                    ?? this.extractMetaContent(html, 'name', 'twitter:title')
+                    ?? preview.title;
+                const description = this.extractMetaContent(html, 'property', 'og:description')
+                    ?? this.extractMetaContent(html, 'name', 'twitter:description')
+                    ?? preview.description;
+                const imageUrl = this.extractMetaContent(html, 'property', 'og:image')
+                    ?? this.extractMetaContent(html, 'name', 'twitter:image')
+                    ?? undefined;
+                const targetUrl = this.extractMetaContent(html, 'property', 'og:url')
+                    ?? this.extractCanonicalHref(html)
+                    ?? fallbackTarget;
+
+                preview = {
+                    unfurlUrl,
+                    targetUrl: this.toAbsoluteUrl(targetUrl, unfurlUrl),
+                    title,
+                    description,
+                    imageUrl: imageUrl ? this.toAbsoluteUrl(imageUrl, unfurlUrl) : undefined
+                };
+            }
+
+            this.unfurlPreviewByUrl.set(unfurlUrl, preview);
+        } catch {
+            // Keep dock unfurl rendering resilient when metadata fetch fails.
+        } finally {
+            this.pendingUnfurlPreviewUrls.delete(unfurlUrl);
+        }
+    }
+
     private scrollThreadToBottomOnNextRender(): void {
-        const maxAttempts = 10;
+        const maxAttempts = 30;
 
         const scrollToBottom = (attemptsLeft: number, previousHeight = -1) => {
             const container = this.threadListRef?.nativeElement;
             if (!container) {
                 if (attemptsLeft > 0) {
-                    window.setTimeout(() => scrollToBottom(attemptsLeft - 1, previousHeight), 80);
+                    window.setTimeout(() => scrollToBottom(attemptsLeft - 1, previousHeight), 120);
                 }
                 return;
             }
@@ -1190,7 +1327,7 @@ export class MessagesDockComponent {
 
             const currentHeight = container.scrollHeight;
             if (currentHeight !== previousHeight) {
-                window.setTimeout(() => scrollToBottom(attemptsLeft - 1, currentHeight), 80);
+                window.setTimeout(() => scrollToBottom(attemptsLeft - 1, currentHeight), 120);
             }
         };
 
@@ -1217,6 +1354,10 @@ export class MessagesDockComponent {
         if (parsed.sharedReel) {
             const authorHandle = parsed.sharedReel.authorHandle?.trim() ?? '';
             return authorHandle ? `Shared reel from @${authorHandle}` : 'Shared reel';
+        }
+
+        if (parsed.unfurlUrl) {
+            return 'Shared link';
         }
 
         const lines = (content ?? '').split(/\r?\n/).map(line => line.trim()).filter(Boolean);
@@ -1350,6 +1491,101 @@ export class MessagesDockComponent {
 
     private isVideoUrl(url: string): boolean {
         return /\.(mp4|mov|webm|m4v)(\?|$)/i.test(url);
+    }
+
+    private isUnfurlUrl(url: string): boolean {
+        try {
+            const parsed = new URL(url);
+            return parsed.pathname.toLowerCase().startsWith(MessagesDockComponent.UnfurlPrefix);
+        } catch {
+            return false;
+        }
+    }
+
+    private extractUnfurlUrlFromText(text: string): string | null {
+        const urls = Array.from((text ?? '').matchAll(/https?:\/\/\S+/gi))
+            .map(match => this.normalizedMediaUrl(match[0] ?? ''))
+            .filter((url): url is string => !!url && this.isUnfurlUrl(url));
+
+        return urls[0] ?? null;
+    }
+
+    private resolveTargetFromUnfurlUrl(unfurlUrl: string): string | null {
+        try {
+            const parsed = new URL(unfurlUrl);
+            const prefixIndex = parsed.pathname.toLowerCase().indexOf(MessagesDockComponent.UnfurlPrefix);
+            if (prefixIndex < 0) {
+                return null;
+            }
+
+            const encodedTargetPath = parsed.pathname.slice(prefixIndex + MessagesDockComponent.UnfurlPrefix.length);
+            if (!encodedTargetPath) {
+                return null;
+            }
+
+            const targetPath = `/${encodedTargetPath}`;
+            return `${window.location.origin}${targetPath}`;
+        } catch {
+            return null;
+        }
+    }
+
+    private buildUnfurlTitleFromTarget(targetUrl: string): string {
+        try {
+            const parsed = new URL(targetUrl);
+            const segment = parsed.pathname.split('/').filter(Boolean).slice(-1)[0] ?? 'shared-link';
+            return segment
+                .replace(/[-_]+/g, ' ')
+                .trim()
+                .replace(/\b\w/g, value => value.toUpperCase()) || 'Shared link';
+        } catch {
+            return 'Shared link';
+        }
+    }
+
+    private extractMetaContent(html: string, keyName: 'property' | 'name', keyValue: string): string | null {
+        const escapedKey = keyValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const metaRegex = new RegExp(`<meta[^>]*${keyName}=[\"']${escapedKey}[\"'][^>]*content=[\"']([^\"']+)[\"'][^>]*>`, 'i');
+        const reverseMetaRegex = new RegExp(`<meta[^>]*content=[\"']([^\"']+)[\"'][^>]*${keyName}=[\"']${escapedKey}[\"'][^>]*>`, 'i');
+
+        const directMatch = html.match(metaRegex)?.[1]?.trim();
+        if (directMatch) {
+            return directMatch;
+        }
+
+        const reverseMatch = html.match(reverseMetaRegex)?.[1]?.trim();
+        return reverseMatch || null;
+    }
+
+    private extractCanonicalHref(html: string): string | null {
+        const canonicalRegex = /<link[^>]*rel=[\"']canonical[\"'][^>]*href=[\"']([^\"']+)[\"'][^>]*>/i;
+        const reverseCanonicalRegex = /<link[^>]*href=[\"']([^\"']+)[\"'][^>]*rel=[\"']canonical[\"'][^>]*>/i;
+        return html.match(canonicalRegex)?.[1]?.trim()
+            ?? html.match(reverseCanonicalRegex)?.[1]?.trim()
+            ?? null;
+    }
+
+    private toAbsoluteUrl(url: string, baseUrl: string): string {
+        try {
+            return new URL(url, baseUrl).toString();
+        } catch {
+            return url;
+        }
+    }
+
+    private navigateToUrl(targetUrl: string): void {
+        try {
+            const parsed = new URL(targetUrl, window.location.origin);
+            if (parsed.origin === window.location.origin) {
+                this.open = false;
+                void this.router.navigateByUrl(`${parsed.pathname}${parsed.search}${parsed.hash}`);
+                return;
+            }
+
+            window.location.href = parsed.toString();
+        } catch {
+            window.location.href = targetUrl;
+        }
     }
 
     private sharedReelKey(sharedReel: SharedReelPreview): string {

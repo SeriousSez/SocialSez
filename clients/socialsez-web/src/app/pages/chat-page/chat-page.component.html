@@ -169,8 +169,9 @@
 
                                 <div class="message-content-row">
                                     <div class="bubble-wrap">
-                                        <div class="bubble" [class.media-only]="parsed.gifUrl || parsed.imageUrl || parsed.sharedReel || parsed.sharedStory" [class.shared-only]="(parsed.sharedPost || parsed.sharedReel || parsed.sharedStory) && !parsed.text && !parsed.gifUrl && !parsed.imageUrl"
-                                            [class.shared-with-text]="(parsed.sharedPost || parsed.sharedStory) && !!parsed.text" [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
+                                        <div class="bubble" [class.media-only]="parsed.gifUrl || parsed.imageUrl || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl"
+                                            [class.shared-only]="(parsed.sharedPost || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl) && !parsed.text && !parsed.gifUrl && !parsed.imageUrl"
+                                            [class.shared-with-text]="(parsed.sharedPost || parsed.sharedStory || parsed.unfurlUrl) && !!parsed.text" [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
                                             <p *ngIf="parsed.text">{{ parsed.text }}</p>
                                             <article class="shared-post-preview" *ngIf="parsed.sharedPost as shared" [attr.role]="'button'" tabindex="0" (click)="openSharedPost(shared, $event)" (keydown.enter)="openSharedPost(shared, $event)" (keydown.space)="openSharedPost(shared, $event)">
                                                 <header class="shared-post-head">
@@ -249,6 +250,18 @@
                                                         </div>
 
                                                         <div class="shared-reel-unavailable-badge" *ngIf="isSharedReelUnavailable(sharedReel)">Reel was deleted</div>
+                                                    </div>
+                                                </button>
+                                            </article>
+                                            <article class="shared-link-preview" *ngIf="parsed.unfurlUrl as unfurlUrl">
+                                                <button type="button" class="shared-link-card" (click)="openUnfurledLink(unfurlUrl, $event)">
+                                                    <img class="shared-link-image" *ngIf="getUnfurlPreview(unfurlUrl)?.imageUrl as imageUrl" [src]="imageUrl" alt="Shared link preview" />
+                                                    <div class="shared-link-image fallback" *ngIf="!getUnfurlPreview(unfurlUrl)?.imageUrl && !isUnfurlPreviewLoading(unfurlUrl)">
+                                                        <i class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
+                                                    </div>
+                                                    <div class="shared-link-copy">
+                                                        <p class="shared-link-title">{{ getUnfurlPreview(unfurlUrl)?.title || 'Loading preview...' }}</p>
+                                                        <p class="shared-link-desc">{{ getUnfurlPreview(unfurlUrl)?.description || 'Resolving shared link metadata...' }}</p>
                                                     </div>
                                                 </button>
                                             </article>

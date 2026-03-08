@@ -212,6 +212,18 @@
                                             </div>
                                         </button>
                                     </article>
+                                    <article class="dock-shared-link-preview" *ngIf="parsed.unfurlUrl as unfurlUrl">
+                                        <button type="button" class="dock-shared-link-card" (click)="openUnfurledLink(unfurlUrl, $event)">
+                                            <img class="dock-shared-link-image" *ngIf="getUnfurlPreview(unfurlUrl)?.imageUrl as imageUrl" [src]="imageUrl" alt="Shared link preview" />
+                                            <div class="dock-shared-link-image fallback" *ngIf="!getUnfurlPreview(unfurlUrl)?.imageUrl && !isUnfurlPreviewLoading(unfurlUrl)">
+                                                <i class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
+                                            </div>
+                                            <div class="dock-shared-link-copy">
+                                                <p class="dock-shared-link-title">{{ getUnfurlPreview(unfurlUrl)?.title || 'Loading preview...' }}</p>
+                                                <p class="dock-shared-link-desc">{{ getUnfurlPreview(unfurlUrl)?.description || 'Resolving shared link metadata...' }}</p>
+                                            </div>
+                                        </button>
+                                    </article>
                                     <img class="dock-media" *ngIf="parsed.imageUrl" [src]="parsed.imageUrl" alt="Sent image" />
                                     <img class="dock-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" alt="Sent GIF" />
                                 </div>
