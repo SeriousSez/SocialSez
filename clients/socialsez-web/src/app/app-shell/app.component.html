@@ -6,7 +6,6 @@
     </span>
     <div class="top-notice-copy">
         <span class="banner-title">{{ topNoticeMessage }}</span>
-        <span class="banner-version" *ngIf="showTopNoticeVersion">{{ topNoticeVersion }}</span>
     </div>
     <button type="button" class="top-notice-action" *ngIf="showTopNoticeAction" (click)="onTopNoticeAction()" aria-label="Dismiss notification">{{ topNoticeActionLabel }}</button>
 </section>
