@@ -767,7 +767,7 @@ app.MapGet("/api/unfurl/{**targetPath}", async (
     var normalizedTargetPath = string.IsNullOrWhiteSpace(targetPath)
         ? "/"
         : $"/{targetPath.TrimStart('/')}";
-    var meta = await ResolveUnfurlMetaAsync(normalizedTargetPath, context, postService, communityService, reelService, storyService, profileService, blogService, context.RequestAborted);
+    var meta = await ResolveUnfurlMetaAsync(normalizedTargetPath, context, publicAppOrigin, postService, communityService, reelService, storyService, profileService, blogService, context.RequestAborted);
     var targetUrl = ToAppUrl(context, publicAppOrigin, normalizedTargetPath);
     var html = BuildUnfurlRedirectHtml(BuildMetaTags(meta, targetUrl), targetUrl);
 
@@ -818,7 +818,7 @@ app.MapFallback(async (
         return await File.ReadAllTextAsync(spaIndexPath, context.RequestAborted);
     }) ?? string.Empty;
 
-    var meta = await ResolveUnfurlMetaAsync(path, context, postService, communityService, reelService, storyService, profileService, blogService, context.RequestAborted);
+    var meta = await ResolveUnfurlMetaAsync(path, context, publicAppOrigin, postService, communityService, reelService, storyService, profileService, blogService, context.RequestAborted);
     var responseHtml = InjectMetaTags(indexHtml, BuildMetaTags(meta, ToAppUrl(context, publicAppOrigin, path)));
 
     context.Response.ContentType = "text/html; charset=utf-8";
@@ -833,6 +833,7 @@ app.Run();
 static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
     string path,
     HttpContext context,
+    string? publicAppOrigin,
     IPostService postService,
     ICommunityService communityService,
     IReelService reelService,
@@ -844,7 +845,7 @@ static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
     var defaultMeta = new UnfurlMeta(
         "Venli",
         "Build, post, discover and follow in one flow.",
-        ToAbsoluteUrl(context, "/assets/images/v-blue-close.png"),
+        ToAbsoluteUrl(context, "/assets/images/v-blue-close.png", publicAppOrigin),
         "website");
 
     var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
@@ -866,7 +867,7 @@ static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
             return new UnfurlMeta(
                 $"@{post.AuthorHandle} on Venli",
                 Truncate(post.Content, 200) ?? "Shared post on Venli.",
-                ToAbsoluteUrl(context, post.ImageUrls.FirstOrDefault() ?? post.ImageUrl ?? post.AuthorImageUrl),
+                ToAbsoluteUrl(context, post.ImageUrls.FirstOrDefault() ?? post.ImageUrl ?? post.AuthorImageUrl, publicAppOrigin),
                 "article");
         }
 
@@ -886,7 +887,7 @@ static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
             return new UnfurlMeta(
                 title,
                 description,
-                ToAbsoluteUrl(context, communityPost.ImageUrls.FirstOrDefault() ?? communityPost.ImageUrl ?? communityPost.AuthorImageUrl),
+                ToAbsoluteUrl(context, communityPost.ImageUrls.FirstOrDefault() ?? communityPost.ImageUrl ?? communityPost.AuthorImageUrl, publicAppOrigin),
                 "article");
         }
 
@@ -901,7 +902,7 @@ static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
             return new UnfurlMeta(
                 $"Reel by @{reel.AuthorHandle}",
                 Truncate(reel.Caption, 220) ?? "Watch this reel on Venli.",
-                ToAbsoluteUrl(context, reel.ThumbnailUrl ?? reel.AuthorImageUrl),
+                ToAbsoluteUrl(context, reel.ThumbnailUrl ?? reel.AuthorImageUrl, publicAppOrigin),
                 "video.other");
         }
 
@@ -916,7 +917,7 @@ static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
             return new UnfurlMeta(
                 $"Story by @{story.AuthorHandle}",
                 Truncate(story.Caption, 220) ?? "View this story on Venli.",
-                ToAbsoluteUrl(context, story.MediaUrl ?? story.AuthorImageUrl),
+                ToAbsoluteUrl(context, story.MediaUrl ?? story.AuthorImageUrl, publicAppOrigin),
                 "article");
         }
 
@@ -933,7 +934,7 @@ static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
             return new UnfurlMeta(
                 $"{displayName} (@{profile.Handle}) | Venli",
                 Truncate(profile.Bio, 220) ?? $"View @{profile.Handle}'s profile on Venli.",
-                ToAbsoluteUrl(context, profile.ImageUrl),
+                ToAbsoluteUrl(context, profile.ImageUrl, publicAppOrigin),
                 "profile");
         }
 
@@ -949,7 +950,7 @@ static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
             return new UnfurlMeta(
                 $"{community.Name} | Venli Community",
                 Truncate(community.Description, 220) ?? $"Join {community.Name} on Venli.",
-                ToAbsoluteUrl(context, community.ImageUrl),
+                ToAbsoluteUrl(context, community.ImageUrl, publicAppOrigin),
                 "website");
         }
 
@@ -969,7 +970,7 @@ static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
                     return new UnfurlMeta(
                         $"{post.Title} | @{post.AuthorHandle}",
                         Truncate(post.Excerpt ?? post.Content, 220) ?? "Read this blog post on Venli.",
-                        ToAbsoluteUrl(context, post.CoverImageUrl),
+                        ToAbsoluteUrl(context, post.CoverImageUrl, publicAppOrigin),
                         "article");
                 }
             }
@@ -1018,7 +1019,7 @@ static string Truncate(string? value, int maxLength)
     return $"{normalized[..Math.Max(0, maxLength - 1)].TrimEnd()}...";
 }
 
-static string ToAbsoluteUrl(HttpContext context, string? value)
+static string ToAbsoluteUrl(HttpContext context, string? value, string? publicAppOrigin = null)
 {
     var defaultPath = "/assets/images/v-blue-close.png";
     var normalized = string.IsNullOrWhiteSpace(value) ? defaultPath : value.Trim();
@@ -1044,6 +1045,12 @@ static string ToAbsoluteUrl(HttpContext context, string? value)
     if (!normalized.StartsWith('/'))
     {
         normalized = $"/{normalized}";
+    }
+
+    if (!string.IsNullOrWhiteSpace(publicAppOrigin)
+        && normalized.StartsWith("/assets/", StringComparison.OrdinalIgnoreCase))
+    {
+        return $"{publicAppOrigin.TrimEnd('/')}{normalized}";
     }
 
     return $"{context.Request.Scheme}://{context.Request.Host}{normalized}";
