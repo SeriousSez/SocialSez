@@ -596,6 +596,14 @@ h1 {
     box-shadow: 0 18px 44px -34px #0f172a;
 }
 
+.content.content-full-bleed {
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
 .panel {
     border: 1px solid #d7e1ef;
     border-radius: 12px;
@@ -717,6 +725,12 @@ label {
         box-sizing: border-box;
         display: grid;
         align-content: start;
+    }
+
+    .content.content-full-bleed {
+        padding: 0 0 calc(var(--mobile-footer-nav-height) + env(safe-area-inset-bottom));
+        min-height: 0;
+        background: transparent;
     }
 
     .content> :not(router-outlet) {

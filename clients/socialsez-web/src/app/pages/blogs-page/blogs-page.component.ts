@@ -195,6 +195,12 @@ export class BlogsPageComponent {
         return blog.id;
     }
 
+    blogCardStyles(blog: BlogDto): Record<string, string> {
+        return {
+            '--blog-card-accent': this.normalizeBlogAccent(blog.theme?.accentColor)
+        };
+    }
+
     get tabSubtitle(): string {
         switch (this.activeTab) {
             case 'following':
@@ -308,6 +314,15 @@ export class BlogsPageComponent {
     private toTimestamp(value: string): number {
         const parsed = Date.parse(value);
         return Number.isNaN(parsed) ? 0 : parsed;
+    }
+
+    private normalizeBlogAccent(value: string | null | undefined): string {
+        const normalized = (value ?? '').trim();
+        if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(normalized)) {
+            return normalized;
+        }
+
+        return '#0ea5e9';
     }
 
     private rankAndFilterBlogs(blogs: ReadonlyArray<BlogDto>, query: string): BlogDto[] {

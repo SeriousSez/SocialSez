@@ -180,6 +180,12 @@ export class AppComponent implements OnInit, OnDestroy {
             || /^\/cp\//i.test(this.router.url);
     }
 
+    get isBlogReadingRoute(): boolean {
+        const routePath = this.router.url.split('?')[0].split('#')[0].toLowerCase();
+        const segments = routePath.split('/').filter(segment => !!segment);
+        return segments.length >= 3 && segments[0] === 'blogs' && segments[1] !== 'studio';
+    }
+
     get searchContextLabel(): string {
         const url = this.router.url.toLowerCase();
 

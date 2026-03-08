@@ -61,7 +61,8 @@
     </section>
 
     <div class="blog-grid" *ngIf="!loading && !error && blogs.length; else emptyState">
-        <article class="blog-card" *ngFor="let blog of visibleBlogs; trackBy: trackBlog" role="link" tabindex="0" (click)="openBlogAsync(blog, $event)" (keydown.enter)="openBlogAsync(blog, $event)" (keydown.space)="$event.preventDefault(); openBlogAsync(blog, $event)">
+        <article class="blog-card" *ngFor="let blog of visibleBlogs; trackBy: trackBlog" [ngStyle]="blogCardStyles(blog)" role="link" tabindex="0" (click)="openBlogAsync(blog, $event)" (keydown.enter)="openBlogAsync(blog, $event)"
+            (keydown.space)="$event.preventDefault(); openBlogAsync(blog, $event)">
             <header class="blog-card-head">
                 <a class="blog-title" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">{{ blog.title }}</a>
                 <div class="blog-state-row">
