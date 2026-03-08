@@ -778,6 +778,41 @@ app.MapGet("/api/unfurl/{**targetPath}", async (
     }
 });
 
+app.MapGet("/api/unfurl/image", (HttpContext context) =>
+{
+    var safeTitle = Truncate(context.Request.Query["title"], 90);
+    var safeSubtitle = Truncate(context.Request.Query["subtitle"], 120);
+    var safeAccent = context.Request.Query.TryGetValue("accent", out var accentValue) && !string.IsNullOrWhiteSpace(accentValue)
+        ? accentValue.ToString().Trim()
+        : "#2563eb";
+
+    var svg = $"""
+<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1200\" height=\"630\" viewBox=\"0 0 1200 630\" role=\"img\" aria-label=\"{XmlEscape(safeTitle)}\">
+    <defs>
+        <linearGradient id=\"bg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">
+            <stop offset=\"0%\" stop-color=\"#0f172a\"/>
+            <stop offset=\"100%\" stop-color=\"#1e293b\"/>
+        </linearGradient>
+        <linearGradient id=\"accent\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\">
+            <stop offset=\"0%\" stop-color=\"{XmlEscape(safeAccent)}\"/>
+            <stop offset=\"100%\" stop-color=\"#22d3ee\"/>
+        </linearGradient>
+    </defs>
+
+    <rect width=\"1200\" height=\"630\" fill=\"url(#bg)\"/>
+    <rect x=\"56\" y=\"64\" width=\"10\" height=\"502\" rx=\"5\" fill=\"url(#accent)\"/>
+
+    <text x=\"92\" y=\"190\" fill=\"#e2e8f0\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"58\" font-weight=\"800\">{XmlEscape(string.IsNullOrWhiteSpace(safeTitle) ? "Venli" : safeTitle)}</text>
+    <text x=\"92\" y=\"260\" fill=\"#94a3b8\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"34\" font-weight=\"500\">{XmlEscape(string.IsNullOrWhiteSpace(safeSubtitle) ? "Community Platform" : safeSubtitle)}</text>
+
+    <text x=\"92\" y=\"542\" fill=\"#cbd5e1\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"30\" font-weight=\"700\">venli.sezginsahin.dk</text>
+</svg>
+""";
+
+    context.Response.Headers.CacheControl = "public,max-age=86400";
+    return Results.Text(svg, "image/svg+xml");
+});
+
 var spaIndexPath = Path.Combine(webRoot, "index.html");
 
 app.MapFallback(async (
@@ -883,11 +918,17 @@ static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
                 ?? $"Community post by @{communityPost.AuthorHandle}";
             var description = Truncate(communityPost.Content ?? communityPost.MediaContent ?? communityPost.LinkUrl, 220)
                 ?? "Shared community post on Venli.";
+            var generatedImage = BuildUnfurlImageUrl(
+                context,
+                publicAppOrigin,
+                title,
+                $"@{communityPost.AuthorHandle} in community",
+                "#0ea5e9");
 
             return new UnfurlMeta(
                 title,
                 description,
-                ToAbsoluteUrl(context, communityPost.ImageUrls.FirstOrDefault() ?? communityPost.ImageUrl ?? communityPost.AuthorImageUrl, publicAppOrigin),
+                generatedImage,
                 "article");
         }
 
@@ -967,10 +1008,17 @@ static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
                 var post = await blogService.GetPostBySlugAsync(handle, segments[2], segments[3], null, cancellationToken);
                 if (post is not null)
                 {
+                    var title = $"{post.Title} | @{post.AuthorHandle}";
+                    var description = Truncate(post.Excerpt ?? post.Content, 220) ?? "Read this blog post on Venli.";
+                    var mediaImage = ToAbsoluteUrl(context, post.CoverImageUrl, publicAppOrigin);
+                    var image = string.IsNullOrWhiteSpace(mediaImage)
+                        ? BuildUnfurlImageUrl(context, publicAppOrigin, post.Title, $"@{post.AuthorHandle} on Venli", "#22c55e")
+                        : mediaImage;
+
                     return new UnfurlMeta(
-                        $"{post.Title} | @{post.AuthorHandle}",
-                        Truncate(post.Excerpt ?? post.Content, 220) ?? "Read this blog post on Venli.",
-                        ToAbsoluteUrl(context, post.CoverImageUrl, publicAppOrigin),
+                        title,
+                        description,
+                        image,
                         "article");
                 }
             }
@@ -1093,6 +1141,21 @@ static string BuildUnfurlRedirectHtml(string metaTags, string targetUrl)
 {
     var escapedTargetUrl = WebUtility.HtmlEncode(targetUrl);
     return $"<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">{metaTags}<meta name=\"robots\" content=\"noindex, nofollow\"><link rel=\"canonical\" href=\"{escapedTargetUrl}\"><meta http-equiv=\"refresh\" content=\"0; url={escapedTargetUrl}\"><script>window.location.replace({System.Text.Json.JsonSerializer.Serialize(targetUrl)});</script></head><body><a href=\"{escapedTargetUrl}\">Continue</a></body></html>";
+}
+
+static string BuildUnfurlImageUrl(HttpContext context, string? publicAppOrigin, string title, string subtitle, string accent = "#2563eb")
+{
+    var origin = !string.IsNullOrWhiteSpace(publicAppOrigin)
+        ? publicAppOrigin.TrimEnd('/')
+        : $"{context.Request.Scheme}://{context.Request.Host}";
+
+    var query = $"title={Uri.EscapeDataString(title)}&subtitle={Uri.EscapeDataString(subtitle)}&accent={Uri.EscapeDataString(accent)}";
+    return $"{origin}/api/unfurl/image?{query}";
+}
+
+static string XmlEscape(string? value)
+{
+    return WebUtility.HtmlEncode(value ?? string.Empty);
 }
 
 static string InjectMetaTags(string html, string tags)
