@@ -5,6 +5,7 @@ import { BlogDto, BlogPostDto } from '../../core/api.types';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { renderMarkdownToHtml } from '../../core/markdown.util';
 import { SessionService } from '../../core/session.service';
+import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
 @Component({
     selector: 'app-blog-post-page',
@@ -83,7 +84,7 @@ export class BlogPostPageComponent implements OnDestroy {
         const encodedHandle = encodeURIComponent(this.handle);
         const encodedBlogSlug = encodeURIComponent(this.blogSlug);
         const encodedPostSlug = encodeURIComponent(this.postSlug);
-        return `${window.location.origin}/api/unfurl/blogs/${encodedHandle}/${encodedBlogSlug}/${encodedPostSlug}`;
+        return buildUnfurlShareUrl(`/blogs/${encodedHandle}/${encodedBlogSlug}/${encodedPostSlug}`);
     }
 
     get allowLikes(): boolean {

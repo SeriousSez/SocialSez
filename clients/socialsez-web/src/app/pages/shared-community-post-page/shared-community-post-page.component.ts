@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 import { CommunityDto, CommunityPollDto, CommunityPostDto } from '../../core/api.types';
 import { expandDiscoveryTerms, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
+import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 import { CommunityPostEditorModalComponent, CommunityPostEditorSavePayload } from '../../shared/community-post-editor-modal/community-post-editor-modal.component';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
 import { SocialSezApiService } from '../../core/socialsez-api.service';
@@ -108,7 +109,7 @@ export class SharedCommunityPostPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/api/unfurl/cp/${postId}`;
+        const link = buildUnfurlShareUrl(`/cp/${postId}`);
         const copied = await this.copyTextToClipboardAsync(link);
         if (!copied) {
             return;
@@ -1223,7 +1224,7 @@ export class SharedCommunityPostPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/api/unfurl/cp/${postId}#comment-${commentId}`;
+        const link = buildUnfurlShareUrl(`/cp/${postId}#comment-${commentId}`);
         const copied = await this.copyTextToClipboardAsync(link);
         if (!copied) {
             return;

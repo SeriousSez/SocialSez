@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { PostDto } from '../../core/api.types';
 import { SocialSezApiService } from '../../core/socialsez-api.service';
 import { SessionService } from '../../core/session.service';
+import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
 interface SharedContentPart {
     text: string;
@@ -46,7 +47,7 @@ export class SharedPostPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/api/unfurl/post/${postId}`;
+        const link = buildUnfurlShareUrl(`/post/${postId}`);
         await navigator.clipboard.writeText(link);
         this.ngZone.run(() => {
             this.copiedLink = true;

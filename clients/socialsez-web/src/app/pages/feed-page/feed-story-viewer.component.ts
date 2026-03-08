@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { StoryDto, StoryGroupDto } from '../../core/api.types';
+import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
 @Component({
     selector: 'app-feed-story-viewer',
@@ -246,7 +247,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
             return;
         }
 
-        const link = `${window.location.origin}/api/unfurl/story/${storyId}`;
+        const link = buildUnfurlShareUrl(`/story/${storyId}`);
         try {
             await navigator.clipboard.writeText(link);
             this.ngZone.run(() => {

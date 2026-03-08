@@ -7,6 +7,7 @@ import { CommunityDto, CommunityMemberDto, CommunityPollDto, CommunityPostDto, C
 import { rankByDiscoveryQuery, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { SessionService } from '../../core/session.service';
+import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
@@ -828,7 +829,7 @@ export class CommunityDetailPageComponent {
             return;
         }
 
-        const communityUrl = `${window.location.origin}/api/unfurl/c/${encodeURIComponent(slug)}`;
+        const communityUrl = buildUnfurlShareUrl(`/c/${encodeURIComponent(slug)}`);
 
         try {
             const copied = await this.copyTextToClipboardAsync(communityUrl);
@@ -1160,7 +1161,7 @@ export class CommunityDetailPageComponent {
     }
 
     async sharePostAsync(post: CommunityPostDto): Promise<void> {
-        const postUrl = `${window.location.origin}/api/unfurl/cp/${post.id}`;
+        const postUrl = buildUnfurlShareUrl(`/cp/${post.id}`);
 
         try {
             const copied = await this.copyTextToClipboardAsync(postUrl);

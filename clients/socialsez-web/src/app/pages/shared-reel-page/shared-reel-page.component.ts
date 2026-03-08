@@ -5,6 +5,7 @@ import { NgZone } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ReelDto } from '../../core/api.types';
 import { SocialSezApiService } from '../../core/socialsez-api.service';
+import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
 interface SharedContentPart {
     text: string;
@@ -41,7 +42,7 @@ export class SharedReelPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/api/unfurl/reel/${reelId}`;
+        const link = buildUnfurlShareUrl(`/reel/${reelId}`);
         await navigator.clipboard.writeText(link);
         this.ngZone.run(() => {
             this.copiedLink = true;

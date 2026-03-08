@@ -49,6 +49,12 @@ var allowedCorsOrigins = (configuredCorsOrigins is { Length: > 0 }
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
 
+var configuredPublicAppOrigin = builder.Configuration["PublicAppOrigin"]?.Trim();
+var inferredPublicAppOrigin = allowedCorsOrigins.FirstOrDefault(origin => !origin.Contains(".api.", StringComparison.OrdinalIgnoreCase));
+var publicAppOrigin = !string.IsNullOrWhiteSpace(configuredPublicAppOrigin)
+    ? configuredPublicAppOrigin
+    : inferredPublicAppOrigin;
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ClientApps", policy =>
@@ -762,8 +768,8 @@ app.MapGet("/api/unfurl/{**targetPath}", async (
         ? "/"
         : $"/{targetPath.TrimStart('/')}";
     var meta = await ResolveUnfurlMetaAsync(normalizedTargetPath, context, postService, communityService, reelService, storyService, profileService, blogService, context.RequestAborted);
-    var targetUrl = ToAbsoluteUrl(context, normalizedTargetPath);
-    var html = BuildUnfurlRedirectHtml(BuildMetaTags(meta, context, normalizedTargetPath), targetUrl);
+    var targetUrl = ToAppUrl(context, publicAppOrigin, normalizedTargetPath);
+    var html = BuildUnfurlRedirectHtml(BuildMetaTags(meta, targetUrl), targetUrl);
 
     context.Response.ContentType = "text/html; charset=utf-8";
     if (!HttpMethods.IsHead(context.Request.Method))
@@ -813,7 +819,7 @@ app.MapFallback(async (
     }) ?? string.Empty;
 
     var meta = await ResolveUnfurlMetaAsync(path, context, postService, communityService, reelService, storyService, profileService, blogService, context.RequestAborted);
-    var responseHtml = InjectMetaTags(indexHtml, BuildMetaTags(meta, context, path));
+    var responseHtml = InjectMetaTags(indexHtml, BuildMetaTags(meta, ToAppUrl(context, publicAppOrigin, path)));
 
     context.Response.ContentType = "text/html; charset=utf-8";
     if (!HttpMethods.IsHead(context.Request.Method))
@@ -1019,6 +1025,19 @@ static string ToAbsoluteUrl(HttpContext context, string? value)
 
     if (Uri.TryCreate(normalized, UriKind.Absolute, out var absoluteUri))
     {
+        if (absoluteUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+            || absoluteUri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase)
+            || absoluteUri.Host.Equals("0.0.0.0", StringComparison.OrdinalIgnoreCase))
+        {
+            var rewrittenPath = absoluteUri.PathAndQuery;
+            if (rewrittenPath.StartsWith("/api/uploads/", StringComparison.OrdinalIgnoreCase))
+            {
+                rewrittenPath = rewrittenPath[4..];
+            }
+
+            return $"{context.Request.Scheme}://{context.Request.Host}{rewrittenPath}";
+        }
+
         return absoluteUri.ToString();
     }
 
@@ -1030,9 +1049,28 @@ static string ToAbsoluteUrl(HttpContext context, string? value)
     return $"{context.Request.Scheme}://{context.Request.Host}{normalized}";
 }
 
-static string BuildMetaTags(UnfurlMeta meta, HttpContext context, string path)
+static string ToAppUrl(HttpContext context, string? appOrigin, string path)
 {
-    var pageUrl = ToAbsoluteUrl(context, path);
+    var normalizedPath = string.IsNullOrWhiteSpace(path)
+        ? "/"
+        : (path.StartsWith('/') ? path : $"/{path}");
+
+    if (!string.IsNullOrWhiteSpace(appOrigin))
+    {
+        return $"{appOrigin.TrimEnd('/')}{normalizedPath}";
+    }
+
+    var host = context.Request.Host.Host;
+    if (host.Contains(".api.", StringComparison.OrdinalIgnoreCase))
+    {
+        host = host.Replace(".api.", ".", StringComparison.OrdinalIgnoreCase);
+    }
+
+    return $"{context.Request.Scheme}://{host}{normalizedPath}";
+}
+
+static string BuildMetaTags(UnfurlMeta meta, string pageUrl)
+{
     var title = WebUtility.HtmlEncode(meta.Title);
     var description = WebUtility.HtmlEncode(meta.Description);
     var imageUrl = WebUtility.HtmlEncode(meta.ImageUrl);

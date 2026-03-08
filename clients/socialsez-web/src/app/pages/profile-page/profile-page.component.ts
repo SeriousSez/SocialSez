@@ -11,6 +11,7 @@ import { ReelInteractionsService } from '../../core/reel-interactions.service';
 import { executeReelShareToChat } from '../../core/reel-share-to-chat.utils';
 import { cancelReelShareModal, openReelShareModal } from '../../core/reel-share-modal-state.utils';
 import { StoryPresenceService } from '../../core/story-presence.service';
+import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 import { SessionService } from '../../core/session.service';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { PostComposerComponent } from '../../shared/post-composer/post-composer.component';
@@ -473,7 +474,7 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
-        const link = `${window.location.origin}/api/unfurl/users/${handle}`;
+        const link = buildUnfurlShareUrl(`/users/${handle}`);
 
         try {
             await navigator.clipboard.writeText(link);

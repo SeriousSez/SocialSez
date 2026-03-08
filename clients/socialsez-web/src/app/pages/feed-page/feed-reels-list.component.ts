@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReelCommentDto, ReelDto } from '../../core/api.types';
+import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 import { CommentsSheetComponent } from '../../shared/comments-sheet/comments-sheet.component';
 
 export interface ReelCommentCreateEvent {
@@ -211,7 +212,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     async onCopyReelLink(reel: ReelDto): Promise<void> {
-        const link = `${window.location.origin}/api/unfurl/reel/${reel.id}`;
+        const link = buildUnfurlShareUrl(`/reel/${reel.id}`);
         try {
             await navigator.clipboard.writeText(link);
             this.ngZone.run(() => {

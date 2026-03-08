@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { CommentDto, PostDto, PostReactionDetailDto, ProfileDto } from '../../core/api.types';
 import { SharedPostPreview, extractSharedPostFromContent } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
+import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 import { CommentsSheetComponent } from '../comments-sheet/comments-sheet.component';
 import { ConfirmModalComponent } from '../confirm-modal/confirm-modal.component';
 import { LazyImageComponent } from '../lazy-image/lazy-image.component';
@@ -1226,7 +1227,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
             return;
         }
 
-        const link = `${window.location.origin}/api/unfurl/post/${postId}`;
+        const link = buildUnfurlShareUrl(`/post/${postId}`);
         try {
             await navigator.clipboard.writeText(link);
             this.ngZone.run(() => {
