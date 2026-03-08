@@ -44,8 +44,7 @@
 
 .cover-media-img {
     display: block;
-    width: min(100%, 520px);
-    max-height: 300px;
+    width: min(100%, 100%);
     height: auto;
     object-fit: cover;
     border-radius: 14px;
