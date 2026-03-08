@@ -23,7 +23,6 @@ export const routes: Routes = [
     { path: '', pathMatch: 'full', redirectTo: 'blogs' },
     { path: 'auth', loadComponent: () => import('./pages/auth-page/auth-page.component').then(module => module.AuthPageComponent), canActivate: [guestGuard] },
     { path: 'feed', loadComponent: () => import('./pages/feed-page/feed-page.component').then(module => module.FeedPageComponent), canActivate: [authGuard] },
-    { path: 'compose', loadComponent: () => import('./pages/compose-page/compose-page.component').then(module => module.ComposePageComponent), canActivate: [authGuard] },
     { path: 'discover', loadComponent: () => import('./pages/discover-page/discover-page.component').then(module => module.DiscoverPageComponent) },
     { path: 'communities', loadComponent: () => import('./pages/communities-page/communities-page.component').then(module => module.CommunitiesPageComponent) },
     { path: 'c/:slug', loadComponent: () => import('./pages/community-detail-page/community-detail-page.component').then(module => module.CommunityDetailPageComponent) },

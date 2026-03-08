@@ -25,35 +25,58 @@
 .tabs {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px;
-    border: 1px solid var(--color-border);
-    border-radius: 999px;
-    background: var(--color-surface-muted);
-    width: fit-content;
+    gap: 8px;
 }
 
 .tab-button {
-    border: 0;
+    border: 1px solid var(--color-border-input);
     border-radius: 999px;
-    padding: 7px 12px;
-    background: transparent;
-    color: var(--color-text-muted);
+    padding: 7px 14px;
+    background: var(--color-surface);
+    color: var(--color-text-subtle);
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     box-shadow: none;
-    transition: background-color 120ms ease, color 120ms ease;
+    transform: none;
+    transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 
 .tab-button.active {
-    background: var(--color-surface);
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
+    background: var(--gradient-primary);
+    color: var(--color-text-on-dark);
+    border-color: var(--color-primary);
 }
 
 .tab-button[aria-selected='true'] {
-    color: var(--color-text);
+    color: var(--color-text-on-dark);
+}
+
+.tab-button:hover {
+    box-shadow: none;
+    transform: none;
+}
+
+:host-context(.theme-dark) {
+    .tab-button {
+        background: var(--color-surface-muted);
+        color: var(--color-text-muted);
+        border-color: var(--color-border);
+        opacity: 0.86;
+    }
+
+    .tab-button.active {
+        background: var(--gradient-primary);
+        color: var(--color-text-on-dark);
+        border-color: var(--color-border);
+        opacity: 1;
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 55%, transparent) inset;
+    }
+
+    .tab-button:not(.active):hover {
+        opacity: 1;
+        background: var(--color-surface-alt);
+    }
 }
 
 .tab-panel {

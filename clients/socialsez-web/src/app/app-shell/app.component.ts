@@ -49,6 +49,7 @@ export class AppComponent implements OnInit, OnDestroy {
     loadingRightRailCommunity = false;
     savingRightRailRules = false;
     unreadNotificationsCount = 0;
+    mobileFooterMenuOpen = false;
     searchScopePickerOpen = false;
     manualSearchScope: SearchDiscoverType | null = null;
     readonly searchScopeOptions: ReadonlyArray<SearchScopeOption> = [
@@ -326,6 +327,8 @@ export class AppComponent implements OnInit, OnDestroy {
                 takeUntilDestroyed(this.destroyRef)
             )
             .subscribe(() => {
+                this.mobileFooterMenuOpen = false;
+
                 if (!this.session.isAuthenticated()) {
                     this.unreadNotificationsCount = 0;
                 }
@@ -367,21 +370,33 @@ export class AppComponent implements OnInit, OnDestroy {
 
     @HostListener('document:click', ['$event'])
     onDocumentClick(event: MouseEvent): void {
-        if (!this.searchScopePickerOpen) {
-            return;
-        }
-
         const target = event.target as HTMLElement | null;
-        if (target?.closest('.search-scope-picker')) {
-            return;
+
+        if (this.searchScopePickerOpen) {
+            if (target?.closest('.search-scope-picker')) {
+                return;
+            }
+
+            this.searchScopePickerOpen = false;
         }
 
-        this.searchScopePickerOpen = false;
+        if (this.mobileFooterMenuOpen && !target?.closest('.mobile-footer-more')) {
+            this.mobileFooterMenuOpen = false;
+        }
     }
 
     @HostListener('document:keydown.escape')
     onDocumentEscape(): void {
         this.searchScopePickerOpen = false;
+        this.mobileFooterMenuOpen = false;
+    }
+
+    toggleMobileFooterMenu(): void {
+        this.mobileFooterMenuOpen = !this.mobileFooterMenuOpen;
+    }
+
+    closeMobileFooterMenu(): void {
+        this.mobileFooterMenuOpen = false;
     }
 
     private async initializeAsync(): Promise<void> {

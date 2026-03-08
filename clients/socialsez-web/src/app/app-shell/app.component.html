@@ -38,7 +38,6 @@
 
         <nav class="tabs">
             <a class="tab-feed" routerLink="/feed" routerLinkActive="active"><i class="fa-duotone fa-light fa-house" aria-hidden="true"></i><span>Feed</span></a>
-            <a class="tab-compose" routerLink="/compose" routerLinkActive="active"><i class="fa-duotone fa-pen" aria-hidden="true"></i><span>Compose</span></a>
             <a class="tab-discover" routerLink="/discover" routerLinkActive="active"><i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i><span>Discover</span></a>
             <a class="tab-blogs" routerLink="/blogs" routerLinkActive="active"><i class="fa-duotone fa-light fa-blog" aria-hidden="true"></i><span>Blogs</span></a>
             <a class="tab-communities" routerLink="/communities" routerLinkActive="active"><i class="fa-duotone fa-light fa-users" aria-hidden="true"></i><span>Communities</span></a>
@@ -152,38 +151,48 @@
         <i class="fa-duotone fa-light fa-house" aria-hidden="true"></i>
         <span>Feed</span>
     </a>
-    <a class="mobile-footer-tab" routerLink="/blogs" routerLinkActive="active">
-        <i class="fa-duotone fa-light fa-blog" aria-hidden="true"></i>
-        <span>Blogs</span>
-    </a>
     <a class="mobile-footer-tab" routerLink="/discover" routerLinkActive="active">
         <i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i>
         <span>Discover</span>
     </a>
-    <a class="mobile-footer-tab" routerLink="/communities" routerLinkActive="active">
-        <i class="fa-duotone fa-light fa-users" aria-hidden="true"></i>
-        <span>Groups</span>
+    <a class="mobile-footer-tab" routerLink="/blogs" routerLinkActive="active">
+        <i class="fa-duotone fa-light fa-blog" aria-hidden="true"></i>
+        <span>Blogs</span>
     </a>
     <a class="mobile-footer-tab" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()">
         <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
         <span>Chat</span>
     </a>
-    <a class="mobile-footer-tab" routerLink="/notifications" routerLinkActive="active" *ngIf="session.isAuthenticated()">
-        <i class="fa-duotone fa-light fa-bell" aria-hidden="true"></i>
-        <span>Alerts</span>
-    </a>
-    <a class="mobile-footer-tab" routerLink="/profile" routerLinkActive="active" *ngIf="session.isAuthenticated()">
-        <i class="fa-duotone fa-light fa-user" aria-hidden="true"></i>
-        <span>Profile</span>
-    </a>
-    <a class="mobile-footer-tab" routerLink="/settings" routerLinkActive="active" *ngIf="session.isAuthenticated()">
-        <i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i>
-        <span>Settings</span>
-    </a>
-    <a class="mobile-footer-tab" routerLink="/auth" routerLinkActive="active" *ngIf="!session.isAuthenticated()">
-        <i class="fa-duotone fa-light fa-right-to-bracket" aria-hidden="true"></i>
-        <span>Auth</span>
-    </a>
+
+    <div class="mobile-footer-more" [class.open]="mobileFooterMenuOpen">
+        <button type="button" class="mobile-footer-tab mobile-footer-more-trigger" [class.active]="mobileFooterMenuOpen" (click)="toggleMobileFooterMenu()" [attr.aria-expanded]="mobileFooterMenuOpen" aria-haspopup="menu" aria-label="Open more navigation">
+            <i class="fa-duotone fa-light fa-bars" aria-hidden="true"></i>
+            <span>More</span>
+        </button>
+
+        <div class="mobile-footer-more-menu" *ngIf="mobileFooterMenuOpen" role="menu" aria-label="More navigation">
+            <a class="mobile-footer-more-item" routerLink="/communities" (click)="closeMobileFooterMenu()" role="menuitem">
+                <i class="fa-duotone fa-light fa-users" aria-hidden="true"></i>
+                <span>Groups</span>
+            </a>
+            <a class="mobile-footer-more-item" routerLink="/notifications" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="session.isAuthenticated()">
+                <i class="fa-duotone fa-light fa-bell" aria-hidden="true"></i>
+                <span>Alerts</span>
+            </a>
+            <a class="mobile-footer-more-item" routerLink="/profile" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="session.isAuthenticated()">
+                <i class="fa-duotone fa-light fa-user" aria-hidden="true"></i>
+                <span>Profile</span>
+            </a>
+            <a class="mobile-footer-more-item" routerLink="/settings" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="session.isAuthenticated()">
+                <i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i>
+                <span>Settings</span>
+            </a>
+            <a class="mobile-footer-more-item" routerLink="/auth" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="!session.isAuthenticated()">
+                <i class="fa-duotone fa-light fa-right-to-bracket" aria-hidden="true"></i>
+                <span>Auth</span>
+            </a>
+        </div>
+    </div>
 </nav>
 
 <app-messages-dock [visible]="showMessagesDock" (sharedMediaRequested)="onDockSharedMediaRequested($event)" *ngIf="!isEmbedRoute"></app-messages-dock>
