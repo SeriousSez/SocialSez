@@ -828,7 +828,7 @@ export class CommunityDetailPageComponent {
             return;
         }
 
-        const communityUrl = `${window.location.origin}/c/${encodeURIComponent(slug)}`;
+        const communityUrl = `${window.location.origin}/api/unfurl/c/${encodeURIComponent(slug)}`;
 
         try {
             const copied = await this.copyTextToClipboardAsync(communityUrl);
@@ -1160,7 +1160,7 @@ export class CommunityDetailPageComponent {
     }
 
     async sharePostAsync(post: CommunityPostDto): Promise<void> {
-        const postUrl = `${window.location.origin}/cp/${post.id}`;
+        const postUrl = `${window.location.origin}/api/unfurl/cp/${post.id}`;
 
         try {
             const copied = await this.copyTextToClipboardAsync(postUrl);

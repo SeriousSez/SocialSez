@@ -46,7 +46,7 @@ export class SharedPostPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/post/${postId}`;
+        const link = `${window.location.origin}/api/unfurl/post/${postId}`;
         await navigator.clipboard.writeText(link);
         this.ngZone.run(() => {
             this.copiedLink = true;

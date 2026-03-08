@@ -211,7 +211,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     async onCopyReelLink(reel: ReelDto): Promise<void> {
-        const link = `${window.location.origin}/reel/${reel.id}`;
+        const link = `${window.location.origin}/api/unfurl/reel/${reel.id}`;
         try {
             await navigator.clipboard.writeText(link);
             this.ngZone.run(() => {

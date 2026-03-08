@@ -83,7 +83,7 @@ export class BlogPostPageComponent implements OnDestroy {
         const encodedHandle = encodeURIComponent(this.handle);
         const encodedBlogSlug = encodeURIComponent(this.blogSlug);
         const encodedPostSlug = encodeURIComponent(this.postSlug);
-        return `${window.location.origin}/blogs/${encodedHandle}/${encodedBlogSlug}/${encodedPostSlug}`;
+        return `${window.location.origin}/api/unfurl/blogs/${encodedHandle}/${encodedBlogSlug}/${encodedPostSlug}`;
     }
 
     get allowLikes(): boolean {

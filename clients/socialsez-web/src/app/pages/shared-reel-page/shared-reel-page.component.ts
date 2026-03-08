@@ -41,7 +41,7 @@ export class SharedReelPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/reel/${reelId}`;
+        const link = `${window.location.origin}/api/unfurl/reel/${reelId}`;
         await navigator.clipboard.writeText(link);
         this.ngZone.run(() => {
             this.copiedLink = true;

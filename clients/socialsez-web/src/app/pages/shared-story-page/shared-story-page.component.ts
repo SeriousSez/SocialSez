@@ -45,7 +45,7 @@ export class SharedStoryPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/story/${storyId}`;
+        const link = `${window.location.origin}/api/unfurl/story/${storyId}`;
         await navigator.clipboard.writeText(link);
         this.ngZone.run(() => {
             this.copiedLink = true;

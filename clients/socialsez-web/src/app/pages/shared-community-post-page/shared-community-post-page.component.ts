@@ -108,7 +108,7 @@ export class SharedCommunityPostPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/cp/${postId}`;
+        const link = `${window.location.origin}/api/unfurl/cp/${postId}`;
         const copied = await this.copyTextToClipboardAsync(link);
         if (!copied) {
             return;
@@ -1223,7 +1223,7 @@ export class SharedCommunityPostPageComponent {
             return;
         }
 
-        const link = `${window.location.origin}/cp/${postId}#comment-${commentId}`;
+        const link = `${window.location.origin}/api/unfurl/cp/${postId}#comment-${commentId}`;
         const copied = await this.copyTextToClipboardAsync(link);
         if (!copied) {
             return;

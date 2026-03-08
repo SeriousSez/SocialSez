@@ -473,7 +473,7 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
-        const link = `${window.location.origin}/users/${handle}`;
+        const link = `${window.location.origin}/api/unfurl/users/${handle}`;
 
         try {
             await navigator.clipboard.writeText(link);

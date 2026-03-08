@@ -246,7 +246,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
             return;
         }
 
-        const link = `${window.location.origin}/story/${storyId}`;
+        const link = `${window.location.origin}/api/unfurl/story/${storyId}`;
         try {
             await navigator.clipboard.writeText(link);
             this.ngZone.run(() => {

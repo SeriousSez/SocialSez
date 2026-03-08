@@ -742,6 +742,36 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
 
+app.MapGet("/api/unfurl/{**targetPath}", async (
+    HttpContext context,
+    string targetPath,
+    IPostService postService,
+    ICommunityService communityService,
+    IReelService reelService,
+    IStoryService storyService,
+    IProfileService profileService,
+    IBlogService blogService) =>
+{
+    if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    var normalizedTargetPath = string.IsNullOrWhiteSpace(targetPath)
+        ? "/"
+        : $"/{targetPath.TrimStart('/')}";
+    var meta = await ResolveUnfurlMetaAsync(normalizedTargetPath, context, postService, communityService, reelService, storyService, profileService, blogService, context.RequestAborted);
+    var targetUrl = ToAbsoluteUrl(context, normalizedTargetPath);
+    var html = BuildUnfurlRedirectHtml(BuildMetaTags(meta, context, normalizedTargetPath), targetUrl);
+
+    context.Response.ContentType = "text/html; charset=utf-8";
+    if (!HttpMethods.IsHead(context.Request.Method))
+    {
+        await context.Response.WriteAsync(html, context.RequestAborted);
+    }
+});
+
 var spaIndexPath = Path.Combine(webRoot, "index.html");
 
 app.MapFallback(async (
@@ -1012,6 +1042,12 @@ static string BuildMetaTags(UnfurlMeta meta, HttpContext context, string path)
     builder.AppendLine($"<title>{title}</title>");
     builder.AppendLine($"<meta name=\"description\" content=\"{description}\">\n<meta property=\"og:site_name\" content=\"Venli\">\n<meta property=\"og:type\" content=\"{type}\">\n<meta property=\"og:title\" content=\"{title}\">\n<meta property=\"og:description\" content=\"{description}\">\n<meta property=\"og:url\" content=\"{WebUtility.HtmlEncode(pageUrl)}\">\n<meta property=\"og:image\" content=\"{imageUrl}\">\n<meta name=\"twitter:card\" content=\"summary_large_image\">\n<meta name=\"twitter:title\" content=\"{title}\">\n<meta name=\"twitter:description\" content=\"{description}\">\n<meta name=\"twitter:image\" content=\"{imageUrl}\">\n<meta name=\"twitter:url\" content=\"{WebUtility.HtmlEncode(pageUrl)}\">");
     return builder.ToString();
+}
+
+static string BuildUnfurlRedirectHtml(string metaTags, string targetUrl)
+{
+    var escapedTargetUrl = WebUtility.HtmlEncode(targetUrl);
+    return $"<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">{metaTags}<meta name=\"robots\" content=\"noindex, nofollow\"><link rel=\"canonical\" href=\"{escapedTargetUrl}\"><meta http-equiv=\"refresh\" content=\"0; url={escapedTargetUrl}\"><script>window.location.replace({System.Text.Json.JsonSerializer.Serialize(targetUrl)});</script></head><body><a href=\"{escapedTargetUrl}\">Continue</a></body></html>";
 }
 
 static string InjectMetaTags(string html, string tags)

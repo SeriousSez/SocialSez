@@ -1226,7 +1226,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
             return;
         }
 
-        const link = `${window.location.origin}/post/${postId}`;
+        const link = `${window.location.origin}/api/unfurl/post/${postId}`;
         try {
             await navigator.clipboard.writeText(link);
             this.ngZone.run(() => {
