@@ -2,6 +2,9 @@
     <button type="button" class="messages-dock" (click)="toggle($event)" aria-label="Open messages">
         <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
         <span>Messages</span>
+        <span class="messages-dock-recent" *ngIf="recentMessagedAvatars.length" aria-hidden="true">
+            <img class="messages-dock-recent-avatar" *ngFor="let avatar of recentMessagedAvatars; trackBy: trackByRecentAvatar" [src]="avatar.imageUrl || avatarFallbackUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="" />
+        </span>
     </button>
 
     <div class="messages-panel-backdrop" *ngIf="open" (click)="close()"></div>

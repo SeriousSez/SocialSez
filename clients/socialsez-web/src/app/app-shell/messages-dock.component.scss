@@ -19,6 +19,27 @@
     font-size: 1rem;
 }
 
+.messages-dock-recent {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+}
+
+.messages-dock-recent-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    object-fit: cover;
+    margin-left: -8px;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #dbe4f0;
+    background: #e2e8f0;
+}
+
+.messages-dock-recent-avatar:first-child {
+    margin-left: 0;
+}
+
 .messages-panel-backdrop {
     position: fixed;
     inset: 0;
@@ -818,6 +839,11 @@
         color: var(--color-text);
         border-color: var(--color-border);
         box-shadow: none;
+    }
+
+    .messages-dock-recent-avatar {
+        border-color: var(--color-surface-muted);
+        box-shadow: 0 0 0 1px var(--color-border);
     }
 
     .messages-panel {

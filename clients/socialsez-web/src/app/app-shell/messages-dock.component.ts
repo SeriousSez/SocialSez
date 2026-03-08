@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, ProfileDto } from '../core/api.types';
@@ -43,6 +43,11 @@ interface GiphyGifResult {
     originalUrl: string;
 }
 
+interface DockRecentContactAvatar {
+    key: string;
+    imageUrl: string;
+}
+
 @Component({
     selector: 'app-messages-dock',
     standalone: true,
@@ -54,6 +59,7 @@ interface GiphyGifResult {
 export class MessagesDockComponent {
     @Input() visible = false;
     @Output() sharedMediaRequested = new EventEmitter<DockMediaRequest>();
+    readonly avatarFallbackUrl = '/assets/images/avatar-fallback.svg';
     private readonly apiOrigin = this.resolveApiOrigin();
     private readonly messageGapForTimeBreakMs = 30 * 60 * 1000;
     private readonly messageGapForCompactMs = 5 * 60 * 1000;
@@ -87,6 +93,35 @@ export class MessagesDockComponent {
                 this.displayName(conv).toLowerCase().includes(query) ||
                 this.preview(conv).toLowerCase().includes(query)
         );
+    }
+
+    get recentMessagedAvatars(): ReadonlyArray<DockRecentContactAvatar> {
+        const avatars: DockRecentContactAvatar[] = [];
+        const seenKeys = new Set<string>();
+
+        for (const conversation of this.conversations) {
+            if (!conversation.lastMessage) {
+                continue;
+            }
+
+            const participant = this.primaryParticipant(conversation);
+            const key = participant?.profileId?.trim() || conversation.id;
+            if (seenKeys.has(key)) {
+                continue;
+            }
+
+            seenKeys.add(key);
+            avatars.push({
+                key,
+                imageUrl: participant?.imageUrl?.trim() || this.avatarFallbackUrl
+            });
+
+            if (avatars.length >= 3) {
+                break;
+            }
+        }
+
+        return avatars;
     }
 
     open = false;
@@ -140,6 +175,16 @@ export class MessagesDockComponent {
 
     constructor(private readonly session: SessionService, private readonly router: Router) { }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        if (!changes['visible']) {
+            return;
+        }
+
+        if (this.visible) {
+            void this.ensureRecentConversationsLoaded();
+        }
+    }
+
     toggle(event?: Event): void {
         event?.stopPropagation();
         if (!this.visible) {
@@ -166,8 +211,6 @@ export class MessagesDockComponent {
     private resetDockState(): void {
         this.activeConversation = null;
         this.messages = [];
-        this.conversations = [];
-        this.dockStartedConversationIds.clear();
         this.loading = false;
         this.loadingMessages = false;
         this.sendingMessage = false;
@@ -197,6 +240,19 @@ export class MessagesDockComponent {
             this.newChatSearchProfilesDebounceId = null;
         }
         this.status = '';
+    }
+
+    private async ensureRecentConversationsLoaded(): Promise<void> {
+        if (!this.session.isAuthenticated()) {
+            this.conversations = [];
+            return;
+        }
+
+        if (this.conversations.length || this.loading) {
+            return;
+        }
+
+        await this.loadConversations();
     }
 
     async openFullChat(conversationId?: string, event?: Event): Promise<void> {
@@ -886,6 +942,10 @@ export class MessagesDockComponent {
 
     trackByConversationId(_: number, conversation: ChatConversationDto): string {
         return conversation.id;
+    }
+
+    trackByRecentAvatar(_: number, avatar: DockRecentContactAvatar): string {
+        return avatar.key;
     }
 
     trackByMessageId(_: number, message: ChatMessageDto): string {
