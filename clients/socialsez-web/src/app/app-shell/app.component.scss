@@ -321,10 +321,10 @@ h1 {
 }
 
 .tabs a.active {
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    color: #fff;
-    border-color: #0f172a;
-    box-shadow: 0 12px 26px -20px #0f172a;
+    background: var(--gradient-primary);
+    color: var(--color-text-on-dark);
+    border-color: var(--color-primary);
+    box-shadow: 0 12px 26px -20px var(--color-primary);
 }
 
 .tabs a:hover {
@@ -835,7 +835,7 @@ label {
     }
 
     .mobile-footer-tab.active {
-        color: #0f172a;
+        color: var(--color-primary);
         background: transparent;
         border-color: transparent;
         opacity: 1;
@@ -850,7 +850,7 @@ label {
         width: 40px;
         height: 3px;
         border-radius: 999px;
-        background: #0f172a;
+        background: var(--color-primary);
     }
 
     .mobile-footer-tab:hover {

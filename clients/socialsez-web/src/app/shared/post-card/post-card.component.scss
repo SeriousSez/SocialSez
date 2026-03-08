@@ -308,15 +308,15 @@
 .comment-compose button {
     border: none;
     border-radius: 9px;
-    background: linear-gradient(135deg, #0f172a, #1f2937);
-    color: #ffffff;
+    background: var(--gradient-primary);
+    color: var(--color-text-on-dark);
     padding: 6px 10px;
     font-weight: 700;
 }
 
 .comment-edit-actions .ghost {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: var(--color-surface-muted);
+    color: var(--color-text);
 }
 
 .comment-engagement {
@@ -781,8 +781,8 @@
 .post-actions button {
     border: none;
     border-radius: 10px;
-    background: linear-gradient(135deg, #0f172a, #1f2937);
-    color: #ffffff;
+    background: var(--gradient-primary);
+    color: var(--color-text-on-dark);
     padding: 8px 12px;
     cursor: pointer;
     font-weight: 700;
@@ -791,7 +791,7 @@
 
 .post-actions button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 14px 26px -20px #0f172a;
+    box-shadow: 0 14px 26px -20px var(--color-primary);
 }
 
 .post-actions button:disabled {
@@ -802,8 +802,8 @@
 }
 
 .post-actions .ghost {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: var(--color-surface-muted);
+    color: var(--color-text);
 }
 
 .post-actions .danger {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
 
 @Component({
@@ -17,12 +17,20 @@ import { SkeletonComponent } from '../skeleton/skeleton.component';
 
             <img
                 *ngIf="currentSrc"
+                #imageEl
                 [class]="imgClass"
                 [src]="currentSrc"
                 [alt]="alt"
                 [attr.loading]="loading"
                 [attr.decoding]="decoding"
-                [style.display]="loaded ? 'block' : 'none'"
+                [style.display]="'block'"
+                [style.opacity]="loaded ? '1' : '0'"
+                [style.pointer-events]="loaded ? 'auto' : 'none'"
+                [style.position]="loaded ? 'static' : 'absolute'"
+                [style.inset]="loaded ? null : '0'"
+                [style.width]="loaded ? null : '100%'"
+                [style.height]="loaded ? null : '100%'"
+                [style.transition]="'opacity 180ms ease'"
                 (load)="onLoaded()"
                 (error)="onLoadError()" />
 
@@ -33,6 +41,7 @@ import { SkeletonComponent } from '../skeleton/skeleton.component';
         `
             .lazy-image-shell {
                 display: block;
+                position: relative;
             }
 
             .lazy-image-fallback {
@@ -53,7 +62,7 @@ import { SkeletonComponent } from '../skeleton/skeleton.component';
         `
     ]
 })
-export class LazyImageComponent implements OnChanges {
+export class LazyImageComponent implements OnChanges, AfterViewChecked {
     @Input() src: string | null = null;
     @Input() alt = 'Image';
     @Input() imgClass = '';
@@ -66,6 +75,7 @@ export class LazyImageComponent implements OnChanges {
     loaded = false;
     failed = false;
     currentSrc: string | null = null;
+    @ViewChild('imageEl') imageEl?: ElementRef<HTMLImageElement>;
     private triedFallback = false;
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -90,11 +100,30 @@ export class LazyImageComponent implements OnChanges {
         this.failed = true;
     }
 
+    ngAfterViewChecked(): void {
+        this.syncLoadedFromDom();
+    }
+
     private resetState(): void {
         const normalizedSrc = this.src?.trim() ?? '';
         this.currentSrc = normalizedSrc.length > 0 ? normalizedSrc : null;
         this.loaded = false;
         this.failed = !this.currentSrc;
         this.triedFallback = false;
+    }
+
+    private syncLoadedFromDom(): void {
+        if (this.loaded || this.failed) {
+            return;
+        }
+
+        const image = this.imageEl?.nativeElement;
+        if (!image) {
+            return;
+        }
+
+        if (image.complete && image.naturalWidth > 0) {
+            this.onLoaded();
+        }
     }
 }

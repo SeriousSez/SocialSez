@@ -299,8 +299,8 @@ textarea:focus {
     font-weight: 700;
     font-size: 0.9rem;
     cursor: pointer;
-    background: #0284c7;
-    color: #fff;
+    background: var(--gradient-primary);
+    color: var(--color-text-on-dark);
 }
 
 .form-actions {
@@ -310,7 +310,8 @@ textarea:focus {
 }
 
 .new-btn {
-    background: #f97316;
+    background: var(--color-secondary);
+    color: var(--color-text-on-dark);
 }
 
 .danger-btn {
@@ -320,8 +321,8 @@ textarea:focus {
     font-weight: 700;
     font-size: 0.9rem;
     cursor: pointer;
-    background: #dc2626;
-    color: #fff;
+    background: var(--gradient-danger);
+    color: var(--color-text-on-dark);
 }
 
 .muted {
@@ -357,9 +358,9 @@ textarea:focus {
 }
 
 .composer-switcher button.active {
-    color: #0f172a;
-    background: #ffffff;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    color: var(--color-text-on-dark);
+    background: var(--gradient-primary);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-primary) 24%, transparent);
 }
 
 .markdown-toolbar {

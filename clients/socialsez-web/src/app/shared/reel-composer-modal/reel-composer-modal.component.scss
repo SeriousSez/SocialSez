@@ -154,7 +154,7 @@
 
 .close {
     background: transparent;
-    color: #334155;
+    color: var(--color-text-subtle);
     width: 34px;
     height: 34px;
     padding: 0;
@@ -167,7 +167,7 @@
     &:hover {
         box-shadow: none;
         transform: none;
-        color: black;
+        color: var(--color-text);
     }
 }
 
@@ -411,7 +411,7 @@
 .cover-upload-link {
     border: 0;
     background: transparent;
-    color: #1d4ed8;
+    color: var(--color-primary);
     font-size: 0.82rem;
     font-weight: 600;
     padding: 0;
@@ -509,8 +509,8 @@
 button {
     border: none;
     border-radius: 10px;
-    background: linear-gradient(135deg, #0f172a, #1f2937);
-    color: #ffffff;
+    background: var(--gradient-primary);
+    color: var(--color-text-on-dark);
     padding: 10px 14px;
     cursor: pointer;
     font-weight: 700;
@@ -519,7 +519,7 @@ button {
 
 button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 14px 26px -20px #0f172a;
+    box-shadow: 0 14px 26px -20px var(--color-primary);
 }
 
 button:disabled {
@@ -530,15 +530,16 @@ button:disabled {
 }
 
 .ghost {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: var(--button-ghost-bg);
+    color: var(--button-ghost-text);
+    border: 1px solid var(--button-ghost-border);
 }
 
 .icon-btn {
     border: none;
     background: transparent;
     padding: 4px;
-    color: #1e293b;
+    color: var(--button-ghost-text);
     border-radius: 8px;
     box-shadow: none;
     transform: none;
@@ -546,7 +547,7 @@ button:disabled {
 }
 
 .icon-btn:hover {
-    background: #f1f5f9;
+    background: var(--button-ghost-bg);
     box-shadow: none;
     transform: none;
 }

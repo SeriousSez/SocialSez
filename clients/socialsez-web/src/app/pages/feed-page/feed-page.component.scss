@@ -139,7 +139,7 @@ h2 {
 .close:hover {
     box-shadow: none;
     transform: none;
-    color: black;
+    color: var(--color-text);
 }
 
 .visually-hidden {
@@ -380,7 +380,7 @@ h2 {
 }
 
 .composer-steps span.active {
-    color: #0f172a;
+    color: var(--color-text);
     font-weight: 700;
 }
 
@@ -391,8 +391,9 @@ h2 {
 }
 
 .ghost {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: var(--button-ghost-bg);
+    color: var(--button-ghost-text);
+    border: 1px solid var(--button-ghost-border);
 }
 
 .stories {
@@ -418,7 +419,7 @@ h2 {
 }
 
 .stories-tabs button.active {
-    color: #0f172a;
+    color: var(--color-primary);
 }
 
 :host-context(.theme-dark) {

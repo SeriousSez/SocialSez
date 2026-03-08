@@ -9,10 +9,10 @@
 }
 
 .segmented-tabs button {
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--color-border-input);
     border-radius: 999px;
-    background: #fff;
-    color: #334155;
+    background: var(--color-surface);
+    color: var(--color-text-subtle);
     padding: 7px 14px;
     font-size: 0.9rem;
     font-weight: 700;
@@ -22,9 +22,9 @@
 }
 
 .segmented-tabs button.active {
-    background: #0f172a;
-    color: #fff;
-    border-color: #0f172a;
+    background: var(--gradient-primary);
+    color: var(--color-text-on-dark);
+    border-color: var(--color-primary);
 }
 
 .segmented-tabs button:hover {

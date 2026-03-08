@@ -112,7 +112,7 @@ export class BlogPostPageComponent implements OnDestroy {
             return;
         }
 
-        window.open(url, '_blank', 'noopener,noreferrer');
+        window.open(url, '_self', 'noopener,noreferrer');
     }
 
     async copyShareLinkAsync(): Promise<void> {

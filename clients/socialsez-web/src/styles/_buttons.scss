@@ -40,13 +40,13 @@ button.is-loading::after {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.35);
-    border-top-color: #ffffff;
+    border: 2px solid var(--button-loading-track);
+    border-top-color: var(--button-loading-head);
     animation: button-spin 0.7s linear infinite;
 }
 
 button.ghost.is-loading::after {
-    border: 2px solid rgba(15, 23, 42, 0.25);
+    border: 2px solid var(--button-loading-ghost-track);
     border-top-color: var(--color-primary);
 }
 
@@ -67,8 +67,13 @@ button.is-failure {
 }
 
 button.ghost {
-    background: #e2e8f0;
-    color: var(--color-text);
+    background: var(--button-ghost-bg);
+    color: var(--button-ghost-text);
+    border: 1px solid var(--button-ghost-border);
+}
+
+button.ghost:hover {
+    background: var(--button-ghost-bg-hover);
 }
 
 button.danger {

@@ -1,75 +1,91 @@
 :root {
-    --color-primary: #0f172a;
-    --color-primary-strong: #1f2937;
-    --color-secondary: #2563eb;
-    --color-secondary-strong: #1d4ed8;
-    --color-accent: #60a5fa;
+    --color-primary: #4f46e5;
+    --color-primary-strong: #4338ca;
+    --color-secondary: #22d3ee;
+    --color-secondary-strong: #0891b2;
+    --color-accent: #5eead4;
     --color-warning: #f59e0b;
 
     --color-success: #166534;
     --color-danger: #b91c1c;
     --color-danger-strong: #991b1b;
 
-    --color-text: #0f172a;
-    --color-text-subtle: #334155;
-    --color-text-muted: #64748b;
-    --color-text-soft: #475569;
+    --color-text: #1f2340;
+    --color-text-subtle: #313a62;
+    --color-text-muted: #68739a;
+    --color-text-soft: #4e587f;
     --color-text-on-dark: #ffffff;
 
     --color-surface: #ffffff;
-    --color-surface-alt: #f8fafc;
-    --color-surface-muted: #f1f5f9;
+    --color-surface-alt: #f4f7ff;
+    --color-surface-muted: #e8eeff;
 
-    --color-border: #dbe4f0;
-    --color-border-strong: #c6d4e6;
-    --color-border-input: #cbd5e1;
+    --color-border: #d9e2fb;
+    --color-border-strong: #c1cff3;
+    --color-border-input: #c8d3ef;
 
-    --color-link: #0b4ab8;
-    --color-status-border: #94a3b8;
+    --color-link: #4338ca;
+    --color-status-border: #8b95bd;
     --color-error-text: #7f1d1d;
     --color-error-border: #fecaca;
     --color-error-accent: #ef4444;
 
-    --gradient-primary: linear-gradient(135deg, #0f172a, #1f2937);
+    --gradient-primary: linear-gradient(135deg, #6366f1, #7c3aed);
     --gradient-danger: linear-gradient(135deg, #991b1b, #b91c1c);
-    --gradient-surface: linear-gradient(180deg, #ffffff, #f8fafc);
+    --gradient-surface: linear-gradient(180deg, #ffffff, #f4f7ff);
     --gradient-error-surface: linear-gradient(180deg, #fff7f7, #fff1f2);
+
+    --button-ghost-bg: #e8eeff;
+    --button-ghost-bg-hover: #dde6ff;
+    --button-ghost-text: #1f2340;
+    --button-ghost-border: #c8d3ef;
+    --button-loading-track: rgba(255, 255, 255, 0.35);
+    --button-loading-head: #ffffff;
+    --button-loading-ghost-track: rgba(31, 35, 64, 0.25);
 }
 
 :root.theme-dark {
-    --color-primary: #1e293b;
-    --color-primary-strong: #334155;
-    --color-secondary: #60a5fa;
-    --color-secondary-strong: #93c5fd;
-    --color-accent: #93c5fd;
+    --color-primary: #6366f1;
+    --color-primary-strong: #818cf8;
+    --color-secondary: #22d3ee;
+    --color-secondary-strong: #67e8f9;
+    --color-accent: #5eead4;
     --color-warning: #fbbf24;
 
     --color-success: #4ade80;
     --color-danger: #f87171;
     --color-danger-strong: #ef4444;
 
-    --color-text: #e2e8f0;
-    --color-text-subtle: #cbd5e1;
-    --color-text-muted: #94a3b8;
-    --color-text-soft: #9ca3af;
+    --color-text: #e7e9ff;
+    --color-text-subtle: #cdd3ff;
+    --color-text-muted: #98a3d1;
+    --color-text-soft: #aab3da;
     --color-text-on-dark: #f8fafc;
 
-    --color-surface: #0f172a;
-    --color-surface-alt: #111827;
-    --color-surface-muted: #1e293b;
+    --color-surface: #11142a;
+    --color-surface-alt: #0b1022;
+    --color-surface-muted: #1a1f3c;
 
-    --color-border: #334155;
-    --color-border-strong: #475569;
-    --color-border-input: #334155;
+    --color-border: #2e3764;
+    --color-border-strong: #404d87;
+    --color-border-input: #313a69;
 
-    --color-link: #93c5fd;
-    --color-status-border: #64748b;
+    --color-link: #a5b4fc;
+    --color-status-border: #5f6ca5;
     --color-error-text: #fecaca;
     --color-error-border: #7f1d1d;
     --color-error-accent: #f87171;
 
-    --gradient-primary: linear-gradient(135deg, #1e293b, #334155);
+    --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
     --gradient-danger: linear-gradient(135deg, #991b1b, #b91c1c);
-    --gradient-surface: linear-gradient(180deg, #0f172a, #111827);
+    --gradient-surface: linear-gradient(180deg, #11142a, #0b1022);
     --gradient-error-surface: linear-gradient(180deg, #3f1116, #2b0c10);
+
+    --button-ghost-bg: #1a1f3c;
+    --button-ghost-bg-hover: #232a4e;
+    --button-ghost-text: #e7e9ff;
+    --button-ghost-border: #313a69;
+    --button-loading-track: rgba(248, 250, 252, 0.32);
+    --button-loading-head: #f8fafc;
+    --button-loading-ghost-track: rgba(231, 233, 255, 0.3);
 }
