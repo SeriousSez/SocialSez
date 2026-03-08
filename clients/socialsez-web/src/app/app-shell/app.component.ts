@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, HostListener, OnDestroy, OnInit, inject, isDevMode } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { Meta, Title } from '@angular/platform-browser';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SwUpdate, VersionEvent } from '@angular/service-worker';
 import { filter, firstValueFrom } from 'rxjs';
@@ -32,6 +33,13 @@ type SearchDiscoverType = 'all' | 'users' | 'posts' | 'hashtags' | 'reels' | 'co
 interface SearchScopeOption {
     value: SearchDiscoverType;
     label: string;
+}
+
+interface RoutePreviewMeta {
+    title: string;
+    description: string;
+    imageUrl?: string;
+    type?: 'website' | 'article' | 'video.other' | 'profile';
 }
 
 @Component({
@@ -89,13 +97,24 @@ export class AppComponent implements OnInit, OnDestroy {
     private readonly updateMessagePattern = /(new\s+version|version\s+available|update\s+available)/i;
     private readonly errorMessagePattern = /(error|failed|could not|unable to|invalid|denied|forbidden|unauthorized|not found|expired)/i;
     private readonly updateNoticeMessage = 'New version available. Reload to update.';
+    private readonly defaultMetaTitle = 'Venli';
+    private readonly defaultMetaDescription = 'Build, post, discover and follow in one flow.';
+    private readonly defaultMetaImagePath = '/assets/images/v-blue-close.png';
+    private metaRequestVersion = 0;
     private appUpdateAvailable = false;
     private appUpdateVersionLabel = '';
     private reloadingForUpdate = false;
 
     private readonly destroyRef = inject(DestroyRef);
 
-    constructor(public readonly session: SessionService, private readonly router: Router, private readonly api: SocialSezApiService, private readonly swUpdate: SwUpdate) { }
+    constructor(
+        public readonly session: SessionService,
+        private readonly router: Router,
+        private readonly api: SocialSezApiService,
+        private readonly swUpdate: SwUpdate,
+        private readonly titleService: Title,
+        private readonly metaService: Meta
+    ) { }
 
     get topNoticeMessage(): string {
         if (this.appUpdateAvailable) {
@@ -303,6 +322,7 @@ export class AppComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.applyThemePreference();
         this.initializeVersionUpdates();
+        void this.updateRouteMetaAsync(this.router.url);
 
         this.session.appChanges$
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -334,6 +354,7 @@ export class AppComponent implements OnInit, OnDestroy {
             )
             .subscribe(() => {
                 this.mobileFooterMenuOpen = false;
+                void this.updateRouteMetaAsync(this.router.url);
 
                 if (!this.session.isAuthenticated()) {
                     this.unreadNotificationsCount = 0;
@@ -447,6 +468,236 @@ export class AppComponent implements OnInit, OnDestroy {
             this.rightRailCommunity = null;
         } finally {
             this.loadingRightRailCommunity = false;
+        }
+    }
+
+    private async updateRouteMetaAsync(rawUrl: string): Promise<void> {
+        const requestVersion = ++this.metaRequestVersion;
+        const routePath = this.normalizeRoutePath(rawUrl);
+        const currentUrl = this.absoluteUrl(routePath);
+
+        this.applyRouteMeta({
+            title: this.defaultMetaTitle,
+            description: this.defaultMetaDescription,
+            imageUrl: this.absoluteUrl(this.defaultMetaImagePath),
+            type: 'website'
+        }, currentUrl);
+
+        let resolvedMeta: RoutePreviewMeta | null = null;
+        try {
+            resolvedMeta = await this.resolveRouteMetaAsync(routePath);
+        } catch {
+            resolvedMeta = null;
+        }
+
+        if (requestVersion !== this.metaRequestVersion || !resolvedMeta) {
+            return;
+        }
+
+        this.applyRouteMeta(resolvedMeta, currentUrl);
+    }
+
+    private async resolveRouteMetaAsync(routePath: string): Promise<RoutePreviewMeta | null> {
+        const profileMatch = routePath.match(/^\/users\/([^?#/]+)/i);
+        if (profileMatch) {
+            const profile = await firstValueFrom(this.api.getProfile(profileMatch[1]));
+            const displayName = this.sanitizeMetaContent(profile.displayName, profile.handle);
+            return {
+                title: `${displayName} (@${profile.handle}) | Venli`,
+                description: this.truncatePreviewText(profile.bio, 220) || `View @${profile.handle}'s profile on Venli.`,
+                imageUrl: this.absoluteMediaUrl(profile.imageUrl),
+                type: 'profile'
+            };
+        }
+
+        if (/^\/profile(\/|$)/i.test(routePath)) {
+            const currentProfile = this.session.profile;
+            if (currentProfile) {
+                const displayName = this.sanitizeMetaContent(currentProfile.displayName, currentProfile.handle);
+                return {
+                    title: `${displayName} (@${currentProfile.handle}) | Venli`,
+                    description: this.truncatePreviewText(currentProfile.bio, 220) || 'Your profile on Venli.',
+                    imageUrl: this.absoluteMediaUrl(currentProfile.imageUrl),
+                    type: 'profile'
+                };
+            }
+
+            return {
+                title: 'Your profile | Venli',
+                description: 'Manage your profile on Venli.',
+                type: 'profile'
+            };
+        }
+
+        const postMatch = routePath.match(/^\/post\/([^?#/]+)/i);
+        if (postMatch) {
+            const post = await firstValueFrom(this.api.getPublicPost(postMatch[1]));
+            const content = this.truncatePreviewText(post.content, 200);
+            return {
+                title: `@${post.authorHandle} on Venli`,
+                description: content || 'Shared post on Venli.',
+                imageUrl: this.absoluteMediaUrl(post.imageUrls?.[0] || post.imageUrl || post.authorImageUrl),
+                type: 'article'
+            };
+        }
+
+        const communityPostMatch = routePath.match(/^\/cp\/([^?#/]+)/i);
+        if (communityPostMatch) {
+            const communityPost = await firstValueFrom(this.api.getSharedCommunityPost(communityPostMatch[1]));
+            const headline = this.truncatePreviewText(communityPost.title || communityPost.content || communityPost.mediaContent || '', 160);
+            return {
+                title: headline || `Community post by @${communityPost.authorHandle}`,
+                description: this.truncatePreviewText(communityPost.content || communityPost.mediaContent || communityPost.linkUrl || '', 220) || 'Shared community post on Venli.',
+                imageUrl: this.absoluteMediaUrl(communityPost.imageUrls?.[0] || communityPost.imageUrl || communityPost.authorImageUrl),
+                type: 'article'
+            };
+        }
+
+        const reelMatch = routePath.match(/^\/reel\/([^?#/]+)/i);
+        if (reelMatch) {
+            const reel = await firstValueFrom(this.api.getPublicReel(reelMatch[1]));
+            return {
+                title: `Reel by @${reel.authorHandle}`,
+                description: this.truncatePreviewText(reel.caption, 220) || 'Watch this reel on Venli.',
+                imageUrl: this.absoluteMediaUrl(reel.thumbnailUrl || reel.authorImageUrl),
+                type: 'video.other'
+            };
+        }
+
+        const storyMatch = routePath.match(/^\/story\/([^?#/]+)/i);
+        if (storyMatch) {
+            const story = await firstValueFrom(this.api.getPublicStory(storyMatch[1]));
+            return {
+                title: `Story by @${story.authorHandle}`,
+                description: this.truncatePreviewText(story.caption, 220) || 'View this story on Venli.',
+                imageUrl: this.absoluteMediaUrl(story.mediaUrl || story.authorImageUrl),
+                type: 'article'
+            };
+        }
+
+        const communityMatch = routePath.match(/^\/c\/([^?#/]+)/i);
+        if (communityMatch) {
+            const community = await firstValueFrom(this.api.getCommunityBySlug(communityMatch[1], 20));
+            return {
+                title: `${community.name} | Venli Community`,
+                description: this.truncatePreviewText(community.description, 220) || `Join ${community.name} on Venli.`,
+                imageUrl: this.absoluteMediaUrl(community.imageUrl),
+                type: 'website'
+            };
+        }
+
+        const blogPostMatch = routePath.match(/^\/blogs\/([^?#/]+)\/([^?#/]+)\/([^?#/]+)/i);
+        if (blogPostMatch) {
+            const post = await firstValueFrom(this.api.getBlogPost(blogPostMatch[1], blogPostMatch[2], blogPostMatch[3]));
+            return {
+                title: `${post.title} | @${post.authorHandle}`,
+                description: this.truncatePreviewText(post.excerpt || post.content, 220) || 'Read this blog post on Venli.',
+                imageUrl: this.absoluteMediaUrl(post.coverImageUrl),
+                type: 'article'
+            };
+        }
+
+        const blogMatch = routePath.match(/^\/blogs\/([^?#/]+)\/([^?#/]+)/i);
+        if (blogMatch) {
+            const blog = await firstValueFrom(this.api.getBlogByAuthorAndSlug(blogMatch[1], blogMatch[2]));
+            return {
+                title: `${blog.title} | @${blog.ownerHandle}`,
+                description: this.truncatePreviewText(blog.description, 220) || `Read @${blog.ownerHandle}'s blog on Venli.`,
+                type: 'website'
+            };
+        }
+
+        const authorBlogMatch = routePath.match(/^\/blogs\/([^?#/]+)/i);
+        if (authorBlogMatch) {
+            return {
+                title: `@${authorBlogMatch[1]} blogs | Venli`,
+                description: `Read and follow @${authorBlogMatch[1]}'s blogs on Venli.`,
+                type: 'website'
+            };
+        }
+
+        return null;
+    }
+
+    private applyRouteMeta(meta: RoutePreviewMeta, absoluteUrl: string): void {
+        const title = this.sanitizeMetaContent(meta.title, this.defaultMetaTitle);
+        const description = this.sanitizeMetaContent(meta.description, this.defaultMetaDescription);
+        const imageUrl = this.absoluteMediaUrl(meta.imageUrl || this.defaultMetaImagePath);
+        const type = meta.type || 'website';
+
+        this.titleService.setTitle(title);
+
+        this.metaService.updateTag({ name: 'description', content: description });
+        this.metaService.updateTag({ property: 'og:title', content: title });
+        this.metaService.updateTag({ property: 'og:description', content: description });
+        this.metaService.updateTag({ property: 'og:type', content: type });
+        this.metaService.updateTag({ property: 'og:url', content: absoluteUrl });
+        this.metaService.updateTag({ property: 'og:site_name', content: 'Venli' });
+        this.metaService.updateTag({ name: 'twitter:title', content: title });
+        this.metaService.updateTag({ name: 'twitter:description', content: description });
+        this.metaService.updateTag({ name: 'twitter:url', content: absoluteUrl });
+        this.metaService.updateTag({ name: 'twitter:card', content: imageUrl ? 'summary_large_image' : 'summary' });
+
+        this.setMetaTagWithOptionalValue('property', 'og:image', imageUrl);
+        this.setMetaTagWithOptionalValue('name', 'twitter:image', imageUrl);
+    }
+
+    private setMetaTagWithOptionalValue(tagType: 'name' | 'property', tagKey: string, value?: string): void {
+        if (!value) {
+            this.metaService.removeTag(`${tagType}='${tagKey}'`);
+            return;
+        }
+
+        this.metaService.updateTag({ [tagType]: tagKey, content: value });
+    }
+
+    private sanitizeMetaContent(value: string | null | undefined, fallback: string): string {
+        const normalized = (value ?? '').replace(/\s+/g, ' ').trim();
+        return normalized || fallback;
+    }
+
+    private truncatePreviewText(value: string | null | undefined, maxLength: number): string {
+        const normalized = this.sanitizeMetaContent(value, '');
+        if (!normalized) {
+            return '';
+        }
+
+        if (normalized.length <= maxLength) {
+            return normalized;
+        }
+
+        return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}...`;
+    }
+
+    private normalizeRoutePath(rawUrl: string): string {
+        const withoutHash = rawUrl.split('#')[0] ?? '';
+        const withoutQuery = withoutHash.split('?')[0] ?? '';
+        return withoutQuery || '/';
+    }
+
+    private absoluteUrl(pathOrUrl: string): string {
+        const normalized = (pathOrUrl ?? '').trim();
+        if (!normalized) {
+            return window.location.origin;
+        }
+
+        try {
+            return new URL(normalized, window.location.origin).toString();
+        } catch {
+            return window.location.origin;
+        }
+    }
+
+    private absoluteMediaUrl(pathOrUrl?: string | null): string | undefined {
+        const normalized = (pathOrUrl ?? '').trim();
+        if (!normalized) {
+            return undefined;
+        }
+
+        try {
+            return new URL(normalized, window.location.origin).toString();
+        } catch {
+            return undefined;
         }
     }
 
