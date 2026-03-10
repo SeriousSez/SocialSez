@@ -63,6 +63,10 @@ export class ChatSharedPostPreviewComponent {
         void this.router.navigate(['/post', this.shared.postId]);
     }
 
+    onCardPointerDown(event: PointerEvent): void {
+        event.stopPropagation();
+    }
+
     onCardKeydown(event: KeyboardEvent): void {
         if (event.key !== 'Enter' && event.key !== ' ') {
             return;

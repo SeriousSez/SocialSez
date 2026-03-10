@@ -1,4 +1,4 @@
-<article class="shared-post-preview" role="button" tabindex="0" (click)="onCardClick($event)" (keydown)="onCardKeydown($event)">
+<article class="shared-post-preview" role="button" tabindex="0" (pointerdown)="onCardPointerDown($event)" (click)="onCardClick($event)" (keydown)="onCardKeydown($event)">
     <header class="shared-post-head">
         <img class="shared-post-author-avatar" *ngIf="shared.authorImageUrl" [src]="shared.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared post author avatar" />
         <span class="shared-post-author-fallback" *ngIf="!shared.authorImageUrl">{{ shared.authorHandle[0].toUpperCase() }}</span>

@@ -446,6 +446,11 @@ export class ChatPageComponent implements OnDestroy {
             return;
         }
 
+        const parsed = this.parsedMessage(message);
+        if (parsed.sharedPost) {
+            return;
+        }
+
         const target = this.resolveEventTargetElement(event);
         if (target && this.isMessageInteractionTarget(target)) {
             return;
