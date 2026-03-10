@@ -227,6 +227,7 @@ export class ChatPageComponent implements OnDestroy {
     private mobileReactionPressedMessageId: string | null = null;
     private mobileReactionLongPressTriggered = false;
     private readonly mobileReactionLongPressDelayMs = 420;
+    private readonly disableMobileMessageLongPress = true;
     private replyTargetHighlightTimerId: number | null = null;
     private localTypingIdleTimerId: number | null = null;
     private localTypingConversationId: string | null = null;
@@ -439,6 +440,10 @@ export class ChatPageComponent implements OnDestroy {
 
     onMessagePressStart(message: ChatMessageDto, event: PointerEvent): void {
         if (event.pointerType !== 'touch') {
+            return;
+        }
+
+        if (this.disableMobileMessageLongPress) {
             return;
         }
 

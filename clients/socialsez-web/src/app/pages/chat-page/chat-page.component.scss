@@ -1559,9 +1559,18 @@
     display: inline-grid;
     place-items: center;
     line-height: 1;
+    position: relative;
 }
 
 .reaction-emoji i {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-55%, -55%);
+    width: auto;
+    height: auto;
+    display: block;
+    line-height: 1;
     font-size: 0.62rem;
     color: var(--summary-fg);
     --fa-primary-color: var(--summary-fg);
@@ -1626,7 +1635,9 @@
 }
 
 .reaction-total {
+    align-self: center;
     font-size: 12px;
+    line-height: 1;
     color: var(--color-text-muted);
     font-weight: 700;
     margin-left: 2px;
