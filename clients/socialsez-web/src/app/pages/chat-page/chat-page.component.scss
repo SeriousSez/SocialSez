@@ -1823,6 +1823,8 @@
         grid-template-rows: minmax(0, 1fr);
         padding: 0;
         box-sizing: border-box;
+        position: relative;
+        z-index: 2;
     }
 
     .page-head {
