@@ -3741,13 +3741,17 @@ export class ChatPageComponent implements OnDestroy {
         }
 
         this.pendingUnfurlPreviewUrls.add(unfurlUrl);
+        const fallbackTarget = this.resolveTargetFromUnfurlUrl(unfurlUrl) ?? unfurlUrl;
+        const fallbackPreview: ChatUnfurlPreview = {
+            unfurlUrl,
+            targetUrl: fallbackTarget,
+            title: this.buildUnfurlTitleFromTarget(fallbackTarget),
+            description: 'Link preview unavailable. Open shared link.'
+        };
 
         try {
-            const fallbackTarget = this.resolveTargetFromUnfurlUrl(unfurlUrl) ?? unfurlUrl;
             let preview: ChatUnfurlPreview = {
-                unfurlUrl,
-                targetUrl: fallbackTarget,
-                title: this.buildUnfurlTitleFromTarget(fallbackTarget),
+                ...fallbackPreview,
                 description: 'Open shared link'
             };
 
@@ -3778,7 +3782,7 @@ export class ChatPageComponent implements OnDestroy {
 
             this.unfurlPreviewByUrl.set(unfurlUrl, preview);
         } catch {
-            // Keep unfurl rendering resilient even when metadata fetch fails.
+            this.unfurlPreviewByUrl.set(unfurlUrl, fallbackPreview);
         } finally {
             this.pendingUnfurlPreviewUrls.delete(unfurlUrl);
         }

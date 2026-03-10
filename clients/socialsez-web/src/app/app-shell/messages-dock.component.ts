@@ -1264,13 +1264,17 @@ export class MessagesDockComponent {
         }
 
         this.pendingUnfurlPreviewUrls.add(unfurlUrl);
+        const fallbackTarget = this.resolveTargetFromUnfurlUrl(unfurlUrl) ?? unfurlUrl;
+        const fallbackPreview: DockUnfurlPreview = {
+            unfurlUrl,
+            targetUrl: fallbackTarget,
+            title: this.buildUnfurlTitleFromTarget(fallbackTarget),
+            description: 'Link preview unavailable. Open shared link.'
+        };
 
         try {
-            const fallbackTarget = this.resolveTargetFromUnfurlUrl(unfurlUrl) ?? unfurlUrl;
             let preview: DockUnfurlPreview = {
-                unfurlUrl,
-                targetUrl: fallbackTarget,
-                title: this.buildUnfurlTitleFromTarget(fallbackTarget),
+                ...fallbackPreview,
                 description: 'Open shared link'
             };
 
@@ -1301,7 +1305,7 @@ export class MessagesDockComponent {
 
             this.unfurlPreviewByUrl.set(unfurlUrl, preview);
         } catch {
-            // Keep dock unfurl rendering resilient when metadata fetch fails.
+            this.unfurlPreviewByUrl.set(unfurlUrl, fallbackPreview);
         } finally {
             this.pendingUnfurlPreviewUrls.delete(unfurlUrl);
         }
