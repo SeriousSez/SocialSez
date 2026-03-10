@@ -439,13 +439,9 @@ export class ChatPageComponent implements OnDestroy {
         }, this.mobileReactionLongPressDelayMs);
     }
 
-    onMessagePressEnd(event?: PointerEvent): void {
+    onMessagePressEnd(_event?: PointerEvent): void {
         if (!this.isMobileReactionMode()) {
             return;
-        }
-
-        if (event?.pointerType === 'touch' && this.mobileReactionLongPressTriggered) {
-            event.preventDefault();
         }
 
         if (this.mobileReactionPressTimerId !== null) {
@@ -461,12 +457,10 @@ export class ChatPageComponent implements OnDestroy {
         this.clearMobileReactionLongPressState();
     }
 
-    onMessageContextMenu(event: MouseEvent): void {
+    onMessageContextMenu(_event: MouseEvent): void {
         if (!this.isMobileReactionMode()) {
             return;
         }
-
-        event.preventDefault();
     }
 
     async onMobileReactionSelected(message: ChatMessageDto, reactionType: string, event: MouseEvent): Promise<void> {
