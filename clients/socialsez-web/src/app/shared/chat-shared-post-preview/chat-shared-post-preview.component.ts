@@ -53,7 +53,7 @@ export class ChatSharedPostPreviewComponent {
     }
 
     onCardClick(event: MouseEvent): void {
-        const target = event.target as HTMLElement | null;
+        const target = this.resolveEventTargetElement(event);
         if (target?.closest('a, button, input, textarea, select')) {
             return;
         }
@@ -83,6 +83,19 @@ export class ChatSharedPostPreviewComponent {
         event.preventDefault();
         event.stopPropagation();
         void this.router.navigate(['/users', handle]);
+    }
+
+    private resolveEventTargetElement(event: Event): HTMLElement | null {
+        const target = event.target;
+        if (target instanceof HTMLElement) {
+            return target;
+        }
+
+        if (target instanceof Node) {
+            return target.parentElement;
+        }
+
+        return null;
     }
 
     private parseRichTextLine(line: string): RichTextPart[] {

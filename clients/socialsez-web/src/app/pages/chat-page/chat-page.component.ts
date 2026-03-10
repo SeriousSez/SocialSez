@@ -446,7 +446,7 @@ export class ChatPageComponent implements OnDestroy {
             return;
         }
 
-        const target = event.target as HTMLElement | null;
+        const target = this.resolveEventTargetElement(event);
         if (target && this.isMessageInteractionTarget(target)) {
             return;
         }
@@ -3468,6 +3468,19 @@ export class ChatPageComponent implements OnDestroy {
 
         fallbackPath.push(window);
         return fallbackPath;
+    }
+
+    private resolveEventTargetElement(event: Event): HTMLElement | null {
+        const target = event.target;
+        if (target instanceof HTMLElement) {
+            return target;
+        }
+
+        if (target instanceof Node) {
+            return target.parentElement;
+        }
+
+        return null;
     }
 
     private isMessageInteractionTarget(target: HTMLElement): boolean {
