@@ -186,75 +186,12 @@
                                             [class.shared-with-text]="(parsed.sharedPost || parsed.sharedStory || parsed.unfurlUrl) && !!parsed.text" [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
                                             <p *ngIf="parsed.text">{{ parsed.text }}</p>
                                             <app-chat-shared-post-preview *ngIf="parsed.sharedPost as shared" [shared]="shared"></app-chat-shared-post-preview>
-                                            <article class="shared-reel-preview shared-story-preview" *ngIf="parsed.sharedStory as sharedStory">
-                                                <p class="shared-story-label">Story from @{{ sharedStory.authorHandle || message.authorHandle }}</p>
-                                                <button type="button" class="shared-reel-trigger shared-story-trigger" (click)="openSharedStory(sharedStory, message, $event)">
-                                                    <div class="shared-reel-frame shared-story-frame">
-                                                        <img class="shared-reel-thumbnail" *ngIf="(sharedStory.thumbnailUrl || !isVideoMedia(sharedStory.mediaUrl)); else sharedStoryNoThumb" [src]="sharedStory.thumbnailUrl || sharedStory.mediaUrl" alt="Shared story preview" />
-                                                        <ng-template #sharedStoryNoThumb>
-                                                            <video class="shared-reel-thumbnail" *ngIf="isVideoMedia(sharedStory.mediaUrl); else sharedStoryNoVideoThumb" [src]="sharedStory.mediaUrl" muted playsinline preload="auto" aria-label="Shared story preview"></video>
-                                                            <ng-template #sharedStoryNoVideoThumb>
-                                                                <div class="shared-reel-thumbnail-fallback" aria-label="Shared story preview unavailable">
-                                                                    <i class="fa-duotone fa-light fa-images" aria-hidden="true"></i>
-                                                                </div>
-                                                            </ng-template>
-                                                        </ng-template>
-
-                                                        <header class="shared-reel-overlay-top">
-                                                            <img class="shared-reel-author-avatar" *ngIf="(message.authorImageUrl) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared story author avatar" />
-                                                            <span class="shared-reel-author-fallback" *ngIf="!message.authorImageUrl">{{ (sharedStory.authorHandle || message.authorHandle || 'S')[0].toUpperCase() }}</span>
-                                                            <strong class="shared-reel-author-handle">{{ sharedStory.authorHandle || message.authorHandle || 'story' }}</strong>
-                                                        </header>
-
-                                                        <div class="shared-reel-overlay-bottom">
-                                                            <span class="shared-reel-badge" aria-label="Story">
-                                                                <i class="fa-duotone fa-light fa-circle-play" aria-hidden="true"></i>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            </article>
-                                            <article class="shared-reel-preview" *ngIf="parsed.sharedReel as sharedReel" [class.unavailable]="isSharedReelUnavailable(sharedReel)">
-                                                <button type="button" class="shared-reel-trigger" (click)="openSharedReel(sharedReel, message, $event)" [disabled]="isSharedReelUnavailable(sharedReel)">
-                                                    <div class="shared-reel-frame">
-                                                        <img class="shared-reel-thumbnail" *ngIf="sharedReel.thumbnailUrl as thumbnail; else sharedReelNoThumb" [src]="thumbnail" alt="Shared reel thumbnail" />
-                                                        <ng-template #sharedReelNoThumb>
-                                                            <video class="shared-reel-thumbnail" *ngIf="isVideoMedia(sharedReel.videoUrl); else sharedReelNoVideoThumb" [src]="sharedReel.videoUrl" muted playsinline preload="auto" aria-label="Shared reel preview"></video>
-                                                            <ng-template #sharedReelNoVideoThumb>
-                                                                <div class="shared-reel-thumbnail-fallback" aria-label="Shared reel thumbnail unavailable">
-                                                                    <i class="fa-duotone fa-solid fa-clapperboard-play" aria-hidden="true"></i>
-                                                                </div>
-                                                            </ng-template>
-                                                        </ng-template>
-
-                                                        <header class="shared-reel-overlay-top">
-                                                            <img class="shared-reel-author-avatar" *ngIf="(sharedReel.authorImageUrl || message.authorImageUrl) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared reel author avatar" />
-                                                            <span class="shared-reel-author-fallback" *ngIf="!(sharedReel.authorImageUrl || message.authorImageUrl)">{{ (sharedReel.authorHandle || message.authorHandle || 'R')[0].toUpperCase() }}</span>
-                                                            <strong class="shared-reel-author-handle">{{ sharedReel.authorHandle || message.authorHandle || 'shared reel' }}</strong>
-                                                        </header>
-
-                                                        <div class="shared-reel-overlay-bottom">
-                                                            <span class="shared-reel-badge" aria-label="Reel">
-                                                                <i class="fa-duotone fa-solid fa-clapperboard-play" aria-hidden="true"></i>
-                                                            </span>
-                                                        </div>
-
-                                                        <div class="shared-reel-unavailable-badge" *ngIf="isSharedReelUnavailable(sharedReel)">Reel was deleted</div>
-                                                    </div>
-                                                </button>
-                                            </article>
-                                            <article class="shared-link-preview" *ngIf="parsed.unfurlUrl as unfurlUrl">
-                                                <button type="button" class="shared-link-card" (click)="openUnfurledLink(unfurlUrl, $event)">
-                                                    <img class="shared-link-image" *ngIf="getUnfurlPreview(unfurlUrl)?.imageUrl as imageUrl" [src]="imageUrl" alt="Shared link preview" />
-                                                    <div class="shared-link-image fallback" *ngIf="!getUnfurlPreview(unfurlUrl)?.imageUrl && !isUnfurlPreviewLoading(unfurlUrl)">
-                                                        <i class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
-                                                    </div>
-                                                    <div class="shared-link-copy">
-                                                        <p class="shared-link-title">{{ getUnfurlPreview(unfurlUrl)?.title || 'Loading preview...' }}</p>
-                                                        <p class="shared-link-desc">{{ getUnfurlPreview(unfurlUrl)?.description || 'Resolving shared link metadata...' }}</p>
-                                                    </div>
-                                                </button>
-                                            </article>
+                                            <app-chat-shared-story-preview *ngIf="parsed.sharedStory as sharedStory" [sharedStory]="sharedStory" [messageAuthorHandle]="message.authorHandle" [messageAuthorImageUrl]="message.authorImageUrl"
+                                                (openRequested)="openSharedStory(sharedStory, message, $event)"></app-chat-shared-story-preview>
+                                            <app-chat-shared-reel-preview *ngIf="parsed.sharedReel as sharedReel" [sharedReel]="sharedReel" [messageAuthorHandle]="message.authorHandle" [messageAuthorImageUrl]="message.authorImageUrl" [unavailable]="isSharedReelUnavailable(sharedReel)"
+                                                (openRequested)="openSharedReel(sharedReel, message, $event)"></app-chat-shared-reel-preview>
+                                            <app-chat-shared-link-preview *ngIf="parsed.unfurlUrl as unfurlUrl" [unfurlUrl]="unfurlUrl" [preview]="getUnfurlPreview(unfurlUrl)" [loading]="isUnfurlPreviewLoading(unfurlUrl)"
+                                                (openRequested)="openUnfurledLink(unfurlUrl, $event)"></app-chat-shared-link-preview>
                                             <img class="chat-message-media" *ngIf="parsed.imageUrl" [src]="parsed.imageUrl" alt="Sent image" />
                                             <img class="chat-message-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" alt="Sent GIF" />
                                         </div>

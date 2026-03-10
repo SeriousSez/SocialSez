@@ -21,6 +21,9 @@ import { TextInputModalComponent } from '../../shared/text-input-modal/text-inpu
 import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
 import { ChatSearchModalComponent } from '../../shared/chat-search-modal/chat-search-modal.component';
 import { ChatSharedPostPreviewComponent } from '../../shared/chat-shared-post-preview/chat-shared-post-preview.component';
+import { ChatSharedReelPreviewComponent } from '../../shared/chat-shared-reel-preview/chat-shared-reel-preview.component';
+import { ChatSharedStoryPreviewComponent } from '../../shared/chat-shared-story-preview/chat-shared-story-preview.component';
+import { ChatSharedLinkPreviewComponent } from '../../shared/chat-shared-link-preview/chat-shared-link-preview.component';
 import { ReactionPickerComponent } from '../../shared/reaction-picker/reaction-picker.component';
 import { ReportModalComponent } from '../../shared/report-modal/report-modal.component';
 import { ShareReelMessageModalComponent, ShareReelMessageSubmit } from '../../shared/share-reel-message-modal/share-reel-message-modal.component';
@@ -78,7 +81,7 @@ type ChatReportTarget =
 @Component({
     selector: 'app-chat-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent, ChatSharedPostPreviewComponent, ShareReelMessageModalComponent, FeedStoryViewerComponent, ConfirmModalComponent, TextInputModalComponent, ReportModalComponent],
+    imports: [CommonModule, FormsModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent, ChatSharedPostPreviewComponent, ChatSharedStoryPreviewComponent, ChatSharedReelPreviewComponent, ChatSharedLinkPreviewComponent, ShareReelMessageModalComponent, FeedStoryViewerComponent, ConfirmModalComponent, TextInputModalComponent, ReportModalComponent],
     templateUrl: './chat-page.component.html',
     styleUrl: './chat-page.component.scss',
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
@@ -1960,7 +1963,7 @@ export class ChatPageComponent implements OnDestroy {
         this.navigateToUrl(targetUrl);
     }
 
-    async openSharedReel(sharedReel: SharedReelPreview, message: ChatMessageDto, event: MouseEvent): Promise<void> {
+    async openSharedReel(sharedReel: SharedReelPreview, message: ChatMessageDto, event: Event): Promise<void> {
         event.preventDefault();
         event.stopPropagation();
 
@@ -2031,8 +2034,9 @@ export class ChatPageComponent implements OnDestroy {
         void this.resolveSharedReelDetails(normalizedSharedReel);
     }
 
-    openSharedStory(sharedStory: SharedStoryPreview, message: ChatMessageDto, event: MouseEvent): void {
+    openSharedStory(sharedStory: SharedStoryPreview, message: ChatMessageDto, event: Event): void {
         event.preventDefault();
+        event.stopPropagation();
 
         const fallbackStory = this.buildSharedStoryFromPreview(sharedStory, message);
         this.activeSharedStoryGroup = {
@@ -2341,7 +2345,6 @@ export class ChatPageComponent implements OnDestroy {
     toggleActiveSharedReelPlayback(event?: Event): void {
         event?.preventDefault();
         event?.stopPropagation();
-
         const video = this.activeSharedReelVideoRef?.nativeElement;
         if (!video) {
             return;

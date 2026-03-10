@@ -1,0 +1,29 @@
+<article class="shared-reel-preview" [class.unavailable]="unavailable">
+    <button type="button" class="shared-reel-trigger" (click)="onOpen($event)" [disabled]="unavailable">
+        <div class="shared-reel-frame">
+            <img class="shared-reel-thumbnail" *ngIf="sharedReel.thumbnailUrl as thumbnail; else sharedReelNoThumb" [src]="thumbnail" alt="Shared reel thumbnail" />
+            <ng-template #sharedReelNoThumb>
+                <video class="shared-reel-thumbnail" *ngIf="isVideoMedia(sharedReel.videoUrl); else sharedReelNoVideoThumb" [src]="sharedReel.videoUrl" muted playsinline preload="auto" aria-label="Shared reel preview"></video>
+                <ng-template #sharedReelNoVideoThumb>
+                    <div class="shared-reel-thumbnail-fallback" aria-label="Shared reel thumbnail unavailable">
+                        <i class="fa-duotone fa-solid fa-clapperboard-play" aria-hidden="true"></i>
+                    </div>
+                </ng-template>
+            </ng-template>
+
+            <header class="shared-reel-overlay-top">
+                <img class="shared-reel-author-avatar" *ngIf="authorImageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared reel author avatar" />
+                <span class="shared-reel-author-fallback" *ngIf="!authorImageUrl">{{ authorHandle[0].toUpperCase() }}</span>
+                <strong class="shared-reel-author-handle">{{ authorHandle }}</strong>
+            </header>
+
+            <div class="shared-reel-overlay-bottom">
+                <span class="shared-reel-badge" aria-label="Reel">
+                    <i class="fa-duotone fa-solid fa-clapperboard-play" aria-hidden="true"></i>
+                </span>
+            </div>
+
+            <div class="shared-reel-unavailable-badge" *ngIf="unavailable">Reel was deleted</div>
+        </div>
+    </button>
+</article>

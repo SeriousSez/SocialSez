@@ -1,0 +1,28 @@
+<article class="shared-reel-preview shared-story-preview">
+    <p class="shared-story-label">Story from @{{ sharedStory.authorHandle || messageAuthorHandle }}</p>
+    <button type="button" class="shared-reel-trigger shared-story-trigger" (click)="onOpen($event)">
+        <div class="shared-reel-frame shared-story-frame">
+            <img class="shared-reel-thumbnail" *ngIf="(sharedStory.thumbnailUrl || !isVideoMedia(sharedStory.mediaUrl)); else sharedStoryNoThumb" [src]="sharedStory.thumbnailUrl || sharedStory.mediaUrl" alt="Shared story preview" />
+            <ng-template #sharedStoryNoThumb>
+                <video class="shared-reel-thumbnail" *ngIf="isVideoMedia(sharedStory.mediaUrl); else sharedStoryNoVideoThumb" [src]="sharedStory.mediaUrl" muted playsinline preload="auto" aria-label="Shared story preview"></video>
+                <ng-template #sharedStoryNoVideoThumb>
+                    <div class="shared-reel-thumbnail-fallback" aria-label="Shared story preview unavailable">
+                        <i class="fa-duotone fa-light fa-images" aria-hidden="true"></i>
+                    </div>
+                </ng-template>
+            </ng-template>
+
+            <header class="shared-reel-overlay-top">
+                <img class="shared-reel-author-avatar" *ngIf="messageAuthorImageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared story author avatar" />
+                <span class="shared-reel-author-fallback" *ngIf="!messageAuthorImageUrl">{{ authorHandle[0].toUpperCase() }}</span>
+                <strong class="shared-reel-author-handle">{{ authorHandle }}</strong>
+            </header>
+
+            <div class="shared-reel-overlay-bottom">
+                <span class="shared-reel-badge" aria-label="Story">
+                    <i class="fa-duotone fa-light fa-circle-play" aria-hidden="true"></i>
+                </span>
+            </div>
+        </div>
+    </button>
+</article>

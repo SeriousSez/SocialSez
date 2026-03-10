@@ -1,0 +1,12 @@
+<article class="shared-link-preview">
+    <button type="button" class="shared-link-card" (click)="onOpen($event)">
+        <img class="shared-link-image" *ngIf="preview?.imageUrl as imageUrl" [src]="imageUrl" alt="Shared link preview" />
+        <div class="shared-link-image fallback" *ngIf="!preview?.imageUrl && !loading">
+            <i class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
+        </div>
+        <div class="shared-link-copy">
+            <p class="shared-link-title">{{ preview?.title || 'Loading preview...' }}</p>
+            <p class="shared-link-desc">{{ preview?.description || 'Resolving shared link metadata...' }}</p>
+        </div>
+    </button>
+</article>

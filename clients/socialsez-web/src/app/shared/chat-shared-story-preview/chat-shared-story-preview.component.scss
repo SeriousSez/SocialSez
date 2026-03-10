@@ -1,0 +1,116 @@
+.shared-reel-preview {
+    width: fit-content;
+}
+
+.shared-story-label {
+    margin: 0 0 8px;
+    color: #334155;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.shared-reel-trigger {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    transform: none;
+    border-radius: 18px;
+    line-height: 0;
+}
+
+.shared-reel-trigger:hover {
+    box-shadow: none;
+    transform: none;
+}
+
+.shared-reel-frame {
+    width: min(188px, 70vw);
+    aspect-ratio: 9 / 16;
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #020617;
+}
+
+.shared-story-frame {
+    width: min(150px, 66vw);
+}
+
+.shared-reel-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.shared-reel-thumbnail-fallback {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    background: #0f172a;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.35rem;
+}
+
+.shared-reel-overlay-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.58), rgba(15, 23, 42, 0));
+}
+
+.shared-reel-author-avatar,
+.shared-reel-author-fallback {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.shared-reel-author-fallback {
+    display: grid;
+    place-items: center;
+    background: #dbeafe;
+    color: #1e3a8a;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.shared-reel-author-handle {
+    display: block;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.15;
+    text-shadow: 0 1px 2px rgba(15, 23, 42, 0.85);
+    max-width: calc(100% - 40px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.shared-reel-overlay-bottom {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+}
+
+.shared-reel-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: rgba(15, 23, 42, 0.52);
+    color: #fff;
+    font-size: 0.78rem;
+}
