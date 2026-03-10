@@ -3,7 +3,7 @@
         <h2>Messages</h2>
     </header>
 
-    <section class="chat-layout" [class.mobile-thread-active]="!!selectedConversationId">
+    <main class="chat-layout" [class.mobile-thread-active]="!!selectedConversationId" aria-label="Messages layout">
         <aside class="chat-sidebar">
             <section class="chat-tools">
                 <div class="chat-search-row">
@@ -173,7 +173,7 @@
                                             [class.shared-only]="(parsed.sharedPost || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl) && !parsed.text && !parsed.gifUrl && !parsed.imageUrl"
                                             [class.shared-with-text]="(parsed.sharedPost || parsed.sharedStory || parsed.unfurlUrl) && !!parsed.text" [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
                                             <p *ngIf="parsed.text">{{ parsed.text }}</p>
-                                            <article class="shared-post-preview" *ngIf="parsed.sharedPost as shared" [attr.role]="'button'" tabindex="0" (click)="openSharedPost(shared, $event)" (keydown.enter)="openSharedPost(shared, $event)" (keydown.space)="openSharedPost(shared, $event)">
+                                            <article class="shared-post-preview" *ngIf="parsed.sharedPost as shared" role="button" tabindex="0" (click)="openSharedPost(shared, $event)" (keydown.enter)="openSharedPost(shared, $event)" (keydown.space)="openSharedPost(shared, $event)">
                                                 <header class="shared-post-head">
                                                     <img class="shared-post-author-avatar" *ngIf="shared.authorImageUrl" [src]="shared.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared post author avatar" />
                                                     <span class="shared-post-author-fallback" *ngIf="!shared.authorImageUrl">{{ shared.authorHandle[0].toUpperCase() }}</span>
@@ -474,8 +474,9 @@
                 </section>
             </section>
         </ng-template>
-    </section>
+    </main>
 
+    <!-- Dialogs and transient overlays -->
     <app-chat-search-modal [open]="chatSearchModalOpen" [query]="modalSearchUsersQuery" [searching]="searchingProfiles" [loadingSuggestions]="loadingProfileSuggestions" [error]="searchUsersError" [profiles]="filteredProfiles" [followingSuggestions]="suggestedFollowingProfiles"
         [relevantSuggestions]="suggestedRelevantProfiles" [busy]="startingDirectChat" (close)="closeChatSearchModal()" (queryChange)="onModalSearchUsersInput($event)" (selectProfile)="selectProfileForChat($event)">
     </app-chat-search-modal>
@@ -712,26 +713,28 @@
         </section>
     </div>
 
-    <app-confirm-modal [open]="!!pendingDeleteSharedReelCommentId" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingSharedReelCommentId"
-        (cancel)="cancelDeleteActiveSharedReelComment()" (confirm)="confirmDeleteActiveSharedReelComment()">
-    </app-confirm-modal>
+    <ng-container>
+        <app-confirm-modal [open]="!!pendingDeleteSharedReelCommentId" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingSharedReelCommentId"
+            (cancel)="cancelDeleteActiveSharedReelComment()" (confirm)="confirmDeleteActiveSharedReelComment()">
+        </app-confirm-modal>
 
-    <app-feed-story-viewer [activeStory]="activeSharedStory" [activeStoryGroup]="activeSharedStoryGroup" [activeStoryIndex]="activeSharedStoryIndex" [storyCount]="activeSharedStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousSharedStory" [hasNextStory]="hasNextSharedStory"
-        [liked]="activeSharedStory ? isActiveSharedStoryLiked(activeSharedStory.id) : false" [sendingReply]="sendingSharedStoryReply" [sharingStory]="sharingSharedStoryMessage" [canDelete]="canDeleteActiveSharedStory" [deletingStory]="deletingSharedStory" [canReport]="canReportActiveSharedStory"
-        [reportingStory]="reportingContent" [errorMessage]="sharedStoryViewerError" (closed)="closeSharedStoryViewer()" (previous)="showPreviousSharedStory()" (next)="showNextSharedStory()" (replySubmitted)="sendSharedStoryReply($event)" (likeToggled)="toggleSharedStoryLike($event)"
-        (shareRequested)="openSharedStoryShareModal($event)" (deleteRequested)="requestDeleteActiveSharedStory($event)" (reportRequested)="requestReportActiveSharedStory($event)">
-    </app-feed-story-viewer>
+        <app-feed-story-viewer [activeStory]="activeSharedStory" [activeStoryGroup]="activeSharedStoryGroup" [activeStoryIndex]="activeSharedStoryIndex" [storyCount]="activeSharedStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousSharedStory" [hasNextStory]="hasNextSharedStory"
+            [liked]="activeSharedStory ? isActiveSharedStoryLiked(activeSharedStory.id) : false" [sendingReply]="sendingSharedStoryReply" [sharingStory]="sharingSharedStoryMessage" [canDelete]="canDeleteActiveSharedStory" [deletingStory]="deletingSharedStory" [canReport]="canReportActiveSharedStory"
+            [reportingStory]="reportingContent" [errorMessage]="sharedStoryViewerError" (closed)="closeSharedStoryViewer()" (previous)="showPreviousSharedStory()" (next)="showNextSharedStory()" (replySubmitted)="sendSharedStoryReply($event)" (likeToggled)="toggleSharedStoryLike($event)"
+            (shareRequested)="openSharedStoryShareModal($event)" (deleteRequested)="requestDeleteActiveSharedStory($event)" (reportRequested)="requestReportActiveSharedStory($event)">
+        </app-feed-story-viewer>
 
-    <app-confirm-modal [open]="!!pendingDeleteSharedStoryId" title="Delete story" message="Delete this story? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingSharedStory" (cancel)="cancelDeleteActiveSharedStory()"
-        (confirm)="confirmDeleteActiveSharedStory()">
-    </app-confirm-modal>
+        <app-confirm-modal [open]="!!pendingDeleteSharedStoryId" title="Delete story" message="Delete this story? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingSharedStory" (cancel)="cancelDeleteActiveSharedStory()"
+            (confirm)="confirmDeleteActiveSharedStory()">
+        </app-confirm-modal>
 
-    <app-confirm-modal [open]="!!pendingDeleteSharedReelId" title="Delete reel" message="Delete this reel? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingSharedReel" (cancel)="cancelDeleteActiveSharedReel()"
-        (confirm)="confirmDeleteActiveSharedReel()">
-    </app-confirm-modal>
+        <app-confirm-modal [open]="!!pendingDeleteSharedReelId" title="Delete reel" message="Delete this reel? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingSharedReel" (cancel)="cancelDeleteActiveSharedReel()"
+            (confirm)="confirmDeleteActiveSharedReel()">
+        </app-confirm-modal>
 
-    <app-share-reel-message-modal [open]="!!pendingShareReelFromViewer" [reel]="pendingShareReelFromViewer" [busy]="!!sharingSharedReelId" (cancel)="cancelActiveSharedReelShareModal()" (confirm)="submitActiveSharedReelShareAsMessage($event)"></app-share-reel-message-modal>
-    <app-share-reel-message-modal [open]="!!pendingShareStoryFromViewer" [reel]="pendingShareStoryAsReel" [contentKind]="'story'" [busy]="!!sharingSharedStoryId" (cancel)="cancelSharedStoryShareModal()" (confirm)="submitSharedStoryShareAsMessage($event)"></app-share-reel-message-modal>
+        <app-share-reel-message-modal [open]="!!pendingShareReelFromViewer" [reel]="pendingShareReelFromViewer" [busy]="!!sharingSharedReelId" (cancel)="cancelActiveSharedReelShareModal()" (confirm)="submitActiveSharedReelShareAsMessage($event)"></app-share-reel-message-modal>
+        <app-share-reel-message-modal [open]="!!pendingShareStoryFromViewer" [reel]="pendingShareStoryAsReel" [contentKind]="'story'" [busy]="!!sharingSharedStoryId" (cancel)="cancelSharedStoryShareModal()" (confirm)="submitSharedStoryShareAsMessage($event)"></app-share-reel-message-modal>
 
-    <app-report-modal [open]="showContentReportModal" [busy]="reportingContent" [profileHandle]="pendingContentReportTarget?.handle ?? ''" (cancel)="closeContentReportModal()" (submitReport)="submitContentReport($event)"></app-report-modal>
+        <app-report-modal [open]="showContentReportModal" [busy]="reportingContent" [profileHandle]="pendingContentReportTarget?.handle ?? ''" (cancel)="closeContentReportModal()" (submitReport)="submitContentReport($event)"></app-report-modal>
+    </ng-container>
 </section>
