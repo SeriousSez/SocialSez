@@ -393,6 +393,10 @@
     gap: 8px;
 }
 
+.chat-layout .message.own .message-content-row {
+    justify-content: flex-end;
+}
+
 .chat-layout .message-reaction-picker {
     display: inline-flex;
     align-items: center;
@@ -841,9 +845,14 @@
     flex-wrap: nowrap;
 }
 
+.chat-layout .message:not(.own) .reaction-summary.corner {
+    left: auto;
+    left: -4px;
+}
+
 .chat-layout .message.own .reaction-summary.corner {
     left: auto;
-    right: 0px;
+    right: -4px;
 }
 
 .chat-layout .reaction-summary .reaction-badge {
@@ -887,6 +896,15 @@
     border: none;
     padding: 0;
     border-radius: 0;
+}
+
+.chat-layout .bubble.shared-unfurl-only {
+    width: fit-content;
+    max-width: min(86vw, 550px);
+}
+
+.chat-layout .message.own .bubble.shared-unfurl-only {
+    margin-left: auto;
 }
 
 .chat-layout .message.own .bubble.shared-only,
