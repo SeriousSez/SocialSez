@@ -97,21 +97,22 @@
                         </div>
                     </ng-template>
 
-                    <div class="thread-group-menu">
-                        <button type="button" class="thread-group-menu-toggle" [attr.aria-expanded]="groupChatMenuOpen" aria-haspopup="menu" aria-label="Group chat options" (click)="toggleGroupChatMenu($event)">
-                            <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
-                        </button>
-
-                        <div class="thread-group-menu-list" *ngIf="groupChatMenuOpen" role="menu" aria-label="Group chat options">
-                            <button type="button" role="menuitem" (click)="renameGroupChat(conversation, $event)">Change chat name</button>
-                            <button type="button" role="menuitem" (click)="leaveGroupChat(conversation, $event)">{{ conversation.isGroup ? 'Leave chat' : 'Delete chat' }}</button>
-                            <button type="button" role="menuitem" (click)="toggleGroupChatMute(conversation, $event)">{{ isGroupChatMuted(conversation) ? 'Unmute chat' : 'Mute chat' }}</button>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="thread-search">
                     <input [(ngModel)]="messageSearchQuery" placeholder="Search messages" />
+                </div>
+
+                <div class="thread-group-menu">
+                    <button type="button" class="thread-group-menu-toggle" [attr.aria-expanded]="groupChatMenuOpen" aria-haspopup="menu" aria-label="Group chat options" (click)="toggleGroupChatMenu($event)">
+                        <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
+                    </button>
+
+                    <div class="thread-group-menu-list" *ngIf="groupChatMenuOpen" role="menu" aria-label="Group chat options">
+                        <button type="button" role="menuitem" (click)="renameGroupChat(conversation, $event)">Change chat name</button>
+                        <button type="button" role="menuitem" (click)="leaveGroupChat(conversation, $event)">{{ conversation.isGroup ? 'Leave chat' : 'Delete chat' }}</button>
+                        <button type="button" role="menuitem" (click)="toggleGroupChatMute(conversation, $event)">{{ isGroupChatMuted(conversation) ? 'Unmute chat' : 'Mute chat' }}</button>
+                    </div>
                 </div>
             </header>
 

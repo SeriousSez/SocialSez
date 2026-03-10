@@ -26,7 +26,6 @@ export class SharedPostPageComponent {
     error = '';
     copiedLink = false;
     post: PostDto | null = null;
-    hashtagClickCount = 0;
     lastClickedHashtag = '';
     private copiedLinkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -73,7 +72,6 @@ export class SharedPostPageComponent {
     goToHashtag(tag: string, event: Event): void {
         event.preventDefault();
         event.stopPropagation();
-        this.hashtagClickCount += 1;
         this.lastClickedHashtag = tag;
         window.setTimeout(() => {
             window.location.assign(`/hashtags/${encodeURIComponent(tag)}`);

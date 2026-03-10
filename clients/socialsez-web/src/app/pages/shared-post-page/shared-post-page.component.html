@@ -43,8 +43,6 @@
             </ng-container>
         </p>
 
-        <p class="hashtag-debug">Hashtag clicks: {{ hashtagClickCount }} <span *ngIf="lastClickedHashtag">(last: #{{ lastClickedHashtag }})</span></p>
-
         <ng-container *ngIf="item.imageUrl as mediaUrl">
             <video class="media" *ngIf="isVideoMedia(mediaUrl); else imageMedia" [src]="mediaUrl" controls playsinline preload="auto"></video>
             <ng-template #imageMedia>

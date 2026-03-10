@@ -327,7 +327,7 @@
 
 .message-panel-head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 240px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 240px) auto;
     align-items: center;
     gap: 10px;
     border-bottom: 1px solid #e2e8f0;

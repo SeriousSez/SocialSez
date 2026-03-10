@@ -25,7 +25,6 @@ export class SharedStoryPageComponent {
     error = '';
     copiedLink = false;
     story: StoryDto | null = null;
-    hashtagClickCount = 0;
     lastClickedHashtag = '';
     private copiedLinkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -72,7 +71,6 @@ export class SharedStoryPageComponent {
     goToHashtag(tag: string, event: Event): void {
         event.preventDefault();
         event.stopPropagation();
-        this.hashtagClickCount += 1;
         this.lastClickedHashtag = tag;
         window.setTimeout(() => {
             window.location.assign(`/hashtags/${encodeURIComponent(tag)}`);

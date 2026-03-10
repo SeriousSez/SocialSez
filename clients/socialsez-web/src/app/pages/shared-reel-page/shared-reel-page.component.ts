@@ -25,7 +25,6 @@ export class SharedReelPageComponent {
     error = '';
     copiedLink = false;
     reel: ReelDto | null = null;
-    hashtagClickCount = 0;
     lastClickedHashtag = '';
     private copiedLinkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -68,7 +67,6 @@ export class SharedReelPageComponent {
     goToHashtag(tag: string, event: Event): void {
         event.preventDefault();
         event.stopPropagation();
-        this.hashtagClickCount += 1;
         this.lastClickedHashtag = tag;
         window.setTimeout(() => {
             window.location.assign(`/hashtags/${encodeURIComponent(tag)}`);
