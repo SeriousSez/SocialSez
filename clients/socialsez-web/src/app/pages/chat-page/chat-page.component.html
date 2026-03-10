@@ -318,18 +318,18 @@
                         <button type="button" aria-label="Cancel reply" (click)="cancelReplyToMessage()">×</button>
                     </div>
 
-                    <div class="chat-composer-input-shell">
-                        <button #emojiToggleBtn type="button" class="chat-composer-icon" aria-label="Add emoji" title="Add emoji" (click)="toggleEmojiPicker()">
+                    <div class="chat-composer-input-shell" [class.composer-icons-hidden]="newMessage.trim().length > 0">
+                        <button #emojiToggleBtn type="button" class="chat-composer-icon chat-composer-emoji-btn" aria-label="Add emoji" title="Add emoji" (click)="toggleEmojiPicker()">
                             <i class="fa-duotone fa-light fa-face-smile" aria-hidden="true"></i>
                         </button>
 
                         <textarea #composerInput [(ngModel)]="newMessage" placeholder="Message..." rows="1" (input)="onComposerInputChange()" (keydown)="onComposerKeydown($event)"></textarea>
 
-                        <button #gifToggleBtn type="button" class="chat-composer-icon" aria-label="Add GIF" title="Add GIF" (click)="toggleGifInput()">
+                        <button #gifToggleBtn type="button" class="chat-composer-icon chat-composer-media-btn" aria-label="Add GIF" title="Add GIF" (click)="toggleGifInput()">
                             <i class="fa-duotone fa-light fa-gif" aria-hidden="true"></i>
                         </button>
 
-                        <button type="button" class="chat-composer-icon" aria-label="Add image" title="Add image" (click)="openImagePicker()" [disabled]="uploadingImage">
+                        <button type="button" class="chat-composer-icon chat-composer-media-btn" aria-label="Add image" title="Add image" (click)="openImagePicker()" [disabled]="uploadingImage">
                             <i class="fa-duotone fa-light fa-image" aria-hidden="true"></i>
                         </button>
 
