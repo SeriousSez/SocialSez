@@ -13,9 +13,9 @@
     <p class="shared-post-content" *ngIf="previewLines as lines">
         <ng-container *ngFor="let line of lines; let isLastLine = last">
             <ng-container *ngFor="let part of line">
-                <a *ngIf="part.hashtag; else maybeMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (pointerup)="openHashtag(part.hashtag, $event)" (click)="openHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                <a *ngIf="part.hashtag; else maybeMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="openHashtag(part.hashtag, $event)">{{ part.text }}</a>
                 <ng-template #maybeMention>
-                    <a *ngIf="part.mentionHandle; else plainText" class="mention" [href]="'/users/' + part.mentionHandle" (pointerup)="openUserProfile(part.mentionHandle, $event)" (click)="openUserProfile(part.mentionHandle, $event)">{{ part.text }}</a>
+                    <a *ngIf="part.mentionHandle; else plainText" class="mention" [href]="'/users/' + part.mentionHandle" (click)="openUserProfile(part.mentionHandle, $event)">{{ part.text }}</a>
                 </ng-template>
                 <ng-template #plainText>{{ part.text }}</ng-template>
             </ng-container>
