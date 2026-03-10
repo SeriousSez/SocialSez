@@ -486,8 +486,8 @@ h1 {
 }
 
 .search-row:focus-within {
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+    border-color: #cbd5e1;
+    box-shadow: none;
 }
 
 .search-row input {
@@ -1070,8 +1070,8 @@ label {
     }
 
     .search-row:focus-within {
-        border-color: var(--color-accent);
-        box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.2);
+        border-color: var(--color-border);
+        box-shadow: none;
     }
 
     .signin-link {

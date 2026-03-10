@@ -6,6 +6,7 @@ import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, ProfileDto } f
 import { SharedReelCommentPreview, SharedReelPreview, decodeSharedReelPayload } from '../core/shared-reel.utils';
 import { SharedPostPreview, decodeSharedPostPayload } from '../core/shared-post.utils';
 import { SharedStoryPreview, decodeSharedStoryPayload } from '../core/shared-story.utils';
+import { ChatReplyPreview, isChatReplyMarker, decodeChatReplyPayload, stripChatReplyMarkerPrefix } from '../core/chat-reply.utils';
 import { SessionService } from '../core/session.service';
 import { ReactionPickerComponent } from '../shared/reaction-picker/reaction-picker.component';
 import { SkeletonComponent } from '../shared/skeleton/skeleton.component';
@@ -16,6 +17,7 @@ interface ParsedDockMessage {
     text: string;
     imageUrl?: string;
     gifUrl?: string;
+    reply?: ChatReplyPreview;
     sharedPost?: SharedPostPreview;
     sharedReel?: SharedReelPreview;
     sharedStory?: SharedStoryPreview;
@@ -50,6 +52,11 @@ interface GiphyGifResult {
     title: string;
     previewUrl: string;
     originalUrl: string;
+}
+
+interface DockMessageSearchPreviewPart {
+    text: string;
+    matched: boolean;
 }
 
 interface DockRecentContactAvatar {
@@ -134,6 +141,20 @@ export class MessagesDockComponent {
         return avatars;
     }
 
+    get messageSearchResults(): ChatMessageDto[] {
+        const query = this.messageSearchQuery.trim().toLowerCase();
+        if (!query) {
+            return [];
+        }
+
+        return [...this.messages]
+            .filter(message => {
+                const preview = this.previewContent(message.content).toLowerCase();
+                return preview.includes(query) || (message.authorHandle ?? '').toLowerCase().includes(query);
+            })
+            .sort((left, right) => right.createdAtUtc.localeCompare(left.createdAtUtc));
+    }
+
     open = false;
     loading = false;
     loadingMessages = false;
@@ -154,6 +175,9 @@ export class MessagesDockComponent {
     emojiPickerOpen = false;
     gifInputOpen = false;
     newChatSearchOpen = false;
+    messageSearchViewOpen = false;
+    messageSearchQuery = '';
+    threadMenuOpen = false;
     newChatSearchQuery = '';
     newChatSearchingProfiles = false;
     newChatLoadingProfileSuggestions = false;
@@ -166,6 +190,7 @@ export class MessagesDockComponent {
     private readonly unfurlPreviewByUrl = new Map<string, DockUnfurlPreview>();
     private readonly pendingUnfurlPreviewUrls = new Set<string>();
     private newChatSearchProfilesDebounceId: number | null = null;
+    private suppressAutoBottomScrollUntilMs = 0;
 
     @ViewChild('dockImageInput')
     private imageInputRef?: ElementRef<HTMLInputElement>;
@@ -240,6 +265,9 @@ export class MessagesDockComponent {
         this.gifInputOpen = false;
         this.emojiPickerOpen = false;
         this.newChatSearchOpen = false;
+        this.messageSearchViewOpen = false;
+        this.messageSearchQuery = '';
+        this.threadMenuOpen = false;
         this.newChatSearchQuery = '';
         this.newChatSearchingProfiles = false;
         this.newChatLoadingProfileSuggestions = false;
@@ -289,6 +317,9 @@ export class MessagesDockComponent {
         this.gifUrlInput = '';
         this.gifInputOpen = false;
         this.emojiPickerOpen = false;
+        this.messageSearchViewOpen = false;
+        this.messageSearchQuery = '';
+        this.threadMenuOpen = false;
         this.loadingMessages = true;
         this.status = '';
 
@@ -318,7 +349,47 @@ export class MessagesDockComponent {
         this.gifUrlInput = '';
         this.gifInputOpen = false;
         this.emojiPickerOpen = false;
+        this.messageSearchViewOpen = false;
+        this.messageSearchQuery = '';
+        this.threadMenuOpen = false;
         this.status = '';
+    }
+
+    toggleThreadMenu(event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.threadMenuOpen = !this.threadMenuOpen;
+    }
+
+    closeThreadMenu(event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+        this.threadMenuOpen = false;
+    }
+
+    openMessageSearchView(event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+        this.closeThreadMenu();
+        this.messageSearchViewOpen = true;
+    }
+
+    closeMessageSearchView(event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+        this.messageSearchViewOpen = false;
+        this.messageSearchQuery = '';
+    }
+
+    onMessageSearchResultClick(message: ChatMessageDto, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        const targetMessageId = message.id;
+        this.suppressAutoBottomScrollUntilMs = Date.now() + 1800;
+        this.messageSearchViewOpen = false;
+        this.messageSearchQuery = '';
+        this.scrollToMessageById(targetMessageId);
+        window.setTimeout(() => this.scrollToMessageById(targetMessageId), 220);
     }
 
     async sendMessage(event?: Event): Promise<void> {
@@ -336,6 +407,7 @@ export class MessagesDockComponent {
             const created = await this.session.sendChatMessageAsync(conversation.id, content);
             this.messages = [...this.messages, created].sort((left, right) => left.createdAtUtc.localeCompare(right.createdAtUtc));
             this.scrollThreadToBottomOnNextRender();
+            window.setTimeout(() => this.scrollThreadToBottomOnNextRender(), 350);
             this.draftMessage = '';
             this.imageUrlInput = null;
             this.gifUrlInput = '';
@@ -351,12 +423,26 @@ export class MessagesDockComponent {
 
     @HostListener('document:pointerdown', ['$event'])
     onDocumentPointerDown(event: PointerEvent): void {
-        if (!this.open || (!this.emojiPickerOpen && !this.gifInputOpen)) {
+        if (!this.open) {
             return;
         }
 
         const path = event.composedPath();
         const isInside = (element: Element | null | undefined): boolean => !!element && path.includes(element);
+
+        if (this.threadMenuOpen) {
+            const clickedInsideThreadMenu = path.some(
+                item => item instanceof HTMLElement && (item.classList.contains('thread-menu') || item.classList.contains('thread-menu-toggle'))
+            );
+
+            if (!clickedInsideThreadMenu) {
+                this.threadMenuOpen = false;
+            }
+        }
+
+        if (!this.emojiPickerOpen && !this.gifInputOpen) {
+            return;
+        }
 
         const picker = this.emojiPickerWrapRef?.nativeElement;
         if (this.emojiPickerOpen && isInside(picker)) {
@@ -500,6 +586,14 @@ export class MessagesDockComponent {
         }
     }
 
+    onDockMediaLoaded(): void {
+        if (Date.now() < this.suppressAutoBottomScrollUntilMs) {
+            return;
+        }
+
+        this.scrollThreadToBottomOnNextRender();
+    }
+
     clearComposerImage(): void {
         this.imageUrlInput = null;
     }
@@ -621,11 +715,111 @@ export class MessagesDockComponent {
         }).format(date);
     }
 
+    replyPreviewLabel(message: ChatMessageDto, reply: ChatReplyPreview): string {
+        const currentHandle = (this.session.profile?.handle ?? '').trim().toLowerCase();
+        const repliedToHandle = (reply.authorHandle ?? '').trim();
+        const repliedToIsMe = !!currentHandle && repliedToHandle.toLowerCase() === currentHandle;
+        const repliedTarget = repliedToIsMe ? 'you' : `@${repliedToHandle}`;
+        if (this.isOwnMessage(message)) {
+            return `You replied to ${repliedTarget}`;
+        }
+        return `@${message.authorHandle} replied to ${repliedTarget}`;
+    }
+
+    replyPreviewText(reply: ChatReplyPreview): string {
+        const text = (reply.text ?? '').trim();
+        if (text) {
+            return text;
+        }
+        switch (reply.sourceType) {
+            case 'image': return '📷 Image';
+            case 'gif': return 'GIF';
+            case 'post': return 'Shared post';
+            case 'reel': return 'Shared reel';
+            case 'story': return 'Shared story';
+            default: return 'Message';
+        }
+    }
+
+    messageSearchPreviewParts(message: ChatMessageDto): DockMessageSearchPreviewPart[] {
+        const preview = this.previewContent(message.content).trim();
+        if (!preview) {
+            return [{ text: 'Message', matched: false }];
+        }
+
+        const query = this.messageSearchQuery.trim();
+        if (!query) {
+            return [{ text: preview, matched: false }];
+        }
+
+        const lowerPreview = preview.toLowerCase();
+        const lowerQuery = query.toLowerCase();
+        const parts: DockMessageSearchPreviewPart[] = [];
+        let cursor = 0;
+
+        while (cursor < preview.length) {
+            const matchIndex = lowerPreview.indexOf(lowerQuery, cursor);
+            if (matchIndex < 0) {
+                parts.push({ text: preview.slice(cursor), matched: false });
+                break;
+            }
+
+            if (matchIndex > cursor) {
+                parts.push({ text: preview.slice(cursor, matchIndex), matched: false });
+            }
+
+            const matchEnd = matchIndex + query.length;
+            parts.push({ text: preview.slice(matchIndex, matchEnd), matched: true });
+            cursor = matchEnd;
+        }
+
+        return parts.filter(part => !!part.text);
+    }
+
+    messageSearchResultDate(message: ChatMessageDto): string {
+        const date = new Date(message.createdAtUtc);
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+
+        return new Intl.DateTimeFormat(undefined, {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        }).format(date);
+    }
+
+    isEmojiOnlyText(text: string): boolean {
+        const normalized = (text ?? '').replace(/\s+/g, '');
+        if (!normalized) {
+            return false;
+        }
+
+        return /^(?:(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})(?:\uFE0F|\p{Emoji_Modifier})?)*)+$/u.test(normalized);
+    }
+
+    emojiOnlyCount(text: string): number {
+        const normalized = (text ?? '').replace(/\s+/g, '');
+        if (!normalized) {
+            return 0;
+        }
+
+        const tokens = normalized.match(/(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})(?:\uFE0F|\p{Emoji_Modifier})?)*/gu);
+        return tokens?.length ?? 0;
+    }
+
+    isReplyToOwnMessage(reply: ChatReplyPreview): boolean {
+        const currentHandle = (this.session.profile?.handle ?? '').trim().toLowerCase();
+        if (!currentHandle) { return false; }
+        return (reply.authorHandle ?? '').trim().toLowerCase() === currentHandle;
+    }
+
     parsedMessage(content: string): ParsedDockMessage {
         const lines = (content ?? '').split(/\r?\n/);
         const textLines: string[] = [];
         let imageUrl: string | undefined;
         let gifUrl: string | undefined;
+        let reply: ChatReplyPreview | undefined;
         let sharedPost: SharedPostPreview | undefined;
         let sharedReel: SharedReelPreview | undefined;
         let sharedStory: SharedStoryPreview | undefined;
@@ -633,6 +827,14 @@ export class MessagesDockComponent {
 
         for (const rawLine of lines) {
             const line = rawLine.trim();
+
+            if (isChatReplyMarker(line)) {
+                const parsed = decodeChatReplyPayload(stripChatReplyMarkerPrefix(line));
+                if (parsed) {
+                    reply = parsed;
+                    continue;
+                }
+            }
 
             if (line.startsWith('[image]')) {
                 const url = this.normalizedMediaUrl(line.slice(7));
@@ -750,6 +952,7 @@ export class MessagesDockComponent {
             text,
             imageUrl,
             gifUrl,
+            reply,
             sharedPost,
             sharedReel,
             sharedStory,
@@ -1038,6 +1241,9 @@ export class MessagesDockComponent {
 
     @HostListener('document:keydown.escape')
     onEscape(): void {
+        this.threadMenuOpen = false;
+        this.messageSearchViewOpen = false;
+        this.messageSearchQuery = '';
         this.emojiPickerOpen = false;
         this.gifInputOpen = false;
         this.open = false;
@@ -1338,6 +1544,38 @@ export class MessagesDockComponent {
         };
 
         requestAnimationFrame(() => scrollToBottom(maxAttempts));
+    }
+
+    private scrollToMessageById(messageId: string): void {
+        const targetId = (messageId ?? '').trim();
+        if (!targetId) {
+            return;
+        }
+
+        const maxAttempts = 16;
+        const attemptScroll = (attemptsLeft: number) => {
+            const container = this.threadListRef?.nativeElement;
+            if (!container) {
+                if (attemptsLeft > 0) {
+                    window.setTimeout(() => attemptScroll(attemptsLeft - 1), 80);
+                }
+                return;
+            }
+
+            const target = Array.from(container.querySelectorAll<HTMLElement>('article.thread-message[data-message-id]'))
+                .find(element => element.getAttribute('data-message-id') === targetId);
+
+            if (!target) {
+                if (attemptsLeft > 0) {
+                    window.setTimeout(() => attemptScroll(attemptsLeft - 1), 80);
+                }
+                return;
+            }
+
+            target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        };
+
+        requestAnimationFrame(() => attemptScroll(maxAttempts));
     }
 
     private previewContent(content: string): string {

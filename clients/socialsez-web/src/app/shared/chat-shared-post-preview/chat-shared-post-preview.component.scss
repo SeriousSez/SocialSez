@@ -11,8 +11,9 @@
 }
 
 .shared-post-head {
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: start;
     gap: 8px;
     min-width: 0;
 }
@@ -79,10 +80,12 @@
     background: var(--color-surface-alt);
     color: var(--color-text);
     padding: 5px 10px;
-    justify-self: start;
+    justify-self: end;
+    align-self: start;
     font-size: 0.76rem;
     font-weight: 700;
     pointer-events: auto;
+    white-space: nowrap;
 }
 
 @media (max-width: 680px) {

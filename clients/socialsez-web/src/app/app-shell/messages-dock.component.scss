@@ -119,6 +119,25 @@
     color: #94a3b8;
 }
 
+.dock-search-input:focus,
+.dock-search-input:focus-visible,
+.dock-message-search-input-wrap input:focus,
+.dock-message-search-input-wrap input:focus-visible,
+.thread-composer input:focus,
+.thread-composer input:focus-visible,
+.thread-gif-search-row input:focus,
+.thread-gif-search-row input:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.dock-search-bar:focus-within,
+.dock-message-search-input-wrap:focus-within,
+.thread-composer-input-shell:focus-within,
+.thread-gif-search-row:focus-within {
+    box-shadow: none !important;
+}
+
 .messages-panel h3 {
     margin: 0;
     white-space: nowrap;
@@ -153,6 +172,40 @@
 .header-actions {
     display: flex;
     gap: 6px;
+    align-items: center;
+}
+
+.thread-menu {
+    position: relative;
+}
+
+.thread-menu-list {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: 170px;
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.18);
+    padding: 6px;
+    z-index: 12;
+    display: grid;
+    gap: 2px;
+}
+
+.thread-menu-list button {
+    border: 0;
+    background: transparent;
+    color: #0f172a;
+    text-align: left;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.86rem;
+}
+
+.thread-menu-list button:hover {
+    background: #f8fafc;
 }
 
 .icon-btn {
@@ -160,6 +213,181 @@
     background: transparent;
     padding: 4px;
     color: #1e293b;
+}
+
+.dock-message-search-view {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px;
+    flex: 1;
+    overflow: hidden;
+    padding: 12px;
+}
+
+.dock-message-search-header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+}
+
+.dock-message-search-back {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border: 1px solid #dbe4f0;
+    border-radius: 10px;
+    background: #fff;
+    color: #334155;
+    display: grid;
+    place-items: center;
+    padding: 0;
+}
+
+.dock-message-search-input-wrap {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+    padding: 0 10px;
+    color: #64748b;
+}
+
+.dock-message-search-input-wrap input {
+    width: 100%;
+    height: 40px;
+    border: 0;
+    background: transparent;
+    color: #0f172a;
+    font: inherit;
+    padding: 0;
+    outline: none;
+}
+
+.dock-message-search-clear {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #64748b;
+    display: grid;
+    place-items: center;
+    padding: 0;
+}
+
+.dock-message-search-clear:hover {
+    background: rgba(148, 163, 184, 0.14);
+}
+
+.dock-message-search-results {
+    min-height: 0;
+    overflow: auto;
+    display: grid;
+    align-content: start;
+    gap: 4px;
+}
+
+.dock-message-search-result {
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    padding: 8px 6px;
+    text-align: left;
+    color: #0f172a;
+}
+
+.dock-message-search-result:hover {
+    background: #f8fafc;
+}
+
+.dock-message-search-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.dock-message-search-avatar.fallback {
+    display: grid;
+    place-items: center;
+    background: #dbeafe;
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+.dock-message-search-copy {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.dock-message-search-author {
+    color: #0f172a;
+    font-size: 0.98rem;
+    line-height: 1.2;
+}
+
+.dock-message-search-snippet {
+    color: #475569;
+    font-size: 0.92rem;
+    line-height: 1.28;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.dock-message-search-snippet strong {
+    color: #0f172a;
+    font-weight: 800;
+}
+
+.dock-message-search-date {
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.dock-message-search-empty {
+    margin: 0;
+    min-height: 0;
+    align-self: stretch;
+    border: 1px dashed #dbe4f0;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 8px;
+    text-align: center;
+    color: #64748b;
+    padding: 22px 16px;
+}
+
+.dock-message-search-empty.idle {
+    min-height: 180px;
+}
+
+.dock-message-search-empty h4,
+.dock-message-search-empty p {
+    margin: 0;
+}
+
+.dock-message-search-empty h4 {
+    color: #0f172a;
+    font-size: 0.98rem;
 }
 
 .list {
@@ -332,6 +560,13 @@
 
 .thread-bubble-wrap {
     position: relative;
+    display: grid;
+    gap: 4px;
+    justify-items: start;
+}
+
+.thread-message.own .thread-bubble-wrap {
+    justify-items: end;
 }
 
 .thread-body {
@@ -404,6 +639,16 @@
     margin: 0;
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+.thread-message p.message-emoji-only {
+    font-size: 1.45rem;
+    line-height: 1.2;
+}
+
+.thread-message p.message-emoji-only.message-emoji-only-few {
+    font-size: 1.75rem;
+    line-height: 1.1;
 }
 
 .dock-shared-post-preview {
@@ -865,15 +1110,20 @@
     .messages-panel h3,
     .icon-btn,
     .dock-search-input,
+    .dock-message-search-input-wrap input,
     .meta strong,
     .thread-message p,
     .dock-shared-post-content,
     .dock-shared-post-author-meta strong,
-    .thread-composer input {
+    .thread-composer input,
+    .dock-message-search-author,
+    .dock-message-search-snippet strong,
+    .thread-menu-list button {
         color: var(--color-text);
     }
 
     .dock-search-bar,
+    .dock-message-search-input-wrap,
     .thread-composer,
     .thread-composer-input-shell,
     .row,
@@ -881,12 +1131,14 @@
     .status,
     .dock-reaction-summary span,
     .dock-message-actions .reaction-btn,
-    .dock-shared-post-preview {
+    .dock-shared-post-preview,
+    .thread-menu-list {
         background: var(--color-surface-muted);
         border-color: var(--color-border);
     }
 
     .row:hover,
+    .dock-message-search-result:hover,
     .thread-message .thread-body,
     .thread-message.own .thread-body {
         background: var(--color-surface-alt);
@@ -898,12 +1150,40 @@
     .thread-time-break,
     .dock-message-time-side,
     .dock-search-input::placeholder,
+    .dock-message-search-input-wrap,
+    .dock-message-search-date,
+    .dock-message-search-empty,
     .dock-shared-story-label,
     .dock-shared-post-author-meta span,
     .dock-reaction-summary,
     .chat-search-hint,
     .status {
         color: var(--color-text-muted);
+    }
+
+    .dock-message-search-avatar.fallback {
+        background: var(--color-surface-alt);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+    }
+
+    .dock-message-search-empty {
+        background: linear-gradient(180deg, color-mix(in srgb, var(--color-surface-muted) 88%, transparent) 0%, var(--color-surface) 100%);
+        border-color: var(--color-border);
+    }
+
+    .dock-message-search-empty h4 {
+        color: var(--color-text);
+    }
+
+    .dock-message-search-snippet {
+        color: var(--color-text-muted);
+    }
+
+    .dock-message-search-back {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text);
     }
 
     .thread-message-avatar.fallback {

@@ -6,11 +6,11 @@
             <span>Shared post from</span>
             <strong>@{{ shared.authorHandle }}</strong>
         </div>
+
+        <button type="button" class="shared-post-open" (click)="openPost($event)">Open post</button>
     </header>
 
     <img class="shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" alt="Shared post media" />
 
     <p class="shared-post-content" *ngIf="previewText as text">{{ text }}</p>
-
-    <button type="button" class="shared-post-open" (click)="openPost($event)">Open post</button>
 </article>

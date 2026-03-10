@@ -56,6 +56,11 @@ interface RichTextPart {
     mentionHandle?: string;
 }
 
+interface MessageSearchPreviewPart {
+    text: string;
+    matched: boolean;
+}
+
 interface GiphyGifResult {
     id: string;
     title: string;
@@ -172,6 +177,7 @@ export class ChatPageComponent implements OnDestroy {
     searchUsersQuery = '';
     modalSearchUsersQuery = '';
     messageSearchQuery = '';
+    messageSearchViewOpen = false;
     newMessage = '';
     editingMessageId: string | null = null;
     editingMessageDraft = '';
@@ -516,6 +522,10 @@ export class ChatPageComponent implements OnDestroy {
             this.messageSearchScore(message, expandedTerms) > 0);
     }
 
+    get messageSearchResults(): ChatMessageDto[] {
+        return [...this.visibleMessages].sort((left, right) => right.createdAtUtc.localeCompare(left.createdAtUtc));
+    }
+
     get filteredConversations(): ChatConversationDto[] {
         const expandedTerms = expandDiscoveryTerms(this.searchUsersQuery);
         const withMessages = this.conversations.filter(conversation => !!conversation.lastMessage?.id);
@@ -819,6 +829,7 @@ export class ChatPageComponent implements OnDestroy {
         this.showNoOlderMessagesMarker = false;
         this.clearRemoteTypingState();
         this.messageSearchQuery = '';
+        this.messageSearchViewOpen = false;
         this.newMessage = '';
         this.cancelReplyToMessage();
         this.closeMessageActions();
@@ -881,6 +892,7 @@ export class ChatPageComponent implements OnDestroy {
         this.showNoOlderMessagesMarker = false;
         this.clearRemoteTypingState();
         this.messageSearchQuery = '';
+        this.messageSearchViewOpen = false;
         this.messageActionsMessageId = null;
         this.messageActionsOpenBelow = false;
         this.messageActionsMenuLeftPx = 0;
@@ -993,6 +1005,78 @@ export class ChatPageComponent implements OnDestroy {
         return `@${reply.authorHandle}`;
     }
 
+    openMessageSearchView(event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+        this.closeGroupChatMenu();
+        this.messageSearchViewOpen = true;
+    }
+
+    closeMessageSearchView(event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+        this.messageSearchViewOpen = false;
+        this.messageSearchQuery = '';
+    }
+
+    onMessageSearchResultClick(message: ChatMessageDto, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        const targetMessageId = message.id;
+        this.messageSearchViewOpen = false;
+        this.messageSearchQuery = '';
+        this.scrollToMessageById(targetMessageId);
+        window.setTimeout(() => this.scrollToMessageById(targetMessageId), 220);
+    }
+
+    messageSearchPreviewParts(message: ChatMessageDto): MessageSearchPreviewPart[] {
+        const preview = this.conversationPreview(message.content).trim();
+        if (!preview) {
+            return [{ text: 'Message', matched: false }];
+        }
+
+        const query = this.messageSearchQuery.trim();
+        if (!query) {
+            return [{ text: preview, matched: false }];
+        }
+
+        const lowerPreview = preview.toLowerCase();
+        const lowerQuery = query.toLowerCase();
+        const parts: MessageSearchPreviewPart[] = [];
+        let cursor = 0;
+
+        while (cursor < preview.length) {
+            const matchIndex = lowerPreview.indexOf(lowerQuery, cursor);
+            if (matchIndex < 0) {
+                parts.push({ text: preview.slice(cursor), matched: false });
+                break;
+            }
+
+            if (matchIndex > cursor) {
+                parts.push({ text: preview.slice(cursor, matchIndex), matched: false });
+            }
+
+            const matchEnd = matchIndex + query.length;
+            parts.push({ text: preview.slice(matchIndex, matchEnd), matched: true });
+            cursor = matchEnd;
+        }
+
+        return parts.filter(part => !!part.text);
+    }
+
+    messageSearchResultDate(message: ChatMessageDto): string {
+        const date = this.parseUtcDate(message.createdAtUtc);
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+
+        return new Intl.DateTimeFormat(undefined, {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        }).format(date);
+    }
+
     replyPreviewLabel(message: ChatMessageDto, reply: ChatReplyPreview): string {
         const currentHandle = (this.session.profile?.handle ?? '').trim().toLowerCase();
         const repliedToHandle = (reply.authorHandle ?? '').trim();
@@ -1026,6 +1110,25 @@ export class ChatPageComponent implements OnDestroy {
             default:
                 return 'Message';
         }
+    }
+
+    isEmojiOnlyText(text: string): boolean {
+        const normalized = (text ?? '').replace(/\s+/g, '');
+        if (!normalized) {
+            return false;
+        }
+
+        return /^(?:(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})(?:\uFE0F|\p{Emoji_Modifier})?)*)+$/u.test(normalized);
+    }
+
+    emojiOnlyCount(text: string): number {
+        const normalized = (text ?? '').replace(/\s+/g, '');
+        if (!normalized) {
+            return 0;
+        }
+
+        const tokens = normalized.match(/(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})(?:\uFE0F|\p{Emoji_Modifier})?)*/gu);
+        return tokens?.length ?? 0;
     }
 
     isReplyToOwnMessage(reply: ChatReplyPreview): boolean {
@@ -3925,7 +4028,7 @@ export class ChatPageComponent implements OnDestroy {
             return;
         }
 
-        const maxAttempts = 8;
+        const maxAttempts = 16;
         const attemptScroll = (attemptsLeft: number) => {
             const container = this.messageListRef?.nativeElement;
             if (!container) {

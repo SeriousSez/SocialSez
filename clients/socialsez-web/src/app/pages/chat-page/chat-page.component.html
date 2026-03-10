@@ -99,16 +99,13 @@
 
                 </div>
 
-                <div class="thread-search">
-                    <input [(ngModel)]="messageSearchQuery" placeholder="Search messages" />
-                </div>
-
                 <div class="thread-group-menu">
                     <button type="button" class="thread-group-menu-toggle" [attr.aria-expanded]="groupChatMenuOpen" aria-haspopup="menu" aria-label="Group chat options" (click)="toggleGroupChatMenu($event)">
                         <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
                     </button>
 
                     <div class="thread-group-menu-list" *ngIf="groupChatMenuOpen" role="menu" aria-label="Group chat options">
+                        <button type="button" role="menuitem" (click)="openMessageSearchView($event)">Search messages</button>
                         <button type="button" role="menuitem" (click)="renameGroupChat(conversation, $event)">Change chat name</button>
                         <button type="button" role="menuitem" (click)="leaveGroupChat(conversation, $event)">{{ conversation.isGroup ? 'Leave chat' : 'Delete chat' }}</button>
                         <button type="button" role="menuitem" (click)="toggleGroupChatMute(conversation, $event)">{{ isGroupChatMuted(conversation) ? 'Unmute chat' : 'Mute chat' }}</button>
@@ -116,200 +113,249 @@
                 </div>
             </header>
 
-            <section class="chat-thread-skeleton" *ngIf="loadingMessages" aria-label="Loading messages">
-                <div class="chat-thread-skeleton-row" [class.own]="i % 2 === 1" *ngFor="let _ of [1, 2, 3, 4, 5, 6, 7, 8]; let i = index">
-                    <app-skeleton width="28px" height="28px" radius="999px"></app-skeleton>
-                    <div class="chat-thread-skeleton-bubble" [class.hero]="i === 2 || i === 7">
-                        <app-skeleton [width]="i % 2 === 1 ? '200px' : '220px'" height="13px"></app-skeleton>
-                        <app-skeleton [width]="i % 2 === 1 ? '150px' : '180px'" height="13px"></app-skeleton>
-                        <app-skeleton *ngIf="i === 2 || i === 7" [width]="i % 2 === 1 ? '220px' : '260px'" height="130px" radius="12px"></app-skeleton>
-                    </div>
-                </div>
-            </section>
-
-            <section class="message-empty" *ngIf="!loadingMessages && !visibleMessages.length && typingParticipantCount === 0">
-                <div class="empty-art" aria-hidden="true">
-                    <span class="dot dot-a"></span>
-                    <span class="dot dot-b"></span>
-                    <span class="dot dot-c"></span>
-                </div>
-
-                <h4 *ngIf="!messageSearchQuery.trim()">This chat is waiting for its first message</h4>
-                <p *ngIf="!messageSearchQuery.trim()">Break the silence and send a quick hello 👋</p>
-
-                <div class="suggested-messages" *ngIf="!messageSearchQuery.trim()">
-                    <button type="button" *ngFor="let suggestion of suggestedStarterMessages" (click)="sendSuggestedMessage(suggestion)" [disabled]="sendingMessage">
-                        {{ suggestion }}
+            <section class="message-search-view" *ngIf="messageSearchViewOpen">
+                <header class="message-search-header">
+                    <button type="button" class="message-search-back" (click)="closeMessageSearchView($event)" aria-label="Back to chat">
+                        <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
                     </button>
+
+                    <div class="message-search-input-wrap">
+                        <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
+                        <input [(ngModel)]="messageSearchQuery" placeholder="Search messages" aria-label="Search messages" />
+                        <button type="button" class="message-search-clear" *ngIf="messageSearchQuery.trim()" (click)="messageSearchQuery = ''" aria-label="Clear message search">
+                            <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="message-search-results" *ngIf="messageSearchQuery.trim(); else messageSearchIdleState">
+                    <button type="button" class="message-search-result" *ngFor="let message of messageSearchResults; trackBy: trackByMessageId" (click)="onMessageSearchResultClick(message, $event)">
+                        <img class="message-search-avatar" *ngIf="messageAvatarUrl(message) as avatar; else messageSearchAvatarFallback" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Message author avatar" />
+                        <ng-template #messageSearchAvatarFallback>
+                            <span class="message-search-avatar fallback">{{ messageAvatarText(message) }}</span>
+                        </ng-template>
+
+                        <span class="message-search-copy">
+                            <strong class="message-search-author">{{ isOwnMessage(message) ? 'You' : '@' + message.authorHandle }}</strong>
+                            <span class="message-search-snippet">
+                                <ng-container *ngFor="let part of messageSearchPreviewParts(message)">
+                                    <strong *ngIf="part.matched; else messageSearchPlainPart">{{ part.text }}</strong>
+                                    <ng-template #messageSearchPlainPart>{{ part.text }}</ng-template>
+                                </ng-container>
+                            </span>
+                            <small class="message-search-date">{{ messageSearchResultDate(message) }}</small>
+                        </span>
+                    </button>
+
+                    <p class="message-search-empty" *ngIf="!messageSearchResults.length">No messages found for that search.</p>
                 </div>
 
-                <h4 *ngIf="messageSearchQuery.trim()">No messages found</h4>
-                <p *ngIf="messageSearchQuery.trim()">Try another keyword in search.</p>
+                <ng-template #messageSearchIdleState>
+                    <div class="message-search-empty idle">
+                        <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
+                        <h4>Search this chat</h4>
+                        <p>Find messages, media labels, and @handles inside this conversation.</p>
+                    </div>
+                </ng-template>
             </section>
 
-            <div #messageList class="message-list" *ngIf="!loadingMessages && (visibleMessages.length || typingParticipantCount > 0)" (scroll)="onMessageListScroll()">
-                <div class="message-list-top-loader" *ngIf="loadingOlderMessages">Fetching older messages…</div>
-                <div class="message-list-top-end" *ngIf="!loadingOlderMessages && showNoOlderMessagesMarker">No older messages</div>
-                <ng-container *ngFor="let message of visibleMessages; trackBy: trackByMessageId; let i = index">
-                    <div class="message-time-break" *ngIf="shouldShowMessageTimeBreak(i)">{{ formatMessageBreak(message.createdAtUtc) }}</div>
+            <ng-container *ngIf="!messageSearchViewOpen">
+                <section class="chat-thread-skeleton" *ngIf="loadingMessages" aria-label="Loading messages">
+                    <div class="chat-thread-skeleton-row" [class.own]="i % 2 === 1" *ngFor="let _ of [1, 2, 3, 4, 5, 6, 7, 8]; let i = index">
+                        <app-skeleton width="28px" height="28px" radius="999px"></app-skeleton>
+                        <div class="chat-thread-skeleton-bubble" [class.hero]="i === 2 || i === 7">
+                            <app-skeleton [width]="i % 2 === 1 ? '200px' : '220px'" height="13px"></app-skeleton>
+                            <app-skeleton [width]="i % 2 === 1 ? '150px' : '180px'" height="13px"></app-skeleton>
+                            <app-skeleton *ngIf="i === 2 || i === 7" [width]="i % 2 === 1 ? '220px' : '260px'" height="130px" radius="12px"></app-skeleton>
+                        </div>
+                    </div>
+                </section>
 
-                    <article class="message" [class.own]="isOwnMessage(message)" [class.compact]="isCompactMessage(i)" [class.linked-text]="isLinkedTextToNextShared(i)" [class.linked-shared]="isLinkedSharedFromPreviousText(i)"
-                        [class.reply-target-highlight]="highlightedReplyTargetMessageId === message.id" [attr.data-message-id]="message.id" [class.mobile-reaction-open]="mobileReactionMessageId === message.id">
-                        <div class="message-row">
-                            <ng-container *ngIf="!isOwnMessage(message)">
-                                <button type="button" class="message-avatar-trigger" (click)="openAvatarProfileOrStory(message.authorHandle, $event)"
-                                    [attr.aria-label]="hasActiveStoryForHandle(message.authorHandle) ? ('Open @' + message.authorHandle + ' stories') : ('View @' + message.authorHandle + ' profile')">
-                                    <span class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(message.authorHandle) && !hasUnseenStoryForHandle(message.authorHandle)" *ngIf="!messageAvatarUrl(message)">{{
-                                        messageAvatarText(message) }}</span>
-                                    <img class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(message.authorHandle) && !hasUnseenStoryForHandle(message.authorHandle)" *ngIf="messageAvatarUrl(message) as avatar"
-                                        [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Message sender avatar" />
-                                </button>
-                            </ng-container>
+                <section class="message-empty" *ngIf="!loadingMessages && !visibleMessages.length && typingParticipantCount === 0">
+                    <div class="empty-art" aria-hidden="true">
+                        <span class="dot dot-a"></span>
+                        <span class="dot dot-b"></span>
+                        <span class="dot dot-c"></span>
+                    </div>
 
-                            <div class="message-main" *ngIf="parsedMessage(message) as parsed">
-                                <section class="message-reply-preview" *ngIf="parsed.reply as reply">
-                                    <p class="message-reply-label">{{ replyPreviewLabel(message, reply) }}</p>
+                    <h4 *ngIf="!messageSearchQuery.trim()">This chat is waiting for its first message</h4>
+                    <p *ngIf="!messageSearchQuery.trim()">Break the silence and send a quick hello 👋</p>
 
-                                    <button type="button" class="message-reply-media-card" *ngIf="isReplySharedMedia(reply); else textReplySnippet" (click)="onReplyPreviewClick(message, reply, $event)">
-                                        <img class="message-reply-media-thumb" *ngIf="replyPreviewThumbnail(reply) as thumbnail" [src]="thumbnail" alt="Replied message preview" />
+                    <div class="suggested-messages" *ngIf="!messageSearchQuery.trim()">
+                        <button type="button" *ngFor="let suggestion of suggestedStarterMessages" (click)="sendSuggestedMessage(suggestion)" [disabled]="sendingMessage">
+                            {{ suggestion }}
+                        </button>
+                    </div>
+
+                    <h4 *ngIf="messageSearchQuery.trim()">No messages found</h4>
+                    <p *ngIf="messageSearchQuery.trim()">Try another keyword in search.</p>
+                </section>
+
+                <div #messageList class="message-list" *ngIf="!loadingMessages && (visibleMessages.length || typingParticipantCount > 0)" (scroll)="onMessageListScroll()">
+                    <div class="message-list-top-loader" *ngIf="loadingOlderMessages">Fetching older messages…</div>
+                    <div class="message-list-top-end" *ngIf="!loadingOlderMessages && showNoOlderMessagesMarker">No older messages</div>
+                    <ng-container *ngFor="let message of visibleMessages; trackBy: trackByMessageId; let i = index">
+                        <div class="message-time-break" *ngIf="shouldShowMessageTimeBreak(i)">{{ formatMessageBreak(message.createdAtUtc) }}</div>
+
+                        <article class="message" [class.own]="isOwnMessage(message)" [class.compact]="isCompactMessage(i)" [class.linked-text]="isLinkedTextToNextShared(i)" [class.linked-shared]="isLinkedSharedFromPreviousText(i)"
+                            [class.reply-target-highlight]="highlightedReplyTargetMessageId === message.id" [attr.data-message-id]="message.id" [class.mobile-reaction-open]="mobileReactionMessageId === message.id">
+                            <div class="message-row">
+                                <ng-container *ngIf="!isOwnMessage(message)">
+                                    <button type="button" class="message-avatar-trigger" (click)="openAvatarProfileOrStory(message.authorHandle, $event)"
+                                        [attr.aria-label]="hasActiveStoryForHandle(message.authorHandle) ? ('Open @' + message.authorHandle + ' stories') : ('View @' + message.authorHandle + ' profile')">
+                                        <span class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(message.authorHandle) && !hasUnseenStoryForHandle(message.authorHandle)" *ngIf="!messageAvatarUrl(message)">{{
+                                            messageAvatarText(message) }}</span>
+                                        <img class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(message.authorHandle) && !hasUnseenStoryForHandle(message.authorHandle)" *ngIf="messageAvatarUrl(message) as avatar"
+                                            [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Message sender avatar" />
                                     </button>
+                                </ng-container>
 
-                                    <ng-template #textReplySnippet>
-                                        <button type="button" class="message-reply-snippet" [class.reply-to-own]="isReplyToOwnMessage(reply)" [class.reply-to-other]="!isReplyToOwnMessage(reply)" (click)="onReplyPreviewClick(message, reply, $event)">{{ replyPreviewText(reply) }}</button>
-                                    </ng-template>
-                                </section>
+                                <div class="message-main" *ngIf="parsedMessage(message) as parsed">
+                                    <section class="message-reply-preview" *ngIf="parsed.reply as reply">
+                                        <p class="message-reply-label">{{ replyPreviewLabel(message, reply) }}</p>
 
-                                <div class="message-content-row">
-                                    <div class="bubble-wrap">
-                                        <div class="bubble" [class.media-only]="parsed.gifUrl || parsed.imageUrl || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl"
-                                            [class.shared-only]="(parsed.sharedPost || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl) && !parsed.text && !parsed.gifUrl && !parsed.imageUrl"
-                                            [class.shared-post-only]="parsed.sharedPost && !parsed.text && !parsed.gifUrl && !parsed.imageUrl && !parsed.sharedReel && !parsed.sharedStory && !parsed.unfurlUrl"
-                                            [class.shared-unfurl-only]="parsed.unfurlUrl && !parsed.text && !parsed.gifUrl && !parsed.imageUrl && !parsed.sharedPost && !parsed.sharedReel && !parsed.sharedStory"
-                                            [class.shared-with-text]="(parsed.sharedPost || parsed.sharedStory || parsed.unfurlUrl) && !!parsed.text" [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
-                                            <p *ngIf="parsed.text">{{ parsed.text }}</p>
-                                            <app-chat-shared-post-preview *ngIf="parsed.sharedPost as shared" [shared]="shared"></app-chat-shared-post-preview>
-                                            <app-chat-shared-story-preview *ngIf="parsed.sharedStory as sharedStory" [sharedStory]="sharedStory" [messageAuthorHandle]="message.authorHandle" [messageAuthorImageUrl]="message.authorImageUrl"
-                                                (openRequested)="openSharedStory(sharedStory, message, $event)"></app-chat-shared-story-preview>
-                                            <app-chat-shared-reel-preview *ngIf="parsed.sharedReel as sharedReel" [sharedReel]="sharedReel" [messageAuthorHandle]="message.authorHandle" [messageAuthorImageUrl]="message.authorImageUrl" [unavailable]="isSharedReelUnavailable(sharedReel)"
-                                                (openRequested)="openSharedReel(sharedReel, message, $event)"></app-chat-shared-reel-preview>
-                                            <app-chat-shared-link-preview *ngIf="parsed.unfurlUrl as unfurlUrl" [unfurlUrl]="unfurlUrl" [preview]="getUnfurlPreview(unfurlUrl)" [loading]="isUnfurlPreviewLoading(unfurlUrl)"
-                                                (openRequested)="openUnfurledLink(unfurlUrl, $event)"></app-chat-shared-link-preview>
-                                            <img class="chat-message-media" *ngIf="parsed.imageUrl" [src]="parsed.imageUrl" alt="Sent image" />
-                                            <img class="chat-message-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" alt="Sent GIF" />
-                                        </div>
+                                        <button type="button" class="message-reply-media-card" *ngIf="isReplySharedMedia(reply); else textReplySnippet" (click)="onReplyPreviewClick(message, reply, $event)">
+                                            <img class="message-reply-media-thumb" *ngIf="replyPreviewThumbnail(reply) as thumbnail" [src]="thumbnail" alt="Replied message preview" />
+                                        </button>
 
-                                        <div class="reaction-summary corner" *ngIf="messageDisplayReactions(message) as visibleReactions">
-                                            <span class="reaction-badge" *ngIf="visibleReactions.length" [class.has-multiple]="reactionTotalCountFromReactions(visibleReactions) > 1" [class.clickable]="reactionTotalCountFromReactions(visibleReactions) > 1"
-                                                [attr.role]="reactionTotalCountFromReactions(visibleReactions) > 1 ? 'button' : null" [attr.tabindex]="reactionTotalCountFromReactions(visibleReactions) > 1 ? 0 : null" aria-label="Show reactions"
-                                                (mousedown)="onMessageReactionSummaryMouseDown(message, $event)" (click)="onMessageReactionSummaryClick(message, $event)" (keydown)="onMessageReactionSummaryKeydown(message, $event)">
-                                                <span class="reaction-emoji" *ngFor="let reaction of visibleReactions" [ngClass]="reactionBadgeClass(reaction.type)">
-                                                    <i [class]="reactionIconClass(reaction.type)" aria-hidden="true"></i>
+                                        <ng-template #textReplySnippet>
+                                            <button type="button" class="message-reply-snippet" [class.reply-to-own]="isReplyToOwnMessage(reply)" [class.reply-to-other]="!isReplyToOwnMessage(reply)" (click)="onReplyPreviewClick(message, reply, $event)">{{ replyPreviewText(reply) }}</button>
+                                        </ng-template>
+                                    </section>
+
+                                    <div class="message-content-row">
+                                        <div class="bubble-wrap">
+                                            <div class="bubble" [class.media-only]="parsed.gifUrl || parsed.imageUrl || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl"
+                                                [class.shared-only]="(parsed.sharedPost || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl) && !parsed.text && !parsed.gifUrl && !parsed.imageUrl"
+                                                [class.shared-post-only]="parsed.sharedPost && !parsed.text && !parsed.gifUrl && !parsed.imageUrl && !parsed.sharedReel && !parsed.sharedStory && !parsed.unfurlUrl"
+                                                [class.shared-unfurl-only]="parsed.unfurlUrl && !parsed.text && !parsed.gifUrl && !parsed.imageUrl && !parsed.sharedPost && !parsed.sharedReel && !parsed.sharedStory"
+                                                [class.shared-with-text]="(parsed.sharedPost || parsed.sharedStory || parsed.unfurlUrl) && !!parsed.text" [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
+                                                <p *ngIf="parsed.text" [class.message-emoji-only]="isEmojiOnlyText(parsed.text)" [class.message-emoji-only-few]="isEmojiOnlyText(parsed.text) && emojiOnlyCount(parsed.text) <= 3">{{ parsed.text }}</p>
+                                                <app-chat-shared-post-preview *ngIf="parsed.sharedPost as shared" [shared]="shared"></app-chat-shared-post-preview>
+                                                <app-chat-shared-story-preview *ngIf="parsed.sharedStory as sharedStory" [sharedStory]="sharedStory" [messageAuthorHandle]="message.authorHandle" [messageAuthorImageUrl]="message.authorImageUrl"
+                                                    (openRequested)="openSharedStory(sharedStory, message, $event)"></app-chat-shared-story-preview>
+                                                <app-chat-shared-reel-preview *ngIf="parsed.sharedReel as sharedReel" [sharedReel]="sharedReel" [messageAuthorHandle]="message.authorHandle" [messageAuthorImageUrl]="message.authorImageUrl" [unavailable]="isSharedReelUnavailable(sharedReel)"
+                                                    (openRequested)="openSharedReel(sharedReel, message, $event)"></app-chat-shared-reel-preview>
+                                                <app-chat-shared-link-preview *ngIf="parsed.unfurlUrl as unfurlUrl" [unfurlUrl]="unfurlUrl" [preview]="getUnfurlPreview(unfurlUrl)" [loading]="isUnfurlPreviewLoading(unfurlUrl)"
+                                                    (openRequested)="openUnfurledLink(unfurlUrl, $event)"></app-chat-shared-link-preview>
+                                                <img class="chat-message-media" *ngIf="parsed.imageUrl" [src]="parsed.imageUrl" alt="Sent image" />
+                                                <img class="chat-message-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" alt="Sent GIF" />
+                                            </div>
+
+                                            <div class="reaction-summary corner" *ngIf="messageDisplayReactions(message) as visibleReactions">
+                                                <span class="reaction-badge" *ngIf="visibleReactions.length" [class.has-multiple]="reactionTotalCountFromReactions(visibleReactions) > 1" [class.clickable]="reactionTotalCountFromReactions(visibleReactions) > 1"
+                                                    [attr.role]="reactionTotalCountFromReactions(visibleReactions) > 1 ? 'button' : null" [attr.tabindex]="reactionTotalCountFromReactions(visibleReactions) > 1 ? 0 : null" aria-label="Show reactions"
+                                                    (mousedown)="onMessageReactionSummaryMouseDown(message, $event)" (click)="onMessageReactionSummaryClick(message, $event)" (keydown)="onMessageReactionSummaryKeydown(message, $event)">
+                                                    <span class="reaction-emoji" *ngFor="let reaction of visibleReactions" [ngClass]="reactionBadgeClass(reaction.type)">
+                                                        <i [class]="reactionIconClass(reaction.type)" aria-hidden="true"></i>
+                                                    </span>
+                                                    <span class="reaction-total" *ngIf="reactionTotalCountFromReactions(visibleReactions) > 1">{{ reactionTotalCountFromReactions(visibleReactions) }}</span>
                                                 </span>
-                                                <span class="reaction-total" *ngIf="reactionTotalCountFromReactions(visibleReactions) > 1">{{ reactionTotalCountFromReactions(visibleReactions) }}</span>
-                                            </span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div class="message-reaction-picker" [class.menu-open]="isMessageActionsOpen(message)">
-                                        <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="noReactions" [myReactionType]="message.myReactionType" [busy]="reactingMessageId === message.id" [popoverAlign]="isOwnMessage(message) ? 'end' : 'start'"
-                                            (primaryClick)="onMessagePrimaryReaction(message)" (reactionSelected)="onMessageReactionSelected(message, $event)">
-                                        </app-reaction-picker>
+                                        <div class="message-reaction-picker" [class.menu-open]="isMessageActionsOpen(message)">
+                                            <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="noReactions" [myReactionType]="message.myReactionType" [busy]="reactingMessageId === message.id" [popoverAlign]="isOwnMessage(message) ? 'end' : 'start'"
+                                                (primaryClick)="onMessagePrimaryReaction(message)" (reactionSelected)="onMessageReactionSelected(message, $event)">
+                                            </app-reaction-picker>
 
-                                        <button type="button" class="message-reply-toggle" *ngIf="!isEditingMessage(message)" (click)="beginReplyToMessage(message, $event)" aria-label="Reply to message">
-                                            <i class="fa-duotone fa-light fa-reply" aria-hidden="true"></i>
-                                        </button>
-
-                                        <button type="button" class="message-actions-toggle" *ngIf="canShowMessageActions(message) && !isEditingMessage(message)" (click)="toggleMessageActions(message, $event)" [attr.aria-expanded]="isMessageActionsOpen(message)" aria-label="Message options">
-                                            <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
-                                        </button>
-
-                                        <div class="message-actions-menu" [class.open-below]="isMessageActionsOpenBelow(message)" *ngIf="isMessageActionsOpen(message)" (click)="$event.stopPropagation()" [style.left.px]="messageActionsMenuLeftPx" [style.top.px]="messageActionsMenuTopPx">
-                                            <div class="message-actions-time">{{ formatTime(message.createdAtUtc) }}</div>
-                                            <button type="button" *ngIf="canEditMessage(message)" (click)="beginMessageEditFromMenu(message, $event)" [disabled]="updatingMessageId === message.id">
-                                                <span>Edit</span>
-                                                <i class="fa-duotone fa-light fa-pencil" aria-hidden="true"></i>
+                                            <button type="button" class="message-reply-toggle" *ngIf="!isEditingMessage(message)" (click)="beginReplyToMessage(message, $event)" aria-label="Reply to message">
+                                                <i class="fa-duotone fa-light fa-reply" aria-hidden="true"></i>
                                             </button>
-                                            <button type="button" *ngIf="canReportMessage(message)" (click)="openMessageReport(message, $event)">
-                                                <span>Report</span>
-                                                <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
+
+                                            <button type="button" class="message-actions-toggle" *ngIf="canShowMessageActions(message) && !isEditingMessage(message)" (click)="toggleMessageActions(message, $event)" [attr.aria-expanded]="isMessageActionsOpen(message)" aria-label="Message options">
+                                                <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
                                             </button>
-                                            <button type="button" (click)="copyMessageText(message, $event)">
-                                                <span>Copy</span>
-                                                <i class="fa-duotone fa-light fa-copy" aria-hidden="true"></i>
-                                            </button>
+
+                                            <div class="message-actions-menu" [class.open-below]="isMessageActionsOpenBelow(message)" *ngIf="isMessageActionsOpen(message)" (click)="$event.stopPropagation()" [style.left.px]="messageActionsMenuLeftPx" [style.top.px]="messageActionsMenuTopPx">
+                                                <div class="message-actions-time">{{ formatTime(message.createdAtUtc) }}</div>
+                                                <button type="button" *ngIf="canEditMessage(message)" (click)="beginMessageEditFromMenu(message, $event)" [disabled]="updatingMessageId === message.id">
+                                                    <span>Edit</span>
+                                                    <i class="fa-duotone fa-light fa-pencil" aria-hidden="true"></i>
+                                                </button>
+                                                <button type="button" *ngIf="canReportMessage(message)" (click)="openMessageReport(message, $event)">
+                                                    <span>Report</span>
+                                                    <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
+                                                </button>
+                                                <button type="button" (click)="copyMessageText(message, $event)">
+                                                    <span>Copy</span>
+                                                    <i class="fa-duotone fa-light fa-copy" aria-hidden="true"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div class="mobile-reaction-menu" *ngIf="mobileReactionMessageId === message.id" (click)="$event.stopPropagation()">
-                                <button type="button" class="mobile-reaction-option" *ngFor="let reaction of reactionOptions" [class.active]="message.myReactionType === reaction.type" [disabled]="reactingMessageId === message.id" (click)="onMobileReactionSelected(message, reaction.type, $event)">
-                                    {{ reaction.emoji }}
+                                <div class="mobile-reaction-menu" *ngIf="mobileReactionMessageId === message.id" (click)="$event.stopPropagation()">
+                                    <button type="button" class="mobile-reaction-option" *ngFor="let reaction of reactionOptions" [class.active]="message.myReactionType === reaction.type" [disabled]="reactingMessageId === message.id"
+                                        (click)="onMobileReactionSelected(message, reaction.type, $event)">
+                                        {{ reaction.emoji }}
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    </ng-container>
+
+                    <div class="typing-indicator-row" *ngIf="typingParticipantCount > 0" aria-live="polite">
+                        <div class="typing-bubble">
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                        </div>
+                    </div>
+
+                    <div class="reactions-modal-backdrop" *ngIf="messageReactionsModalOpen || messageReactionsModalClosing" [class.closing]="messageReactionsModalClosing" (click)="closeMessageReactionsModal()">
+                        <section class="reactions-modal" [class.closing]="messageReactionsModalClosing" role="dialog" aria-modal="true" aria-label="Reactions" (click)="$event.stopPropagation()">
+                            <header class="reactions-modal-header">
+                                <h3>Reactions</h3>
+                                <button type="button" class="reactions-modal-close" (click)="closeMessageReactionsModal()" aria-label="Close reactions">
+                                    <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
+                                </button>
+                            </header>
+
+                            <div class="reactions-modal-tabs" *ngIf="messageReactionModalFilters.length">
+                                <button type="button" class="reaction-tab" *ngFor="let filter of messageReactionModalFilters" [class.active]="selectedMessageReactionFilter === filter.key" (mousedown)="onMessageReactionTabMouseDown(filter.key, $event)"
+                                    (click)="onMessageReactionTabClick(filter.key, $event)">
+                                    <ng-container *ngIf="filter.key === 'all'; else messageReactionFilterIcon">
+                                        <span class="reaction-tab-label">All</span>
+                                    </ng-container>
+                                    <ng-template #messageReactionFilterIcon>
+                                        <span class="reaction-emoji reaction-tab-reaction" [ngClass]="reactionBadgeClass(filter.type)">
+                                            <i [class]="reactionIconClass(filter.type)" aria-hidden="true"></i>
+                                        </span>
+                                    </ng-template>
+                                    <span class="reaction-tab-count">{{ filter.count | number }}</span>
                                 </button>
                             </div>
-                        </div>
-                    </article>
-                </ng-container>
 
-                <div class="typing-indicator-row" *ngIf="typingParticipantCount > 0" aria-live="polite">
-                    <div class="typing-bubble">
-                        <span class="typing-dot"></span>
-                        <span class="typing-dot"></span>
-                        <span class="typing-dot"></span>
+                            <div class="reactions-modal-list" *ngIf="visibleMessageReactionDetails.length; else messageReactionsModalEmpty">
+                                <article class="reaction-person" *ngFor="let item of visibleMessageReactionDetails">
+                                    <img class="reaction-person-avatar" *ngIf="item.imageUrl; else messageReactionPersonInitial" [src]="item.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reaction author image" />
+                                    <ng-template #messageReactionPersonInitial>
+                                        <div class="reaction-person-avatar fallback">{{ (item.displayName || item.handle || '?').charAt(0).toUpperCase() }}</div>
+                                    </ng-template>
+
+                                    <div class="reaction-person-main">
+                                        <p class="reaction-person-name">{{ item.displayName }}</p>
+                                        <p class="reaction-person-subtitle" *ngIf="item.subtitle">{{ item.subtitle }}</p>
+                                        <p class="reaction-person-subtitle" *ngIf="!item.subtitle && item.handle">@{{ item.handle }}</p>
+                                    </div>
+
+                                    <span class="reaction-emoji reaction-person-reaction" [ngClass]="reactionBadgeClass(item.reactionType)">
+                                        <i [class]="reactionIconClass(item.reactionType)" aria-hidden="true"></i>
+                                    </span>
+                                </article>
+                            </div>
+
+                            <ng-template #messageReactionsModalEmpty>
+                                <div class="reactions-modal-empty">{{ messageReactionDetailsEmptyMessage }}</div>
+                            </ng-template>
+                        </section>
                     </div>
                 </div>
+            </ng-container>
 
-                <div class="reactions-modal-backdrop" *ngIf="messageReactionsModalOpen || messageReactionsModalClosing" [class.closing]="messageReactionsModalClosing" (click)="closeMessageReactionsModal()">
-                    <section class="reactions-modal" [class.closing]="messageReactionsModalClosing" role="dialog" aria-modal="true" aria-label="Reactions" (click)="$event.stopPropagation()">
-                        <header class="reactions-modal-header">
-                            <h3>Reactions</h3>
-                            <button type="button" class="reactions-modal-close" (click)="closeMessageReactionsModal()" aria-label="Close reactions">
-                                <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
-                            </button>
-                        </header>
-
-                        <div class="reactions-modal-tabs" *ngIf="messageReactionModalFilters.length">
-                            <button type="button" class="reaction-tab" *ngFor="let filter of messageReactionModalFilters" [class.active]="selectedMessageReactionFilter === filter.key" (mousedown)="onMessageReactionTabMouseDown(filter.key, $event)"
-                                (click)="onMessageReactionTabClick(filter.key, $event)">
-                                <ng-container *ngIf="filter.key === 'all'; else messageReactionFilterIcon">
-                                    <span class="reaction-tab-label">All</span>
-                                </ng-container>
-                                <ng-template #messageReactionFilterIcon>
-                                    <span class="reaction-emoji reaction-tab-reaction" [ngClass]="reactionBadgeClass(filter.type)">
-                                        <i [class]="reactionIconClass(filter.type)" aria-hidden="true"></i>
-                                    </span>
-                                </ng-template>
-                                <span class="reaction-tab-count">{{ filter.count | number }}</span>
-                            </button>
-                        </div>
-
-                        <div class="reactions-modal-list" *ngIf="visibleMessageReactionDetails.length; else messageReactionsModalEmpty">
-                            <article class="reaction-person" *ngFor="let item of visibleMessageReactionDetails">
-                                <img class="reaction-person-avatar" *ngIf="item.imageUrl; else messageReactionPersonInitial" [src]="item.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reaction author image" />
-                                <ng-template #messageReactionPersonInitial>
-                                    <div class="reaction-person-avatar fallback">{{ (item.displayName || item.handle || '?').charAt(0).toUpperCase() }}</div>
-                                </ng-template>
-
-                                <div class="reaction-person-main">
-                                    <p class="reaction-person-name">{{ item.displayName }}</p>
-                                    <p class="reaction-person-subtitle" *ngIf="item.subtitle">{{ item.subtitle }}</p>
-                                    <p class="reaction-person-subtitle" *ngIf="!item.subtitle && item.handle">@{{ item.handle }}</p>
-                                </div>
-
-                                <span class="reaction-emoji reaction-person-reaction" [ngClass]="reactionBadgeClass(item.reactionType)">
-                                    <i [class]="reactionIconClass(item.reactionType)" aria-hidden="true"></i>
-                                </span>
-                            </article>
-                        </div>
-
-                        <ng-template #messageReactionsModalEmpty>
-                            <div class="reactions-modal-empty">{{ messageReactionDetailsEmptyMessage }}</div>
-                        </ng-template>
-                    </section>
-                </div>
-            </div>
-
-            <footer class="chat-composer">
+            <footer class="chat-composer" *ngIf="!messageSearchViewOpen">
                 <div class="chat-composer-main">
                     <div class="chat-replying-tag" *ngIf="replyingToPreview as reply">
                         <div class="chat-replying-copy">
