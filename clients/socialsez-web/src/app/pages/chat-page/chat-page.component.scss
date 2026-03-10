@@ -1764,6 +1764,20 @@
 }
 
 @media (max-width: 960px) {
+
+    .chat-page,
+    .chat-layout,
+    .chat-sidebar,
+    .conversation-list-wrap,
+    .conversation-list,
+    .message-panel,
+    .message-list,
+    .chat-composer {
+        position: relative;
+        z-index: 1;
+        pointer-events: auto;
+    }
+
     .chat-layout {
         grid-template-columns: 1fr;
         height: auto;
@@ -1825,6 +1839,15 @@
         box-sizing: border-box;
         position: relative;
         z-index: 2;
+    }
+
+    .chat-layout::before,
+    .chat-layout::after,
+    .chat-sidebar::before,
+    .chat-sidebar::after,
+    .message-panel::before,
+    .message-panel::after {
+        content: none !important;
     }
 
     .page-head {
