@@ -20,6 +20,7 @@ import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.
 import { TextInputModalComponent } from '../../shared/text-input-modal/text-input-modal.component';
 import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
 import { ChatSearchModalComponent } from '../../shared/chat-search-modal/chat-search-modal.component';
+import { ChatSharedPostPreviewComponent } from '../../shared/chat-shared-post-preview/chat-shared-post-preview.component';
 import { ReactionPickerComponent } from '../../shared/reaction-picker/reaction-picker.component';
 import { ReportModalComponent } from '../../shared/report-modal/report-modal.component';
 import { ShareReelMessageModalComponent, ShareReelMessageSubmit } from '../../shared/share-reel-message-modal/share-reel-message-modal.component';
@@ -77,7 +78,7 @@ type ChatReportTarget =
 @Component({
     selector: 'app-chat-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent, ShareReelMessageModalComponent, FeedStoryViewerComponent, ConfirmModalComponent, TextInputModalComponent, ReportModalComponent],
+    imports: [CommonModule, FormsModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent, ChatSharedPostPreviewComponent, ShareReelMessageModalComponent, FeedStoryViewerComponent, ConfirmModalComponent, TextInputModalComponent, ReportModalComponent],
     templateUrl: './chat-page.component.html',
     styleUrl: './chat-page.component.scss',
     schemas: [CUSTOM_ELEMENTS_SCHEMA]

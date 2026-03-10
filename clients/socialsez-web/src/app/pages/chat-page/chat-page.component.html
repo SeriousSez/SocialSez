@@ -185,33 +185,7 @@
                                             [class.shared-only]="(parsed.sharedPost || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl) && !parsed.text && !parsed.gifUrl && !parsed.imageUrl"
                                             [class.shared-with-text]="(parsed.sharedPost || parsed.sharedStory || parsed.unfurlUrl) && !!parsed.text" [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
                                             <p *ngIf="parsed.text">{{ parsed.text }}</p>
-                                            <article class="shared-post-preview" *ngIf="parsed.sharedPost as shared">
-                                                <header class="shared-post-head">
-                                                    <img class="shared-post-author-avatar" *ngIf="shared.authorImageUrl" [src]="shared.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared post author avatar" />
-                                                    <span class="shared-post-author-fallback" *ngIf="!shared.authorImageUrl">{{ shared.authorHandle[0].toUpperCase() }}</span>
-                                                    <div class="shared-post-author-meta">
-                                                        <span>Shared post from</span>
-                                                        <strong>@{{ shared.authorHandle }}</strong>
-                                                    </div>
-                                                </header>
-                                                <img class="shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" alt="Shared post media" />
-                                                <div class="shared-post-content" *ngIf="shared.content">
-                                                    <ng-container *ngFor="let line of richTextLines(sharedPreviewContent(shared.content)); let isLastLine = last">
-                                                        <ng-container *ngFor="let part of line">
-                                                            <a *ngIf="part.hashtag; else maybeSharedMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="openHashtag(part.hashtag, $event)">{{ part.text }}</a>
-                                                            <ng-template #maybeSharedMention>
-                                                                <a *ngIf="part.mentionHandle; else plainSharedText" class="mention" [href]="'/users/' + part.mentionHandle" (click)="openUserProfile(part.mentionHandle, $event)">{{ part.text }}</a>
-                                                            </ng-template>
-                                                            <ng-template #plainSharedText>{{ part.text }}</ng-template>
-                                                        </ng-container>
-                                                        <br *ngIf="!isLastLine" />
-                                                    </ng-container>
-                                                </div>
-
-                                                <button type="button" class="shared-post-open" (click)="openSharedPost(shared, $event)">
-                                                    Open post
-                                                </button>
-                                            </article>
+                                            <app-chat-shared-post-preview *ngIf="parsed.sharedPost as shared" [shared]="shared"></app-chat-shared-post-preview>
                                             <article class="shared-reel-preview shared-story-preview" *ngIf="parsed.sharedStory as sharedStory">
                                                 <p class="shared-story-label">Story from @{{ sharedStory.authorHandle || message.authorHandle }}</p>
                                                 <button type="button" class="shared-reel-trigger shared-story-trigger" (click)="openSharedStory(sharedStory, message, $event)">
