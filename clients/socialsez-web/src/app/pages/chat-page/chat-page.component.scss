@@ -429,6 +429,15 @@
     border-radius: 10px;
 }
 
+.thread-person-button {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+}
+
 .thread-person-link:hover .thread-identity h3 {
     text-decoration: underline;
 }

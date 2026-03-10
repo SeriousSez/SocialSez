@@ -71,7 +71,7 @@
                         <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
                     </button>
 
-                    <a class="thread-person thread-person-link" *ngIf="chatHeaderProfileHandle(conversation) as profileHandle; else threadPersonStatic" [attr.href]="'/users/' + profileHandle" (click)="openAvatarProfileOrStory(profileHandle, $event)"
+                    <button type="button" class="thread-person thread-person-link thread-person-button" *ngIf="chatHeaderProfileHandle(conversation) as profileHandle; else threadPersonStatic" (click)="openAvatarProfileOrStory(profileHandle, $event)"
                         [attr.aria-label]="hasActiveStoryForHandle(profileHandle) ? ('Open @' + profileHandle + ' stories') : ('View @' + profileHandle + ' profile')">
                         <span class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="!conversationAvatarUrl(conversation)">{{
                             conversationAvatarText(conversation)
@@ -83,7 +83,7 @@
                             <h3>{{ chatHeaderName(conversation) }}</h3>
                             <p>{{ chatHeaderHandle(conversation) }}</p>
                         </div>
-                    </a>
+                    </button>
 
                     <ng-template #threadPersonStatic>
                         <div class="thread-person">
@@ -97,14 +97,14 @@
                         </div>
                     </ng-template>
 
-                    <div class="thread-group-menu" *ngIf="conversation.isGroup">
+                    <div class="thread-group-menu">
                         <button type="button" class="thread-group-menu-toggle" [attr.aria-expanded]="groupChatMenuOpen" aria-haspopup="menu" aria-label="Group chat options" (click)="toggleGroupChatMenu($event)">
                             <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
                         </button>
 
                         <div class="thread-group-menu-list" *ngIf="groupChatMenuOpen" role="menu" aria-label="Group chat options">
                             <button type="button" role="menuitem" (click)="renameGroupChat(conversation, $event)">Change chat name</button>
-                            <button type="button" role="menuitem" (click)="leaveGroupChat(conversation, $event)">Leave chat</button>
+                            <button type="button" role="menuitem" (click)="leaveGroupChat(conversation, $event)">{{ conversation.isGroup ? 'Leave chat' : 'Delete chat' }}</button>
                             <button type="button" role="menuitem" (click)="toggleGroupChatMute(conversation, $event)">{{ isGroupChatMuted(conversation) ? 'Unmute chat' : 'Mute chat' }}</button>
                         </div>
                     </div>
@@ -730,12 +730,12 @@
             (cancel)="cancelDeleteActiveSharedReelComment()" (confirm)="confirmDeleteActiveSharedReelComment()">
         </app-confirm-modal>
 
-        <app-confirm-modal [open]="!!pendingLeaveGroupConversation" title="Leave chat" [message]="'Leave ' + leaveGroupConversationDisplayName() + '? You can be re-added later by another member.'" confirmText="Leave" cancelText="Cancel" confirmClass="danger" [busy]="leavingGroupChat"
-            busyText="Leaving..." (cancel)="cancelLeaveGroupChat()" (confirm)="confirmLeaveGroupChat()">
+        <app-confirm-modal [open]="!!pendingLeaveGroupConversation" [title]="pendingLeaveGroupConversation?.isGroup ? 'Leave chat' : 'Delete chat'" [message]="leaveGroupConversationConfirmMessage()" [confirmText]="pendingLeaveGroupConversation?.isGroup ? 'Leave' : 'Delete'" cancelText="Cancel"
+            confirmClass="danger" [busy]="leavingGroupChat" busyText="Leaving..." (cancel)="cancelLeaveGroupChat()" (confirm)="confirmLeaveGroupChat()">
         </app-confirm-modal>
 
-        <app-text-input-modal [open]="renameGroupChatModalOpen" title="Change chat name" message="Give this group chat a clear name so members can find it quickly." label="Chat name" placeholder="Enter group chat name" [value]="renameGroupChatDraft" (valueChange)="renameGroupChatDraft = $event"
-            confirmText="Save" cancelText="Cancel" [busy]="renamingGroupChat" busyText="Saving..." [maxLength]="120" (cancel)="cancelRenameGroupChat()" (confirm)="submitRenameGroupChat($event)">
+        <app-text-input-modal [open]="renameGroupChatModalOpen" title="Change chat name" [message]="renameChatModalMessage()" label="Chat name" placeholder="Enter chat name" [value]="renameGroupChatDraft" (valueChange)="renameGroupChatDraft = $event" confirmText="Save" cancelText="Cancel"
+            [busy]="renamingGroupChat" busyText="Saving..." [maxLength]="120" (cancel)="cancelRenameGroupChat()" (confirm)="submitRenameGroupChat($event)">
         </app-text-input-modal>
 
         <app-feed-story-viewer [activeStory]="activeSharedStory" [activeStoryGroup]="activeSharedStoryGroup" [activeStoryIndex]="activeSharedStoryIndex" [storyCount]="activeSharedStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousSharedStory" [hasNextStory]="hasNextSharedStory"

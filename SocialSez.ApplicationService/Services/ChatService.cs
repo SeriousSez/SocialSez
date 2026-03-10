@@ -204,15 +204,10 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             return null;
         }
 
-        if (!conversation.IsGroup)
-        {
-            throw new InvalidOperationException("Only group chats can be renamed.");
-        }
-
         var title = request.Title?.Trim();
         if (string.IsNullOrWhiteSpace(title))
         {
-            throw new ArgumentException("Group title is required.", nameof(request));
+            throw new ArgumentException("Chat title is required.", nameof(request));
         }
 
         conversation.Title = title;
@@ -239,11 +234,6 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             return false;
         }
 
-        if (!conversation.IsGroup)
-        {
-            throw new InvalidOperationException("Only group chats can be left.");
-        }
-
         var membership = conversation.Members.FirstOrDefault(x => x.ProfileId == profileId);
         if (membership is null)
         {
@@ -251,11 +241,6 @@ public class ChatService(SocialSezContext dbContext) : IChatService
         }
 
         dbContext.ChatConversationMembers.Remove(membership);
-
-        if (conversation.Members.Count <= 1)
-        {
-            dbContext.ChatConversations.Remove(conversation);
-        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;

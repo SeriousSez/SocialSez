@@ -1718,11 +1718,32 @@ export class ChatPageComponent implements OnDestroy {
             : 'this chat';
     }
 
+    leaveGroupConversationConfirmMessage(): string {
+        const name = this.leaveGroupConversationDisplayName();
+        if (!this.pendingLeaveGroupConversation) {
+            return 'Delete this chat?';
+        }
+
+        return this.pendingLeaveGroupConversation.isGroup
+            ? `Leave ${name}? You can be re-added later by another member.`
+            : `Delete ${name}? This removes the chat from your inbox.`;
+    }
+
+    renameChatModalMessage(): string {
+        return this.pendingRenameGroupConversation?.isGroup
+            ? 'Give this group chat a clear name so members can find it quickly.'
+            : 'Set a custom chat name for this conversation.';
+    }
+
     cancelRenameGroupChat(): void {
         if (this.renamingGroupChat) {
             return;
         }
 
+        this.resetRenameGroupChatModalState();
+    }
+
+    private resetRenameGroupChatModalState(): void {
         this.renameGroupChatModalOpen = false;
         this.pendingRenameGroupConversation = null;
         this.renameGroupChatDraft = '';
@@ -1736,7 +1757,7 @@ export class ChatPageComponent implements OnDestroy {
 
         const trimmedName = nextName.trim();
         if (!trimmedName) {
-            this.status = 'Group name cannot be empty.';
+            this.session.message = 'Chat name cannot be empty.';
             return;
         }
 
@@ -1744,12 +1765,12 @@ export class ChatPageComponent implements OnDestroy {
         try {
             const updatedConversation = await this.session.renameGroupConversationAsync(conversation.id, trimmedName);
             this.upsertConversation(updatedConversation);
-            this.status = 'Group chat name updated.';
-            this.cancelRenameGroupChat();
+            this.session.message = 'Chat name updated.';
         } catch {
-            this.status = 'Could not update group chat name.';
+            this.session.message = 'Could not update chat name.';
         } finally {
             this.renamingGroupChat = false;
+            this.resetRenameGroupChatModalState();
         }
     }
 
@@ -1758,6 +1779,8 @@ export class ChatPageComponent implements OnDestroy {
         if (this.leavingGroupChat) {
             return;
         }
+
+        this.resetRenameGroupChatModalState();
 
         this.pendingLeaveGroupConversation = conversation;
     }
@@ -1785,9 +1808,9 @@ export class ChatPageComponent implements OnDestroy {
             }
 
             this.pendingLeaveGroupConversation = null;
-            this.status = 'You left the group chat.';
+            this.session.message = conversation.isGroup ? 'You left the group chat.' : 'Chat deleted.';
         } catch {
-            this.status = 'Could not leave group chat.';
+            this.session.message = conversation.isGroup ? 'Could not leave group chat.' : 'Could not delete chat.';
         } finally {
             this.leavingGroupChat = false;
         }
@@ -1800,9 +1823,9 @@ export class ChatPageComponent implements OnDestroy {
         try {
             const updatedConversation = await this.session.setConversationMuteAsync(conversation.id, nextMutedState);
             this.upsertConversation(updatedConversation);
-            this.status = nextMutedState ? 'Chat muted.' : 'Chat unmuted.';
+            this.session.message = nextMutedState ? 'Chat muted.' : 'Chat unmuted.';
         } catch {
-            this.status = 'Could not update mute setting.';
+            this.session.message = 'Could not update mute setting.';
         }
     }
 
@@ -2009,7 +2032,6 @@ export class ChatPageComponent implements OnDestroy {
 
     openSharedStory(sharedStory: SharedStoryPreview, message: ChatMessageDto, event: MouseEvent): void {
         event.preventDefault();
-        event.stopPropagation();
 
         const fallbackStory = this.buildSharedStoryFromPreview(sharedStory, message);
         this.activeSharedStoryGroup = {
@@ -2032,14 +2054,6 @@ export class ChatPageComponent implements OnDestroy {
 
     closeSharedStoryViewer(): void {
         this.activeSharedStoryGroup = null;
-        this.activeSharedStoryIndex = 0;
-        this.sharedStoryViewerError = '';
-        this.sendingSharedStoryReply = false;
-        this.sharingSharedStoryMessage = false;
-        this.deletingSharedStory = false;
-        this.pendingDeleteSharedStoryId = null;
-        this.pendingShareStoryFromViewer = null;
-        this.sharingSharedStoryId = null;
     }
 
     showPreviousSharedStory(): void {
