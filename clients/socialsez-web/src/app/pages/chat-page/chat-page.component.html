@@ -185,7 +185,7 @@
                                             [class.shared-only]="(parsed.sharedPost || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl) && !parsed.text && !parsed.gifUrl && !parsed.imageUrl"
                                             [class.shared-with-text]="(parsed.sharedPost || parsed.sharedStory || parsed.unfurlUrl) && !!parsed.text" [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
                                             <p *ngIf="parsed.text">{{ parsed.text }}</p>
-                                            <article class="shared-post-preview" *ngIf="parsed.sharedPost as shared" role="button" tabindex="0" (click)="openSharedPost(shared, $event)" (keydown.enter)="openSharedPost(shared, $event)" (keydown.space)="openSharedPost(shared, $event)">
+                                            <article class="shared-post-preview" *ngIf="parsed.sharedPost as shared">
                                                 <header class="shared-post-head">
                                                     <img class="shared-post-author-avatar" *ngIf="shared.authorImageUrl" [src]="shared.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared post author avatar" />
                                                     <span class="shared-post-author-fallback" *ngIf="!shared.authorImageUrl">{{ shared.authorHandle[0].toUpperCase() }}</span>
@@ -207,6 +207,10 @@
                                                         <br *ngIf="!isLastLine" />
                                                     </ng-container>
                                                 </div>
+
+                                                <button type="button" class="shared-post-open" (click)="openSharedPost(shared, $event)">
+                                                    Open post
+                                                </button>
                                             </article>
                                             <article class="shared-reel-preview shared-story-preview" *ngIf="parsed.sharedStory as sharedStory">
                                                 <p class="shared-story-label">Story from @{{ sharedStory.authorHandle || message.authorHandle }}</p>
