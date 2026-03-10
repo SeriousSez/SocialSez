@@ -764,18 +764,12 @@
     align-items: flex-end;
     gap: 8px;
     min-width: 0;
-    justify-content: flex-start;
-}
-
-.message.own .message-content-row {
-    justify-content: flex-end;
 }
 
 .bubble-wrap {
     position: relative;
     min-width: 0;
     max-width: min(78vw, 460px);
-    order: 1;
 }
 
 .bubble {
@@ -795,17 +789,6 @@
     background: #eef2ff;
 }
 
-.message .bubble.shared-post-only,
-.message.own .bubble.shared-post-only,
-.message .bubble.shared-unfurl-only,
-.message.own .bubble.shared-unfurl-only {
-    border: 0;
-    background: transparent;
-    padding: 0;
-    border-radius: 0;
-    overflow: visible;
-}
-
 .bubble p {
     margin: 0;
     line-height: 1.35;
@@ -821,11 +804,6 @@
     position: relative;
     z-index: 1;
     pointer-events: auto;
-    order: 2;
-}
-
-.message.own .message-reaction-picker {
-    order: -1;
 }
 
 .message-reaction-picker>* {
@@ -1617,8 +1595,13 @@
 .reaction-summary.corner {
     position: absolute;
     bottom: -10px;
-    right: 2px;
+    left: 2px;
     z-index: 2;
+}
+
+.message.own .reaction-summary.corner {
+    left: auto;
+    right: 2px;
 }
 
 .reaction-badge {

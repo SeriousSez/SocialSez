@@ -1,6 +1,5 @@
 .shared-link-preview {
-    width: min(100%, 320px);
-    max-width: 100%;
+    width: min(320px, 72vw);
 }
 
 .shared-link-card {

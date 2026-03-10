@@ -785,23 +785,6 @@ export class ChatPageComponent implements OnDestroy {
             || (!!myProfile?.handle && profile.handle.toLowerCase() === myProfile.handle.toLowerCase());
     }
 
-    isOwnMessage(message: ChatMessageDto): boolean {
-        const myProfile = this.session.profile;
-        if (!myProfile) {
-            return false;
-        }
-
-        const myId = (myProfile.id ?? '').trim().toLowerCase();
-        const authorId = (message.authorProfileId ?? '').trim().toLowerCase();
-        if (myId && authorId && myId === authorId) {
-            return true;
-        }
-
-        const myHandle = (myProfile.handle ?? '').trim().toLowerCase();
-        const authorHandle = (message.authorHandle ?? '').trim().toLowerCase();
-        return !!myHandle && !!authorHandle && myHandle === authorHandle;
-    }
-
     async selectConversation(conversation: ChatConversationDto): Promise<void> {
         const previousConversationId = this.selectedConversationId;
         this.stopTypingForConversation(previousConversationId);

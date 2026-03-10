@@ -152,10 +152,10 @@
                 <ng-container *ngFor="let message of visibleMessages; trackBy: trackByMessageId; let i = index">
                     <div class="message-time-break" *ngIf="shouldShowMessageTimeBreak(i)">{{ formatMessageBreak(message.createdAtUtc) }}</div>
 
-                    <article class="message" [class.own]="isOwnMessage(message)" [class.compact]="isCompactMessage(i)" [class.linked-text]="isLinkedTextToNextShared(i)" [class.linked-shared]="isLinkedSharedFromPreviousText(i)"
+                    <article class="message" [class.own]="currentProfileId === message.authorProfileId" [class.compact]="isCompactMessage(i)" [class.linked-text]="isLinkedTextToNextShared(i)" [class.linked-shared]="isLinkedSharedFromPreviousText(i)"
                         [class.reply-target-highlight]="highlightedReplyTargetMessageId === message.id" [attr.data-message-id]="message.id" [class.mobile-reaction-open]="mobileReactionMessageId === message.id">
                         <div class="message-row">
-                            <ng-container *ngIf="!isOwnMessage(message)">
+                            <ng-container *ngIf="currentProfileId !== message.authorProfileId">
                                 <button type="button" class="message-avatar-trigger" (click)="openAvatarProfileOrStory(message.authorHandle, $event)"
                                     [attr.aria-label]="hasActiveStoryForHandle(message.authorHandle) ? ('Open @' + message.authorHandle + ' stories') : ('View @' + message.authorHandle + ' profile')">
                                     <span class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(message.authorHandle) && !hasUnseenStoryForHandle(message.authorHandle)" *ngIf="!messageAvatarUrl(message)">{{
@@ -182,8 +182,6 @@
                                     <div class="bubble-wrap">
                                         <div class="bubble" [class.media-only]="parsed.gifUrl || parsed.imageUrl || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl"
                                             [class.shared-only]="(parsed.sharedPost || parsed.sharedReel || parsed.sharedStory || parsed.unfurlUrl) && !parsed.text && !parsed.gifUrl && !parsed.imageUrl"
-                                            [class.shared-post-only]="parsed.sharedPost && !parsed.text && !parsed.gifUrl && !parsed.imageUrl && !parsed.sharedReel && !parsed.sharedStory && !parsed.unfurlUrl"
-                                            [class.shared-unfurl-only]="parsed.unfurlUrl && !parsed.text && !parsed.gifUrl && !parsed.imageUrl && !parsed.sharedPost && !parsed.sharedReel && !parsed.sharedStory"
                                             [class.shared-with-text]="(parsed.sharedPost || parsed.sharedStory || parsed.unfurlUrl) && !!parsed.text" [class.linked-text-to-shared]="isLinkedTextToNextShared(i)" [class.linked-from-text]="isLinkedSharedFromPreviousText(i)">
                                             <p *ngIf="parsed.text">{{ parsed.text }}</p>
                                             <app-chat-shared-post-preview *ngIf="parsed.sharedPost as shared" [shared]="shared"></app-chat-shared-post-preview>
@@ -210,7 +208,7 @@
                                     </div>
 
                                     <div class="message-reaction-picker" [class.menu-open]="isMessageActionsOpen(message)">
-                                        <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="noReactions" [myReactionType]="message.myReactionType" [busy]="reactingMessageId === message.id" [popoverAlign]="isOwnMessage(message) ? 'end' : 'start'"
+                                        <app-reaction-picker [reactionOptions]="reactionOptions" [reactions]="noReactions" [myReactionType]="message.myReactionType" [busy]="reactingMessageId === message.id" [popoverAlign]="currentProfileId === message.authorProfileId ? 'end' : 'start'"
                                             (primaryClick)="onMessagePrimaryReaction(message)" (reactionSelected)="onMessageReactionSelected(message, $event)">
                                         </app-reaction-picker>
 
