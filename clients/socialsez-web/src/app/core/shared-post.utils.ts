@@ -47,11 +47,11 @@ export function decodeSharedPostPayload(payload: string): SharedPostPreview | nu
         const postId = (parsed.postId ?? '').trim();
         const authorHandle = (parsed.authorHandle ?? '').trim();
         const content = (parsed.content ?? '').trim();
-        const createdAtUtc = (parsed.createdAtUtc ?? '').trim();
+        const createdAtUtc = (parsed.createdAtUtc ?? '').trim() || new Date().toISOString();
         const authorImageUrl = parsed.authorImageUrl?.trim() || undefined;
         const imageUrl = parsed.imageUrl?.trim() || undefined;
 
-        if (!postId || !authorHandle || !createdAtUtc) {
+        if (!postId || !authorHandle) {
             return null;
         }
 

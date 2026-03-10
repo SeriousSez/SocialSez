@@ -654,8 +654,10 @@ export class MessagesDockComponent {
                 const parsed = decodeSharedPostPayload(line.slice(6));
                 if (parsed) {
                     sharedPost = parsed;
-                    continue;
                 }
+
+                // Ignore malformed legacy markers so base64 payload text does not render in thread previews.
+                continue;
             }
 
             if (line.startsWith('[reel]')) {

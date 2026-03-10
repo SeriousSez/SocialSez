@@ -4445,8 +4445,10 @@ export class ChatPageComponent implements OnDestroy {
                 const parsed = decodeSharedPostPayload(line.slice(6));
                 if (parsed) {
                     sharedPost = parsed;
-                    continue;
                 }
+
+                // Ignore malformed legacy markers so base64 payload text does not render in chat bubbles.
+                continue;
             }
 
             if (line.startsWith('[reel]')) {
