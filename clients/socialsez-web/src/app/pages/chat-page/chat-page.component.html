@@ -153,8 +153,7 @@
                     <div class="message-time-break" *ngIf="shouldShowMessageTimeBreak(i)">{{ formatMessageBreak(message.createdAtUtc) }}</div>
 
                     <article class="message" [class.own]="currentProfileId === message.authorProfileId" [class.compact]="isCompactMessage(i)" [class.linked-text]="isLinkedTextToNextShared(i)" [class.linked-shared]="isLinkedSharedFromPreviousText(i)"
-                        [class.reply-target-highlight]="highlightedReplyTargetMessageId === message.id" [attr.data-message-id]="message.id" [class.mobile-reaction-open]="mobileReactionMessageId === message.id" (pointerdown)="onMessagePressStart(message, $event)"
-                        (pointerup)="onMessagePressEnd($event)" (pointercancel)="onMessagePressCancel()" (pointerleave)="onMessagePressEnd($event)" (contextmenu)="onMessageContextMenu($event)">
+                        [class.reply-target-highlight]="highlightedReplyTargetMessageId === message.id" [attr.data-message-id]="message.id" [class.mobile-reaction-open]="mobileReactionMessageId === message.id">
                         <div class="message-row">
                             <ng-container *ngIf="currentProfileId !== message.authorProfileId">
                                 <button type="button" class="message-avatar-trigger" (click)="openAvatarProfileOrStory(message.authorHandle, $event)"

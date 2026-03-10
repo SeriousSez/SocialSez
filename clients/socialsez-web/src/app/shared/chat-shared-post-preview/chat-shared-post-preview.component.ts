@@ -52,26 +52,7 @@ export class ChatSharedPostPreviewComponent {
         return clipped;
     }
 
-    onCardClick(event: MouseEvent): void {
-        const target = this.resolveEventTargetElement(event);
-        if (target?.closest('a, button, input, textarea, select')) {
-            return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-        void this.router.navigate(['/post', this.shared.postId]);
-    }
-
-    onCardPointerDown(event: PointerEvent): void {
-        event.stopPropagation();
-    }
-
-    onCardKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Enter' && event.key !== ' ') {
-            return;
-        }
-
+    openPost(event: MouseEvent): void {
         event.preventDefault();
         event.stopPropagation();
         void this.router.navigate(['/post', this.shared.postId]);
@@ -87,19 +68,6 @@ export class ChatSharedPostPreviewComponent {
         event.preventDefault();
         event.stopPropagation();
         void this.router.navigate(['/users', handle]);
-    }
-
-    private resolveEventTargetElement(event: Event): HTMLElement | null {
-        const target = event.target;
-        if (target instanceof HTMLElement) {
-            return target;
-        }
-
-        if (target instanceof Node) {
-            return target.parentElement;
-        }
-
-        return null;
     }
 
     private parseRichTextLine(line: string): RichTextPart[] {
