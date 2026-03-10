@@ -1,4 +1,4 @@
-<article class="shared-post-preview">
+<article class="shared-post-preview" role="button" tabindex="0" aria-label="Open shared post" (click)="openPost($event)" (keydown.enter)="openPost($event)" (keydown.space)="openPost($event)">
     <header class="shared-post-head">
         <img class="shared-post-author-avatar" *ngIf="shared.authorImageUrl" [src]="shared.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Shared post author avatar" />
         <span class="shared-post-author-fallback" *ngIf="!shared.authorImageUrl">{{ (shared.authorHandle || 'S').charAt(0).toUpperCase() }}</span>
@@ -10,7 +10,16 @@
 
     <img class="shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" alt="Shared post media" />
 
-    <p class="shared-post-content" *ngIf="previewText as text">{{ text }}</p>
-
-    <button type="button" class="shared-post-open" (click)="openPost($event)">Open post</button>
+    <p class="shared-post-content" *ngIf="previewLines as lines">
+        <ng-container *ngFor="let line of lines; let isLastLine = last">
+            <ng-container *ngFor="let part of line">
+                <a *ngIf="part.hashtag; else maybeMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (pointerup)="openHashtag(part.hashtag, $event)" (click)="openHashtag(part.hashtag, $event)">{{ part.text }}</a>
+                <ng-template #maybeMention>
+                    <a *ngIf="part.mentionHandle; else plainText" class="mention" [href]="'/users/' + part.mentionHandle" (pointerup)="openUserProfile(part.mentionHandle, $event)" (click)="openUserProfile(part.mentionHandle, $event)">{{ part.text }}</a>
+                </ng-template>
+                <ng-template #plainText>{{ part.text }}</ng-template>
+            </ng-container>
+            <br *ngIf="!isLastLine" />
+        </ng-container>
+    </p>
 </article>
