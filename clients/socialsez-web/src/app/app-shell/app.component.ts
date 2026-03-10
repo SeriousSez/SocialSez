@@ -174,7 +174,12 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     get showMessagesDock(): boolean {
-        return this.session.isAuthenticated() && !this.isChatRoute;
+        return this.session.isAuthenticated() && !this.isChatRoute && !this.isMobileViewport;
+    }
+
+    get isMobileViewport(): boolean {
+        return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+            && window.matchMedia('(max-width: 780px)').matches;
     }
 
     get isChatRoute(): boolean {

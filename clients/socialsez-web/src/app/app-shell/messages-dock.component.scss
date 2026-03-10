@@ -933,6 +933,13 @@
 }
 
 @media (max-width: 780px) {
+
+    .messages-dock,
+    .messages-panel,
+    .messages-panel-backdrop {
+        display: none !important;
+    }
+
     .messages-dock {
         right: 12px;
         bottom: 10px;
