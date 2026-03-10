@@ -96,6 +96,18 @@
                             </div>
                         </div>
                     </ng-template>
+
+                    <div class="thread-group-menu" *ngIf="conversation.isGroup">
+                        <button type="button" class="thread-group-menu-toggle" [attr.aria-expanded]="groupChatMenuOpen" aria-haspopup="menu" aria-label="Group chat options" (click)="toggleGroupChatMenu($event)">
+                            <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
+                        </button>
+
+                        <div class="thread-group-menu-list" *ngIf="groupChatMenuOpen" role="menu" aria-label="Group chat options">
+                            <button type="button" role="menuitem" (click)="renameGroupChat(conversation, $event)">Change chat name</button>
+                            <button type="button" role="menuitem" (click)="leaveGroupChat(conversation, $event)">Leave chat</button>
+                            <button type="button" role="menuitem" (click)="toggleGroupChatMute(conversation, $event)">{{ isGroupChatMuted(conversation) ? 'Unmute chat' : 'Mute chat' }}</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="thread-search">
@@ -478,7 +490,7 @@
 
     <!-- Dialogs and transient overlays -->
     <app-chat-search-modal [open]="chatSearchModalOpen" [query]="modalSearchUsersQuery" [searching]="searchingProfiles" [loadingSuggestions]="loadingProfileSuggestions" [error]="searchUsersError" [profiles]="filteredProfiles" [followingSuggestions]="suggestedFollowingProfiles"
-        [relevantSuggestions]="suggestedRelevantProfiles" [busy]="startingDirectChat" (close)="closeChatSearchModal()" (queryChange)="onModalSearchUsersInput($event)" (selectProfile)="selectProfileForChat($event)">
+        [relevantSuggestions]="suggestedRelevantProfiles" [busy]="startingDirectChat" (close)="closeChatSearchModal()" (queryChange)="onModalSearchUsersInput($event)" (startChat)="startChatWithProfiles($event)">
     </app-chat-search-modal>
 
     <div class="shared-reel-viewer" *ngIf="activeSharedReel as reel" (click)="onSharedReelViewerBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Shared reel viewer">
@@ -717,6 +729,14 @@
         <app-confirm-modal [open]="!!pendingDeleteSharedReelCommentId" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingSharedReelCommentId"
             (cancel)="cancelDeleteActiveSharedReelComment()" (confirm)="confirmDeleteActiveSharedReelComment()">
         </app-confirm-modal>
+
+        <app-confirm-modal [open]="!!pendingLeaveGroupConversation" title="Leave chat" [message]="'Leave ' + leaveGroupConversationDisplayName() + '? You can be re-added later by another member.'" confirmText="Leave" cancelText="Cancel" confirmClass="danger" [busy]="leavingGroupChat"
+            busyText="Leaving..." (cancel)="cancelLeaveGroupChat()" (confirm)="confirmLeaveGroupChat()">
+        </app-confirm-modal>
+
+        <app-text-input-modal [open]="renameGroupChatModalOpen" title="Change chat name" message="Give this group chat a clear name so members can find it quickly." label="Chat name" placeholder="Enter group chat name" [value]="renameGroupChatDraft" (valueChange)="renameGroupChatDraft = $event"
+            confirmText="Save" cancelText="Cancel" [busy]="renamingGroupChat" busyText="Saving..." [maxLength]="120" (cancel)="cancelRenameGroupChat()" (confirm)="submitRenameGroupChat($event)">
+        </app-text-input-modal>
 
         <app-feed-story-viewer [activeStory]="activeSharedStory" [activeStoryGroup]="activeSharedStoryGroup" [activeStoryIndex]="activeSharedStoryIndex" [storyCount]="activeSharedStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousSharedStory" [hasNextStory]="hasNextSharedStory"
             [liked]="activeSharedStory ? isActiveSharedStoryLiked(activeSharedStory.id) : false" [sendingReply]="sendingSharedStoryReply" [sharingStory]="sharingSharedStoryMessage" [canDelete]="canDeleteActiveSharedStory" [deletingStory]="deletingSharedStory" [canReport]="canReportActiveSharedStory"

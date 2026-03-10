@@ -32,10 +32,12 @@ import {
     RegisterRequest,
     SafetyStatusDto,
     SetMessageReactionRequest,
+    SetConversationMuteRequest,
     SetReactionRequest,
     StoryDto,
     StoryGroupDto,
     UpdateChatMessageRequest,
+    UpdateGroupConversationTitleRequest,
     UpdatePostRequest,
     UpdateProfilePrivacyRequest,
     UpdateProfileRequest,
@@ -497,6 +499,18 @@ export class SocialSezApiService {
 
     createGroupConversation(request: CreateGroupConversationRequest): Observable<ChatConversationDto> {
         return this.withAutoRefresh(() => this.http.post<ChatConversationDto>(`${this.baseUrl}/chat/conversations/group`, request, { headers: this.authHeaders() }));
+    }
+
+    updateGroupConversationTitle(conversationId: string, request: UpdateGroupConversationTitleRequest): Observable<ChatConversationDto> {
+        return this.withAutoRefresh(() => this.http.put<ChatConversationDto>(`${this.baseUrl}/chat/conversations/${conversationId}/title`, request, { headers: this.authHeaders() }));
+    }
+
+    leaveGroupConversation(conversationId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/chat/conversations/${conversationId}/members/me`, { headers: this.authHeaders() }));
+    }
+
+    setConversationMute(conversationId: string, request: SetConversationMuteRequest): Observable<ChatConversationDto> {
+        return this.withAutoRefresh(() => this.http.put<ChatConversationDto>(`${this.baseUrl}/chat/conversations/${conversationId}/mute`, request, { headers: this.authHeaders() }));
     }
 
     getChatMessages(conversationId: string, take = 50, skip = 0): Observable<ChatMessageDto[]> {

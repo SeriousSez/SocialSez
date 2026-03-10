@@ -4,6 +4,10 @@ public sealed record CreateDirectConversationRequest(Guid OtherProfileId);
 
 public sealed record CreateGroupConversationRequest(string? Title, IReadOnlyCollection<Guid> MemberProfileIds);
 
+public sealed record UpdateGroupConversationTitleRequest(string? Title);
+
+public sealed record SetConversationMuteRequest(bool IsMuted);
+
 public sealed record CreateChatMessageRequest(string Content);
 
 public sealed record UpdateChatMessageRequest(string Content);
@@ -28,6 +32,7 @@ public sealed record ChatConversationDto(
     Guid Id,
     bool IsGroup,
     string? Title,
+    bool IsMuted,
     DateTime CreatedAtUtc,
     IReadOnlyCollection<ChatParticipantDto> Participants,
     ChatMessagePreviewDto? LastMessage);

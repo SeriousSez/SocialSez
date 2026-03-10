@@ -776,6 +776,18 @@ export class SessionService {
         return firstValueFrom(this.api.createGroupConversation({ title, memberProfileIds }));
     }
 
+    async renameGroupConversationAsync(conversationId: string, title: string): Promise<ChatConversationDto> {
+        return firstValueFrom(this.api.updateGroupConversationTitle(conversationId, { title }));
+    }
+
+    async leaveGroupConversationAsync(conversationId: string): Promise<void> {
+        await firstValueFrom(this.api.leaveGroupConversation(conversationId));
+    }
+
+    async setConversationMuteAsync(conversationId: string, isMuted: boolean): Promise<ChatConversationDto> {
+        return firstValueFrom(this.api.setConversationMute(conversationId, { isMuted }));
+    }
+
     async loadChatMessagesAsync(conversationId: string, take = 50, skip = 0): Promise<ChatMessageDto[]> {
         return firstValueFrom(this.api.getChatMessages(conversationId, take, skip));
     }

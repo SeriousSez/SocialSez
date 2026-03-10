@@ -10,12 +10,17 @@
                 <input [ngModel]="query" (ngModelChange)="onQueryInput($event)" placeholder="Search by name or @handle" aria-label="Search users" />
             </div>
 
+            <div class="chat-search-selection-bar" *ngIf="selectedCount > 0" aria-live="polite">
+                <span>{{ selectedCount }} selected</span>
+                <button type="button" (click)="submitSelection()" [disabled]="!canSubmitSelection">{{ selectedCount > 1 ? 'Start group chat' : 'Start chat' }}</button>
+            </div>
+
             <p class="chat-search-hint" *ngIf="!showingSearchResults && loadingSuggestions">Loading suggestions...</p>
             <p class="chat-search-hint" *ngIf="showingSearchResults && searching">Searching users...</p>
             <p class="chat-search-hint" *ngIf="!searching && !loadingSuggestions && error">{{ error }}</p>
 
             <div class="chat-search-results" *ngIf="showingSearchResults && !searching && !error && profiles.length">
-                <button type="button" class="chat-search-result" *ngFor="let profile of profiles" (click)="selectProfile.emit(profile)" [disabled]="busy">
+                <button type="button" class="chat-search-result" [class.selected]="isSelected(profile)" *ngFor="let profile of profiles" (click)="toggleProfileSelection(profile)" [disabled]="busy">
                     <span class="chat-search-avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
                     <img class="chat-search-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
 
@@ -23,6 +28,8 @@
                         <strong>{{ profile.displayName }}</strong>
                         <small>@{{ profile.handle }}</small>
                     </span>
+
+                    <span class="chat-search-selected-indicator" *ngIf="isSelected(profile)" aria-hidden="true">✓</span>
                 </button>
             </div>
 
@@ -32,7 +39,7 @@
                 <section class="chat-suggestion-group" *ngIf="followingSuggestions.length">
                     <h4>Following</h4>
                     <div class="chat-search-results">
-                        <button type="button" class="chat-search-result" *ngFor="let profile of followingSuggestions" (click)="selectProfile.emit(profile)" [disabled]="busy">
+                        <button type="button" class="chat-search-result" [class.selected]="isSelected(profile)" *ngFor="let profile of followingSuggestions" (click)="toggleProfileSelection(profile)" [disabled]="busy">
                             <span class="chat-search-avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
                             <img class="chat-search-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
 
@@ -40,6 +47,8 @@
                                 <strong>{{ profile.displayName }}</strong>
                                 <small>@{{ profile.handle }}</small>
                             </span>
+
+                            <span class="chat-search-selected-indicator" *ngIf="isSelected(profile)" aria-hidden="true">✓</span>
                         </button>
                     </div>
                 </section>
@@ -47,7 +56,7 @@
                 <section class="chat-suggestion-group" *ngIf="relevantSuggestions.length">
                     <h4>Relevant from your network</h4>
                     <div class="chat-search-results">
-                        <button type="button" class="chat-search-result" *ngFor="let profile of relevantSuggestions" (click)="selectProfile.emit(profile)" [disabled]="busy">
+                        <button type="button" class="chat-search-result" [class.selected]="isSelected(profile)" *ngFor="let profile of relevantSuggestions" (click)="toggleProfileSelection(profile)" [disabled]="busy">
                             <span class="chat-search-avatar" *ngIf="!profile.imageUrl">{{ avatarText(profile) }}</span>
                             <img class="chat-search-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
 
@@ -55,6 +64,8 @@
                                 <strong>{{ profile.displayName }}</strong>
                                 <small>@{{ profile.handle }}</small>
                             </span>
+
+                            <span class="chat-search-selected-indicator" *ngIf="isSelected(profile)" aria-hidden="true">✓</span>
                         </button>
                     </div>
                 </section>

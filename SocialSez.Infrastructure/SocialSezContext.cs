@@ -220,6 +220,7 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
         {
             entity.ToTable("ChatConversationMembers");
             entity.HasKey(x => new { x.ConversationId, x.ProfileId });
+            entity.Property(x => x.IsMuted).HasDefaultValue(false);
 
             entity.HasOne(x => x.Conversation)
                 .WithMany(x => x.Members)

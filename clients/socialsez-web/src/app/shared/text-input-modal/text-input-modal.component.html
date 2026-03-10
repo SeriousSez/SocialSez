@@ -1,0 +1,22 @@
+<section class="modal-overlay" *ngIf="open" (click)="onBackdropClick($event)">
+    <article class="modal-card" role="dialog" aria-modal="true" [attr.aria-label]="title">
+        <h3>{{ title }}</h3>
+        <p *ngIf="message">{{ message }}</p>
+
+        <label class="input-block">
+            <span>{{ label }}</span>
+            <input [ngModel]="draftValue" (ngModelChange)="onDraftValueChange($event)" [placeholder]="placeholder" [attr.maxlength]="maxLength" [disabled]="busy" (keydown.enter)="onSubmit()" />
+        </label>
+
+        <div class="input-meta" *ngIf="maxLength > 0">
+            <span>{{ draftValue.length }} / {{ maxLength }}</span>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="ghost" (click)="cancel.emit()" [disabled]="busy">{{ cancelText }}</button>
+            <button type="button" class="primary" [class.is-loading]="busy" [attr.aria-busy]="busy" (click)="onSubmit()" [disabled]="busy">
+                {{ busy ? busyText : confirmText }}
+            </button>
+        </div>
+    </article>
+</section>

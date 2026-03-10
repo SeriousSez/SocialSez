@@ -41,7 +41,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
             .ToDictionary(g => g.Key, g => g.First());
 
         return conversations
-            .Select(x => MapConversationDto(x, latestByConversation.TryGetValue(x.Id, out var latest) ? latest : null))
+            .Select(x => MapConversationDto(x, profileId, latestByConversation.TryGetValue(x.Id, out var latest) ? latest : null))
             .OrderByDescending(x => x.LastMessage?.CreatedAtUtc ?? x.CreatedAtUtc)
             .ToArray();
     }
@@ -86,7 +86,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
                 .OrderByDescending(x => x.CreatedAtUtc)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            return MapConversationDto(existing, lastMessage);
+            return MapConversationDto(existing, profileId, lastMessage);
         }
 
         var conversation = new ChatConversation
@@ -120,7 +120,7 @@ public class ChatService(SocialSezContext dbContext) : IChatService
                 .ThenInclude(x => x.Profile)
             .FirstAsync(x => x.Id == conversation.Id, cancellationToken);
 
-        return MapConversationDto(created, null);
+        return MapConversationDto(created, profileId, null);
     }
 
     public async Task<ChatConversationDto> CreateGroupConversationAsync(Guid profileId, CreateGroupConversationRequest request, CancellationToken cancellationToken = default)
@@ -189,7 +189,107 @@ public class ChatService(SocialSezContext dbContext) : IChatService
                 .ThenInclude(x => x.Profile)
             .FirstAsync(x => x.Id == conversation.Id, cancellationToken);
 
-        return MapConversationDto(created, null);
+        return MapConversationDto(created, profileId, null);
+    }
+
+    public async Task<ChatConversationDto?> UpdateGroupConversationTitleAsync(Guid profileId, Guid conversationId, UpdateGroupConversationTitleRequest request, CancellationToken cancellationToken = default)
+    {
+        var conversation = await dbContext.ChatConversations
+            .Include(x => x.Members)
+                .ThenInclude(x => x.Profile)
+            .FirstOrDefaultAsync(x => x.Id == conversationId, cancellationToken);
+
+        if (conversation is null || !conversation.Members.Any(x => x.ProfileId == profileId))
+        {
+            return null;
+        }
+
+        if (!conversation.IsGroup)
+        {
+            throw new InvalidOperationException("Only group chats can be renamed.");
+        }
+
+        var title = request.Title?.Trim();
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            throw new ArgumentException("Group title is required.", nameof(request));
+        }
+
+        conversation.Title = title;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var lastMessage = await dbContext.ChatMessages
+            .AsNoTracking()
+            .Include(x => x.AuthorProfile)
+            .Where(x => x.ConversationId == conversationId)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return MapConversationDto(conversation, profileId, lastMessage);
+    }
+
+    public async Task<bool> LeaveGroupConversationAsync(Guid profileId, Guid conversationId, CancellationToken cancellationToken = default)
+    {
+        var conversation = await dbContext.ChatConversations
+            .Include(x => x.Members)
+            .FirstOrDefaultAsync(x => x.Id == conversationId, cancellationToken);
+
+        if (conversation is null)
+        {
+            return false;
+        }
+
+        if (!conversation.IsGroup)
+        {
+            throw new InvalidOperationException("Only group chats can be left.");
+        }
+
+        var membership = conversation.Members.FirstOrDefault(x => x.ProfileId == profileId);
+        if (membership is null)
+        {
+            return false;
+        }
+
+        dbContext.ChatConversationMembers.Remove(membership);
+
+        if (conversation.Members.Count <= 1)
+        {
+            dbContext.ChatConversations.Remove(conversation);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<ChatConversationDto?> SetConversationMuteAsync(Guid profileId, Guid conversationId, SetConversationMuteRequest request, CancellationToken cancellationToken = default)
+    {
+        var conversation = await dbContext.ChatConversations
+            .Include(x => x.Members)
+                .ThenInclude(x => x.Profile)
+            .FirstOrDefaultAsync(x => x.Id == conversationId, cancellationToken);
+
+        if (conversation is null)
+        {
+            return null;
+        }
+
+        var membership = conversation.Members.FirstOrDefault(x => x.ProfileId == profileId);
+        if (membership is null)
+        {
+            return null;
+        }
+
+        membership.IsMuted = request.IsMuted;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var lastMessage = await dbContext.ChatMessages
+            .AsNoTracking()
+            .Include(x => x.AuthorProfile)
+            .Where(x => x.ConversationId == conversationId)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return MapConversationDto(conversation, profileId, lastMessage);
     }
 
     public async Task<IReadOnlyCollection<ChatMessageDto>?> GetMessagesAsync(Guid profileId, Guid conversationId, int take = 50, int skip = 0, CancellationToken cancellationToken = default)
@@ -454,12 +554,15 @@ public class ChatService(SocialSezContext dbContext) : IChatService
         };
     }
 
-    private static ChatConversationDto MapConversationDto(ChatConversation entity, ChatMessage? lastMessage)
+    private static ChatConversationDto MapConversationDto(ChatConversation entity, Guid viewerProfileId, ChatMessage? lastMessage)
     {
+        var viewerMembership = entity.Members.FirstOrDefault(x => x.ProfileId == viewerProfileId);
+
         return new ChatConversationDto(
             entity.Id,
             entity.IsGroup,
             entity.Title,
+            viewerMembership?.IsMuted ?? false,
             entity.CreatedAtUtc,
             entity.Members
                 .OrderBy(x => x.JoinedAtUtc)

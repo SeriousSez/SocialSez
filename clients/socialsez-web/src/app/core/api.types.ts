@@ -222,6 +222,14 @@ export interface CreateGroupConversationRequest {
     memberProfileIds: string[];
 }
 
+export interface UpdateGroupConversationTitleRequest {
+    title: string;
+}
+
+export interface SetConversationMuteRequest {
+    isMuted: boolean;
+}
+
 export interface CreateChatMessageRequest {
     content: string;
 }
@@ -254,6 +262,7 @@ export interface ChatConversationDto {
     id: string;
     isGroup: boolean;
     title?: string;
+    isMuted: boolean;
     createdAtUtc: string;
     participants: ChatParticipantDto[];
     lastMessage?: ChatMessagePreviewDto;

@@ -71,6 +71,60 @@ public class ChatController(IChatService chatService, IHubContext<ChatHub> chatH
         }
     }
 
+    [HttpPut("conversations/{conversationId:guid}/title")]
+    public async Task<ActionResult<ChatConversationDto>> UpdateGroupConversationTitle(Guid conversationId, [FromBody] UpdateGroupConversationTitleRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var conversation = await chatService.UpdateGroupConversationTitleAsync(profileId, conversationId, request, cancellationToken);
+            return conversation is null ? NotFound() : Ok(conversation);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("conversations/{conversationId:guid}/members/me")]
+    public async Task<ActionResult> LeaveGroupConversation(Guid conversationId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var left = await chatService.LeaveGroupConversationAsync(profileId, conversationId, cancellationToken);
+            return left ? NoContent() : NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("conversations/{conversationId:guid}/mute")]
+    public async Task<ActionResult<ChatConversationDto>> SetConversationMute(Guid conversationId, [FromBody] SetConversationMuteRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var conversation = await chatService.SetConversationMuteAsync(profileId, conversationId, request, cancellationToken);
+        return conversation is null ? NotFound() : Ok(conversation);
+    }
+
     [HttpGet("conversations/{conversationId:guid}/messages")]
     public async Task<ActionResult<IReadOnlyCollection<ChatMessageDto>>> GetMessages(Guid conversationId, [FromQuery] int take = 50, [FromQuery] int skip = 0, CancellationToken cancellationToken = default)
     {

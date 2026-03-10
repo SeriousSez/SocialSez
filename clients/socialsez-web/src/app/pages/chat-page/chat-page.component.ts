@@ -17,6 +17,7 @@ import { executeStoryShareToChat as executeStoryShareToChatCore } from '../../co
 import { SessionService } from '../../core/session.service';
 import { ChatReplyPreview, buildChatReplyMarker, decodeChatReplyPayload, isChatReplyMarker, stripChatReplyMarkerPrefix } from '../../core/chat-reply.utils';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
+import { TextInputModalComponent } from '../../shared/text-input-modal/text-input-modal.component';
 import { FeedStoryViewerComponent } from '../feed-page/feed-story-viewer.component';
 import { ChatSearchModalComponent } from '../../shared/chat-search-modal/chat-search-modal.component';
 import { ReactionPickerComponent } from '../../shared/reaction-picker/reaction-picker.component';
@@ -76,7 +77,7 @@ type ChatReportTarget =
 @Component({
     selector: 'app-chat-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent, ShareReelMessageModalComponent, FeedStoryViewerComponent, ConfirmModalComponent, ReportModalComponent],
+    imports: [CommonModule, FormsModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent, ShareReelMessageModalComponent, FeedStoryViewerComponent, ConfirmModalComponent, TextInputModalComponent, ReportModalComponent],
     templateUrl: './chat-page.component.html',
     styleUrl: './chat-page.component.scss',
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
@@ -153,6 +154,13 @@ export class ChatPageComponent implements OnDestroy {
     reportingContent = false;
     showContentReportModal = false;
     pendingContentReportTarget: ChatReportTarget | null = null;
+    groupChatMenuOpen = false;
+    renamingGroupChat = false;
+    leavingGroupChat = false;
+    renameGroupChatModalOpen = false;
+    renameGroupChatDraft = '';
+    pendingRenameGroupConversation: ChatConversationDto | null = null;
+    pendingLeaveGroupConversation: ChatConversationDto | null = null;
 
     selectedConversationId: string | null = null;
     selectedConversation: ChatConversationDto | null = null;
@@ -384,6 +392,16 @@ export class ChatPageComponent implements OnDestroy {
                 this.messageActionsOpenBelow = false;
                 this.messageActionsMenuLeftPx = 0;
                 this.messageActionsMenuTopPx = 0;
+            }
+        }
+
+        if (this.groupChatMenuOpen) {
+            const clickedInsideGroupChatMenu = path.some(
+                item => item instanceof HTMLElement && (item.classList.contains('thread-group-menu') || item.classList.contains('thread-group-menu-toggle'))
+            );
+
+            if (!clickedInsideGroupChatMenu) {
+                this.groupChatMenuOpen = false;
             }
         }
 
@@ -636,6 +654,28 @@ export class ChatPageComponent implements OnDestroy {
         await this.startDirectChat(profile.id);
     }
 
+    async startChatWithProfiles(profiles: ProfileDto[]): Promise<void> {
+        if (this.startingDirectChat) {
+            return;
+        }
+
+        const uniqueProfiles = this.deduplicateProfilesById(profiles)
+            .filter(profile => !this.isCurrentUserProfile(profile));
+
+        if (!uniqueProfiles.length) {
+            return;
+        }
+
+        this.closeChatSearchModal(true);
+
+        if (uniqueProfiles.length === 1) {
+            await this.startDirectChat(uniqueProfiles[0].id);
+            return;
+        }
+
+        await this.startGroupChat(uniqueProfiles);
+    }
+
     async startDirectChat(profileId: string): Promise<void> {
         if (this.startingDirectChat) {
             return;
@@ -646,14 +686,7 @@ export class ChatPageComponent implements OnDestroy {
 
         try {
             const conversation = await this.session.createDirectConversationAsync(profileId);
-            const existingIndex = this.conversations.findIndex(x => x.id === conversation.id);
-            if (existingIndex >= 0) {
-                const next = [...this.conversations];
-                next[existingIndex] = conversation;
-                this.conversations = next;
-            } else {
-                this.conversations = [conversation, ...this.conversations];
-            }
+            this.upsertConversation(conversation);
 
             await this.selectConversation(conversation);
         } catch {
@@ -661,6 +694,81 @@ export class ChatPageComponent implements OnDestroy {
         } finally {
             this.startingDirectChat = false;
         }
+    }
+
+    private async startGroupChat(profiles: ProfileDto[]): Promise<void> {
+        const memberProfileIds = profiles
+            .map(profile => profile.id)
+            .filter(profileId => !!profileId);
+
+        if (memberProfileIds.length < 2) {
+            return;
+        }
+
+        this.startingDirectChat = true;
+        this.status = '';
+
+        try {
+            const title = this.buildGroupChatTitle(profiles);
+            const conversation = await this.session.createGroupConversationAsync(title, memberProfileIds);
+            this.upsertConversation(conversation);
+
+            await this.selectConversation(conversation);
+        } catch {
+            this.status = 'Could not start group chat.';
+        } finally {
+            this.startingDirectChat = false;
+        }
+    }
+
+    private buildGroupChatTitle(profiles: ReadonlyArray<ProfileDto>): string {
+        const names = profiles
+            .map(profile => profile.displayName?.trim() || profile.handle?.trim())
+            .filter(name => !!name) as string[];
+
+        const joined = names.slice(0, 3).join(', ');
+        if (!joined) {
+            return 'Group chat';
+        }
+
+        return names.length > 3 ? `${joined} +${names.length - 3}` : joined;
+    }
+
+    private upsertConversation(conversation: ChatConversationDto): void {
+        const existingIndex = this.conversations.findIndex(item => item.id === conversation.id);
+        if (existingIndex >= 0) {
+            const next = [...this.conversations];
+            next[existingIndex] = conversation;
+            this.conversations = next;
+            if (this.selectedConversationId === conversation.id) {
+                this.selectedConversation = conversation;
+            }
+            return;
+        }
+
+        this.conversations = [conversation, ...this.conversations];
+        if (this.selectedConversationId === conversation.id) {
+            this.selectedConversation = conversation;
+        }
+    }
+
+    private deduplicateProfilesById(profiles: ReadonlyArray<ProfileDto>): ProfileDto[] {
+        const map = new Map<string, ProfileDto>();
+        for (const profile of profiles) {
+            if (!profile.id || map.has(profile.id)) {
+                continue;
+            }
+
+            map.set(profile.id, profile);
+        }
+
+        return [...map.values()];
+    }
+
+    private isCurrentUserProfile(profile: ProfileDto): boolean {
+        const myProfile = this.session.profile;
+        return (myProfile?.id && profile.id === myProfile.id)
+            || (!!myProfile?.handle && profile.handle.toLowerCase() === myProfile.handle.toLowerCase());
     }
 
     async selectConversation(conversation: ChatConversationDto): Promise<void> {
@@ -729,6 +837,7 @@ export class ChatPageComponent implements OnDestroy {
         this.stopTypingForConversation(this.selectedConversationId);
         this.selectedConversationId = null;
         this.selectedConversation = null;
+        this.groupChatMenuOpen = false;
         void this.router.navigate([], {
             relativeTo: this.route,
             queryParams: { conversation: null },
@@ -1578,6 +1687,123 @@ export class ChatPageComponent implements OnDestroy {
 
     chatHeaderProfileHandle(conversation: ChatConversationDto): string | null {
         return this.primaryParticipant(conversation)?.handle ?? null;
+    }
+
+    toggleGroupChatMenu(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.groupChatMenuOpen = !this.groupChatMenuOpen;
+    }
+
+    closeGroupChatMenu(event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+        this.groupChatMenuOpen = false;
+    }
+
+    isGroupChatMuted(conversation: ChatConversationDto): boolean {
+        return !!conversation.isMuted;
+    }
+
+    renameGroupChat(conversation: ChatConversationDto, event: Event): void {
+        this.closeGroupChatMenu(event);
+        this.pendingRenameGroupConversation = conversation;
+        this.renameGroupChatDraft = this.chatHeaderName(conversation).trim();
+        this.renameGroupChatModalOpen = true;
+    }
+
+    leaveGroupConversationDisplayName(): string {
+        return this.pendingLeaveGroupConversation
+            ? this.chatHeaderName(this.pendingLeaveGroupConversation)
+            : 'this chat';
+    }
+
+    cancelRenameGroupChat(): void {
+        if (this.renamingGroupChat) {
+            return;
+        }
+
+        this.renameGroupChatModalOpen = false;
+        this.pendingRenameGroupConversation = null;
+        this.renameGroupChatDraft = '';
+    }
+
+    async submitRenameGroupChat(nextName: string): Promise<void> {
+        const conversation = this.pendingRenameGroupConversation;
+        if (!conversation || this.renamingGroupChat) {
+            return;
+        }
+
+        const trimmedName = nextName.trim();
+        if (!trimmedName) {
+            this.status = 'Group name cannot be empty.';
+            return;
+        }
+
+        this.renamingGroupChat = true;
+        try {
+            const updatedConversation = await this.session.renameGroupConversationAsync(conversation.id, trimmedName);
+            this.upsertConversation(updatedConversation);
+            this.status = 'Group chat name updated.';
+            this.cancelRenameGroupChat();
+        } catch {
+            this.status = 'Could not update group chat name.';
+        } finally {
+            this.renamingGroupChat = false;
+        }
+    }
+
+    leaveGroupChat(conversation: ChatConversationDto, event: Event): void {
+        this.closeGroupChatMenu(event);
+        if (this.leavingGroupChat) {
+            return;
+        }
+
+        this.pendingLeaveGroupConversation = conversation;
+    }
+
+    cancelLeaveGroupChat(): void {
+        if (this.leavingGroupChat) {
+            return;
+        }
+
+        this.pendingLeaveGroupConversation = null;
+    }
+
+    async confirmLeaveGroupChat(): Promise<void> {
+        const conversation = this.pendingLeaveGroupConversation;
+        if (!conversation || this.leavingGroupChat) {
+            return;
+        }
+
+        this.leavingGroupChat = true;
+        try {
+            await this.session.leaveGroupConversationAsync(conversation.id);
+            this.conversations = this.conversations.filter(item => item.id !== conversation.id);
+            if (this.selectedConversationId === conversation.id) {
+                this.clearSelectedConversation();
+            }
+
+            this.pendingLeaveGroupConversation = null;
+            this.status = 'You left the group chat.';
+        } catch {
+            this.status = 'Could not leave group chat.';
+        } finally {
+            this.leavingGroupChat = false;
+        }
+    }
+
+    async toggleGroupChatMute(conversation: ChatConversationDto, event: Event): Promise<void> {
+        this.closeGroupChatMenu(event);
+
+        const nextMutedState = !conversation.isMuted;
+        try {
+            const updatedConversation = await this.session.setConversationMuteAsync(conversation.id, nextMutedState);
+            this.upsertConversation(updatedConversation);
+            this.status = nextMutedState ? 'Chat muted.' : 'Chat unmuted.';
+        } catch {
+            this.status = 'Could not update mute setting.';
+        }
     }
 
     openUserProfile(handle: string, event: MouseEvent): void {
