@@ -20,6 +20,7 @@ import { FeedStoryViewerComponent } from './feed-story-viewer.component';
 import { ReelComposerModalComponent, ReelUploadStatusEvent } from '../../shared/reel-composer-modal/reel-composer-modal.component';
 import { SessionService } from '../../core/session.service';
 import { PostComposerComponent } from '../../shared/post-composer/post-composer.component';
+import { ReelBackgroundUploadService } from '../../core/reel-background-upload.service';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
 import { SharePostMessageModalComponent, SharePostMessageSubmit } from '../../shared/share-post-message-modal/share-post-message-modal.component';
 import { ShareReelMessageModalComponent, ShareReelMessageSubmit } from '../../shared/share-reel-message-modal/share-reel-message-modal.component';
@@ -179,7 +180,8 @@ export class FeedPageComponent implements OnDestroy {
         private readonly reelInteractions: ReelInteractionsService,
         private readonly storyPresence: StoryPresenceService,
         private readonly router: Router,
-        private readonly route: ActivatedRoute
+        private readonly route: ActivatedRoute,
+        private readonly bgUpload: ReelBackgroundUploadService
     ) {
         this.session.appChanges$
             .pipe(
@@ -206,6 +208,15 @@ export class FeedPageComponent implements OnDestroy {
                 void this.load();
             }
         });
+
+        this.bgUpload.status$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(event => {
+                this.onReelUploadStatusChanged(event);
+                if (event.state === 'success') {
+                    void this.load();
+                }
+            });
     }
 
     get currentProfileId(): string | null {
