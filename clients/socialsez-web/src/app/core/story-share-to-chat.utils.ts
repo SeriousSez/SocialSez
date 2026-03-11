@@ -26,7 +26,9 @@ export async function executeStoryShareToChat(
     }
 
     const recipientIds = request.recipientIds;
-    if (!recipientIds.length) {
+    const groupChatIds = request.groupChatIds ?? [];
+
+    if (!recipientIds.length && !groupChatIds.length) {
         return false;
     }
 
@@ -44,16 +46,27 @@ export async function executeStoryShareToChat(
             await transport.sendChatMessageAsync(conversationId, storyMessage);
         };
 
-        if (request.mode === 'group' && recipientIds.length > 1) {
-            const group = await transport.createGroupConversationAsync('', recipientIds);
-            await sendToConversation(group.id);
-        } else {
-            await Promise.all(recipientIds.map(async (recipientId) => {
-                const conversation = await transport.createDirectConversationAsync(recipientId);
-                await sendToConversation(conversation.id);
-            }));
+        const conversationPromises: Promise<void>[] = [];
+
+        // Send to existing group chats directly
+        for (const groupChatId of groupChatIds) {
+            conversationPromises.push(sendToConversation(groupChatId));
         }
 
+        // Handle individual recipients
+        if (recipientIds.length > 0) {
+            if (request.mode === 'group' && recipientIds.length > 1) {
+                const group = await transport.createGroupConversationAsync('', recipientIds);
+                conversationPromises.push(sendToConversation(group.id));
+            } else {
+                for (const recipientId of recipientIds) {
+                    const conversation = await transport.createDirectConversationAsync(recipientId);
+                    conversationPromises.push(sendToConversation(conversation.id));
+                }
+            }
+        }
+
+        await Promise.all(conversationPromises);
         return true;
     } catch {
         state.errorMessage = errorMessage;

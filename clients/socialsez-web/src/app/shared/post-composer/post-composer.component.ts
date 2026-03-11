@@ -3,12 +3,13 @@ import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChil
 import { FormsModule } from '@angular/forms';
 import { ImageCroppedEvent, ImageCropperComponent, LoadedImage } from 'ngx-image-cropper';
 import { ProfileDto } from '../../core/api.types';
+import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.component';
 import { SessionService } from '../../core/session.service';
 
 @Component({
     selector: 'app-post-composer',
     standalone: true,
-    imports: [CommonModule, FormsModule, ImageCropperComponent],
+    imports: [CommonModule, FormsModule, ImageCropperComponent, RichTextEditorComponent],
     templateUrl: './post-composer.component.html',
     styleUrl: './post-composer.component.scss'
 })
@@ -57,6 +58,10 @@ export class PostComposerComponent implements OnDestroy {
         }
 
         this.clearSelectedMedia();
+    }
+
+    onEditorContentChanged(value: string): void {
+        this.content = this.normalizeContentLength(value ?? '');
     }
 
     onContentInput(value: string, textarea: HTMLTextAreaElement): void {

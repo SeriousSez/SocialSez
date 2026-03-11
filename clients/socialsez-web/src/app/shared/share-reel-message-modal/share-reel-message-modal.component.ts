@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ProfileDto, ReelDto } from '../../core/api.types';
+import { ChatConversationDto, ProfileDto, ReelDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 
 interface ShareRecipient {
@@ -10,10 +10,13 @@ interface ShareRecipient {
     displayName: string;
     imageUrl?: string;
     bio?: string;
+    isGroupChat?: boolean;
+    participantHandles?: string[];
 }
 
 export interface ShareReelMessageSubmit {
     recipientIds: string[];
+    groupChatIds?: string[];
     note: string;
     mode: 'separate' | 'group';
 }
@@ -196,8 +199,21 @@ export class ShareReelMessageModalComponent implements OnChanges, OnDestroy {
             return;
         }
 
+        const selectedRecipients = Array.from(this.selectedRecipientIds)
+            .map(id => this.recipients.find(r => r.id === id))
+            .filter((r): r is ShareRecipient => r !== undefined);
+
+        const groupChatIds = selectedRecipients
+            .filter(r => r.isGroupChat)
+            .map(r => r.id);
+
+        const profileIds = selectedRecipients
+            .filter(r => !r.isGroupChat)
+            .map(r => r.id);
+
         this.confirm.emit({
-            recipientIds: [...this.selectedRecipientIds],
+            recipientIds: profileIds,
+            groupChatIds: groupChatIds.length > 0 ? groupChatIds : undefined,
             note: this.note,
             mode: 'separate'
         });
@@ -208,8 +224,21 @@ export class ShareReelMessageModalComponent implements OnChanges, OnDestroy {
             return;
         }
 
+        const selectedRecipients = Array.from(this.selectedRecipientIds)
+            .map(id => this.recipients.find(r => r.id === id))
+            .filter((r): r is ShareRecipient => r !== undefined);
+
+        const groupChatIds = selectedRecipients
+            .filter(r => r.isGroupChat)
+            .map(r => r.id);
+
+        const profileIds = selectedRecipients
+            .filter(r => !r.isGroupChat)
+            .map(r => r.id);
+
         this.confirm.emit({
-            recipientIds: [...this.selectedRecipientIds],
+            recipientIds: profileIds,
+            groupChatIds: groupChatIds.length > 0 ? groupChatIds : undefined,
             note: this.note,
             mode: 'group'
         });
@@ -248,7 +277,22 @@ export class ShareReelMessageModalComponent implements OnChanges, OnDestroy {
                     bio: undefined
                 } as ShareRecipient));
 
-            const merged = [...mappedFollowing];
+            // Add group chats as recipients
+            const groupChats = conversations
+                .filter(conv => conv.isGroup)
+                .map(conv => ({
+                    id: conv.id,
+                    handle: `group-${conv.id}`,
+                    displayName: conv.title || 'Group Chat',
+                    imageUrl: undefined,
+                    bio: undefined,
+                    isGroupChat: true,
+                    participantHandles: conv.participants
+                        .filter(p => p.profileId !== this.session.profile?.id)
+                        .map(p => p.handle)
+                } as ShareRecipient));
+
+            const merged = [...mappedFollowing, ...groupChats];
             for (const participant of fromConversations) {
                 if (!merged.some(existing => existing.id === participant.id)) {
                     merged.push(participant);
@@ -278,6 +322,7 @@ export class ShareReelMessageModalComponent implements OnChanges, OnDestroy {
     private matchesQuery(recipient: ShareRecipient, query: string): boolean {
         return recipient.displayName.toLowerCase().includes(query)
             || recipient.handle.toLowerCase().includes(query)
+            || (recipient.participantHandles?.some(handle => handle.toLowerCase().includes(query)) ?? false)
             || (recipient.bio?.toLowerCase().includes(query) ?? false);
     }
 

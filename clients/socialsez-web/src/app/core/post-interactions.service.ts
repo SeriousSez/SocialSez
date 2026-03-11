@@ -5,6 +5,7 @@ import { buildSharedPostMarker, buildSharedPostPreview } from './shared-post.uti
 
 export interface PostShareMessageRequest {
     recipientIds: string[];
+    groupChatIds?: string[];
     note: string;
     mode: 'separate' | 'group';
 }
@@ -58,7 +59,9 @@ export class PostInteractionsService {
 
     async shareToChat(post: PostDto, request: PostShareMessageRequest): Promise<void> {
         const recipientIds = request.recipientIds;
-        if (!recipientIds.length) {
+        const groupChatIds = request.groupChatIds ?? [];
+
+        if (!recipientIds.length && !groupChatIds.length) {
             return;
         }
 
@@ -71,15 +74,24 @@ export class PostInteractionsService {
             await this.session.sendChatMessageAsync(conversationId, marker);
         };
 
-        if (request.mode === 'group' && recipientIds.length > 1) {
-            const group = await this.session.createGroupConversationAsync('', recipientIds);
-            await sendToConversation(group.id);
-            return;
+        const conversationPromises: Promise<void>[] = [];
+
+        for (const groupChatId of groupChatIds) {
+            conversationPromises.push(sendToConversation(groupChatId));
         }
 
-        await Promise.all(recipientIds.map(async recipientId => {
-            const conversation = await this.session.createDirectConversationAsync(recipientId);
-            await sendToConversation(conversation.id);
-        }));
+        if (recipientIds.length > 0) {
+            if (request.mode === 'group' && recipientIds.length > 1) {
+                const group = await this.session.createGroupConversationAsync('', recipientIds);
+                conversationPromises.push(sendToConversation(group.id));
+            } else {
+                for (const recipientId of recipientIds) {
+                    const conversation = await this.session.createDirectConversationAsync(recipientId);
+                    conversationPromises.push(sendToConversation(conversation.id));
+                }
+            }
+        }
+
+        await Promise.all(conversationPromises);
     }
 }

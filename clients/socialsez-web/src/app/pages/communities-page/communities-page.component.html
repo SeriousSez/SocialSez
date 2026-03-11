@@ -138,7 +138,7 @@
         </label>
         <label>
             Description
-            <textarea [(ngModel)]="createDescription" rows="3" placeholder="What is this community about?" maxlength="600"></textarea>
+            <app-rich-text-editor [placeholder]="'What is this community about?'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="createDescription" (contentChanged)="createDescription = $event"></app-rich-text-editor>
         </label>
         <label>
             Rules

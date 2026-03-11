@@ -56,6 +56,7 @@ type BlogEditorSection = 'blog' | 'posts';
 })
 export class BlogStudioPageComponent {
     @ViewChild('contentEditor') contentEditor?: ElementRef<HTMLTextAreaElement>;
+    @ViewChild('descriptionEditor') descriptionEditor?: ElementRef<HTMLTextAreaElement>;
     @ViewChild('coverImageInput') coverImageInput?: ElementRef<HTMLInputElement>;
     @ViewChild('customCssEditor') customCssEditor?: ElementRef<HTMLTextAreaElement>;
 
@@ -76,6 +77,7 @@ export class BlogStudioPageComponent {
     showBlogEditor = false;
     activeEditorSection: BlogEditorSection = 'blog';
     activePostComposerView: PostComposerView = 'write';
+    activeDescriptionView: PostComposerView = 'write';
 
     readonly blogForm: BlogFormState = this.createEmptyBlogForm();
     readonly postForm: BlogPostFormState = this.createEmptyPostForm();
@@ -121,6 +123,10 @@ export class BlogStudioPageComponent {
 
     get postPreviewHtml(): string {
         return renderMarkdownToHtml(this.postForm.content);
+    }
+
+    get descriptionPreviewHtml(): string {
+        return renderMarkdownToHtml(this.blogForm.description);
     }
 
     get accentColorPickerValue(): string {
@@ -296,6 +302,35 @@ export class BlogStudioPageComponent {
 
     setPostComposerView(view: PostComposerView): void {
         this.activePostComposerView = view;
+    }
+
+    setDescriptionView(view: PostComposerView): void {
+        this.activeDescriptionView = view;
+    }
+
+    insertDescriptionMarkdown(action: MarkdownToolAction): void {
+        const editor = this.descriptionEditor?.nativeElement;
+        if (!editor) {
+            return;
+        }
+
+        const value = this.blogForm.description;
+        const start = editor.selectionStart ?? 0;
+        const end = editor.selectionEnd ?? 0;
+        const selected = value.slice(start, end);
+        const before = value.slice(0, start);
+        const after = value.slice(end);
+
+        const insertion = this.buildMarkdownInsertion(action, selected);
+        this.blogForm.description = `${before}${insertion.text}${after}`;
+
+        const selectionStart = before.length + insertion.selectStart;
+        const selectionEnd = before.length + insertion.selectEnd;
+
+        setTimeout(() => {
+            editor.focus();
+            editor.setSelectionRange(selectionStart, selectionEnd);
+        }, 0);
     }
 
     openCoverImagePicker(): void {

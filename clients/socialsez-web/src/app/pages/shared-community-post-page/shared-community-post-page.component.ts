@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CommunityDto, CommunityPollDto, CommunityPostDto } from '../../core/api.types';
+import { formatUtcDateTime } from '../../core/date-time.util';
 import { expandDiscoveryTerms, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
@@ -161,12 +162,10 @@ export class SharedCommunityPostPageComponent {
             return '';
         }
 
-        const mutedUntilDate = new Date(mutedUntilUtc);
-        if (Number.isNaN(mutedUntilDate.getTime())) {
-            return '';
-        }
-
-        return mutedUntilDate.toLocaleString();
+        return formatUtcDateTime(mutedUntilUtc, {
+            dateStyle: 'short',
+            timeStyle: 'medium'
+        });
     }
 
     get postTitle(): string {

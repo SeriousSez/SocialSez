@@ -17,7 +17,9 @@ export async function executeReelShareToChat(
         return false;
     }
 
-    if (!request.recipientIds.length) {
+    const hasRecipients = request.recipientIds.length > 0;
+    const hasGroupChats = (request.groupChatIds?.length ?? 0) > 0;
+    if (!hasRecipients && !hasGroupChats) {
         return false;
     }
 

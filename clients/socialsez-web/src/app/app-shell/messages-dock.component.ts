@@ -3,6 +3,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, ElementRef, EventEmitter, HostListen
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, ProfileDto } from '../core/api.types';
+import { parseUtcDate, resolveAppLocale } from '../core/date-time.util';
 import { SharedReelCommentPreview, SharedReelPreview, decodeSharedReelPayload } from '../core/shared-reel.utils';
 import { SharedPostPreview, decodeSharedPostPayload } from '../core/shared-post.utils';
 import { SharedStoryPreview, decodeSharedStoryPayload } from '../core/shared-story.utils';
@@ -703,12 +704,12 @@ export class MessagesDockComponent {
     }
 
     formatMessageBreak(dateValueUtc: string): string {
-        const date = new Date(dateValueUtc);
+        const date = parseUtcDate(dateValueUtc);
         if (Number.isNaN(date.getTime())) {
             return '';
         }
 
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat(resolveAppLocale(), {
             weekday: 'short',
             hour: 'numeric',
             minute: '2-digit'
@@ -777,12 +778,12 @@ export class MessagesDockComponent {
     }
 
     messageSearchResultDate(message: ChatMessageDto): string {
-        const date = new Date(message.createdAtUtc);
+        const date = parseUtcDate(message.createdAtUtc);
         if (Number.isNaN(date.getTime())) {
             return '';
         }
 
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat(resolveAppLocale(), {
             day: 'numeric',
             month: 'long',
             year: 'numeric'

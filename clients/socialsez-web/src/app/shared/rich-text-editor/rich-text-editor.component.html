@@ -15,12 +15,27 @@
         </div>
     </div>
 
-    <textarea *ngIf="editorMode === 'markdown'" name="editorMarkdownDraft" rows="3" [(ngModel)]="markdownDraft" [placeholder]="placeholder" (focus)="expand()"></textarea>
+    <div class="editor-input-wrap">
+        <textarea *ngIf="editorMode === 'markdown'" #markdownTextarea name="editorMarkdownDraft" rows="3" [ngModel]="markdownDraft" (ngModelChange)="onMarkdownInput($event, markdownTextarea)" [placeholder]="placeholder" (focus)="expand()" (keyup)="onMarkdownCursor(markdownTextarea)"
+            (click)="onMarkdownCursor(markdownTextarea)" (blur)="onEditorBlur()" [style.height.px]="editorHeightPx" [style.min-height.px]="editorHeightPx" [style.max-height.px]="editorHeightPx"></textarea>
 
-    <div *ngIf="editorMode === 'rich'" #richEditor class="rich-editor" contenteditable="true" [attr.data-placeholder]="placeholder" (focus)="expand(); onRichEditorFocus()" (keydown)="onRichEditorKeydown($event)" (keyup)="onRichEditorKeyup()" (input)="onRichEditorInput()"
-        (mouseup)="onRichEditorMouseup()" (mousedown)="onRichEditorMousedown($event)"></div>
+        <div *ngIf="editorMode === 'rich'" #richEditor class="rich-editor" contenteditable="true" [attr.data-placeholder]="placeholder" (focus)="expand(); onRichEditorFocus()" (keydown)="onRichEditorKeydown($event)" (keyup)="onRichEditorKeyup()" (input)="onRichEditorInput()"
+            (mouseup)="onRichEditorMouseup()" (mousedown)="onRichEditorMousedown($event)" (blur)="onEditorBlur()" [style.height.px]="editorHeightPx" [style.min-height.px]="editorHeightPx" [style.max-height.px]="editorHeightPx"></div>
 
-    <div class="comment-actions" *ngIf="expanded">
+        <div class="mention-suggestions" *ngIf="mentionOpen || mentionLoading">
+            <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
+            <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
+                <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
+                <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
+                <span class="mention-meta">
+                    <span class="mention-name">{{ profile.displayName }}</span>
+                    <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <div class="comment-actions" *ngIf="expanded && showActions">
         <p class="meta" *ngIf="errorMessage">{{ errorMessage }}</p>
         <div class="comment-primary-actions">
             <button *ngIf="showModeToggle" type="button" class="ghost mode-toggle-icon" (click)="toggleEditorMode()" [attr.aria-label]="editorMode === 'rich' ? 'Switch to Markdown editor' : 'Switch to Rich Text editor'"

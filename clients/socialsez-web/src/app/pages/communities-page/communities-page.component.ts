@@ -7,11 +7,12 @@ import { buildDiscoverySuggestions, DISCOVERY_TOPICS, rankByDiscoveryQuery, scor
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { SessionService } from '../../core/session.service';
 import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
+import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
 
 @Component({
     selector: 'app-communities-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink, RichTextEditorComponent],
     templateUrl: './communities-page.component.html',
     styleUrl: './communities-page.component.scss'
 })

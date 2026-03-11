@@ -32,11 +32,12 @@ export async function executePostShareToChat(
     state: PostShareExecutionState,
     postId: string,
     recipientIds: readonly string[],
+    groupChatIds: readonly string[] | undefined,
     action: () => Promise<void>,
     errorMessage: string,
     ...busyFlags: boolean[]
 ): Promise<boolean> {
-    if (!recipientIds.length) {
+    if (!recipientIds.length && (!groupChatIds || !groupChatIds.length)) {
         return false;
     }
 

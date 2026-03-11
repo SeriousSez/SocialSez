@@ -4,12 +4,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommunityDto, CommunityMemberDto, CommunityPollDto, CommunityPostDto, CommunityRuleDto, ProfileDto } from '../../core/api.types';
+import { formatUtcDateTime } from '../../core/date-time.util';
 import { rankByDiscoveryQuery, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { SessionService } from '../../core/session.service';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
+import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 type CommunityComposerTab = 'text' | 'media' | 'link' | 'poll';
@@ -31,7 +33,7 @@ interface PendingMemberModerationAction {
 @Component({
     selector: 'app-community-detail-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, ConfirmModalComponent, SkeletonComponent],
+    imports: [CommonModule, FormsModule, RouterLink, ConfirmModalComponent, SkeletonComponent, RichTextEditorComponent],
     templateUrl: './community-detail-page.component.html',
     styleUrl: './community-detail-page.component.scss'
 })
@@ -154,12 +156,10 @@ export class CommunityDetailPageComponent {
             return '';
         }
 
-        const mutedUntilDate = new Date(mutedUntilUtc);
-        if (Number.isNaN(mutedUntilDate.getTime())) {
-            return '';
-        }
-
-        return mutedUntilDate.toLocaleString();
+        return formatUtcDateTime(mutedUntilUtc, {
+            dateStyle: 'short',
+            timeStyle: 'medium'
+        });
     }
 
     get canLeave(): boolean {

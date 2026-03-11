@@ -4,7 +4,7 @@
             <h2>Blog Studio</h2>
             <p>Build and customize your blog, then publish posts.</p>
         </div>
-        <a routerLink="/feed" class="back-link">Back to Feed</a>
+        <a routerLink="/blogs" class="back-link">Back to Blogs</a>
     </header>
 
     <p class="error" *ngIf="error">{{ error }}</p>
@@ -81,7 +81,25 @@
                 <input type="text" [(ngModel)]="blogForm.title" maxlength="160" placeholder="My design notes" />
 
                 <label>Description</label>
-                <textarea rows="3" [(ngModel)]="blogForm.description" maxlength="1000" placeholder="What this blog is about"></textarea>
+                <div class="composer-switcher" aria-label="Description mode">
+                    <button type="button" [class.active]="activeDescriptionView === 'write'" (click)="setDescriptionView('write')">Write</button>
+                    <button type="button" [class.active]="activeDescriptionView === 'preview'" (click)="setDescriptionView('preview')">Preview</button>
+                </div>
+                <div class="markdown-toolbar" *ngIf="activeDescriptionView === 'write'" aria-label="Description markdown tools">
+                    <button type="button" (click)="insertDescriptionMarkdown('h2')">H2</button>
+                    <button type="button" (click)="insertDescriptionMarkdown('bold')">Bold</button>
+                    <button type="button" (click)="insertDescriptionMarkdown('italic')">Italic</button>
+                    <button type="button" (click)="insertDescriptionMarkdown('link')">Link</button>
+                    <button type="button" (click)="insertDescriptionMarkdown('ul')">Bullet List</button>
+                    <button type="button" (click)="insertDescriptionMarkdown('ol')">Numbered List</button>
+                    <button type="button" (click)="insertDescriptionMarkdown('quote')">Quote</button>
+                    <button type="button" (click)="insertDescriptionMarkdown('inlineCode')">Inline Code</button>
+                    <button type="button" (click)="insertDescriptionMarkdown('codeBlock')">Code Block</button>
+                </div>
+                <div class="markdown-editor">
+                    <textarea *ngIf="activeDescriptionView === 'write'" #descriptionEditor rows="4" [(ngModel)]="blogForm.description" maxlength="2000" placeholder="What this blog is about"></textarea>
+                    <div *ngIf="activeDescriptionView === 'preview'" class="markdown-preview" [innerHTML]="descriptionPreviewHtml"></div>
+                </div>
 
                 <label>Slug</label>
                 <input type="text" [(ngModel)]="blogForm.slug" maxlength="80" placeholder="design-notes" />

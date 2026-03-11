@@ -1803,6 +1803,7 @@ export class ProfilePageComponent implements OnDestroy {
             state,
             post.id,
             request.recipientIds,
+            request.groupChatIds,
             () => this.postInteractions.shareToChat(post, request),
             'Could not send this post to chat right now.',
             this.savingPost,

@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ProfileDto } from '../../core/api.types';
+import { SessionService } from '../../core/session.service';
 
 @Component({
     selector: 'app-rich-text-editor, app-comment-editor',
@@ -11,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class RichTextEditorComponent implements OnChanges, AfterViewInit {
     @ViewChild('richEditor') richEditor?: ElementRef<HTMLDivElement>;
+    @ViewChild('markdownTextarea') markdownTextarea?: ElementRef<HTMLTextAreaElement>;
 
     @Input() placeholder = 'Join the conversation';
     @Input() submitLabel = 'Comment';
@@ -18,13 +21,16 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
     @Input() submitting = false;
     @Input() errorMessage = '';
     @Input() collapsed = false;
+    @Input() showActions = true;
     @Input() showModeToggle = true;
+    @Input() editorHeightPx: number | null = null;
     @Input() initialContent = '';
     @Input() initialContentIsHtml = false;
     @Input() resetToken = 0;
 
     @Output() submitted = new EventEmitter<string>();
     @Output() cancelled = new EventEmitter<void>();
+    @Output() contentChanged = new EventEmitter<string>();
 
     expanded = !this.collapsed;
     editorMode: 'markdown' | 'rich' = 'rich';
@@ -38,17 +44,28 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
     isQuoteCommandActive = false;
     isSpoilerCommandActive = false;
 
+    mentionResults: ProfileDto[] = [];
+    mentionOpen = false;
+    mentionLoading = false;
+
+    private mentionRangeStart = -1;
+    private mentionRangeEnd = -1;
+    private mentionSearchDebounceId: number | null = null;
+    private mentionSearchToken = 0;
+    private pendingRichMentionRange: Range | null = null;
+
     private readonly defaultSpoilerPlaceholder = '|';
     private lastAppliedInitial = '';
 
     constructor(
         private readonly cdr: ChangeDetectorRef,
-        private readonly ngZone: NgZone
+        private readonly ngZone: NgZone,
+        private readonly session: SessionService
     ) {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['collapsed'] && !changes['collapsed'].firstChange) {
+        if (changes['collapsed']) {
             this.expanded = !this.collapsed;
         }
 
@@ -91,6 +108,79 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
 
         this.resetComposer();
         this.cancelled.emit();
+    }
+
+    onMarkdownInput(value: string, textarea: HTMLTextAreaElement): void {
+        this.markdownDraft = value;
+        this.emitLiveContent();
+        this.updateMentionSuggestions(value, textarea.selectionStart ?? value.length);
+    }
+
+    onMarkdownCursor(textarea: HTMLTextAreaElement): void {
+        this.updateMentionSuggestions(this.markdownDraft, textarea.selectionStart ?? this.markdownDraft.length);
+    }
+
+    onEditorBlur(): void {
+        window.setTimeout(() => {
+            this.closeMentionSuggestions();
+        }, 120);
+    }
+
+    async selectMention(profile: ProfileDto): Promise<void> {
+        if (!this.mentionOpen) {
+            return;
+        }
+
+        const replacement = `@${profile.handle} `;
+
+        if (this.editorMode === 'markdown') {
+            if (this.mentionRangeStart < 0 || this.mentionRangeEnd < this.mentionRangeStart) {
+                return;
+            }
+
+            const mergedContent = `${this.markdownDraft.slice(0, this.mentionRangeStart)}${replacement}${this.markdownDraft.slice(this.mentionRangeEnd)}`;
+            this.markdownDraft = mergedContent;
+            this.emitLiveContent();
+
+            const nextCaret = this.mentionRangeStart + replacement.length;
+            this.closeMentionSuggestions();
+
+            await Promise.resolve();
+            const textarea = this.markdownTextarea?.nativeElement;
+            if (!textarea) {
+                return;
+            }
+
+            textarea.focus();
+            textarea.setSelectionRange(nextCaret, nextCaret);
+            return;
+        }
+
+        const editor = this.richEditor?.nativeElement;
+        const mentionRange = this.pendingRichMentionRange;
+        if (!editor || !mentionRange) {
+            return;
+        }
+
+        const replacementNode = document.createTextNode(replacement);
+        mentionRange.deleteContents();
+        mentionRange.insertNode(replacementNode);
+
+        const selection = window.getSelection();
+        if (selection) {
+            const cursor = document.createRange();
+            cursor.setStart(replacementNode, replacementNode.textContent?.length ?? replacement.length);
+            cursor.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(cursor);
+        }
+
+        this.pendingRichMentionRange = null;
+        this.closeMentionSuggestions();
+        this.updateRichCommandStates();
+        this.refreshView();
+        this.emitLiveContent();
+        editor.focus();
     }
 
     onSubmit(): void {
@@ -279,18 +369,23 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
         this.normalizeComposeSpoilerSpans();
         this.cleanupEmptyComposeSpoilers();
         this.updateRichCommandStates();
+        this.updateRichMentionSuggestions();
+        this.emitLiveContent();
     }
 
     onRichEditorFocus(): void {
         this.updateRichCommandStates();
+        this.updateRichMentionSuggestions();
     }
 
     onRichEditorKeyup(): void {
         this.updateRichCommandStates();
+        this.updateRichMentionSuggestions();
     }
 
     onRichEditorMouseup(): void {
         setTimeout(() => this.updateRichCommandStates(), 0);
+        setTimeout(() => this.updateRichMentionSuggestions(), 0);
     }
 
     onRichToolbarMouseDown(event: MouseEvent): void {
@@ -342,15 +437,20 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
         this.markdownDraft = '';
         this.editorMode = 'rich';
         this.resetRichCommandStates();
+        this.closeMentionSuggestions();
+        this.pendingRichMentionRange = null;
         if (this.richEditor) {
             this.richEditor.nativeElement.innerHTML = '';
         }
 
         this.expanded = !this.collapsed;
         this.refreshView();
+        this.emitLiveContent();
     }
 
     private applyInitialContent(content: string): void {
+        this.closeMentionSuggestions();
+        this.pendingRichMentionRange = null;
         if (this.initialContentIsHtml) {
             const editorHtml = this.storageHtmlToEditorHtml(content);
             this.markdownDraft = this.editorHtmlToText(editorHtml);
@@ -364,6 +464,8 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
         if (this.editorMode === 'rich' && this.richEditor) {
             this.richEditor.nativeElement.innerHTML = this.markdownToRichHtml(content);
         }
+
+        this.emitLiveContent();
     }
 
     private storageHtmlToEditorHtml(content: string): string {
@@ -401,6 +503,157 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
 
         const serialized = this.readRichContent();
         return this.hasMeaningfulSerializedContent(serialized) ? serialized : '';
+    }
+
+    private updateRichMentionSuggestions(): void {
+        const editor = this.richEditor?.nativeElement;
+        const selection = window.getSelection();
+        if (!editor || !selection || !selection.rangeCount || !selection.isCollapsed) {
+            this.pendingRichMentionRange = null;
+            this.closeMentionSuggestions();
+            return;
+        }
+
+        const anchorNode = selection.anchorNode;
+        if (!anchorNode) {
+            this.pendingRichMentionRange = null;
+            this.closeMentionSuggestions();
+            return;
+        }
+
+        const textNode = anchorNode.nodeType === Node.TEXT_NODE
+            ? anchorNode
+            : (anchorNode.childNodes[selection.anchorOffset - 1] ?? null);
+
+        if (!textNode || textNode.nodeType !== Node.TEXT_NODE || !editor.contains(textNode)) {
+            this.pendingRichMentionRange = null;
+            this.closeMentionSuggestions();
+            return;
+        }
+
+        const text = textNode.textContent ?? '';
+        const caretOffset = anchorNode.nodeType === Node.TEXT_NODE
+            ? selection.anchorOffset
+            : text.length;
+        const beforeCaret = text.slice(0, caretOffset);
+        const match = beforeCaret.match(/(^|\s)@([\p{L}\p{N}_]{1,30})$/u);
+        if (!match) {
+            this.pendingRichMentionRange = null;
+            this.closeMentionSuggestions();
+            return;
+        }
+
+        const query = match[2] ?? '';
+        if (!query) {
+            this.pendingRichMentionRange = null;
+            this.closeMentionSuggestions();
+            return;
+        }
+
+        const atIndex = beforeCaret.lastIndexOf('@');
+        if (atIndex < 0) {
+            this.pendingRichMentionRange = null;
+            this.closeMentionSuggestions();
+            return;
+        }
+
+        const range = document.createRange();
+        range.setStart(textNode, atIndex);
+        range.setEnd(textNode, caretOffset);
+        this.pendingRichMentionRange = range;
+
+        this.searchMentionProfiles(query);
+    }
+
+    private updateMentionSuggestions(value: string, caret: number): void {
+        const context = this.extractMentionContext(value, caret);
+        if (!context || !context.query) {
+            this.closeMentionSuggestions();
+            return;
+        }
+
+        this.mentionRangeStart = context.start;
+        this.mentionRangeEnd = caret;
+        this.searchMentionProfiles(context.query);
+    }
+
+    private searchMentionProfiles(query: string): void {
+        if (this.mentionSearchDebounceId !== null) {
+            window.clearTimeout(this.mentionSearchDebounceId);
+            this.mentionSearchDebounceId = null;
+        }
+
+        this.mentionLoading = true;
+        const token = ++this.mentionSearchToken;
+        this.mentionSearchDebounceId = window.setTimeout(async () => {
+            this.mentionSearchDebounceId = null;
+
+            try {
+                const profiles = await this.session.searchProfilesAsync(query);
+                if (token !== this.mentionSearchToken) {
+                    return;
+                }
+
+                const currentHandle = this.session.profile?.handle.toLowerCase() ?? '';
+                this.mentionResults = profiles.filter(profile => profile.handle.toLowerCase() !== currentHandle).slice(0, 6);
+                this.mentionOpen = this.mentionResults.length > 0;
+            } catch {
+                if (token !== this.mentionSearchToken) {
+                    return;
+                }
+
+                this.mentionResults = [];
+                this.mentionOpen = false;
+            } finally {
+                if (token === this.mentionSearchToken) {
+                    this.mentionLoading = false;
+                }
+            }
+        }, 200);
+    }
+
+    private closeMentionSuggestions(): void {
+        this.mentionOpen = false;
+        this.mentionResults = [];
+        this.mentionLoading = false;
+        this.mentionRangeStart = -1;
+        this.mentionRangeEnd = -1;
+        this.mentionSearchToken += 1;
+
+        if (this.mentionSearchDebounceId !== null) {
+            window.clearTimeout(this.mentionSearchDebounceId);
+            this.mentionSearchDebounceId = null;
+        }
+    }
+
+    private extractMentionContext(value: string, caret: number): { query: string; start: number } | null {
+        const prefix = value.slice(0, caret);
+        const match = prefix.match(/(^|\s)@([\p{L}\p{N}_]{1,30})$/u);
+        if (!match) {
+            return null;
+        }
+
+        const query = match[2] ?? '';
+        if (!query) {
+            return null;
+        }
+
+        return {
+            query,
+            start: caret - query.length - 1
+        };
+    }
+
+    private emitLiveContent(): void {
+        if (this.editorMode === 'markdown') {
+            this.lastAppliedInitial = this.markdownDraft;
+            this.contentChanged.emit(this.markdownDraft);
+            return;
+        }
+
+        const serialized = this.readRichContent();
+        this.lastAppliedInitial = serialized;
+        this.contentChanged.emit(serialized);
     }
 
     private hasMeaningfulSerializedContent(serialized: string): boolean {

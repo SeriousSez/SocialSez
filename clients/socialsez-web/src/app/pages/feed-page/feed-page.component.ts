@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter, skip } from 'rxjs';
 import { FeedMode, PostDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
+import { parseUtcDate, resolveAppLocale } from '../../core/date-time.util';
 import { executePostShareAction, executePostShareToChat, executePostShareToFeedAndReload } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
 import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
@@ -132,7 +133,7 @@ export class FeedPageComponent implements OnDestroy {
     private reelUploadStatusHideTimeoutId: number | null = null;
     private composerCloseTimerId: number | null = null;
     private storyComposerCloseTimerId: number | null = null;
-    private readonly preciseDateFormatter = new Intl.DateTimeFormat(undefined, {
+    private readonly preciseDateFormatter = new Intl.DateTimeFormat(resolveAppLocale(), {
         month: 'short',
         day: 'numeric',
         year: 'numeric'
@@ -1345,7 +1346,7 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     formatFeedTimestamp(utcValue: string): string {
-        const createdAt = this.parseUtcDate(utcValue);
+        const createdAt = parseUtcDate(utcValue);
         if (Number.isNaN(createdAt.getTime())) {
             return utcValue;
         }
@@ -1379,12 +1380,6 @@ export class FeedPageComponent implements OnDestroy {
         }
 
         return this.preciseDateFormatter.format(createdAt);
-    }
-
-    private parseUtcDate(value: string): Date {
-        const hasExplicitTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
-        const normalized = hasExplicitTimezone ? value : `${value}Z`;
-        return new Date(normalized);
     }
 
     private removeStoryFromCollections(storyId: string): void {
@@ -1596,6 +1591,7 @@ export class FeedPageComponent implements OnDestroy {
             state,
             post.id,
             request.recipientIds,
+            request.groupChatIds,
             () => this.postInteractions.shareToChat(post, request),
             'Could not send this post to chat right now.',
             this.savingPost,

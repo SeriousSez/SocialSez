@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, PostReactionDetailDto, ProfileDto, ReactionSummaryDto, ReelCommentDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
+import { parseUtcDate, prefers24HourClock, resolveAppLocale } from '../../core/date-time.util';
 import { expandDiscoveryTerms, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { ChatRealtimeService } from '../../core/chat-realtime.service';
 import { ReelInteractionsService } from '../../core/reel-interactions.service';
@@ -108,7 +109,7 @@ export class ChatPageComponent implements OnDestroy {
     private readonly composerMaxHeightPx = 120;
     private readonly typingIdleTimeoutMs = 1800;
     private readonly remoteTypingExpiryMs = 3200;
-    private readonly preciseDateFormatter = new Intl.DateTimeFormat(undefined, {
+    private readonly preciseDateFormatter = new Intl.DateTimeFormat(resolveAppLocale(), {
         month: 'short',
         day: 'numeric',
         year: 'numeric'
@@ -249,10 +250,7 @@ export class ChatPageComponent implements OnDestroy {
     private readonly pendingUnfurlPreviewUrls = new Set<string>();
     private activeStoryGroups: StoryGroupDto[] = [];
 
-    readonly prefers24HourClock = (() => {
-        const hourCycle = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle;
-        return hourCycle === 'h23' || hourCycle === 'h24';
-    })();
+    readonly prefers24HourClock = prefers24HourClock();
 
     get typingParticipantCount(): number {
         return this.remoteTypingProfileIds.size;
@@ -1065,7 +1063,7 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     messageSearchResultDate(message: ChatMessageDto): string {
-        const date = this.parseUtcDate(message.createdAtUtc);
+        const date = parseUtcDate(message.createdAtUtc);
         if (Number.isNaN(date.getTime())) {
             return '';
         }
@@ -3114,7 +3112,7 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     formatFeedTimestamp(utcValue: string): string {
-        const createdAt = this.parseUtcDate(utcValue);
+        const createdAt = parseUtcDate(utcValue);
         if (Number.isNaN(createdAt.getTime())) {
             return utcValue;
         }
@@ -3151,12 +3149,12 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     formatTime(dateValueUtc: string): string {
-        const date = new Date(dateValueUtc);
+        const date = parseUtcDate(dateValueUtc);
         if (Number.isNaN(date.getTime())) {
             return '';
         }
 
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat(resolveAppLocale(), {
             hour: 'numeric',
             minute: '2-digit'
         }).format(date);
@@ -3233,12 +3231,12 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     formatMessageBreak(dateValueUtc: string): string {
-        const date = new Date(dateValueUtc);
+        const date = parseUtcDate(dateValueUtc);
         if (Number.isNaN(date.getTime())) {
             return '';
         }
 
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat(resolveAppLocale(), {
             weekday: 'short',
             hour: 'numeric',
             minute: '2-digit'
@@ -4501,12 +4499,6 @@ export class ChatPageComponent implements OnDestroy {
             frameOffsetX,
             frameOffsetY
         };
-    }
-
-    private parseUtcDate(value: string): Date {
-        const hasExplicitTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
-        const normalized = hasExplicitTimezone ? value : `${value}Z`;
-        return new Date(normalized);
     }
 
     private async executeReelShareToChat(reel: ReelDto, request: ShareReelMessageSubmit): Promise<boolean> {

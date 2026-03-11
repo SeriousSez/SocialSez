@@ -303,6 +303,7 @@ export class HashtagPageComponent {
             state,
             post.id,
             request.recipientIds,
+            request.groupChatIds,
             () => this.postInteractions.shareToChat(post, request),
             'Could not send this post to chat right now.',
             this.savingPost,

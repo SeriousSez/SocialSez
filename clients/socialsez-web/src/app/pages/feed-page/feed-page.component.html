@@ -145,7 +145,7 @@
     <app-segmented-tabs class="content-tabs" [tabs]="contentTabs" [activeTab]="selectedContentTab" ariaLabel="Feed content type" [fullWidthOnMobile]="true" (activeTabChange)="onContentTabChanged($event)"></app-segmented-tabs>
 
     <section class="feed-skeleton" *ngIf="selectedContentTab === 'posts' && loading" aria-label="Loading feed">
-        <article class="feed-skeleton-card" *ngFor="let _ of [1, 2, 3]">
+        <article class="feed-skeleton-card" *ngFor="let _ of [1, 2]">
             <div class="feed-skeleton-head">
                 <app-skeleton width="34px" height="34px" radius="999px"></app-skeleton>
                 <div class="feed-skeleton-meta">

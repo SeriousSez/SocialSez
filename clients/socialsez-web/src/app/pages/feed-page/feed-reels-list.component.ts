@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReelCommentDto, ReelDto } from '../../core/api.types';
+import { parseUtcDate, resolveAppLocale } from '../../core/date-time.util';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 import { CommentsSheetComponent } from '../../shared/comments-sheet/comments-sheet.component';
 
@@ -82,7 +83,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     private readonly pointerHandledActionKeys = new Map<string, number>();
     private copyLinkResetTimerId: number | null = null;
     private readonly ngZone = inject(NgZone);
-    private readonly preciseDateFormatter = new Intl.DateTimeFormat(undefined, {
+    private readonly preciseDateFormatter = new Intl.DateTimeFormat(resolveAppLocale(), {
         month: 'short',
         day: 'numeric',
         year: 'numeric'
@@ -777,7 +778,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     formatFeedTimestamp(utcValue: string): string {
-        const createdAt = this.parseUtcDate(utcValue);
+        const createdAt = parseUtcDate(utcValue);
         if (Number.isNaN(createdAt.getTime())) {
             return utcValue;
         }
@@ -811,12 +812,6 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         }
 
         return this.preciseDateFormatter.format(createdAt);
-    }
-
-    private parseUtcDate(value: string): Date {
-        const hasExplicitTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
-        const normalized = hasExplicitTimezone ? value : `${value}Z`;
-        return new Date(normalized);
     }
 
     private parseReelMetadata(reel: ReelDto): { location: string; collaborators: string[]; caption: string; frameZoom: number; frameOffsetX: number; frameOffsetY: number } {

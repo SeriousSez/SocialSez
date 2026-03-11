@@ -3,6 +3,7 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleCha
 import { FormsModule } from '@angular/forms';
 import { CommunityPostDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
+import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.component';
 
 interface EditImageEntry {
     url: string;
@@ -24,7 +25,7 @@ export interface CommunityPostEditorSavePayload {
 @Component({
     selector: 'app-community-post-editor-modal, app-community-post-edit-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, RichTextEditorComponent],
     templateUrl: './community-post-editor-modal.component.html',
     styleUrl: './community-post-editor-modal.component.scss'
 })

@@ -37,8 +37,12 @@
                 <img class="avatar" *ngIf="recipient.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Recipient avatar" />
 
                 <div class="meta">
-                    <h4>{{ recipient.displayName }}</h4>
-                    <p>{{ recipient.bio || ('@' + recipient.handle) }}</p>
+                    <div class="meta-header">
+                        <h4>{{ recipient.displayName }}</h4>
+                        <span class="group-badge" *ngIf="recipient.isGroupChat">Group</span>
+                    </div>
+                    <p *ngIf="!recipient.isGroupChat">{{ recipient.bio || ('@' + recipient.handle) }}</p>
+                    <p *ngIf="recipient.isGroupChat">@{{ recipient.participantHandles?.join(', @') || recipient.handle }}</p>
                 </div>
 
                 <span class="checkbox" [class.checked]="isSelected(recipient.id)"></span>

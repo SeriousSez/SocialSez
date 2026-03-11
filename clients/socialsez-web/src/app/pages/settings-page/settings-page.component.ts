@@ -3,12 +3,13 @@ import { Component, ElementRef, HostListener, OnDestroy, ViewChild } from '@angu
 import { FormsModule } from '@angular/forms';
 import { ProfileDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
+import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
 import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
 
 @Component({
     selector: 'app-settings-page',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, RichTextEditorComponent],
     templateUrl: './settings-page.component.html',
     styleUrl: './settings-page.component.scss'
 })

@@ -358,7 +358,8 @@
             <button type="button" [class.active]="isEditPostTab('poll')" (click)="setEditPostTab('poll')">Poll</button>
         </nav>
 
-        <textarea *ngIf="isEditPostTab('text') || isEditPostTab('poll')" [(ngModel)]="editPostContent" rows="4" maxlength="5000" placeholder="Update your post..." [disabled]="updatingPost"></textarea>
+        <app-rich-text-editor *ngIf="isEditPostTab('text') || isEditPostTab('poll')" [placeholder]="'Update your post...'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="editPostContent" [initialContentIsHtml]="true"
+            (contentChanged)="editPostContent = $event"></app-rich-text-editor>
 
         <section class="composer-media" *ngIf="isEditPostTab('media') || isEditPostTab('link')">
             <label *ngIf="isEditPostTab('link')">
@@ -384,7 +385,8 @@
                 <button type="button" class="ghost" (click)="removeEditPostImage(editPostActiveImageIndex)" [disabled]="updatingPost">Remove current</button>
             </div>
 
-            <textarea [(ngModel)]="editPostMediaContent" rows="4" maxlength="5000" placeholder="Add optional body text..." [disabled]="updatingPost"></textarea>
+            <app-rich-text-editor [placeholder]="'Add optional body text...'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="editPostMediaContent" [initialContentIsHtml]="true"
+                (contentChanged)="editPostMediaContent = $event"></app-rich-text-editor>
         </section>
 
         <div class="poll-editor" *ngIf="isEditPostTab('poll')">
@@ -423,7 +425,8 @@
 
         <label>
             Information
-            <textarea class="edit-community-information" [(ngModel)]="updateCommunityInformation" rows="3" maxlength="400" placeholder="Describe this community" [disabled]="updatingCommunity"></textarea>
+            <app-rich-text-editor class="edit-community-information" [placeholder]="'Describe this community'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="140" [initialContent]="updateCommunityInformation" [initialContentIsHtml]="true"
+                (contentChanged)="updateCommunityInformation = $event"></app-rich-text-editor>
         </label>
 
         <label>
@@ -463,7 +466,8 @@
             <button type="button" [class.active]="isComposerTab('poll')" (click)="setComposerTab('poll')">Poll</button>
         </nav>
 
-        <textarea *ngIf="isComposerTab('text')" [(ngModel)]="composerContent" (ngModelChange)="onComposerChanged()" rows="4" placeholder="Share your thoughts..."></textarea>
+        <app-rich-text-editor *ngIf="isComposerTab('text')" [placeholder]="'Share your thoughts...'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="composerContent"
+            (contentChanged)="composerContent = $event; onComposerChanged()"></app-rich-text-editor>
 
         <section class="composer-media" *ngIf="isComposerTab('media') || isComposerTab('link')">
             <label *ngIf="isComposerTab('link')">
@@ -489,7 +493,7 @@
                 <button type="button" class="ghost" (click)="removeComposerImage(composerActiveImageIndex)" [disabled]="posting">Remove current</button>
             </div>
 
-            <textarea [(ngModel)]="composerMediaContent" (ngModelChange)="onComposerChanged()" rows="4" placeholder="Add optional body text..."></textarea>
+            <app-rich-text-editor [placeholder]="'Add optional body text...'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="composerMediaContent" (contentChanged)="composerMediaContent = $event; onComposerChanged()"></app-rich-text-editor>
         </section>
 
         <p class="meta" *ngIf="!isComposerTab('media') && composerImagePreviewUrls.length">{{ composerImagePreviewUrls.length }} image(s) attached in Images &amp; Video tab.</p>

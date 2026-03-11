@@ -17,7 +17,8 @@
             <button type="button" [class.active]="tab === 'poll'" (click)="setTab('poll')">Poll</button>
         </nav>
 
-        <textarea *ngIf="tab === 'text' || tab === 'poll'" [(ngModel)]="content" rows="4" maxlength="5000" placeholder="Update your post..." [disabled]="isBusy"></textarea>
+        <app-rich-text-editor *ngIf="tab === 'text' || tab === 'poll'" [placeholder]="'Update your post...'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="content" [initialContentIsHtml]="true"
+            (contentChanged)="content = $event"></app-rich-text-editor>
 
         <section class="composer-media" *ngIf="tab === 'media' || tab === 'link'">
             <label *ngIf="tab === 'link'">
@@ -43,7 +44,7 @@
                 <button type="button" class="ghost" (click)="removeEditPostImage(editPostActiveImageIndex)" [disabled]="isBusy">Remove current</button>
             </div>
 
-            <textarea [(ngModel)]="mediaContent" rows="4" maxlength="5000" placeholder="Add optional body text..." [disabled]="isBusy"></textarea>
+            <app-rich-text-editor [placeholder]="'Add optional body text...'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="mediaContent" [initialContentIsHtml]="true" (contentChanged)="mediaContent = $event"></app-rich-text-editor>
         </section>
 
         <div class="poll-editor" *ngIf="tab === 'poll'">
