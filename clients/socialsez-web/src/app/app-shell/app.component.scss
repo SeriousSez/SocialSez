@@ -291,6 +291,10 @@ h1 {
     transition: 160ms ease;
 }
 
+.tabs a:focus-visible {
+    outline: none;
+}
+
 .tab-content {
     display: flex;
     align-items: center;
@@ -330,6 +334,35 @@ h1 {
 .tabs a:hover {
     transform: translateY(-1px);
     border-color: #8fa7c4;
+}
+
+.tab-blogs i {
+    --fa-primary-color: #d97706;
+    --fa-secondary-color: #fbbf24;
+    --fa-primary-opacity: 1;
+    --fa-secondary-opacity: 0.7;
+}
+
+.tab-communities i {
+    --fa-primary-color: #e11d78;
+    --fa-secondary-color: #fb7bb8;
+    --fa-primary-opacity: 1;
+    --fa-secondary-opacity: 0.7;
+}
+
+
+.tab-notifications i {
+    --fa-primary-color: #b45309;
+    --fa-secondary-color: #f59e0b;
+    --fa-primary-opacity: 1;
+    --fa-secondary-opacity: 0.7;
+}
+
+.tab-blogs.active i,
+.tab-communities.active i,
+.tab-notifications.active i {
+    --fa-primary-color: currentColor;
+    --fa-secondary-color: currentColor;
 }
 
 .profile-chip {
