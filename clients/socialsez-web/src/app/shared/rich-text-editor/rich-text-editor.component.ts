@@ -14,6 +14,7 @@ import { SessionService } from '../../core/session.service';
 export class RichTextEditorComponent implements OnChanges, AfterViewInit {
     @ViewChild('richEditor') richEditor?: ElementRef<HTMLDivElement>;
     @ViewChild('markdownTextarea') markdownTextarea?: ElementRef<HTMLTextAreaElement>;
+    @ViewChild('linkUrlInput') linkUrlInput?: ElementRef<HTMLInputElement>;
 
     @Input() placeholder = 'Join the conversation';
     @Input() submitLabel = 'Comment';
@@ -48,11 +49,18 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
     mentionOpen = false;
     mentionLoading = false;
 
+    linkModalOpen = false;
+    linkModalUrl = '';
+    linkModalTarget: '_blank' | '_self' | '_parent' | '_top' | 'custom' = '_blank';
+    linkModalCustomTarget = '';
+    linkModalError = '';
+
     private mentionRangeStart = -1;
     private mentionRangeEnd = -1;
     private mentionSearchDebounceId: number | null = null;
     private mentionSearchToken = 0;
     private pendingRichMentionRange: Range | null = null;
+    private pendingLinkSelectionRange: Range | null = null;
 
     private readonly defaultSpoilerPlaceholder = '|';
     private lastAppliedInitial = '';
@@ -98,7 +106,15 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
     }
 
     expand(): void {
+        if (this.expanded) {
+            return;
+        }
+
         this.expanded = true;
+        this.refreshView();
+        window.setTimeout(() => {
+            this.focusActiveEditor();
+        }, 0);
     }
 
     onCancel(): void {
@@ -266,13 +282,7 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
         }
 
         if (command === 'createLink') {
-            const url = prompt('Enter URL');
-            if (!url) {
-                return;
-            }
-
-            document.execCommand('createLink', false, url.trim());
-            this.refreshView();
+            this.openLinkModal();
             return;
         }
 
@@ -431,6 +441,52 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
         event.preventDefault();
         this.placeCaretAtStart(exitPoint);
         this.updateRichCommandStates();
+    }
+
+    closeLinkModal(): void {
+        this.linkModalOpen = false;
+        this.linkModalError = '';
+        this.pendingLinkSelectionRange = null;
+        this.focusActiveEditor();
+    }
+
+    submitLinkModal(): void {
+        const normalizedUrl = this.normalizeLinkUrl(this.linkModalUrl);
+        if (!normalizedUrl) {
+            this.linkModalError = 'Enter a valid URL.';
+            return;
+        }
+
+        if (!this.restorePendingLinkSelection()) {
+            this.linkModalError = 'Select text in the editor before adding a link.';
+            return;
+        }
+
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) {
+            this.linkModalError = 'Select text in the editor before adding a link.';
+            return;
+        }
+
+        const range = selection.getRangeAt(0);
+        if (range.collapsed) {
+            const textNode = document.createTextNode(normalizedUrl);
+            range.insertNode(textNode);
+            const linkRange = document.createRange();
+            linkRange.selectNodeContents(textNode);
+            selection.removeAllRanges();
+            selection.addRange(linkRange);
+        }
+
+        document.execCommand('createLink', false, normalizedUrl);
+        this.applySelectionLinkAttributes(this.resolveLinkTargetValue());
+        this.linkModalOpen = false;
+        this.linkModalError = '';
+        this.pendingLinkSelectionRange = null;
+        this.updateRichCommandStates();
+        this.refreshView();
+        this.emitLiveContent();
+        this.focusActiveEditor();
     }
 
     private resetComposer(): void {
@@ -910,6 +966,129 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
         }
     }
 
+    private openLinkModal(): void {
+        const editor = this.richEditor?.nativeElement;
+        const selection = window.getSelection();
+        if (!editor || !selection || !selection.rangeCount) {
+            return;
+        }
+
+        this.pendingLinkSelectionRange = selection.getRangeAt(0).cloneRange();
+        const activeLink = this.findAncestorTag(selection.anchorNode, editor, 'A');
+        if (activeLink instanceof HTMLAnchorElement) {
+            this.linkModalUrl = activeLink.getAttribute('href') ?? activeLink.href ?? '';
+            const existingTarget = (activeLink.getAttribute('target') ?? '').trim();
+            if (!existingTarget || existingTarget === '_blank' || existingTarget === '_self' || existingTarget === '_parent' || existingTarget === '_top') {
+                this.linkModalTarget = (existingTarget || '_blank') as '_blank' | '_self' | '_parent' | '_top';
+                this.linkModalCustomTarget = '';
+            } else {
+                this.linkModalTarget = 'custom';
+                this.linkModalCustomTarget = existingTarget;
+            }
+        } else {
+            this.linkModalUrl = '';
+            this.linkModalTarget = '_blank';
+            this.linkModalCustomTarget = '';
+        }
+
+        this.linkModalError = '';
+        this.linkModalOpen = true;
+        this.refreshView();
+        window.setTimeout(() => {
+            this.linkUrlInput?.nativeElement.focus();
+            this.linkUrlInput?.nativeElement.select();
+        }, 0);
+    }
+
+    private restorePendingLinkSelection(): boolean {
+        if (!this.pendingLinkSelectionRange) {
+            return false;
+        }
+
+        const editor = this.richEditor?.nativeElement;
+        if (!editor) {
+            return false;
+        }
+
+        const selection = window.getSelection();
+        if (!selection) {
+            return false;
+        }
+
+        editor.focus();
+        selection.removeAllRanges();
+        selection.addRange(this.pendingLinkSelectionRange);
+        return true;
+    }
+
+    private applySelectionLinkAttributes(target: string): void {
+        const editor = this.richEditor?.nativeElement;
+        const selection = window.getSelection();
+        if (!editor || !selection || !selection.rangeCount) {
+            return;
+        }
+
+        const links = new Set<HTMLAnchorElement>();
+
+        const anchorAncestor = this.findAncestorTag(selection.anchorNode, editor, 'A');
+        if (anchorAncestor instanceof HTMLAnchorElement) {
+            links.add(anchorAncestor);
+        }
+
+        const focusAncestor = this.findAncestorTag(selection.focusNode, editor, 'A');
+        if (focusAncestor instanceof HTMLAnchorElement) {
+            links.add(focusAncestor);
+        }
+
+        if (!links.size) {
+            const allLinks = editor.querySelectorAll('a[href]');
+            if (allLinks.length) {
+                const latestLink = allLinks[allLinks.length - 1];
+                if (latestLink instanceof HTMLAnchorElement) {
+                    links.add(latestLink);
+                }
+            }
+        }
+
+        for (const link of links) {
+            link.setAttribute('target', target);
+            if (target === '_blank') {
+                link.setAttribute('rel', 'noopener noreferrer');
+            } else {
+                link.removeAttribute('rel');
+            }
+        }
+    }
+
+    private resolveLinkTargetValue(): string {
+        if (this.linkModalTarget !== 'custom') {
+            return this.linkModalTarget;
+        }
+
+        const custom = this.linkModalCustomTarget.trim();
+        return custom || '_blank';
+    }
+
+    private normalizeLinkUrl(rawValue: string): string | null {
+        const trimmed = (rawValue ?? '').trim();
+        if (!trimmed) {
+            return null;
+        }
+
+        const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+        try {
+            const parsed = new URL(candidate);
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+                return null;
+            }
+
+            return parsed.toString();
+        } catch {
+            return null;
+        }
+    }
+
     private isSpoilerLikeElement(element: HTMLElement): boolean {
         if (element.classList.contains('compose-spoiler')) {
             return true;
@@ -1118,6 +1297,31 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
         const range = document.createRange();
         range.setStart(textNode, Math.max(0, Math.min(offset, textNode.length)));
         range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    private focusActiveEditor(): void {
+        if (this.editorMode === 'markdown') {
+            this.markdownTextarea?.nativeElement.focus();
+            return;
+        }
+
+        const editor = this.richEditor?.nativeElement;
+        if (!editor) {
+            return;
+        }
+
+        editor.focus();
+
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount > 0) {
+            return;
+        }
+
+        const range = document.createRange();
+        range.selectNodeContents(editor);
+        range.collapse(false);
         selection.removeAllRanges();
         selection.addRange(range);
     }

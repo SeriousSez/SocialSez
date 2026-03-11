@@ -270,8 +270,22 @@ export class ProfilePageComponent implements OnDestroy {
         return this.isFollowing ? 'Unfollow' : 'Follow';
     }
 
+    renderBioHtml(bio: string): string {
+        const source = (bio ?? '').trim();
+        if (!source) {
+            return '';
+        }
+
+        const decoded = this.decodeHtmlEntities(source);
+        if (/<\/?[a-z][\s\S]*>/i.test(decoded)) {
+            return this.normalizeBioHtmlLinks(decoded);
+        }
+
+        return this.linkifyBioText(source);
+    }
+
     parseBioSegments(bio: string): BioSegment[] {
-        const source = bio ?? '';
+        const source = this.toDisplayBioText(bio ?? '');
         if (!source.trim()) {
             return [];
         }
@@ -310,6 +324,130 @@ export class ProfilePageComponent implements OnDestroy {
         return segments.length ? segments : [{ text: source }];
     }
 
+    private toDisplayBioText(source: string): string {
+        if (!source || !source.trim()) {
+            return '';
+        }
+
+        if (!/[<>]|&(?:amp|lt|gt|quot|#39);/i.test(source)) {
+            return source;
+        }
+
+        if (typeof document !== 'undefined') {
+            const container = document.createElement('div');
+            container.innerHTML = source;
+            return (container.textContent ?? '')
+                .replace(/\u00a0/g, ' ')
+                .replace(/\r/g, '');
+        }
+
+        return source
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&amp;/gi, '&')
+            .replace(/&lt;/gi, '<')
+            .replace(/&gt;/gi, '>')
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;/gi, "'");
+    }
+
+    private decodeHtmlEntities(source: string): string {
+        if (!source) {
+            return '';
+        }
+
+        if (typeof document !== 'undefined') {
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = source;
+            return textarea.value;
+        }
+
+        return source
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&amp;/gi, '&')
+            .replace(/&lt;/gi, '<')
+            .replace(/&gt;/gi, '>')
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;/gi, "'");
+    }
+
+    private normalizeBioHtmlLinks(source: string): string {
+        if (!source) {
+            return '';
+        }
+
+        if (typeof document !== 'undefined') {
+            const container = document.createElement('div');
+            container.innerHTML = source;
+
+            const links = container.querySelectorAll('a[href]');
+            for (const link of links) {
+                const target = (link.getAttribute('target') ?? '').trim();
+                if (!target) {
+                    link.setAttribute('target', '_self');
+                }
+
+                if ((link.getAttribute('target') ?? '').trim().toLowerCase() === '_blank') {
+                    const rel = link.getAttribute('rel') ?? '';
+                    const relTokens = new Set(rel.split(/\s+/).filter(Boolean).map(token => token.toLowerCase()));
+                    relTokens.add('noopener');
+                    relTokens.add('noreferrer');
+                    link.setAttribute('rel', Array.from(relTokens).join(' '));
+                }
+
+                link.classList.add('bio-link');
+            }
+
+            return container.innerHTML;
+        }
+
+        return source;
+    }
+
+    private linkifyBioText(source: string): string {
+        const expression = /((?:https?:\/\/|www\.)[^\s]+|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,})(?:\/[^\s]*)?)/gi;
+        let cursor = 0;
+        let html = '';
+
+        for (const match of source.matchAll(expression)) {
+            const value = match[0] ?? '';
+            const index = match.index ?? 0;
+            const cleanedValue = value.replace(/[),.;!?]+$/g, '');
+            const normalizedUrl = this.normalizeBioUrl(cleanedValue);
+
+            if (index > cursor) {
+                html += this.escapeHtml(source.slice(cursor, index));
+            }
+
+            if (normalizedUrl) {
+                html += `<a class="bio-link" href="${this.escapeHtml(normalizedUrl)}" target="_self">${this.escapeHtml(cleanedValue)}</a>`;
+                const trailingPart = value.slice(cleanedValue.length);
+                if (trailingPart) {
+                    html += this.escapeHtml(trailingPart);
+                }
+            } else {
+                html += this.escapeHtml(value);
+            }
+
+            cursor = index + value.length;
+        }
+
+        if (cursor < source.length) {
+            html += this.escapeHtml(source.slice(cursor));
+        }
+
+        return html || this.escapeHtml(source);
+    }
+
+    private escapeHtml(value: string): string {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     openBioLink(url: string | undefined, event: MouseEvent): void {
         if (!url) {
             return;
@@ -321,7 +459,7 @@ export class ProfilePageComponent implements OnDestroy {
 
         event.preventDefault();
         event.stopPropagation();
-        this.navigateToBioUrl(url);
+        this.navigateToBioUrl(url, '_self');
     }
 
     private normalizeBioUrl(candidate: string): string | null {
@@ -607,8 +745,8 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
-        const target = event.target as HTMLElement | null;
-        const bioLink = target?.closest('a.bio-link') as HTMLAnchorElement | null;
+        const eventTarget = event.target as HTMLElement | null;
+        const bioLink = eventTarget?.closest('a.bio-link') as HTMLAnchorElement | null;
         if (!bioLink) {
             return;
         }
@@ -622,17 +760,29 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
+        const linkTarget = (bioLink.getAttribute('target') ?? '_self').trim() || '_self';
+        const rel = bioLink.getAttribute('rel') ?? undefined;
+
         event.preventDefault();
         event.stopPropagation();
         this.lastBioPointerNavigationAt = Date.now();
-        this.navigateToBioUrl(href);
+        this.navigateToBioUrl(href, linkTarget, rel);
     }
 
-    private navigateToBioUrl(url: string): void {
+    private navigateToBioUrl(url: string, target: string = '_self', rel?: string): void {
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.target = '_blank';
-        anchor.rel = 'noopener noreferrer';
+        anchor.target = target;
+
+        if (target.toLowerCase() === '_blank') {
+            const relTokens = new Set((rel ?? '').split(/\s+/).filter(Boolean).map(token => token.toLowerCase()));
+            relTokens.add('noopener');
+            relTokens.add('noreferrer');
+            anchor.rel = Array.from(relTokens).join(' ');
+        } else if (rel?.trim()) {
+            anchor.rel = rel;
+        }
+
         anchor.style.display = 'none';
 
         document.body.appendChild(anchor);

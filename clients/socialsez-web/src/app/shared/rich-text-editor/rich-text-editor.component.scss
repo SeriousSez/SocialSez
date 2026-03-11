@@ -259,3 +259,77 @@ textarea {
 :host ::ng-deep .rich-editor blockquote p {
     margin: 0 !important;
 }
+
+.link-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.52);
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    z-index: 500;
+}
+
+.link-modal {
+    width: min(420px, 100%);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    padding: 14px;
+    display: grid;
+    gap: 10px;
+}
+
+.link-modal h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.link-modal label {
+    display: grid;
+    gap: 6px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.link-modal input,
+.link-modal select {
+    width: 100%;
+}
+
+.link-modal select {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface-muted);
+    color: var(--color-text);
+    border-radius: 10px;
+    min-height: 38px;
+    padding: 7px 34px 7px 10px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #64748b 50%),
+        linear-gradient(135deg, #64748b 50%, transparent 50%);
+    background-position:
+        calc(100% - 16px) calc(50% + 1px),
+        calc(100% - 10px) calc(50% + 1px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+}
+
+.link-modal select:focus {
+    outline: none;
+    border-color: var(--color-border);
+    box-shadow: none;
+}
+
+.link-modal select option {
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+
+.link-modal .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}

@@ -93,6 +93,16 @@ label {
     font-weight: 700;
 }
 
+.editor-field {
+    display: grid;
+    gap: 6px;
+}
+
+.field-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
 .actions {
     display: flex;
     gap: 8px;

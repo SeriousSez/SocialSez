@@ -15,15 +15,12 @@
                 <div class="hero-copy">
                     <h2>{{ profile.displayName }}</h2>
                     <p class="handle">@{{ profile.handle }}</p>
-                    <p class="bio" *ngIf="!isBlockedView; else blockedBio">
+                    <div class="bio" *ngIf="!isBlockedView; else blockedBio">
                         <ng-container *ngIf="profile.bio.trim(); else emptyBio">
-                            <ng-container *ngFor="let segment of parseBioSegments(profile.bio)">
-                                <a *ngIf="segment.url; else plainBioText" class="bio-link" [href]="segment.url" target="_blank" rel="noopener noreferrer" (click)="openBioLink(segment.url, $event)">{{ segment.text }}</a>
-                                <ng-template #plainBioText>{{ segment.text }}</ng-template>
-                            </ng-container>
+                            <div [innerHTML]="renderBioHtml(profile.bio)"></div>
                         </ng-container>
                         <ng-template #emptyBio>No bio yet.</ng-template>
-                    </p>
+                    </div>
                     <ng-template #blockedBio>
                         <p class="bio">Bio hidden because this profile is blocked.</p>
                     </ng-template>

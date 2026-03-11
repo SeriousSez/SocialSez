@@ -1,4 +1,4 @@
-<div class="comment-compose-shell" [class.expanded]="expanded" (click)="expand()">
+<div class="comment-compose-shell" [class.expanded]="expanded">
     <div class="comment-compose-top" *ngIf="expanded && editorMode === 'rich'">
         <div class="rich-toolbar" (mousedown)="onRichToolbarMouseDown($event)" (pointerdown)="onRichToolbarPointerDown($event)">
             <button type="button" class="ghost" [class.is-active]="isBoldCommandActive" (click)="applyRichCommand('bold')"><i class="fa-duotone fa-light fa-bold" aria-hidden="true"></i></button>
@@ -47,4 +47,38 @@
             <button type="button" (click)="onSubmit()" [disabled]="submitting || !canSubmit">{{ submitting ? submittingLabel : submitLabel }}</button>
         </div>
     </div>
+</div>
+
+<div class="link-modal-backdrop" *ngIf="linkModalOpen" (click)="closeLinkModal()">
+    <section class="link-modal" role="dialog" aria-modal="true" aria-label="Insert link" (click)="$event.stopPropagation()">
+        <h4>Insert Link</h4>
+
+        <label>
+            URL
+            <input #linkUrlInput type="text" [(ngModel)]="linkModalUrl" placeholder="https://example.com" />
+        </label>
+
+        <label>
+            Open link in
+            <select [(ngModel)]="linkModalTarget">
+                <option value="_blank">New tab</option>
+                <option value="_self">Current tab</option>
+                <option value="_parent">Parent frame</option>
+                <option value="_top">Top window</option>
+                <option value="custom">Custom target</option>
+            </select>
+        </label>
+
+        <label *ngIf="linkModalTarget === 'custom'">
+            Custom target
+            <input type="text" [(ngModel)]="linkModalCustomTarget" placeholder="_blank or myFrame" />
+        </label>
+
+        <p class="meta" *ngIf="linkModalError">{{ linkModalError }}</p>
+
+        <div class="actions">
+            <button type="button" class="ghost" (click)="closeLinkModal()">Cancel</button>
+            <button type="button" (click)="submitLinkModal()">Apply link</button>
+        </div>
+    </section>
 </div>

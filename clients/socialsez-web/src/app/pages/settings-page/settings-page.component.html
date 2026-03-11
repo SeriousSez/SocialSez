@@ -15,9 +15,10 @@
 
         <div class="section-body" *ngIf="sectionOpenState.profile">
             <label>Display Name <input [(ngModel)]="displayName" /></label>
-            <label>Bio
-                <app-comment-editor [placeholder]="'Tell people about yourself'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="bio" (contentChanged)="bio = $event"></app-comment-editor>
-            </label>
+            <div class="editor-field">
+                <span class="field-label">Bio</span>
+                <app-comment-editor [placeholder]="'Tell people about yourself'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="bio" [initialContentIsHtml]="true" (contentChanged)="bio = $event"></app-comment-editor>
+            </div>
             <div class="profile-image-actions">
                 <button type="button" class="ghost" (click)="openAvatarModal()" [disabled]="uploadingProfileImage">Change Image</button>
                 <button class="ghost" type="button" (click)="removeProfileImage()" [disabled]="!imageUrl.trim() || uploadingProfileImage">Remove Image</button>
