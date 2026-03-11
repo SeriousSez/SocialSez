@@ -153,11 +153,7 @@ button.retry {
 }
 
 button.auth-submit {
-    background: var(--color-secondary);
-}
-
-button.auth-submit:hover {
-    box-shadow: none;
+    background: var(--gradient-primary);
 }
 
 button.link-btn {

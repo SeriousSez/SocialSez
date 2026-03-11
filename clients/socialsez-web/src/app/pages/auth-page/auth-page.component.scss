@@ -43,9 +43,9 @@ h2 {
 }
 
 .mode-btn.active {
-    background: #1e293b;
-    color: #fff;
-    border-color: #1e293b;
+    background: var(--gradient-primary);
+    color: var(--color-text-on-dark);
+    border-color: var(--color-primary);
 }
 
 .mode-btn:disabled {
@@ -121,12 +121,6 @@ label {
         background: transparent;
         color: var(--color-text-muted);
         border-color: transparent;
-    }
-
-    .mode-btn.active {
-        background: var(--gradient-primary);
-        color: var(--color-text-on-dark);
-        border-color: var(--color-border);
     }
 
     .mode-btn:not(.active):hover {

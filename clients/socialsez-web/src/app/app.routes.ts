@@ -20,7 +20,7 @@ const guestGuard = async () => {
 };
 
 export const routes: Routes = [
-    { path: '', pathMatch: 'full', redirectTo: 'blogs' },
+    { path: '', pathMatch: 'full', redirectTo: 'feed' },
     { path: 'auth', loadComponent: () => import('./pages/auth-page/auth-page.component').then(module => module.AuthPageComponent), canActivate: [guestGuard] },
     { path: 'feed', loadComponent: () => import('./pages/feed-page/feed-page.component').then(module => module.FeedPageComponent), canActivate: [authGuard] },
     { path: 'discover', loadComponent: () => import('./pages/discover-page/discover-page.component').then(module => module.DiscoverPageComponent) },
