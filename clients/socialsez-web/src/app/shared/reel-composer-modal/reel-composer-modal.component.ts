@@ -3,7 +3,6 @@ import { Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, Output, 
 import { ProfileDto } from '../../core/api.types';
 import { environment } from '../../../environments/environment';
 import { SessionService } from '../../core/session.service';
-import { ReelBackgroundUploadService } from '../../core/reel-background-upload.service';
 import { UploadProgressService } from '../../core/upload-progress.service';
 
 interface ReelCoverOption {
@@ -150,7 +149,6 @@ export class ReelComposerModalComponent implements OnDestroy {
     constructor(
         private readonly session: SessionService,
         private readonly ngZone: NgZone,
-        private readonly bgUpload: ReelBackgroundUploadService,
         private readonly uploadProgress: UploadProgressService
     ) { }
 
@@ -533,57 +531,30 @@ export class ReelComposerModalComponent implements OnDestroy {
         this.postingReel = true;
         this.reelComposerError = '';
 
-        // Step 1: process video while modal is still open so all this.* reads are safe
-        let uploadVideo: File;
-        let durationSeconds: number;
-        let thumbnail: File | undefined;
-        let captionPayload: string | undefined;
-
-        try {
-            uploadVideo = await this.buildTrimmedVideoOrOriginal(this.reelVideoFile);
-            durationSeconds = Math.max(1, Math.min(180, Math.round(this.reelTrimEndSeconds - this.reelTrimStartSeconds)));
-            const generatedCover = this.reelCoverOptions.find(option => option.index === this.selectedReelCoverIndex);
-            thumbnail = this.reelThumbnailFile
-                ?? (generatedCover
-                    ? new File([generatedCover.blob], `reel-cover-${Date.now()}.jpg`, { type: generatedCover.blob.type || 'image/jpeg' })
-                    : undefined);
-            captionPayload = this.buildReelCaptionPayload();
-        } catch {
-            this.reelComposerError = 'Could not process video. Please try again.';
-            this.postingReel = false;
-            return;
-        }
-
-        // Step 2: all data captured — close modal immediately and reset
+        // Close immediately and continue processing/upload in the background.
         this.uploadStatus.emit({
             state: 'uploading',
             message: 'Reel is uploading. You can keep browsing while it finishes.'
         });
         this.closed.emit();
-        this.resetComposer();
-        this.postingReel = false;
 
-        // Step 3: fire upload with only local variable captures — no this.* needed
         const handle = this.uploadProgress.begin('Uploading reel...');
         const session = this.session;
-        const bgUpload = this.bgUpload;
         const uploadStatus = this.uploadStatus;
         const published = this.published;
 
         void (async () => {
             try {
-                if (bgUpload.isSupported) {
-                    try {
-                        await bgUpload.uploadReel(uploadVideo, durationSeconds, captionPayload, thumbnail);
-                        handle.succeed('Reel uploading in background...');
-                        uploadStatus.emit({
-                            state: 'uploading',
-                            message: "Reel is uploading in the background. You'll be notified when it's done."
-                        });
-                        return;
-                    } catch {
-                    }
-                }
+                const uploadVideo = await this.buildTrimmedVideoOrOriginal(this.reelVideoFile!);
+                const durationSeconds = Math.max(1, Math.min(180, Math.round(this.reelTrimEndSeconds - this.reelTrimStartSeconds)));
+                const generatedCover = this.reelCoverOptions.find(option => option.index === this.selectedReelCoverIndex);
+                const thumbnail = this.reelThumbnailFile
+                    ?? (generatedCover
+                        ? new File([generatedCover.blob], `reel-cover-${Date.now()}.jpg`, { type: generatedCover.blob.type || 'image/jpeg' })
+                        : undefined);
+                const captionPayload = this.buildReelCaptionPayload();
+
+                this.resetComposer();
 
                 await session.createReelAsync(uploadVideo, durationSeconds, captionPayload, thumbnail);
                 published.emit();
@@ -598,6 +569,8 @@ export class ReelComposerModalComponent implements OnDestroy {
                     state: 'failed',
                     message: 'Reel upload failed. Please try again.'
                 });
+            } finally {
+                this.postingReel = false;
             }
         })();
     }
