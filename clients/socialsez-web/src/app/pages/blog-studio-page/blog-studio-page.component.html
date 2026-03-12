@@ -102,7 +102,7 @@
                 </div>
 
                 <label>Slug</label>
-                <input type="text" [(ngModel)]="blogForm.slug" maxlength="80" placeholder="design-notes" />
+                <input type="text" [(ngModel)]="blogForm.slug" (ngModelChange)="onBlogSlugInput($event)" maxlength="80" placeholder="design-notes" />
 
                 <label class="checkbox">
                     <input type="checkbox" [(ngModel)]="blogForm.isPublic" />
@@ -214,7 +214,7 @@
                     <input type="text" [(ngModel)]="postForm.title" maxlength="220" placeholder="How I redesigned my profile page" />
 
                     <label>Post slug</label>
-                    <input type="text" [(ngModel)]="postForm.slug" maxlength="120" placeholder="profile-redesign" />
+                    <input type="text" [(ngModel)]="postForm.slug" (ngModelChange)="onPostSlugInput($event)" maxlength="120" placeholder="profile-redesign" />
 
                     <label>Excerpt</label>
                     <textarea rows="2" [(ngModel)]="postForm.excerpt" maxlength="800" placeholder="A short teaser for listings"></textarea>

@@ -583,7 +583,15 @@ export class SocialSezApiService {
     }
 
     getCommunityBySlug(slug: string, members = 20): Observable<CommunityDto> {
-        return this.http.get<CommunityDto>(`${this.baseUrl}/communities/slug/${encodeURIComponent(slug)}?members=${members}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+        const normalizedSlug = slug
+            .trim()
+            .replace(/_/g, '-')
+            .split(/\s+/g)
+            .filter(part => part.length > 0)
+            .join('-')
+            .toLowerCase();
+
+        return this.http.get<CommunityDto>(`${this.baseUrl}/communities/slug/${encodeURIComponent(normalizedSlug)}?members=${members}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
     getMyCommunities(take = 50): Observable<CommunityDto[]> {

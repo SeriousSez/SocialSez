@@ -608,7 +608,12 @@ export class SessionService {
 
     async getCommunityBySlugAsync(slug: string, members = 20): Promise<CommunityDto | null> {
         try {
-            const community = await firstValueFrom(this.api.getCommunityBySlug(slug, members));
+            const normalizedSlug = this.normalizeCommunitySlugInput(slug);
+            if (!normalizedSlug) {
+                return null;
+            }
+
+            const community = await firstValueFrom(this.api.getCommunityBySlug(normalizedSlug, members));
             return this.normalizeCommunity(community);
         } catch {
             return null;
@@ -1071,6 +1076,19 @@ export class SessionService {
 
     private emitAppChange(change: 'profile' | 'posts' | 'session' | 'notifications'): void {
         this.ngZone.run(() => this.appChanges.next(change));
+    }
+
+    private normalizeCommunitySlugInput(value: string | null | undefined): string {
+        const normalizedWhitespace = (value ?? '').trim().replace(/_/g, '-');
+        if (!normalizedWhitespace) {
+            return '';
+        }
+
+        return normalizedWhitespace
+            .split(/\s+/g)
+            .filter(part => part.length > 0)
+            .join('-')
+            .toLowerCase();
     }
 
     private addNoticeHistoryEntry(message: string, version: number): void {

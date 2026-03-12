@@ -513,6 +513,14 @@ export class BlogStudioPageComponent {
         this.blogForm.surfaceColor = (value ?? '').trim();
     }
 
+    onBlogSlugInput(value: string): void {
+        this.blogForm.slug = this.normalizeSlugInput(value);
+    }
+
+    onPostSlugInput(value: string): void {
+        this.postForm.slug = this.normalizeSlugInput(value);
+    }
+
     autoResizeCustomCss(event?: Event): void {
         const editor = (event?.target as HTMLTextAreaElement | null) ?? this.customCssEditor?.nativeElement;
         if (!editor) {
@@ -748,5 +756,9 @@ export class BlogStudioPageComponent {
 
     private isHexColor(value: string): boolean {
         return /^#(?:[\da-fA-F]{3}|[\da-fA-F]{6})$/.test(value);
+    }
+
+    private normalizeSlugInput(value: string): string {
+        return (value ?? '').replace(/\s+/g, '-');
     }
 }

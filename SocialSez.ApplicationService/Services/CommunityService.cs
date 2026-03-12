@@ -143,7 +143,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
     {
         await EnsureCommunitySchemaAsync(cancellationToken);
 
-        var normalizedSlug = (slug ?? string.Empty).Trim().ToLowerInvariant();
+        var normalizedSlug = NormalizeSlugLookup(slug);
         if (string.IsNullOrWhiteSpace(normalizedSlug))
         {
             return null;
@@ -1574,6 +1574,20 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
 
         var slug = string.Join('-', parts);
         return slug.Length > 60 ? slug[..60] : slug;
+    }
+
+    private static string NormalizeSlugLookup(string? slug)
+    {
+        if (string.IsNullOrWhiteSpace(slug))
+        {
+            return string.Empty;
+        }
+
+        var normalizedWhitespace = slug.Trim().Replace('_', '-');
+        var collapsed = string.Join('-', normalizedWhitespace
+            .Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries));
+
+        return collapsed.ToLowerInvariant();
     }
 
     private static CommunityDto MapCommunity(Community community, Guid? viewerProfileId, bool includeMembers, int memberTake)
