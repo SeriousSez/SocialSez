@@ -663,20 +663,23 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
-        this.createMenuOpen = false;
-        if (this.storyComposerCloseTimerId !== null) {
-            window.clearTimeout(this.storyComposerCloseTimerId);
-            this.storyComposerCloseTimerId = null;
-        }
-        this.storyComposerClosing = false;
-        this.showStoryComposer = false;
-        this.showReelComposer = false;
-        if (this.composerCloseTimerId !== null) {
-            window.clearTimeout(this.composerCloseTimerId);
-            this.composerCloseTimerId = null;
-        }
-        this.composerClosing = false;
-        this.showComposer = true;
+        this.ngZone.run(() => {
+            this.createMenuOpen = false;
+            if (this.storyComposerCloseTimerId !== null) {
+                window.clearTimeout(this.storyComposerCloseTimerId);
+                this.storyComposerCloseTimerId = null;
+            }
+            this.storyComposerClosing = false;
+            this.showStoryComposer = false;
+            this.showReelComposer = false;
+            if (this.composerCloseTimerId !== null) {
+                window.clearTimeout(this.composerCloseTimerId);
+                this.composerCloseTimerId = null;
+            }
+            this.composerClosing = false;
+            this.showComposer = true;
+            this.cdr.detectChanges();
+        });
     }
 
     toggleCreateMenu(event: Event): void {
@@ -821,22 +824,25 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
-        this.createMenuOpen = false;
-        if (this.composerCloseTimerId !== null) {
-            window.clearTimeout(this.composerCloseTimerId);
-            this.composerCloseTimerId = null;
-        }
-        this.composerClosing = false;
-        this.showComposer = false;
-        this.showReelComposer = false;
-        if (this.storyComposerCloseTimerId !== null) {
-            window.clearTimeout(this.storyComposerCloseTimerId);
-            this.storyComposerCloseTimerId = null;
-        }
-        this.storyComposerClosing = false;
-        this.showStoryComposer = true;
-        this.storyComposerStep = 1;
-        this.storyComposerError = '';
+        this.ngZone.run(() => {
+            this.createMenuOpen = false;
+            if (this.composerCloseTimerId !== null) {
+                window.clearTimeout(this.composerCloseTimerId);
+                this.composerCloseTimerId = null;
+            }
+            this.composerClosing = false;
+            this.showComposer = false;
+            this.showReelComposer = false;
+            if (this.storyComposerCloseTimerId !== null) {
+                window.clearTimeout(this.storyComposerCloseTimerId);
+                this.storyComposerCloseTimerId = null;
+            }
+            this.storyComposerClosing = false;
+            this.showStoryComposer = true;
+            this.storyComposerStep = 1;
+            this.storyComposerError = '';
+            this.cdr.detectChanges();
+        });
     }
 
     openReelComposer(): void {
@@ -844,10 +850,13 @@ export class ProfilePageComponent implements OnDestroy {
             return;
         }
 
-        this.createMenuOpen = false;
-        this.showComposer = false;
-        this.showStoryComposer = false;
-        this.showReelComposer = true;
+        this.ngZone.run(() => {
+            this.createMenuOpen = false;
+            this.showComposer = false;
+            this.showStoryComposer = false;
+            this.showReelComposer = true;
+            this.cdr.detectChanges();
+        });
     }
 
     openBlogStudio(): void {
@@ -1010,6 +1019,9 @@ export class ProfilePageComponent implements OnDestroy {
 
         this.storyPreviewReady = true;
         this.syncStoryPreviewToTrimRange(true);
+        void preview.play().catch(() => {
+            // ignored: browser may still require a user gesture in some contexts
+        });
     }
 
     onStoryPreviewTimeUpdate(): void {
@@ -2835,7 +2847,6 @@ export class ProfilePageComponent implements OnDestroy {
             const video = document.createElement('video');
             video.src = url;
             video.preload = 'auto';
-            video.muted = true;
             video.playsInline = true;
 
             const cleanup = () => {

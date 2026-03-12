@@ -331,7 +331,21 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     }
 
     isVideoStory(mediaUrl: string): boolean {
-        return /\.(mp4|webm|mov|m4v|ogv)(?:\?.*)?$/i.test(mediaUrl);
+        const normalized = mediaUrl.trim().toLowerCase();
+        if (!normalized) {
+            return false;
+        }
+
+        if (/\.(jpg|jpeg|png|gif|webp|bmp|svg|avif)(?:\?.*)?$/i.test(normalized)) {
+            return false;
+        }
+
+        if (/\.(mp4|webm|mov|m4v|ogv|ogg)(?:\?.*)?$/i.test(normalized)) {
+            return true;
+        }
+
+        // Many signed/CDN URLs do not include extensions; default to video and fallback on error.
+        return true;
     }
 
     formatStoryAge(createdAtUtc: string): string {

@@ -585,6 +585,9 @@ export class FeedPageComponent implements OnDestroy {
 
         this.storyPreviewReady = true;
         this.syncStoryPreviewToTrimRange(true);
+        void preview.play().catch(() => {
+            // ignored: browser may still require a user gesture in some contexts
+        });
     }
 
     onStoryPreviewTimeUpdate(): void {
@@ -2215,7 +2218,6 @@ export class FeedPageComponent implements OnDestroy {
             const video = document.createElement('video');
             video.src = url;
             video.preload = 'auto';
-            video.muted = true;
             video.playsInline = true;
 
             const cleanup = () => {
