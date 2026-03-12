@@ -2,9 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgZone } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
 import { PostDto } from '../../core/api.types';
-import { SocialSezApiService } from '../../core/socialsez-api.service';
 import { SessionService } from '../../core/session.service';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
@@ -29,7 +27,7 @@ export class SharedPostPageComponent {
     lastClickedHashtag = '';
     private copiedLinkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(private readonly route: ActivatedRoute, private readonly api: SocialSezApiService, public readonly session: SessionService, private readonly ngZone: NgZone) {
+    constructor(private readonly route: ActivatedRoute, public readonly session: SessionService, private readonly ngZone: NgZone) {
         this.route.paramMap.subscribe(params => {
             const postId = (params.get('id') ?? '').trim();
             void this.loadAsync(postId);
@@ -133,13 +131,12 @@ export class SharedPostPageComponent {
         }
 
         try {
-            this.post = await firstValueFrom(this.api.getPublicPost(postId));
-        } catch (error: any) {
-            if (error?.status === 404) {
+            this.post = await this.session.loadPublicPostByIdAsync(postId);
+            if (!this.post) {
                 this.notFound = true;
-            } else {
-                this.error = 'Could not load this shared post.';
             }
+        } catch {
+            this.error = 'Could not load this shared post.';
         } finally {
             this.loading = false;
         }

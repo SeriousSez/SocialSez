@@ -2,9 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgZone } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
 import { StoryDto } from '../../core/api.types';
-import { SocialSezApiService } from '../../core/socialsez-api.service';
+import { SessionService } from '../../core/session.service';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
 interface SharedContentPart {
@@ -28,7 +27,7 @@ export class SharedStoryPageComponent {
     lastClickedHashtag = '';
     private copiedLinkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(private readonly route: ActivatedRoute, private readonly api: SocialSezApiService, private readonly ngZone: NgZone) {
+    constructor(private readonly route: ActivatedRoute, private readonly session: SessionService, private readonly ngZone: NgZone) {
         this.route.paramMap.subscribe(params => {
             const storyId = (params.get('id') ?? '').trim();
             void this.loadAsync(storyId);
@@ -132,13 +131,12 @@ export class SharedStoryPageComponent {
         }
 
         try {
-            this.story = await firstValueFrom(this.api.getPublicStory(storyId));
-        } catch (error: any) {
-            if (error?.status === 404) {
+            this.story = await this.session.loadPublicStoryByIdAsync(storyId);
+            if (!this.story) {
                 this.notFound = true;
-            } else {
-                this.error = 'Could not load this shared story.';
             }
+        } catch {
+            this.error = 'Could not load this shared story.';
         } finally {
             this.loading = false;
         }

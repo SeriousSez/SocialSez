@@ -22,6 +22,7 @@ import { ReelComposerModalComponent, ReelUploadStatusEvent } from '../../shared/
 import { SessionService } from '../../core/session.service';
 import { PostComposerComponent } from '../../shared/post-composer/post-composer.component';
 import { ReelBackgroundUploadService } from '../../core/reel-background-upload.service';
+import { UploadProgressService } from '../../core/upload-progress.service';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
 import { SharePostMessageModalComponent, SharePostMessageSubmit } from '../../shared/share-post-message-modal/share-post-message-modal.component';
 import { ShareReelMessageModalComponent, ShareReelMessageSubmit } from '../../shared/share-reel-message-modal/share-reel-message-modal.component';
@@ -182,7 +183,8 @@ export class FeedPageComponent implements OnDestroy {
         private readonly storyPresence: StoryPresenceService,
         private readonly router: Router,
         private readonly route: ActivatedRoute,
-        private readonly bgUpload: ReelBackgroundUploadService
+        private readonly bgUpload: ReelBackgroundUploadService,
+        private readonly uploadProgress: UploadProgressService
     ) {
         this.session.appChanges$
             .pipe(
@@ -685,6 +687,7 @@ export class FeedPageComponent implements OnDestroy {
 
         this.postingStory = true;
         this.storyComposerError = '';
+        const handle = this.uploadProgress.begin('Uploading story...');
 
         try {
             const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile);
@@ -694,8 +697,10 @@ export class FeedPageComponent implements OnDestroy {
                 try {
                     await this.session.createStoryAsync(uploadStoryMedia);
                     await this.load();
+                    handle.succeed('Story published!');
                 } catch {
                     this.error = 'Could not publish story right now.';
+                    handle.fail('Story upload failed');
                 } finally {
                     this.postingStory = false;
                 }
@@ -703,6 +708,7 @@ export class FeedPageComponent implements OnDestroy {
         } catch {
             this.storyComposerError = 'Could not publish story right now.';
             this.postingStory = false;
+            handle.fail('Story upload failed');
         }
     }
 

@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { BlogDto, BlogPostDto, BlogThemeConfigDto } from '../../core/api.types';
 import { renderMarkdownToHtml } from '../../core/markdown.util';
 import { SessionService } from '../../core/session.service';
+import { UploadProgressService } from '../../core/upload-progress.service';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 interface BlogFormState {
@@ -109,7 +110,10 @@ export class BlogStudioPageComponent {
         { value: CUSTOM_THEME_OPTION, label: 'Custom' }
     ];
 
-    constructor(private readonly session: SessionService) {
+    constructor(
+        private readonly session: SessionService,
+        private readonly uploadProgress: UploadProgressService
+    ) {
         void this.loadAsync();
     }
 
@@ -371,6 +375,7 @@ export class BlogStudioPageComponent {
 
         this.savingPost = true;
         this.postError = '';
+        const handle = this.uploadProgress.begin('Saving blog post...');
 
         try {
             const title = this.postForm.title.trim();
@@ -389,9 +394,11 @@ export class BlogStudioPageComponent {
                 this.posts = [saved, ...this.posts];
             }
 
+            handle.succeed('Blog post saved!');
             this.editPost(saved);
         } catch {
             this.postError = 'Could not save blog post. Make sure title and content are set.';
+            handle.fail('Blog post save failed');
         } finally {
             this.savingPost = false;
         }

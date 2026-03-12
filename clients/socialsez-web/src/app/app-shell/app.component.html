@@ -54,13 +54,13 @@
         </nav>
 
         <div class="side-card side-card-mobile-fallback">
-            <h3>Recent activity</h3>
-            <p class="hint" *ngIf="!noticeHistoryPreview.length">No recent notifications.</p>
-            <ul *ngIf="noticeHistoryPreview.length" aria-label="Recent app notifications">
-                <li *ngFor="let entry of noticeHistoryPreview; trackBy: trackNoticeById">
-                    <span class="notice-history-row">
-                        <span class="notice-history-message" [class.is-error]="entry.isError">{{ entry.message }}</span>
-                        <span class="trend-count">{{ entry.createdAtUtc | date:'shortTime' }}</span>
+            <h3>Activity</h3>
+            <p class="hint" *ngIf="!progressItems.length">Nothing in progress.</p>
+            <ul *ngIf="progressItems.length" aria-label="Upload and publish activity">
+                <li *ngFor="let item of progressItems; trackBy: trackProgressItemById">
+                    <span class="progress-row">
+                        <i class="fa-duotone fa-light" [class.fa-spinner]="item.status === 'pending'" [class.fa-spin]="item.status === 'pending'" [class.fa-circle-check]="item.status === 'success'" [class.fa-circle-exclamation]="item.status === 'failed'" aria-hidden="true"></i>
+                        <span class="progress-label" [class.is-error]="item.status === 'failed'">{{ item.label }}</span>
                     </span>
                 </li>
             </ul>
@@ -110,10 +110,6 @@
     <aside class="right-rail">
         <ng-container *ngIf="!isCommunityPageRoute">
             <div class="side-card">
-                <h3>Now</h3>
-                <p>Build, post, discover and follow in one flow.</p>
-            </div>
-            <div class="side-card">
                 <h3>Trending</h3>
                 <p class="hint" *ngIf="loadingTrending">Loading hashtags...</p>
                 <ul *ngIf="!loadingTrending && trendingHashtags.length">
@@ -125,13 +121,13 @@
                 <p class="hint" *ngIf="!loadingTrending && !trendingHashtags.length">No trending hashtags yet.</p>
             </div>
             <div class="side-card">
-                <h3>Recent activity</h3>
-                <p class="hint" *ngIf="!noticeHistoryPreview.length">No recent notifications.</p>
-                <ul *ngIf="noticeHistoryPreview.length" aria-label="Recent app notifications">
-                    <li *ngFor="let entry of noticeHistoryPreview; trackBy: trackNoticeById">
-                        <span class="notice-history-row">
-                            <span class="notice-history-message" [class.is-error]="entry.isError">{{ entry.message }}</span>
-                            <span class="trend-count">{{ entry.createdAtUtc | date:'shortTime' }}</span>
+                <h3>Activity</h3>
+                <p class="hint" *ngIf="!progressItems.length">Nothing in progress.</p>
+                <ul *ngIf="progressItems.length" aria-label="Upload and publish activity">
+                    <li *ngFor="let item of progressItems; trackBy: trackProgressItemById">
+                        <span class="progress-row">
+                            <i class="fa-duotone fa-light" [class.fa-spinner]="item.status === 'pending'" [class.fa-spin]="item.status === 'pending'" [class.fa-circle-check]="item.status === 'success'" [class.fa-circle-exclamation]="item.status === 'failed'" aria-hidden="true"></i>
+                            <span class="progress-label" [class.is-error]="item.status === 'failed'">{{ item.label }}</span>
                         </span>
                     </li>
                 </ul>

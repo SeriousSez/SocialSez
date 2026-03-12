@@ -10,6 +10,8 @@ import { CommunityDto, CommunityRuleDto, HashtagSearchResultDto, ReelDto, StoryD
 import { SharedReelCommentPreview } from '../core/shared-reel.utils';
 import { SessionNoticeEntry, SessionService } from '../core/session.service';
 import { SocialSezApiService } from '../core/socialsez-api.service';
+import { UploadProgressService } from '../core/upload-progress.service';
+import { ProgressItem } from '../core/upload-progress.service';
 import { MessagesDockComponent } from './messages-dock.component';
 import { FeedStoryViewerComponent } from '../pages/feed-page/feed-story-viewer.component';
 import { CommunityInfoRailComponent } from './community-info-rail.component';
@@ -113,7 +115,8 @@ export class AppComponent implements OnInit, OnDestroy {
         private readonly api: SocialSezApiService,
         private readonly swUpdate: SwUpdate,
         private readonly titleService: Title,
-        private readonly metaService: Meta
+        private readonly metaService: Meta,
+        readonly uploadProgress: UploadProgressService
     ) { }
 
     get topNoticeMessage(): string {
@@ -163,6 +166,14 @@ export class AppComponent implements OnInit, OnDestroy {
         }
 
         return 'Dismiss';
+    }
+
+    get progressItems(): readonly ProgressItem[] {
+        return this.uploadProgress.items;
+    }
+
+    trackProgressItemById(_: number, item: ProgressItem): number {
+        return item.id;
     }
 
     get noticeHistoryPreview(): readonly SessionNoticeEntry[] {

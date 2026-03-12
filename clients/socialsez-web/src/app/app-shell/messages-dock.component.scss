@@ -185,7 +185,7 @@
     top: calc(100% + 8px);
     min-width: 170px;
     border: 1px solid #dbe4f0;
-    border-radius: 12px;
+    border-radius: 0;
     background: #fff;
     box-shadow: 0 16px 34px rgba(15, 23, 42, 0.18);
     padding: 6px;
@@ -199,7 +199,7 @@
     background: transparent;
     color: #0f172a;
     text-align: left;
-    border-radius: 8px;
+    border-radius: 0;
     padding: 8px 10px;
     font-size: 0.86rem;
 }
@@ -296,7 +296,7 @@
 
 .dock-message-search-result {
     border: 0;
-    border-radius: 14px;
+    border-radius: 0;
     background: transparent;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -408,6 +408,7 @@
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 10px;
+    border-radius: 0;
     border: none;
     border-bottom: 1px solid #f1f5f9;
     background: #fff;

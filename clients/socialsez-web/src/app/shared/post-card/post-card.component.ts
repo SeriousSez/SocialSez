@@ -10,6 +10,7 @@ import { CommentsSheetComponent } from '../comments-sheet/comments-sheet.compone
 import { ConfirmModalComponent } from '../confirm-modal/confirm-modal.component';
 import { LazyImageComponent } from '../lazy-image/lazy-image.component';
 import { ReactionPickerComponent } from '../reaction-picker/reaction-picker.component';
+import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.component';
 
 export interface CommentUpdatePayload {
     commentId: string;
@@ -48,7 +49,7 @@ interface ReactionDetailEntry {
 @Component({
     selector: 'app-post-card',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactionPickerComponent, ConfirmModalComponent, CommentsSheetComponent, LazyImageComponent],
+    imports: [CommonModule, FormsModule, ReactionPickerComponent, ConfirmModalComponent, CommentsSheetComponent, LazyImageComponent, RichTextEditorComponent],
     templateUrl: './post-card.component.html',
     styleUrl: './post-card.component.scss'
 })
@@ -240,6 +241,11 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         }
 
         this.updateMentionSuggestions('post-edit', null, normalizedValue, textarea.selectionStart ?? normalizedValue.length);
+    }
+
+    onPostEditRichContentChanged(value: string): void {
+        const normalizedValue = this.normalizePostContentLength(value ?? '');
+        this.editValueChange.emit(normalizedValue);
     }
 
     toggleContentExpansion(): void {

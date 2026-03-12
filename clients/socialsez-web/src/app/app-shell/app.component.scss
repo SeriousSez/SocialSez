@@ -621,6 +621,26 @@ h1 {
     color: var(--color-danger-strong);
 }
 
+.progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    font-size: 0.85rem;
+    color: var(--color-text-subtle);
+}
+
+.progress-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.progress-label.is-error {
+    color: var(--color-danger-strong);
+}
+
 .content {
     border: 1px solid #dbe4f0;
     border-radius: 16px;

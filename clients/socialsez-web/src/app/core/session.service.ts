@@ -217,6 +217,20 @@ export class SessionService {
         }
     }
 
+    async loadPublicStoryByIdAsync(storyId: string): Promise<StoryDto | null> {
+        const normalized = storyId.trim();
+        if (!normalized) {
+            return null;
+        }
+
+        try {
+            const story = await firstValueFrom(this.api.getPublicStory(normalized));
+            return this.normalizeStory(story);
+        } catch {
+            return null;
+        }
+    }
+
     async toggleReelLikeAsync(reelId: string): Promise<ReelDto> {
         const updated = await firstValueFrom(this.api.toggleReelLike(reelId));
         return this.normalizeReel(updated);
@@ -250,6 +264,20 @@ export class SessionService {
     async loadPublicPostsByAuthorHandleAsync(handle: string): Promise<PostDto[]> {
         const posts = await firstValueFrom(this.api.getPublicPostsByAuthorHandle(handle));
         return posts.map(post => this.normalizePost(post));
+    }
+
+    async loadPublicPostByIdAsync(postId: string): Promise<PostDto | null> {
+        const normalized = postId.trim();
+        if (!normalized) {
+            return null;
+        }
+
+        try {
+            const post = await firstValueFrom(this.api.getPublicPost(normalized));
+            return this.normalizePost(post);
+        } catch {
+            return null;
+        }
     }
 
     async searchPostsAsync(query: string): Promise<PostDto[]> {

@@ -60,18 +60,16 @@
 
         <label>
             Open link in
-            <select [(ngModel)]="linkModalTarget">
-                <option value="_blank">New tab</option>
-                <option value="_self">Current tab</option>
-                <option value="_parent">Parent frame</option>
-                <option value="_top">Top window</option>
-                <option value="custom">Custom target</option>
-            </select>
-        </label>
-
-        <label *ngIf="linkModalTarget === 'custom'">
-            Custom target
-            <input type="text" [(ngModel)]="linkModalCustomTarget" placeholder="_blank or myFrame" />
+            <div class="link-target-options" role="radiogroup" aria-label="Open link in">
+                <label class="link-target-option">
+                    <input type="radio" name="linkTarget" [value]="'_blank'" [(ngModel)]="linkModalTarget" />
+                    <span>New tab</span>
+                </label>
+                <label class="link-target-option">
+                    <input type="radio" name="linkTarget" [value]="'_self'" [(ngModel)]="linkModalTarget" />
+                    <span>Current tab</span>
+                </label>
+            </div>
         </label>
 
         <p class="meta" *ngIf="linkModalError">{{ linkModalError }}</p>

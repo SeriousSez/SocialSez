@@ -318,7 +318,19 @@ export class BlogsPageComponent {
 
     private normalizeBlogAccent(value: string | null | undefined): string {
         const normalized = (value ?? '').trim();
-        if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(normalized)) {
+        if (!normalized) {
+            return '#0ea5e9';
+        }
+
+        if (/^[0-9a-fA-F]{3,8}$/.test(normalized)) {
+            return `#${normalized}`;
+        }
+
+        if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(normalized)) {
+            return normalized;
+        }
+
+        if (typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('color', normalized)) {
             return normalized;
         }
 

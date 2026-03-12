@@ -293,39 +293,33 @@ textarea {
     color: var(--color-text);
 }
 
-.link-modal input,
-.link-modal select {
+.link-modal input {
     width: 100%;
 }
 
-.link-modal select {
-    border: 1px solid var(--color-border);
-    background-color: var(--color-surface-muted);
-    color: var(--color-text);
+.link-target-options {
+    display: flex;
+    align-items: center;
+    gap: 14px;
     border-radius: 10px;
-    min-height: 38px;
-    padding: 7px 34px 7px 10px;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image:
-        linear-gradient(45deg, transparent 50%, #64748b 50%),
-        linear-gradient(135deg, #64748b 50%, transparent 50%);
-    background-position:
-        calc(100% - 16px) calc(50% + 1px),
-        calc(100% - 10px) calc(50% + 1px);
-    background-size: 6px 6px, 6px 6px;
-    background-repeat: no-repeat;
+    background: transparent;
+    padding: 8px 10px;
 }
 
-.link-modal select:focus {
-    outline: none;
-    border-color: var(--color-border);
-    box-shadow: none;
-}
-
-.link-modal select option {
-    background: var(--color-surface);
+.link-target-option {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    font-size: 0.86rem;
+    font-weight: 600 !important;
     color: var(--color-text);
+    cursor: pointer;
+}
+
+.link-target-option input[type='radio'] {
+    margin: 0;
+    accent-color: var(--color-primary);
 }
 
 .link-modal .actions {

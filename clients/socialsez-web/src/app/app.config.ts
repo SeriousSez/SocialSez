@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { map } from 'rxjs';
 import { normalizeUtcDateFields, resolveAppLocale } from './core/date-time.util';
+import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 
 const normalizeUtcDateInterceptor: HttpInterceptorFn = (req, next) =>
@@ -30,7 +31,7 @@ export const appConfig: ApplicationConfig = {
     },
     provideRouter(routes),
     provideServiceWorker('sw.js', {
-      enabled: true,
+      enabled: environment.production,
       registrationStrategy: 'registerWhenStable:30000'
     })
   ]

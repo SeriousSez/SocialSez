@@ -27,6 +27,7 @@ import { ReportModalComponent } from '../../shared/report-modal/report-modal.com
 import { SegmentedTabItem, SegmentedTabsComponent } from '../../shared/segmented-tabs/segmented-tabs.component';
 import { CreateContentMenuComponent } from '../../shared/create-content-menu/create-content-menu.component';
 import { buildSharedPostReferenceCounts } from '../../core/shared-post.utils';
+import { UploadProgressService } from '../../core/upload-progress.service';
 
 interface StoryTrimPreviewOption {
     previewUrl: string;
@@ -192,7 +193,8 @@ export class ProfilePageComponent implements OnDestroy {
         private readonly reelInteractions: ReelInteractionsService,
         private readonly storyPresence: StoryPresenceService,
         private readonly route: ActivatedRoute,
-        private readonly router: Router
+        private readonly router: Router,
+        private readonly uploadProgress: UploadProgressService
     ) {
         this.session.appChanges$
             .pipe(
@@ -1146,6 +1148,7 @@ export class ProfilePageComponent implements OnDestroy {
 
         this.postingStory = true;
         this.storyComposerError = '';
+        const handle = this.uploadProgress.begin('Uploading story...');
 
         try {
             const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile);
@@ -1155,8 +1158,10 @@ export class ProfilePageComponent implements OnDestroy {
                 try {
                     await this.session.createStoryAsync(uploadStoryMedia);
                     await this.load();
+                    handle.succeed('Story published!');
                 } catch {
                     this.error = 'Could not publish story right now.';
+                    handle.fail('Story upload failed');
                 } finally {
                     this.postingStory = false;
                 }
@@ -1164,6 +1169,7 @@ export class ProfilePageComponent implements OnDestroy {
         } catch {
             this.storyComposerError = 'Could not publish story right now.';
             this.postingStory = false;
+            handle.fail('Story upload failed');
         }
     }
 

@@ -5,6 +5,7 @@ import { ImageCroppedEvent, ImageCropperComponent, LoadedImage } from 'ngx-image
 import { ProfileDto } from '../../core/api.types';
 import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.component';
 import { SessionService } from '../../core/session.service';
+import { UploadProgressService } from '../../core/upload-progress.service';
 
 @Component({
     selector: 'app-post-composer',
@@ -49,7 +50,10 @@ export class PostComposerComponent implements OnDestroy {
     @ViewChild('postMediaInput')
     private postMediaInputRef?: ElementRef<HTMLInputElement>;
 
-    constructor(private readonly session: SessionService) { }
+    constructor(
+        private readonly session: SessionService,
+        private readonly uploadProgress: UploadProgressService
+    ) { }
 
     ngOnDestroy(): void {
         if (this.mentionSearchDebounceId !== null) {
@@ -116,6 +120,7 @@ export class PostComposerComponent implements OnDestroy {
 
         this.uploadingMedia = true;
         this.status = '';
+        const handle = this.uploadProgress.begin('Publishing post...');
 
         try {
             const mediaFiles = this.buildUploadFiles();
@@ -123,9 +128,11 @@ export class PostComposerComponent implements OnDestroy {
             this.content = '';
             this.clearSelectedMedia();
             this.status = 'Posted.';
+            handle.succeed('Post published!');
             this.posted.emit();
         } catch {
             this.status = 'Could not create post.';
+            handle.fail('Post failed');
         } finally {
             this.uploadingMedia = false;
         }

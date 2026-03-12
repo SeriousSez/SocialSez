@@ -166,7 +166,7 @@
     position: relative;
     border: 1px solid #d9e7f6;
     background: #fff;
-    border-radius: 14px;
+    border-radius: 4px 14px 14px 4px;
     padding: 14px;
     display: grid;
     gap: 10px;
@@ -183,6 +183,7 @@
     bottom: 0;
     width: 4px;
     border-radius: 14px 0 0 14px;
+    background: var(--blog-card-accent);
     background: linear-gradient(180deg, var(--blog-card-accent), color-mix(in srgb, var(--blog-card-accent) 62%, #ffffff 38%));
 }
 

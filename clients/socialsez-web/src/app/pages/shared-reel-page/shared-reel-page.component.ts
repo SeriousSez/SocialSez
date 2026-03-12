@@ -2,9 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgZone } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
 import { ReelDto } from '../../core/api.types';
-import { SocialSezApiService } from '../../core/socialsez-api.service';
+import { SessionService } from '../../core/session.service';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
 interface SharedContentPart {
@@ -28,7 +27,7 @@ export class SharedReelPageComponent {
     lastClickedHashtag = '';
     private copiedLinkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(private readonly route: ActivatedRoute, private readonly api: SocialSezApiService, private readonly ngZone: NgZone) {
+    constructor(private readonly route: ActivatedRoute, private readonly session: SessionService, private readonly ngZone: NgZone) {
         this.route.paramMap.subscribe(params => {
             const reelId = (params.get('id') ?? '').trim();
             void this.loadAsync(reelId);
@@ -128,13 +127,12 @@ export class SharedReelPageComponent {
         }
 
         try {
-            this.reel = await firstValueFrom(this.api.getPublicReel(reelId));
-        } catch (error: any) {
-            if (error?.status === 404) {
+            this.reel = await this.session.loadPublicReelByIdAsync(reelId);
+            if (!this.reel) {
                 this.notFound = true;
-            } else {
-                this.error = 'Could not load this shared reel.';
             }
+        } catch {
+            this.error = 'Could not load this shared reel.';
         } finally {
             this.loading = false;
         }

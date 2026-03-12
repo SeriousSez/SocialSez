@@ -51,8 +51,7 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
 
     linkModalOpen = false;
     linkModalUrl = '';
-    linkModalTarget: '_blank' | '_self' | '_parent' | '_top' | 'custom' = '_blank';
-    linkModalCustomTarget = '';
+    linkModalTarget: '_blank' | '_self' = '_blank';
     linkModalError = '';
 
     private mentionRangeStart = -1;
@@ -978,17 +977,10 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
         if (activeLink instanceof HTMLAnchorElement) {
             this.linkModalUrl = activeLink.getAttribute('href') ?? activeLink.href ?? '';
             const existingTarget = (activeLink.getAttribute('target') ?? '').trim();
-            if (!existingTarget || existingTarget === '_blank' || existingTarget === '_self' || existingTarget === '_parent' || existingTarget === '_top') {
-                this.linkModalTarget = (existingTarget || '_blank') as '_blank' | '_self' | '_parent' | '_top';
-                this.linkModalCustomTarget = '';
-            } else {
-                this.linkModalTarget = 'custom';
-                this.linkModalCustomTarget = existingTarget;
-            }
+            this.linkModalTarget = existingTarget === '_self' ? '_self' : '_blank';
         } else {
             this.linkModalUrl = '';
             this.linkModalTarget = '_blank';
-            this.linkModalCustomTarget = '';
         }
 
         this.linkModalError = '';
@@ -1061,12 +1053,7 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
     }
 
     private resolveLinkTargetValue(): string {
-        if (this.linkModalTarget !== 'custom') {
-            return this.linkModalTarget;
-        }
-
-        const custom = this.linkModalCustomTarget.trim();
-        return custom || '_blank';
+        return this.linkModalTarget;
     }
 
     private normalizeLinkUrl(rawValue: string): string | null {
