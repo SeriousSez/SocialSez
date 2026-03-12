@@ -533,34 +533,50 @@ export class ReelComposerModalComponent implements OnDestroy {
         this.postingReel = true;
         this.reelComposerError = '';
 
-        // Close the modal immediately — processing and upload continue in the background
+        // Step 1: process video while modal is still open so all this.* reads are safe
+        let uploadVideo: File;
+        let durationSeconds: number;
+        let thumbnail: File | undefined;
+        let captionPayload: string | undefined;
+
+        try {
+            uploadVideo = await this.buildTrimmedVideoOrOriginal(this.reelVideoFile);
+            durationSeconds = Math.max(1, Math.min(180, Math.round(this.reelTrimEndSeconds - this.reelTrimStartSeconds)));
+            const generatedCover = this.reelCoverOptions.find(option => option.index === this.selectedReelCoverIndex);
+            thumbnail = this.reelThumbnailFile
+                ?? (generatedCover
+                    ? new File([generatedCover.blob], `reel-cover-${Date.now()}.jpg`, { type: generatedCover.blob.type || 'image/jpeg' })
+                    : undefined);
+            captionPayload = this.buildReelCaptionPayload();
+        } catch {
+            this.reelComposerError = 'Could not process video. Please try again.';
+            this.postingReel = false;
+            return;
+        }
+
+        // Step 2: all data captured — close modal immediately and reset
         this.uploadStatus.emit({
             state: 'uploading',
             message: 'Reel is uploading. You can keep browsing while it finishes.'
         });
         this.closed.emit();
+        this.resetComposer();
+        this.postingReel = false;
 
+        // Step 3: fire upload with only local variable captures — no this.* needed
         const handle = this.uploadProgress.begin('Uploading reel...');
+        const session = this.session;
+        const bgUpload = this.bgUpload;
+        const uploadStatus = this.uploadStatus;
+        const published = this.published;
 
         void (async () => {
             try {
-                // buildTrimmedVideoOrOriginal reads this.* — must run before resetComposer()
-                const uploadVideo = await this.buildTrimmedVideoOrOriginal(this.reelVideoFile!);
-                const durationSeconds = Math.max(1, Math.min(180, Math.round(this.reelTrimEndSeconds - this.reelTrimStartSeconds)));
-                const generatedCover = this.reelCoverOptions.find(option => option.index === this.selectedReelCoverIndex);
-                const thumbnail = this.reelThumbnailFile
-                    ?? (generatedCover
-                        ? new File([generatedCover.blob], `reel-cover-${Date.now()}.jpg`, { type: generatedCover.blob.type || 'image/jpeg' })
-                        : undefined);
-                const captionPayload = this.buildReelCaptionPayload();
-
-                this.resetComposer();
-
-                if (this.bgUpload.isSupported) {
+                if (bgUpload.isSupported) {
                     try {
-                        await this.bgUpload.uploadReel(uploadVideo, durationSeconds, captionPayload, thumbnail);
+                        await bgUpload.uploadReel(uploadVideo, durationSeconds, captionPayload, thumbnail);
                         handle.succeed('Reel uploading in background...');
-                        this.uploadStatus.emit({
+                        uploadStatus.emit({
                             state: 'uploading',
                             message: "Reel is uploading in the background. You'll be notified when it's done."
                         });
@@ -569,21 +585,19 @@ export class ReelComposerModalComponent implements OnDestroy {
                     }
                 }
 
-                await this.session.createReelAsync(uploadVideo, durationSeconds, captionPayload, thumbnail);
-                this.published.emit();
+                await session.createReelAsync(uploadVideo, durationSeconds, captionPayload, thumbnail);
+                published.emit();
                 handle.succeed('Reel uploaded!');
-                this.uploadStatus.emit({
+                uploadStatus.emit({
                     state: 'success',
                     message: 'Reel uploaded successfully.'
                 });
             } catch {
                 handle.fail('Reel upload failed');
-                this.uploadStatus.emit({
+                uploadStatus.emit({
                     state: 'failed',
                     message: 'Reel upload failed. Please try again.'
                 });
-            } finally {
-                this.postingReel = false;
             }
         })();
     }
