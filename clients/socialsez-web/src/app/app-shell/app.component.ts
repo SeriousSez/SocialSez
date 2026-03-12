@@ -78,6 +78,8 @@ export class AppComponent implements OnInit, OnDestroy {
     profileChipFirstStoryId: string | null = null;
     profileChipStoryGroup: StoryGroupDto | null = null;
     profileChipStoryIndex = 0;
+    profileChipStoryViewerError = '';
+    deletingProfileChipStory = false;
     dockStoryGroup: StoryGroupDto | null = null;
     dockStoryIndex = 0;
     dockReelModal: DockReelModalState | null = null;
@@ -1060,6 +1062,76 @@ export class AppComponent implements OnInit, OnDestroy {
     closeProfileChipStoryViewer(): void {
         this.profileChipStoryGroup = null;
         this.profileChipStoryIndex = 0;
+        this.profileChipStoryViewerError = '';
+        this.deletingProfileChipStory = false;
+    }
+
+    get canDeleteActiveProfileChipStory(): boolean {
+        const story = this.activeProfileChipStory;
+        const currentProfileId = this.session.profile?.id;
+        const currentHandle = (this.session.profile?.handle ?? '').trim().toLowerCase();
+        if (!story) {
+            return false;
+        }
+
+        if (currentProfileId && story.authorId === currentProfileId) {
+            return true;
+        }
+
+        return !!currentHandle && story.authorHandle.trim().toLowerCase() === currentHandle;
+    }
+
+    requestDeleteProfileChipStory(story: StoryDto): void {
+        if (!this.canDeleteActiveProfileChipStory || this.deletingProfileChipStory) {
+            return;
+        }
+
+        void this.deleteProfileChipStoryAsync(story);
+    }
+
+    private async deleteProfileChipStoryAsync(story: StoryDto): Promise<void> {
+        if (!this.canDeleteActiveProfileChipStory || this.deletingProfileChipStory) {
+            return;
+        }
+
+        this.deletingProfileChipStory = true;
+        this.profileChipStoryViewerError = '';
+
+        try {
+            await this.session.deleteStoryAsync(story.id);
+            this.removeProfileChipStoryLocally(story.id);
+            await this.refreshProfileChipStoryStatus();
+        } catch {
+            this.profileChipStoryViewerError = 'Could not delete this story right now.';
+        } finally {
+            this.deletingProfileChipStory = false;
+        }
+    }
+
+    private removeProfileChipStoryLocally(storyId: string): void {
+        const group = this.profileChipStoryGroup;
+        if (!group) {
+            return;
+        }
+
+        const updatedStories = group.stories.filter(story => story.id !== storyId);
+        if (!updatedStories.length) {
+            this.closeProfileChipStoryViewer();
+            this.profileChipHasStory = false;
+            this.profileChipHasUnseenStory = false;
+            this.profileChipFirstStoryId = null;
+            return;
+        }
+
+        this.profileChipStoryIndex = Math.min(this.profileChipStoryIndex, updatedStories.length - 1);
+        this.profileChipStoryGroup = {
+            ...group,
+            stories: updatedStories,
+            hasUnseenStories: updatedStories.some(story => !story.viewedByMe)
+        };
+        this.profileChipHasStory = true;
+        this.profileChipHasUnseenStory = this.hasUnseenStories(this.profileChipStoryGroup);
+        this.profileChipFirstStoryId = updatedStories[0]?.id ?? null;
     }
 
     onDockSharedMediaRequested(media: {

@@ -598,6 +598,14 @@ export class ProfilePageComponent implements OnDestroy {
         return !!this.activeStoryGroup && this.activeStoryIndex < this.activeStoryGroup.stories.length - 1;
     }
 
+    get hasPendingStoryUpload(): boolean {
+        return this.uploadProgress.items.some(item => item.status === 'pending' && item.kind === 'story');
+    }
+
+    get storyUploadInProgress(): boolean {
+        return this.postingStory || this.hasPendingStoryUpload;
+    }
+
     get canDeleteActiveStory(): boolean {
         const story = this.activeStory;
         return !!story && !!this.currentProfileId && story.authorId === this.currentProfileId;
@@ -806,6 +814,10 @@ export class ProfilePageComponent implements OnDestroy {
 
     openStoryComposer(): void {
         if (!this.isOwnProfile) {
+            return;
+        }
+
+        if (this.postingStory) {
             return;
         }
 
@@ -1148,29 +1160,29 @@ export class ProfilePageComponent implements OnDestroy {
 
         this.postingStory = true;
         this.storyComposerError = '';
-        const handle = this.uploadProgress.begin('Uploading story...');
+        const handle = this.uploadProgress.begin('Uploading story...', 'story');
 
-        try {
-            const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile);
-            this.beginStoryComposerClose();
+        this.showStoryComposer = false;
+        this.storyComposerClosing = false;
+        this.detachStoryFrameDragListeners();
+        this.detachStoryTrimDragListeners();
 
-            void (async () => {
-                try {
-                    await this.session.createStoryAsync(uploadStoryMedia);
-                    await this.load();
-                    handle.succeed('Story published!');
-                } catch {
-                    this.error = 'Could not publish story right now.';
-                    handle.fail('Story upload failed');
-                } finally {
-                    this.postingStory = false;
-                }
-            })();
-        } catch {
-            this.storyComposerError = 'Could not publish story right now.';
-            this.postingStory = false;
-            handle.fail('Story upload failed');
-        }
+        void (async () => {
+            try {
+                const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile!);
+                await this.session.createStoryAsync(uploadStoryMedia);
+                await this.load();
+                handle.succeed('Story published!');
+            } catch {
+                this.error = 'Could not publish story right now.';
+                handle.fail('Story upload failed');
+            } finally {
+                this.postingStory = false;
+                this.storyComposerStep = 1;
+                this.storyComposerError = '';
+                this.clearStoryMediaSelection();
+            }
+        })();
     }
 
     ngOnDestroy(): void {
@@ -1665,6 +1677,14 @@ export class ProfilePageComponent implements OnDestroy {
         if (this.currentProfileHandle === normalized) {
             const openedStory = await this.openStoryForHandle(handle);
             if (openedStory) {
+                return;
+            }
+
+            if (this.isOwnProfile) {
+                this.ngZone.run(() => {
+                    this.openStoryComposer();
+                    this.cdr.detectChanges();
+                });
                 return;
             }
         }

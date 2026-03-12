@@ -49,7 +49,7 @@
 
                 <div class="story-preview-panel" *ngIf="storyMediaPreviewUrl && storyMediaIsVideo">
                     <div #storyFrameViewport class="story-media-frame" [class.dragging]="isStoryFrameDragging">
-                        <video #storyPreviewVideo class="story-media-preview" [src]="storyMediaPreviewUrl" playsinline preload="metadata" (loadedmetadata)="onStoryPreviewLoadedMetadata()" (timeupdate)="onStoryPreviewTimeUpdate()"></video>
+                        <video #storyPreviewVideo class="story-media-preview" [src]="storyMediaPreviewUrl" muted playsinline preload="metadata" (loadedmetadata)="onStoryPreviewLoadedMetadata()" (timeupdate)="onStoryPreviewTimeUpdate()"></video>
                         <div class="story-crop-frame" [class.dragging]="isStoryFrameDragging" [ngStyle]="storyCropFrameStyle" (pointerdown)="onStoryFramePointerDown($event, storyFrameViewport)" role="button" aria-label="Drag to set story framing"></div>
                     </div>
 
@@ -125,8 +125,20 @@
 
         <p class="stories-error" *ngIf="!storiesLoading && storiesError">{{ storiesError }}</p>
 
-        <div class="stories-rail" *ngIf="!storiesLoading && !storiesError && visibleStoryGroups.length">
-            <button type="button" class="story-item story-button" *ngFor="let group of visibleStoryGroups" (click)="openStoryGroup(group)" [attr.aria-label]="'Open stories from @' + group.authorHandle">
+        <div class="stories-rail" *ngIf="!storiesLoading && !storiesError && (visibleStoryGroups.length || storyUploadInProgress || !!currentProfileHandle)">
+            <button type="button" class="story-item story-button" [class.is-uploading]="storyUploadInProgress" [disabled]="storyUploadInProgress" (click)="onOwnStoryItemClicked()" aria-label="Open your story">
+                <span class="story-ring" [class.seen]="!!ownVisibleStoryGroup && !ownVisibleStoryGroup.hasUnseenStories" [class.is-uploading]="storyUploadInProgress" [class.is-uploading-pending]="storyUploadInProgress && !ownVisibleStoryGroup"
+                    [class.is-empty]="!ownVisibleStoryGroup && !storyUploadInProgress" aria-hidden="true">
+                    <span class="story-upload-spinner" *ngIf="storyUploadInProgress"></span>
+                    <img *ngIf="currentProfileImageUrl; else uploadingStoryInitial" [src]="currentProfileImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Your story" />
+                    <ng-template #uploadingStoryInitial>
+                        <span class="story-initial">{{ currentProfileHandle ? currentProfileHandle[0] : 'Y' }}</span>
+                    </ng-template>
+                </span>
+                <span class="story-handle">Your story</span>
+            </button>
+
+            <button type="button" class="story-item story-button" *ngFor="let group of nonOwnVisibleStoryGroups" (click)="openStoryGroup(group)" [attr.aria-label]="'Open stories from @' + group.authorHandle">
                 <span class="story-ring" [class.seen]="!group.hasUnseenStories">
                     <img *ngIf="group.authorImageUrl; else storyInitial" [src]="group.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Story author" />
                     <ng-template #storyInitial>
@@ -137,7 +149,7 @@
             </button>
         </div>
 
-        <p class="stories-empty" *ngIf="!storiesLoading && !storiesError && !visibleStoryGroups.length">
+        <p class="stories-empty" *ngIf="!storiesLoading && !storiesError && !visibleStoryGroups.length && !storyUploadInProgress && !currentProfileHandle">
             {{ selectedFeedMode === 'following' ? 'No stories from people you follow yet.' : 'No active stories yet.' }}
         </p>
     </section>

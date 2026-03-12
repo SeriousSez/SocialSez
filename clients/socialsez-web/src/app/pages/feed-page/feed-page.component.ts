@@ -230,6 +230,50 @@ export class FeedPageComponent implements OnDestroy {
         return this.storyGroups;
     }
 
+    get currentProfileHandle(): string {
+        return (this.session.profile?.handle ?? '').trim().toLowerCase();
+    }
+
+    get currentProfileImageUrl(): string {
+        return (this.session.profile?.imageUrl ?? '').trim();
+    }
+
+    get ownVisibleStoryGroup(): StoryGroupDto | null {
+        const handle = this.currentProfileHandle;
+        if (!handle) {
+            return null;
+        }
+
+        return this.visibleStoryGroups.find(group => (group.authorHandle ?? '').trim().toLowerCase() === handle) ?? null;
+    }
+
+    get hasPendingStoryUpload(): boolean {
+        return this.uploadProgress.items.some(item => item.status === 'pending' && item.kind === 'story');
+    }
+
+    get storyUploadInProgress(): boolean {
+        return this.postingStory || this.hasPendingStoryUpload;
+    }
+
+    get nonOwnVisibleStoryGroups(): StoryGroupDto[] {
+        const handle = this.currentProfileHandle;
+        if (!handle) {
+            return this.visibleStoryGroups;
+        }
+
+        return this.visibleStoryGroups.filter(group => (group.authorHandle ?? '').trim().toLowerCase() !== handle);
+    }
+
+    onOwnStoryItemClicked(): void {
+        const ownGroup = this.ownVisibleStoryGroup;
+        if (ownGroup) {
+            this.openStoryGroup(ownGroup);
+            return;
+        }
+
+        this.openStoryComposer();
+    }
+
     get activeStoryAuthorHandles(): string[] {
         return this.storyPresence.getActiveStoryAuthorHandles(this.storyGroups);
     }
@@ -316,6 +360,10 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     openStoryComposer(): void {
+        if (this.postingStory) {
+            return;
+        }
+
         this.createMenuOpen = false;
         if (this.composerCloseTimerId !== null) {
             window.clearTimeout(this.composerCloseTimerId);
@@ -687,29 +735,29 @@ export class FeedPageComponent implements OnDestroy {
 
         this.postingStory = true;
         this.storyComposerError = '';
-        const handle = this.uploadProgress.begin('Uploading story...');
+        const handle = this.uploadProgress.begin('Uploading story...', 'story');
 
-        try {
-            const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile);
-            this.cancelStoryComposer();
+        this.showStoryComposer = false;
+        this.storyComposerClosing = false;
+        this.detachStoryFrameDragListeners();
+        this.detachStoryTrimDragListeners();
 
-            void (async () => {
-                try {
-                    await this.session.createStoryAsync(uploadStoryMedia);
-                    await this.load();
-                    handle.succeed('Story published!');
-                } catch {
-                    this.error = 'Could not publish story right now.';
-                    handle.fail('Story upload failed');
-                } finally {
-                    this.postingStory = false;
-                }
-            })();
-        } catch {
-            this.storyComposerError = 'Could not publish story right now.';
-            this.postingStory = false;
-            handle.fail('Story upload failed');
-        }
+        void (async () => {
+            try {
+                const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile!);
+                await this.session.createStoryAsync(uploadStoryMedia);
+                await this.load();
+                handle.succeed('Story published!');
+            } catch {
+                this.error = 'Could not publish story right now.';
+                handle.fail('Story upload failed');
+            } finally {
+                this.postingStory = false;
+                this.storyComposerStep = 1;
+                this.storyComposerError = '';
+                this.clearStoryMediaSelection();
+            }
+        })();
     }
 
     async load(): Promise<void> {

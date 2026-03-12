@@ -1,9 +1,12 @@
 import { Injectable } from '@angular/core';
 
+export type ProgressKind = 'generic' | 'story' | 'reel' | 'post' | 'blog';
+
 export interface ProgressItem {
     id: number;
     label: string;
     status: 'pending' | 'success' | 'failed';
+    kind: ProgressKind;
 }
 
 export interface ProgressHandle {
@@ -20,9 +23,9 @@ export class UploadProgressService {
         return this._items;
     }
 
-    begin(label: string): ProgressHandle {
+    begin(label: string, kind: ProgressKind = 'generic'): ProgressHandle {
         const id = ++this.counter;
-        this._items = [...this._items, { id, label, status: 'pending' }];
+        this._items = [...this._items, { id, label, status: 'pending', kind }];
 
         const update = (newLabel: string, status: 'success' | 'failed') => {
             this._items = this._items.map(item =>

@@ -135,9 +135,6 @@
         </ng-container>
 
         <app-community-info-rail *ngIf="isCommunityPageRoute" [community]="rightRailCommunity" [loading]="loadingRightRailCommunity" [canEditRules]="canEditRightRailCommunityRules" [savingRules]="savingRightRailRules" (rulesSaved)="saveRightRailRulesAsync($event)"></app-community-info-rail>
-        <!-- <p class="hint" *ngIf="showDebug && session.nextSilentRefreshAt">
-            [debug] Next silent refresh: {{ session.nextSilentRefreshAt | date:'mediumTime' }}
-        </p> -->
     </aside>
 </main>
 
@@ -193,8 +190,8 @@
 <app-messages-dock [visible]="showMessagesDock" (sharedMediaRequested)="onDockSharedMediaRequested($event)" *ngIf="!isEmbedRoute"></app-messages-dock>
 
 <app-feed-story-viewer [activeStory]="activeProfileChipStory" [activeStoryGroup]="profileChipStoryGroup" [activeStoryIndex]="profileChipStoryIndex" [storyCount]="profileChipStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousProfileChipStory" [hasNextStory]="hasNextProfileChipStory"
-    [liked]="activeProfileChipStory ? isProfileChipStoryLiked(activeProfileChipStory.id) : false" [sendingReply]="false" [sharingStory]="false" [canDelete]="false" [deletingStory]="false" [errorMessage]="''" (closed)="closeProfileChipStoryViewer()" (previous)="showPreviousProfileChipStory()"
-    (next)="showNextProfileChipStory()" (likeToggled)="toggleProfileChipStoryLike($event)" *ngIf="!isEmbedRoute">
+    [liked]="activeProfileChipStory ? isProfileChipStoryLiked(activeProfileChipStory.id) : false" [sendingReply]="false" [sharingStory]="false" [canDelete]="canDeleteActiveProfileChipStory" [deletingStory]="deletingProfileChipStory" [errorMessage]="profileChipStoryViewerError"
+    (closed)="closeProfileChipStoryViewer()" (previous)="showPreviousProfileChipStory()" (next)="showNextProfileChipStory()" (likeToggled)="toggleProfileChipStoryLike($event)" (deleteRequested)="requestDeleteProfileChipStory($event)" *ngIf="!isEmbedRoute">
 </app-feed-story-viewer>
 
 <app-feed-story-viewer [activeStory]="activeDockStory" [activeStoryGroup]="dockStoryGroup" [activeStoryIndex]="dockStoryIndex" [storyCount]="dockStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousDockStory" [hasNextStory]="hasNextDockStory"

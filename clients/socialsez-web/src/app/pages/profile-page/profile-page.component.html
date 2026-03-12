@@ -2,7 +2,8 @@
     <ng-container *ngIf="profile as profile; else noProfileState">
         <ng-container *ngIf="!loading; else profileOverviewSkeleton">
             <header class="profile-hero">
-                <a *ngIf="!isBlockedView; else blockedProfileImage" class="hero-image-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)"
+                <a *ngIf="!isBlockedView; else blockedProfileImage" class="hero-image-link" [class.story-uploading]="isOwnProfile && storyUploadInProgress" [class.story-uploading-pending]="isOwnProfile && storyUploadInProgress && !viewedProfileHasActiveStory"
+                    [class.story-uploading-active]="isOwnProfile && storyUploadInProgress && viewedProfileHasActiveStory" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)"
                     [attr.aria-label]="viewedProfileHasActiveStory ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
                     <img class="hero-image" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" [src]="avatarImageUrl" (error)="onHeroImageError()" [alt]="profile.displayName + ' avatar'" />
                 </a>
@@ -160,7 +161,7 @@
 
                     <div class="story-preview-panel" *ngIf="storyMediaPreviewUrl && storyMediaIsVideo">
                         <div #storyFrameViewport class="story-media-frame" [class.dragging]="isStoryFrameDragging">
-                            <video #storyPreviewVideo class="story-media-preview" [src]="storyMediaPreviewUrl" playsinline preload="metadata" (loadedmetadata)="onStoryPreviewLoadedMetadata()" (timeupdate)="onStoryPreviewTimeUpdate()"></video>
+                            <video #storyPreviewVideo class="story-media-preview" [src]="storyMediaPreviewUrl" muted playsinline preload="metadata" (loadedmetadata)="onStoryPreviewLoadedMetadata()" (timeupdate)="onStoryPreviewTimeUpdate()"></video>
                             <div class="story-crop-frame" [class.dragging]="isStoryFrameDragging" [ngStyle]="storyCropFrameStyle" (pointerdown)="onStoryFramePointerDown($event, storyFrameViewport)" role="button" aria-label="Drag to set story framing"></div>
                         </div>
 
