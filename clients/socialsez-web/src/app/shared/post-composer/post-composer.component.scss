@@ -230,6 +230,18 @@ button:disabled {
     color: #64748b;
 }
 
+.sensitive-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-size: 0.9rem;
+}
+
+.sensitive-toggle input {
+    margin: 0;
+}
+
 .preview-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));

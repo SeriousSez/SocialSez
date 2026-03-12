@@ -86,6 +86,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     @Input() busy = false;
     @Input() canInteract = true;
     @Input() repostCount = 0;
+    @Input() hideSensitiveMedia = false;
 
     @Output() editValueChange = new EventEmitter<string>();
     @Output() toggleLike = new EventEmitter<void>();
@@ -157,6 +158,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     private mentionSearchToken = 0;
     private activePostImageIndex = 0;
     private readonly pointerHandledActionKeys = new Map<string, number>();
+    sensitiveMediaRevealed = false;
     @ViewChild('reactionsModalList') private reactionsModalListRef?: ElementRef<HTMLDivElement>;
 
     ngOnDestroy(): void {
@@ -201,7 +203,16 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         this.replyingToCommentId = null;
         this.expandedCommentReplyRootIds.clear();
         this.activePostImageIndex = 0;
+        this.sensitiveMediaRevealed = false;
 
+    }
+
+    shouldHideSensitiveMedia(): boolean {
+        return this.hideSensitiveMedia && this.post?.isSensitive === true && !this.sensitiveMediaRevealed;
+    }
+
+    revealSensitiveMedia(): void {
+        this.sensitiveMediaRevealed = true;
     }
 
     onPostPrimaryReaction(): void {

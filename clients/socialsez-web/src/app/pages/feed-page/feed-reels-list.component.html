@@ -17,7 +17,7 @@
             </div>
         </header>
 
-        <div class="reel-video-frame" (click)="onReelFrameClick(reel.id)">
+        <div class="reel-video-frame" *ngIf="!shouldHideSensitiveReel(reel); else sensitiveReelPlaceholder" (click)="onReelFrameClick(reel.id)">
             <video #reelVideoEl class="reel-video" [attr.data-reel-id]="reel.id" [style.transform]="getReelFrameTransform(reel)" [poster]="reel.thumbnailUrl || null" [src]="reel.videoUrl" [muted]="isReelMuted(reel.id)" [loop]="activeReelId === reel.id" playsinline preload="metadata"
                 (loadedmetadata)="onReelVideoLoadedMetadata(reel.id)" (error)="onReelVideoError(reel.id)"></video>
             <div class="reel-video-error" *ngIf="isReelVideoUnavailable(reel.id)">
@@ -46,6 +46,13 @@
                 {{ isReelMuted(reel.id) ? '🔇' : '🔊' }}
             </button>
         </div>
+
+        <ng-template #sensitiveReelPlaceholder>
+            <div class="reel-sensitive-placeholder">
+                <p>This reel is marked as sensitive media.</p>
+                <button type="button" class="ghost" (click)="revealSensitiveReel(reel, $event)">Show reel</button>
+            </div>
+        </ng-template>
 
         <footer class="reel-engagement">
             <div class="engagement-actions">

@@ -107,6 +107,7 @@ export class ProfilePageComponent implements OnDestroy {
     storyFrameOffsetY = 0;
     storyComposerError = '';
     postingStory = false;
+    markStorySensitive = false;
     sharingPostId: string | null = null;
     sharingReelId: string | null = null;
     pendingSharePost: PostDto | null = null;
@@ -234,6 +235,10 @@ export class ProfilePageComponent implements OnDestroy {
 
     get currentProfileId(): string | null {
         return this.session.profile?.id ?? null;
+    }
+
+    get hideSensitiveMediaEnabled(): boolean {
+        return this.session.getHideSensitiveMediaPreference();
     }
 
     get isOwnProfile(): boolean {
@@ -1182,7 +1187,8 @@ export class ProfilePageComponent implements OnDestroy {
         void (async () => {
             try {
                 const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile!);
-                await this.session.createStoryAsync(uploadStoryMedia);
+                const isSensitive = this.markStorySensitive;
+                await this.session.createStoryAsync(uploadStoryMedia, undefined, isSensitive);
                 await this.load();
                 handle.succeed('Story published!');
             } catch {
@@ -2980,6 +2986,7 @@ export class ProfilePageComponent implements OnDestroy {
 
         this.storyMediaObjectUrl = '';
         this.storyMediaFile = null;
+        this.markStorySensitive = false;
         this.storyMediaPreviewUrl = '';
         this.storyMediaIsVideo = false;
         this.storyMediaDurationSeconds = 0;

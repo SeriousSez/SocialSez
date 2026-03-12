@@ -3,7 +3,7 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
-import { PostDto, StoryGroupDto } from '../../core/api.types';
+import { HashtagBlogDto, HashtagBlogPostDto, HashtagCommunityDto, HashtagCommunityPostDto, HashtagReelDto, PostDto, StoryGroupDto } from '../../core/api.types';
 import { executePostShareAction, executePostShareToChat } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
 import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
@@ -26,6 +26,11 @@ import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 export class HashtagPageComponent {
     hashtag = '';
     posts: PostDto[] = [];
+    reels: HashtagReelDto[] = [];
+    communities: HashtagCommunityDto[] = [];
+    communityPosts: HashtagCommunityPostDto[] = [];
+    blogs: HashtagBlogDto[] = [];
+    blogPosts: HashtagBlogPostDto[] = [];
     loading = true;
     error = '';
     reactingPostId: string | null = null;
@@ -79,6 +84,15 @@ export class HashtagPageComponent {
         return this.postInteractions.isAuthenticated();
     }
 
+    get hasAnyContent(): boolean {
+        return this.posts.length > 0
+            || this.reels.length > 0
+            || this.communities.length > 0
+            || this.communityPosts.length > 0
+            || this.blogs.length > 0
+            || this.blogPosts.length > 0;
+    }
+
     hasActiveStoryForHandle(handle: string): boolean {
         return this.storyPresence.hasActiveStoryForHandle(this.activeStoryGroups, handle);
     }
@@ -112,6 +126,28 @@ export class HashtagPageComponent {
             .replace(/(?:blob:[^\s]+|https?:\/\/[^\s]+)/gi, ' ')
             .replace(/\s{2,}/g, ' ')
             .trim();
+    }
+
+    getCommunityPostPreview(post: HashtagCommunityPostDto): string {
+        const source = post.content?.trim();
+        if (!source) {
+            return '';
+        }
+
+        return source.length > 180
+            ? `${source.slice(0, 177)}...`
+            : source;
+    }
+
+    getBlogPostPreview(post: HashtagBlogPostDto): string {
+        const source = post.excerpt?.trim();
+        if (!source) {
+            return '';
+        }
+
+        return source.length > 180
+            ? `${source.slice(0, 177)}...`
+            : source;
     }
 
     getPostRepostCount(postId: string): number {
@@ -376,6 +412,11 @@ export class HashtagPageComponent {
     async load(): Promise<void> {
         if (!this.hashtag) {
             this.posts = [];
+            this.reels = [];
+            this.communities = [];
+            this.communityPosts = [];
+            this.blogs = [];
+            this.blogPosts = [];
             this.loading = false;
             this.error = 'Hashtag is required.';
             return;
@@ -396,10 +437,21 @@ export class HashtagPageComponent {
                 void this.refreshActiveStoryPresence();
 
                 try {
-                    this.posts = await this.session.loadPostsByHashtagAsync(this.hashtag);
+                    const content = await this.session.loadHashtagContentAsync(this.hashtag);
+                    this.posts = content.posts;
+                    this.reels = content.reels;
+                    this.communities = content.communities;
+                    this.communityPosts = content.communityPosts;
+                    this.blogs = content.blogs;
+                    this.blogPosts = content.blogPosts;
                 } catch {
                     this.posts = [];
-                    this.error = 'Could not load posts for this hashtag right now.';
+                    this.reels = [];
+                    this.communities = [];
+                    this.communityPosts = [];
+                    this.blogs = [];
+                    this.blogPosts = [];
+                    this.error = 'Could not load hashtag content right now.';
                 } finally {
                     this.loading = false;
                 }

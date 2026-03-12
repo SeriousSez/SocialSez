@@ -51,57 +51,66 @@
         </article>
 
         <ng-container *ngIf="postMediaUrls() as mediaUrls">
-            <ng-container *ngIf="mediaUrls.length > 0 && hasOnlyImageMedia(mediaUrls); else nonImageMediaBlock">
-                <ng-container *ngIf="activePostImageUrl(mediaUrls) as activeImageUrl">
-                    <div class="post-image-carousel" *ngIf="mediaUrls.length > 1">
-                        <button type="button" class="post-image-nav" (click)="showPreviousPostImage(mediaUrls, $event)" [disabled]="!canMovePostImageBack(mediaUrls)" aria-label="Previous image" title="Previous image">
-                            <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
-                        </button>
+            <ng-container *ngIf="shouldHideSensitiveMedia(); else visiblePostMediaBlock">
+                <div class="sensitive-media-banner">
+                    <p>This media is marked as sensitive.</p>
+                    <button type="button" class="ghost" (click)="revealSensitiveMedia()">Show media</button>
+                </div>
+            </ng-container>
 
-                        <div class="post-image-frame">
+            <ng-template #visiblePostMediaBlock>
+                <ng-container *ngIf="mediaUrls.length > 0 && hasOnlyImageMedia(mediaUrls); else nonImageMediaBlock">
+                    <ng-container *ngIf="activePostImageUrl(mediaUrls) as activeImageUrl">
+                        <div class="post-image-carousel" *ngIf="mediaUrls.length > 1">
+                            <button type="button" class="post-image-nav" (click)="showPreviousPostImage(mediaUrls, $event)" [disabled]="!canMovePostImageBack(mediaUrls)" aria-label="Previous image" title="Previous image">
+                                <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
+                            </button>
+
+                            <div class="post-image-frame">
+                                <div class="post-image-stack">
+                                    <img class="post-image post-image-layer post-image-current" [src]="activeImageUrl" alt="Post image" (click)="openImageFullscreen(mediaUrls, activeImageUrl, $event)" />
+                                </div>
+                            </div>
+
+                            <button type="button" class="post-image-nav" (click)="showNextPostImage(mediaUrls, $event)" [disabled]="!canMovePostImageForward(mediaUrls)" aria-label="Next image" title="Next image">
+                                <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <div class="post-image-frame" *ngIf="mediaUrls.length <= 1">
                             <div class="post-image-stack">
                                 <img class="post-image post-image-layer post-image-current" [src]="activeImageUrl" alt="Post image" (click)="openImageFullscreen(mediaUrls, activeImageUrl, $event)" />
                             </div>
                         </div>
 
-                        <button type="button" class="post-image-nav" (click)="showNextPostImage(mediaUrls, $event)" [disabled]="!canMovePostImageForward(mediaUrls)" aria-label="Next image" title="Next image">
-                            <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
-                        </button>
-                    </div>
-
-                    <div class="post-image-frame" *ngIf="mediaUrls.length <= 1">
-                        <div class="post-image-stack">
-                            <img class="post-image post-image-layer post-image-current" [src]="activeImageUrl" alt="Post image" (click)="openImageFullscreen(mediaUrls, activeImageUrl, $event)" />
-                        </div>
-                    </div>
-
-                    <div class="post-image-thumbs" *ngIf="mediaUrls.length > 1">
-                        <button type="button" class="post-image-thumb" *ngFor="let previewUrl of mediaUrls; index as i" [class.active]="i === getPostActiveImageIndex(mediaUrls)" (click)="setActivePostImage(mediaUrls, i, $event)">
-                            <img [src]="previewUrl" [alt]="'Image ' + (i + 1)" />
-                        </button>
-                    </div>
-                </ng-container>
-            </ng-container>
-
-            <ng-template #nonImageMediaBlock>
-                <ng-container *ngIf="mediaUrls.length === 1 && mediaUrls[0] as mediaUrl">
-                    <video class="post-media" *ngIf="isVideoMedia(mediaUrl); else fallbackSingleImage" [src]="mediaUrl" controls playsinline preload="metadata"></video>
-                    <ng-template #fallbackSingleImage>
-                        <app-lazy-image imgClass="post-image" [src]="mediaUrl" alt="Post media" skeletonHeight="280px" skeletonRadius="10px"></app-lazy-image>
-                    </ng-template>
-                </ng-container>
-
-                <div class="post-media-grid" *ngIf="mediaUrls.length > 1" [ngClass]="postMediaGridClass(mediaUrls)">
-                    <ng-container *ngFor="let mediaUrl of visiblePostMediaUrls(mediaUrls); let index = index">
-                        <div class="post-media-grid-item-wrap" [class.show-more]="index === 3 && hiddenPostMediaCount(mediaUrls) > 0">
-                            <video class="post-media-grid-item" *ngIf="isVideoMedia(mediaUrl); else gridImageMedia" [src]="mediaUrl" controls playsinline preload="metadata"></video>
-                            <ng-template #gridImageMedia>
-                                <app-lazy-image imgClass="post-media-grid-item" [src]="mediaUrl" alt="Post media" skeletonHeight="180px" skeletonRadius="10px"></app-lazy-image>
-                            </ng-template>
-                            <div class="post-media-overflow" *ngIf="index === 3 && hiddenPostMediaCount(mediaUrls) > 0">+{{ hiddenPostMediaCount(mediaUrls) }}</div>
+                        <div class="post-image-thumbs" *ngIf="mediaUrls.length > 1">
+                            <button type="button" class="post-image-thumb" *ngFor="let previewUrl of mediaUrls; index as i" [class.active]="i === getPostActiveImageIndex(mediaUrls)" (click)="setActivePostImage(mediaUrls, i, $event)">
+                                <img [src]="previewUrl" [alt]="'Image ' + (i + 1)" />
+                            </button>
                         </div>
                     </ng-container>
-                </div>
+                </ng-container>
+
+                <ng-template #nonImageMediaBlock>
+                    <ng-container *ngIf="mediaUrls.length === 1 && mediaUrls[0] as mediaUrl">
+                        <video class="post-media" *ngIf="isVideoMedia(mediaUrl); else fallbackSingleImage" [src]="mediaUrl" controls playsinline preload="metadata"></video>
+                        <ng-template #fallbackSingleImage>
+                            <app-lazy-image imgClass="post-image" [src]="mediaUrl" alt="Post media" skeletonHeight="280px" skeletonRadius="10px"></app-lazy-image>
+                        </ng-template>
+                    </ng-container>
+
+                    <div class="post-media-grid" *ngIf="mediaUrls.length > 1" [ngClass]="postMediaGridClass(mediaUrls)">
+                        <ng-container *ngFor="let mediaUrl of visiblePostMediaUrls(mediaUrls); let index = index">
+                            <div class="post-media-grid-item-wrap" [class.show-more]="index === 3 && hiddenPostMediaCount(mediaUrls) > 0">
+                                <video class="post-media-grid-item" *ngIf="isVideoMedia(mediaUrl); else gridImageMedia" [src]="mediaUrl" controls playsinline preload="metadata"></video>
+                                <ng-template #gridImageMedia>
+                                    <app-lazy-image imgClass="post-media-grid-item" [src]="mediaUrl" alt="Post media" skeletonHeight="180px" skeletonRadius="10px"></app-lazy-image>
+                                </ng-template>
+                                <div class="post-media-overflow" *ngIf="index === 3 && hiddenPostMediaCount(mediaUrls) > 0">+{{ hiddenPostMediaCount(mediaUrls) }}</div>
+                            </div>
+                        </ng-container>
+                    </div>
+                </ng-template>
             </ng-template>
         </ng-container>
 

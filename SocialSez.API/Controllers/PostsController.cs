@@ -43,7 +43,7 @@ public class PostsController(IPostService postService, SocialSezContext dbContex
                 postMediaUrls.Add(mediaUrl);
             }
 
-            var post = await postService.CreateAsync(new CreatePostRequest(profileId, request.Content, postMediaUrls), cancellationToken);
+            var post = await postService.CreateAsync(new CreatePostRequest(profileId, request.Content, postMediaUrls, request.IsSensitive), cancellationToken);
             return Ok(post);
         }
         catch (ArgumentException ex)
@@ -286,6 +286,23 @@ public class PostsController(IPostService postService, SocialSezContext dbContex
     }
 
     [AllowAnonymous]
+    [HttpGet("hashtags/{hashtag}/content")]
+    public async Task<ActionResult<HashtagContentDto>> GetHashtagContent(string hashtag, [FromQuery] int takePerType = 25, CancellationToken cancellationToken = default)
+    {
+        var viewerId = TryGetOptionalProfileId();
+
+        try
+        {
+            var content = await postService.GetHashtagContentAsync(viewerId, hashtag, takePerType, cancellationToken);
+            return Ok(content);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [AllowAnonymous]
     [HttpGet("hashtags/{hashtag}")]
     public async Task<ActionResult<IReadOnlyCollection<PostDto>>> GetByHashtag(string hashtag, [FromQuery] int take = 25, CancellationToken cancellationToken = default)
     {
@@ -416,7 +433,7 @@ public class PostsController(IPostService postService, SocialSezContext dbContex
         ".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm", ".mov", ".m4v", ".ogv"
     };
 
-    public sealed record CreatePostFormRequest(string? Content, IReadOnlyCollection<IFormFile>? Images, IFormFile? Image);
+    public sealed record CreatePostFormRequest(string? Content, IReadOnlyCollection<IFormFile>? Images, IFormFile? Image, bool IsSensitive = false);
     public sealed record CreateCommentBody(string Content, Guid? ParentCommentId = null);
     public sealed record UpdateCommentBody(string Content);
 }

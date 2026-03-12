@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable, catchError, of, switchMap, tap, throwError, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
+    AuthSessionDto,
     AuthResponse,
     BlogDto,
     BlogPostDto,
@@ -21,6 +22,7 @@ import {
     FollowStatusDto,
     FollowSuggestionsDto,
     FeedMode,
+    HashtagContentDto,
     HashtagSearchResultDto,
     LoginRequest,
     MarkAllReadResponse,
@@ -29,6 +31,7 @@ import {
     ProfileActivitySummaryDto,
     ProfileDto,
     ReelDto,
+    RevokeOtherSessionsResponse,
     RegisterRequest,
     SafetyStatusDto,
     SetMessageReactionRequest,
@@ -111,6 +114,32 @@ export class SocialSezApiService {
         );
     }
 
+    getAuthSessions(): Observable<AuthSessionDto[]> {
+        return this.withAutoRefresh(() => this.http.post<AuthSessionDto[]>(`${this.baseUrl}/auth/sessions`, {
+            refreshToken: this.refreshToken || null
+        }, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    revokeAuthSessionById(sessionId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/auth/sessions/revoke`, {
+            sessionId
+        }, { headers: this.authHeaders() }));
+    }
+
+    revokeOtherAuthSessions(): Observable<RevokeOtherSessionsResponse> {
+        return this.withAutoRefresh(() => this.http.post<RevokeOtherSessionsResponse>(`${this.baseUrl}/auth/sessions/revoke-others`, {
+            refreshToken: this.refreshToken || null
+        }, { headers: this.authHeaders() }));
+    }
+
+    deactivateMyAccount(): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/auth/account/deactivate`, {}, { headers: this.authHeaders() }));
+    }
+
+    deleteMyAccount(): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/auth/account`, { headers: this.authHeaders() }));
+    }
+
     getProfile(handle: string): Observable<ProfileDto> {
         return this.http.get<ProfileDto>(`${this.baseUrl}/profiles/${handle}`);
     }
@@ -127,9 +156,10 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.get<ProfileDto>(`${this.baseUrl}/profiles/me`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
-    createPost(content: string, imageFiles?: File[]): Observable<PostDto> {
+    createPost(content: string, imageFiles?: File[], isSensitive = false): Observable<PostDto> {
         const formData = new FormData();
         formData.append('content', content);
+        formData.append('isSensitive', `${isSensitive}`);
 
         if (imageFiles?.length) {
             for (const imageFile of imageFiles) {
@@ -140,9 +170,10 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<PostDto>(`${this.baseUrl}/posts`, formData, { headers: this.authHeaders() }));
     }
 
-    createStory(mediaFile: File, caption?: string): Observable<StoryDto> {
+    createStory(mediaFile: File, caption?: string, isSensitive = false): Observable<StoryDto> {
         const formData = new FormData();
         formData.append('media', mediaFile);
+        formData.append('isSensitive', `${isSensitive}`);
 
         if (caption?.trim()) {
             formData.append('caption', caption.trim());
@@ -155,10 +186,11 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/stories/${storyId}`, { headers: this.authHeaders() }));
     }
 
-    createReel(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File): Observable<ReelDto> {
+    createReel(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File, isSensitive = false): Observable<ReelDto> {
         const formData = new FormData();
         formData.append('video', videoFile);
         formData.append('durationSeconds', `${Math.max(1, Math.round(durationSeconds))}`);
+        formData.append('isSensitive', `${isSensitive}`);
 
         if (caption?.trim()) {
             formData.append('caption', caption.trim());
@@ -298,6 +330,11 @@ export class SocialSezApiService {
     getPostsByHashtag(hashtag: string, take = 25): Observable<PostDto[]> {
         const normalized = hashtag.trim().replace(/^#/, '');
         return this.http.get<PostDto[]>(`${this.baseUrl}/posts/hashtags/${encodeURIComponent(normalized)}?take=${take}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    getHashtagContent(hashtag: string, takePerType = 25): Observable<HashtagContentDto> {
+        const normalized = hashtag.trim().replace(/^#/, '');
+        return this.http.get<HashtagContentDto>(`${this.baseUrl}/posts/hashtags/${encodeURIComponent(normalized)}/content?takePerType=${takePerType}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
     getPostsByAuthorHandle(handle: string, take = 25): Observable<PostDto[]> {

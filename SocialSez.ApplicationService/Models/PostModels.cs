@@ -1,6 +1,6 @@
 namespace SocialSez.ApplicationService.Models;
 
-public sealed record CreatePostRequest(Guid AuthorId, string? Content, IReadOnlyCollection<string>? ImageUrls);
+public sealed record CreatePostRequest(Guid AuthorId, string? Content, IReadOnlyCollection<string>? ImageUrls, bool IsSensitive = false);
 
 public sealed record UpdatePostRequest(string? Content);
 
@@ -34,6 +34,64 @@ public sealed record PostReactionDetailDto(
 
 public sealed record HashtagSearchResultDto(string Tag, int Count);
 
+public sealed record HashtagReelDto(
+    Guid Id,
+    Guid AuthorId,
+    string AuthorHandle,
+    string? AuthorImageUrl,
+    string? Caption,
+    string? ThumbnailUrl,
+    DateTime CreatedAtUtc);
+
+public sealed record HashtagCommunityDto(
+    Guid Id,
+    string Slug,
+    string Name,
+    string? Description,
+    string? ImageUrl,
+    bool IsPrivate,
+    int MemberCount);
+
+public sealed record HashtagCommunityPostDto(
+    Guid Id,
+    Guid CommunityId,
+    string CommunitySlug,
+    string CommunityName,
+    Guid AuthorId,
+    string AuthorHandle,
+    string? AuthorImageUrl,
+    string? Title,
+    string? Content,
+    DateTime CreatedAtUtc);
+
+public sealed record HashtagBlogDto(
+    Guid Id,
+    Guid OwnerProfileId,
+    string OwnerHandle,
+    string Slug,
+    string Title,
+    string? Description,
+    DateTime UpdatedAtUtc);
+
+public sealed record HashtagBlogPostDto(
+    Guid Id,
+    Guid BlogId,
+    string BlogSlug,
+    string AuthorHandle,
+    string Slug,
+    string Title,
+    string? Excerpt,
+    string? CoverImageUrl,
+    DateTime UpdatedAtUtc);
+
+public sealed record HashtagContentDto(
+    IReadOnlyCollection<PostDto> Posts,
+    IReadOnlyCollection<HashtagReelDto> Reels,
+    IReadOnlyCollection<HashtagCommunityDto> Communities,
+    IReadOnlyCollection<HashtagCommunityPostDto> CommunityPosts,
+    IReadOnlyCollection<HashtagBlogDto> Blogs,
+    IReadOnlyCollection<HashtagBlogPostDto> BlogPosts);
+
 public sealed record PostDto(
     Guid Id,
     Guid AuthorId,
@@ -42,6 +100,7 @@ public sealed record PostDto(
     string Content,
     string? ImageUrl,
     IReadOnlyCollection<string> ImageUrls,
+    bool IsSensitive,
     DateTime CreatedAtUtc,
     int LikeCount,
     bool LikedByMe,

@@ -48,6 +48,7 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             Caption = string.IsNullOrWhiteSpace(caption) ? null : caption,
             VideoUrl = videoUrl,
             ThumbnailUrl = string.IsNullOrWhiteSpace(request.ThumbnailUrl) ? null : request.ThumbnailUrl.Trim(),
+            IsSensitive = request.IsSensitive,
             DurationSeconds = durationSeconds,
             CreatedAtUtc = DateTime.UtcNow
         };
@@ -63,6 +64,7 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             reel.Caption,
             reel.VideoUrl,
             reel.ThumbnailUrl,
+            reel.IsSensitive,
             reel.DurationSeconds,
             reel.CreatedAtUtc,
             0,
@@ -680,6 +682,7 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             reel.Caption,
             reel.VideoUrl,
             reel.ThumbnailUrl,
+            reel.IsSensitive,
             reel.DurationSeconds,
             reel.CreatedAtUtc,
             reel.Likes.Count,
@@ -733,6 +736,14 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             try
             {
                 await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE ReelComments ADD COLUMN ParentCommentId TEXT NULL;", cancellationToken);
+            }
+            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+            {
+            }
+
+            try
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Reels ADD COLUMN IsSensitive INTEGER NOT NULL DEFAULT 0;", cancellationToken);
             }
             catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
             {

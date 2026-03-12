@@ -122,6 +122,164 @@ public class AuthService(
         return true;
     }
 
+    public async Task<IReadOnlyCollection<AuthSessionDto>> GetSessionsAsync(Guid profileId, string? currentRefreshToken, CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.AppUsers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ProfileId == profileId, cancellationToken);
+
+        if (user is null)
+        {
+            return Array.Empty<AuthSessionDto>();
+        }
+
+        var now = DateTime.UtcNow;
+        var currentTokenHash = string.IsNullOrWhiteSpace(currentRefreshToken)
+            ? null
+            : HashToken(currentRefreshToken);
+
+        var sessions = await dbContext.RefreshTokens
+            .AsNoTracking()
+            .Where(x => x.AppUserId == user.Id)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new AuthSessionDto(
+                x.Id,
+                x.CreatedAtUtc,
+                x.ExpiresAtUtc,
+                x.RevokedAtUtc != null || x.ExpiresAtUtc <= now,
+                currentTokenHash != null && x.TokenHash == currentTokenHash))
+            .ToListAsync(cancellationToken);
+
+        return sessions;
+    }
+
+    public async Task<bool> RevokeSessionByIdAsync(Guid profileId, Guid sessionId, CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.AppUsers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ProfileId == profileId, cancellationToken);
+
+        if (user is null)
+        {
+            return false;
+        }
+
+        var refreshToken = await dbContext.RefreshTokens
+            .FirstOrDefaultAsync(x => x.Id == sessionId && x.AppUserId == user.Id, cancellationToken);
+
+        if (refreshToken is null || refreshToken.RevokedAtUtc is not null)
+        {
+            return false;
+        }
+
+        refreshToken.RevokedAtUtc = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<int> RevokeOtherSessionsAsync(Guid profileId, string? currentRefreshToken, CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.AppUsers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ProfileId == profileId, cancellationToken);
+
+        if (user is null)
+        {
+            return 0;
+        }
+
+        var now = DateTime.UtcNow;
+        var currentTokenHash = string.IsNullOrWhiteSpace(currentRefreshToken)
+            ? null
+            : HashToken(currentRefreshToken);
+
+        var candidates = await dbContext.RefreshTokens
+            .Where(x => x.AppUserId == user.Id && x.RevokedAtUtc == null && x.ExpiresAtUtc > now)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in candidates)
+        {
+            if (currentTokenHash is not null && token.TokenHash == currentTokenHash)
+            {
+                continue;
+            }
+
+            token.RevokedAtUtc = now;
+        }
+
+        var changed = candidates.Count(x => x.RevokedAtUtc == now);
+        if (changed > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return changed;
+    }
+
+    public async Task<bool> DeactivateAccountAsync(Guid profileId, CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.AppUsers
+            .Include(x => x.Profile)
+            .FirstOrDefaultAsync(x => x.ProfileId == profileId, cancellationToken);
+
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.Profile.IsPrivate = true;
+
+        var now = DateTime.UtcNow;
+        var activeTokens = await dbContext.RefreshTokens
+            .Where(x => x.AppUserId == user.Id && x.RevokedAtUtc == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in activeTokens)
+        {
+            token.RevokedAtUtc = now;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> DeleteAccountAsync(Guid profileId, CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.AppUsers
+            .Include(x => x.Profile)
+            .FirstOrDefaultAsync(x => x.ProfileId == profileId, cancellationToken);
+
+        if (user is null)
+        {
+            return false;
+        }
+
+        var suffix = Guid.NewGuid().ToString("N")[..10];
+        var replacementSecret = GenerateRefreshToken();
+        var now = DateTime.UtcNow;
+
+        user.Email = $"deleted+{suffix}@socialsez.local";
+        user.PasswordHash = passwordHasher.HashPassword(user, replacementSecret);
+
+        user.Profile.Handle = $"deleted-{suffix}";
+        user.Profile.DisplayName = "Deleted User";
+        user.Profile.Bio = string.Empty;
+        user.Profile.ImageUrl = null;
+        user.Profile.IsPrivate = true;
+
+        var tokens = await dbContext.RefreshTokens
+            .Where(x => x.AppUserId == user.Id && x.RevokedAtUtc == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in tokens)
+        {
+            token.RevokedAtUtc = now;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     private async Task<AuthResponse> BuildAuthResponseAsync(AppUser user, UserProfile profile, CancellationToken cancellationToken)
     {
         var (token, expiresAtUtc) = jwtTokenFactory.CreateToken(user, profile);

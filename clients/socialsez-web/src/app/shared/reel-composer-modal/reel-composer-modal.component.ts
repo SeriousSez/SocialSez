@@ -84,6 +84,7 @@ export class ReelComposerModalComponent implements OnDestroy {
     reelCaption = '';
     reelLocation = '';
     reelCollaborators = '';
+    markSensitive = false;
     reelComposerStep: 1 | 2 = 1;
     isRendered = false;
     isClosing = false;
@@ -553,10 +554,11 @@ export class ReelComposerModalComponent implements OnDestroy {
                         ? new File([generatedCover.blob], `reel-cover-${Date.now()}.jpg`, { type: generatedCover.blob.type || 'image/jpeg' })
                         : undefined);
                 const captionPayload = this.buildReelCaptionPayload();
+                const isSensitive = this.markSensitive;
 
                 this.resetComposer();
 
-                await session.createReelAsync(uploadVideo, durationSeconds, captionPayload, thumbnail);
+                await session.createReelAsync(uploadVideo, durationSeconds, captionPayload, thumbnail, isSensitive);
                 published.emit();
                 handle.succeed('Reel uploaded!');
                 uploadStatus.emit({
@@ -631,6 +633,7 @@ export class ReelComposerModalComponent implements OnDestroy {
         this.reelCaption = '';
         this.reelLocation = '';
         this.reelCollaborators = '';
+        this.markSensitive = false;
         this.reelComposerStep = 1;
         this.locationHint = 'Type at least 2 characters to search locations.';
         this.loadingLocationSuggestions = false;

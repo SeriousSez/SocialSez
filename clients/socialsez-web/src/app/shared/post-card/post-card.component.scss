@@ -180,6 +180,21 @@
     background: #fee2e2;
 }
 
+.sensitive-media-banner {
+    border: 1px solid #dbe4f0;
+    border-radius: 10px;
+    padding: 12px;
+    background: #f8fafc;
+    display: grid;
+    gap: 8px;
+    justify-items: start;
+}
+
+.sensitive-media-banner p {
+    margin: 0;
+    color: #334155;
+}
+
 .comments {
     display: grid;
     gap: 10px;

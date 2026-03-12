@@ -44,6 +44,24 @@
     transform-origin: center center;
 }
 
+.reel-sensitive-placeholder {
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    border-radius: 12px;
+    border: 1px solid #dbe4f0;
+    background: #f8fafc;
+    display: grid;
+    place-items: center;
+    gap: 10px;
+    text-align: center;
+    padding: 16px;
+}
+
+.reel-sensitive-placeholder p {
+    margin: 0;
+    color: #334155;
+}
+
 .reel-video-error {
     position: absolute;
     inset: auto 10px 52px 10px;

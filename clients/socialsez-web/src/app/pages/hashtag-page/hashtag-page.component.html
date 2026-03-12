@@ -10,27 +10,98 @@
     <p class="error" *ngIf="!loading && error">{{ error }}</p>
     <button class="retry" *ngIf="!loading && error" (click)="load()">Retry</button>
 
-    <div class="list" *ngIf="!loading && !error && posts.length; else emptyState">
-        <app-post-card *ngFor="let post of posts" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id || sharingPostId === post.id"
-            [viewerProfileId]="currentProfileId" [canInteract]="isAuthenticated" [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event"
-            (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)"
-            (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)"
-            (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
-            <div post-header class="author">
-                <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? ('Open @' + post.authorHandle + ' stories') : ('View @' + post.authorHandle + ' profile')">
-                    <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
-                        onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Author image" />
-                </a>
-                <ng-template #authorInitial>
-                    <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
-                </ng-template>
-                <div class="meta"><a class="author-link" [routerLink]="['/users', post.authorHandle]">@{{ post.authorHandle }}</a> · {{ post.createdAtUtc | date:'short' }}</div>
+    <div class="results" *ngIf="!loading && !error && hasAnyContent; else emptyState">
+        <section class="result-section" *ngIf="posts.length">
+            <h3>Posts</h3>
+            <div class="list">
+                <app-post-card *ngFor="let post of posts" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [reacting]="reactingPostId === post.id"
+                    [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [canInteract]="isAuthenticated" [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent"
+                    [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (toggleLike)="toggleLike(post)"
+                    (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)"
+                    (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
+                    <div post-header class="author">
+                        <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? ('Open @' + post.authorHandle + ' stories') : ('View @' + post.authorHandle + ' profile')">
+                            <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
+                                onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Author image" />
+                        </a>
+                        <ng-template #authorInitial>
+                            <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
+                        </ng-template>
+                        <div class="meta"><a class="author-link" [routerLink]="['/users', post.authorHandle]">@{{ post.authorHandle }}</a> · {{ post.createdAtUtc | date:'short' }}</div>
+                    </div>
+                </app-post-card>
             </div>
-        </app-post-card>
+        </section>
+
+        <section class="result-section" *ngIf="reels.length">
+            <h3>Reels</h3>
+            <div class="mini-list">
+                <a class="mini-item" *ngFor="let reel of reels" [routerLink]="['/reel', reel.id]">
+                    <img class="mini-thumb" *ngIf="reel.thumbnailUrl" [src]="reel.thumbnailUrl" alt="Reel thumbnail" />
+                    <div>
+                        <p class="mini-title">{{ reel.caption || 'Reel by @' + reel.authorHandle }}</p>
+                        <p class="mini-meta">@{{ reel.authorHandle }} · {{ reel.createdAtUtc | date:'short' }}</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="result-section" *ngIf="communities.length">
+            <h3>Communities</h3>
+            <div class="mini-list">
+                <a class="mini-item" *ngFor="let community of communities" [routerLink]="['/c', community.slug]">
+                    <img class="mini-thumb" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
+                    <div>
+                        <p class="mini-title">{{ community.name }}</p>
+                        <p class="mini-meta">{{ community.memberCount }} members</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="result-section" *ngIf="communityPosts.length">
+            <h3>Community Posts</h3>
+            <div class="mini-list">
+                <a class="mini-item" *ngFor="let post of communityPosts" [routerLink]="['/cp', post.id]">
+                    <div>
+                        <p class="mini-title">{{ post.title || 'Post in ' + post.communityName }}</p>
+                        <p class="mini-copy" *ngIf="getCommunityPostPreview(post)">{{ getCommunityPostPreview(post) }}</p>
+                        <p class="mini-meta">{{ post.communityName }} · @{{ post.authorHandle }} · {{ post.createdAtUtc | date:'short' }}</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="result-section" *ngIf="blogs.length">
+            <h3>Blogs</h3>
+            <div class="mini-list">
+                <a class="mini-item" *ngFor="let blog of blogs" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">
+                    <div>
+                        <p class="mini-title">{{ blog.title }}</p>
+                        <p class="mini-copy" *ngIf="blog.description">{{ blog.description }}</p>
+                        <p class="mini-meta">@{{ blog.ownerHandle }} · {{ blog.updatedAtUtc | date:'short' }}</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="result-section" *ngIf="blogPosts.length">
+            <h3>Blog Posts</h3>
+            <div class="mini-list">
+                <a class="mini-item" *ngFor="let post of blogPosts" [routerLink]="['/blogs', post.authorHandle, post.blogSlug, post.slug]">
+                    <img class="mini-thumb" *ngIf="post.coverImageUrl" [src]="post.coverImageUrl" alt="Blog post cover image" />
+                    <div>
+                        <p class="mini-title">{{ post.title }}</p>
+                        <p class="mini-copy" *ngIf="getBlogPostPreview(post)">{{ getBlogPostPreview(post) }}</p>
+                        <p class="mini-meta">@{{ post.authorHandle }} · {{ post.updatedAtUtc | date:'short' }}</p>
+                    </div>
+                </a>
+            </div>
+        </section>
     </div>
 
     <ng-template #emptyState>
-        <p class="empty" *ngIf="!loading && !error">No posts found for #{{ hashtag }} yet.</p>
+        <p class="empty" *ngIf="!loading && !error">No content found for #{{ hashtag }} yet.</p>
     </ng-template>
 </section>
 

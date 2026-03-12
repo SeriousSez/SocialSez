@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { ReplaySubject, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
+    AuthSessionDto,
     AuthResponse,
     BlogDto,
     BlogPostDto,
@@ -18,6 +19,12 @@ import {
     FollowRequestDto,
     FollowStatusDto,
     FollowSuggestionsDto,
+    HashtagBlogDto,
+    HashtagBlogPostDto,
+    HashtagCommunityDto,
+    HashtagCommunityPostDto,
+    HashtagContentDto,
+    HashtagReelDto,
     HashtagSearchResultDto,
     LoginRequest,
     NotificationDto,
@@ -158,6 +165,27 @@ export class SessionService {
         }
     }
 
+    async loadAuthSessionsAsync(): Promise<AuthSessionDto[]> {
+        return firstValueFrom(this.api.getAuthSessions());
+    }
+
+    async revokeAuthSessionByIdAsync(sessionId: string): Promise<void> {
+        await firstValueFrom(this.api.revokeAuthSessionById(sessionId));
+    }
+
+    async revokeOtherAuthSessionsAsync(): Promise<number> {
+        const response = await firstValueFrom(this.api.revokeOtherAuthSessions());
+        return response.revokedCount;
+    }
+
+    async deactivateMyAccountAsync(): Promise<void> {
+        await firstValueFrom(this.api.deactivateMyAccount());
+    }
+
+    async deleteMyAccountAsync(): Promise<void> {
+        await firstValueFrom(this.api.deleteMyAccount());
+    }
+
     async loadFeedAsync(mode: FeedMode = 'for-you'): Promise<PostDto[]> {
         const feed = await firstValueFrom(this.api.getFeed(25, mode));
         return feed.map(post => this.normalizePost(post));
@@ -211,7 +239,8 @@ export class SessionService {
     async loadPublicStoriesByAuthorHandleAsync(handle: string): Promise<StoryGroupDto | null> {
         try {
             const storyGroup = await firstValueFrom(this.api.getPublicStoriesByAuthorHandle(handle));
-            return this.normalizeStoryGroup(storyGroup);
+            const normalizedGroup = this.normalizeStoryGroup(storyGroup);
+            return normalizedGroup.stories.length > 0 ? normalizedGroup : null;
         } catch {
             return null;
         }
@@ -256,6 +285,18 @@ export class SessionService {
         return posts.map(post => this.normalizePost(post));
     }
 
+    async loadHashtagContentAsync(hashtag: string): Promise<HashtagContentDto> {
+        const content = await firstValueFrom(this.api.getHashtagContent(hashtag));
+        return {
+            posts: (content.posts ?? []).map(post => this.normalizePost(post)),
+            reels: (content.reels ?? []).map(reel => this.normalizeHashtagReel(reel)),
+            communities: (content.communities ?? []).map(community => this.normalizeHashtagCommunity(community)),
+            communityPosts: (content.communityPosts ?? []).map(post => this.normalizeHashtagCommunityPost(post)),
+            blogs: (content.blogs ?? []).map(blog => this.normalizeHashtagBlog(blog)),
+            blogPosts: (content.blogPosts ?? []).map(post => this.normalizeHashtagBlogPost(post))
+        };
+    }
+
     async loadPostsByAuthorHandleAsync(handle: string): Promise<PostDto[]> {
         const posts = await firstValueFrom(this.api.getPostsByAuthorHandle(handle));
         return posts.map(post => this.normalizePost(post));
@@ -298,24 +339,38 @@ export class SessionService {
         return profiles.map(profile => this.normalizeProfile(profile));
     }
 
-    async createPostAsync(content: string, imageFiles?: File[]): Promise<void> {
-        await firstValueFrom(this.api.createPost(content, imageFiles));
+    async createPostAsync(content: string, imageFiles?: File[], isSensitive = false): Promise<void> {
+        await firstValueFrom(this.api.createPost(content, imageFiles, isSensitive));
         this.message = 'Post created.';
         this.emitAppChange('posts');
     }
 
-    async createStoryAsync(mediaFile: File, caption?: string): Promise<StoryDto> {
-        const story = this.normalizeStory(await firstValueFrom(this.api.createStory(mediaFile, caption)));
+    async createStoryAsync(mediaFile: File, caption?: string, isSensitive = false): Promise<StoryDto> {
+        const story = this.normalizeStory(await firstValueFrom(this.api.createStory(mediaFile, caption, isSensitive)));
         this.message = 'Story created.';
         this.emitAppChange('posts');
         return story;
     }
 
-    async createReelAsync(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File): Promise<ReelDto> {
-        const reel = this.normalizeReel(await firstValueFrom(this.api.createReel(videoFile, durationSeconds, caption, thumbnailFile)));
+    async createReelAsync(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File, isSensitive = false): Promise<ReelDto> {
+        const reel = this.normalizeReel(await firstValueFrom(this.api.createReel(videoFile, durationSeconds, caption, thumbnailFile, isSensitive)));
         this.message = 'Reel created.';
         this.emitAppChange('posts');
         return reel;
+    }
+
+    getHideSensitiveMediaPreference(): boolean {
+        const raw = localStorage.getItem('socialsez-web-safety-prefs');
+        if (!raw) {
+            return false;
+        }
+
+        try {
+            const parsed = JSON.parse(raw) as { hideSensitiveMedia?: boolean };
+            return parsed.hideSensitiveMedia === true;
+        } catch {
+            return false;
+        }
     }
 
     async updateReelAsync(reelId: string, caption?: string): Promise<ReelDto> {
@@ -864,6 +919,7 @@ export class SessionService {
 
         return {
             ...post,
+            isSensitive: post.isSensitive === true,
             authorImageUrl: this.normalizeMediaUrl(post.authorImageUrl),
             imageUrl: normalizedPrimaryImage,
             imageUrls: normalizedImageUrls.length > 0
@@ -879,6 +935,7 @@ export class SessionService {
     private normalizeStory(story: StoryDto): StoryDto {
         return {
             ...story,
+            isSensitive: story.isSensitive === true,
             authorImageUrl: this.normalizeMediaUrl(story.authorImageUrl),
             mediaUrl: this.normalizeMediaUrl(story.mediaUrl) ?? story.mediaUrl
         };
@@ -895,6 +952,7 @@ export class SessionService {
     private normalizeReel(reel: ReelDto): ReelDto {
         return {
             ...reel,
+            isSensitive: reel.isSensitive === true,
             authorImageUrl: this.normalizeMediaUrl(reel.authorImageUrl),
             videoUrl: this.normalizeMediaUrl(reel.videoUrl) ?? reel.videoUrl,
             thumbnailUrl: this.normalizeMediaUrl(reel.thumbnailUrl),
@@ -971,6 +1029,43 @@ export class SessionService {
         return {
             ...poll,
             options: (poll.options ?? []).map(option => ({ ...option }))
+        };
+    }
+
+    private normalizeHashtagReel(reel: HashtagReelDto): HashtagReelDto {
+        return {
+            ...reel,
+            authorImageUrl: this.normalizeMediaUrl(reel.authorImageUrl),
+            thumbnailUrl: this.normalizeMediaUrl(reel.thumbnailUrl)
+        };
+    }
+
+    private normalizeHashtagCommunity(community: HashtagCommunityDto): HashtagCommunityDto {
+        return {
+            ...community,
+            imageUrl: this.normalizeMediaUrl(community.imageUrl)
+        };
+    }
+
+    private normalizeHashtagCommunityPost(post: HashtagCommunityPostDto): HashtagCommunityPostDto {
+        return {
+            ...post,
+            authorImageUrl: this.normalizeMediaUrl(post.authorImageUrl)
+        };
+    }
+
+    private normalizeHashtagBlog(blog: HashtagBlogDto): HashtagBlogDto {
+        return {
+            ...blog,
+            ownerHandle: (blog.ownerHandle ?? '').trim().toLowerCase()
+        };
+    }
+
+    private normalizeHashtagBlogPost(post: HashtagBlogPostDto): HashtagBlogPostDto {
+        return {
+            ...post,
+            authorHandle: (post.authorHandle ?? '').trim().toLowerCase(),
+            coverImageUrl: this.normalizeMediaUrl(post.coverImageUrl)
         };
     }
 

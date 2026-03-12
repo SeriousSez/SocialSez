@@ -162,6 +162,32 @@
     object-fit: cover;
 }
 
+.story-sensitive-placeholder {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    gap: 10px;
+    padding: 18px;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.82);
+    color: #f8fafc;
+    z-index: 5;
+}
+
+.story-sensitive-placeholder p {
+    margin: 0;
+}
+
+.story-sensitive-placeholder button {
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+}
+
 .story-caption {
     margin: 0;
     position: absolute;

@@ -40,7 +40,7 @@ public class ReelsController(IReelService reelService, SocialSezContext dbContex
             }
 
             var reel = await reelService.CreateAsync(
-                new CreateReelRequest(profileId, request.Caption, videoUrl, thumbnailUrl, request.DurationSeconds),
+                new CreateReelRequest(profileId, request.Caption, videoUrl, thumbnailUrl, request.DurationSeconds, request.IsSensitive),
                 cancellationToken);
 
             return Ok(reel);
@@ -344,5 +344,5 @@ public class ReelsController(IReelService reelService, SocialSezContext dbContex
     public sealed record CreateReelCommentBody(string Content, Guid? ParentCommentId = null);
     public sealed record UpdateReelCommentBody(string Content);
     public sealed record UpdateReelBody(string? Caption);
-    public sealed record CreateReelFormRequest(string? Caption, int DurationSeconds, IFormFile? Video, IFormFile? Thumbnail);
+    public sealed record CreateReelFormRequest(string? Caption, int DurationSeconds, IFormFile? Video, IFormFile? Thumbnail, bool IsSensitive = false);
 }

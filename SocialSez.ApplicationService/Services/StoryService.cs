@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 using SocialSez.Domain.Entities;
@@ -9,9 +10,13 @@ namespace SocialSez.ApplicationService.Services;
 public class StoryService(SocialSezContext dbContext) : IStoryService
 {
     private const int StoryExpiryHours = 24;
+    private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
+    private static volatile bool storySchemaInitialized;
 
     public async Task<StoryDto> CreateAsync(CreateStoryRequest request, CancellationToken cancellationToken = default)
     {
+        await EnsureStorySchemaAsync(cancellationToken);
+
         var author = await dbContext.UserProfiles
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == request.AuthorId, cancellationToken);
@@ -39,6 +44,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             AuthorId = request.AuthorId,
             Caption = string.IsNullOrWhiteSpace(caption) ? null : caption,
             MediaUrl = mediaUrl,
+            IsSensitive = request.IsSensitive,
             CreatedAtUtc = DateTime.UtcNow,
             ExpiresAtUtc = DateTime.UtcNow.AddHours(StoryExpiryHours)
         };
@@ -53,6 +59,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             author.ImageUrl,
             story.Caption,
             story.MediaUrl,
+            story.IsSensitive,
             story.CreatedAtUtc,
             story.ExpiresAtUtc,
             false,
@@ -61,6 +68,8 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
     public async Task<bool> DeleteAsync(Guid storyId, Guid profileId, CancellationToken cancellationToken = default)
     {
+        await EnsureStorySchemaAsync(cancellationToken);
+
         var story = await dbContext.Stories.FirstOrDefaultAsync(x => x.Id == storyId, cancellationToken);
         if (story is null)
         {
@@ -79,6 +88,8 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
     public async Task<bool> MarkViewedAsync(Guid storyId, Guid viewerId, CancellationToken cancellationToken = default)
     {
+        await EnsureStorySchemaAsync(cancellationToken);
+
         var nowUtc = DateTime.UtcNow;
 
         var story = await dbContext.Stories
@@ -118,6 +129,8 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
     public async Task<IReadOnlyCollection<StoryGroupDto>> GetFeedAsync(Guid profileId, int takeAuthors = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default)
     {
+        await EnsureStorySchemaAsync(cancellationToken);
+
         var nowUtc = DateTime.UtcNow;
         takeAuthors = Math.Clamp(takeAuthors, 1, 100);
         var blockedProfileIds = await GetBlockedProfileIdsAsync(profileId, cancellationToken);
@@ -200,6 +213,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
                         story.Author.ImageUrl,
                         story.Caption,
                         story.MediaUrl,
+                        story.IsSensitive,
                         story.CreatedAtUtc,
                         story.ExpiresAtUtc,
                         story.Views.Any(view => view.ViewerId == profileId),
@@ -225,6 +239,8 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
     public async Task<StoryDto?> GetPublicByIdAsync(Guid storyId, Guid? viewerId, CancellationToken cancellationToken = default)
     {
+        await EnsureStorySchemaAsync(cancellationToken);
+
         var nowUtc = DateTime.UtcNow;
 
         var story = await dbContext.Stories
@@ -254,6 +270,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             story.Author.ImageUrl,
             story.Caption,
             story.MediaUrl,
+            story.IsSensitive,
             story.CreatedAtUtc,
             story.ExpiresAtUtc,
             false,
@@ -262,6 +279,8 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
     public async Task<StoryGroupDto?> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, CancellationToken cancellationToken = default)
     {
+        await EnsureStorySchemaAsync(cancellationToken);
+
         var normalizedHandle = handle.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalizedHandle))
         {
@@ -310,7 +329,12 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
         if (!stories.Any())
         {
-            return null;
+            return new StoryGroupDto(
+                author.Id,
+                author.Handle,
+                author.ImageUrl,
+                false,
+                Array.Empty<StoryDto>());
         }
 
         var viewer = viewerId ?? Guid.Empty;
@@ -322,6 +346,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
                 author.ImageUrl,
                 story.Caption,
                 story.MediaUrl,
+                story.IsSensitive,
                 story.CreatedAtUtc,
                 story.ExpiresAtUtc,
                 viewerId.HasValue && story.Views.Any(view => view.ViewerId == viewer),
@@ -353,5 +378,36 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
         return blockedByViewer
             .Concat(blockingViewer)
             .ToHashSet();
+    }
+
+    private async Task EnsureStorySchemaAsync(CancellationToken cancellationToken)
+    {
+        if (storySchemaInitialized || !dbContext.Database.IsSqlite())
+        {
+            return;
+        }
+
+        await SchemaInitLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (storySchemaInitialized)
+            {
+                return;
+            }
+
+            try
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Stories ADD COLUMN IsSensitive INTEGER NOT NULL DEFAULT 0;", cancellationToken);
+            }
+            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+            {
+            }
+
+            storySchemaInitialized = true;
+        }
+        finally
+        {
+            SchemaInitLock.Release();
+        }
     }
 }

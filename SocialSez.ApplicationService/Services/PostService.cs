@@ -53,6 +53,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             AuthorId = request.AuthorId,
             Content = content,
             ImageUrl = SerializePostMediaUrls(imageUrls),
+            IsSensitive = request.IsSensitive,
             CreatedAtUtc = DateTime.UtcNow
         };
 
@@ -68,6 +69,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             post.Content,
             imageUrls.FirstOrDefault(),
             imageUrls,
+            post.IsSensitive,
             post.CreatedAtUtc,
             0,
             false,
@@ -722,114 +724,132 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
     public async Task<IReadOnlyCollection<HashtagSearchResultDto>> GetTrendingHashtagsAsync(int take = 10, Guid? viewerId = null, CancellationToken cancellationToken = default)
     {
         take = Math.Clamp(take, 1, 100);
-        var sinceUtc = DateTime.UtcNow.AddDays(-7);
         var viewerHasId = viewerId.HasValue;
         var viewerProfileId = viewerId.GetValueOrDefault();
+        var sinceUtc = DateTime.UtcNow.AddDays(-7);
         var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
         var blockedProfileIds = viewerId.HasValue
             ? await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken)
             : null;
 
-        var recentCandidates = await dbContext.Posts
-            .AsNoTracking()
-            .Where(x =>
-                !string.IsNullOrWhiteSpace(x.Content)
-                && x.Content.Contains('#')
-                && x.CreatedAtUtc >= sinceUtc
-                && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
-                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(2000)
-            .Select(x => x.Content)
-            .ToArrayAsync(cancellationToken);
+        async Task<Dictionary<string, int>> LoadCountsAsync(bool recentOnly)
+        {
+            var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
-        var candidates = recentCandidates.Length > 0
-            ? recentCandidates
-            : await dbContext.Posts
+            var postCandidates = await dbContext.Posts
                 .AsNoTracking()
                 .Where(x =>
                     !string.IsNullOrWhiteSpace(x.Content)
-                    && x.Content.Contains('#')
+                    && x.Content.Contains("#")
+                    && (!recentOnly || x.CreatedAtUtc >= sinceUtc)
                     && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                     && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
                 .OrderByDescending(x => x.CreatedAtUtc)
-                .Take(2000)
+                .Take(1200)
                 .Select(x => x.Content)
                 .ToArrayAsync(cancellationToken);
 
-        var communityPostCandidates = await dbContext.CommunityPosts
-            .AsNoTracking()
-            .Where(x =>
-                ((x.Title != null && x.Title.Contains('#')) || (x.Content != null && x.Content.Contains('#')))
-                && x.CreatedAtUtc >= sinceUtc
-                && (!x.Community.IsPrivate || (viewerHasId && x.Community.Members.Any(member => member.ProfileId == viewerProfileId)))
-                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(2000)
-            .Select(x => new { x.Title, x.Content })
-            .ToArrayAsync(cancellationToken);
+            var reelCandidates = await dbContext.Reels
+                .AsNoTracking()
+                .Where(x =>
+                    !string.IsNullOrWhiteSpace(x.Caption)
+                    && x.Caption.Contains("#")
+                    && (!recentOnly || x.CreatedAtUtc >= sinceUtc)
+                    && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
+                    && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .Take(1200)
+                .Select(x => x.Caption)
+                .ToArrayAsync(cancellationToken);
 
-        var blogPostCandidates = await dbContext.BlogPosts
-            .AsNoTracking()
-            .Where(x =>
-                x.UpdatedAtUtc >= sinceUtc
-                && (x.IsPublished || (viewerHasId && x.AuthorProfileId == viewerProfileId))
-                && (x.Blog.IsPublic || (viewerHasId && x.Blog.OwnerProfileId == viewerProfileId))
-                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorProfileId)))
-            .OrderByDescending(x => x.UpdatedAtUtc)
-            .Take(2000)
-            .Select(x => new { x.Title, x.Content, x.Excerpt, x.TagsJson })
-            .ToArrayAsync(cancellationToken);
+            var communityPostCandidates = await dbContext.CommunityPosts
+                .AsNoTracking()
+                .Where(x =>
+                    ((x.Title != null && x.Title.Contains("#")) || (x.Content != null && x.Content.Contains("#")))
+                    && (!recentOnly || x.CreatedAtUtc >= sinceUtc)
+                    && (!x.Community.IsPrivate || (viewerHasId && x.Community.Members.Any(member => member.ProfileId == viewerProfileId)))
+                    && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .Take(1200)
+                .Select(x => new { x.Title, x.Content })
+                .ToArrayAsync(cancellationToken);
 
-        var communityCandidates = await dbContext.Communities
-            .AsNoTracking()
-            .Where(x =>
-                ((x.Name != null && x.Name.Contains('#')) || (x.Description != null && x.Description.Contains('#')))
-                && (!x.IsPrivate || (viewerHasId && x.Members.Any(member => member.ProfileId == viewerProfileId))))
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(1000)
-            .Select(x => new { x.Name, x.Description })
-            .ToArrayAsync(cancellationToken);
+            var blogPostCandidates = await dbContext.BlogPosts
+                .AsNoTracking()
+                .Where(x =>
+                    (x.IsPublished || (viewerHasId && x.AuthorProfileId == viewerProfileId))
+                    && (x.Blog.IsPublic || (viewerHasId && x.Blog.OwnerProfileId == viewerProfileId))
+                    && (!recentOnly || x.UpdatedAtUtc >= sinceUtc)
+                    && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorProfileId)))
+                .OrderByDescending(x => x.UpdatedAtUtc)
+                .Take(1200)
+                .Select(x => new { x.Title, x.Content, x.Excerpt, x.TagsJson })
+                .ToArrayAsync(cancellationToken);
 
-        var blogCandidates = await dbContext.Blogs
-            .AsNoTracking()
-            .Where(x =>
-                ((x.Title != null && x.Title.Contains('#')) || (x.Description != null && x.Description.Contains('#')))
-                && (x.IsPublic || (viewerHasId && x.OwnerProfileId == viewerProfileId)))
-            .OrderByDescending(x => x.UpdatedAtUtc)
-            .Take(1000)
-            .Select(x => new { x.Title, x.Description })
-            .ToArrayAsync(cancellationToken);
+            var communityCandidates = await dbContext.Communities
+                .AsNoTracking()
+                .Where(x =>
+                    ((x.Name != null && x.Name.Contains("#")) || (x.Description != null && x.Description.Contains("#")))
+                    && (!recentOnly || x.CreatedAtUtc >= sinceUtc)
+                    && (!x.IsPrivate || (viewerHasId && x.Members.Any(member => member.ProfileId == viewerProfileId)))
+                    && (blockedProfileIds == null || !blockedProfileIds.Contains(x.CreatedByProfileId)))
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .Take(1200)
+                .Select(x => new { x.Name, x.Description })
+                .ToArrayAsync(cancellationToken);
 
-        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var blogCandidates = await dbContext.Blogs
+                .AsNoTracking()
+                .Where(x =>
+                    ((x.Title != null && x.Title.Contains("#")) || (x.Description != null && x.Description.Contains("#")))
+                    && (!recentOnly || x.UpdatedAtUtc >= sinceUtc)
+                    && (x.IsPublic || (viewerHasId && x.OwnerProfileId == viewerProfileId))
+                    && (blockedProfileIds == null || !blockedProfileIds.Contains(x.OwnerProfileId)))
+                .OrderByDescending(x => x.UpdatedAtUtc)
+                .Take(1200)
+                .Select(x => new { x.Title, x.Description })
+                .ToArrayAsync(cancellationToken);
 
-        foreach (var content in candidates)
-        {
-            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(content));
+            foreach (var content in postCandidates)
+            {
+                IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(content));
+            }
+
+            foreach (var caption in reelCandidates)
+            {
+                IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(caption));
+            }
+
+            foreach (var candidate in communityPostCandidates)
+            {
+                IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Content));
+            }
+
+            foreach (var candidate in blogPostCandidates)
+            {
+                var tags = ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Content, candidate.Excerpt)
+                    .Concat(ExtractHashtagsFromBlogTagsJson(candidate.TagsJson))
+                    .Distinct(StringComparer.OrdinalIgnoreCase);
+                IncrementHashtagCounts(counts, tags);
+            }
+
+            foreach (var candidate in communityCandidates)
+            {
+                IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Name, candidate.Description));
+            }
+
+            foreach (var candidate in blogCandidates)
+            {
+                IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Description));
+            }
+
+            return counts;
         }
 
-        foreach (var candidate in communityPostCandidates)
-        {
-            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Content));
-        }
-
-        foreach (var candidate in blogPostCandidates)
-        {
-            var tags = ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Content, candidate.Excerpt)
-                .Concat(ExtractHashtagsFromBlogTagsJson(candidate.TagsJson))
-                .Distinct(StringComparer.OrdinalIgnoreCase);
-            IncrementHashtagCounts(counts, tags);
-        }
-
-        foreach (var candidate in communityCandidates)
-        {
-            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Name, candidate.Description));
-        }
-
-        foreach (var candidate in blogCandidates)
-        {
-            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(candidate.Title, candidate.Description));
-        }
+        var recentCounts = await LoadCountsAsync(recentOnly: true);
+        var counts = recentCounts.Count > 0
+            ? recentCounts
+            : await LoadCountsAsync(recentOnly: false);
 
         return counts
             .Select(x => new HashtagSearchResultDto(x.Key, x.Value))
@@ -859,7 +879,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .AsNoTracking()
             .Where(x =>
                 !string.IsNullOrWhiteSpace(x.Content)
-                && x.Content.Contains('#')
+                && x.Content.Contains("#")
                 && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                 && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
             .OrderByDescending(x => x.CreatedAtUtc)
@@ -867,10 +887,22 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .Select(x => x.Content)
             .ToArrayAsync(cancellationToken);
 
+        var reelCandidates = await dbContext.Reels
+            .AsNoTracking()
+            .Where(x =>
+                !string.IsNullOrWhiteSpace(x.Caption)
+                && x.Caption.Contains("#")
+                && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(1000)
+            .Select(x => x.Caption)
+            .ToArrayAsync(cancellationToken);
+
         var communityPostCandidates = await dbContext.CommunityPosts
             .AsNoTracking()
             .Where(x =>
-                ((x.Title != null && x.Title.Contains('#')) || (x.Content != null && x.Content.Contains('#')))
+                ((x.Title != null && x.Title.Contains("#")) || (x.Content != null && x.Content.Contains("#")))
                 && (!x.Community.IsPrivate || (viewerHasId && x.Community.Members.Any(member => member.ProfileId == viewerProfileId)))
                 && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
             .OrderByDescending(x => x.CreatedAtUtc)
@@ -892,7 +924,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         var communityCandidates = await dbContext.Communities
             .AsNoTracking()
             .Where(x =>
-                ((x.Name != null && x.Name.Contains('#')) || (x.Description != null && x.Description.Contains('#')))
+                ((x.Name != null && x.Name.Contains("#")) || (x.Description != null && x.Description.Contains("#")))
                 && (!x.IsPrivate || (viewerHasId && x.Members.Any(member => member.ProfileId == viewerProfileId))))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(1000)
@@ -902,7 +934,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         var blogCandidates = await dbContext.Blogs
             .AsNoTracking()
             .Where(x =>
-                ((x.Title != null && x.Title.Contains('#')) || (x.Description != null && x.Description.Contains('#')))
+                ((x.Title != null && x.Title.Contains("#")) || (x.Description != null && x.Description.Contains("#")))
                 && (x.IsPublic || (viewerHasId && x.OwnerProfileId == viewerProfileId)))
             .OrderByDescending(x => x.UpdatedAtUtc)
             .Take(1000)
@@ -914,6 +946,11 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         foreach (var content in candidates)
         {
             IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(content), normalizedQuery);
+        }
+
+        foreach (var caption in reelCandidates)
+        {
+            IncrementHashtagCounts(counts, ExtractDistinctHashtagsFromTexts(caption), normalizedQuery);
         }
 
         foreach (var candidate in communityPostCandidates)
@@ -947,7 +984,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .ToArray();
     }
 
-    public async Task<IReadOnlyCollection<PostDto>> GetByHashtagAsync(Guid? viewerId, string hashtag, int take = 25, CancellationToken cancellationToken = default)
+    public async Task<HashtagContentDto> GetHashtagContentAsync(Guid? viewerId, string hashtag, int takePerType = 25, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
 
@@ -957,14 +994,17 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             throw new ArgumentException("Hashtag is required.", nameof(hashtag));
         }
 
-        take = Math.Clamp(take, 1, 100);
+        takePerType = Math.Clamp(takePerType, 1, 100);
         var needle = $"#{normalizedHashtag.ToLowerInvariant()}";
+        var hashtagRegex = BuildHashtagRegex(normalizedHashtag);
+        var viewerHasId = viewerId.HasValue;
+        var viewerProfileId = viewerId.GetValueOrDefault();
         var allowedPrivateAuthorIds = await GetAllowedPrivateAuthorIdsAsync(viewerId, cancellationToken);
         var blockedProfileIds = viewerId.HasValue
             ? await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken)
             : null;
 
-        var candidates = await dbContext.Posts
+        var postCandidates = await dbContext.Posts
             .AsNoTracking()
             .Include(x => x.Author)
             .Include(x => x.Comments)
@@ -978,17 +1018,167 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 && !string.IsNullOrWhiteSpace(x.Content)
                 && x.Content.ToLower().Contains(needle))
             .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(take * 5)
+            .Take(takePerType * 5)
             .ToArrayAsync(cancellationToken);
 
-        var hashtagRegex = BuildHashtagRegex(normalizedHashtag);
         var mapProfileId = viewerId ?? Guid.Empty;
-
-        return candidates
+        var posts = postCandidates
             .Where(post => hashtagRegex.IsMatch(post.Content))
-            .Take(take)
+            .Take(takePerType)
             .Select(post => MapToPostDto(post, mapProfileId))
             .ToArray();
+
+        var reelCandidates = await dbContext.Reels
+            .AsNoTracking()
+            .Include(x => x.Author)
+            .Where(x =>
+                !string.IsNullOrWhiteSpace(x.Caption)
+                && x.Caption.ToLower().Contains(needle)
+                && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(takePerType * 5)
+            .ToArrayAsync(cancellationToken);
+
+        var reels = reelCandidates
+            .Where(reel => !string.IsNullOrWhiteSpace(reel.Caption) && hashtagRegex.IsMatch(reel.Caption))
+            .Take(takePerType)
+            .Select(reel => new HashtagReelDto(
+                reel.Id,
+                reel.AuthorId,
+                reel.Author.Handle,
+                reel.Author.ImageUrl,
+                reel.Caption,
+                reel.ThumbnailUrl,
+                reel.CreatedAtUtc))
+            .ToArray();
+
+        var communityCandidates = await dbContext.Communities
+            .AsNoTracking()
+            .Where(x =>
+                ((x.Name != null && x.Name.ToLower().Contains(needle)) || (x.Description != null && x.Description.ToLower().Contains(needle)))
+                && (!x.IsPrivate || (viewerHasId && x.Members.Any(member => member.ProfileId == viewerProfileId)))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.CreatedByProfileId)))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(takePerType * 5)
+            .Select(x => new
+            {
+                x.Id,
+                x.Slug,
+                x.Name,
+                x.Description,
+                x.ImageUrl,
+                x.IsPrivate,
+                MemberCount = x.Members.Count
+            })
+            .ToArrayAsync(cancellationToken);
+
+        var communities = communityCandidates
+            .Where(item => hashtagRegex.IsMatch($"{item.Name} {item.Description}"))
+            .Take(takePerType)
+            .Select(item => new HashtagCommunityDto(
+                item.Id,
+                item.Slug,
+                item.Name,
+                item.Description,
+                item.ImageUrl,
+                item.IsPrivate,
+                item.MemberCount))
+            .ToArray();
+
+        var communityPostCandidates = await dbContext.CommunityPosts
+            .AsNoTracking()
+            .Include(x => x.Author)
+            .Include(x => x.Community)
+            .Where(x =>
+                ((x.Title != null && x.Title.ToLower().Contains(needle)) || (x.Content != null && x.Content.ToLower().Contains(needle)))
+                && (!x.Community.IsPrivate || (viewerHasId && x.Community.Members.Any(member => member.ProfileId == viewerProfileId)))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(takePerType * 5)
+            .ToArrayAsync(cancellationToken);
+
+        var communityPosts = communityPostCandidates
+            .Where(item => hashtagRegex.IsMatch($"{item.Title} {item.Content}"))
+            .Take(takePerType)
+            .Select(item => new HashtagCommunityPostDto(
+                item.Id,
+                item.CommunityId,
+                item.Community.Slug,
+                item.Community.Name,
+                item.AuthorId,
+                item.Author.Handle,
+                item.Author.ImageUrl,
+                item.Title,
+                item.Content,
+                item.CreatedAtUtc))
+            .ToArray();
+
+        var blogCandidates = await dbContext.Blogs
+            .AsNoTracking()
+            .Include(x => x.OwnerProfile)
+            .Where(x =>
+                ((x.Title != null && x.Title.ToLower().Contains(needle)) || (x.Description != null && x.Description.ToLower().Contains(needle)))
+                && (x.IsPublic || (viewerHasId && x.OwnerProfileId == viewerProfileId))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.OwnerProfileId)))
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(takePerType * 5)
+            .ToArrayAsync(cancellationToken);
+
+        var blogs = blogCandidates
+            .Where(item => hashtagRegex.IsMatch($"{item.Title} {item.Description}"))
+            .Take(takePerType)
+            .Select(item => new HashtagBlogDto(
+                item.Id,
+                item.OwnerProfileId,
+                item.OwnerProfile.Handle,
+                item.Slug,
+                item.Title,
+                item.Description,
+                item.UpdatedAtUtc))
+            .ToArray();
+
+        var blogPostCandidates = await dbContext.BlogPosts
+            .AsNoTracking()
+            .Include(x => x.Blog)
+            .Include(x => x.AuthorProfile)
+            .Where(x =>
+                (x.IsPublished || (viewerHasId && x.AuthorProfileId == viewerProfileId))
+                && (x.Blog.IsPublic || (viewerHasId && x.Blog.OwnerProfileId == viewerProfileId))
+                && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorProfileId))
+                && ((x.Title != null && x.Title.ToLower().Contains(needle))
+                    || (x.Content != null && x.Content.ToLower().Contains(needle))
+                    || (x.Excerpt != null && x.Excerpt.ToLower().Contains(needle))
+                    || (x.TagsJson != null && x.TagsJson.ToLower().Contains(normalizedHashtag.ToLowerInvariant()))))
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(takePerType * 6)
+            .ToArrayAsync(cancellationToken);
+
+        var blogTagNeedle = normalizedHashtag.ToLowerInvariant();
+        var blogPosts = blogPostCandidates
+            .Where(item =>
+                hashtagRegex.IsMatch($"{item.Title} {item.Content} {item.Excerpt}")
+                || ExtractHashtagsFromBlogTagsJson(item.TagsJson).Contains(blogTagNeedle, StringComparer.OrdinalIgnoreCase))
+            .Take(takePerType)
+            .Select(item => new HashtagBlogPostDto(
+                item.Id,
+                item.BlogId,
+                item.Blog.Slug,
+                item.AuthorProfile.Handle,
+                item.Slug,
+                item.Title,
+                item.Excerpt,
+                item.CoverImageUrl,
+                item.UpdatedAtUtc))
+            .ToArray();
+
+        return new HashtagContentDto(posts, reels, communities, communityPosts, blogs, blogPosts);
+    }
+
+    public async Task<IReadOnlyCollection<PostDto>> GetByHashtagAsync(Guid? viewerId, string hashtag, int take = 25, CancellationToken cancellationToken = default)
+    {
+        var result = await GetHashtagContentAsync(viewerId, hashtag, take, cancellationToken);
+        return result.Posts;
     }
 
     public async Task<IReadOnlyCollection<PostDto>> GetByAuthorHandleAsync(Guid profileId, string handle, int take = 25, CancellationToken cancellationToken = default)
@@ -1212,6 +1402,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             post.Content,
             primaryImageUrl,
             imageUrls,
+            post.IsSensitive,
             post.CreatedAtUtc,
             likeCount,
             string.Equals(myReactionType, LikeReactionType, StringComparison.OrdinalIgnoreCase),
@@ -1435,6 +1626,14 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             try
             {
                 await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Comments ADD COLUMN ParentCommentId TEXT NULL;", cancellationToken);
+            }
+            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+            {
+            }
+
+            try
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Posts ADD COLUMN IsSensitive INTEGER NOT NULL DEFAULT 0;", cancellationToken);
             }
             catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
             {

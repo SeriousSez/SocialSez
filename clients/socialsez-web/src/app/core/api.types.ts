@@ -42,6 +42,18 @@ export interface AuthResponse {
     profile: ProfileDto;
 }
 
+export interface AuthSessionDto {
+    id: string;
+    createdAtUtc: string;
+    expiresAtUtc: string;
+    isRevoked: boolean;
+    isCurrent: boolean;
+}
+
+export interface RevokeOtherSessionsResponse {
+    revokedCount: number;
+}
+
 export interface UpdateProfileRequest {
     displayName: string;
     bio?: string;
@@ -141,6 +153,70 @@ export interface HashtagSearchResultDto {
     count: number;
 }
 
+export interface HashtagReelDto {
+    id: string;
+    authorId: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    caption?: string;
+    thumbnailUrl?: string;
+    createdAtUtc: string;
+}
+
+export interface HashtagCommunityDto {
+    id: string;
+    slug: string;
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    isPrivate: boolean;
+    memberCount: number;
+}
+
+export interface HashtagCommunityPostDto {
+    id: string;
+    communityId: string;
+    communitySlug: string;
+    communityName: string;
+    authorId: string;
+    authorHandle: string;
+    authorImageUrl?: string;
+    title?: string;
+    content?: string;
+    createdAtUtc: string;
+}
+
+export interface HashtagBlogDto {
+    id: string;
+    ownerProfileId: string;
+    ownerHandle: string;
+    slug: string;
+    title: string;
+    description?: string;
+    updatedAtUtc: string;
+}
+
+export interface HashtagBlogPostDto {
+    id: string;
+    blogId: string;
+    blogSlug: string;
+    authorHandle: string;
+    slug: string;
+    title: string;
+    excerpt?: string;
+    coverImageUrl?: string;
+    updatedAtUtc: string;
+}
+
+export interface HashtagContentDto {
+    posts: PostDto[];
+    reels: HashtagReelDto[];
+    communities: HashtagCommunityDto[];
+    communityPosts: HashtagCommunityPostDto[];
+    blogs: HashtagBlogDto[];
+    blogPosts: HashtagBlogPostDto[];
+}
+
 export interface PostDto {
     id: string;
     authorId: string;
@@ -149,6 +225,7 @@ export interface PostDto {
     content: string;
     imageUrl?: string;
     imageUrls?: string[];
+    isSensitive?: boolean;
     createdAtUtc: string;
     likeCount: number;
     likedByMe: boolean;
@@ -165,6 +242,7 @@ export interface StoryDto {
     authorImageUrl?: string;
     caption?: string;
     mediaUrl: string;
+    isSensitive?: boolean;
     createdAtUtc: string;
     expiresAtUtc: string;
     viewedByMe: boolean;
@@ -187,6 +265,7 @@ export interface ReelDto {
     caption?: string;
     videoUrl: string;
     thumbnailUrl?: string;
+    isSensitive?: boolean;
     durationSeconds: number;
     createdAtUtc: string;
     likeCount: number;

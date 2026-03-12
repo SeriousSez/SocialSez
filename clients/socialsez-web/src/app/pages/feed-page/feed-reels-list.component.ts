@@ -47,6 +47,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     @Input() showOwnerActions = false;
     @Input() updatingReelId: string | null = null;
     @Input() deletingReelId: string | null = null;
+    @Input() hideSensitiveMedia = false;
     @ViewChildren('reelItem', { read: ElementRef }) private readonly reelItemRefs!: QueryList<ElementRef<HTMLElement>>;
     @ViewChildren('reelVideoEl', { read: ElementRef }) private readonly reelVideoRefs!: QueryList<ElementRef<HTMLVideoElement>>;
 
@@ -72,6 +73,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     private intersectionObserver: IntersectionObserver | null = null;
     private readonly reelVisibility = new Map<string, number>();
     private readonly mutedReelIds = new Set<string>();
+    private readonly revealedSensitiveReelIds = new Set<string>();
     private readonly pausedByUserReelIds = new Set<string>();
     private readonly failedReelVideoIds = new Set<string>();
     private readonly expandedReelCaptions = new Set<string>();
@@ -130,6 +132,12 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         for (const key of Array.from(this.failedReelVideoIds.values())) {
             if (!currentIds.has(key)) {
                 this.failedReelVideoIds.delete(key);
+            }
+        }
+
+        for (const key of Array.from(this.revealedSensitiveReelIds.values())) {
+            if (!currentIds.has(key)) {
+                this.revealedSensitiveReelIds.delete(key);
             }
         }
 
@@ -272,6 +280,16 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         event.preventDefault();
         event.stopPropagation();
         this.authorAvatarClicked.emit(handle);
+    }
+
+    shouldHideSensitiveReel(reel: ReelDto): boolean {
+        return this.hideSensitiveMedia && reel.isSensitive === true && !this.revealedSensitiveReelIds.has(reel.id);
+    }
+
+    revealSensitiveReel(reel: ReelDto, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.revealedSensitiveReelIds.add(reel.id);
     }
 
     hasActiveStoryForAuthor(handle: string): boolean {

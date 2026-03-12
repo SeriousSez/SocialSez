@@ -121,6 +121,7 @@ export class FeedPageComponent implements OnDestroy {
     storyFrameOffsetX = 0;
     storyFrameOffsetY = 0;
     postingStory = false;
+    markStorySensitive = false;
     storyComposerError = '';
     storyViewerError = '';
     deletingStory = false;
@@ -236,6 +237,10 @@ export class FeedPageComponent implements OnDestroy {
 
     get currentProfileImageUrl(): string {
         return (this.session.profile?.imageUrl ?? '').trim();
+    }
+
+    get hideSensitiveMediaEnabled(): boolean {
+        return this.session.getHideSensitiveMediaPreference();
     }
 
     get ownVisibleStoryGroup(): StoryGroupDto | null {
@@ -748,7 +753,8 @@ export class FeedPageComponent implements OnDestroy {
         void (async () => {
             try {
                 const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile!);
-                await this.session.createStoryAsync(uploadStoryMedia);
+                const isSensitive = this.markStorySensitive;
+                await this.session.createStoryAsync(uploadStoryMedia, undefined, isSensitive);
                 await this.load();
                 handle.succeed('Story published!');
             } catch {
@@ -1830,6 +1836,7 @@ export class FeedPageComponent implements OnDestroy {
 
         this.storyMediaObjectUrl = '';
         this.storyMediaFile = null;
+        this.markStorySensitive = false;
         this.storyMediaPreviewUrl = '';
         this.storyMediaIsVideo = false;
         this.storyMediaDurationSeconds = 0;

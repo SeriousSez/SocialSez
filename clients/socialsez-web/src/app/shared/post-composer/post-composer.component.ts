@@ -29,6 +29,7 @@ export class PostComposerComponent implements OnDestroy {
     mediaPreviewUrls: string[] = [];
     status = '';
     uploadingMedia = false;
+    markSensitive = false;
     mediaKind: 'none' | 'image-croppable' | 'image-static' | 'video' | 'multi-image' = 'none';
     cropOutputFormat: 'jpeg' | 'png' = 'jpeg';
 
@@ -124,8 +125,9 @@ export class PostComposerComponent implements OnDestroy {
 
         try {
             const mediaFiles = this.buildUploadFiles();
-            await this.session.createPostAsync(this.content.trim(), mediaFiles.length > 0 ? mediaFiles : undefined);
+            await this.session.createPostAsync(this.content.trim(), mediaFiles.length > 0 ? mediaFiles : undefined, this.markSensitive);
             this.content = '';
+            this.markSensitive = false;
             this.clearSelectedMedia();
             this.status = 'Posted.';
             handle.succeed('Post published!');
@@ -144,6 +146,7 @@ export class PostComposerComponent implements OnDestroy {
         }
 
         this.content = '';
+        this.markSensitive = false;
         this.clearSelectedMedia();
         this.status = '';
         this.canceled.emit();

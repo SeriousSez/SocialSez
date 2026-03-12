@@ -7,138 +7,423 @@
         <div class="chip">@{{ profile.handle }}</div>
     </header>
 
-    <section class="card">
+    <section class="card unsaved-banner" *ngIf="hasAnyUnsavedChanges">
+        <p class="meta">You have unsaved settings changes.</p>
+        <div class="actions">
+            <button type="button" class="ghost" (click)="resetAllUnsavedChanges()">Discard all unsaved changes</button>
+        </div>
+    </section>
+
+    <section class="card" id="settings-section-profile">
         <button type="button" class="section-toggle" (click)="toggleSection('profile')" [attr.aria-expanded]="sectionOpenState.profile">
             <h3>Profile</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.profile">▾</span>
         </button>
 
-        <div class="section-body" *ngIf="sectionOpenState.profile">
-            <label>Display Name <input [(ngModel)]="displayName" /></label>
-            <div class="editor-field">
-                <span class="field-label">Bio</span>
-                <app-comment-editor [placeholder]="'Tell people about yourself'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="bio" [initialContentIsHtml]="true" (contentChanged)="bio = $event"></app-comment-editor>
-            </div>
-            <div class="profile-image-actions">
-                <button type="button" class="ghost" (click)="openAvatarModal()" [disabled]="uploadingProfileImage">Change Image</button>
-                <button class="ghost" type="button" (click)="removeProfileImage()" [disabled]="!imageUrl.trim() || uploadingProfileImage">Remove Image</button>
-            </div>
-            <p class="meta" *ngIf="uploadingProfileImage">Uploading image...</p>
-            <img class="preview" *ngIf="imageUrl.trim()" [src]="imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile image preview" />
-            <div class="actions">
-                <button (click)="saveProfile()">Save Profile</button>
-                <button class="ghost" (click)="reloadProfile()">Reload</button>
+        <div class="section-body" [class.open]="sectionOpenState.profile" [attr.aria-hidden]="!sectionOpenState.profile" [attr.inert]="!sectionOpenState.profile ? '' : null">
+            <div class="section-inner">
+                <label>Display Name <input [(ngModel)]="displayName" /></label>
+                <div class="editor-field">
+                    <span class="field-label">Bio</span>
+                    <app-comment-editor [placeholder]="'Tell people about yourself'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="bio" [initialContentIsHtml]="true" (contentChanged)="bio = $event"></app-comment-editor>
+                </div>
+                <div class="profile-image-actions">
+                    <button type="button" class="ghost" (click)="openAvatarModal()" [disabled]="uploadingProfileImage">Change Image</button>
+                    <button class="ghost" type="button" (click)="removeProfileImage()" [disabled]="!imageUrl.trim() || uploadingProfileImage">Remove Image</button>
+                </div>
+                <p class="meta" *ngIf="uploadingProfileImage">Uploading image...</p>
+                <img class="preview" *ngIf="imageUrl.trim()" [src]="imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile image preview" />
+                <div class="actions">
+                    <button (click)="saveProfile()">Save Profile</button>
+                    <button class="ghost" (click)="reloadProfile()">Reload</button>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="settings-section-account">
         <button type="button" class="section-toggle" (click)="toggleSection('account')" [attr.aria-expanded]="sectionOpenState.account">
             <h3>Account</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.account">▾</span>
         </button>
 
-        <div class="section-body" *ngIf="sectionOpenState.account">
-            <p class="meta"><strong>Profile Id:</strong> {{ profile.id }}</p>
-            <label>Handle <input [(ngModel)]="handle" (ngModelChange)="onHandleInput($event)" /></label>
-            <p class="meta" *ngIf="handleChangeAvailableAtUtc as availableAt; else handleReadyNow">
-                Handle changes are limited to once every 30 days. Next change available on {{ availableAt | date:'mediumDate' }}.
-            </p>
-            <ng-template #handleReadyNow>
-                <p class="meta">Handle changes are limited to once every 30 days. You can change it now.</p>
-            </ng-template>
-            <label class="toggle">
-                <input type="checkbox" [(ngModel)]="isPrivate" (change)="savePrivacy()" />
-                Private profile
-            </label>
-            <p class="meta"><strong>Joined:</strong> {{ profile.createdAtUtc | date:'mediumDate' }}</p>
+        <div class="section-body" [class.open]="sectionOpenState.account" [attr.aria-hidden]="!sectionOpenState.account" [attr.inert]="!sectionOpenState.account ? '' : null">
+            <div class="section-inner">
+                <p class="meta"><strong>Profile Id:</strong> {{ profile.id }}</p>
+                <label>Handle <input [(ngModel)]="handle" (ngModelChange)="onHandleInput($event)" /></label>
+                <p class="meta" *ngIf="handleChangeAvailableAtUtc as availableAt; else handleReadyNow">
+                    Handle changes are limited to once every 30 days. Next change available on {{ availableAt | date:'mediumDate' }}.
+                </p>
+                <ng-template #handleReadyNow>
+                    <p class="meta">Handle changes are limited to once every 30 days. You can change it now.</p>
+                </ng-template>
+                <p class="meta"><strong>Joined:</strong> {{ profile.createdAtUtc | date:'mediumDate' }}</p>
+            </div>
         </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="settings-section-privacy">
+        <button type="button" class="section-toggle" (click)="toggleSection('privacy')" [attr.aria-expanded]="sectionOpenState.privacy">
+            <h3>Privacy</h3>
+            <span class="section-toggle-icon" [class.open]="sectionOpenState.privacy">▾</span>
+        </button>
+
+        <div class="section-body" [class.open]="sectionOpenState.privacy" [attr.aria-hidden]="!sectionOpenState.privacy" [attr.inert]="!sectionOpenState.privacy ? '' : null">
+            <div class="section-inner">
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="isPrivate" />
+                    Private profile
+                </label>
+                <p class="meta">When enabled, only approved followers can see your posts, reels, and stories.</p>
+                <div class="actions">
+                    <button type="button" (click)="savePrivacy()" [disabled]="!hasPrivacyChanges || savingPrivacy">{{ savingPrivacy ? 'Saving...' : 'Save Privacy' }}</button>
+                    <button type="button" class="ghost" (click)="resetPrivacyChanges()" [disabled]="!hasPrivacyChanges || savingPrivacy">Discard</button>
+                </div>
+
+                <hr />
+
+                <div class="field-group">
+                    <label>Who can comment on your content?
+                        <select [(ngModel)]="discoveryPrivacyPrefs.commentsAudience">
+                            <option *ngFor="let option of audienceOptions" [ngValue]="option.value">{{ option.label }}</option>
+                        </select>
+                    </label>
+                    <label>Who can mention or tag you?
+                        <select [(ngModel)]="discoveryPrivacyPrefs.mentionsAudience">
+                            <option *ngFor="let option of audienceOptions" [ngValue]="option.value">{{ option.label }}</option>
+                        </select>
+                    </label>
+                    <label>Who can message you?
+                        <select [(ngModel)]="discoveryPrivacyPrefs.messagesAudience">
+                            <option *ngFor="let option of audienceOptions" [ngValue]="option.value">{{ option.label }}</option>
+                        </select>
+                    </label>
+                    <label>Who can reply to your stories?
+                        <select [(ngModel)]="discoveryPrivacyPrefs.storyRepliesAudience">
+                            <option *ngFor="let option of audienceOptions" [ngValue]="option.value">{{ option.label }}</option>
+                        </select>
+                    </label>
+                </div>
+
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="discoveryPrivacyPrefs.showInSearchSuggestions" />
+                    Show account in search suggestions
+                </label>
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="discoveryPrivacyPrefs.allowProfileIndexing" />
+                    Allow profile indexing by search engines
+                </label>
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="discoveryPrivacyPrefs.showActivityStatus" />
+                    Show activity status / last seen
+                </label>
+
+                <div class="actions">
+                    <button type="button" (click)="saveDiscoveryPrivacyPrefs()" [disabled]="!hasDiscoveryPrivacyChanges || privacyPrefsSaving">{{ privacyPrefsSaving ? 'Saving...' : 'Save Audience & Discovery' }}</button>
+                    <button type="button" class="ghost" (click)="resetDiscoveryPrivacyPrefs()" [disabled]="!hasDiscoveryPrivacyChanges || privacyPrefsSaving">Discard</button>
+                </div>
+                <p class="meta" *ngIf="sectionSavedAt.privacy as savedAt">Last saved: {{ savedAt | date:'short' }}</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="card" id="settings-section-session">
         <button type="button" class="section-toggle" (click)="toggleSection('session')" [attr.aria-expanded]="sectionOpenState.session">
             <h3>Session</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.session">▾</span>
         </button>
 
-        <div class="section-body" *ngIf="sectionOpenState.session">
-            <p class="meta">Use these controls for your current login session.</p>
-            <div class="actions">
-                <button (click)="refreshSession()">Refresh Session</button>
+        <div class="section-body" [class.open]="sectionOpenState.session" [attr.aria-hidden]="!sectionOpenState.session" [attr.inert]="!sectionOpenState.session ? '' : null">
+            <div class="section-inner">
+                <p class="meta">Use these controls for your current login session.</p>
+                <div class="actions">
+                    <button (click)="refreshSession()">Refresh Session</button>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="settings-section-preferences">
         <button type="button" class="section-toggle" (click)="toggleSection('preferences')" [attr.aria-expanded]="sectionOpenState.preferences">
             <h3>Preferences</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.preferences">▾</span>
         </button>
 
-        <div class="section-body" *ngIf="sectionOpenState.preferences">
-            <label class="toggle">
-                <input type="checkbox" [(ngModel)]="prefs.compactFeed" (change)="savePrefs()" />
-                Compact feed layout
-            </label>
-            <label class="toggle">
-                <input type="checkbox" [(ngModel)]="prefs.darkMode" (change)="savePrefs()" />
-                Dark mode
-            </label>
+        <div class="section-body" [class.open]="sectionOpenState.preferences" [attr.aria-hidden]="!sectionOpenState.preferences" [attr.inert]="!sectionOpenState.preferences ? '' : null">
+            <div class="section-inner">
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="prefs.compactFeed" (change)="savePrefs()" />
+                    Compact feed layout
+                </label>
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="prefs.useSystemTheme" (change)="onUseSystemThemeChanged()" />
+                    Use system theme
+                </label>
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="prefs.darkMode" (change)="savePrefs()" [disabled]="prefs.useSystemTheme" />
+                    Dark mode
+                </label>
+                <p class="meta" *ngIf="prefs.useSystemTheme">Dark mode follows your operating system appearance while this is enabled.</p>
+
+                <hr />
+
+                <h4>Accessibility & Region</h4>
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="accessibilityPrefs.reducedMotion" />
+                    Reduced motion
+                </label>
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="accessibilityPrefs.largerText" />
+                    Larger text mode
+                </label>
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="accessibilityPrefs.highContrast" />
+                    High contrast mode
+                </label>
+                <label>Language
+                    <select [(ngModel)]="accessibilityPrefs.language">
+                        <option *ngFor="let option of languageOptions" [ngValue]="option.value">{{ option.label }}</option>
+                    </select>
+                </label>
+                <label>Region
+                    <select [(ngModel)]="accessibilityPrefs.region">
+                        <option *ngFor="let option of regionOptions" [ngValue]="option.value">{{ option.label }}</option>
+                    </select>
+                </label>
+                <div class="actions">
+                    <button type="button" (click)="saveAccessibilityPrefs()" [disabled]="!hasAccessibilityChanges || accessibilitySaving">{{ accessibilitySaving ? 'Saving...' : 'Save Accessibility' }}</button>
+                    <button type="button" class="ghost" (click)="resetAccessibilityPrefs()" [disabled]="!hasAccessibilityChanges || accessibilitySaving">Discard</button>
+                </div>
+                <p class="meta" *ngIf="sectionSavedAt.accessibility as savedAt">Last saved: {{ savedAt | date:'short' }}</p>
+            </div>
         </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="settings-section-notifications">
+        <button type="button" class="section-toggle" (click)="toggleSection('notifications')" [attr.aria-expanded]="sectionOpenState.notifications">
+            <h3>Notifications</h3>
+            <span class="section-toggle-icon" [class.open]="sectionOpenState.notifications">▾</span>
+        </button>
+
+        <div class="section-body" [class.open]="sectionOpenState.notifications" [attr.aria-hidden]="!sectionOpenState.notifications" [attr.inert]="!sectionOpenState.notifications ? '' : null">
+            <div class="section-inner">
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.likes" /> Likes</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.comments" /> Comments</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.follows" /> Follows</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.mentions" /> Mentions</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.messages" /> Direct messages</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.marketing" /> Marketing</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.product" /> Product updates</label>
+
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.quietHoursEnabled" /> Quiet hours</label>
+                <div class="inline-time-range" *ngIf="notificationPrefs.quietHoursEnabled">
+                    <label>Start <input type="time" [(ngModel)]="notificationPrefs.quietHoursStart" /></label>
+                    <label>End <input type="time" [(ngModel)]="notificationPrefs.quietHoursEnd" /></label>
+                </div>
+
+                <div class="actions">
+                    <button type="button" (click)="saveNotificationPrefs()" [disabled]="!hasNotificationChanges || notificationsSaving">{{ notificationsSaving ? 'Saving...' : 'Save Notifications' }}</button>
+                    <button type="button" class="ghost" (click)="resetNotificationPrefs()" [disabled]="!hasNotificationChanges || notificationsSaving">Discard</button>
+                </div>
+                <p class="meta" *ngIf="sectionSavedAt.notifications as savedAt">Last saved: {{ savedAt | date:'short' }}</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="card" id="settings-section-safety">
+        <button type="button" class="section-toggle" (click)="toggleSection('safety')" [attr.aria-expanded]="sectionOpenState.safety">
+            <h3>Safety</h3>
+            <span class="section-toggle-icon" [class.open]="sectionOpenState.safety">▾</span>
+        </button>
+
+        <div class="section-body" [class.open]="sectionOpenState.safety" [attr.aria-hidden]="!sectionOpenState.safety" [attr.inert]="!sectionOpenState.safety ? '' : null">
+            <div class="section-inner">
+                <label>Sensitive content level
+                    <select [(ngModel)]="safetyPrefs.sensitiveContentLevel">
+                        <option *ngFor="let option of sensitiveContentOptions" [ngValue]="option.value">{{ option.label }}</option>
+                    </select>
+                </label>
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="safetyPrefs.hideSensitiveMedia" />
+                    Hide sensitive media by default
+                </label>
+
+                <h4>Muted words</h4>
+                <div class="chip-input-row">
+                    <input [(ngModel)]="addMutedKeywordValue" placeholder="Add word or phrase" />
+                    <button type="button" class="ghost" (click)="addMutedKeyword()">Add</button>
+                </div>
+                <div class="chip-list" *ngIf="safetyPrefs.mutedKeywords.length; else noMutedKeywords">
+                    <button type="button" class="chip removable" *ngFor="let keyword of safetyPrefs.mutedKeywords" (click)="removeMutedKeyword(keyword)">{{ keyword }} ✕</button>
+                </div>
+                <ng-template #noMutedKeywords>
+                    <p class="meta">No muted keywords yet.</p>
+                </ng-template>
+
+                <h4>Muted users</h4>
+                <div class="chip-input-row muted-handle-input-row">
+                    <div class="muted-handle-autocomplete">
+                        <input [(ngModel)]="addMutedHandleValue" (ngModelChange)="onMutedHandleInputChanged($event)" (focus)="onMutedHandleInputFocus()" (blur)="onMutedHandleInputBlur()" (keydown.enter)="onMutedHandleInputEnter($event)" placeholder="Add handle (example: @name)" />
+                        <div class="mention-suggestions muted-handle-suggestions" *ngIf="mutedHandleSuggestionsOpen || mutedHandleSuggestionsLoading">
+                            <p class="mention-hint" *ngIf="mutedHandleSuggestionsLoading">Searching users...</p>
+                            <button type="button" *ngFor="let profile of mutedHandleSuggestions" (mousedown)="$event.preventDefault()" (click)="selectMutedHandleSuggestion(profile)">
+                                <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
+                                <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
+                                <span class="mention-meta">
+                                    <span class="mention-name">{{ profile.displayName }}</span>
+                                    <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" class="ghost" (click)="addMutedHandle()">Add</button>
+                </div>
+                <div class="chip-list" *ngIf="safetyPrefs.mutedHandles.length; else noMutedHandles">
+                    <button type="button" class="chip removable" *ngFor="let handle of safetyPrefs.mutedHandles" (click)="removeMutedHandle(handle)">@{{ handle }} ✕</button>
+                </div>
+                <ng-template #noMutedHandles>
+                    <p class="meta">No muted users in preferences yet.</p>
+                </ng-template>
+
+                <div class="actions">
+                    <button type="button" (click)="saveSafetyPrefs()" [disabled]="!hasSafetyChanges || safetySaving">{{ safetySaving ? 'Saving...' : 'Save Safety' }}</button>
+                    <button type="button" class="ghost" (click)="resetSafetyPrefs()" [disabled]="!hasSafetyChanges || safetySaving">Discard</button>
+                </div>
+                <p class="meta" *ngIf="sectionSavedAt.safety as savedAt">Last saved: {{ savedAt | date:'short' }}</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="card" id="settings-section-security">
+        <button type="button" class="section-toggle" (click)="toggleSection('security')" [attr.aria-expanded]="sectionOpenState.security">
+            <h3>Security</h3>
+            <span class="section-toggle-icon" [class.open]="sectionOpenState.security">▾</span>
+        </button>
+
+        <div class="section-body" [class.open]="sectionOpenState.security" [attr.aria-hidden]="!sectionOpenState.security" [attr.inert]="!sectionOpenState.security ? '' : null">
+            <div class="section-inner">
+                <p class="meta">Where you are logged in.</p>
+                <div class="blocked-list" *ngIf="deviceSessions.length; else noSessions">
+                    <article class="blocked-item" *ngFor="let loginSession of deviceSessions">
+                        <div class="blocked-meta">
+                            <span class="blocked-name">{{ loginSession.current ? 'Current device' : 'Signed-in device' }}</span>
+                            <span class="blocked-handle">{{ loginSession.label }}</span>
+                            <span class="blocked-handle">Created {{ loginSession.createdAtUtc | date:'short' }}</span>
+                            <span class="blocked-handle">Expires {{ loginSession.expiresAtUtc | date:'short' }}</span>
+                            <span class="blocked-handle" *ngIf="loginSession.revoked">Revoked</span>
+                        </div>
+                        <button type="button" class="ghost" *ngIf="!loginSession.current" [disabled]="securitySaving || loginSession.revoked || revokeSessionId === loginSession.id" (click)="revokeDeviceSession(loginSession.id)">
+                            {{ revokeSessionId === loginSession.id ? 'Revoking...' : 'Revoke' }}
+                        </button>
+                    </article>
+                </div>
+                <ng-template #noSessions>
+                    <p class="meta">No active sessions found.</p>
+                </ng-template>
+
+                <div class="actions">
+                    <button type="button" class="ghost" (click)="logoutOtherSessions()" [disabled]="securitySaving">{{ securitySaving ? 'Processing...' : 'Log out other sessions' }}</button>
+                </div>
+                <p class="meta" *ngIf="sectionSavedAt.security as savedAt">Last saved: {{ savedAt | date:'short' }}</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="card" id="settings-section-data">
+        <button type="button" class="section-toggle" (click)="toggleSection('data')" [attr.aria-expanded]="sectionOpenState.data">
+            <h3>Data controls</h3>
+            <span class="section-toggle-icon" [class.open]="sectionOpenState.data">▾</span>
+        </button>
+
+        <div class="section-body" [class.open]="sectionOpenState.data" [attr.aria-hidden]="!sectionOpenState.data" [attr.inert]="!sectionOpenState.data ? '' : null">
+            <div class="section-inner">
+                <p class="meta">Download your account data and manage account lifecycle requests.</p>
+                <div class="actions">
+                    <button type="button" (click)="exportMyData()" [disabled]="dataActionWorking">{{ dataActionWorking ? 'Working...' : 'Download my data' }}</button>
+                </div>
+
+                <div class="danger-zone">
+                    <h4>Deactivate account</h4>
+                    <p class="meta">Type DEACTIVATE to confirm request.</p>
+                    <div class="inline-confirm-row">
+                        <input [(ngModel)]="deactivateConfirmValue" placeholder="Type DEACTIVATE" />
+                        <button type="button" class="ghost" (click)="requestDeactivation()" [disabled]="dataActionWorking || deactivateConfirmValue.trim().toUpperCase() !== 'DEACTIVATE'">Request deactivation</button>
+                    </div>
+
+                    <h4>Delete account</h4>
+                    <p class="meta">Type DELETE to confirm request.</p>
+                    <div class="inline-confirm-row">
+                        <input [(ngModel)]="deleteConfirmValue" placeholder="Type DELETE" />
+                        <button type="button" class="danger" (click)="requestDeleteAccount()" [disabled]="dataActionWorking || deleteConfirmValue.trim().toUpperCase() !== 'DELETE'">Request delete</button>
+                    </div>
+                    <p class="meta">Both actions are applied immediately and sign you out.</p>
+                </div>
+
+                <p class="meta" *ngIf="sectionSavedAt.data as savedAt">Last action: {{ savedAt | date:'short' }}</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="card" id="settings-section-blocked">
         <button type="button" class="section-toggle" (click)="toggleSection('blocked')" [attr.aria-expanded]="sectionOpenState.blocked">
             <h3>Blocked users</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.blocked">▾</span>
         </button>
 
-        <div class="section-body" *ngIf="sectionOpenState.blocked">
-            <p class="meta">Manage users you have blocked.</p>
+        <div class="section-body" [class.open]="sectionOpenState.blocked" [attr.aria-hidden]="!sectionOpenState.blocked" [attr.inert]="!sectionOpenState.blocked ? '' : null">
+            <div class="section-inner">
+                <p class="meta">Manage users you have blocked.</p>
 
-            <p class="meta" *ngIf="loadingBlockedProfiles">Loading blocked users...</p>
+                <p class="meta" *ngIf="loadingBlockedProfiles">Loading blocked users...</p>
 
-            <div class="blocked-list" *ngIf="!loadingBlockedProfiles && blockedProfiles.length; else emptyBlockedState">
-                <article class="blocked-item" *ngFor="let blocked of blockedProfiles">
-                    <a class="blocked-avatar-link" [attr.href]="'/users/' + blocked.handle" aria-label="View profile">
-                        <img class="blocked-avatar" *ngIf="blocked.imageUrl; else blockedInitial" [src]="blocked.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Blocked user image" />
-                        <ng-template #blockedInitial>
-                            <div class="blocked-avatar initial">{{ blocked.displayName[0] || blocked.handle[0] }}</div>
-                        </ng-template>
-                    </a>
+                <div class="blocked-list" *ngIf="!loadingBlockedProfiles && blockedProfiles.length; else emptyBlockedState">
+                    <article class="blocked-item" *ngFor="let blocked of blockedProfiles">
+                        <a class="blocked-avatar-link" [attr.href]="'/users/' + blocked.handle" aria-label="View profile">
+                            <img class="blocked-avatar" *ngIf="blocked.imageUrl; else blockedInitial" [src]="blocked.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Blocked user image" />
+                            <ng-template #blockedInitial>
+                                <div class="blocked-avatar initial">{{ blocked.displayName[0] || blocked.handle[0] }}</div>
+                            </ng-template>
+                        </a>
 
-                    <div class="blocked-meta">
-                        <a class="blocked-name" [attr.href]="'/users/' + blocked.handle">{{ blocked.displayName }}</a>
-                        <a class="blocked-handle" [attr.href]="'/users/' + blocked.handle">@{{ blocked.handle }}</a>
-                    </div>
+                        <div class="blocked-meta">
+                            <a class="blocked-name" [attr.href]="'/users/' + blocked.handle">{{ blocked.displayName }}</a>
+                            <a class="blocked-handle" [attr.href]="'/users/' + blocked.handle">@{{ blocked.handle }}</a>
+                        </div>
 
-                    <button type="button" class="ghost" [disabled]="unblockingProfileId === blocked.id" (click)="unblock(blocked)">
-                        {{ unblockingProfileId === blocked.id ? 'Unblocking...' : 'Unblock' }}
-                    </button>
-                </article>
+                        <button type="button" class="ghost" [disabled]="unblockingProfileId === blocked.id" (click)="unblock(blocked)">
+                            {{ unblockingProfileId === blocked.id ? 'Unblocking...' : 'Unblock' }}
+                        </button>
+                    </article>
+                </div>
+
+                <ng-template #emptyBlockedState>
+                    <p class="meta" *ngIf="!loadingBlockedProfiles">You have not blocked anyone.</p>
+                </ng-template>
             </div>
-
-            <ng-template #emptyBlockedState>
-                <p class="meta" *ngIf="!loadingBlockedProfiles">You have not blocked anyone.</p>
-            </ng-template>
         </div>
     </section>
 
-    <section class="card logout-card">
+    <section class="card logout-card" id="settings-section-logout">
         <button type="button" class="section-toggle" (click)="toggleSection('logout')" [attr.aria-expanded]="sectionOpenState.logout">
             <h3>Sign out</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.logout">▾</span>
         </button>
 
-        <div class="section-body" *ngIf="sectionOpenState.logout">
-            <p class="meta">Sign out of your current account on this device.</p>
-            <div class="actions">
-                <button class="danger" (click)="logout()">Logout</button>
+        <div class="section-body" [class.open]="sectionOpenState.logout" [attr.aria-hidden]="!sectionOpenState.logout" [attr.inert]="!sectionOpenState.logout ? '' : null">
+            <div class="section-inner">
+                <p class="meta">Sign out of your current account on this device.</p>
+                <div class="actions">
+                    <button class="danger" (click)="logout()">Logout</button>
+                </div>
             </div>
         </div>
     </section>
 
 </section>
+
+<app-confirm-modal [open]="!!pendingAccountAction" [title]="accountActionModalTitle" [message]="accountActionModalMessage" [confirmText]="accountActionModalConfirmText" cancelText="Cancel" confirmClass="danger" [busy]="dataActionWorking" (cancel)="cancelPendingAccountAction()"
+    (confirm)="confirmPendingAccountAction()">
+</app-confirm-modal>
 
 <div class="compose-modal" *ngIf="avatarModalOpen" role="dialog" aria-modal="true" aria-label="Update profile image" (click)="closeAvatarModal()">
     <section class="compose-modal-card avatar-modal" (click)="$event.stopPropagation()">

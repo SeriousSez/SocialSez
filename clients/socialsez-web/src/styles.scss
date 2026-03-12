@@ -307,6 +307,23 @@ app-reel-composer-modal {
     color: var(--color-text-on-dark) !important;
 }
 
+:root.prefers-reduced-motion *,
+:root.prefers-reduced-motion *::before,
+:root.prefers-reduced-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+
+:root.larger-text {
+    font-size: 17px;
+}
+
+:root.high-contrast body {
+    filter: contrast(1.15);
+}
+
 :root.theme-dark .post-actions .ghost,
 :root.theme-dark .comments-toggle,
 :root.theme-dark .hero-icon-link,

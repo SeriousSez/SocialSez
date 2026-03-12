@@ -5,7 +5,8 @@ public sealed record CreateReelRequest(
     string? Caption,
     string VideoUrl,
     string? ThumbnailUrl,
-    int DurationSeconds);
+    int DurationSeconds,
+    bool IsSensitive = false);
 
 public sealed record CreateReelCommentRequest(Guid AuthorId, string Content, Guid? ParentCommentId = null);
 
@@ -33,6 +34,7 @@ public sealed record ReelDto(
     string? Caption,
     string VideoUrl,
     string? ThumbnailUrl,
+    bool IsSensitive,
     int DurationSeconds,
     DateTime CreatedAtUtc,
     int LikeCount,

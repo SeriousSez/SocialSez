@@ -16,6 +16,11 @@
     </section>
     <p class="meta" *ngIf="uploadingMedia">Uploading media and publishing...</p>
 
+    <label class="sensitive-toggle">
+        <input type="checkbox" [(ngModel)]="markSensitive" [disabled]="uploadingMedia" />
+        <span>Mark this post as sensitive media</span>
+    </label>
+
     <section class="crop-panel" *ngIf="mediaPreviewUrl || mediaPreviewUrls.length > 0">
         <image-cropper *ngIf="mediaKind === 'image-croppable'" [imageFile]="selectedMediaFiles[0] || undefined" [maintainAspectRatio]="false" [resizeToWidth]="1200" [onlyScaleDown]="true" [format]="cropOutputFormat" (imageCropped)="onImageCropped($event)" (imageLoaded)="onImageLoaded($event)"
             (loadImageFailed)="onLoadImageFailed()"></image-cropper>

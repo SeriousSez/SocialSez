@@ -6,6 +6,7 @@ public class Post
     public Guid AuthorId { get; set; }
     public string Content { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
+    public bool IsSensitive { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public UserProfile Author { get; set; } = null!;

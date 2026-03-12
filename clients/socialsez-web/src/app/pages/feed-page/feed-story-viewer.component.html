@@ -41,10 +41,19 @@
         </header>
 
         <div class="story-media-wrap">
-            <video #storyVideoEl *ngIf="isVideoStory(story.mediaUrl) && !videoPlaybackError; else imageStory" [src]="story.mediaUrl" autoplay [muted]="storyMuted" playsinline preload="auto" (loadedmetadata)="onVideoLoadedMetadata(storyVideoEl)" (play)="onVideoPlay()" (pause)="onVideoPause()"
-                (timeupdate)="onVideoTimeUpdate(storyVideoEl)" (ended)="onVideoEnded()" (error)="onVideoError()"></video>
-            <ng-template #imageStory>
-                <img [src]="story.mediaUrl" alt="Story" />
+            <ng-container *ngIf="!shouldHideSensitiveStory(); else hiddenStoryMedia">
+                <video #storyVideoEl *ngIf="isVideoStory(story.mediaUrl) && !videoPlaybackError; else imageStory" [src]="story.mediaUrl" autoplay [muted]="storyMuted" playsinline preload="auto" (loadedmetadata)="onVideoLoadedMetadata(storyVideoEl)" (play)="onVideoPlay()"
+                    (pause)="onVideoPause()" (timeupdate)="onVideoTimeUpdate(storyVideoEl)" (ended)="onVideoEnded()" (error)="onVideoError()"></video>
+                <ng-template #imageStory>
+                    <img [src]="story.mediaUrl" alt="Story" />
+                </ng-template>
+            </ng-container>
+
+            <ng-template #hiddenStoryMedia>
+                <div class="story-sensitive-placeholder">
+                    <p>This story is marked as sensitive media.</p>
+                    <button type="button" (click)="revealSensitiveStory()">Show story</button>
+                </div>
             </ng-template>
 
             <p class="story-caption" *ngIf="story.caption">{{ story.caption }}</p>

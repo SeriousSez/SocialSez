@@ -773,22 +773,64 @@ export class AppComponent implements OnInit, OnDestroy {
             document.documentElement.classList.toggle('theme-dark', prefersDark);
             localStorage.setItem(this.prefsStorageKey, JSON.stringify({
                 compactFeed: false,
-                darkMode: prefersDark
+                useSystemTheme: true,
+                darkMode: prefersDark,
+                reducedMotion: false,
+                largerText: false,
+                highContrast: false,
+                language: 'system',
+                region: 'system'
             }));
+            this.applyPresentationPreferences({
+                reducedMotion: false,
+                largerText: false,
+                highContrast: false,
+                language: 'system'
+            });
             return;
         }
 
         try {
-            const parsed = JSON.parse(stored) as { darkMode?: boolean };
-            document.documentElement.classList.toggle('theme-dark', !!parsed.darkMode);
+            const parsed = JSON.parse(stored) as {
+                useSystemTheme?: boolean;
+                darkMode?: boolean;
+                reducedMotion?: boolean;
+                largerText?: boolean;
+                highContrast?: boolean;
+                language?: string;
+            };
+            const useSystemTheme = parsed.useSystemTheme ?? true;
+            const darkMode = useSystemTheme ? this.prefersSystemDarkMode() : !!parsed.darkMode;
+            document.documentElement.classList.toggle('theme-dark', darkMode);
+            this.applyPresentationPreferences(parsed);
         } catch {
             const prefersDark = this.prefersSystemDarkMode();
             document.documentElement.classList.toggle('theme-dark', prefersDark);
             localStorage.setItem(this.prefsStorageKey, JSON.stringify({
                 compactFeed: false,
-                darkMode: prefersDark
+                useSystemTheme: true,
+                darkMode: prefersDark,
+                reducedMotion: false,
+                largerText: false,
+                highContrast: false,
+                language: 'system',
+                region: 'system'
             }));
+            this.applyPresentationPreferences({
+                reducedMotion: false,
+                largerText: false,
+                highContrast: false,
+                language: 'system'
+            });
         }
+    }
+
+    private applyPresentationPreferences(prefs: { reducedMotion?: boolean; largerText?: boolean; highContrast?: boolean; language?: string }): void {
+        const root = document.documentElement;
+        root.classList.toggle('prefers-reduced-motion', !!prefs.reducedMotion);
+        root.classList.toggle('larger-text', !!prefs.largerText);
+        root.classList.toggle('high-contrast', !!prefs.highContrast);
+        root.setAttribute('lang', prefs.language && prefs.language !== 'system' ? prefs.language : 'en');
     }
 
     private prefersSystemDarkMode(): boolean {
@@ -1599,81 +1641,16 @@ export class AppComponent implements OnInit, OnDestroy {
 
         this.loadingTrending = true;
         try {
-            const [trending, forYouReels, followingReels] = await Promise.allSettled([
-                this.session.loadTrendingHashtagsAsync(20),
-                this.session.loadReelFeedAsync(80, 'for-you'),
-                this.session.loadReelFeedAsync(80, 'following')
-            ]);
-
-            const mergedCounts = new Map<string, number>();
-
-            if (trending.status === 'fulfilled') {
-                for (const item of trending.value) {
-                    const tag = item.tag.trim();
-                    if (!tag) {
-                        continue;
-                    }
-
-                    mergedCounts.set(tag, (mergedCounts.get(tag) ?? 0) + Math.max(0, item.count));
-                }
-            }
-
-            const reelsById = new Map<string, string>();
-            if (forYouReels.status === 'fulfilled') {
-                for (const reel of forYouReels.value) {
-                    reelsById.set(reel.id, reel.id);
-                    this.collectReelHashtags(reel, mergedCounts);
-                }
-            }
-
-            if (followingReels.status === 'fulfilled') {
-                for (const reel of followingReels.value) {
-                    if (reelsById.has(reel.id)) {
-                        continue;
-                    }
-
-                    reelsById.set(reel.id, reel.id);
-                    this.collectReelHashtags(reel, mergedCounts);
-                }
-            }
-
-            this.trendingHashtags = Array.from(mergedCounts.entries())
-                .map(([tag, count]) => ({ tag, count }))
+            const trending = await this.session.loadTrendingHashtagsAsync(20);
+            this.trendingHashtags = trending
+                .map(item => ({ tag: item.tag.trim(), count: Math.max(0, item.count) }))
+                .filter(item => item.tag.length > 0)
                 .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
                 .slice(0, 3);
         } catch {
             this.trendingHashtags = [];
         } finally {
             this.loadingTrending = false;
-        }
-    }
-
-    private collectReelHashtags(reel: ReelDto, counts: Map<string, number>): void {
-        this.collectHashtagsFromText(reel.caption, counts);
-        for (const comment of reel.comments ?? []) {
-            this.collectHashtagsFromText(comment.content, counts);
-        }
-    }
-
-    private collectHashtagsFromText(content: string | null | undefined, counts: Map<string, number>): void {
-        const text = (content ?? '').trim();
-        if (!text) {
-            return;
-        }
-
-        const hashtagRegex = /#[\p{L}\p{N}_-]+/gu;
-        const uniqueTags = new Set<string>();
-        for (const match of text.matchAll(hashtagRegex)) {
-            const normalized = (match[0] ?? '').slice(1).trim();
-            if (!normalized) {
-                continue;
-            }
-
-            uniqueTags.add(normalized);
-        }
-
-        for (const tag of uniqueTags) {
-            counts.set(tag, (counts.get(tag) ?? 0) + 1);
         }
     }
 

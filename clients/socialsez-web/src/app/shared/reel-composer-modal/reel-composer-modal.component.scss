@@ -470,6 +470,18 @@
     gap: 8px;
 }
 
+.sensitive-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-size: 0.9rem;
+}
+
+.sensitive-toggle input {
+    margin: 0;
+}
+
 .reel-publish-preview {
     display: grid;
     gap: 6px;

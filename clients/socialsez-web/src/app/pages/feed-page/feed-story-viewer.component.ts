@@ -28,6 +28,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     @Input() canReport = false;
     @Input() reportingStory = false;
     @Input() errorMessage = '';
+    @Input() hideSensitiveMedia = false;
 
     @ViewChild('storyVideoEl') private readonly storyVideoRef?: ElementRef<HTMLVideoElement>;
 
@@ -47,6 +48,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     isClosing = false;
     copyLinkCopied = false;
     videoPlaybackError = false;
+    sensitiveMediaRevealed = false;
 
     private imageProgressFrameId = 0;
     private videoProgressFrameId = 0;
@@ -66,6 +68,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
             this.isClosing = false;
             this.copyLinkCopied = false;
             this.videoPlaybackError = false;
+            this.sensitiveMediaRevealed = false;
             this.clearCloseTimeout();
             this.resetPlaybackState();
         }
@@ -233,6 +236,15 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         this.likeToggled.emit(this.activeStory);
     }
 
+    shouldHideSensitiveStory(): boolean {
+        return this.hideSensitiveMedia && this.activeStory?.isSensitive === true && !this.sensitiveMediaRevealed;
+    }
+
+    revealSensitiveStory(): void {
+        this.sensitiveMediaRevealed = true;
+        this.resetPlaybackState();
+    }
+
     onShareClick(): void {
         if (!this.activeStory || this.sharingStory) {
             return;
@@ -391,6 +403,10 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
 
         const story = this.activeStory;
         if (!story) {
+            return;
+        }
+
+        if (this.shouldHideSensitiveStory()) {
             return;
         }
 

@@ -42,6 +42,11 @@
 
                 <p class="media-file" *ngIf="storyMediaFile">Selected: {{ storyMediaFile.name }}</p>
                 <p class="media-file">Stories expire automatically after 24 hours.</p>
+
+                <label class="sensitive-toggle">
+                    <input type="checkbox" [checked]="markStorySensitive" (change)="markStorySensitive = $any($event.target).checked" [disabled]="postingStory" />
+                    <span>Mark this story as sensitive media</span>
+                </label>
             </ng-container>
 
             <ng-container *ngIf="storyComposerStep === 2">
@@ -190,7 +195,7 @@
     <button class="retry" *ngIf="(selectedContentTab === 'posts' && !loading && error) || (selectedContentTab === 'reels' && !reelsLoading && reelsError)" (click)="load()">Retry</button>
 
     <div class="list" *ngIf="selectedContentTab === 'posts' && !loading && !error && feed.length; else postsEmptyState">
-        <app-post-card *ngFor="let post of feed; trackBy: trackPostById" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [reacting]="reactingPostId === post.id"
+        <app-post-card *ngFor="let post of feed; trackBy: trackPostById" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [reacting]="reactingPostId === post.id" [hideSensitiveMedia]="hideSensitiveMediaEnabled"
             [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [savingEdit]="savingPost"
             [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)"
             (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)"
@@ -209,9 +214,9 @@
     </div>
 
     <app-feed-reels-list *ngIf="selectedContentTab === 'reels' && !reelsLoading && !reelsError && reels.length; else reelsEmptyState" [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="activeUnseenStoryAuthorHandles" [reactingReelId]="reactingReelId"
-        [commentingReelId]="commentingReelId" [sharingReelId]="sharingReelId" [showOwnerActions]="true" [viewerProfileId]="currentProfileId" [deletingReelId]="deletingReelId" (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)"
-        (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)" (reelDeleted)="deleteReel($event)"
-        (reportRequested)="openReelReport($event)" (reelCommentReportRequested)="openReelCommentReport($event)"></app-feed-reels-list>
+        [commentingReelId]="commentingReelId" [sharingReelId]="sharingReelId" [showOwnerActions]="true" [viewerProfileId]="currentProfileId" [deletingReelId]="deletingReelId" [hideSensitiveMedia]="hideSensitiveMediaEnabled" (authorAvatarClicked)="openProfileOrStory($event)"
+        (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)"
+        (reelDeleted)="deleteReel($event)" (reportRequested)="openReelReport($event)" (reelCommentReportRequested)="openReelCommentReport($event)"></app-feed-reels-list>
 
     <ng-template #postsEmptyState>
         <p class="empty" *ngIf="selectedContentTab === 'posts' && !loading && !error">No posts yet. Follow people or create your first post to kick off your timeline.</p>
@@ -234,7 +239,7 @@
 <app-share-reel-message-modal [open]="!!pendingShareStory" [reel]="pendingShareStoryAsReel" [contentKind]="'story'" [busy]="!!sharingStoryId" (cancel)="cancelStoryShareModal()" (confirm)="submitStoryShareAsMessage($event)">
 </app-share-reel-message-modal>
 
-<app-feed-story-viewer [activeStory]="activeStory" [activeStoryGroup]="activeStoryGroup" [activeStoryIndex]="activeStoryIndex" [storyCount]="activeStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousStory" [hasNextStory]="hasNextStory"
+<app-feed-story-viewer [activeStory]="activeStory" [activeStoryGroup]="activeStoryGroup" [activeStoryIndex]="activeStoryIndex" [storyCount]="activeStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousStory" [hasNextStory]="hasNextStory" [hideSensitiveMedia]="hideSensitiveMediaEnabled"
     [liked]="activeStory ? isStoryLiked(activeStory.id) : false" [sendingReply]="sendingStoryReply" [sharingStory]="sharingStoryMessage" [canDelete]="canDeleteActiveStory" [deletingStory]="deletingStory" [canReport]="canReportActiveStory" [reportingStory]="reportingContent"
     [errorMessage]="storyViewerError" (closed)="closeStoryViewer()" (previous)="showPreviousStory()" (next)="showNextStory()" (replySubmitted)="sendStoryReply($event)" (likeToggled)="toggleStoryLike($event)" (shareRequested)="shareStoryAsMessage($event)"
     (deleteRequested)="requestDeleteStory($event)" (reportRequested)="openStoryReport($event)">

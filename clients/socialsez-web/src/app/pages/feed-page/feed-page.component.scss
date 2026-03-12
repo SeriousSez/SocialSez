@@ -372,6 +372,18 @@ h2 {
     font-size: 0.86rem;
 }
 
+.sensitive-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-size: 0.9rem;
+}
+
+.sensitive-toggle input {
+    margin: 0;
+}
+
 .composer-steps {
     display: flex;
     gap: 12px;

@@ -33,7 +33,7 @@ public class StoriesController(IStoryService storyService, SocialSezContext dbCo
 
             var mediaUrl = await SaveMediaAsync(profileId, request.Media, cancellationToken);
             var story = await storyService.CreateAsync(
-                new CreateStoryRequest(profileId, request.Caption, mediaUrl),
+                new CreateStoryRequest(profileId, request.Caption, mediaUrl, request.IsSensitive),
                 cancellationToken);
 
             return Ok(story);
@@ -196,5 +196,5 @@ public class StoriesController(IStoryService storyService, SocialSezContext dbCo
         ".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm", ".mov", ".m4v", ".ogv"
     };
 
-    public sealed record CreateStoryFormRequest(string? Caption, IFormFile? Media);
+    public sealed record CreateStoryFormRequest(string? Caption, IFormFile? Media, bool IsSensitive = false);
 }

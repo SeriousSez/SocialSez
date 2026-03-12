@@ -126,6 +126,11 @@
                         </div>
                     </label>
                     <p class="media-file">{{ collaboratorsHint }}</p>
+
+                    <label class="sensitive-toggle">
+                        <input type="checkbox" [checked]="markSensitive" (change)="markSensitive = $any($event.target).checked" />
+                        <span>Mark this reel as sensitive media</span>
+                    </label>
                 </div>
             </section>
         </ng-template>
