@@ -1865,8 +1865,10 @@ export class FeedPageComponent implements OnDestroy {
         }
 
         const requestToken = ++this.storyTrimPreviewRefreshToken;
-        this.generatingStoryTrimPreviews = true;
-        this.clearStoryTrimPreviewOptions();
+        this.ngZone.run(() => {
+            this.generatingStoryTrimPreviews = true;
+            this.clearStoryTrimPreviewOptions();
+        });
 
         const sampleCount = 12;
         const lastSecond = Math.max(0, durationSeconds - 1);
@@ -1880,14 +1882,20 @@ export class FeedPageComponent implements OnDestroy {
                 return;
             }
 
-            this.storyTrimPreviewOptions = previews;
+            this.ngZone.run(() => {
+                this.storyTrimPreviewOptions = previews;
+            });
         } catch {
             if (requestToken === this.storyTrimPreviewRefreshToken) {
-                this.clearStoryTrimPreviewOptions();
+                this.ngZone.run(() => {
+                    this.clearStoryTrimPreviewOptions();
+                });
             }
         } finally {
             if (requestToken === this.storyTrimPreviewRefreshToken) {
-                this.generatingStoryTrimPreviews = false;
+                this.ngZone.run(() => {
+                    this.generatingStoryTrimPreviews = false;
+                });
             }
         }
     }

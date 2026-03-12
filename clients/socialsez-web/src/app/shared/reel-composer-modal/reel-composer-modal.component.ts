@@ -738,9 +738,11 @@ export class ReelComposerModalComponent implements OnDestroy {
             coverOptions.push({ index, timeSeconds, blob: coverBlob, previewUrl: coverPreviewUrl });
         }
 
-        this.reelTrimPreviewOptions = trimOptions;
-        this.reelCoverOptions = coverOptions;
-        this.selectedReelCoverIndex = coverOptions[0]?.index ?? 0;
+        this.runInZone(() => {
+            this.reelTrimPreviewOptions = trimOptions;
+            this.reelCoverOptions = coverOptions;
+            this.selectedReelCoverIndex = coverOptions[0]?.index ?? 0;
+        });
     }
 
     private async captureVideoFrame(file: File, timeSeconds: number, useFrameCrop = true): Promise<Blob> {
