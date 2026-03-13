@@ -34,6 +34,8 @@ public sealed record PostReactionDetailDto(
 
 public sealed record HashtagSearchResultDto(string Tag, int Count);
 
+public sealed record FollowedHashtagDto(string Tag, DateTime FollowedAtUtc);
+
 public sealed record HashtagReelDto(
     Guid Id,
     Guid AuthorId,

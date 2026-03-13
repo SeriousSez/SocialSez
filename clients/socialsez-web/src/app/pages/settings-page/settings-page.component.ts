@@ -87,6 +87,11 @@ export class SettingsPageComponent implements OnDestroy {
     handle = '';
     bio = '';
     imageUrl = '';
+    birthMonth = '';
+    birthDay = '';
+    birthYear = '';
+    countryCode = '';
+    marketingOptIn = false;
     isPrivate = false;
     private initialPrivacy = false;
     savingPrivacy = false;
@@ -143,6 +148,55 @@ export class SettingsPageComponent implements OnDestroy {
         { value: 'US', label: 'United States' },
         { value: 'GB', label: 'United Kingdom' },
         { value: 'CA', label: 'Canada' }
+    ];
+
+    readonly monthOptions = Array.from({ length: 12 }, (_, index) => `${index + 1}`.padStart(2, '0'));
+    readonly dayOptions = Array.from({ length: 31 }, (_, index) => `${index + 1}`.padStart(2, '0'));
+    readonly yearOptions = Array.from({ length: 110 }, (_, index) => `${new Date().getFullYear() - index}`);
+    readonly countryOptions: ReadonlyArray<{ value: string; label: string }> = [
+        { value: 'AR', label: 'Argentina' },
+        { value: 'AU', label: 'Australia' },
+        { value: 'AT', label: 'Austria' },
+        { value: 'BE', label: 'Belgium' },
+        { value: 'BR', label: 'Brazil' },
+        { value: 'BG', label: 'Bulgaria' },
+        { value: 'CA', label: 'Canada' },
+        { value: 'CH', label: 'Switzerland' },
+        { value: 'CL', label: 'Chile' },
+        { value: 'CN', label: 'China' },
+        { value: 'CO', label: 'Colombia' },
+        { value: 'CZ', label: 'Czechia' },
+        { value: 'DE', label: 'Germany' },
+        { value: 'DK', label: 'Denmark' },
+        { value: 'EE', label: 'Estonia' },
+        { value: 'ES', label: 'Spain' },
+        { value: 'FI', label: 'Finland' },
+        { value: 'FR', label: 'France' },
+        { value: 'GB', label: 'United Kingdom' },
+        { value: 'GR', label: 'Greece' },
+        { value: 'HR', label: 'Croatia' },
+        { value: 'HU', label: 'Hungary' },
+        { value: 'IE', label: 'Ireland' },
+        { value: 'IN', label: 'India' },
+        { value: 'IT', label: 'Italy' },
+        { value: 'JP', label: 'Japan' },
+        { value: 'LT', label: 'Lithuania' },
+        { value: 'LU', label: 'Luxembourg' },
+        { value: 'LV', label: 'Latvia' },
+        { value: 'MX', label: 'Mexico' },
+        { value: 'NL', label: 'Netherlands' },
+        { value: 'NO', label: 'Norway' },
+        { value: 'NZ', label: 'New Zealand' },
+        { value: 'PL', label: 'Poland' },
+        { value: 'PT', label: 'Portugal' },
+        { value: 'RO', label: 'Romania' },
+        { value: 'SE', label: 'Sweden' },
+        { value: 'SG', label: 'Singapore' },
+        { value: 'SK', label: 'Slovakia' },
+        { value: 'TR', label: 'Turkey' },
+        { value: 'UA', label: 'Ukraine' },
+        { value: 'US', label: 'United States' },
+        { value: 'ZA', label: 'South Africa' }
     ];
 
     @ViewChild('avatarFileInput') private avatarFileInputRef?: ElementRef<HTMLInputElement>;
@@ -227,6 +281,9 @@ export class SettingsPageComponent implements OnDestroy {
             this.handle = session.profile.handle;
             this.bio = session.profile.bio;
             this.imageUrl = session.profile.imageUrl ?? '';
+            this.setBirthDateParts(session.profile.dateOfBirth?.slice(0, 10));
+            this.countryCode = session.profile.countryCode ?? '';
+            this.marketingOptIn = session.profile.marketingOptIn === true;
             this.isPrivate = session.profile.isPrivate;
             this.initialPrivacy = session.profile.isPrivate;
         }
@@ -299,11 +356,19 @@ export class SettingsPageComponent implements OnDestroy {
     async saveProfile(): Promise<void> {
         try {
             this.handle = this.normalizeHandle(this.handle);
+            if (this.hasAnyBirthPart && !this.composedDateOfBirth) {
+                this.session.message = 'Please select a complete valid birth date.';
+                return;
+            }
+
             await this.session.updateProfileAsync({
                 displayName: this.displayName,
                 handle: this.handle,
                 bio: this.bio,
-                imageUrl: this.imageUrl
+                imageUrl: this.imageUrl,
+                dateOfBirth: this.composedDateOfBirth,
+                countryCode: this.countryCode || undefined,
+                marketingOptIn: this.marketingOptIn
             });
             this.session.message = 'Profile settings saved.';
         } catch (error) {
@@ -319,6 +384,9 @@ export class SettingsPageComponent implements OnDestroy {
                 this.handle = this.session.profile.handle;
                 this.bio = this.session.profile.bio;
                 this.imageUrl = this.session.profile.imageUrl ?? '';
+                this.setBirthDateParts(this.session.profile.dateOfBirth?.slice(0, 10));
+                this.countryCode = this.session.profile.countryCode ?? '';
+                this.marketingOptIn = this.session.profile.marketingOptIn === true;
                 this.isPrivate = this.session.profile.isPrivate;
                 this.initialPrivacy = this.session.profile.isPrivate;
             }
@@ -330,6 +398,33 @@ export class SettingsPageComponent implements OnDestroy {
 
     get hasPrivacyChanges(): boolean {
         return this.isPrivate !== this.initialPrivacy;
+    }
+
+    get hasAnyBirthPart(): boolean {
+        return !!(this.birthYear || this.birthMonth || this.birthDay);
+    }
+
+    get composedDateOfBirth(): string | undefined {
+        if (!this.birthYear || !this.birthMonth || !this.birthDay) {
+            return undefined;
+        }
+
+        const raw = `${this.birthYear}-${this.birthMonth}-${this.birthDay}`;
+        const parsed = new Date(`${raw}T00:00:00Z`);
+        if (Number.isNaN(parsed.getTime())) {
+            return undefined;
+        }
+
+        const [year, month, day] = raw.split('-').map(value => Number.parseInt(value, 10));
+        if (
+            parsed.getUTCFullYear() !== year
+            || parsed.getUTCMonth() + 1 !== month
+            || parsed.getUTCDate() !== day
+        ) {
+            return undefined;
+        }
+
+        return raw;
     }
 
     get hasDiscoveryPrivacyChanges(): boolean {
@@ -888,7 +983,10 @@ export class SettingsPageComponent implements OnDestroy {
                 displayName: this.displayName,
                 handle: this.handle,
                 bio: this.bio,
-                imageUrl: uploadedUrl
+                imageUrl: uploadedUrl,
+                dateOfBirth: this.composedDateOfBirth,
+                countryCode: this.countryCode || undefined,
+                marketingOptIn: this.marketingOptIn
             });
 
             this.session.message = 'Profile image updated.';
@@ -1126,6 +1224,20 @@ export class SettingsPageComponent implements OnDestroy {
         } catch (error) {
             this.session.message = toUserErrorMessage(error, actionError('load active sessions'));
         }
+    }
+
+    private setBirthDateParts(value: string | null | undefined): void {
+        if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            this.birthYear = '';
+            this.birthMonth = '';
+            this.birthDay = '';
+            return;
+        }
+
+        const [year, month, day] = value.split('-');
+        this.birthYear = year;
+        this.birthMonth = month;
+        this.birthDay = day;
     }
 
     private isSessionActive(session: AuthSessionDto, nowMs: number): boolean {

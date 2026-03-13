@@ -15,6 +15,38 @@
     </div>
 
     <section class="results" *ngIf="!loading && showRecommendedReelsSection">
+        <section class="section" *ngIf="showFollowedHashtagsSection">
+            <h3>Following hashtags</h3>
+            <div class="hashtags followed-hashtags">
+                <div class="hashtag-follow-item" *ngFor="let tag of followedHashtags">
+                    <a [routerLink]="['/hashtags', tag]" class="hashtag-pill">#{{ tag }}</a>
+                    <button type="button" class="ghost hashtag-follow-btn" (click)="toggleHashtagFollow(tag, $event)">Unfollow</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" *ngIf="showFollowedHashtagsSection && followedHashtagPosts.length">
+            <h3>From followed hashtags</h3>
+            <div class="post-list">
+                <app-post-card *ngFor="let post of followedHashtagPosts" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [reacting]="reactingPostId === post.id"
+                    [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [canInteract]="isAuthenticated" [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent"
+                    [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (toggleLike)="toggleLike(post)"
+                    (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)"
+                    (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
+                    <div post-header class="author">
+                        <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? ('Open @' + post.authorHandle + ' stories') : ('View @' + post.authorHandle + ' profile')">
+                            <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else followedAuthorInitial"
+                                [src]="post.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Author image" />
+                        </a>
+                        <ng-template #followedAuthorInitial>
+                            <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
+                        </ng-template>
+                        <div class="meta"><a class="author-link" [routerLink]="['/users', post.authorHandle]">@{{ post.authorHandle }}</a> · {{ post.createdAtUtc | date:'short' }}</div>
+                    </div>
+                </app-post-card>
+            </div>
+        </section>
+
         <section class="section" *ngIf="showRecommendedProfilesSection && recommendedProfiles.length">
             <h3>People you may know</h3>
             <article class="card" *ngFor="let profile of recommendedProfiles">
@@ -37,7 +69,30 @@
             </article>
         </section>
 
-        <ng-container *ngTemplateOutlet="reelsSectionTemplate; context: { title: 'Recommended reels from people you do not follow', reels: recommendedReels }"></ng-container>
+        <section class="section" *ngIf="showRecommendedReelsSection && recommendedReels.length">
+            <h3>For you</h3>
+
+            <div class="recommended-reel-mosaic" *ngIf="showRecommendedReelsMosaic; else recommendedReelsFallback">
+                <article class="recommended-reel-tile" *ngFor="let reel of recommendedReels | slice:0:18">
+                    <img class="recommended-reel-image" *ngIf="reel.thumbnailUrl; else noRecommendedReelImage" [src]="reel.thumbnailUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Recommended reel" />
+                    <ng-template #noRecommendedReelImage>
+                        <div class="recommended-reel-image recommended-reel-image-fallback">@{{ reel.authorHandle }}</div>
+                    </ng-template>
+
+                    <div class="recommended-reel-overlay">
+                        <span class="recommended-reel-handle">@{{ reel.authorHandle }}</span>
+                        <span class="recommended-reel-caption" *ngIf="reel.caption?.trim()">{{ reel.caption }}</span>
+                    </div>
+                </article>
+            </div>
+
+            <ng-template #recommendedReelsFallback>
+                <app-feed-reels-list [reels]="recommendedReels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="unseenStoryAuthorHandles" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId" [viewerProfileId]="currentProfileId"
+                    [canInteract]="isAuthenticated" (likeToggled)="toggleReelLike($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (commentAdded)="addReelComment($event)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)"
+                    (authorAvatarClicked)="openProfileByHandle($event)">
+                </app-feed-reels-list>
+            </ng-template>
+        </section>
 
         <section class="discover-empty" *ngIf="!recommendedReels.length && !recommendedProfiles.length">
             <section class="message-empty no-chat-empty">
@@ -146,7 +201,10 @@
         <section class="section" *ngIf="showHashtagsSection && hashtagResults.length">
             <h3>Hashtags</h3>
             <div class="hashtags">
-                <a *ngFor="let hashtag of hashtagResults" [routerLink]="['/hashtags', hashtag.tag]" class="hashtag-pill">#{{ hashtag.tag }} <span>{{ hashtag.count }}</span></a>
+                <div class="hashtag-follow-item" *ngFor="let hashtag of hashtagResults">
+                    <a [routerLink]="['/hashtags', hashtag.tag]" class="hashtag-pill">#{{ hashtag.tag }} <span>{{ hashtag.count }}</span></a>
+                    <button type="button" class="ghost hashtag-follow-btn" (click)="toggleHashtagFollow(hashtag.tag, $event)">{{ isHashtagFollowed(hashtag.tag) ? 'Unfollow' : 'Follow' }}</button>
+                </div>
             </div>
         </section>
 

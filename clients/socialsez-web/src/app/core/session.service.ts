@@ -17,6 +17,7 @@ import {
     FeedMode,
     FollowActionResultDto,
     FollowRequestDto,
+    FollowedHashtagDto,
     FollowStatusDto,
     FollowSuggestionsDto,
     HashtagBlogDto,
@@ -129,12 +130,14 @@ export class SessionService {
         }
     }
 
-    async registerAsync(request: RegisterRequest): Promise<void> {
+    async registerAsync(request: RegisterRequest, navigateToFeed = true): Promise<void> {
         const auth = await firstValueFrom(this.api.register(request));
         this.applyAuth(auth);
         this.message = `Registered as ${auth.profile.handle}.`;
         this.emitAppChange('session');
-        await this.router.navigateByUrl('/feed');
+        if (navigateToFeed) {
+            await this.router.navigateByUrl('/feed');
+        }
     }
 
     async loginAsync(request: LoginRequest): Promise<void> {
@@ -332,6 +335,21 @@ export class SessionService {
 
     async loadTrendingHashtagsAsync(take = 10): Promise<HashtagSearchResultDto[]> {
         return firstValueFrom(this.api.getTrendingHashtags(take));
+    }
+
+    async loadFollowedHashtagsAsync(take = 20): Promise<FollowedHashtagDto[]> {
+        return firstValueFrom(this.api.getFollowedHashtags(take));
+    }
+
+    async followHashtagAsync(tag: string): Promise<FollowedHashtagDto> {
+        const followed = await firstValueFrom(this.api.followHashtag(tag));
+        this.emitAppChange('posts');
+        return followed;
+    }
+
+    async unfollowHashtagAsync(tag: string): Promise<void> {
+        await firstValueFrom(this.api.unfollowHashtag(tag));
+        this.emitAppChange('posts');
     }
 
     async searchProfilesAsync(query: string): Promise<ProfileDto[]> {

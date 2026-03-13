@@ -1,6 +1,15 @@
 namespace SocialSez.ApplicationService.Models;
 
-public sealed record RegisterRequest(string Email, string Password, string Handle, string DisplayName, string? Bio);
+public sealed record RegisterRequest(
+    string Email,
+    string Password,
+    string Handle,
+    string DisplayName,
+    string? Bio,
+    DateTime? DateOfBirth,
+    string? CountryCode,
+    bool MarketingOptIn,
+    bool IsPrivateByDefault);
 
 public sealed record LoginRequest(string Email, string Password);
 

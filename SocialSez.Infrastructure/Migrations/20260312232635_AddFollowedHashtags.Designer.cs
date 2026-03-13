@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SocialSez.Infrastructure;
 
@@ -11,9 +12,11 @@ using SocialSez.Infrastructure;
 namespace SocialSez.Infrastructure.Migrations
 {
     [DbContext(typeof(SocialSezContext))]
-    partial class SocialSezContextModelSnapshot : ModelSnapshot
+    [Migration("20260312232635_AddFollowedHashtags")]
+    partial class AddFollowedHashtags
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1286,14 +1289,7 @@ namespace SocialSez.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
-                    b.Property<string>("CountryCode")
-                        .HasMaxLength(2)
-                        .HasColumnType("varchar(2)");
-
                     b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("DateOfBirth")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("DisplayName")
@@ -1317,11 +1313,6 @@ namespace SocialSez.Infrastructure.Migrations
 
                     b.Property<DateTime?>("LastHandleChangeAtUtc")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<bool>("MarketingOptIn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasDefaultValue(false);
 
                     b.HasKey("Id");
 

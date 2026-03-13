@@ -17,7 +17,7 @@
     <p class="meta" *ngIf="uploadingMedia">Uploading media and publishing...</p>
 
     <label class="sensitive-toggle">
-        <input type="checkbox" [(ngModel)]="markSensitive" [disabled]="uploadingMedia" />
+        <input type="checkbox" [ngModel]="markSensitive" (ngModelChange)="onSensitiveToggleChanged($event)" [disabled]="uploadingMedia" />
         <span>Mark this post as sensitive media</span>
     </label>
 

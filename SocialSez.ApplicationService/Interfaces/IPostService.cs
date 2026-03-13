@@ -19,6 +19,9 @@ public interface IPostService
     Task<IReadOnlyCollection<PostDto>> SearchPostsAsync(Guid? viewerId, string query, int take = 25, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<HashtagSearchResultDto>> GetTrendingHashtagsAsync(int take = 10, Guid? viewerId = null, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<HashtagSearchResultDto>> SearchHashtagsAsync(string query, int take = 20, Guid? viewerId = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<FollowedHashtagDto>> GetFollowedHashtagsAsync(Guid profileId, int take = 20, CancellationToken cancellationToken = default);
+    Task<FollowedHashtagDto?> FollowHashtagAsync(Guid profileId, string hashtag, CancellationToken cancellationToken = default);
+    Task<bool> UnfollowHashtagAsync(Guid profileId, string hashtag, CancellationToken cancellationToken = default);
     Task<HashtagContentDto> GetHashtagContentAsync(Guid? viewerId, string hashtag, int takePerType = 25, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<PostDto>> GetByHashtagAsync(Guid? viewerId, string hashtag, int take = 25, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<PostDto>> GetByAuthorHandleAsync(Guid profileId, string handle, int take = 25, CancellationToken cancellationToken = default);

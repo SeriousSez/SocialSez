@@ -48,6 +48,7 @@ export class ReelComposerModalComponent implements OnDestroy {
     private static readonly ReelOutputAspect = 9 / 16;
     private static readonly MaxTrimDurationSeconds = 180;
     private static readonly CloseAnimationDurationMs = 180;
+    private readonly draftStorageKey = 'socialsez.reel-composer.draft.v1';
 
     @Input()
     set open(value: boolean) {
@@ -64,6 +65,7 @@ export class ReelComposerModalComponent implements OnDestroy {
 
             this.isClosing = false;
             this.isRendered = true;
+            this.restoreDraft();
             return;
         }
 
@@ -315,6 +317,7 @@ export class ReelComposerModalComponent implements OnDestroy {
     onLocationInput(rawValue: string): void {
         this.reelLocation = rawValue;
         this.updateLocationSuggestions(rawValue);
+        this.persistDraft();
     }
 
     onLocationFocus(): void {
@@ -330,11 +333,13 @@ export class ReelComposerModalComponent implements OnDestroy {
     selectLocationSuggestion(suggestion: LocationSuggestion): void {
         this.reelLocation = suggestion.description;
         this.closeLocationSuggestions();
+        this.persistDraft();
     }
 
     onCollaboratorsInput(rawValue: string): void {
         this.reelCollaborators = rawValue;
         this.updateCollaboratorSuggestions(rawValue);
+        this.persistDraft();
     }
 
     onCollaboratorsFocus(): void {
@@ -350,6 +355,17 @@ export class ReelComposerModalComponent implements OnDestroy {
     selectCollaboratorSuggestion(profile: ProfileDto): void {
         this.reelCollaborators = this.replaceCurrentCollaboratorToken(this.reelCollaborators, `@${profile.handle}`);
         this.closeCollaboratorSuggestions();
+        this.persistDraft();
+    }
+
+    onCaptionInput(rawValue: string): void {
+        this.reelCaption = rawValue;
+        this.persistDraft();
+    }
+
+    onSensitiveToggleChanged(value: boolean): void {
+        this.markSensitive = value;
+        this.persistDraft();
     }
 
     onTrimStartChanged(rawValue: string): void {
@@ -559,6 +575,7 @@ export class ReelComposerModalComponent implements OnDestroy {
                 this.resetComposer();
 
                 await session.createReelAsync(uploadVideo, durationSeconds, captionPayload, thumbnail, isSensitive);
+                this.clearDraft();
                 published.emit();
                 handle.succeed('Reel uploaded!');
                 uploadStatus.emit({
@@ -645,6 +662,52 @@ export class ReelComposerModalComponent implements OnDestroy {
         this.reelPreviewReady = false;
         this.generatingReelCovers = false;
         this.resetFramePosition(false);
+    }
+
+    private persistDraft(): void {
+        const hasDraft = !!this.reelCaption.trim()
+            || !!this.reelLocation.trim()
+            || !!this.reelCollaborators.trim()
+            || this.markSensitive;
+
+        if (!hasDraft) {
+            localStorage.removeItem(this.draftStorageKey);
+            return;
+        }
+
+        localStorage.setItem(this.draftStorageKey, JSON.stringify({
+            reelCaption: this.reelCaption,
+            reelLocation: this.reelLocation,
+            reelCollaborators: this.reelCollaborators,
+            markSensitive: this.markSensitive
+        }));
+    }
+
+    private restoreDraft(): void {
+        const raw = localStorage.getItem(this.draftStorageKey);
+        if (!raw) {
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(raw) as {
+                reelCaption?: string;
+                reelLocation?: string;
+                reelCollaborators?: string;
+                markSensitive?: boolean;
+            };
+
+            this.reelCaption = parsed.reelCaption ?? '';
+            this.reelLocation = parsed.reelLocation ?? '';
+            this.reelCollaborators = parsed.reelCollaborators ?? '';
+            this.markSensitive = parsed.markSensitive === true;
+        } catch {
+            localStorage.removeItem(this.draftStorageKey);
+        }
+    }
+
+    private clearDraft(): void {
+        localStorage.removeItem(this.draftStorageKey);
     }
 
     private clearReelComposerMedia(): void {

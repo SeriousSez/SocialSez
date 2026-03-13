@@ -2,7 +2,8 @@
     <div class="hero">
         <h2>Welcome to Venli</h2>
         <p class="sub" *ngIf="mode === 'login'">Sign in with your email and password.</p>
-        <p class="sub" *ngIf="mode === 'register'">Create your account to start posting and following.</p>
+        <p class="sub" *ngIf="mode === 'register' && registerStep === 'account'">Create your account to start posting and following.</p>
+        <p class="sub" *ngIf="mode === 'register' && registerStep === 'interests'">Pick interests to personalize Discover from day one.</p>
     </div>
 
     <div class="mode-switch" role="tablist" aria-label="Authentication mode">
@@ -10,20 +11,85 @@
         <button type="button" class="mode-btn" role="tab" [attr.aria-selected]="mode === 'register'" [class.active]="mode === 'register'" [disabled]="mode === 'register' || isSubmitting" (click)="setMode('register')">Create account</button>
     </div>
 
-    <form class="auth-form" (ngSubmit)="submit()">
-        <div class="grid">
+    <form class="auth-form" (ngSubmit)="submit()" autocomplete="off" data-lpignore="true" data-form-type="other">
+        <div class="grid" *ngIf="mode === 'login' || registerStep === 'account'">
             <label>Email <input [(ngModel)]="email" name="email" placeholder="you@example.com" /></label>
             <label>Password <input [(ngModel)]="password" name="password" type="password" placeholder="••••••••" /></label>
-            <label *ngIf="mode === 'register'">Handle <input [(ngModel)]="handle" name="handle" (ngModelChange)="onHandleInput($event)" placeholder="sez" /></label>
-            <label *ngIf="mode === 'register'">Display Name <input [(ngModel)]="displayName" name="displayName" placeholder="Sez" /></label>
-            <label class="full" *ngIf="mode === 'register'">Bio <input [(ngModel)]="bio" name="bio" placeholder="Builder" /></label>
+
+            <ng-container *ngIf="mode === 'register'">
+                <label>Confirm Password <input [(ngModel)]="confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" /></label>
+                <label>Handle <input [(ngModel)]="handle" name="handle" (ngModelChange)="onHandleInput($event)" placeholder="sez" /></label>
+                <label>Display Name <input [(ngModel)]="displayName" name="displayName" placeholder="Sez" /></label>
+                <label>Date of Birth
+                    <div class="dob-select-row" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+                        <select class="country-select dob-select" [(ngModel)]="birthDay" name="birthDay" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+                            <option value="">Day</option>
+                            <option *ngFor="let day of dayOptions" [value]="day">{{ day }}</option>
+                        </select>
+                        <select class="country-select dob-select" [(ngModel)]="birthMonth" name="birthMonth" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+                            <option value="">Month</option>
+                            <option *ngFor="let month of monthOptions" [value]="month">{{ month }}</option>
+                        </select>
+                        <select class="country-select dob-select" [(ngModel)]="birthYear" name="birthYear" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+                            <option value="">Year</option>
+                            <option *ngFor="let year of yearOptions" [value]="year">{{ year }}</option>
+                        </select>
+                    </div>
+                </label>
+                <label>Country
+                    <select class="country-select" [(ngModel)]="countryCode" name="countryCode" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+                        <option value="">Select country (optional)</option>
+                        <option *ngFor="let country of countries" [value]="country.code">{{ country.name }}</option>
+                    </select>
+                </label>
+                <label class="full">Bio <input [(ngModel)]="bio" name="bio" placeholder="Builder" /></label>
+
+                <p class="hint full" *ngIf="normalizedHandlePreview">Your profile URL: /users/{{ normalizedHandlePreview }}</p>
+                <p class="hint full">Password strength: <strong [class.weak]="passwordStrengthLabel === 'Weak'" [class.medium]="passwordStrengthLabel === 'Medium'" [class.strong]="passwordStrengthLabel === 'Strong'">{{ passwordStrengthLabel }}</strong></p>
+
+                <label class="checkbox full">
+                    <input type="checkbox" [(ngModel)]="acceptedTerms" name="acceptedTerms" />
+                    <span>I agree to the terms and community guidelines.</span>
+                </label>
+
+                <label class="checkbox full">
+                    <input type="checkbox" [(ngModel)]="isPrivateByDefault" name="isPrivateByDefault" />
+                    <span>Make my account private by default.</span>
+                </label>
+
+                <label class="checkbox full">
+                    <input type="checkbox" [(ngModel)]="marketingOptIn" name="marketingOptIn" />
+                    <span>Send me product updates and tips by email.</span>
+                </label>
+            </ng-container>
         </div>
 
+        <section class="interests-step" *ngIf="mode === 'register' && registerStep === 'interests'">
+            <h3>Choose your interests</h3>
+            <p class="hint">Select up to 12 hashtags. We’ll follow them for you to tune your feed.</p>
+
+            <div class="interest-pills" *ngIf="suggestedInterests.length; else noInterestsTemplate">
+                <button type="button" class="interest-pill" *ngFor="let interest of suggestedInterests" [class.selected]="isInterestSelected(interest.tag)" (click)="toggleInterest(interest.tag)">
+                    #{{ interest.tag }}
+                </button>
+            </div>
+
+            <ng-template #noInterestsTemplate>
+                <p class="hint">Trending interests are unavailable right now. You can skip and configure this later in Discover.</p>
+            </ng-template>
+        </section>
+
         <div class="actions">
-            <button class="auth-submit" type="submit" [disabled]="isSubmitting">
+            <button class="auth-submit" type="submit" [disabled]="isSubmitting || (mode === 'register' && registerStep === 'account' && !canSubmitRegistrationAccountStep)">
                 <span class="btn-loader" *ngIf="isSubmitting" aria-hidden="true"></span>
-                <span>{{ isSubmitting ? (mode === 'login' ? 'Signing in...' : 'Creating account...') : (mode === 'login' ? 'Sign in' : 'Create account') }}</span>
+                <span>
+                    {{ isSubmitting
+                    ? (mode === 'login' ? 'Signing in...' : (registerStep === 'account' ? 'Creating account...' : 'Finishing setup...'))
+                    : (mode === 'login' ? 'Sign in' : (registerStep === 'account' ? 'Continue' : 'Finish')) }}
+                </span>
             </button>
+
+            <button *ngIf="mode === 'register' && registerStep === 'interests'" type="button" class="ghost" [disabled]="isSubmitting" (click)="skipInterests()">Skip for now</button>
         </div>
     </form>
 
@@ -33,7 +99,7 @@
         New here?
         <button type="button" class="link-btn" [disabled]="isSubmitting" (click)="setMode('register')">Create an account</button>
     </p>
-    <p class="switch-cta" *ngIf="mode === 'register'">
+    <p class="switch-cta" *ngIf="mode === 'register' && registerStep === 'account'">
         Already have an account?
         <button type="button" class="link-btn" [disabled]="isSubmitting" (click)="setMode('login')">Sign in</button>
     </p>

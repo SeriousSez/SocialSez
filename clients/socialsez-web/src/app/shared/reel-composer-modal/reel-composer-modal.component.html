@@ -96,7 +96,7 @@
 
                 <div class="reel-publish-form">
                     <label>Caption
-                        <textarea rows="3" [value]="reelCaption" (input)="reelCaption = $any($event.target).value"></textarea>
+                        <textarea rows="3" [value]="reelCaption" (input)="onCaptionInput($any($event.target).value)"></textarea>
                     </label>
                     <label>Location
                         <div class="autocomplete-field">
@@ -128,7 +128,7 @@
                     <p class="media-file">{{ collaboratorsHint }}</p>
 
                     <label class="sensitive-toggle">
-                        <input type="checkbox" [checked]="markSensitive" (change)="markSensitive = $any($event.target).checked" />
+                        <input type="checkbox" [checked]="markSensitive" (change)="onSensitiveToggleChanged($any($event.target).checked)" />
                         <span>Mark this reel as sensitive media</span>
                     </label>
                 </div>

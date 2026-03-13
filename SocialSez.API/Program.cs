@@ -154,6 +154,48 @@ using (var scope = app.Services.CreateScope())
 
         if (dbContext.Database.IsSqlite())
         {
+            try
+            {
+                dbContext.Database.ExecuteSqlRaw("ALTER TABLE UserProfiles ADD COLUMN DateOfBirth TEXT NULL;");
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                dbContext.Database.ExecuteSqlRaw("ALTER TABLE UserProfiles ADD COLUMN CountryCode TEXT NULL;");
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                dbContext.Database.ExecuteSqlRaw("ALTER TABLE UserProfiles ADD COLUMN MarketingOptIn INTEGER NOT NULL DEFAULT 0;");
+            }
+            catch
+            {
+            }
+        }
+        else
+        {
+            try
+            {
+                dbContext.Database.ExecuteSqlRaw("""
+                ALTER TABLE UserProfiles
+                    ADD COLUMN IF NOT EXISTS DateOfBirth datetime(6) NULL,
+                    ADD COLUMN IF NOT EXISTS CountryCode varchar(2) NULL,
+                    ADD COLUMN IF NOT EXISTS MarketingOptIn tinyint(1) NOT NULL DEFAULT 0;
+                """);
+            }
+            catch
+            {
+            }
+        }
+
+        if (dbContext.Database.IsSqlite())
+        {
             dbContext.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS PostReactions (
                 PostId TEXT NOT NULL,

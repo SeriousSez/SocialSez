@@ -984,6 +984,75 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .ToArray();
     }
 
+    public async Task<IReadOnlyCollection<FollowedHashtagDto>> GetFollowedHashtagsAsync(Guid profileId, int take = 20, CancellationToken cancellationToken = default)
+    {
+        await EnsurePostSchemaAsync(cancellationToken);
+
+        take = Math.Clamp(take, 1, 100);
+
+        return await dbContext.FollowedHashtags
+            .AsNoTracking()
+            .Where(x => x.ProfileId == profileId)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(take)
+            .Select(x => new FollowedHashtagDto(x.Tag, x.CreatedAtUtc))
+            .ToArrayAsync(cancellationToken);
+    }
+
+    public async Task<FollowedHashtagDto?> FollowHashtagAsync(Guid profileId, string hashtag, CancellationToken cancellationToken = default)
+    {
+        await EnsurePostSchemaAsync(cancellationToken);
+
+        var normalizedHashtag = NormalizeHashtag(hashtag);
+        if (string.IsNullOrEmpty(normalizedHashtag))
+        {
+            return null;
+        }
+
+        var existing = await dbContext.FollowedHashtags
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ProfileId == profileId && x.Tag == normalizedHashtag, cancellationToken);
+
+        if (existing is not null)
+        {
+            return new FollowedHashtagDto(existing.Tag, existing.CreatedAtUtc);
+        }
+
+        var followed = new FollowedHashtag
+        {
+            ProfileId = profileId,
+            Tag = normalizedHashtag,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        dbContext.FollowedHashtags.Add(followed);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return new FollowedHashtagDto(followed.Tag, followed.CreatedAtUtc);
+    }
+
+    public async Task<bool> UnfollowHashtagAsync(Guid profileId, string hashtag, CancellationToken cancellationToken = default)
+    {
+        await EnsurePostSchemaAsync(cancellationToken);
+
+        var normalizedHashtag = NormalizeHashtag(hashtag);
+        if (string.IsNullOrEmpty(normalizedHashtag))
+        {
+            return false;
+        }
+
+        var existing = await dbContext.FollowedHashtags
+            .FirstOrDefaultAsync(x => x.ProfileId == profileId && x.Tag == normalizedHashtag, cancellationToken);
+
+        if (existing is null)
+        {
+            return false;
+        }
+
+        dbContext.FollowedHashtags.Remove(existing);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     public async Task<HashtagContentDto> GetHashtagContentAsync(Guid? viewerId, string hashtag, int takePerType = 25, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
@@ -1639,7 +1708,18 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             {
             }
 
+            dbContext.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS FollowedHashtags (
+                ProfileId TEXT NOT NULL,
+                Tag TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                PRIMARY KEY (ProfileId, Tag),
+                FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+            );
+            """);
+
             await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_Comments_ParentCommentId ON Comments (ParentCommentId);", cancellationToken);
+            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_FollowedHashtags_ProfileId_CreatedAtUtc ON FollowedHashtags (ProfileId, CreatedAtUtc);", cancellationToken);
             postSchemaInitialized = true;
         }
         finally

@@ -183,7 +183,10 @@ public class SafetyService(SocialSezContext dbContext) : ISafetyService
                 x.Blocked.ImageUrl,
                 x.Blocked.IsPrivate,
                 x.Blocked.CreatedAtUtc,
-                null))
+                null,
+                null,
+                null,
+                false))
             .Take(take)
             .ToArrayAsync(cancellationToken);
     }

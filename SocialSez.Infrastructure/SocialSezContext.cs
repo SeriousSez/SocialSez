@@ -17,6 +17,7 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<ChatMessageReaction> ChatMessageReactions => Set<ChatMessageReaction>();
     public DbSet<Follow> Follows => Set<Follow>();
+    public DbSet<FollowedHashtag> FollowedHashtags => Set<FollowedHashtag>();
     public DbSet<Story> Stories => Set<Story>();
     public DbSet<StoryView> StoryViews => Set<StoryView>();
     public DbSet<Reel> Reels => Set<Reel>();
@@ -86,6 +87,8 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
             entity.Property(x => x.DisplayName).HasMaxLength(120).IsRequired();
             entity.Property(x => x.Bio).HasMaxLength(500);
             entity.Property(x => x.ImageUrl).HasMaxLength(1024);
+            entity.Property(x => x.CountryCode).HasMaxLength(2);
+            entity.Property(x => x.MarketingOptIn).HasDefaultValue(false);
             entity.Property(x => x.IsPrivate).HasDefaultValue(false);
             entity.Property(x => x.LastHandleChangeAtUtc);
             entity.HasIndex(x => x.Handle).IsUnique();
@@ -200,6 +203,20 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
                 .WithMany(x => x.Followers)
                 .HasForeignKey(x => x.FollowedId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<FollowedHashtag>(entity =>
+        {
+            entity.ToTable("FollowedHashtags");
+            entity.HasKey(x => new { x.ProfileId, x.Tag });
+            entity.Property(x => x.Tag).HasMaxLength(64).IsRequired();
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.FollowedHashtags)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.ProfileId, x.CreatedAtUtc });
         });
 
         modelBuilder.Entity<ChatConversation>(entity =>

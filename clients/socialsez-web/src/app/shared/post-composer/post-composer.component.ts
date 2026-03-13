@@ -16,6 +16,7 @@ import { UploadProgressService } from '../../core/upload-progress.service';
 })
 export class PostComposerComponent implements OnDestroy {
     readonly maxContentLength = 3000;
+    private readonly draftStorageKey = 'socialsez.post-composer.draft.v1';
 
     @Input() showCancel = false;
     @Input() title = 'Compose';
@@ -54,7 +55,9 @@ export class PostComposerComponent implements OnDestroy {
     constructor(
         private readonly session: SessionService,
         private readonly uploadProgress: UploadProgressService
-    ) { }
+    ) {
+        this.restoreDraft();
+    }
 
     ngOnDestroy(): void {
         if (this.mentionSearchDebounceId !== null) {
@@ -67,11 +70,13 @@ export class PostComposerComponent implements OnDestroy {
 
     onEditorContentChanged(value: string): void {
         this.content = this.normalizeContentLength(value ?? '');
+        this.persistDraft();
     }
 
     onContentInput(value: string, textarea: HTMLTextAreaElement): void {
         const normalizedValue = this.normalizeContentLength(value);
         this.content = normalizedValue;
+        this.persistDraft();
 
         if (normalizedValue !== value) {
             const nextCaret = Math.min(textarea.selectionStart ?? normalizedValue.length, normalizedValue.length);
@@ -129,6 +134,7 @@ export class PostComposerComponent implements OnDestroy {
             this.content = '';
             this.markSensitive = false;
             this.clearSelectedMedia();
+            this.clearDraft();
             this.status = 'Posted.';
             handle.succeed('Post published!');
             this.posted.emit();
@@ -148,8 +154,14 @@ export class PostComposerComponent implements OnDestroy {
         this.content = '';
         this.markSensitive = false;
         this.clearSelectedMedia();
+        this.clearDraft();
         this.status = '';
         this.canceled.emit();
+    }
+
+    onSensitiveToggleChanged(value: boolean): void {
+        this.markSensitive = value;
+        this.persistDraft();
     }
 
     openPostMediaPicker(): void {
@@ -164,6 +176,7 @@ export class PostComposerComponent implements OnDestroy {
         const input = event.target as HTMLInputElement;
         const files = Array.from(input.files ?? []);
         if (files.length === 0) {
+            this.persistDraft();
             return;
         }
 
@@ -172,6 +185,7 @@ export class PostComposerComponent implements OnDestroy {
             this.clearSelectedMedia();
             this.status = 'Unsupported file type selected.';
             input.value = '';
+            this.persistDraft();
             return;
         }
 
@@ -181,6 +195,7 @@ export class PostComposerComponent implements OnDestroy {
             this.clearSelectedMedia();
             this.status = 'Select one video or multiple images.';
             input.value = '';
+            this.persistDraft();
             return;
         }
 
@@ -188,6 +203,7 @@ export class PostComposerComponent implements OnDestroy {
             this.clearSelectedMedia();
             this.status = 'Select one video or multiple images.';
             input.value = '';
+            this.persistDraft();
             return;
         }
 
@@ -201,12 +217,14 @@ export class PostComposerComponent implements OnDestroy {
             this.cropOutputFormat = 'jpeg';
             this.status = `${this.selectedMediaFiles.length} images attached.`;
             input.value = '';
+            this.persistDraft();
             return;
         }
 
         const file = files[0];
         if (!file) {
             input.value = '';
+            this.persistDraft();
             return;
         }
 
@@ -230,10 +248,12 @@ export class PostComposerComponent implements OnDestroy {
             this.mediaKind = 'none';
             this.status = 'Unsupported file type selected.';
             this.clearSelectedMedia();
+            this.persistDraft();
             return;
         }
 
         input.value = '';
+        this.persistDraft();
     }
 
     onImageCropped(event: ImageCroppedEvent): void {
@@ -261,6 +281,43 @@ export class PostComposerComponent implements OnDestroy {
     removePostMedia(): void {
         this.clearSelectedMedia();
         this.status = 'Media removed.';
+        this.persistDraft();
+    }
+
+    private persistDraft(): void {
+        const hasDraft = !!this.content.trim() || this.markSensitive;
+        if (!hasDraft) {
+            localStorage.removeItem(this.draftStorageKey);
+            return;
+        }
+
+        localStorage.setItem(this.draftStorageKey, JSON.stringify({
+            content: this.content,
+            markSensitive: this.markSensitive
+        }));
+    }
+
+    private restoreDraft(): void {
+        const raw = localStorage.getItem(this.draftStorageKey);
+        if (!raw) {
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(raw) as {
+                content?: string;
+                markSensitive?: boolean;
+            };
+
+            this.content = this.normalizeContentLength(parsed.content ?? '');
+            this.markSensitive = parsed.markSensitive === true;
+        } catch {
+            localStorage.removeItem(this.draftStorageKey);
+        }
+    }
+
+    private clearDraft(): void {
+        localStorage.removeItem(this.draftStorageKey);
     }
 
     private updateMentionSuggestions(value: string, caret: number): void {

@@ -21,10 +21,40 @@ public class AuthService(
     {
         var email = request.Email.Trim().ToLowerInvariant();
         var handle = NormalizeHandle(request.Handle);
+        var displayName = request.DisplayName?.Trim() ?? string.Empty;
+        var countryCode = NormalizeCountryCode(request.CountryCode);
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(request.Password))
         {
             throw new ArgumentException("Email and password are required.");
+        }
+
+        if (request.Password.Length < 8)
+        {
+            throw new ArgumentException("Password must be at least 8 characters.");
+        }
+
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            throw new ArgumentException("Display name is required.");
+        }
+
+        if (request.DateOfBirth is DateTime dateOfBirth)
+        {
+            if (dateOfBirth.Date > DateTime.UtcNow.Date)
+            {
+                throw new ArgumentException("Date of birth cannot be in the future.");
+            }
+
+            if (CalculateAgeInYears(dateOfBirth.Date, DateTime.UtcNow.Date) < 13)
+            {
+                throw new ArgumentException("You must be at least 13 years old to register.");
+            }
+        }
+
+        if (request.CountryCode is not null && string.IsNullOrEmpty(countryCode))
+        {
+            throw new ArgumentException("Country code must be a valid 2-letter ISO code.");
         }
 
         if (await dbContext.AppUsers.AnyAsync(x => x.Email == email, cancellationToken))
@@ -41,8 +71,12 @@ public class AuthService(
         {
             Id = Guid.NewGuid(),
             Handle = handle,
-            DisplayName = request.DisplayName.Trim(),
+            DisplayName = displayName,
             Bio = request.Bio?.Trim() ?? string.Empty,
+            DateOfBirth = request.DateOfBirth?.Date,
+            CountryCode = countryCode,
+            MarketingOptIn = request.MarketingOptIn,
+            IsPrivate = request.IsPrivateByDefault,
             CreatedAtUtc = DateTime.UtcNow
         };
 
@@ -265,6 +299,9 @@ public class AuthService(
         user.Profile.DisplayName = "Deleted User";
         user.Profile.Bio = string.Empty;
         user.Profile.ImageUrl = null;
+        user.Profile.DateOfBirth = null;
+        user.Profile.CountryCode = null;
+        user.Profile.MarketingOptIn = false;
         user.Profile.IsPrivate = true;
 
         var tokens = await dbContext.RefreshTokens
@@ -298,7 +335,10 @@ public class AuthService(
                 profile.ImageUrl,
                 profile.IsPrivate,
                 profile.CreatedAtUtc,
-                CalculateHandleChangeAvailableAtUtc(profile.LastHandleChangeAtUtc)));
+                CalculateHandleChangeAvailableAtUtc(profile.LastHandleChangeAtUtc),
+                profile.DateOfBirth,
+                profile.CountryCode,
+                profile.MarketingOptIn));
     }
 
     private static DateTime? CalculateHandleChangeAvailableAtUtc(DateTime? lastHandleChangeAtUtc)
@@ -350,5 +390,32 @@ public class AuthService(
     {
         var normalized = (handle ?? string.Empty).Trim().ToLowerInvariant();
         return Regex.Replace(normalized, "\\s+", "-");
+    }
+
+    private static string? NormalizeCountryCode(string? countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(countryCode))
+        {
+            return null;
+        }
+
+        var normalized = countryCode.Trim().ToUpperInvariant();
+        if (normalized.Length != 2 || !normalized.All(char.IsLetter))
+        {
+            return string.Empty;
+        }
+
+        return normalized;
+    }
+
+    private static int CalculateAgeInYears(DateTime dateOfBirth, DateTime currentDate)
+    {
+        var age = currentDate.Year - dateOfBirth.Year;
+        if (dateOfBirth.Date > currentDate.AddYears(-age))
+        {
+            age--;
+        }
+
+        return age;
     }
 }

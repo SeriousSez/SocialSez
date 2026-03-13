@@ -40,6 +40,8 @@ export class DiscoverPageComponent implements OnDestroy {
     communityResults: CommunityDto[] = [];
     communityPostResults: CommunityPostDto[] = [];
     blogResults: BlogDto[] = [];
+    followedHashtags: string[] = [];
+    followedHashtagPosts: PostDto[] = [];
     recommendedReels: ReelDto[] = [];
     recommendedProfiles: ProfileDto[] = [];
 
@@ -83,6 +85,7 @@ export class DiscoverPageComponent implements OnDestroy {
     private repostCountSource: PostDto[] | null = null;
     private repostCountsByPostId = new Map<string, number>();
     private queryDebounceTimerId: number | null = null;
+    private readonly followedHashtagsStorageKey = 'socialsez.followed-hashtags.v1';
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly ngZone = inject(NgZone);
 
@@ -94,6 +97,9 @@ export class DiscoverPageComponent implements OnDestroy {
         private readonly route: ActivatedRoute,
         private readonly router: Router
     ) {
+        this.loadFollowedHashtags();
+        void this.syncFollowedHashtagsFromServer();
+
         this.route.queryParamMap
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(params => {
@@ -104,6 +110,7 @@ export class DiscoverPageComponent implements OnDestroy {
                     this.clearResults();
                     this.status = '';
                     this.updateSuggestions();
+                    void this.refreshFollowedHashtagFeed();
                     void this.loadRecommendedNonFollowingReels();
                     this.cdr.detectChanges();
                     return;
@@ -280,6 +287,14 @@ export class DiscoverPageComponent implements OnDestroy {
         return !this.showingSearchResults;
     }
 
+    get showRecommendedReelsMosaic(): boolean {
+        return this.showRecommendedReelsSection && this.recommendedReels.length >= 9;
+    }
+
+    get showFollowedHashtagsSection(): boolean {
+        return !this.showingSearchResults && this.followedHashtags.length > 0;
+    }
+
     displayPostContent(post: PostDto): string {
         if (!post.content) {
             return '';
@@ -301,12 +316,13 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     private ensurePostRepostCounts(): void {
-        if (this.repostCountSource === this.postResults) {
+        const combinedPosts = [...this.postResults, ...this.followedHashtagPosts];
+        if (this.repostCountSource === combinedPosts) {
             return;
         }
 
-        this.repostCountSource = this.postResults;
-        this.repostCountsByPostId = buildSharedPostReferenceCounts(this.postResults);
+        this.repostCountSource = combinedPosts;
+        this.repostCountsByPostId = buildSharedPostReferenceCounts(combinedPosts);
     }
 
     canManagePost(post: PostDto): boolean {
@@ -502,6 +518,41 @@ export class DiscoverPageComponent implements OnDestroy {
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('follow this user'));
         }
+    }
+
+    isHashtagFollowed(tag: string): boolean {
+        const normalized = this.normalizeHashtagTag(tag);
+        return !!normalized && this.followedHashtags.includes(normalized);
+    }
+
+    async toggleHashtagFollow(tag: string, event?: Event): Promise<void> {
+        event?.preventDefault();
+        event?.stopPropagation();
+
+        let normalized = this.normalizeHashtagTag(tag);
+        if (!normalized) {
+            return;
+        }
+
+        if (this.followedHashtags.includes(normalized)) {
+            if (this.isAuthenticated) {
+                await this.session.unfollowHashtagAsync(normalized);
+            }
+
+            this.followedHashtags = this.followedHashtags.filter(item => item !== normalized);
+            this.status = `Unfollowed #${normalized}.`;
+        } else {
+            if (this.isAuthenticated) {
+                const followed = await this.session.followHashtagAsync(normalized);
+                normalized = this.normalizeHashtagTag(followed.tag) ?? normalized;
+            }
+
+            this.followedHashtags = [normalized, ...this.followedHashtags.filter(item => item !== normalized)].slice(0, 20);
+            this.status = `Following #${normalized}.`;
+        }
+
+        this.saveFollowedHashtags();
+        await this.refreshFollowedHashtagFeed();
     }
 
     async toggleLike(post: PostDto): Promise<void> {
@@ -824,6 +875,82 @@ export class DiscoverPageComponent implements OnDestroy {
         this.communityResults = [];
         this.communityPostResults = [];
         this.blogResults = [];
+    }
+
+    private loadFollowedHashtags(): void {
+        const raw = localStorage.getItem(this.followedHashtagsStorageKey);
+        if (!raw) {
+            this.followedHashtags = [];
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(raw) as string[];
+            this.followedHashtags = (parsed ?? [])
+                .map(item => this.normalizeHashtagTag(item))
+                .filter((item): item is string => !!item)
+                .slice(0, 20);
+        } catch {
+            this.followedHashtags = [];
+            localStorage.removeItem(this.followedHashtagsStorageKey);
+        }
+    }
+
+    private async syncFollowedHashtagsFromServer(): Promise<void> {
+        if (!this.isAuthenticated) {
+            await this.refreshFollowedHashtagFeed();
+            return;
+        }
+
+        try {
+            const followed = await this.session.loadFollowedHashtagsAsync(20);
+            this.followedHashtags = followed
+                .map(item => this.normalizeHashtagTag(item.tag))
+                .filter((item): item is string => !!item)
+                .slice(0, 20);
+            this.saveFollowedHashtags();
+        } catch {
+            // Keep local fallback if server sync fails.
+        }
+
+        await this.refreshFollowedHashtagFeed();
+    }
+
+    private saveFollowedHashtags(): void {
+        if (!this.followedHashtags.length) {
+            localStorage.removeItem(this.followedHashtagsStorageKey);
+            return;
+        }
+
+        localStorage.setItem(this.followedHashtagsStorageKey, JSON.stringify(this.followedHashtags));
+    }
+
+    private async refreshFollowedHashtagFeed(): Promise<void> {
+        if (!this.followedHashtags.length) {
+            this.followedHashtagPosts = [];
+            return;
+        }
+
+        const results = await Promise.allSettled(
+            this.followedHashtags.slice(0, 5).map(tag => this.session.loadHashtagContentAsync(tag))
+        );
+
+        const merged = new Map<string, PostDto>();
+        for (const result of results) {
+            if (result.status !== 'fulfilled') {
+                continue;
+            }
+
+            for (const post of result.value.posts ?? []) {
+                if (!merged.has(post.id)) {
+                    merged.set(post.id, post);
+                }
+            }
+        }
+
+        this.followedHashtagPosts = Array.from(merged.values())
+            .sort((left, right) => Date.parse(right.createdAtUtc) - Date.parse(left.createdAtUtc))
+            .slice(0, 30);
     }
 
     private async primeSuggestionTags(): Promise<void> {
@@ -1237,6 +1364,7 @@ export class DiscoverPageComponent implements OnDestroy {
 
     private applyPostUpdate(updated: PostDto): void {
         this.postResults = this.postResults.map(post => post.id === updated.id ? updated : post);
+        this.followedHashtagPosts = this.followedHashtagPosts.map(post => post.id === updated.id ? updated : post);
     }
 
     private applyReelUpdate(updated: ReelDto): void {
@@ -1461,5 +1589,9 @@ export class DiscoverPageComponent implements OnDestroy {
             default:
                 return 'all';
         }
+    }
+
+    private normalizeHashtagTag(value: string | null | undefined): string {
+        return canonicalizeTopicOrTag((value ?? '').replace(/^#/, ''));
     }
 }

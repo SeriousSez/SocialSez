@@ -285,6 +285,45 @@ public class PostsController(IPostService postService, SocialSezContext dbContex
         return Ok(hashtags);
     }
 
+    [Authorize]
+    [HttpGet("hashtags/following")]
+    public async Task<ActionResult<IReadOnlyCollection<FollowedHashtagDto>>> GetFollowedHashtags([FromQuery] int take = 20, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var hashtags = await postService.GetFollowedHashtagsAsync(profileId, take, cancellationToken);
+        return Ok(hashtags);
+    }
+
+    [Authorize]
+    [HttpPost("hashtags/{hashtag}/follow")]
+    public async Task<ActionResult<FollowedHashtagDto>> FollowHashtag(string hashtag, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var followed = await postService.FollowHashtagAsync(profileId, hashtag, cancellationToken);
+        return followed is null ? BadRequest(new { message = "Hashtag is required." }) : Ok(followed);
+    }
+
+    [Authorize]
+    [HttpDelete("hashtags/{hashtag}/follow")]
+    public async Task<IActionResult> UnfollowHashtag(string hashtag, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var unfollowed = await postService.UnfollowHashtagAsync(profileId, hashtag, cancellationToken);
+        return unfollowed ? NoContent() : NotFound();
+    }
+
     [AllowAnonymous]
     [HttpGet("hashtags/{hashtag}/content")]
     public async Task<ActionResult<HashtagContentDto>> GetHashtagContent(string hashtag, [FromQuery] int takePerType = 25, CancellationToken cancellationToken = default)

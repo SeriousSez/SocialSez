@@ -58,6 +58,36 @@
                     <p class="meta">Handle changes are limited to once every 30 days. You can change it now.</p>
                 </ng-template>
                 <p class="meta"><strong>Joined:</strong> {{ profile.createdAtUtc | date:'mediumDate' }}</p>
+                <label>Date of birth
+                    <div class="dob-select-row" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+                        <select class="dob-select" [(ngModel)]="birthDay" name="settingsBirthDay" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+                            <option value="">Day</option>
+                            <option *ngFor="let day of dayOptions" [value]="day">{{ day }}</option>
+                        </select>
+                        <select class="dob-select" [(ngModel)]="birthMonth" name="settingsBirthMonth" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+                            <option value="">Month</option>
+                            <option *ngFor="let month of monthOptions" [value]="month">{{ month }}</option>
+                        </select>
+                        <select class="dob-select" [(ngModel)]="birthYear" name="settingsBirthYear" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+                            <option value="">Year</option>
+                            <option *ngFor="let year of yearOptions" [value]="year">{{ year }}</option>
+                        </select>
+                    </div>
+                </label>
+                <label>Country
+                    <select [(ngModel)]="countryCode">
+                        <option value="">Select country (optional)</option>
+                        <option *ngFor="let country of countryOptions" [ngValue]="country.value">{{ country.label }}</option>
+                    </select>
+                </label>
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="marketingOptIn" />
+                    Receive product updates and tips by email
+                </label>
+                <div class="actions">
+                    <button type="button" (click)="saveProfile()">Save Account Details</button>
+                    <button type="button" class="ghost" (click)="reloadProfile()">Reload</button>
+                </div>
             </div>
         </div>
     </section>

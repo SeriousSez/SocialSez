@@ -7,6 +7,9 @@ export interface ProfileDto {
     isPrivate: boolean;
     createdAtUtc: string;
     handleChangeAvailableAtUtc?: string;
+    dateOfBirth?: string;
+    countryCode?: string;
+    marketingOptIn?: boolean;
 }
 
 export interface ProfileActivitySummaryDto {
@@ -27,6 +30,10 @@ export interface RegisterRequest {
     handle: string;
     displayName: string;
     bio?: string;
+    dateOfBirth?: string;
+    countryCode?: string;
+    marketingOptIn?: boolean;
+    isPrivateByDefault?: boolean;
 }
 
 export interface LoginRequest {
@@ -59,6 +66,9 @@ export interface UpdateProfileRequest {
     bio?: string;
     imageUrl?: string;
     handle?: string;
+    dateOfBirth?: string;
+    countryCode?: string;
+    marketingOptIn?: boolean;
 }
 
 export interface UpdateProfilePrivacyRequest {
@@ -151,6 +161,11 @@ export interface MarkAllReadResponse {
 export interface HashtagSearchResultDto {
     tag: string;
     count: number;
+}
+
+export interface FollowedHashtagDto {
+    tag: string;
+    followedAtUtc: string;
 }
 
 export interface HashtagReelDto {

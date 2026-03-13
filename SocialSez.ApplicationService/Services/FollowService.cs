@@ -308,7 +308,10 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
                 x.Followed.ImageUrl,
                 x.Followed.IsPrivate,
                 x.Followed.CreatedAtUtc,
-                null))
+                null,
+                null,
+                null,
+                false))
             .ToListAsync(cancellationToken);
     }
 
@@ -332,7 +335,10 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
                 x.Followed.ImageUrl,
                 x.Followed.IsPrivate,
                 x.Followed.CreatedAtUtc,
-                null))
+                null,
+                null,
+                null,
+                false))
             .ToListAsync(cancellationToken);
 
         var followingIds = await dbContext.Follows
@@ -389,7 +395,10 @@ public class FollowService(SocialSezContext dbContext) : IFollowService
                 x.ImageUrl,
                 x.IsPrivate,
                 x.CreatedAtUtc,
-                null))
+                null,
+                null,
+                null,
+                false))
             .ToListAsync(cancellationToken);
 
         var orderedRelevant = secondDegreeCandidates

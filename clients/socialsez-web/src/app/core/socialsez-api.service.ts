@@ -19,6 +19,7 @@ import {
     CreateGroupConversationRequest,
     FollowActionResultDto,
     FollowRequestDto,
+    FollowedHashtagDto,
     FollowStatusDto,
     FollowSuggestionsDto,
     FeedMode,
@@ -335,6 +336,20 @@ export class SocialSezApiService {
     getHashtagContent(hashtag: string, takePerType = 25): Observable<HashtagContentDto> {
         const normalized = hashtag.trim().replace(/^#/, '');
         return this.http.get<HashtagContentDto>(`${this.baseUrl}/posts/hashtags/${encodeURIComponent(normalized)}/content?takePerType=${takePerType}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    getFollowedHashtags(take = 20): Observable<FollowedHashtagDto[]> {
+        return this.withAutoRefresh(() => this.http.get<FollowedHashtagDto[]>(`${this.baseUrl}/posts/hashtags/following?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    followHashtag(hashtag: string): Observable<FollowedHashtagDto> {
+        const normalized = hashtag.trim().replace(/^#/, '');
+        return this.withAutoRefresh(() => this.http.post<FollowedHashtagDto>(`${this.baseUrl}/posts/hashtags/${encodeURIComponent(normalized)}/follow`, {}, { headers: this.authHeaders() }));
+    }
+
+    unfollowHashtag(hashtag: string): Observable<void> {
+        const normalized = hashtag.trim().replace(/^#/, '');
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/posts/hashtags/${encodeURIComponent(normalized)}/follow`, { headers: this.authHeaders() }));
     }
 
     getPostsByAuthorHandle(handle: string, take = 25): Observable<PostDto[]> {

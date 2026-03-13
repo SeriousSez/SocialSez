@@ -265,6 +265,38 @@ public class ProfileService(SocialSezContext dbContext, IMemoryCache memoryCache
         profile.Bio = request.Bio?.Trim() ?? string.Empty;
         profile.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
 
+        if (request.DateOfBirth.HasValue)
+        {
+            var dateOfBirth = request.DateOfBirth.Value.Date;
+            if (dateOfBirth > DateTime.UtcNow.Date)
+            {
+                throw new ArgumentException("Date of birth cannot be in the future.", nameof(request));
+            }
+
+            if (CalculateAgeInYears(dateOfBirth, DateTime.UtcNow.Date) < 13)
+            {
+                throw new ArgumentException("You must be at least 13 years old.", nameof(request));
+            }
+
+            profile.DateOfBirth = dateOfBirth;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.CountryCode))
+        {
+            var normalizedCountryCode = NormalizeCountryCode(request.CountryCode);
+            if (string.IsNullOrEmpty(normalizedCountryCode))
+            {
+                throw new ArgumentException("Country code must be a valid 2-letter ISO code.", nameof(request));
+            }
+
+            profile.CountryCode = normalizedCountryCode;
+        }
+
+        if (request.MarketingOptIn.HasValue)
+        {
+            profile.MarketingOptIn = request.MarketingOptIn.Value;
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         SearchCacheVersionStamp.BumpProfile();
 
@@ -311,7 +343,10 @@ public class ProfileService(SocialSezContext dbContext, IMemoryCache memoryCache
                 profile.ImageUrl,
                 profile.IsPrivate,
                 profile.CreatedAtUtc,
-                handleChangeAvailableAtUtc);
+                handleChangeAvailableAtUtc,
+                profile.DateOfBirth,
+                profile.CountryCode,
+                profile.MarketingOptIn);
         }
 
         return new ProfileDto(
@@ -322,7 +357,10 @@ public class ProfileService(SocialSezContext dbContext, IMemoryCache memoryCache
             profile.ImageUrl,
             profile.IsPrivate,
             profile.CreatedAtUtc,
-            handleChangeAvailableAtUtc);
+            handleChangeAvailableAtUtc,
+            null,
+            null,
+            false);
     }
 
     private static DateTime? CalculateHandleChangeAvailableAtUtc(DateTime? lastHandleChangeAtUtc)
@@ -340,6 +378,33 @@ public class ProfileService(SocialSezContext dbContext, IMemoryCache memoryCache
     {
         var normalized = (handle ?? string.Empty).Trim().ToLowerInvariant();
         return Regex.Replace(normalized, "\\s+", "-");
+    }
+
+    private static string? NormalizeCountryCode(string? countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(countryCode))
+        {
+            return null;
+        }
+
+        var normalized = countryCode.Trim().ToUpperInvariant();
+        if (normalized.Length != 2 || !normalized.All(char.IsLetter))
+        {
+            return string.Empty;
+        }
+
+        return normalized;
+    }
+
+    private static int CalculateAgeInYears(DateTime dateOfBirth, DateTime currentDate)
+    {
+        var age = currentDate.Year - dateOfBirth.Year;
+        if (dateOfBirth.Date > currentDate.AddYears(-age))
+        {
+            age--;
+        }
+
+        return age;
     }
 }
 
