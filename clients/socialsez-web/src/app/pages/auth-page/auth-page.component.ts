@@ -22,6 +22,7 @@ export class AuthPageComponent {
     password = '';
     confirmPassword = '';
     showLoginPassword = false;
+    staySignedIn = true;
     showRegisterPassword = false;
     showConfirmPassword = false;
     handle = '';
@@ -174,7 +175,7 @@ export class AuthPageComponent {
             await this.session.loginAsync({
                 email: this.email,
                 password: this.password
-            });
+            }, this.staySignedIn);
         } catch {
             this.errorMessage = 'Invalid credentials.';
         }

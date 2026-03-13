@@ -180,8 +180,8 @@ export class SessionService {
         }
     }
 
-    async loginAsync(request: LoginRequest): Promise<void> {
-        const auth = await firstValueFrom(this.api.login(request));
+    async loginAsync(request: LoginRequest, staySignedIn = true): Promise<void> {
+        const auth = await firstValueFrom(this.api.login(request, staySignedIn));
         this.applyAuth(auth);
         this.message = 'Logged in.';
         this.emitAppChange('session');

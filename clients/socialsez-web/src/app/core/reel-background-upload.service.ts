@@ -1,6 +1,7 @@
 import { Injectable, NgZone, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { readAccessToken } from './auth-storage.util';
 
 export interface ReelUploadSwStatusEvent {
     type: 'REEL_UPLOAD_STATUS';
@@ -52,7 +53,7 @@ export class ReelBackgroundUploadService implements OnDestroy {
             void Notification.requestPermission();
         }
 
-        const token = localStorage.getItem('socialsez.accessToken') ?? '';
+        const token = readAccessToken();
 
         const formData = new FormData();
         formData.append('video', videoFile);

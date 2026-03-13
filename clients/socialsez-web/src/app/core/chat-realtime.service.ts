@@ -3,6 +3,7 @@ import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@micros
 import { Subject } from 'rxjs';
 import { ChatMessageDto } from './api.types';
 import { environment } from '../../environments/environment';
+import { readAccessToken } from './auth-storage.util';
 
 export interface ChatTypingChangedEvent {
     conversationId: string;
@@ -83,7 +84,7 @@ export class ChatRealtimeService {
         if (!this.hubConnection) {
             this.hubConnection = new HubConnectionBuilder()
                 .withUrl(this.hubUrl, {
-                    accessTokenFactory: () => localStorage.getItem('socialsez.accessToken') ?? '',
+                    accessTokenFactory: () => readAccessToken(),
                     withCredentials: false
                 })
                 .withAutomaticReconnect()

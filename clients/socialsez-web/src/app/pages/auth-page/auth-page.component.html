@@ -24,6 +24,11 @@
                 </div>
             </label>
 
+            <label class="checkbox full" *ngIf="mode === 'login'">
+                <input type="checkbox" [(ngModel)]="staySignedIn" name="staySignedIn" />
+                <span>Stay signed in</span>
+            </label>
+
             <ng-container *ngIf="mode === 'register'">
                 <label>Confirm Password
                     <div class="password-field">

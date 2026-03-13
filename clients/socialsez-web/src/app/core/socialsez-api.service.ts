@@ -50,6 +50,7 @@ import {
     UpdateProfileRequest,
     UploadImageResponse
 } from './api.types';
+import { clearSessionTokens, readAccessToken, readRefreshToken, writeSessionTokens } from './auth-storage.util';
 
 @Injectable({ providedIn: 'root' })
 export class SocialSezApiService {
@@ -58,22 +59,20 @@ export class SocialSezApiService {
     private refreshToken = '';
 
     constructor(private readonly http: HttpClient) {
-        this.token = localStorage.getItem('socialsez.accessToken') ?? '';
-        this.refreshToken = localStorage.getItem('socialsez.refreshToken') ?? '';
+        this.token = readAccessToken();
+        this.refreshToken = readRefreshToken();
     }
 
-    private setSession(auth: AuthResponse): void {
+    private setSession(auth: AuthResponse, staySignedIn = true): void {
         this.token = auth.token;
         this.refreshToken = auth.refreshToken;
-        localStorage.setItem('socialsez.accessToken', auth.token);
-        localStorage.setItem('socialsez.refreshToken', auth.refreshToken);
+        writeSessionTokens(auth.token, auth.refreshToken, staySignedIn);
     }
 
     clearToken(): void {
         this.token = '';
         this.refreshToken = '';
-        localStorage.removeItem('socialsez.accessToken');
-        localStorage.removeItem('socialsez.refreshToken');
+        clearSessionTokens();
     }
 
     register(request: RegisterRequest): Observable<AuthResponse> {
@@ -82,9 +81,9 @@ export class SocialSezApiService {
         );
     }
 
-    login(request: LoginRequest): Observable<AuthResponse> {
+    login(request: LoginRequest, staySignedIn = true): Observable<AuthResponse> {
         return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, request).pipe(
-            tap(auth => this.setSession(auth))
+            tap(auth => this.setSession(auth, staySignedIn))
         );
     }
 
