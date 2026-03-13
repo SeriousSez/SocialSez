@@ -23,6 +23,7 @@ export class SavedCollectionsRailComponent implements OnInit {
     renamingCollectionId: string | null = null;
     renameValue = '';
     loading = false;
+    allSavedCount = 0;
 
     get activeCollectionId(): string | null {
         return this.router.parseUrl(this.router.url).queryParamMap.get('collectionId');
@@ -106,10 +107,29 @@ export class SavedCollectionsRailComponent implements OnInit {
         this.loading = true;
         try {
             this.collections = await this.session.loadCollectionsAsync();
+            this.allSavedCount = await this.loadAllSavedCountAsync();
         } catch {
             this.session.message = 'Failed to load collections.';
         } finally {
             this.loading = false;
         }
+    }
+
+    private async loadAllSavedCountAsync(): Promise<number> {
+        const pageSize = 200;
+        const maxPages = 25;
+        let total = 0;
+
+        for (let page = 0; page < maxPages; page++) {
+            const skip = page * pageSize;
+            const items = await this.session.loadAllSavedItemsAsync(pageSize, skip);
+            total += items.length;
+
+            if (items.length < pageSize) {
+                break;
+            }
+        }
+
+        return total;
     }
 }

@@ -20,6 +20,7 @@
         <button class="nav-item" [class.active]="!activeCollectionId" (click)="selectAllAsync()">
             <i class="fa-duotone fa-light fa-bookmark"></i>
             <span>All Saved</span>
+            <span class="count">{{ allSavedCount }}</span>
         </button>
 
         @if (!loading && collections.length === 0) {
