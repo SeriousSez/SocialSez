@@ -197,9 +197,10 @@
     <div class="list" *ngIf="selectedContentTab === 'posts' && !loading && !error && feed.length; else postsEmptyState">
         <app-post-card *ngFor="let post of feed; trackBy: trackPostById" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [reacting]="reactingPostId === post.id" [hideSensitiveMedia]="hideSensitiveMediaEnabled"
             [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [savingEdit]="savingPost"
-            [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)"
-            (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)"
-            (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)" (reportPost)="openPostReport(post)" (reportComment)="openPostCommentReport(post, $event.id)">
+            [savedByMe]="isPostSaved(post.id)" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (toggleLike)="toggleLike(post)"
+            (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)"
+            (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)" (saveToggled)="toggleSavedPost(post)"
+            (reportPost)="openPostReport(post)" (reportComment)="openPostCommentReport(post, $event.id)">
             <div post-header class="author">
                 <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? ('Open @' + post.authorHandle + ' stories') : 'View author profile'">
                     <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
@@ -214,9 +215,10 @@
     </div>
 
     <app-feed-reels-list *ngIf="selectedContentTab === 'reels' && !reelsLoading && !reelsError && reels.length; else reelsEmptyState" [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="activeUnseenStoryAuthorHandles" [reactingReelId]="reactingReelId"
-        [commentingReelId]="commentingReelId" [sharingReelId]="sharingReelId" [showOwnerActions]="true" [viewerProfileId]="currentProfileId" [deletingReelId]="deletingReelId" [hideSensitiveMedia]="hideSensitiveMediaEnabled" (authorAvatarClicked)="openProfileOrStory($event)"
-        (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)"
-        (reelDeleted)="deleteReel($event)" (reportRequested)="openReelReport($event)" (reelCommentReportRequested)="openReelCommentReport($event)"></app-feed-reels-list>
+        [commentingReelId]="commentingReelId" [sharingReelId]="sharingReelId" [savedReelIds]="savedReelIds" [showOwnerActions]="true" [viewerProfileId]="currentProfileId" [deletingReelId]="deletingReelId" [hideSensitiveMedia]="hideSensitiveMediaEnabled"
+        (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelCommentUpdated)="updateReelComment($event)"
+        (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)" (saveToggled)="toggleSavedReel($event)" (reelDeleted)="deleteReel($event)" (reportRequested)="openReelReport($event)"
+        (reelCommentReportRequested)="openReelCommentReport($event)"></app-feed-reels-list>
 
     <ng-template #postsEmptyState>
         <p class="empty" *ngIf="selectedContentTab === 'posts' && !loading && !error">No posts yet. Follow people or create your first post to kick off your timeline.</p>

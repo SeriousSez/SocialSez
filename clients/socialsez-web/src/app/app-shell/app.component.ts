@@ -15,6 +15,7 @@ import { ProgressItem } from '../core/upload-progress.service';
 import { MessagesDockComponent } from './messages-dock.component';
 import { FeedStoryViewerComponent } from '../pages/feed-page/feed-story-viewer.component';
 import { CommunityInfoRailComponent } from './community-info-rail.component';
+import { SavedCollectionsRailComponent } from './saved-collections-rail.component';
 
 interface DockReelModalState {
     reelId?: string;
@@ -46,7 +47,7 @@ interface RoutePreviewMeta {
 
 @Component({
     selector: 'app-root',
-    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, MessagesDockComponent, FeedStoryViewerComponent, CommunityInfoRailComponent],
+    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, MessagesDockComponent, FeedStoryViewerComponent, CommunityInfoRailComponent, SavedCollectionsRailComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
@@ -223,6 +224,11 @@ export class AppComponent implements OnInit, OnDestroy {
         return segments.length >= 3 && segments[0] === 'blogs' && segments[1] !== 'studio';
     }
 
+    get isSavedRoute(): boolean {
+        const routePath = this.router.url.split('?')[0].split('#')[0].toLowerCase();
+        return routePath === '/saved' || routePath.startsWith('/saved/');
+    }
+
     get searchContextLabel(): string {
         const url = this.router.url.toLowerCase();
 
@@ -363,6 +369,29 @@ export class AppComponent implements OnInit, OnDestroy {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(() => {
                 this.onTopNoticeMessageChanged();
+            });
+
+        this.session.openReelInModal$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(reel => {
+                this.dockStoryGroup = null;
+                this.dockStoryIndex = 0;
+                this.dockReelModal = {
+                    reelId: reel.id,
+                    videoUrl: reel.videoUrl,
+                    thumbnailUrl: reel.thumbnailUrl,
+                    authorHandle: reel.authorHandle,
+                    authorImageUrl: reel.authorImageUrl,
+                    caption: reel.caption,
+                    createdAtUtc: reel.createdAtUtc,
+                    likeCount: reel.likeCount,
+                    likedByMe: reel.likedByMe,
+                    comments: [...reel.comments],
+                    muted: true
+                };
+                this.dockReelCommentDraft = '';
+                this.submittingDockReelComment = false;
+                this.togglingDockReelLike = false;
             });
 
         this.router.events

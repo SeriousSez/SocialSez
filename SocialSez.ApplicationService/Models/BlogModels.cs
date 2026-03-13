@@ -82,4 +82,5 @@ public sealed record BlogPostDto(
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
     DateTime? PublishedAtUtc,
-    bool IsOwner);
+    bool IsOwner,
+    bool IsSavedByMe);

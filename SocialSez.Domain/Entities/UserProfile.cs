@@ -38,6 +38,7 @@ public class UserProfile
     public ICollection<CommunityPollVote> CommunityPollVotes { get; set; } = new List<CommunityPollVote>();
     public ICollection<Blog> Blogs { get; set; } = new List<Blog>();
     public ICollection<BlogPost> BlogPosts { get; set; } = new List<BlogPost>();
+    public ICollection<BlogPostSave> SavedBlogPosts { get; set; } = new List<BlogPostSave>();
     public ICollection<ProfileFollowRequest> ReceivedFollowRequests { get; set; } = new List<ProfileFollowRequest>();
     public ICollection<ProfileFollowRequest> SentFollowRequests { get; set; } = new List<ProfileFollowRequest>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
@@ -47,4 +48,6 @@ public class UserProfile
     public ICollection<UserMute> MutedByProfiles { get; set; } = new List<UserMute>();
     public ICollection<UserReport> ReportsFiled { get; set; } = new List<UserReport>();
     public ICollection<UserReport> ReportsReceived { get; set; } = new List<UserReport>();
+    public ICollection<SavedItem> SavedItems { get; set; } = new List<SavedItem>();
+    public ICollection<SavedCollection> SavedCollections { get; set; } = new List<SavedCollection>();
 }

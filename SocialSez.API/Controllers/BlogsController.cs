@@ -221,6 +221,32 @@ public class BlogsController(IBlogService blogService) : ControllerBase
         }
     }
 
+    [Authorize]
+    [HttpPost("{blogId:guid}/posts/{postId:guid}/save")]
+    public async Task<ActionResult<BlogPostDto>> SavePost(Guid blogId, Guid postId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var post = await blogService.SavePostAsync(blogId, postId, profileId, cancellationToken);
+        return post is null ? NotFound() : Ok(post);
+    }
+
+    [Authorize]
+    [HttpDelete("{blogId:guid}/posts/{postId:guid}/save")]
+    public async Task<ActionResult> UnsavePost(Guid blogId, Guid postId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var removed = await blogService.UnsavePostAsync(blogId, postId, profileId, cancellationToken);
+        return removed ? NoContent() : NotFound();
+    }
+
     private bool TryGetProfileId(out Guid profileId)
     {
         var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)

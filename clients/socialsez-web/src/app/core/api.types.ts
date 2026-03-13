@@ -435,6 +435,7 @@ export interface BlogPostDto {
     updatedAtUtc: string;
     publishedAtUtc?: string;
     isOwner: boolean;
+    isSavedByMe: boolean;
 }
 
 export interface CommunityDto {
@@ -499,4 +500,27 @@ export interface CommunityPostCommentDto {
     authorImageUrl?: string;
     content: string;
     createdAtUtc: string;
+}
+
+export interface SavedItemDto {
+    id: string;
+    itemType: 'Post' | 'Reel';
+    postId?: string;
+    reelId?: string;
+    savedAtUtc: string;
+    post?: PostDto;
+    reel?: ReelDto;
+}
+
+export interface SavedCollectionDto {
+    id: string;
+    name: string;
+    createdAtUtc: string;
+    itemCount: number;
+    coverThumbnailUrl?: string;
+}
+
+export interface SavedStatusDto {
+    savedPostIds: Record<string, string>;   // postId → savedItemId
+    savedReelIds: Record<string, string>;   // reelId → savedItemId
 }

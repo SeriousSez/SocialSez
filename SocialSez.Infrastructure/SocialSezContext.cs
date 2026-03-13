@@ -43,8 +43,12 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<CommunityPollOption> CommunityPollOptions => Set<CommunityPollOption>();
     public DbSet<CommunityPollVote> CommunityPollVotes => Set<CommunityPollVote>();
     public DbSet<CommunitySavedPost> CommunitySavedPosts => Set<CommunitySavedPost>();
+    public DbSet<SavedItem> SavedItems => Set<SavedItem>();
+    public DbSet<SavedCollection> SavedCollections => Set<SavedCollection>();
+    public DbSet<SavedCollectionItem> SavedCollectionItems => Set<SavedCollectionItem>();
     public DbSet<Blog> Blogs => Set<Blog>();
     public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
+    public DbSet<BlogPostSave> BlogPostSaves => Set<BlogPostSave>();
     public DbSet<UploadedImage> UploadedImages => Set<UploadedImage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -877,6 +881,86 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
 
             entity.HasIndex(x => new { x.BlogId, x.Slug }).IsUnique();
             entity.HasIndex(x => new { x.BlogId, x.IsPublished, x.PublishedAtUtc });
+        });
+
+        modelBuilder.Entity<BlogPostSave>(entity =>
+        {
+            entity.ToTable("BlogPostSaves");
+            entity.HasKey(x => new { x.PostId, x.ProfileId });
+
+            entity.HasOne(x => x.Post)
+                .WithMany(x => x.SavedBy)
+                .HasForeignKey(x => x.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.SavedBlogPosts)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.ProfileId);
+            entity.HasIndex(x => new { x.ProfileId, x.SavedAtUtc });
+        });
+
+        modelBuilder.Entity<SavedItem>(entity =>
+        {
+            entity.ToTable("SavedItems");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ItemType).HasMaxLength(8).IsRequired();
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.SavedItems)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Post)
+                .WithMany()
+                .HasForeignKey(x => x.PostId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
+            entity.HasOne(x => x.Reel)
+                .WithMany()
+                .HasForeignKey(x => x.ReelId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
+            entity.HasIndex(x => x.ProfileId);
+            entity.HasIndex(x => new { x.ProfileId, x.PostId }).IsUnique().HasFilter("PostId IS NOT NULL");
+            entity.HasIndex(x => new { x.ProfileId, x.ReelId }).IsUnique().HasFilter("ReelId IS NOT NULL");
+            entity.HasIndex(x => new { x.ProfileId, x.SavedAtUtc });
+        });
+
+        modelBuilder.Entity<SavedCollection>(entity =>
+        {
+            entity.ToTable("SavedCollections");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasMaxLength(100).IsRequired();
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.SavedCollections)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.ProfileId);
+        });
+
+        modelBuilder.Entity<SavedCollectionItem>(entity =>
+        {
+            entity.ToTable("SavedCollectionItems");
+            entity.HasKey(x => new { x.CollectionId, x.SavedItemId });
+
+            entity.HasOne(x => x.Collection)
+                .WithMany(x => x.Items)
+                .HasForeignKey(x => x.CollectionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.SavedItem)
+                .WithMany(x => x.CollectionItems)
+                .HasForeignKey(x => x.SavedItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.SavedItemId);
         });
     }
 }

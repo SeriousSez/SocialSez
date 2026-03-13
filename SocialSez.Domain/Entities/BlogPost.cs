@@ -18,4 +18,5 @@ public class BlogPost
 
     public Blog Blog { get; set; } = null!;
     public UserProfile AuthorProfile { get; set; } = null!;
+    public ICollection<BlogPostSave> SavedBy { get; set; } = new List<BlogPostSave>();
 }

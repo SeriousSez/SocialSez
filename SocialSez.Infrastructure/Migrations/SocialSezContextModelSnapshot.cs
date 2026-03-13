@@ -1145,6 +1145,92 @@ namespace SocialSez.Infrastructure.Migrations
                     b.ToTable("RefreshTokens", (string)null);
                 });
 
+            modelBuilder.Entity("SocialSez.Domain.Entities.SavedCollection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfileId");
+
+                    b.ToTable("SavedCollections", (string)null);
+                });
+
+            modelBuilder.Entity("SocialSez.Domain.Entities.SavedCollectionItem", b =>
+                {
+                    b.Property<Guid>("CollectionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("SavedItemId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("AddedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("CollectionId", "SavedItemId");
+
+                    b.HasIndex("SavedItemId");
+
+                    b.ToTable("SavedCollectionItems", (string)null);
+                });
+
+            modelBuilder.Entity("SocialSez.Domain.Entities.SavedItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("ItemType")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("varchar(8)");
+
+                    b.Property<Guid?>("PostId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("ReelId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("SavedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("ProfileId");
+
+                    b.HasIndex("ReelId");
+
+                    b.HasIndex("ProfileId", "PostId")
+                        .IsUnique()
+                        .HasFilter("PostId IS NOT NULL");
+
+                    b.HasIndex("ProfileId", "ReelId")
+                        .IsUnique()
+                        .HasFilter("ReelId IS NOT NULL");
+
+                    b.HasIndex("ProfileId", "SavedAtUtc");
+
+                    b.ToTable("SavedItems", (string)null);
+                });
+
             modelBuilder.Entity("SocialSez.Domain.Entities.Story", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1996,6 +2082,61 @@ namespace SocialSez.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SocialSez.Domain.Entities.SavedCollection", b =>
+                {
+                    b.HasOne("SocialSez.Domain.Entities.UserProfile", "Profile")
+                        .WithMany("SavedCollections")
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Profile");
+                });
+
+            modelBuilder.Entity("SocialSez.Domain.Entities.SavedCollectionItem", b =>
+                {
+                    b.HasOne("SocialSez.Domain.Entities.SavedCollection", "Collection")
+                        .WithMany("Items")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SocialSez.Domain.Entities.SavedItem", "SavedItem")
+                        .WithMany("CollectionItems")
+                        .HasForeignKey("SavedItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Collection");
+
+                    b.Navigation("SavedItem");
+                });
+
+            modelBuilder.Entity("SocialSez.Domain.Entities.SavedItem", b =>
+                {
+                    b.HasOne("SocialSez.Domain.Entities.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SocialSez.Domain.Entities.UserProfile", "Profile")
+                        .WithMany("SavedItems")
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SocialSez.Domain.Entities.Reel", "Reel")
+                        .WithMany()
+                        .HasForeignKey("ReelId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Profile");
+
+                    b.Navigation("Reel");
+                });
+
             modelBuilder.Entity("SocialSez.Domain.Entities.Story", b =>
                 {
                     b.HasOne("SocialSez.Domain.Entities.UserProfile", "Author")
@@ -2216,6 +2357,16 @@ namespace SocialSez.Infrastructure.Migrations
                     b.Navigation("Replies");
                 });
 
+            modelBuilder.Entity("SocialSez.Domain.Entities.SavedCollection", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("SocialSez.Domain.Entities.SavedItem", b =>
+                {
+                    b.Navigation("CollectionItems");
+                });
+
             modelBuilder.Entity("SocialSez.Domain.Entities.Story", b =>
                 {
                     b.Navigation("Views");
@@ -2281,7 +2432,11 @@ namespace SocialSez.Infrastructure.Migrations
 
                     b.Navigation("ReportsReceived");
 
+                    b.Navigation("SavedCollections");
+
                     b.Navigation("SavedCommunityPosts");
+
+                    b.Navigation("SavedItems");
 
                     b.Navigation("SentFollowRequests");
 

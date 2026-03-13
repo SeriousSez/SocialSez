@@ -1339,16 +1339,7 @@ export class CommunityDetailPageComponent {
 
     onPostImageCardClick(post: CommunityPostDto, imageUrl: string, event: Event): void {
         event.stopPropagation();
-
-        const urls = this.getPostMediaUrls(post);
-        if (urls.length <= 1) {
-            this.openImageFullscreen(post, imageUrl, event);
-            return;
-        }
-
-        const index = this.postImageIndexByPostId.get(post.id) ?? 0;
-        const nextIndex = index >= urls.length - 1 ? 0 : index + 1;
-        this.transitionPostImage(post, nextIndex, 'next');
+        this.openImageFullscreen(post, imageUrl, event);
     }
 
     setActivePostImage(post: CommunityPostDto, index: number, event: Event): void {

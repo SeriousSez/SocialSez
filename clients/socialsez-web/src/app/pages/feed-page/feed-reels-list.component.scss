@@ -344,6 +344,17 @@
     color: var(--color-secondary-strong);
 }
 
+.save-button.active {
+    color: var(--color-success);
+}
+
+.save-button.active i {
+    --fa-primary-color: var(--color-success);
+    --fa-secondary-color: var(--color-success);
+    --fa-primary-opacity: 1;
+    --fa-secondary-opacity: 0.4;
+}
+
 .engagement-count {
     font-size: 14px;
     color: #0f172a;

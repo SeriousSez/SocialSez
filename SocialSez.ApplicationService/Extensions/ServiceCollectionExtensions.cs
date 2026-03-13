@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISafetyService, SafetyService>();
         services.AddScoped<ICommunityService, CommunityService>();
         services.AddScoped<IBlogService, BlogService>();
+        services.AddScoped<ISavedCollectionService, SavedCollectionService>();
         return services;
     }
 }

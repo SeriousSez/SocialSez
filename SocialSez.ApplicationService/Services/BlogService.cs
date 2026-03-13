@@ -422,6 +422,7 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         var postsQuery = dbContext.BlogPosts
             .AsNoTracking()
             .Include(x => x.AuthorProfile)
+            .Include(x => x.SavedBy)
             .Where(x => x.BlogId == blog.Id);
 
         if (!isOwner)
@@ -449,6 +450,7 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .Include(x => x.Blog)
                 .ThenInclude(x => x.OwnerProfile)
             .Include(x => x.AuthorProfile)
+            .Include(x => x.SavedBy)
             .FirstOrDefaultAsync(x => x.Blog.OwnerProfile.Handle == normalizedHandle
                 && x.Blog.Slug == normalizedBlogSlug
                 && x.Slug == normalizedPostSlug, cancellationToken);
@@ -465,6 +467,70 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         }
 
         return MapPost(post, post.Blog, post.AuthorProfile, viewerProfileId);
+    }
+
+    public async Task<BlogPostDto?> SavePostAsync(Guid blogId, Guid postId, Guid profileId, CancellationToken cancellationToken = default)
+    {
+        await EnsureBlogSchemaAsync(cancellationToken);
+
+        var post = await dbContext.BlogPosts
+            .Include(x => x.Blog)
+                .ThenInclude(x => x.OwnerProfile)
+            .Include(x => x.AuthorProfile)
+            .Include(x => x.SavedBy)
+            .FirstOrDefaultAsync(x => x.Id == postId && x.BlogId == blogId, cancellationToken);
+
+        if (post is null)
+        {
+            return null;
+        }
+
+        if (!post.SavedBy.Any(x => x.ProfileId == profileId))
+        {
+            dbContext.BlogPostSaves.Add(new BlogPostSave
+            {
+                PostId = postId,
+                ProfileId = profileId,
+                SavedAtUtc = DateTime.UtcNow
+            });
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            post.SavedBy.Add(new BlogPostSave
+            {
+                PostId = postId,
+                ProfileId = profileId,
+                SavedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        return MapPost(post, post.Blog, post.AuthorProfile, profileId);
+    }
+
+    public async Task<bool> UnsavePostAsync(Guid blogId, Guid postId, Guid profileId, CancellationToken cancellationToken = default)
+    {
+        await EnsureBlogSchemaAsync(cancellationToken);
+
+        var postExists = await dbContext.BlogPosts
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == postId && x.BlogId == blogId, cancellationToken);
+
+        if (!postExists)
+        {
+            return false;
+        }
+
+        var existingSave = await dbContext.BlogPostSaves
+            .FirstOrDefaultAsync(x => x.PostId == postId && x.ProfileId == profileId, cancellationToken);
+
+        if (existingSave is null)
+        {
+            return true;
+        }
+
+        dbContext.BlogPostSaves.Remove(existingSave);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     private static string NormalizeTitle(string title)
@@ -692,6 +758,8 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
 
     private static BlogPostDto MapPost(BlogPost post, Blog blog, UserProfile author, Guid? viewerProfileId)
     {
+        var isSavedByMe = viewerProfileId.HasValue && post.SavedBy.Any(x => x.ProfileId == viewerProfileId.Value);
+
         return new BlogPostDto(
             post.Id,
             post.BlogId,
@@ -708,7 +776,8 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             post.CreatedAtUtc,
             post.UpdatedAtUtc,
             post.PublishedAtUtc,
-            viewerProfileId.HasValue && viewerProfileId.Value == blog.OwnerProfileId);
+                viewerProfileId.HasValue && viewerProfileId.Value == blog.OwnerProfileId,
+                isSavedByMe);
     }
 
     private async Task EnsureBlogSchemaAsync(CancellationToken cancellationToken)
@@ -810,6 +879,17 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 """, cancellationToken);
 
                 await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS BlogPostSaves (
+                    PostId TEXT NOT NULL,
+                    ProfileId TEXT NOT NULL,
+                    SavedAtUtc TEXT NOT NULL,
+                    PRIMARY KEY (PostId, ProfileId),
+                    FOREIGN KEY (PostId) REFERENCES BlogPosts (Id) ON DELETE CASCADE,
+                    FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_BlogPosts_BlogId_Slug
                 ON BlogPosts (BlogId, Slug);
                 """, cancellationToken);
@@ -817,6 +897,16 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE INDEX IF NOT EXISTS IX_BlogPosts_BlogId_IsPublished_PublishedAtUtc
                 ON BlogPosts (BlogId, IsPublished, PublishedAtUtc);
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE INDEX IF NOT EXISTS IX_BlogPostSaves_ProfileId
+                ON BlogPostSaves (ProfileId);
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE INDEX IF NOT EXISTS IX_BlogPostSaves_ProfileId_SavedAtUtc
+                ON BlogPostSaves (ProfileId, SavedAtUtc);
                 """, cancellationToken);
             }
             else if (dbContext.Database.IsMySql())
@@ -896,6 +986,17 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                     PRIMARY KEY (`Id`),
                     UNIQUE KEY `IX_BlogPosts_BlogId_Slug` (`BlogId`, `Slug`),
                     KEY `IX_BlogPosts_BlogId_IsPublished_PublishedAtUtc` (`BlogId`, `IsPublished`, `PublishedAtUtc`)
+                );
+                """, cancellationToken);
+
+                await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS `BlogPostSaves` (
+                    `PostId` char(36) NOT NULL,
+                    `ProfileId` char(36) NOT NULL,
+                    `SavedAtUtc` datetime(6) NOT NULL,
+                    PRIMARY KEY (`PostId`, `ProfileId`),
+                    KEY `IX_BlogPostSaves_ProfileId` (`ProfileId`),
+                    KEY `IX_BlogPostSaves_ProfileId_SavedAtUtc` (`ProfileId`, `SavedAtUtc`)
                 );
                 """, cancellationToken);
             }

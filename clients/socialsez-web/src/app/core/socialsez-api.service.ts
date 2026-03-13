@@ -34,6 +34,9 @@ import {
     ReelDto,
     RevokeOtherSessionsResponse,
     RegisterRequest,
+    SavedCollectionDto,
+    SavedItemDto,
+    SavedStatusDto,
     SafetyStatusDto,
     SetMessageReactionRequest,
     SetConversationMuteRequest,
@@ -322,6 +325,14 @@ export class SocialSezApiService {
 
     deleteBlogPost(blogId: string, postId: string): Observable<void> {
         return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}/posts/${encodeURIComponent(postId)}`, { headers: this.authHeaders() }));
+    }
+
+    saveBlogPost(blogId: string, postId: string): Observable<BlogPostDto> {
+        return this.withAutoRefresh(() => this.http.post<BlogPostDto>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}/posts/${encodeURIComponent(postId)}/save`, {}, { headers: this.authHeaders() }));
+    }
+
+    unsaveBlogPost(blogId: string, postId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}/posts/${encodeURIComponent(postId)}/save`, { headers: this.authHeaders() }));
     }
 
     getFeed(take = 25, mode: FeedMode = 'for-you'): Observable<PostDto[]> {
@@ -755,6 +766,60 @@ export class SocialSezApiService {
 
     private authHeaders(): HttpHeaders {
         return new HttpHeaders({ Authorization: `Bearer ${this.token}` });
+    }
+
+    // --- Saved Collections ---
+
+    getAllSavedItems(take = 50, skip = 0): Observable<SavedItemDto[]> {
+        return this.withAutoRefresh(() => this.http.get<SavedItemDto[]>(`${this.baseUrl}/collections/items?take=${take}&skip=${skip}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getCollections(): Observable<SavedCollectionDto[]> {
+        return this.withAutoRefresh(() => this.http.get<SavedCollectionDto[]>(`${this.baseUrl}/collections`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    createCollection(name: string): Observable<SavedCollectionDto> {
+        return this.withAutoRefresh(() => this.http.post<SavedCollectionDto>(`${this.baseUrl}/collections`, { name }, { headers: this.authHeaders() }));
+    }
+
+    deleteCollection(collectionId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/collections/${collectionId}`, { headers: this.authHeaders() }));
+    }
+
+    renameCollection(collectionId: string, name: string): Observable<SavedCollectionDto> {
+        return this.withAutoRefresh(() => this.http.patch<SavedCollectionDto>(`${this.baseUrl}/collections/${collectionId}`, { name }, { headers: this.authHeaders() }));
+    }
+
+    getCollectionItems(collectionId: string, take = 50, skip = 0): Observable<SavedItemDto[]> {
+        return this.withAutoRefresh(() => this.http.get<SavedItemDto[]>(`${this.baseUrl}/collections/${collectionId}/items?take=${take}&skip=${skip}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    savePost(postId: string): Observable<SavedItemDto> {
+        return this.withAutoRefresh(() => this.http.post<SavedItemDto>(`${this.baseUrl}/collections/items/posts/${postId}`, {}, { headers: this.authHeaders() }));
+    }
+
+    saveReel(reelId: string): Observable<SavedItemDto> {
+        return this.withAutoRefresh(() => this.http.post<SavedItemDto>(`${this.baseUrl}/collections/items/reels/${reelId}`, {}, { headers: this.authHeaders() }));
+    }
+
+    unsaveItem(savedItemId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/collections/items/${savedItemId}`, { headers: this.authHeaders() }));
+    }
+
+    addToCollection(collectionId: string, savedItemId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/collections/${collectionId}/items/${savedItemId}`, {}, { headers: this.authHeaders() }));
+    }
+
+    removeFromCollection(collectionId: string, savedItemId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/collections/${collectionId}/items/${savedItemId}`, { headers: this.authHeaders() }));
+    }
+
+    getSavedStatus(postIds: string[], reelIds: string[]): Observable<SavedStatusDto> {
+        const params: string[] = [];
+        if (postIds.length > 0) params.push(`postIds=${postIds.join(',')}`);
+        if (reelIds.length > 0) params.push(`reelIds=${reelIds.join(',')}`);
+        const query = params.length > 0 ? `?${params.join('&')}` : '';
+        return this.withAutoRefresh(() => this.http.get<SavedStatusDto>(`${this.baseUrl}/collections/status${query}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
     private optionalAuthHeaders(): HttpHeaders | undefined {

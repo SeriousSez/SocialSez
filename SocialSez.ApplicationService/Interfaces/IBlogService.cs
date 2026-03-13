@@ -17,4 +17,6 @@ public interface IBlogService
     Task<bool> DeletePostAsync(Guid blogId, Guid postId, Guid authorProfileId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<BlogPostDto>> GetPostsAsync(string handle, string blogSlug, Guid? viewerProfileId = null, CancellationToken cancellationToken = default);
     Task<BlogPostDto?> GetPostBySlugAsync(string handle, string blogSlug, string postSlug, Guid? viewerProfileId = null, CancellationToken cancellationToken = default);
+    Task<BlogPostDto?> SavePostAsync(Guid blogId, Guid postId, Guid profileId, CancellationToken cancellationToken = default);
+    Task<bool> UnsavePostAsync(Guid blogId, Guid postId, Guid profileId, CancellationToken cancellationToken = default);
 }

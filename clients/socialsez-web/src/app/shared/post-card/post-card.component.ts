@@ -85,6 +85,8 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     @Input() viewerProfileId: string | null = null;
     @Input() busy = false;
     @Input() canInteract = true;
+    @Input() savedByMe = false;
+    @Input() savedItemId: string | null = null;
     @Input() repostCount = 0;
     @Input() hideSensitiveMedia = false;
 
@@ -106,6 +108,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     @Output() shareToChat = new EventEmitter<void>();
     @Output() copyLink = new EventEmitter<void>();
     @Output() reportPost = new EventEmitter<void>();
+    @Output() saveToggled = new EventEmitter<void>();
 
     readonly reactionOptions = [
         { type: 'Like', emoji: '👍' },

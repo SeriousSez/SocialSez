@@ -42,6 +42,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     @Input() reactingReelId: string | null = null;
     @Input() commentingReelId: string | null = null;
     @Input() sharingReelId: string | null = null;
+    @Input() savedReelIds: string[] = [];
     @Input() viewerProfileId: string | null = null;
     @Input() canInteract = true;
     @Input() showOwnerActions = false;
@@ -58,6 +59,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     @Output() reelCommentDeleteRequested = new EventEmitter<ReelCommentDeleteEvent>();
     @Output() reelCommentReportRequested = new EventEmitter<ReelCommentReportEvent>();
     @Output() shareRequested = new EventEmitter<ReelDto>();
+    @Output() saveToggled = new EventEmitter<ReelDto>();
     @Output() reportRequested = new EventEmitter<ReelDto>();
     @Output() reelUpdated = new EventEmitter<{ reel: ReelDto; caption: string }>();
     @Output() reelDeleted = new EventEmitter<ReelDto>();
@@ -184,6 +186,18 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         }
 
         this.shareRequested.emit(reel);
+    }
+
+    onToggleSaved(reel: ReelDto): void {
+        if (!this.canInteract) {
+            return;
+        }
+
+        this.saveToggled.emit(reel);
+    }
+
+    isReelSaved(reelId: string): boolean {
+        return this.savedReelIds.includes(reelId);
     }
 
     onReportReel(reel: ReelDto): void {

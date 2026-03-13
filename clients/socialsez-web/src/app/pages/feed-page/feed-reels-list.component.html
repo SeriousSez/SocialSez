@@ -71,6 +71,9 @@
                 <button type="button" class="icon-button" [disabled]="sharingReelId === reel.id || !canInteract" (click)="onShareReel(reel)" aria-label="Share reel in direct messages">
                     <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
                 </button>
+                <button type="button" class="icon-button save-button" [class.active]="isReelSaved(reel.id)" [disabled]="!canInteract" (click)="onToggleSaved(reel)" [attr.aria-label]="isReelSaved(reel.id) ? 'Remove reel from saved' : 'Save reel'">
+                    <i class="fa-duotone fa-bookmark" [class.fa-solid]="isReelSaved(reel.id)" [class.fa-light]="!isReelSaved(reel.id)" aria-hidden="true"></i>
+                </button>
                 <button type="button" class="icon-button" [disabled]="sharingReelId === reel.id" (click)="onCopyReelLink(reel)" aria-label="Copy reel link">
                     <i class="fa-duotone" [class.fa-light]="copiedReelLinkId !== reel.id" [class.fa-solid]="copiedReelLinkId === reel.id" [class.fa-link]="copiedReelLinkId !== reel.id" [class.fa-check]="copiedReelLinkId === reel.id" aria-hidden="true"></i>
                 </button>

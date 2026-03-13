@@ -21,6 +21,9 @@ export class AuthPageComponent {
     email = '';
     password = '';
     confirmPassword = '';
+    showLoginPassword = false;
+    showRegisterPassword = false;
+    showConfirmPassword = false;
     handle = '';
     displayName = '';
     bio = '';
@@ -120,10 +123,25 @@ export class AuthPageComponent {
         this.mode = nextMode;
         this.registerStep = 'account';
         this.errorMessage = '';
+        this.showLoginPassword = false;
+        this.showRegisterPassword = false;
+        this.showConfirmPassword = false;
 
         if (nextMode === 'register' && this.suggestedInterests.length === 0) {
             void this.loadSuggestedInterests();
         }
+    }
+
+    toggleLoginPasswordVisibility(): void {
+        this.showLoginPassword = !this.showLoginPassword;
+    }
+
+    toggleRegisterPasswordVisibility(): void {
+        this.showRegisterPassword = !this.showRegisterPassword;
+    }
+
+    toggleConfirmPasswordVisibility(): void {
+        this.showConfirmPassword = !this.showConfirmPassword;
     }
 
     async register(): Promise<void> {

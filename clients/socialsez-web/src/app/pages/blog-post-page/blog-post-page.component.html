@@ -48,9 +48,10 @@
 
         <div class="content" [innerHTML]="renderedPostContent"></div>
 
-        <section class="blog-actions" *ngIf="allowLikes || allowComments || allowShares || allowEmbeds">
+        <section class="blog-actions" *ngIf="allowLikes || allowComments || allowShares || allowEmbeds || canToggleSave">
             <button type="button" class="ghost" *ngIf="allowLikes" disabled title="Blog likes will be enabled soon">Like</button>
             <button type="button" class="ghost" *ngIf="allowComments" disabled title="Blog comments will be enabled soon">Comment</button>
+            <button type="button" class="ghost" *ngIf="canToggleSave" [disabled]="savingPost" (click)="toggleSavePostAsync()">{{ item.isSavedByMe ? 'Unsave' : 'Save' }}</button>
             <button type="button" class="ghost" *ngIf="allowShares" (click)="copyShareLinkAsync()">{{ copiedShareLink ? 'Link copied' : 'Share' }}</button>
             <button type="button" class="ghost" *ngIf="allowEmbeds" (click)="openEmbedToolsInNewTab()">Embed</button>
         </section>

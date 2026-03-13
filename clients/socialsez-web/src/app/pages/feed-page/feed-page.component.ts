@@ -814,6 +814,17 @@ export class FeedPageComponent implements OnDestroy {
                     this.reelsLoading = false;
                 });
 
+                if (postsResult.status === 'fulfilled' || reelsResult.status === 'fulfilled') {
+                    try {
+                        await this.session.loadSavedStatusAsync(
+                            this.feed.map(post => post.id),
+                            this.reels.map(reel => reel.id)
+                        );
+                    } catch {
+                        // Non-blocking; feed should still render even if saved-status lookup fails.
+                    }
+                }
+
                 await this.loadStories(mode);
             } while (this.reloadQueued);
         } finally {
@@ -1216,6 +1227,56 @@ export class FeedPageComponent implements OnDestroy {
 
     async clearReaction(post: PostDto): Promise<void> {
         await this.runPostMutation(post.id, () => this.postInteractions.clearReaction(post.id), 'Could not clear reaction right now.');
+    }
+
+    isPostSaved(postId: string): boolean {
+        return this.session.isPostSaved(postId);
+    }
+
+    get savedReelIds(): string[] {
+        return Array.from(this.session.savedReelIds.keys());
+    }
+
+    isReelSaved(reelId: string): boolean {
+        return this.session.isReelSaved(reelId);
+    }
+
+    async toggleSavedPost(post: PostDto): Promise<void> {
+        if (!post?.id) {
+            return;
+        }
+
+        try {
+            const savedItemId = this.session.getSavedItemIdForPost(post.id);
+            if (savedItemId) {
+                await this.session.unsaveItemAsync(savedItemId);
+                this.session.message = 'Post removed from saved.';
+            } else {
+                await this.session.savePostAsync(post.id);
+                this.session.message = 'Post saved.';
+            }
+        } catch {
+            this.session.message = 'Could not update saved status right now.';
+        }
+    }
+
+    async toggleSavedReel(reel: ReelDto): Promise<void> {
+        if (!reel?.id) {
+            return;
+        }
+
+        try {
+            const savedItemId = this.session.getSavedItemIdForReel(reel.id);
+            if (savedItemId) {
+                await this.session.unsaveItemAsync(savedItemId);
+                this.session.message = 'Reel removed from saved.';
+            } else {
+                await this.session.saveReelAsync(reel.id);
+                this.session.message = 'Reel saved.';
+            }
+        } catch {
+            this.session.message = 'Could not update saved status right now.';
+        }
     }
 
     async addComment(post: PostDto, payload: string | { content: string; parentCommentId?: string | null }): Promise<void> {

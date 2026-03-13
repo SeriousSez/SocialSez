@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SocialSez.ApplicationService.Interfaces;
@@ -266,6 +267,18 @@ public class ReelsController(IReelService reelService, SocialSezContext dbContex
             throw new ArgumentException("Allowed reel video files: .mp4, .webm, .mov, .m4v, .ogv.");
         }
 
+        var transcoded = await TryTranscodeVideoToMp4Async(file, cancellationToken);
+        if (transcoded is not null)
+        {
+            return await SaveToDatabaseAsync(
+                profileId,
+                transcoded.Value.Content,
+                Path.GetFileNameWithoutExtension(file.FileName) + ".mp4",
+                ".mp4",
+                "video/mp4",
+                cancellationToken);
+        }
+
         return await SaveToDatabaseAsync(profileId, file, extension, cancellationToken);
     }
 
@@ -285,14 +298,36 @@ public class ReelsController(IReelService reelService, SocialSezContext dbContex
         await using var memoryStream = new MemoryStream();
         await file.CopyToAsync(memoryStream, cancellationToken);
 
+        return await SaveToDatabaseAsync(
+            profileId,
+            memoryStream.ToArray(),
+            Path.GetFileName(file.FileName),
+            extension,
+            file.ContentType,
+            cancellationToken);
+    }
+
+    private async Task<string> SaveToDatabaseAsync(Guid profileId, byte[] content, string originalFileName, string extension, string? contentType, CancellationToken cancellationToken)
+    {
+        var normalizedExtension = string.IsNullOrWhiteSpace(extension)
+            ? Path.GetExtension(originalFileName)
+            : extension;
+
+        if (string.IsNullOrWhiteSpace(normalizedExtension))
+        {
+            normalizedExtension = ".bin";
+        }
+
+        normalizedExtension = normalizedExtension.ToLowerInvariant();
+
         var uploaded = new UploadedImage
         {
             Id = Guid.NewGuid(),
             UploadedByProfileId = profileId,
-            ContentType = NormalizeContentType(file.ContentType, extension),
-            OriginalFileName = Path.GetFileName(file.FileName),
-            FileExtension = extension.ToLowerInvariant(),
-            Content = memoryStream.ToArray(),
+            ContentType = NormalizeContentType(contentType, normalizedExtension),
+            OriginalFileName = Path.GetFileName(originalFileName),
+            FileExtension = normalizedExtension,
+            Content = content,
             CreatedAtUtc = DateTime.UtcNow
         };
 
@@ -300,6 +335,134 @@ public class ReelsController(IReelService reelService, SocialSezContext dbContex
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return BuildUploadedMediaUrl(uploaded.Id);
+    }
+
+    private async Task<(byte[] Content, string ContentType)?> TryTranscodeVideoToMp4Async(IFormFile file, CancellationToken cancellationToken)
+    {
+        var ffmpegExecutable = ResolveFfmpegExecutable();
+        if (string.IsNullOrWhiteSpace(ffmpegExecutable))
+        {
+            return null;
+        }
+
+        var inputExtension = Path.GetExtension(file.FileName);
+        if (string.IsNullOrWhiteSpace(inputExtension))
+        {
+            inputExtension = ".bin";
+        }
+
+        var inputPath = Path.Combine(Path.GetTempPath(), $"socialsez-reel-{Guid.NewGuid():N}{inputExtension}");
+        var outputPath = Path.Combine(Path.GetTempPath(), $"socialsez-reel-{Guid.NewGuid():N}.mp4");
+
+        try
+        {
+            await using (var inputStream = new FileStream(inputPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true))
+            {
+                await file.CopyToAsync(inputStream, cancellationToken);
+            }
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = ffmpegExecutable,
+                Arguments = $"-y -i \"{inputPath}\" -movflags +faststart -pix_fmt yuv420p -c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k \"{outputPath}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(startInfo);
+            if (process is null)
+            {
+                return null;
+            }
+
+            await process.WaitForExitAsync(cancellationToken);
+            if (process.ExitCode != 0 || !System.IO.File.Exists(outputPath))
+            {
+                return null;
+            }
+
+            var content = await System.IO.File.ReadAllBytesAsync(outputPath, cancellationToken);
+            if (content.Length == 0)
+            {
+                return null;
+            }
+
+            return (content, "video/mp4");
+        }
+        catch
+        {
+            return null;
+        }
+        finally
+        {
+            try
+            {
+                if (System.IO.File.Exists(inputPath))
+                {
+                    System.IO.File.Delete(inputPath);
+                }
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                if (System.IO.File.Exists(outputPath))
+                {
+                    System.IO.File.Delete(outputPath);
+                }
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    private static string? ResolveFfmpegExecutable()
+    {
+        if (IsCommandAvailable("ffmpeg"))
+        {
+            return "ffmpeg";
+        }
+
+        var localFfmpeg = Path.Combine(AppContext.BaseDirectory, "ffmpeg", "ffmpeg.exe");
+        if (System.IO.File.Exists(localFfmpeg))
+        {
+            return localFfmpeg;
+        }
+
+        return null;
+    }
+
+    private static bool IsCommandAvailable(string command)
+    {
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = command,
+                Arguments = "-version",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+
+            if (process is null)
+            {
+                return false;
+            }
+
+            process.WaitForExit(2000);
+            return process.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private string BuildUploadedMediaUrl(Guid id)

@@ -313,17 +313,7 @@ export class SharedCommunityPostPageComponent {
     }
 
     onPostMediaCardClick(imageUrl: string): void {
-        const mediaUrls = this.postMediaUrls;
-        if (mediaUrls.length <= 1) {
-            this.openImageFullscreen(imageUrl);
-            return;
-        }
-
-        const nextIndex = this.postActiveImageIndex >= mediaUrls.length - 1
-            ? 0
-            : this.postActiveImageIndex + 1;
-
-        this.transitionToPostImage(nextIndex, 'next');
+        this.openImageFullscreen(imageUrl);
     }
 
     setActivePostImage(index: number): void {

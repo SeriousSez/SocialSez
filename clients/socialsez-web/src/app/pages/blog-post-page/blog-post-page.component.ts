@@ -24,6 +24,7 @@ export class BlogPostPageComponent implements OnDestroy {
 
     blog: BlogDto | null = null;
     post: BlogPostDto | null = null;
+    savingPost = false;
     copiedShareLink = false;
     private loadVersion = 0;
     private customCssStyleEl: HTMLStyleElement | null = null;
@@ -103,6 +104,10 @@ export class BlogPostPageComponent implements OnDestroy {
         return this.blog?.allowEmbeds !== false;
     }
 
+    get canToggleSave(): boolean {
+        return !!this.session.profile;
+    }
+
     splitHashtagText(content: string | null | undefined): HashtagTextPart[][] {
         return splitHashtagText(content);
     }
@@ -132,6 +137,30 @@ export class BlogPostPageComponent implements OnDestroy {
             this.cdr.detectChanges();
         } catch {
             this.copiedShareLink = false;
+        }
+    }
+
+    async toggleSavePostAsync(): Promise<void> {
+        const currentPost = this.post;
+        if (!currentPost || this.savingPost || !this.canToggleSave) {
+            return;
+        }
+
+        this.savingPost = true;
+        this.error = '';
+
+        try {
+            if (currentPost.isSavedByMe) {
+                await this.session.unsaveBlogPostAsync(currentPost.blogId, currentPost.id);
+                this.post = { ...currentPost, isSavedByMe: false };
+            } else {
+                this.post = await this.session.saveBlogPostAsync(currentPost.blogId, currentPost.id);
+            }
+        } catch {
+            this.error = 'Could not update saved status right now.';
+        } finally {
+            this.savingPost = false;
+            this.cdr.detectChanges();
         }
     }
 

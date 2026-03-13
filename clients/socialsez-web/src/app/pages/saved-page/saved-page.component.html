@@ -1,0 +1,86 @@
+<div class="saved-page">
+    <div class="saved-content">
+        <div class="content-header">
+            <h3>{{ viewTitle }}</h3>
+            <p>{{ filteredItems.length }} item{{ filteredItems.length === 1 ? '' : 's' }}</p>
+        </div>
+
+        <app-segmented-tabs class="content-tabs" [tabs]="contentTabs" [activeTab]="activeContentTab" ariaLabel="Saved content type" (activeTabChange)="onContentTabChanged($event)">
+        </app-segmented-tabs>
+
+        @if (isLoading) {
+        <div class="loading-state">
+            <i class="fa-duotone fa-light fa-spinner fa-spin"></i>
+            <span>Loading...</span>
+        </div>
+        } @else if (filteredItems.length === 0) {
+        <div class="empty-state compact">
+            @if (activeContentTab === 'posts' || activeContentTab === 'reels') {
+            <p>No saved {{ activeContentLabel }} in this view yet.</p>
+            @if (!isAllView) {
+            <p class="hint">Add items to this collection from All Saved.</p>
+            }
+            } @else {
+            <p>Saved {{ activeContentLabel }} will appear here once listing support is connected.</p>
+            }
+        </div>
+        } @else if (activeContentTab === 'reels') {
+        <div class="reels-grid">
+            @for (item of filteredItems; track item.id) {
+            @if (item.itemType === 'Reel' && item.reel) {
+            <div class="reel-tile" (click)="openReel(item.reel)" [attr.aria-label]="'Open reel by @' + item.reel.authorHandle">
+                @if (item.reel.thumbnailUrl) {
+                <img [src]="item.reel.thumbnailUrl" [alt]="item.reel.caption ?? 'Reel'" class="reel-tile-thumb" />
+                } @else {
+                <div class="reel-tile-placeholder">
+                    <i class="fa-duotone fa-light fa-film"></i>
+                </div>
+                }
+                <span class="reel-tile-play-badge" aria-hidden="true">
+                    <i class="fa-duotone fa-thin fa-circle-play"></i>
+                </span>
+                @if (item.reel.caption) {
+                <div class="reel-tile-caption">{{ item.reel.caption }}</div>
+                }
+                <div class="reel-tile-hover-actions" (click)="$event.stopPropagation()">
+                    <button class="reel-tile-unsave" title="Unsave" (click)="unsaveItem(item)">
+                        <i class="fa-duotone fa-light fa-bookmark-slash"></i>
+                    </button>
+                </div>
+            </div>
+            }
+            }
+        </div>
+        } @else {
+        <div class="items-list">
+            @for (item of filteredItems; track item.id) {
+            <div class="saved-item-wrapper post-item">
+                @if (item.itemType === 'Post' && item.post) {
+                <app-post-card [post]="item.post" [viewerProfileId]="viewerProfileId" [canInteract]="true" />
+                }
+                <div class="item-actions">
+                    <button class="btn-unsave" title="Remove from saved" (click)="unsaveItem(item)">
+                        <i class="fa-duotone fa-light fa-bookmark-slash"></i>
+                        Unsave
+                    </button>
+                    @if (isAllView && collections.length > 0) {
+                    <div class="add-to-collection-dropdown">
+                        <button class="btn-add-to-collection">
+                            <i class="fa-duotone fa-light fa-folder-plus"></i>
+                            Add to collection
+                        </button>
+                        <div class="dropdown-menu">
+                            @for (col of collections; track col.id) {
+                            <button (click)="addItemToCollection(item, col.id)">{{ col.name }}</button>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+        }
+    </div>
+
+</div>

@@ -58,6 +58,7 @@
                 <div class="meta">
                     <span>{{ (post.publishedAtUtc ?? post.updatedAtUtc) | date:'mediumDate' }}</span>
                     <span *ngIf="!post.isPublished" class="draft">Draft</span>
+                    <button type="button" class="save-post" *ngIf="canToggleSave" [disabled]="savingPostId === post.id" (click)="toggleSavedPostAsync(post, $event)">{{ post.isSavedByMe ? 'Unsave' : 'Save' }}</button>
                 </div>
                 <div class="tags" *ngIf="post.tags.length">
                     <a *ngFor="let tag of post.tags" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: tag, type: 'all' }">#{{ tag }}</a>

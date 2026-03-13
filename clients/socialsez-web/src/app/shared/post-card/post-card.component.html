@@ -211,6 +211,11 @@
                 <span class="action-label">{{ copyLinkCopied ? 'Copied' : 'Copy link' }}</span>
             </button>
 
+            <button class="comments-toggle" type="button" (click)="saveToggled.emit()" [disabled]="busy || !canInteract" [attr.aria-label]="savedByMe ? 'Unsave post' : 'Save post'" [attr.title]="savedByMe ? 'Unsave post' : 'Save post'">
+                <i class="fa-duotone" [class.fa-solid]="savedByMe" [class.fa-light]="!savedByMe" [class.fa-bookmark]="true" aria-hidden="true"></i>
+                <span class="action-label">{{ savedByMe ? 'Saved' : 'Save' }}</span>
+            </button>
+
             <button class="comments-toggle" type="button" *ngIf="canReportPost()" (click)="triggerReportPost()" [disabled]="busy || !canInteract" aria-label="Report post" title="Report post">
                 <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
                 <span class="action-label">Report</span>

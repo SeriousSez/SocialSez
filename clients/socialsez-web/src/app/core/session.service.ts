@@ -1,6 +1,6 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
-import { ReplaySubject, firstValueFrom } from 'rxjs';
+import { ReplaySubject, Subject, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
     AuthSessionDto,
@@ -37,7 +37,10 @@ import {
     SafetyStatusDto,
     StoryDto,
     StoryGroupDto,
-    UpdateProfileRequest
+    UpdateProfileRequest,
+    SavedCollectionDto,
+    SavedItemDto,
+    SavedStatusDto
 } from './api.types';
 import { SocialSezApiService } from './socialsez-api.service';
 
@@ -63,10 +66,20 @@ export class SessionService {
     private readonly appChanges = new ReplaySubject<'profile' | 'posts' | 'session' | 'notifications'>(1);
     readonly appChanges$ = this.appChanges.asObservable();
     readonly messageChanges$ = this.messageChanges.asObservable();
+    private readonly openReelInModalSource = new Subject<ReelDto>();
+    readonly openReelInModal$ = this.openReelInModalSource.asObservable();
+
+    requestOpenReelInModal(reel: ReelDto): void {
+        this.openReelInModalSource.next(reel);
+    }
 
     private silentRefreshTimerId: number | undefined;
     private bootstrapPromise: Promise<void> | null = null;
     private bootstrapped = false;
+    // Saved collections state (populated on demand)
+    savedPostIds = new Map<string, string>();  // postId → savedItemId
+    savedReelIds = new Map<string, string>();  // reelId → savedItemId
+    savedStatusLoaded = false;
 
     constructor(
         private readonly api: SocialSezApiService,
@@ -735,6 +748,17 @@ export class SessionService {
         await firstValueFrom(this.api.deleteBlogPost(blogId, postId));
     }
 
+    async saveBlogPostAsync(blogId: string, postId: string): Promise<BlogPostDto> {
+        const saved = await firstValueFrom(this.api.saveBlogPost(blogId, postId));
+        this.message = 'Post saved.';
+        return this.normalizeBlogPost(saved);
+    }
+
+    async unsaveBlogPostAsync(blogId: string, postId: string): Promise<void> {
+        await firstValueFrom(this.api.unsaveBlogPost(blogId, postId));
+        this.message = 'Post removed from saved.';
+    }
+
     async loadBlogPostsAsync(handle: string, blogSlug: string): Promise<BlogPostDto[]> {
         const posts = await firstValueFrom(this.api.getBlogPosts(handle, blogSlug));
         return posts.map(post => this.normalizeBlogPost(post));
@@ -840,6 +864,93 @@ export class SessionService {
         const poll = await firstValueFrom(this.api.voteCommunityPoll(communityId, pollId, optionId));
         return this.normalizeCommunityPoll(poll);
     }
+
+    // --- Saved Collections ---
+
+    async loadAllSavedItemsAsync(take = 50, skip = 0): Promise<SavedItemDto[]> {
+        return firstValueFrom(this.api.getAllSavedItems(take, skip));
+    }
+
+    async loadCollectionsAsync(): Promise<SavedCollectionDto[]> {
+        return firstValueFrom(this.api.getCollections());
+    }
+
+    async createCollectionAsync(name: string): Promise<SavedCollectionDto> {
+        const collection = await firstValueFrom(this.api.createCollection(name));
+        this.message = `Collection "${collection.name}" created.`;
+        return collection;
+    }
+
+    async deleteCollectionAsync(collectionId: string): Promise<void> {
+        await firstValueFrom(this.api.deleteCollection(collectionId));
+        this.message = 'Collection deleted.';
+    }
+
+    async renameCollectionAsync(collectionId: string, name: string): Promise<SavedCollectionDto> {
+        const collection = await firstValueFrom(this.api.renameCollection(collectionId, name));
+        this.message = `Collection renamed to "${collection.name}".`;
+        return collection;
+    }
+
+    async loadCollectionItemsAsync(collectionId: string, take = 50, skip = 0): Promise<SavedItemDto[]> {
+        return firstValueFrom(this.api.getCollectionItems(collectionId, take, skip));
+    }
+
+    async savePostAsync(postId: string): Promise<SavedItemDto> {
+        const item = await firstValueFrom(this.api.savePost(postId));
+        this.savedPostIds.set(postId, item.id);
+        return item;
+    }
+
+    async saveReelAsync(reelId: string): Promise<SavedItemDto> {
+        const item = await firstValueFrom(this.api.saveReel(reelId));
+        this.savedReelIds.set(reelId, item.id);
+        return item;
+    }
+
+    async unsaveItemAsync(savedItemId: string): Promise<void> {
+        await firstValueFrom(this.api.unsaveItem(savedItemId));
+        // Remove from local maps
+        for (const [k, v] of this.savedPostIds) { if (v === savedItemId) { this.savedPostIds.delete(k); break; } }
+        for (const [k, v] of this.savedReelIds) { if (v === savedItemId) { this.savedReelIds.delete(k); break; } }
+    }
+
+    async addToCollectionAsync(collectionId: string, savedItemId: string): Promise<void> {
+        await firstValueFrom(this.api.addToCollection(collectionId, savedItemId));
+    }
+
+    async removeFromCollectionAsync(collectionId: string, savedItemId: string): Promise<void> {
+        await firstValueFrom(this.api.removeFromCollection(collectionId, savedItemId));
+    }
+
+    async loadSavedStatusAsync(postIds: string[], reelIds: string[]): Promise<SavedStatusDto> {
+        const status = await firstValueFrom(this.api.getSavedStatus(postIds, reelIds));
+        for (const [postId, savedItemId] of Object.entries(status.savedPostIds)) {
+            this.savedPostIds.set(postId, savedItemId);
+        }
+        for (const [reelId, savedItemId] of Object.entries(status.savedReelIds)) {
+            this.savedReelIds.set(reelId, savedItemId);
+        }
+        return status;
+    }
+
+    isPostSaved(postId: string): boolean {
+        return this.savedPostIds.has(postId);
+    }
+
+    isReelSaved(reelId: string): boolean {
+        return this.savedReelIds.has(reelId);
+    }
+
+    getSavedItemIdForPost(postId: string): string | undefined {
+        return this.savedPostIds.get(postId);
+    }
+
+    getSavedItemIdForReel(reelId: string): string | undefined {
+        return this.savedReelIds.get(reelId);
+    }
+
+    // --- End Saved Collections ---
 
     async loadNotificationsAsync(take = 50): Promise<NotificationDto[]> {
         return firstValueFrom(this.api.getNotifications(take));
@@ -1044,7 +1155,8 @@ export class SessionService {
         return {
             ...post,
             authorHandle: (post.authorHandle ?? '').trim().toLowerCase(),
-            coverImageUrl: this.normalizeMediaUrl(post.coverImageUrl)
+            coverImageUrl: this.normalizeMediaUrl(post.coverImageUrl),
+            isSavedByMe: post.isSavedByMe === true
         };
     }
 

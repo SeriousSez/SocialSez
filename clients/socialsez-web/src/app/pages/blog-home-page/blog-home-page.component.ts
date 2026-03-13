@@ -21,6 +21,7 @@ export class BlogHomePageComponent implements OnDestroy {
     blogSlug = '';
     blog: BlogDto | null = null;
     posts: BlogPostDto[] = [];
+    savingPostId: string | null = null;
     private loadVersion = 0;
     private customCssStyleEl: HTMLStyleElement | null = null;
     private appliedCustomCss = '';
@@ -63,6 +64,10 @@ export class BlogHomePageComponent implements OnDestroy {
 
     get headerLayoutClass(): string {
         return this.blog?.theme?.headerLayout?.toLowerCase() === 'center' ? 'center' : 'left';
+    }
+
+    get canToggleSave(): boolean {
+        return !!this.session.profile;
     }
 
     async loadAsync(): Promise<void> {
@@ -162,6 +167,33 @@ export class BlogHomePageComponent implements OnDestroy {
         }
 
         await this.router.navigate(['/blogs', currentBlog.ownerHandle, currentBlog.slug, post.slug]);
+    }
+
+    async toggleSavedPostAsync(post: BlogPostDto, event: Event): Promise<void> {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (this.savingPostId || !this.canToggleSave) {
+            return;
+        }
+
+        this.savingPostId = post.id;
+        this.error = '';
+
+        try {
+            if (post.isSavedByMe) {
+                await this.session.unsaveBlogPostAsync(post.blogId, post.id);
+                this.posts = this.posts.map(item => item.id === post.id ? { ...item, isSavedByMe: false } : item);
+            } else {
+                const updated = await this.session.saveBlogPostAsync(post.blogId, post.id);
+                this.posts = this.posts.map(item => item.id === post.id ? updated : item);
+            }
+        } catch {
+            this.error = 'Could not update saved status right now.';
+        } finally {
+            this.savingPostId = null;
+            this.cdr.detectChanges();
+        }
     }
 
     splitHashtagText(content: string | null | undefined): HashtagTextPart[][] {

@@ -14,10 +14,25 @@
     <form class="auth-form" (ngSubmit)="submit()" autocomplete="off" data-lpignore="true" data-form-type="other">
         <div class="grid" *ngIf="mode === 'login' || registerStep === 'account'">
             <label>Email <input [(ngModel)]="email" name="email" placeholder="you@example.com" /></label>
-            <label>Password <input [(ngModel)]="password" name="password" type="password" placeholder="••••••••" /></label>
+            <label>Password
+                <div class="password-field">
+                    <input [(ngModel)]="password" name="password" [type]="mode === 'login' ? (showLoginPassword ? 'text' : 'password') : (showRegisterPassword ? 'text' : 'password')" placeholder="••••••••" />
+                    <button type="button" class="password-toggle" [attr.aria-label]="(mode === 'login' ? showLoginPassword : showRegisterPassword) ? 'Hide password' : 'Show password'" [attr.title]="(mode === 'login' ? showLoginPassword : showRegisterPassword) ? 'Hide password' : 'Show password'"
+                        (click)="mode === 'login' ? toggleLoginPasswordVisibility() : toggleRegisterPasswordVisibility()">
+                        <i class="fa-duotone" [class.fa-eye]="!(mode === 'login' ? showLoginPassword : showRegisterPassword)" [class.fa-eye-slash]="mode === 'login' ? showLoginPassword : showRegisterPassword" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </label>
 
             <ng-container *ngIf="mode === 'register'">
-                <label>Confirm Password <input [(ngModel)]="confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" /></label>
+                <label>Confirm Password
+                    <div class="password-field">
+                        <input [(ngModel)]="confirmPassword" name="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" placeholder="••••••••" />
+                        <button type="button" class="password-toggle" [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'" [attr.title]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'" (click)="toggleConfirmPasswordVisibility()">
+                            <i class="fa-duotone" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </label>
                 <label>Handle <input [(ngModel)]="handle" name="handle" (ngModelChange)="onHandleInput($event)" placeholder="sez" /></label>
                 <label>Display Name <input [(ngModel)]="displayName" name="displayName" placeholder="Sez" /></label>
                 <label>Date of Birth
