@@ -1,0 +1,55 @@
+@if (request) {
+<div class="save-modal-backdrop" (click)="cancel()">
+    <section class="save-modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Save to collection">
+        <header class="save-modal-head">
+            <div>
+                <h3>Save {{ itemLabel }}</h3>
+                <p>Choose where you want to keep it.</p>
+            </div>
+            <button type="button" class="save-modal-close" (click)="cancel()" [disabled]="saving" aria-label="Close save dialog">
+                <i class="fa-duotone fa-light fa-xmark"></i>
+            </button>
+        </header>
+
+        <div class="save-modal-options">
+            <button type="button" class="save-destination all-saved" (click)="saveToAllAsync()" [disabled]="saving">
+                <span class="destination-main">
+                    <i class="fa-duotone fa-light fa-bookmark"></i>
+                    <span>All Saved</span>
+                </span>
+                <span class="destination-copy">Save without assigning a collection</span>
+            </button>
+
+            @if (loading) {
+            <p class="save-modal-hint">Loading collections...</p>
+            } @else {
+            @for (collection of collections; track collection.id) {
+            <button type="button" class="save-destination" (click)="saveToCollectionAsync(collection.id)" [disabled]="saving">
+                <span class="destination-main">
+                    <i class="fa-duotone fa-light fa-folder"></i>
+                    <span>{{ collection.name }}</span>
+                </span>
+                <span class="destination-copy">{{ collection.itemCount }} item{{ collection.itemCount === 1 ? '' : 's' }}</span>
+            </button>
+            }
+            }
+        </div>
+
+        <section class="save-modal-create">
+            <button type="button" class="toggle-create" (click)="creatingCollection = !creatingCollection" [disabled]="saving">
+                <i class="fa-duotone fa-light fa-folder-plus"></i>
+                <span>{{ creatingCollection ? 'Cancel new collection' : 'Create new collection' }}</span>
+            </button>
+
+            @if (creatingCollection) {
+            <div class="create-collection-form">
+                <input type="text" maxlength="100" placeholder="Collection name" [(ngModel)]="newCollectionName" (keydown.enter)="createCollectionAndSaveAsync()" />
+                <button type="button" (click)="createCollectionAndSaveAsync()" [disabled]="!newCollectionName.trim() || saving">
+                    {{ saving ? 'Saving...' : 'Create and save' }}
+                </button>
+            </div>
+            }
+        </section>
+    </section>
+</div>
+}

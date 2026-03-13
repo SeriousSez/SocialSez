@@ -2,7 +2,7 @@
     <div class="saved-content">
         <div class="content-header">
             <h3>{{ viewTitle }}</h3>
-            <p>{{ filteredItems.length }} item{{ filteredItems.length === 1 ? '' : 's' }}</p>
+            <p>{{ activeCount }} item{{ activeCount === 1 ? '' : 's' }}</p>
         </div>
 
         <app-segmented-tabs class="content-tabs" [tabs]="contentTabs" [activeTab]="activeContentTab" ariaLabel="Saved content type" (activeTabChange)="onContentTabChanged($event)">
@@ -13,15 +13,25 @@
             <i class="fa-duotone fa-light fa-spinner fa-spin"></i>
             <span>Loading...</span>
         </div>
-        } @else if (filteredItems.length === 0) {
+        } @else if (activeContentTab === 'community-posts' && filteredCommunityPosts.length === 0) {
         <div class="empty-state compact">
-            @if (activeContentTab === 'posts' || activeContentTab === 'reels') {
-            <p>No saved {{ activeContentLabel }} in this view yet.</p>
+            <p>No saved community posts in this view yet.</p>
             @if (!isAllView) {
             <p class="hint">Add items to this collection from All Saved.</p>
             }
-            } @else {
-            <p>Saved {{ activeContentLabel }} will appear here once listing support is connected.</p>
+        </div>
+        } @else if (activeContentTab === 'blog-posts' && filteredBlogPosts.length === 0) {
+        <div class="empty-state compact">
+            <p>No saved blog posts in this view yet.</p>
+            @if (!isAllView) {
+            <p class="hint">Add items to this collection from All Saved.</p>
+            }
+        </div>
+        } @else if ((activeContentTab === 'posts' || activeContentTab === 'reels') && filteredItems.length === 0) {
+        <div class="empty-state compact">
+            <p>No saved {{ activeContentLabel }} in this view yet.</p>
+            @if (!isAllView) {
+            <p class="hint">Add items to this collection from All Saved.</p>
             }
         </div>
         } @else if (activeContentTab === 'reels') {
@@ -51,32 +61,106 @@
             }
             }
         </div>
+        } @else if (activeContentTab === 'community-posts') {
+        <div class="items-list">
+            @for (post of filteredCommunityPosts; track post.id) {
+            <article class="saved-simple-card">
+                <header class="saved-simple-card-head">
+                    <p class="saved-simple-card-title">{{ post.title || ('Post by @' + post.authorHandle) }}</p>
+                    <a class="saved-simple-card-link" [href]="'/cp/' + post.id">Open</a>
+                </header>
+                @if (post.content) {
+                <p class="saved-simple-card-content">{{ post.content }}</p>
+                }
+                <div class="saved-simple-card-meta">
+                    <span>@{{ post.authorHandle }}</span>
+                    <span>·</span>
+                    <span>{{ post.createdAtUtc | date:'short' }}</span>
+                </div>
+                <div class="item-actions">
+                    <button class="btn-unsave" title="Unsave" (click)="unsaveCommunityPost(post)">
+                        <i class="fa-duotone fa-light fa-bookmark-slash"></i>
+                        Unsave
+                    </button>
+                </div>
+            </article>
+            }
+        </div>
+        } @else if (activeContentTab === 'blog-posts') {
+        <div class="items-list">
+            @for (post of filteredBlogPosts; track post.id) {
+            <article class="saved-simple-card">
+                <header class="saved-simple-card-head">
+                    <p class="saved-simple-card-title">{{ post.title }}</p>
+                    <a class="saved-simple-card-link" [href]="'/blogs/' + post.authorHandle + '/' + post.blogSlug + '/' + post.slug">Open</a>
+                </header>
+                @if (post.excerpt) {
+                <p class="saved-simple-card-content">{{ post.excerpt }}</p>
+                }
+                <div class="saved-simple-card-meta">
+                    <span>@{{ post.authorHandle }}</span>
+                    <span>·</span>
+                    <span>{{ (post.publishedAtUtc || post.updatedAtUtc) | date:'short' }}</span>
+                </div>
+                <div class="item-actions">
+                    <button class="btn-unsave" title="Unsave" (click)="unsaveBlogPost(post)">
+                        <i class="fa-duotone fa-light fa-bookmark-slash"></i>
+                        Unsave
+                    </button>
+                </div>
+            </article>
+            }
+        </div>
         } @else {
         <div class="items-list">
             @for (item of filteredItems; track item.id) {
             <div class="saved-item-wrapper post-item">
                 @if (item.itemType === 'Post' && item.post) {
-                <app-post-card [post]="item.post" [viewerProfileId]="viewerProfileId" [canInteract]="true" />
-                }
-                <div class="item-actions">
-                    <button class="btn-unsave" title="Remove from saved" (click)="unsaveItem(item)">
-                        <i class="fa-duotone fa-light fa-bookmark-slash"></i>
-                        Unsave
-                    </button>
-                    @if (isAllView && collections.length > 0) {
-                    <div class="add-to-collection-dropdown">
-                        <button class="btn-add-to-collection">
-                            <i class="fa-duotone fa-light fa-folder-plus"></i>
-                            Add to collection
-                        </button>
-                        <div class="dropdown-menu">
-                            @for (col of collections; track col.id) {
-                            <button (click)="addItemToCollection(item, col.id)">{{ col.name }}</button>
+                <article class="saved-simple-card">
+                    <header class="saved-simple-card-head">
+                        <div class="saved-post-author">
+                            @if (item.post.authorImageUrl) {
+                            <img class="saved-post-avatar" [src]="item.post.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Author image" />
+                            } @else {
+                            <div class="saved-post-avatar fallback">{{ item.post.authorHandle[0] }}</div>
                             }
+                            <p class="saved-simple-card-title">@{{ item.post.authorHandle }}</p>
                         </div>
+                        <a class="saved-simple-card-link" [href]="'/post/' + item.post.id">Open</a>
+                    </header>
+                    @if (item.post.content) {
+                    <div class="saved-simple-card-content">
+                        @for (line of postContentLines(item.post.content); track $index; let isLastLine = $last) {
+                        <ng-container>
+                            @for (part of line; track $index) {
+                            @if (part.hashtag) {
+                            <a class="hashtag" [routerLink]="['/hashtags', part.hashtag]">{{ part.text }}</a>
+                            } @else if (part.mentionHandle) {
+                            <a class="mention" [routerLink]="['/users', part.mentionHandle]">{{ part.text }}</a>
+                            } @else {
+                            <span>{{ part.text }}</span>
+                            }
+                            }
+                            @if (!isLastLine) {
+                            <br />
+                            }
+                        </ng-container>
+                        }
                     </div>
                     }
-                </div>
+                    <div class="saved-simple-card-meta">
+                        <span>{{ item.post.comments.length }} comments</span>
+                        <span>·</span>
+                        <span>{{ item.post.createdAtUtc | date:'short' }}</span>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-unsave" title="Unsave" (click)="unsaveItem(item)">
+                            <i class="fa-duotone fa-light fa-bookmark-slash"></i>
+                            Unsave
+                        </button>
+                    </div>
+                </article>
+                }
             </div>
             }
         </div>

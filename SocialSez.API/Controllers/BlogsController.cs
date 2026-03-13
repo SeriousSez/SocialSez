@@ -44,6 +44,19 @@ public class BlogsController(IBlogService blogService) : ControllerBase
         return Ok(blogs);
     }
 
+    [Authorize]
+    [HttpGet("posts/saved")]
+    public async Task<ActionResult<IReadOnlyCollection<BlogPostDto>>> GetSavedPosts([FromQuery] int take = 50, [FromQuery] int skip = 0, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var posts = await blogService.GetSavedPostsAsync(profileId, take, skip, cancellationToken);
+        return Ok(posts);
+    }
+
     [HttpGet("by-author/{handle}")]
     public async Task<ActionResult<IReadOnlyCollection<BlogDto>>> GetByAuthorHandle(string handle, CancellationToken cancellationToken)
     {

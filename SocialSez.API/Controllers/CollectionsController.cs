@@ -106,6 +106,38 @@ public class CollectionsController(ISavedCollectionService savedCollectionServic
         }
     }
 
+    // POST /api/collections/items/community-posts/{postId}
+    [HttpPost("items/community-posts/{postId:guid}")]
+    public async Task<ActionResult<SavedItemDto>> SaveCommunityPost(Guid postId)
+    {
+        if (!TryGetProfileId(out var profileId)) return Unauthorized();
+        try
+        {
+            var item = await savedCollectionService.SaveCommunityPostAsync(profileId, postId);
+            return Ok(item);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
+    // POST /api/collections/items/blog-posts/{postId}
+    [HttpPost("items/blog-posts/{postId:guid}")]
+    public async Task<ActionResult<SavedItemDto>> SaveBlogPost(Guid postId)
+    {
+        if (!TryGetProfileId(out var profileId)) return Unauthorized();
+        try
+        {
+            var item = await savedCollectionService.SaveBlogPostAsync(profileId, postId);
+            return Ok(item);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
     // DELETE /api/collections/items/{savedItemId}
     [HttpDelete("items/{savedItemId:guid}")]
     public async Task<IActionResult> UnsaveItem(Guid savedItemId)

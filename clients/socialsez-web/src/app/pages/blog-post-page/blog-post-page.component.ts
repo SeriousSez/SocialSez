@@ -154,7 +154,16 @@ export class BlogPostPageComponent implements OnDestroy {
                 await this.session.unsaveBlogPostAsync(currentPost.blogId, currentPost.id);
                 this.post = { ...currentPost, isSavedByMe: false };
             } else {
-                this.post = await this.session.saveBlogPostAsync(currentPost.blogId, currentPost.id);
+                const saved = await this.session.openSaveToCollectionModalAsync({
+                    kind: 'blog-post',
+                    itemId: currentPost.id,
+                    blogId: currentPost.blogId,
+                    label: currentPost.title
+                });
+
+                if (saved) {
+                    this.post = { ...currentPost, isSavedByMe: true };
+                }
             }
         } catch {
             this.error = 'Could not update saved status right now.';

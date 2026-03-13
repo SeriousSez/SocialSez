@@ -1,0 +1,138 @@
+:host {
+    display: contents;
+}
+
+.save-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.52);
+    display: grid;
+    place-items: center;
+    z-index: 1200;
+    padding: 16px;
+}
+
+.save-modal-card {
+    width: min(460px, 100%);
+    background: #fff;
+    border: 1px solid #dbe4f0;
+    border-radius: 18px;
+    padding: 18px;
+    display: grid;
+    gap: 16px;
+    box-shadow: 0 28px 70px -34px rgba(15, 23, 42, 0.42);
+}
+
+.save-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.save-modal-head h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.save-modal-head p {
+    margin: 4px 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.88rem;
+}
+
+.save-modal-close {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: var(--color-text);
+}
+
+.save-modal-close:hover {
+    box-shadow: none;
+    transform: none;
+    background: #eef2ff;
+}
+
+.save-modal-options {
+    display: grid;
+    gap: 10px;
+}
+
+.save-destination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: left;
+    width: 100%;
+    background: #fff;
+    color: var(--color-text);
+    border: 1px solid #dbe4f0;
+    border-radius: 14px;
+    padding: 12px 14px;
+}
+
+.save-destination:hover {
+    transform: translateY(0);
+    box-shadow: 0 14px 26px -24px var(--color-primary);
+    border-color: #c7d7f8;
+}
+
+.save-destination.all-saved {
+    background: linear-gradient(180deg, #f8fbff, #f2f7ff);
+}
+
+.destination-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+}
+
+.destination-copy {
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+}
+
+.save-modal-create {
+    display: grid;
+    gap: 12px;
+    border-top: 1px solid #e5edf9;
+    padding-top: 14px;
+}
+
+.toggle-create {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid #dbe4f0;
+    color: var(--color-text);
+}
+
+.toggle-create:hover {
+    background: #f8fbff;
+}
+
+.create-collection-form {
+    display: grid;
+    gap: 10px;
+}
+
+.create-collection-form input {
+    width: 100%;
+}
+
+.create-collection-form button {
+    justify-self: start;
+}
+
+.save-modal-hint {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.88rem;
+}

@@ -2,18 +2,23 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { ReelDto, SavedCollectionDto, SavedItemDto } from '../../core/api.types';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BlogPostDto, CommunityPostDto, ReelDto, SavedCollectionDto, SavedItemDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
-import { PostCardComponent } from '../../shared/post-card/post-card.component';
 import { SegmentedTabItem, SegmentedTabsComponent } from '../../shared/segmented-tabs/segmented-tabs.component';
 
 type SavedView = 'all' | { collectionId: string; name: string };
 
+interface SavedPostContentPart {
+    text: string;
+    hashtag?: string;
+    mentionHandle?: string;
+}
+
 @Component({
     selector: 'app-saved-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, PostCardComponent, SegmentedTabsComponent],
+    imports: [CommonModule, FormsModule, RouterLink, SegmentedTabsComponent],
     templateUrl: './saved-page.component.html',
     styleUrl: './saved-page.component.scss'
 })
@@ -30,6 +35,8 @@ export class SavedPageComponent implements OnInit {
 
     collections: SavedCollectionDto[] = [];
     items: SavedItemDto[] = [];
+    communityPosts: CommunityPostDto[] = [];
+    blogPosts: BlogPostDto[] = [];
     view: SavedView = 'all';
     activeContentTab: 'posts' | 'reels' | 'community-posts' | 'blog-posts' = 'posts';
     readonly contentTabs: readonly SegmentedTabItem[] = [
@@ -65,6 +72,14 @@ export class SavedPageComponent implements OnInit {
             } else {
                 this.view = 'all';
                 this.items = await this.session.loadAllSavedItemsAsync(50, 0);
+            }
+
+            if (this.activeContentTab === 'community-posts') {
+                await this.loadSavedCommunityPostsAsync();
+            }
+
+            if (this.activeContentTab === 'blog-posts') {
+                await this.loadSavedBlogPostsAsync();
             }
         } catch {
             this.session.message = 'Failed to load saved items.';
@@ -108,6 +123,38 @@ export class SavedPageComponent implements OnInit {
         return [];
     }
 
+    get filteredCommunityPosts(): CommunityPostDto[] {
+        if (!this.isAllView) {
+            return this.items
+                .filter(item => item.itemType === 'CommunityPost' && !!item.communityPost)
+                .map(item => item.communityPost!);
+        }
+
+        return this.communityPosts;
+    }
+
+    get filteredBlogPosts(): BlogPostDto[] {
+        if (!this.isAllView) {
+            return this.items
+                .filter(item => item.itemType === 'BlogPost' && !!item.blogPost)
+                .map(item => item.blogPost!);
+        }
+
+        return this.blogPosts;
+    }
+
+    get activeCount(): number {
+        if (this.activeContentTab === 'community-posts') {
+            return this.filteredCommunityPosts.length;
+        }
+
+        if (this.activeContentTab === 'blog-posts') {
+            return this.filteredBlogPosts.length;
+        }
+
+        return this.filteredItems.length;
+    }
+
     get activeContentLabel(): string {
         if (this.activeContentTab === 'community-posts') {
             return 'community posts';
@@ -124,17 +171,113 @@ export class SavedPageComponent implements OnInit {
         return this.view === 'all';
     }
 
-    get viewerProfileId(): string {
-        return this.session.profile?.id ?? '';
-    }
-
     onContentTabChanged(tabId: string): void {
         if (tabId === 'posts' || tabId === 'reels' || tabId === 'community-posts' || tabId === 'blog-posts') {
             this.activeContentTab = tabId;
+            if (tabId === 'community-posts' && this.communityPosts.length === 0) {
+                void this.loadSavedCommunityPostsAsync();
+            }
+
+            if (tabId === 'blog-posts' && this.blogPosts.length === 0) {
+                void this.loadSavedBlogPostsAsync();
+            }
+        }
+    }
+
+    async unsaveCommunityPost(post: CommunityPostDto): Promise<void> {
+        try {
+            await this.session.unsaveCommunityPostAsync(post.communityId, post.id);
+            this.communityPosts = this.communityPosts.filter(item => item.id !== post.id);
+        } catch {
+            this.session.message = 'Failed to unsave post.';
+        }
+    }
+
+    async unsaveBlogPost(post: BlogPostDto): Promise<void> {
+        try {
+            await this.session.unsaveBlogPostAsync(post.blogId, post.id);
+            this.blogPosts = this.blogPosts.filter(item => item.id !== post.id);
+        } catch {
+            this.session.message = 'Failed to unsave post.';
         }
     }
 
     openReel(reel: ReelDto): void {
         this.session.requestOpenReelInModal(reel);
+    }
+
+    postContentLines(content: string): SavedPostContentPart[][] {
+        return content
+            .split(/\r?\n/)
+            .map(line => this.parseLineParts(line));
+    }
+
+    private parseLineParts(line: string): SavedPostContentPart[] {
+        const tokenRegex = /#[\p{L}\p{N}_]+|\B@[\p{L}\p{N}_]+/gu;
+        const parts: SavedPostContentPart[] = [];
+        let cursor = 0;
+
+        for (const match of line.matchAll(tokenRegex)) {
+            const token = match[0] ?? '';
+            const start = match.index ?? -1;
+
+            if (start < 0) {
+                continue;
+            }
+
+            if (start > cursor) {
+                parts.push({ text: line.slice(cursor, start) });
+            }
+
+            if (token.startsWith('#')) {
+                parts.push({ text: token, hashtag: token.slice(1) });
+            } else {
+                parts.push({ text: token, mentionHandle: token.slice(1) });
+            }
+
+            cursor = start + token.length;
+        }
+
+        if (cursor < line.length) {
+            parts.push({ text: line.slice(cursor) });
+        }
+
+        if (!parts.length) {
+            parts.push({ text: '' });
+        }
+
+        return parts;
+    }
+
+    private async loadSavedCommunityPostsAsync(): Promise<void> {
+        if (!this.isAllView) {
+            this.communityPosts = [];
+            return;
+        }
+
+        this.isLoading = true;
+        try {
+            this.communityPosts = await this.session.loadSavedCommunityPostsAsync(50, 0);
+        } catch {
+            this.session.message = 'Failed to load saved community posts.';
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    private async loadSavedBlogPostsAsync(): Promise<void> {
+        if (!this.isAllView) {
+            this.blogPosts = [];
+            return;
+        }
+
+        this.isLoading = true;
+        try {
+            this.blogPosts = await this.session.loadSavedBlogPostsAsync(50, 0);
+        } catch {
+            this.session.message = 'Failed to load saved blog posts.';
+        } finally {
+            this.isLoading = false;
+        }
     }
 }

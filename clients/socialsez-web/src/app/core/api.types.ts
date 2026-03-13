@@ -504,12 +504,16 @@ export interface CommunityPostCommentDto {
 
 export interface SavedItemDto {
     id: string;
-    itemType: 'Post' | 'Reel';
+    itemType: 'Post' | 'Reel' | 'CommunityPost' | 'BlogPost';
     postId?: string;
     reelId?: string;
+    communityPostId?: string;
+    blogPostId?: string;
     savedAtUtc: string;
     post?: PostDto;
     reel?: ReelDto;
+    communityPost?: CommunityPostDto;
+    blogPost?: BlogPostDto;
 }
 
 export interface SavedCollectionDto {

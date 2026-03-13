@@ -1148,10 +1148,18 @@ export class CommunityDetailPageComponent {
                 return;
             }
 
-            const saved = await this.session.saveCommunityPostAsync(this.communityId, post.id);
-            this.posts = this.posts.map(item => item.id === post.id ? saved : item);
-            this.status = 'Post saved.';
-            this.statusTone = 'success';
+            const saved = await this.session.openSaveToCollectionModalAsync({
+                kind: 'community-post',
+                itemId: post.id,
+                communityId: this.communityId,
+                label: post.title || `@${post.authorHandle}'s community post`
+            });
+
+            if (saved) {
+                this.posts = this.posts.map(item => item.id === post.id ? { ...item, isSavedByMe: true } : item);
+                this.status = 'Post saved.';
+                this.statusTone = 'success';
+            }
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError(post.isSavedByMe ? 'unsave post' : 'save post'));
             this.statusTone = 'error';

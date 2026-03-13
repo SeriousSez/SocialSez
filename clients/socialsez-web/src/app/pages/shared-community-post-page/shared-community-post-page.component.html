@@ -58,11 +58,6 @@
                     <p class="post-author">{{ item.authorHandle }}</p>
                 </div>
             </div>
-            <button type="button" class="ghost share-link-button" (click)="copyLinkAsync()" [attr.aria-label]="copiedLink ? 'Community post link copied' : 'Copy community post link'" [attr.title]="copiedLink ? 'Copied' : 'Copy link'">
-                <i *ngIf="!copiedLink" class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
-                <i *ngIf="copiedLink" class="fa-duotone fa-solid fa-check" aria-hidden="true"></i>
-                <span>{{ copiedLink ? 'Copied' : 'Share' }}</span>
-            </button>
         </header>
 
         <h1 class="post-title">

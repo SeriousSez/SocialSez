@@ -372,8 +372,16 @@ export class SharedCommunityPostPageComponent {
                 await this.session.unsaveCommunityPostAsync(item.communityId, item.id);
                 this.post = { ...item, isSavedByMe: false };
             } else {
-                const saved = await this.session.saveCommunityPostAsync(item.communityId, item.id);
-                this.post = saved;
+                const saved = await this.session.openSaveToCollectionModalAsync({
+                    kind: 'community-post',
+                    itemId: item.id,
+                    communityId: item.communityId,
+                    label: item.title || `@${item.authorHandle}'s community post`
+                });
+
+                if (saved) {
+                    this.post = { ...item, isSavedByMe: true };
+                }
             }
         } catch {
             this.error = 'Unable to update saved state.';

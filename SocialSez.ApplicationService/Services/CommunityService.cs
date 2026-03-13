@@ -1236,9 +1236,97 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
         }
 
         dbContext.CommunitySavedPosts.Remove(saved);
+
+        var savedCollectionItem = await dbContext.SavedItems
+            .FirstOrDefaultAsync(x => x.ProfileId == profileId && x.CommunityPostId == postId, cancellationToken);
+        if (savedCollectionItem is not null)
+        {
+            dbContext.SavedItems.Remove(savedCollectionItem);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         SearchCacheVersionStamp.BumpCommunity();
         return true;
+    }
+
+    public async Task<IReadOnlyCollection<CommunityPostDto>> GetSavedPostsAsync(Guid profileId, int take = 50, int skip = 0, CancellationToken cancellationToken = default)
+    {
+        await EnsureCommunitySchemaAsync(cancellationToken);
+
+        var normalizedTake = Math.Clamp(take, 1, 100);
+        var normalizedSkip = Math.Max(skip, 0);
+
+        CommunitySavedPost[] savedPosts;
+        try
+        {
+            savedPosts = await dbContext.CommunitySavedPosts
+                .AsNoTracking()
+                .Where(x => x.ProfileId == profileId)
+                .OrderByDescending(x => x.SavedAtUtc)
+                .Skip(normalizedSkip)
+                .Take(normalizedTake)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x.Community)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x.Author)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x.Images)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x.SavedBy)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x.Comments)
+                        .ThenInclude(x => x.Author)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x.Votes)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x.Poll)
+                        .ThenInclude(x => x.Options)
+                            .ThenInclude(x => x.Votes)
+                .ToArrayAsync(cancellationToken);
+        }
+        catch
+        {
+            var fallbackPostIds = await dbContext.CommunitySavedPosts
+                .AsNoTracking()
+                .Where(x => x.ProfileId == profileId)
+                .OrderByDescending(x => x.SavedAtUtc)
+                .Skip(normalizedSkip)
+                .Take(normalizedTake)
+                .Select(x => x.PostId)
+                .ToArrayAsync(cancellationToken);
+
+            var fallbackResults = new List<CommunityPostDto>(fallbackPostIds.Length);
+            foreach (var postId in fallbackPostIds)
+            {
+                try
+                {
+                    var mapped = await GetPostByIdAsync(postId, profileId, cancellationToken);
+                    if (mapped is not null)
+                    {
+                        fallbackResults.Add(mapped);
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            return fallbackResults;
+        }
+
+        var results = new List<CommunityPostDto>(savedPosts.Length);
+        foreach (var post in savedPosts.Select(saved => saved.Post).Where(post => post is not null))
+        {
+            try
+            {
+                results.Add(MapPost(post!, profileId));
+            }
+            catch
+            {
+            }
+        }
+
+        return results;
     }
 
     public async Task<CommunityPollDto?> VotePollAsync(Guid communityId, Guid pollId, VoteCommunityPollRequest request, CancellationToken cancellationToken = default)

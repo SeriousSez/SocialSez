@@ -1,5 +1,0 @@
-C:\Repos\SocialSez\SocialSez.Domain\artifacts\tmpobj\Debug\net8.0\SocialSez.Domain.GeneratedMSBuildEditorConfig.editorconfig
-C:\Repos\SocialSez\SocialSez.Domain\artifacts\tmpobj\Debug\net8.0\SocialSez.Domain.AssemblyInfoInputs.cache
-C:\Repos\SocialSez\SocialSez.Domain\artifacts\tmpobj\Debug\net8.0\SocialSez.Domain.AssemblyInfo.cs
-C:\Repos\SocialSez\SocialSez.Domain\artifacts\tmpobj\Debug\net8.0\SocialSez.Domain.csproj.CoreCompileInputs.cache
-C:\Repos\SocialSez\SocialSez.Domain\artifacts\tmpobj\Debug\net8.0\SocialSez.Domain.sourcelink.json

@@ -1252,8 +1252,11 @@ export class FeedPageComponent implements OnDestroy {
                 await this.session.unsaveItemAsync(savedItemId);
                 this.session.message = 'Post removed from saved.';
             } else {
-                await this.session.savePostAsync(post.id);
-                this.session.message = 'Post saved.';
+                await this.session.openSaveToCollectionModalAsync({
+                    kind: 'post',
+                    itemId: post.id,
+                    label: `@${post.authorHandle}'s post`
+                });
             }
         } catch {
             this.session.message = 'Could not update saved status right now.';
@@ -1271,8 +1274,11 @@ export class FeedPageComponent implements OnDestroy {
                 await this.session.unsaveItemAsync(savedItemId);
                 this.session.message = 'Reel removed from saved.';
             } else {
-                await this.session.saveReelAsync(reel.id);
-                this.session.message = 'Reel saved.';
+                await this.session.openSaveToCollectionModalAsync({
+                    kind: 'reel',
+                    itemId: reel.id,
+                    label: `@${reel.authorHandle}'s reel`
+                });
             }
         } catch {
             this.session.message = 'Could not update saved status right now.';

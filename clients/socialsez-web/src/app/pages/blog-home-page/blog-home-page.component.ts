@@ -185,8 +185,16 @@ export class BlogHomePageComponent implements OnDestroy {
                 await this.session.unsaveBlogPostAsync(post.blogId, post.id);
                 this.posts = this.posts.map(item => item.id === post.id ? { ...item, isSavedByMe: false } : item);
             } else {
-                const updated = await this.session.saveBlogPostAsync(post.blogId, post.id);
-                this.posts = this.posts.map(item => item.id === post.id ? updated : item);
+                const saved = await this.session.openSaveToCollectionModalAsync({
+                    kind: 'blog-post',
+                    itemId: post.id,
+                    blogId: post.blogId,
+                    label: post.title
+                });
+
+                if (saved) {
+                    this.posts = this.posts.map(item => item.id === post.id ? { ...item, isSavedByMe: true } : item);
+                }
             }
         } catch {
             this.error = 'Could not update saved status right now.';

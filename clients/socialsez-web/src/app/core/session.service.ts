@@ -51,6 +51,20 @@ export interface SessionNoticeEntry {
     createdAtUtc: string;
 }
 
+export type SaveToCollectionTargetKind = 'post' | 'reel' | 'community-post' | 'blog-post';
+
+export interface SaveToCollectionRequest {
+    kind: SaveToCollectionTargetKind;
+    itemId: string;
+    communityId?: string;
+    blogId?: string;
+    label?: string;
+}
+
+export interface PendingSaveToCollectionRequest extends SaveToCollectionRequest {
+    resolve: (saved: boolean) => void;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SessionService {
     profile: ProfileDto | null = null;
@@ -68,9 +82,22 @@ export class SessionService {
     readonly messageChanges$ = this.messageChanges.asObservable();
     private readonly openReelInModalSource = new Subject<ReelDto>();
     readonly openReelInModal$ = this.openReelInModalSource.asObservable();
+    private readonly openSaveToCollectionModalSource = new Subject<PendingSaveToCollectionRequest>();
+    readonly openSaveToCollectionModal$ = this.openSaveToCollectionModalSource.asObservable();
 
     requestOpenReelInModal(reel: ReelDto): void {
         this.openReelInModalSource.next(reel);
+    }
+
+    openSaveToCollectionModalAsync(request: SaveToCollectionRequest): Promise<boolean> {
+        if (!this.isAuthenticated()) {
+            this.message = 'Sign in to save items.';
+            return Promise.resolve(false);
+        }
+
+        return new Promise(resolve => {
+            this.openSaveToCollectionModalSource.next({ ...request, resolve });
+        });
     }
 
     private silentRefreshTimerId: number | undefined;
@@ -773,6 +800,34 @@ export class SessionService {
         }
     }
 
+    async loadSavedBlogPostsAsync(take = 50, skip = 0): Promise<BlogPostDto[]> {
+        try {
+            const posts = await firstValueFrom(this.api.getSavedBlogPosts(take, skip));
+            return posts.map(post => this.normalizeBlogPost(post));
+        } catch {
+            const discoveredBlogs = await this.discoverBlogsAsync(undefined, 80);
+            const blogCandidates = discoveredBlogs.slice(0, 40);
+
+            const postGroups = await Promise.all(blogCandidates.map(async blog => {
+                try {
+                    const posts = await this.loadBlogPostsAsync(blog.ownerHandle, blog.slug);
+                    return posts.filter(post => post.isSavedByMe);
+                } catch {
+                    return [] as BlogPostDto[];
+                }
+            }));
+
+            return postGroups
+                .flat()
+                .sort((left, right) => {
+                    const leftTicks = new Date(left.publishedAtUtc ?? left.updatedAtUtc).getTime();
+                    const rightTicks = new Date(right.publishedAtUtc ?? right.updatedAtUtc).getTime();
+                    return rightTicks - leftTicks;
+                })
+                .slice(skip, skip + take);
+        }
+    }
+
     async createCommunityPostAsync(
         communityId: string,
         title: string | null,
@@ -844,6 +899,18 @@ export class SessionService {
         return posts.map(post => this.normalizeCommunityPost(post));
     }
 
+    async loadSavedCommunityPostsAsync(take = 50, skip = 0): Promise<CommunityPostDto[]> {
+        try {
+            const posts = await firstValueFrom(this.api.getSavedCommunityPosts(take, skip));
+            return posts.map(post => this.normalizeCommunityPost(post));
+        } catch {
+            const candidates = await this.searchCommunityPostsAsync('', 200);
+            return candidates
+                .filter(post => post.isSavedByMe)
+                .slice(skip, skip + take);
+        }
+    }
+
     async searchCommunityPostsAsync(query: string, take = 50): Promise<CommunityPostDto[]> {
         const posts = await firstValueFrom(this.api.searchCommunityPosts(query, take));
         return posts.map(post => this.normalizeCommunityPost(post));
@@ -873,6 +940,34 @@ export class SessionService {
 
     async loadCollectionsAsync(): Promise<SavedCollectionDto[]> {
         return firstValueFrom(this.api.getCollections());
+    }
+
+    async saveToCollectionAsync(request: SaveToCollectionRequest, collectionId: string | null): Promise<SavedItemDto> {
+        let item: SavedItemDto;
+
+        switch (request.kind) {
+            case 'post':
+                item = await this.savePostAsync(request.itemId);
+                break;
+            case 'reel':
+                item = await this.saveReelAsync(request.itemId);
+                break;
+            case 'community-post':
+                item = await firstValueFrom(this.api.saveCommunityPostToCollections(request.itemId));
+                break;
+            case 'blog-post':
+                item = await firstValueFrom(this.api.saveBlogPostToCollections(request.itemId));
+                break;
+            default:
+                throw new Error('Unsupported save target.');
+        }
+
+        if (collectionId) {
+            await this.addToCollectionAsync(collectionId, item.id);
+        }
+
+        this.message = collectionId ? 'Saved to collection.' : 'Saved to All Saved.';
+        return item;
     }
 
     async createCollectionAsync(name: string): Promise<SavedCollectionDto> {

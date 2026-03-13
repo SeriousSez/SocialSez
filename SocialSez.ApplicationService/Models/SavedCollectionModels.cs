@@ -2,12 +2,16 @@ namespace SocialSez.ApplicationService.Models;
 
 public sealed record SavedItemDto(
     Guid Id,
-    string ItemType,       // "Post" | "Reel"
+    string ItemType,       // "Post" | "Reel" | "CommunityPost" | "BlogPost"
     Guid? PostId,
     Guid? ReelId,
+    Guid? CommunityPostId,
+    Guid? BlogPostId,
     DateTime SavedAtUtc,
     PostDto? Post,
-    ReelDto? Reel
+    ReelDto? Reel,
+    CommunityPostDto? CommunityPost,
+    BlogPostDto? BlogPost
 );
 
 public sealed record SavedCollectionDto(

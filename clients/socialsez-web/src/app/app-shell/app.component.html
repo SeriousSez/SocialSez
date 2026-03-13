@@ -210,6 +210,8 @@
     <router-outlet></router-outlet>
 </section>
 
+<app-save-to-collection-modal [request]="saveToCollectionRequest" (closed)="closeSaveToCollectionModal()"></app-save-to-collection-modal>
+
 <div class="shared-reel-viewer" *ngIf="!isEmbedRoute && dockReelModal as reel" (click)="onDockReelBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Shared reel viewer">
     <section class="shared-reel-viewer-card">
         <button type="button" class="shared-reel-viewer-close" (click)="closeDockReelModal($event)" aria-label="Close reel viewer">

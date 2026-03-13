@@ -8,7 +8,7 @@ import { SwUpdate, VersionEvent } from '@angular/service-worker';
 import { filter, firstValueFrom } from 'rxjs';
 import { CommunityDto, CommunityRuleDto, HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
 import { SharedReelCommentPreview } from '../core/shared-reel.utils';
-import { SessionNoticeEntry, SessionService } from '../core/session.service';
+import { PendingSaveToCollectionRequest, SessionNoticeEntry, SessionService } from '../core/session.service';
 import { SocialSezApiService } from '../core/socialsez-api.service';
 import { UploadProgressService } from '../core/upload-progress.service';
 import { ProgressItem } from '../core/upload-progress.service';
@@ -16,6 +16,7 @@ import { MessagesDockComponent } from './messages-dock.component';
 import { FeedStoryViewerComponent } from '../pages/feed-page/feed-story-viewer.component';
 import { CommunityInfoRailComponent } from './community-info-rail.component';
 import { SavedCollectionsRailComponent } from './saved-collections-rail.component';
+import { SaveToCollectionModalComponent } from '../shared/save-to-collection-modal/save-to-collection-modal.component';
 
 interface DockReelModalState {
     reelId?: string;
@@ -47,7 +48,7 @@ interface RoutePreviewMeta {
 
 @Component({
     selector: 'app-root',
-    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, MessagesDockComponent, FeedStoryViewerComponent, CommunityInfoRailComponent, SavedCollectionsRailComponent],
+    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, MessagesDockComponent, FeedStoryViewerComponent, CommunityInfoRailComponent, SavedCollectionsRailComponent, SaveToCollectionModalComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
@@ -84,6 +85,7 @@ export class AppComponent implements OnInit, OnDestroy {
     dockStoryGroup: StoryGroupDto | null = null;
     dockStoryIndex = 0;
     dockReelModal: DockReelModalState | null = null;
+    saveToCollectionRequest: PendingSaveToCollectionRequest | null = null;
     dockReelCommentDraft = '';
     submittingDockReelComment = false;
     togglingDockReelLike = false;
@@ -365,6 +367,16 @@ export class AppComponent implements OnInit, OnDestroy {
                 }
             });
 
+        this.session.openSaveToCollectionModal$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(request => {
+                if (this.saveToCollectionRequest) {
+                    this.saveToCollectionRequest.resolve(false);
+                }
+
+                this.saveToCollectionRequest = request;
+            });
+
         this.session.messageChanges$
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(() => {
@@ -419,6 +431,11 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        if (this.saveToCollectionRequest) {
+            this.saveToCollectionRequest.resolve(false);
+            this.saveToCollectionRequest = null;
+        }
+
         if (this.storyStatusPollTimerId !== null) {
             window.clearInterval(this.storyStatusPollTimerId);
             this.storyStatusPollTimerId = null;
@@ -431,6 +448,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
         this.clearTopNoticeAutoDismissTimer();
         this.clearTopNoticeHideTimer();
+    }
+
+    closeSaveToCollectionModal(): void {
+        this.saveToCollectionRequest = null;
     }
 
     @HostListener('window:storage', ['$event'])

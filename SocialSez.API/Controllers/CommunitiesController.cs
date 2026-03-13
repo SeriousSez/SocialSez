@@ -103,6 +103,19 @@ public class CommunitiesController(ICommunityService communityService, ISafetySe
         return Ok(posts);
     }
 
+    [Authorize]
+    [HttpGet("posts/saved")]
+    public async Task<ActionResult<IReadOnlyCollection<CommunityPostDto>>> GetSavedPosts([FromQuery] int take = 50, [FromQuery] int skip = 0, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var posts = await communityService.GetSavedPostsAsync(profileId, take, skip, cancellationToken);
+        return Ok(posts);
+    }
+
     [HttpGet("{communityId:guid}")]
     public async Task<ActionResult<CommunityDto>> GetById(Guid communityId, [FromQuery] int members = 20, CancellationToken cancellationToken = default)
     {

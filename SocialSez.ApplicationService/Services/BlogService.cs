@@ -529,8 +529,45 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         }
 
         dbContext.BlogPostSaves.Remove(existingSave);
+
+        var savedCollectionItem = await dbContext.SavedItems
+            .FirstOrDefaultAsync(x => x.ProfileId == profileId && x.BlogPostId == postId, cancellationToken);
+        if (savedCollectionItem is not null)
+        {
+            dbContext.SavedItems.Remove(savedCollectionItem);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    public async Task<IReadOnlyCollection<BlogPostDto>> GetSavedPostsAsync(Guid profileId, int take = 50, int skip = 0, CancellationToken cancellationToken = default)
+    {
+        await EnsureBlogSchemaAsync(cancellationToken);
+
+        var normalizedTake = Math.Clamp(take, 1, 100);
+        var normalizedSkip = Math.Max(skip, 0);
+
+        var savedPosts = await dbContext.BlogPostSaves
+            .AsNoTracking()
+            .Where(x => x.ProfileId == profileId)
+            .OrderByDescending(x => x.SavedAtUtc)
+            .Skip(normalizedSkip)
+            .Take(normalizedTake)
+            .Include(x => x.Post)
+                .ThenInclude(x => x.Blog)
+                    .ThenInclude(x => x.OwnerProfile)
+            .Include(x => x.Post)
+                .ThenInclude(x => x.AuthorProfile)
+            .Include(x => x.Post)
+                .ThenInclude(x => x.SavedBy)
+            .ToArrayAsync(cancellationToken);
+
+        return savedPosts
+            .Select(saved => saved.Post)
+            .Where(post => post is not null)
+            .Select(post => MapPost(post!, post!.Blog, post.AuthorProfile, profileId))
+            .ToArray();
     }
 
     private static string NormalizeTitle(string title)

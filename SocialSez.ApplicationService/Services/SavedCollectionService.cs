@@ -10,9 +10,13 @@ namespace SocialSez.ApplicationService.Services;
 public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollectionService
 {
     private const string LikeReactionType = "Like";
+    private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
+    private static volatile bool savedSchemaInitialized;
 
     public async Task<IReadOnlyList<SavedItemDto>> GetAllSavedItemsAsync(Guid profileId, int take, int skip)
     {
+        await EnsureSavedSchemaAsync();
+
         var items = await dbContext.SavedItems
             .Where(x => x.ProfileId == profileId)
             .OrderByDescending(x => x.SavedAtUtc)
@@ -39,6 +43,28 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
             .Include(x => x.Reel)
                 .ThenInclude(r => r!.Comments)
                     .ThenInclude(c => c.Likes)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.Author)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.Images)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.SavedBy)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.Comments)
+                    .ThenInclude(c => c.Author)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.Votes)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.Poll)
+                    .ThenInclude(poll => poll!.Options)
+                        .ThenInclude(option => option.Votes)
+            .Include(x => x.BlogPost)
+                .ThenInclude(p => p!.Blog)
+                    .ThenInclude(blog => blog.OwnerProfile)
+            .Include(x => x.BlogPost)
+                .ThenInclude(p => p!.AuthorProfile)
+            .Include(x => x.BlogPost)
+                .ThenInclude(p => p!.SavedBy)
             .ToListAsync();
 
         return items.Select(i => MapToDto(i, profileId)).ToList();
@@ -46,6 +72,8 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
 
     public async Task<IReadOnlyList<SavedCollectionDto>> GetCollectionsAsync(Guid profileId)
     {
+        await EnsureSavedSchemaAsync();
+
         var collections = await dbContext.SavedCollections
             .Where(x => x.ProfileId == profileId)
             .OrderBy(x => x.CreatedAtUtc)
@@ -59,7 +87,10 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
                     .OrderByDescending(i => i.AddedAtUtc)
                     .Select(i => i.SavedItem.Post != null
                         ? i.SavedItem.Post.ImageUrl
-                        : i.SavedItem.Reel != null ? i.SavedItem.Reel.ThumbnailUrl : null)
+                        : i.SavedItem.Reel != null ? i.SavedItem.Reel.ThumbnailUrl
+                        : i.SavedItem.CommunityPost != null ? i.SavedItem.CommunityPost.ImageUrl
+                        : i.SavedItem.BlogPost != null ? i.SavedItem.BlogPost.CoverImageUrl
+                        : null)
                     .FirstOrDefault()
             })
             .ToListAsync();
@@ -71,6 +102,8 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
 
     public async Task<SavedCollectionDto> CreateCollectionAsync(Guid profileId, string name)
     {
+        await EnsureSavedSchemaAsync();
+
         var collection = new SavedCollection
         {
             Id = Guid.NewGuid(),
@@ -85,6 +118,8 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
 
     public async Task DeleteCollectionAsync(Guid profileId, Guid collectionId)
     {
+        await EnsureSavedSchemaAsync();
+
         var collection = await dbContext.SavedCollections
             .FirstOrDefaultAsync(x => x.Id == collectionId && x.ProfileId == profileId);
         if (collection is null) return;
@@ -94,6 +129,8 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
 
     public async Task<SavedCollectionDto> RenameCollectionAsync(Guid profileId, Guid collectionId, string name)
     {
+        await EnsureSavedSchemaAsync();
+
         var collection = await dbContext.SavedCollections
             .FirstOrDefaultAsync(x => x.Id == collectionId && x.ProfileId == profileId)
             ?? throw new InvalidOperationException("Collection not found.");
@@ -105,6 +142,8 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
 
     public async Task<IReadOnlyList<SavedItemDto>> GetCollectionItemsAsync(Guid profileId, Guid collectionId, int take, int skip)
     {
+        await EnsureSavedSchemaAsync();
+
         var collectionExists = await dbContext.SavedCollections
             .AnyAsync(x => x.Id == collectionId && x.ProfileId == profileId);
         if (!collectionExists) return [];
@@ -143,6 +182,37 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
                 .ThenInclude(s => s.Reel)
                     .ThenInclude(r => r!.Comments)
                         .ThenInclude(c => c.Likes)
+            .Include(x => x.SavedItem)
+                .ThenInclude(s => s.CommunityPost)
+                    .ThenInclude(p => p!.Author)
+            .Include(x => x.SavedItem)
+                .ThenInclude(s => s.CommunityPost)
+                    .ThenInclude(p => p!.Images)
+            .Include(x => x.SavedItem)
+                .ThenInclude(s => s.CommunityPost)
+                    .ThenInclude(p => p!.SavedBy)
+            .Include(x => x.SavedItem)
+                .ThenInclude(s => s.CommunityPost)
+                    .ThenInclude(p => p!.Comments)
+                        .ThenInclude(c => c.Author)
+            .Include(x => x.SavedItem)
+                .ThenInclude(s => s.CommunityPost)
+                    .ThenInclude(p => p!.Votes)
+            .Include(x => x.SavedItem)
+                .ThenInclude(s => s.CommunityPost)
+                    .ThenInclude(p => p!.Poll)
+                        .ThenInclude(poll => poll!.Options)
+                            .ThenInclude(option => option.Votes)
+            .Include(x => x.SavedItem)
+                .ThenInclude(s => s.BlogPost)
+                    .ThenInclude(p => p!.Blog)
+                        .ThenInclude(blog => blog.OwnerProfile)
+            .Include(x => x.SavedItem)
+                .ThenInclude(s => s.BlogPost)
+                    .ThenInclude(p => p!.AuthorProfile)
+            .Include(x => x.SavedItem)
+                .ThenInclude(s => s.BlogPost)
+                    .ThenInclude(p => p!.SavedBy)
             .ToListAsync();
 
         return items.Select(x => MapToDto(x.SavedItem, profileId)).ToList();
@@ -150,6 +220,8 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
 
     public async Task<SavedItemDto> SavePostAsync(Guid profileId, Guid postId)
     {
+        await EnsureSavedSchemaAsync();
+
         var existing = await dbContext.SavedItems
             .FirstOrDefaultAsync(x => x.ProfileId == profileId && x.PostId == postId);
         if (existing is not null)
@@ -175,6 +247,8 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
 
     public async Task<SavedItemDto> SaveReelAsync(Guid profileId, Guid reelId)
     {
+        await EnsureSavedSchemaAsync();
+
         var existing = await dbContext.SavedItems
             .FirstOrDefaultAsync(x => x.ProfileId == profileId && x.ReelId == reelId);
         if (existing is not null)
@@ -198,17 +272,120 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
         return await LoadAndMapSavedItemAsync(item.Id, profileId);
     }
 
+    public async Task<SavedItemDto> SaveCommunityPostAsync(Guid profileId, Guid communityPostId)
+    {
+        await EnsureSavedSchemaAsync();
+
+        var existing = await dbContext.SavedItems
+            .FirstOrDefaultAsync(x => x.ProfileId == profileId && x.CommunityPostId == communityPostId);
+        if (existing is not null)
+        {
+            return await LoadAndMapSavedItemAsync(existing.Id, profileId);
+        }
+
+        var post = await dbContext.CommunityPosts
+            .Include(x => x.SavedBy)
+            .FirstOrDefaultAsync(x => x.Id == communityPostId)
+            ?? throw new InvalidOperationException("Community post not found.");
+
+        if (!post.SavedBy.Any(x => x.ProfileId == profileId))
+        {
+            dbContext.CommunitySavedPosts.Add(new CommunitySavedPost
+            {
+                PostId = communityPostId,
+                ProfileId = profileId,
+                SavedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        var item = new SavedItem
+        {
+            Id = Guid.NewGuid(),
+            ProfileId = profileId,
+            ItemType = "CommunityPost",
+            CommunityPostId = communityPostId,
+            SavedAtUtc = DateTime.UtcNow
+        };
+        dbContext.SavedItems.Add(item);
+        await dbContext.SaveChangesAsync();
+        return await LoadAndMapSavedItemAsync(item.Id, profileId);
+    }
+
+    public async Task<SavedItemDto> SaveBlogPostAsync(Guid profileId, Guid blogPostId)
+    {
+        await EnsureSavedSchemaAsync();
+
+        var existing = await dbContext.SavedItems
+            .FirstOrDefaultAsync(x => x.ProfileId == profileId && x.BlogPostId == blogPostId);
+        if (existing is not null)
+        {
+            return await LoadAndMapSavedItemAsync(existing.Id, profileId);
+        }
+
+        var post = await dbContext.BlogPosts
+            .Include(x => x.SavedBy)
+            .FirstOrDefaultAsync(x => x.Id == blogPostId)
+            ?? throw new InvalidOperationException("Blog post not found.");
+
+        if (!post.SavedBy.Any(x => x.ProfileId == profileId))
+        {
+            dbContext.BlogPostSaves.Add(new BlogPostSave
+            {
+                PostId = blogPostId,
+                ProfileId = profileId,
+                SavedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        var item = new SavedItem
+        {
+            Id = Guid.NewGuid(),
+            ProfileId = profileId,
+            ItemType = "BlogPost",
+            BlogPostId = blogPostId,
+            SavedAtUtc = DateTime.UtcNow
+        };
+        dbContext.SavedItems.Add(item);
+        await dbContext.SaveChangesAsync();
+        return await LoadAndMapSavedItemAsync(item.Id, profileId);
+    }
+
     public async Task UnsaveItemAsync(Guid profileId, Guid savedItemId)
     {
+        await EnsureSavedSchemaAsync();
+
         var item = await dbContext.SavedItems
             .FirstOrDefaultAsync(x => x.Id == savedItemId && x.ProfileId == profileId);
         if (item is null) return;
+
+        if (item.CommunityPostId.HasValue)
+        {
+            var communitySaved = await dbContext.CommunitySavedPosts
+                .FirstOrDefaultAsync(x => x.PostId == item.CommunityPostId.Value && x.ProfileId == profileId);
+            if (communitySaved is not null)
+            {
+                dbContext.CommunitySavedPosts.Remove(communitySaved);
+            }
+        }
+
+        if (item.BlogPostId.HasValue)
+        {
+            var blogSaved = await dbContext.BlogPostSaves
+                .FirstOrDefaultAsync(x => x.PostId == item.BlogPostId.Value && x.ProfileId == profileId);
+            if (blogSaved is not null)
+            {
+                dbContext.BlogPostSaves.Remove(blogSaved);
+            }
+        }
+
         dbContext.SavedItems.Remove(item);
         await dbContext.SaveChangesAsync();
     }
 
     public async Task AddToCollectionAsync(Guid profileId, Guid savedItemId, Guid collectionId)
     {
+        await EnsureSavedSchemaAsync();
+
         var collectionExists = await dbContext.SavedCollections
             .AnyAsync(x => x.Id == collectionId && x.ProfileId == profileId);
         if (!collectionExists) throw new InvalidOperationException("Collection not found.");
@@ -232,6 +409,8 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
 
     public async Task RemoveFromCollectionAsync(Guid profileId, Guid savedItemId, Guid collectionId)
     {
+        await EnsureSavedSchemaAsync();
+
         var link = await dbContext.SavedCollectionItems
             .FirstOrDefaultAsync(x =>
                 x.CollectionId == collectionId &&
@@ -244,6 +423,8 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
 
     public async Task<SavedStatusDto> GetSavedStatusAsync(Guid profileId, IEnumerable<Guid> postIds, IEnumerable<Guid> reelIds)
     {
+        await EnsureSavedSchemaAsync();
+
         var postIdList = postIds.ToList();
         var reelIdList = reelIds.ToList();
 
@@ -290,6 +471,28 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
             .Include(x => x.Reel)
                 .ThenInclude(r => r!.Comments)
                     .ThenInclude(c => c.Likes)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.Author)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.Images)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.SavedBy)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.Comments)
+                    .ThenInclude(c => c.Author)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.Votes)
+            .Include(x => x.CommunityPost)
+                .ThenInclude(p => p!.Poll)
+                    .ThenInclude(poll => poll!.Options)
+                        .ThenInclude(option => option.Votes)
+            .Include(x => x.BlogPost)
+                .ThenInclude(p => p!.Blog)
+                    .ThenInclude(blog => blog.OwnerProfile)
+            .Include(x => x.BlogPost)
+                .ThenInclude(p => p!.AuthorProfile)
+            .Include(x => x.BlogPost)
+                .ThenInclude(p => p!.SavedBy)
             .FirstOrDefaultAsync()
             ?? throw new InvalidOperationException("Saved item not found after insert.");
 
@@ -300,6 +503,8 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
     {
         PostDto? postDto = null;
         ReelDto? reelDto = null;
+        CommunityPostDto? communityPostDto = null;
+        BlogPostDto? blogPostDto = null;
 
         if (item.Post is not null)
         {
@@ -309,8 +514,16 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
         {
             reelDto = MapReel(item.Reel, profileId);
         }
+        else if (item.CommunityPost is not null)
+        {
+            communityPostDto = MapCommunityPost(item.CommunityPost, profileId);
+        }
+        else if (item.BlogPost is not null)
+        {
+            blogPostDto = MapBlogPost(item.BlogPost, profileId);
+        }
 
-        return new SavedItemDto(item.Id, item.ItemType, item.PostId, item.ReelId, item.SavedAtUtc, postDto, reelDto);
+        return new SavedItemDto(item.Id, item.ItemType, item.PostId, item.ReelId, item.CommunityPostId, item.BlogPostId, item.SavedAtUtc, postDto, reelDto, communityPostDto, blogPostDto);
     }
 
     private static PostDto MapPost(Post post, Guid profileId)
@@ -374,6 +587,190 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
                     c.Content, c.CreatedAtUtc,
                     c.Likes.Count, c.Likes.Any(l => l.ProfileId == profileId)))
                 .ToArray());
+    }
+
+    private static CommunityPostDto MapCommunityPost(CommunityPost post, Guid profileId)
+    {
+        var upvoteCount = post.Votes.Count(x => string.Equals(x.Type, "Upvote", StringComparison.OrdinalIgnoreCase));
+        var downvoteCount = post.Votes.Count(x => string.Equals(x.Type, "Downvote", StringComparison.OrdinalIgnoreCase));
+        var myVoteType = post.Votes.FirstOrDefault(x => x.ProfileId == profileId)?.Type;
+        var comments = post.Comments
+            .OrderBy(x => x.CreatedAtUtc)
+            .Select(comment => new CommunityPostCommentDto(
+                comment.Id,
+                comment.PostId,
+                comment.ParentCommentId,
+                comment.AuthorId,
+                comment.Author.Handle,
+                comment.Author.ImageUrl,
+                comment.Content,
+                comment.CreatedAtUtc))
+            .ToArray();
+        var imageUrls = post.Images
+            .OrderBy(x => x.SortOrder)
+            .Select(x => x.Url)
+            .Where(url => !string.IsNullOrWhiteSpace(url))
+            .ToArray();
+        var primaryImageUrl = imageUrls.FirstOrDefault() ?? post.ImageUrl;
+        CommunityPollDto? pollDto = null;
+
+        if (post.Poll is not null)
+        {
+            var options = post.Poll.Options
+                .OrderBy(x => x.Text)
+                .Select(option => new CommunityPollOptionDto(
+                    option.Id,
+                    option.Text,
+                    option.Votes.Count,
+                    option.Votes.Any(vote => vote.VoterId == profileId)))
+                .ToArray();
+
+            pollDto = new CommunityPollDto(
+                post.Poll.Id,
+                post.Poll.Question,
+                options.Sum(x => x.VoteCount),
+                options.Any(x => x.VotedByMe),
+                options);
+        }
+
+        return new CommunityPostDto(
+            post.Id,
+            post.CommunityId,
+            post.AuthorId,
+            post.Author.Handle,
+            post.Author.ImageUrl,
+            post.Title,
+            post.LinkUrl,
+            post.Content,
+            post.MediaContent,
+            primaryImageUrl,
+            imageUrls,
+            post.CreatedAtUtc,
+            upvoteCount,
+            downvoteCount,
+            myVoteType,
+            post.SavedBy.Any(x => x.ProfileId == profileId),
+            pollDto,
+            comments);
+    }
+
+    private static BlogPostDto MapBlogPost(BlogPost post, Guid profileId)
+    {
+        return new BlogPostDto(
+            post.Id,
+            post.BlogId,
+            post.Blog.Slug,
+            post.AuthorProfileId,
+            post.AuthorProfile.Handle,
+            post.Slug,
+            post.Title,
+            post.Content,
+            post.Excerpt,
+            post.CoverImageUrl,
+            ParseBlogTags(post.TagsJson),
+            post.IsPublished,
+            post.CreatedAtUtc,
+            post.UpdatedAtUtc,
+            post.PublishedAtUtc,
+            post.Blog.OwnerProfileId == profileId,
+            post.SavedBy.Any(x => x.ProfileId == profileId));
+    }
+
+    private static IReadOnlyCollection<string> ParseBlogTags(string? rawTags)
+    {
+        if (string.IsNullOrWhiteSpace(rawTags))
+        {
+            return Array.Empty<string>();
+        }
+
+        try
+        {
+            var parsed = JsonSerializer.Deserialize<string[]>(rawTags);
+            return parsed?.Where(tag => !string.IsNullOrWhiteSpace(tag)).Select(tag => tag.Trim()).ToArray() ?? Array.Empty<string>();
+        }
+        catch
+        {
+            return Array.Empty<string>();
+        }
+    }
+
+    private async Task EnsureSavedSchemaAsync()
+    {
+        if (savedSchemaInitialized)
+        {
+            return;
+        }
+
+        await SchemaInitLock.WaitAsync();
+        try
+        {
+            if (savedSchemaInitialized)
+            {
+                return;
+            }
+
+            if (dbContext.Database.IsSqlite())
+            {
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SavedItems ADD COLUMN CommunityPostId TEXT NULL;");
+                }
+                catch
+                {
+                }
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SavedItems ADD COLUMN BlogPostId TEXT NULL;");
+                }
+                catch
+                {
+                }
+
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_SavedItems_ProfileId_CommunityPostId ON SavedItems (ProfileId, CommunityPostId);");
+                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_SavedItems_ProfileId_BlogPostId ON SavedItems (ProfileId, BlogPostId);");
+            }
+            else
+            {
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SavedItems ADD COLUMN IF NOT EXISTS CommunityPostId char(36) NULL;");
+                }
+                catch
+                {
+                }
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SavedItems ADD COLUMN IF NOT EXISTS BlogPostId char(36) NULL;");
+                }
+                catch
+                {
+                }
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_SavedItems_ProfileId_CommunityPostId ON SavedItems (ProfileId, CommunityPostId);");
+                }
+                catch
+                {
+                }
+
+                try
+                {
+                    await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_SavedItems_ProfileId_BlogPostId ON SavedItems (ProfileId, BlogPostId);");
+                }
+                catch
+                {
+                }
+            }
+
+            savedSchemaInitialized = true;
+        }
+        finally
+        {
+            SchemaInitLock.Release();
+        }
     }
 
     private static string[] ParsePostMediaUrls(string? rawImageUrl)

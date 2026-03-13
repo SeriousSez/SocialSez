@@ -331,6 +331,10 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<BlogPostDto>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}/posts/${encodeURIComponent(postId)}/save`, {}, { headers: this.authHeaders() }));
     }
 
+    getSavedBlogPosts(take = 50, skip = 0): Observable<BlogPostDto[]> {
+        return this.withAutoRefresh(() => this.http.get<BlogPostDto[]>(`${this.baseUrl}/blogs/posts/saved?take=${take}&skip=${skip}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
     unsaveBlogPost(blogId: string, postId: string): Observable<void> {
         return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}/posts/${encodeURIComponent(postId)}/save`, { headers: this.authHeaders() }));
     }
@@ -734,6 +738,10 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<CommunityPostDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/posts/${encodeURIComponent(postId)}/save`, {}, { headers: this.authHeaders() }));
     }
 
+    getSavedCommunityPosts(take = 50, skip = 0): Observable<CommunityPostDto[]> {
+        return this.withAutoRefresh(() => this.http.get<CommunityPostDto[]>(`${this.baseUrl}/communities/posts/saved?take=${take}&skip=${skip}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
     unsaveCommunityPost(communityId: string, postId: string): Observable<void> {
         return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/posts/${encodeURIComponent(postId)}/save`, { headers: this.authHeaders() }));
     }
@@ -800,6 +808,14 @@ export class SocialSezApiService {
 
     saveReel(reelId: string): Observable<SavedItemDto> {
         return this.withAutoRefresh(() => this.http.post<SavedItemDto>(`${this.baseUrl}/collections/items/reels/${reelId}`, {}, { headers: this.authHeaders() }));
+    }
+
+    saveCommunityPostToCollections(postId: string): Observable<SavedItemDto> {
+        return this.withAutoRefresh(() => this.http.post<SavedItemDto>(`${this.baseUrl}/collections/items/community-posts/${postId}`, {}, { headers: this.authHeaders() }));
+    }
+
+    saveBlogPostToCollections(postId: string): Observable<SavedItemDto> {
+        return this.withAutoRefresh(() => this.http.post<SavedItemDto>(`${this.baseUrl}/collections/items/blog-posts/${postId}`, {}, { headers: this.authHeaders() }));
     }
 
     unsaveItem(savedItemId: string): Observable<void> {

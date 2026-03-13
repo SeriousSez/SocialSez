@@ -12,6 +12,8 @@ public interface ISavedCollectionService
     Task<IReadOnlyList<SavedItemDto>> GetCollectionItemsAsync(Guid profileId, Guid collectionId, int take, int skip);
     Task<SavedItemDto> SavePostAsync(Guid profileId, Guid postId);
     Task<SavedItemDto> SaveReelAsync(Guid profileId, Guid reelId);
+    Task<SavedItemDto> SaveCommunityPostAsync(Guid profileId, Guid communityPostId);
+    Task<SavedItemDto> SaveBlogPostAsync(Guid profileId, Guid blogPostId);
     Task UnsaveItemAsync(Guid profileId, Guid savedItemId);
     Task AddToCollectionAsync(Guid profileId, Guid savedItemId, Guid collectionId);
     Task RemoveFromCollectionAsync(Guid profileId, Guid savedItemId, Guid collectionId);

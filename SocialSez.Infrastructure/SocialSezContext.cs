@@ -906,7 +906,7 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
         {
             entity.ToTable("SavedItems");
             entity.HasKey(x => x.Id);
-            entity.Property(x => x.ItemType).HasMaxLength(8).IsRequired();
+            entity.Property(x => x.ItemType).HasMaxLength(32).IsRequired();
 
             entity.HasOne(x => x.Profile)
                 .WithMany(x => x.SavedItems)
@@ -925,9 +925,23 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade)
                 .IsRequired(false);
 
+            entity.HasOne(x => x.CommunityPost)
+                .WithMany()
+                .HasForeignKey(x => x.CommunityPostId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
+            entity.HasOne(x => x.BlogPost)
+                .WithMany()
+                .HasForeignKey(x => x.BlogPostId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
             entity.HasIndex(x => x.ProfileId);
             entity.HasIndex(x => new { x.ProfileId, x.PostId }).IsUnique().HasFilter("PostId IS NOT NULL");
             entity.HasIndex(x => new { x.ProfileId, x.ReelId }).IsUnique().HasFilter("ReelId IS NOT NULL");
+            entity.HasIndex(x => new { x.ProfileId, x.CommunityPostId }).IsUnique().HasFilter("CommunityPostId IS NOT NULL");
+            entity.HasIndex(x => new { x.ProfileId, x.BlogPostId }).IsUnique().HasFilter("BlogPostId IS NOT NULL");
             entity.HasIndex(x => new { x.ProfileId, x.SavedAtUtc });
         });
 
