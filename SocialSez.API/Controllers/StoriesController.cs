@@ -95,6 +95,119 @@ public class StoriesController(IStoryService storyService, SocialSezContext dbCo
         return Ok(feed);
     }
 
+    [Authorize]
+    [HttpGet("mine")]
+    public async Task<ActionResult<IReadOnlyCollection<StoryDto>>> GetMine([FromQuery] bool includeExpired = true, [FromQuery] int take = 200, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var stories = await storyService.GetByAuthorAsync(profileId, profileId, includeExpired, take, cancellationToken);
+            return Ok(stories);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [Authorize]
+    [HttpPost("collections")]
+    public async Task<ActionResult<StoryCollectionDto>> CreateCollection([FromBody] CreateStoryCollectionRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var collection = await storyService.CreateCollectionAsync(profileId, request.Name, cancellationToken);
+            return Ok(collection);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpDelete("collections/{collectionId:guid}")]
+    public async Task<IActionResult> DeleteCollection(Guid collectionId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await storyService.DeleteCollectionAsync(profileId, collectionId, cancellationToken);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("collections/{collectionId:guid}/stories/{storyId:guid}")]
+    public async Task<ActionResult<StoryCollectionDto>> AddStoryToCollection(Guid collectionId, Guid storyId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var collection = await storyService.AddStoryToCollectionAsync(profileId, collectionId, storyId, cancellationToken);
+            return Ok(collection);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpDelete("collections/{collectionId:guid}/stories/{storyId:guid}")]
+    public async Task<ActionResult<StoryCollectionDto>> RemoveStoryFromCollection(Guid collectionId, Guid storyId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var collection = await storyService.RemoveStoryFromCollectionAsync(profileId, collectionId, storyId, cancellationToken);
+            return Ok(collection);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpGet("collections/by-author/{handle}/public")]
+    public async Task<ActionResult<IReadOnlyCollection<StoryCollectionDto>>> GetCollectionsByAuthor([FromRoute] string handle, CancellationToken cancellationToken)
+    {
+        var viewerId = TryGetOptionalProfileId();
+        var collections = await storyService.GetCollectionsByAuthorHandleAsync(handle, viewerId, cancellationToken);
+        return Ok(collections);
+    }
+
     [AllowAnonymous]
     [HttpGet("{storyId:guid}/public")]
     public async Task<ActionResult<StoryDto>> GetPublicById(Guid storyId, CancellationToken cancellationToken)

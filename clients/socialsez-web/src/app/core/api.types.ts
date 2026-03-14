@@ -272,6 +272,17 @@ export interface StoryGroupDto {
     stories: StoryDto[];
 }
 
+export interface StoryCollectionDto {
+    id: string;
+    profileId: string;
+    profileHandle: string;
+    name: string;
+    createdAtUtc: string;
+    storyCount: number;
+    coverMediaUrl?: string;
+    stories: StoryDto[];
+}
+
 export interface ReelDto {
     id: string;
     authorId: string;

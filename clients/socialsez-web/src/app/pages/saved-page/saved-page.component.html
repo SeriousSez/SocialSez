@@ -38,7 +38,7 @@
         <div class="reels-grid">
             @for (item of filteredItems; track item.id) {
             @if (item.itemType === 'Reel' && item.reel) {
-            <div class="reel-tile" (click)="openReel(item.reel)" [attr.aria-label]="'Open reel by @' + item.reel.authorHandle">
+            <div class="reel-tile" (click)="openReel(item)" [attr.aria-label]="'Open reel by @' + item.reel.authorHandle">
                 @if (item.reel.thumbnailUrl) {
                 <img [src]="item.reel.thumbnailUrl" [alt]="item.reel.caption ?? 'Reel'" class="reel-tile-thumb" />
                 } @else {

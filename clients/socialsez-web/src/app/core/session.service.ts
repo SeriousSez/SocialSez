@@ -36,6 +36,7 @@ import {
     RegisterRequest,
     SafetyStatusDto,
     StoryDto,
+    StoryCollectionDto,
     StoryGroupDto,
     UpdateProfileRequest,
     SavedCollectionDto,
@@ -65,6 +66,13 @@ export interface PendingSaveToCollectionRequest extends SaveToCollectionRequest 
     resolve: (saved: boolean) => void;
 }
 
+export interface OpenReelInModalRequest {
+    reel: ReelDto;
+    collectionId?: string;
+    savedItemId?: string;
+    onRemoveFromCollection?: () => Promise<boolean>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SessionService {
     profile: ProfileDto | null = null;
@@ -80,13 +88,13 @@ export class SessionService {
     private readonly appChanges = new ReplaySubject<'profile' | 'posts' | 'session' | 'notifications'>(1);
     readonly appChanges$ = this.appChanges.asObservable();
     readonly messageChanges$ = this.messageChanges.asObservable();
-    private readonly openReelInModalSource = new Subject<ReelDto>();
+    private readonly openReelInModalSource = new Subject<OpenReelInModalRequest>();
     readonly openReelInModal$ = this.openReelInModalSource.asObservable();
     private readonly openSaveToCollectionModalSource = new Subject<PendingSaveToCollectionRequest>();
     readonly openSaveToCollectionModal$ = this.openSaveToCollectionModalSource.asObservable();
 
-    requestOpenReelInModal(reel: ReelDto): void {
-        this.openReelInModalSource.next(reel);
+    requestOpenReelInModal(request: OpenReelInModalRequest): void {
+        this.openReelInModalSource.next(request);
     }
 
     openSaveToCollectionModalAsync(request: SaveToCollectionRequest): Promise<boolean> {
@@ -301,6 +309,51 @@ export class SessionService {
         } catch {
             return null;
         }
+    }
+
+    async loadMyStoriesAsync(includeExpired = true, take = 200): Promise<StoryDto[]> {
+        const stories = await firstValueFrom(this.api.getMyStories(includeExpired, take));
+        return stories.map(story => this.normalizeStory(story));
+    }
+
+    async loadPublicStoryCollectionsByAuthorHandleAsync(handle: string): Promise<StoryCollectionDto[]> {
+        const collections = await firstValueFrom(this.api.getPublicStoryCollectionsByAuthorHandle(handle));
+        return collections.map(collection => ({
+            ...collection,
+            stories: (collection.stories ?? []).map(story => this.normalizeStory(story))
+        }));
+    }
+
+    async createStoryCollectionAsync(name: string): Promise<StoryCollectionDto> {
+        const created = await firstValueFrom(this.api.createStoryCollection(name));
+        this.message = 'Story collection created.';
+        return {
+            ...created,
+            stories: (created.stories ?? []).map(story => this.normalizeStory(story))
+        };
+    }
+
+    async deleteStoryCollectionAsync(collectionId: string): Promise<void> {
+        await firstValueFrom(this.api.deleteStoryCollection(collectionId));
+        this.message = 'Story collection deleted.';
+    }
+
+    async addStoryToCollectionAsync(collectionId: string, storyId: string): Promise<StoryCollectionDto> {
+        const updated = await firstValueFrom(this.api.addStoryToCollection(collectionId, storyId));
+        this.message = 'Story added to collection.';
+        return {
+            ...updated,
+            stories: (updated.stories ?? []).map(story => this.normalizeStory(story))
+        };
+    }
+
+    async removeStoryFromCollectionAsync(collectionId: string, storyId: string): Promise<StoryCollectionDto> {
+        const updated = await firstValueFrom(this.api.removeStoryFromCollection(collectionId, storyId));
+        this.message = 'Story removed from collection.';
+        return {
+            ...updated,
+            stories: (updated.stories ?? []).map(story => this.normalizeStory(story))
+        };
     }
 
     async toggleReelLikeAsync(reelId: string): Promise<ReelDto> {

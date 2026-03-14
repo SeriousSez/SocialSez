@@ -94,6 +94,120 @@
                 </div>
             </header>
 
+            <section class="story-collections" *ngIf="showStoryCollectionsSection">
+                <div class="story-collections-row" aria-label="Story collections">
+                    <button type="button" class="story-collection-item story-collection-create" *ngIf="isOwnProfile" (click)="openStoryCollectionCreateModal()" aria-label="Create story collection">
+                        <span class="story-collection-thumb story-collection-add" aria-hidden="true">
+                            <i class="fa-duotone fa-light fa-plus"></i>
+                        </span>
+                        <span class="story-collection-name">New</span>
+                    </button>
+
+                    <div class="story-collection-item-wrap" *ngFor="let collection of storyCollections">
+                        <button type="button" class="story-collection-item" (click)="openStoryCollection(collection.id)" [attr.aria-label]="'Open story collection ' + collection.name">
+                            <span class="story-collection-thumb">
+                                <ng-container *ngIf="getStoryCollectionCoverUrl(collection) as coverUrl; else storyCollectionFallback">
+                                    <video *ngIf="isStoryCollectionVideoCover(coverUrl); else storyCollectionImageCover" [src]="coverUrl" muted playsinline autoplay loop preload="metadata" aria-hidden="true"></video>
+                                    <ng-template #storyCollectionImageCover>
+                                        <img [src]="coverUrl" alt="Story collection cover" />
+                                    </ng-template>
+                                </ng-container>
+                                <ng-template #storyCollectionFallback>
+                                    <span class="story-collection-fallback">{{ (collection.name || 'C')[0] }}</span>
+                                </ng-template>
+                            </span>
+                            <span class="story-collection-name">{{ collection.name }}</span>
+                        </button>
+
+                        <button type="button" class="story-collection-edit-indicator" *ngIf="isOwnProfile" (click)="openStoryCollectionManageModal(collection.id, $event)" [attr.aria-label]="'Manage story collection ' + collection.name">
+                            <i class="fa-duotone fa-light fa-pen"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <div class="compose-modal" *ngIf="showStoryCollectionCreateModal" (click)="onStoryCollectionCreateBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create story collection">
+                <section class="compose-modal-card story-collection-modal-card">
+                    <header class="compose-modal-head">
+                        <h3>New Story Collection</h3>
+                        <button type="button" class="close" (click)="closeStoryCollectionCreateModal()" [disabled]="creatingStoryCollection" aria-label="Close story collection modal">✕</button>
+                    </header>
+
+                    <div class="story-collection-modal-body">
+                        <label for="storyCollectionNameInput">Collection name</label>
+                        <input id="storyCollectionNameInput" type="text" [(ngModel)]="newStoryCollectionName" maxlength="80" placeholder="e.g. Summer 2024" aria-label="Story collection name" />
+
+                        <div class="story-archive-list" *ngIf="storyArchive.length; else noStoryArchiveInCreateModal">
+                            <button type="button" class="story-archive-item" *ngFor="let story of storyArchive" (click)="toggleStoryForNewCollection(story.id)" [class.is-selected]="isStorySelectedForNewCollection(story.id)" [disabled]="creatingStoryCollection">
+                                <span class="story-archive-thumb">
+                                    <img [src]="story.mediaUrl" alt="Story media" />
+                                </span>
+                                <span class="story-archive-copy">
+                                    <strong>{{ story.caption || 'Story' }}</strong>
+                                    <small>{{ story.createdAtUtc | date:'mediumDate' }}</small>
+                                </span>
+                                <span class="story-archive-action">{{ isStorySelectedForNewCollection(story.id) ? 'Selected' : 'Select' }}</span>
+                            </button>
+                        </div>
+
+                        <ng-template #noStoryArchiveInCreateModal>
+                            <p class="story-archive-empty">No stories in your archive yet.</p>
+                        </ng-template>
+                    </div>
+
+                    <div class="media-actions">
+                        <button type="button" class="ghost" (click)="closeStoryCollectionCreateModal()" [disabled]="creatingStoryCollection">Cancel</button>
+                        <button type="button" (click)="createStoryCollection()" [disabled]="!canCreateStoryCollection">{{ creatingStoryCollection ? 'Creating...' : 'Create' }}</button>
+                    </div>
+                </section>
+            </div>
+
+            <div class="compose-modal" *ngIf="showStoryCollectionAddModal" (click)="onStoryCollectionAddBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Manage story collection">
+                <section class="compose-modal-card story-collection-modal-card">
+                    <header class="compose-modal-head">
+                        <h3>{{ selectedStoryCollection ? ('Manage ' + selectedStoryCollection.name) : 'Manage Story Collection' }}</h3>
+                        <button type="button" class="close" (click)="closeStoryCollectionAddModal()" [disabled]="addingStoryToCollection" aria-label="Close add stories modal">✕</button>
+                    </header>
+
+                    <div class="story-collection-modal-body">
+                        @if (storyCollections.length) {
+                        <div class="story-collection-select-row">
+                            <label>
+                                <span>Select collection</span>
+                                <select [(ngModel)]="selectedStoryCollectionId" aria-label="Select story collection">
+                                    <option *ngFor="let collection of storyCollections" [value]="collection.id">{{ collection.name }}</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="story-archive-list" *ngIf="storyArchive.length; else noStoryArchiveInAddModal">
+                            <button type="button" class="story-archive-item" *ngFor="let story of storyArchive" (click)="toggleStoryInSelectedCollection(story.id)" [disabled]="!canAddStoriesToCollection">
+                                <span class="story-archive-thumb">
+                                    <img [src]="story.mediaUrl" alt="Story media" />
+                                </span>
+                                <span class="story-archive-copy">
+                                    <strong>{{ story.caption || 'Story' }}</strong>
+                                    <small>{{ story.createdAtUtc | date:'mediumDate' }}</small>
+                                </span>
+                                <span class="story-archive-action">{{ isStoryInSelectedCollection(story.id) ? 'Remove' : 'Add' }}</span>
+                            </button>
+                        </div>
+
+                        <ng-template #noStoryArchiveInAddModal>
+                            <p class="story-archive-empty">No stories in your archive yet.</p>
+                        </ng-template>
+                        } @else {
+                        <p class="story-archive-empty">Create your first collection first.</p>
+                        }
+                    </div>
+
+                    <div class="media-actions">
+                        <button type="button" class="ghost" *ngIf="selectedStoryCollection" (click)="requestDeleteSelectedStoryCollection()" [disabled]="addingStoryToCollection || deletingStoryCollection">Delete collection</button>
+                        <button type="button" class="ghost" (click)="closeStoryCollectionAddModal()" [disabled]="addingStoryToCollection">Close</button>
+                    </div>
+                </section>
+            </div>
+
             <p class="status" *ngIf="isPrivateLockedView"><i class="fa-duotone fa-light fa-lock" aria-hidden="true"></i>This profile is private. Follow and wait for approval to see posts.</p>
 
             <app-segmented-tabs *ngIf="!isBlockedView" class="profile-tabs" [tabs]="contentTabs" [activeTab]="activeTab" ariaLabel="Profile content tabs" [fullWidthOnMobile]="true" (activeTabChange)="onActiveTabChanged($event)"></app-segmented-tabs>
@@ -326,8 +440,9 @@
 
 <app-feed-story-viewer *ngIf="!isBlockedView" [activeStory]="activeStory" [activeStoryGroup]="activeStoryGroup" [activeStoryIndex]="activeStoryIndex" [storyCount]="activeStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousStory" [hasNextStory]="hasNextStory"
     [hideSensitiveMedia]="hideSensitiveMediaEnabled" [liked]="activeStory ? isStoryLiked(activeStory.id) : false" [sendingReply]="sendingStoryReply" [sharingStory]="sharingStoryMessage" [canDelete]="canDeleteActiveStory" [deletingStory]="deletingStory" [canReport]="canReportActiveStory"
-    [reportingStory]="reportingContent" [errorMessage]="storyViewerError" (closed)="closeStoryViewer()" (previous)="showPreviousStory()" (next)="showNextStory()" (replySubmitted)="sendStoryReply($event)" (likeToggled)="toggleStoryLike($event)" (shareRequested)="shareStoryAsMessage($event)"
-    (deleteRequested)="requestDeleteStory($event)" (reportRequested)="openStoryReport($event)">
+    [reportingStory]="reportingContent" [canSaveToCollection]="canSaveActiveStoryToCollection" [savingToCollection]="addingStoryToCollection" [errorMessage]="storyViewerError" (closed)="closeStoryViewer()" (previous)="showPreviousStory()" (next)="showNextStory()"
+    (replySubmitted)="sendStoryReply($event)" (likeToggled)="toggleStoryLike($event)" (shareRequested)="shareStoryAsMessage($event)" (saveToCollectionRequested)="onSaveActiveStoryToCollectionRequested($event)" (deleteRequested)="requestDeleteStory($event)"
+    (reportRequested)="openStoryReport($event)">
 </app-feed-story-viewer>
 
 <app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
@@ -341,6 +456,10 @@
 </app-confirm-modal>
 
 <app-confirm-modal [open]="!!pendingDeleteStoryId" title="Delete story" message="Delete this story? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingStory" (cancel)="cancelDeleteStory()" (confirm)="confirmDeleteStory()">
+</app-confirm-modal>
+
+<app-confirm-modal [open]="!!pendingDeleteStoryCollectionId" title="Delete collection" [message]="deleteSelectedStoryCollectionMessage" confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingStoryCollection" (cancel)="cancelDeleteStoryCollection()"
+    (confirm)="confirmDeleteStoryCollection()">
 </app-confirm-modal>
 
 <app-confirm-modal [open]="showBlockModal" title="Block profile" [message]="'Block @' + (viewedProfile?.handle ?? 'this profile') + '? This removes follow connections.'" confirmText="Block" cancelText="Cancel" confirmClass="danger" [busy]="blockingProfile" (cancel)="closeBlockModal()"

@@ -1,20 +1,7 @@
 <div class="side-card saved-collections-rail">
     <div class="rail-header">
         <h3>Saved</h3>
-        <button type="button" class="btn-icon" title="New collection" (click)="creatingCollection = !creatingCollection" aria-label="Create collection">
-            <i class="fa-duotone fa-light fa-folder-plus"></i>
-        </button>
     </div>
-
-    @if (creatingCollection) {
-    <div class="new-collection-form">
-        <input type="text" placeholder="Collection name" maxlength="100" [(ngModel)]="newCollectionName" (keydown.enter)="createCollectionAsync()" (keydown.escape)="creatingCollection = false" autofocus />
-        <div class="form-actions">
-            <button class="btn-primary" (click)="createCollectionAsync()" [disabled]="!newCollectionName.trim()">Create</button>
-            <button class="btn-ghost" (click)="creatingCollection = false">Cancel</button>
-        </div>
-    </div>
-    }
 
     <nav class="saved-nav" aria-label="Saved collections">
         <button class="nav-item" [class.active]="!activeCollectionId" (click)="selectAllAsync()">

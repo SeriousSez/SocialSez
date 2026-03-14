@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthSessionDto, ProfileDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
@@ -60,6 +62,20 @@ interface DeviceSessionEntry {
 
 type SettingsSectionKey = 'profile' | 'account' | 'privacy' | 'session' | 'preferences' | 'notifications' | 'safety' | 'security' | 'data' | 'blocked' | 'logout';
 type AccountActionKind = 'deactivate' | 'delete';
+
+const settingsSectionByFragment: Record<string, SettingsSectionKey> = {
+    'settings-section-profile': 'profile',
+    'settings-section-account': 'account',
+    'settings-section-privacy': 'privacy',
+    'settings-section-session': 'session',
+    'settings-section-preferences': 'preferences',
+    'settings-section-notifications': 'notifications',
+    'settings-section-safety': 'safety',
+    'settings-section-security': 'security',
+    'settings-section-data': 'data',
+    'settings-section-blocked': 'blocked',
+    'settings-section-logout': 'logout'
+};
 
 @Component({
     selector: 'app-settings-page',
@@ -274,8 +290,9 @@ export class SettingsPageComponent implements OnDestroy {
     private avatarCropDragStartY = 0;
     private avatarCropDragOriginOffsetX = 0;
     private avatarCropDragOriginOffsetY = 0;
+    private fragmentSubscription?: Subscription;
 
-    constructor(public readonly session: SessionService) {
+    constructor(public readonly session: SessionService, private readonly route: ActivatedRoute) {
         if (session.profile) {
             this.displayName = session.profile.displayName;
             this.handle = session.profile.handle;
@@ -294,6 +311,17 @@ export class SettingsPageComponent implements OnDestroy {
         this.loadSafetyPrefs();
         this.loadSectionSavedAt();
         void this.loadDeviceSessionsAsync();
+
+        this.fragmentSubscription = this.route.fragment.subscribe(fragment => {
+            if (!fragment) {
+                return;
+            }
+
+            const section = settingsSectionByFragment[fragment];
+            if (section) {
+                this.toggleSection(section);
+            }
+        });
     }
 
     toggleSection(section: SettingsSectionKey): void {
@@ -859,6 +887,7 @@ export class SettingsPageComponent implements OnDestroy {
     ngOnDestroy(): void {
         this.closeMutedHandleSuggestions();
         this.clearAvatarCropSource();
+        this.fragmentSubscription?.unsubscribe();
     }
 
     openAvatarModal(): void {

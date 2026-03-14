@@ -267,19 +267,40 @@ public class ReelsController(IReelService reelService, SocialSezContext dbContex
             throw new ArgumentException("Allowed reel video files: .mp4, .webm, .mov, .m4v, .ogv.");
         }
 
-        var transcoded = await TryTranscodeVideoToMp4Async(file, cancellationToken);
-        if (transcoded is not null)
+        if (ShouldAttemptTranscode(extension, file.ContentType))
         {
-            return await SaveToDatabaseAsync(
-                profileId,
-                transcoded.Value.Content,
-                Path.GetFileNameWithoutExtension(file.FileName) + ".mp4",
-                ".mp4",
-                "video/mp4",
-                cancellationToken);
+            var transcoded = await TryTranscodeVideoToMp4Async(file, cancellationToken);
+            if (transcoded is not null)
+            {
+                return await SaveToDatabaseAsync(
+                    profileId,
+                    transcoded.Value.Content,
+                    Path.GetFileNameWithoutExtension(file.FileName) + ".mp4",
+                    ".mp4",
+                    "video/mp4",
+                    cancellationToken);
+            }
         }
 
         return await SaveToDatabaseAsync(profileId, file, extension, cancellationToken);
+    }
+
+    private static bool ShouldAttemptTranscode(string? extension, string? contentType)
+    {
+        var normalizedExtension = (extension ?? string.Empty).Trim().ToLowerInvariant();
+        var normalizedContentType = (contentType ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (normalizedExtension is ".mp4" or ".webm")
+        {
+            return false;
+        }
+
+        if (normalizedContentType is "video/mp4" or "video/webm")
+        {
+            return false;
+        }
+
+        return normalizedExtension is ".mov" or ".m4v" or ".ogv";
     }
 
     private async Task<string> SaveThumbnailAsync(Guid profileId, IFormFile file, CancellationToken cancellationToken)

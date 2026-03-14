@@ -1,5 +1,5 @@
 <section class="reels-list">
-    <article class="reel-card" *ngFor="let reel of reels; trackBy: trackReelById" #reelItem [attr.data-reel-id]="reel.id">
+    <article class="reel-card" *ngFor="let reel of reels; trackBy: trackReelById; let index = index" #reelItem [attr.data-reel-id]="reel.id">
         <header class="reel-head">
             <div class="author">
                 <button type="button" class="avatar-button" (click)="onAuthorAvatarClick(reel.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForAuthor(reel.authorHandle) ? ('Open @' + reel.authorHandle + ' stories') : ('View @' + reel.authorHandle + ' profile')">
@@ -18,8 +18,8 @@
         </header>
 
         <div class="reel-video-frame" *ngIf="!shouldHideSensitiveReel(reel); else sensitiveReelPlaceholder" (click)="onReelFrameClick(reel.id)">
-            <video #reelVideoEl class="reel-video" [attr.data-reel-id]="reel.id" [style.transform]="getReelFrameTransform(reel)" [poster]="reel.thumbnailUrl || null" [src]="reel.videoUrl" [muted]="isReelMuted(reel.id)" [loop]="activeReelId === reel.id" playsinline preload="metadata"
-                (loadedmetadata)="onReelVideoLoadedMetadata(reel.id)" (error)="onReelVideoError(reel.id)"></video>
+            <video #reelVideoEl class="reel-video" [attr.data-reel-id]="reel.id" [style.transform]="getReelFrameTransform(reel)" [poster]="reel.thumbnailUrl || null" [src]="reel.videoUrl" [muted]="isReelMuted(reel.id)" [loop]="activeReelId === reel.id" autoplay playsinline
+                [attr.preload]="getReelPreloadMode(index)" (loadedmetadata)="onReelVideoLoadedMetadata(reel.id)" (error)="onReelVideoError(reel.id)"></video>
             <div class="reel-video-error" *ngIf="isReelVideoUnavailable(reel.id)">
                 <strong>Video unavailable</strong>
                 <p>This reel could not be decoded in this browser.</p>

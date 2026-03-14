@@ -269,6 +269,34 @@ export class FeedPageComponent implements OnDestroy {
         return this.visibleStoryGroups.filter(group => (group.authorHandle ?? '').trim().toLowerCase() !== handle);
     }
 
+    get firstStoryToPreload(): StoryDto | null {
+        for (const group of this.visibleStoryGroups) {
+            const first = group.stories?.[0] ?? null;
+            if (first?.mediaUrl?.trim()) {
+                return first;
+            }
+        }
+
+        return null;
+    }
+
+    isLikelyVideoStoryMedia(mediaUrl: string): boolean {
+        const normalized = mediaUrl.trim().toLowerCase();
+        if (!normalized) {
+            return false;
+        }
+
+        if (/\.(jpg|jpeg|png|gif|webp|bmp|svg|avif)(?:\?.*)?$/i.test(normalized)) {
+            return false;
+        }
+
+        if (/\.(mp4|webm|mov|m4v|ogv|ogg)(?:\?.*)?$/i.test(normalized)) {
+            return true;
+        }
+
+        return true;
+    }
+
     onOwnStoryItemClicked(): void {
         const ownGroup = this.ownVisibleStoryGroup;
         if (ownGroup) {

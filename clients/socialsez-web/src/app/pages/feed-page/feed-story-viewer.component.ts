@@ -27,6 +27,8 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     @Input() deletingStory = false;
     @Input() canReport = false;
     @Input() reportingStory = false;
+    @Input() canSaveToCollection = false;
+    @Input() savingToCollection = false;
     @Input() errorMessage = '';
     @Input() hideSensitiveMedia = false;
 
@@ -38,6 +40,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     @Output() replySubmitted = new EventEmitter<{ story: StoryDto; message: string }>();
     @Output() likeToggled = new EventEmitter<StoryDto>();
     @Output() shareRequested = new EventEmitter<StoryDto>();
+    @Output() saveToCollectionRequested = new EventEmitter<StoryDto>();
     @Output() deleteRequested = new EventEmitter<StoryDto>();
     @Output() reportRequested = new EventEmitter<StoryDto>();
 
@@ -49,6 +52,8 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     copyLinkCopied = false;
     videoPlaybackError = false;
     sensitiveMediaRevealed = false;
+    private readonly nonVideoStoryUrls = new Set<string>();
+    private readonly confirmedVideoStoryUrls = new Set<string>();
 
     private imageProgressFrameId = 0;
     private videoProgressFrameId = 0;
@@ -178,6 +183,9 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
             return;
         }
 
+        const normalizedUrl = this.normalizeMediaUrl(this.activeStory.mediaUrl);
+        this.confirmedVideoStoryUrls.add(normalizedUrl);
+        this.nonVideoStoryUrls.delete(normalizedUrl);
         this.videoPlaybackError = false;
         this.currentStoryProgress = 0;
         this.paused = false;
@@ -212,9 +220,48 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     }
 
     onVideoError(): void {
+        const story = this.activeStory;
+        if (!story) {
+            this.videoPlaybackError = true;
+            this.paused = true;
+            this.stopVideoProgressLoop();
+            return;
+        }
+
+        const normalizedUrl = this.normalizeMediaUrl(story.mediaUrl);
+        if (!this.isKnownVideoExtension(normalizedUrl)) {
+            this.nonVideoStoryUrls.add(normalizedUrl);
+            this.confirmedVideoStoryUrls.delete(normalizedUrl);
+            this.videoPlaybackError = false;
+            this.stopVideoProgressLoop();
+            this.paused = false;
+            this.currentStoryProgress = 0;
+            this.resetPlaybackState();
+            return;
+        }
+
         this.videoPlaybackError = true;
         this.paused = true;
         this.stopVideoProgressLoop();
+    }
+
+    onImageError(): void {
+        const story = this.activeStory;
+        if (!story) {
+            return;
+        }
+
+        const normalizedUrl = this.normalizeMediaUrl(story.mediaUrl);
+        if (this.isKnownImageExtension(normalizedUrl)) {
+            return;
+        }
+
+        this.confirmedVideoStoryUrls.add(normalizedUrl);
+        this.nonVideoStoryUrls.delete(normalizedUrl);
+        this.videoPlaybackError = false;
+        this.paused = false;
+        this.currentStoryProgress = 0;
+        this.resetPlaybackState();
     }
 
     onReplySubmit(): void {
@@ -251,6 +298,14 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         }
 
         this.shareRequested.emit(this.activeStory);
+    }
+
+    onSaveToCollectionClick(): void {
+        if (!this.activeStory || !this.canSaveToCollection || this.savingToCollection) {
+            return;
+        }
+
+        this.saveToCollectionRequested.emit(this.activeStory);
     }
 
     async onCopyLinkClick(): Promise<void> {
@@ -343,21 +398,28 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     }
 
     isVideoStory(mediaUrl: string): boolean {
-        const normalized = mediaUrl.trim().toLowerCase();
+        const normalized = this.normalizeMediaUrl(mediaUrl);
         if (!normalized) {
             return false;
         }
 
-        if (/\.(jpg|jpeg|png|gif|webp|bmp|svg|avif)(?:\?.*)?$/i.test(normalized)) {
+        if (this.nonVideoStoryUrls.has(normalized)) {
             return false;
         }
 
-        if (/\.(mp4|webm|mov|m4v|ogv|ogg)(?:\?.*)?$/i.test(normalized)) {
+        if (this.confirmedVideoStoryUrls.has(normalized)) {
             return true;
         }
 
-        // Many signed/CDN URLs do not include extensions; default to video and fallback on error.
-        return true;
+        if (this.isKnownImageExtension(normalized)) {
+            return false;
+        }
+
+        if (this.isKnownVideoExtension(normalized)) {
+            return true;
+        }
+
+        return false;
     }
 
     formatStoryAge(createdAtUtc: string): string {
@@ -450,6 +512,18 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
 
             this.paused = true;
         }
+    }
+
+    private normalizeMediaUrl(mediaUrl: string): string {
+        return mediaUrl.trim().toLowerCase();
+    }
+
+    private isKnownImageExtension(normalizedMediaUrl: string): boolean {
+        return /\.(jpg|jpeg|png|gif|webp|bmp|svg|avif)(?:\?.*)?$/i.test(normalizedMediaUrl);
+    }
+
+    private isKnownVideoExtension(normalizedMediaUrl: string): boolean {
+        return /\.(mp4|webm|mov|m4v|ogv|ogg)(?:\?.*)?$/i.test(normalizedMediaUrl);
     }
 
     private resumeImageProgress(): void {

@@ -12,4 +12,5 @@ public class Story
 
     public UserProfile Author { get; set; } = null!;
     public ICollection<StoryView> Views { get; set; } = new List<StoryView>();
+    public ICollection<StoryCollectionItem> CollectionItems { get; set; } = new List<StoryCollectionItem>();
 }

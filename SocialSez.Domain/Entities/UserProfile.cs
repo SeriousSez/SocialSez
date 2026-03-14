@@ -25,6 +25,7 @@ public class UserProfile
     public ICollection<Follow> Following { get; set; } = new List<Follow>();
     public ICollection<FollowedHashtag> FollowedHashtags { get; set; } = new List<FollowedHashtag>();
     public ICollection<Story> Stories { get; set; } = new List<Story>();
+    public ICollection<StoryCollection> StoryCollections { get; set; } = new List<StoryCollection>();
     public ICollection<StoryView> StoryViews { get; set; } = new List<StoryView>();
     public ICollection<Reel> Reels { get; set; } = new List<Reel>();
     public ICollection<ReelLike> ReelLikes { get; set; } = new List<ReelLike>();

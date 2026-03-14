@@ -358,8 +358,16 @@ h1 {
     --fa-secondary-opacity: 0.7;
 }
 
+.tab-saved i {
+    --fa-primary-color: #15803d;
+    --fa-secondary-color: #4ade80;
+    --fa-primary-opacity: 1;
+    --fa-secondary-opacity: 0.75;
+}
+
 .tab-blogs.active i,
 .tab-communities.active i,
+.tab-saved.active i,
 .tab-notifications.active i {
     --fa-primary-color: currentColor;
     --fa-secondary-color: currentColor;
@@ -598,6 +606,27 @@ h1 {
 .trend-count {
     color: #64748b;
     font-size: 0.82rem;
+}
+
+.settings-quick-nav-links {
+    display: grid;
+    gap: 6px;
+}
+
+.settings-quick-nav-links a {
+    display: block;
+    border: 1px solid #dbe4f0;
+    border-radius: 10px;
+    padding: 8px 10px;
+    color: #334155;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.settings-quick-nav-links a:hover {
+    background: #f8fbff;
+    border-color: #c7d7f8;
 }
 
 .notice-history-row {

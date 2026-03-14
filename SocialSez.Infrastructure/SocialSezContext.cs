@@ -19,6 +19,8 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<Follow> Follows => Set<Follow>();
     public DbSet<FollowedHashtag> FollowedHashtags => Set<FollowedHashtag>();
     public DbSet<Story> Stories => Set<Story>();
+    public DbSet<StoryCollection> StoryCollections => Set<StoryCollection>();
+    public DbSet<StoryCollectionItem> StoryCollectionItems => Set<StoryCollectionItem>();
     public DbSet<StoryView> StoryViews => Set<StoryView>();
     public DbSet<Reel> Reels => Set<Reel>();
     public DbSet<ReelLike> ReelLikes => Set<ReelLike>();
@@ -308,6 +310,39 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
 
             entity.HasIndex(x => new { x.AuthorId, x.CreatedAtUtc });
             entity.HasIndex(x => x.ExpiresAtUtc);
+        });
+
+        modelBuilder.Entity<StoryCollection>(entity =>
+        {
+            entity.ToTable("StoryCollections");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasMaxLength(80).IsRequired();
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.StoryCollections)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.ProfileId, x.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<StoryCollectionItem>(entity =>
+        {
+            entity.ToTable("StoryCollectionItems");
+            entity.HasKey(x => new { x.CollectionId, x.StoryId });
+
+            entity.HasOne(x => x.Collection)
+                .WithMany(x => x.Items)
+                .HasForeignKey(x => x.CollectionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Story)
+                .WithMany(x => x.CollectionItems)
+                .HasForeignKey(x => x.StoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.CollectionId, x.AddedAtUtc });
+            entity.HasIndex(x => x.StoryId);
         });
 
         modelBuilder.Entity<StoryView>(entity =>

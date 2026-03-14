@@ -8,7 +8,7 @@ import { SwUpdate, VersionEvent } from '@angular/service-worker';
 import { filter, firstValueFrom } from 'rxjs';
 import { CommunityDto, CommunityRuleDto, HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
 import { SharedReelCommentPreview } from '../core/shared-reel.utils';
-import { PendingSaveToCollectionRequest, SessionNoticeEntry, SessionService } from '../core/session.service';
+import { OpenReelInModalRequest, PendingSaveToCollectionRequest, SessionNoticeEntry, SessionService } from '../core/session.service';
 import { SocialSezApiService } from '../core/socialsez-api.service';
 import { UploadProgressService } from '../core/upload-progress.service';
 import { ProgressItem } from '../core/upload-progress.service';
@@ -30,6 +30,9 @@ interface DockReelModalState {
     likedByMe: boolean;
     comments: SharedReelCommentPreview[];
     muted: boolean;
+    collectionId?: string;
+    savedItemId?: string;
+    onRemoveFromCollection?: () => Promise<boolean>;
 }
 
 type SearchDiscoverType = 'all' | 'users' | 'posts' | 'hashtags' | 'reels' | 'communities' | 'community-posts' | 'blogs';
@@ -89,6 +92,7 @@ export class AppComponent implements OnInit, OnDestroy {
     dockReelCommentDraft = '';
     submittingDockReelComment = false;
     togglingDockReelLike = false;
+    removingDockReelFromCollection = false;
     private failedProfileChipImageUrl: string | null = null;
     private readonly prefsStorageKey = 'socialsez-web-prefs';
     private readonly likedProfileChipStoryIds = new Set<string>();
@@ -229,6 +233,11 @@ export class AppComponent implements OnInit, OnDestroy {
     get isSavedRoute(): boolean {
         const routePath = this.router.url.split('?')[0].split('#')[0].toLowerCase();
         return routePath === '/saved' || routePath.startsWith('/saved/');
+    }
+
+    get isSettingsRoute(): boolean {
+        const routePath = this.router.url.split('?')[0].split('#')[0].toLowerCase();
+        return routePath === '/settings' || routePath.startsWith('/settings/');
     }
 
     get searchContextLabel(): string {
@@ -385,7 +394,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
         this.session.openReelInModal$
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(reel => {
+            .subscribe((request: OpenReelInModalRequest) => {
+                const reel = request.reel;
                 this.dockStoryGroup = null;
                 this.dockStoryIndex = 0;
                 this.dockReelModal = {
@@ -399,11 +409,15 @@ export class AppComponent implements OnInit, OnDestroy {
                     likeCount: reel.likeCount,
                     likedByMe: reel.likedByMe,
                     comments: [...reel.comments],
-                    muted: true
+                    muted: true,
+                    collectionId: request.collectionId,
+                    savedItemId: request.savedItemId,
+                    onRemoveFromCollection: request.onRemoveFromCollection
                 };
                 this.dockReelCommentDraft = '';
                 this.submittingDockReelComment = false;
                 this.togglingDockReelLike = false;
+                this.removingDockReelFromCollection = false;
             });
 
         this.router.events
@@ -1309,6 +1323,7 @@ export class AppComponent implements OnInit, OnDestroy {
         this.dockReelCommentDraft = '';
         this.submittingDockReelComment = false;
         this.togglingDockReelLike = false;
+        this.removingDockReelFromCollection = false;
     }
 
     onDockReelBackdropClick(event: MouseEvent): void {
@@ -1359,6 +1374,29 @@ export class AppComponent implements OnInit, OnDestroy {
             this.dockReelCommentDraft = '';
         } finally {
             this.submittingDockReelComment = false;
+        }
+    }
+
+    get canRemoveDockReelFromCollection(): boolean {
+        return !!this.dockReelModal?.onRemoveFromCollection && !this.removingDockReelFromCollection;
+    }
+
+    async removeDockReelFromCollectionAsync(): Promise<void> {
+        const onRemove = this.dockReelModal?.onRemoveFromCollection;
+        if (!onRemove || this.removingDockReelFromCollection) {
+            return;
+        }
+
+        this.removingDockReelFromCollection = true;
+        try {
+            const removed = await onRemove();
+            if (removed) {
+                this.closeDockReelModal();
+            }
+        } catch {
+            this.session.message = 'Failed to remove from collection.';
+        } finally {
+            this.removingDockReelFromCollection = false;
         }
     }
 

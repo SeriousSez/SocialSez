@@ -18,8 +18,6 @@ export class SavedCollectionsRailComponent implements OnInit {
     private readonly router = inject(Router);
 
     collections: SavedCollectionDto[] = [];
-    creatingCollection = false;
-    newCollectionName = '';
     renamingCollectionId: string | null = null;
     renameValue = '';
     loading = false;
@@ -47,22 +45,6 @@ export class SavedCollectionsRailComponent implements OnInit {
 
     async selectCollectionAsync(collectionId: string): Promise<void> {
         await this.router.navigate(['/saved'], { queryParams: { collectionId }, queryParamsHandling: 'merge' });
-    }
-
-    async createCollectionAsync(): Promise<void> {
-        const name = this.newCollectionName.trim();
-        if (!name) {
-            return;
-        }
-
-        try {
-            const created = await this.session.createCollectionAsync(name);
-            this.collections = [...this.collections, created];
-            this.newCollectionName = '';
-            this.creatingCollection = false;
-        } catch {
-            this.session.message = 'Failed to create collection.';
-        }
     }
 
     startRename(collection: SavedCollectionDto): void {

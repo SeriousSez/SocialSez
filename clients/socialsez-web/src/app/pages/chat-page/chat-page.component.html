@@ -37,10 +37,10 @@
                     <button type="button" class="conversation" *ngFor="let conversation of filteredConversations; trackBy: trackByConversationId" [class.active]="selectedConversationId === conversation.id" (click)="selectConversation(conversation)">
                         <div class="conversation-row">
                             <ng-container *ngIf="chatHeaderProfileHandle(conversation) as profileHandle; else conversationAvatarStatic">
-                                <span class="avatar conversation-avatar-trigger" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="!conversationAvatarUrl(conversation)"
-                                    (click)="openAvatarProfileOrStory(profileHandle, $event)">{{ conversationAvatarText(conversation) }}</span>
-                                <img class="avatar conversation-avatar-trigger" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="conversationAvatarUrl(conversation) as avatar"
-                                    [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" (click)="openAvatarProfileOrStory(profileHandle, $event)" />
+                                <span class="avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="!conversationAvatarUrl(conversation)">{{
+                                    conversationAvatarText(conversation) }}</span>
+                                <img class="avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar"
+                                    onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
                             </ng-container>
 
                             <ng-template #conversationAvatarStatic>

@@ -78,6 +78,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     private readonly revealedSensitiveReelIds = new Set<string>();
     private readonly pausedByUserReelIds = new Set<string>();
     private readonly failedReelVideoIds = new Set<string>();
+    private readonly reelPlaybackRetryCountById = new Map<string, number>();
     private readonly expandedReelCaptions = new Set<string>();
     private readonly expandedReelReplyThreadRootsByReelId = new Map<string, Set<string>>();
     private readonly openedReelComments = new Set<string>();
@@ -134,6 +135,12 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         for (const key of Array.from(this.failedReelVideoIds.values())) {
             if (!currentIds.has(key)) {
                 this.failedReelVideoIds.delete(key);
+            }
+        }
+
+        for (const key of Array.from(this.reelPlaybackRetryCountById.keys())) {
+            if (!currentIds.has(key)) {
+                this.reelPlaybackRetryCountById.delete(key);
             }
         }
 
@@ -727,9 +734,13 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         }
 
         this.pausedByUserReelIds.delete(reelId);
-        if (this.activeReelId === reelId) {
-            void this.playVideo(video);
+        if (this.activeReelId !== reelId) {
+            this.activeReelId = reelId;
+            this.syncPlaybackState();
+            return;
         }
+
+        void this.playVideo(video);
     }
 
     toggleMute(event: MouseEvent, reelId: string): void {
@@ -758,11 +769,45 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         return this.failedReelVideoIds.has(reelId);
     }
 
+    getReelPreloadMode(index: number): 'auto' | 'metadata' {
+        return index < 3 ? 'auto' : 'metadata';
+    }
+
     onReelVideoLoadedMetadata(reelId: string): void {
         this.failedReelVideoIds.delete(reelId);
+        this.reelPlaybackRetryCountById.delete(reelId);
+        const video = this.findVideoByReelId(reelId);
+        if (!video) {
+            return;
+        }
+
+        video.muted = this.isReelMuted(reelId);
+        if (this.activeReelId === reelId && !this.pausedByUserReelIds.has(reelId)) {
+            void this.playVideo(video);
+        }
     }
 
     onReelVideoError(reelId: string): void {
+        const retries = this.reelPlaybackRetryCountById.get(reelId) ?? 0;
+        if (retries < 1) {
+            this.reelPlaybackRetryCountById.set(reelId, retries + 1);
+
+            const video = this.findVideoByReelId(reelId);
+            if (video) {
+                const currentUrl = (video.currentSrc || video.src || '').trim();
+                if (currentUrl) {
+                    video.src = this.appendCacheBustQuery(currentUrl);
+                    video.load();
+
+                    if (this.activeReelId === reelId && !this.pausedByUserReelIds.has(reelId)) {
+                        void this.playVideo(video);
+                    }
+                }
+            }
+
+            return;
+        }
+
         this.failedReelVideoIds.add(reelId);
         this.pausedByUserReelIds.add(reelId);
 
@@ -962,6 +1007,21 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     private selectMostVisibleReel(): void {
+        if (!this.reels.length) {
+            this.activeReelId = null;
+            return;
+        }
+
+        if (this.reelVisibility.size === 0) {
+            this.activeReelId = this.reels[0].id;
+            for (const reel of this.reels) {
+                if (!this.mutedReelIds.has(reel.id)) {
+                    this.mutedReelIds.add(reel.id);
+                }
+            }
+            return;
+        }
+
         let selectedId: string | null = null;
         let highestRatio = 0;
 
@@ -977,7 +1037,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
             }
         }
 
-        this.activeReelId = highestRatio >= 0.65 ? selectedId : null;
+        this.activeReelId = highestRatio > 0 ? selectedId : null;
     }
 
     private syncPlaybackState(): void {
@@ -1013,19 +1073,43 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
 
     private async playVideo(video: HTMLVideoElement): Promise<void> {
         const reelId = video.dataset['reelId'];
+        if (!reelId) {
+            return;
+        }
+
+        this.failedReelVideoIds.delete(reelId);
+        video.muted = this.isReelMuted(reelId);
 
         try {
             await video.play();
         } catch {
-            if (reelId) {
-                this.failedReelVideoIds.add(reelId);
+            if (!video.muted) {
+                this.mutedReelIds.add(reelId);
+                video.muted = true;
+
+                try {
+                    await video.play();
+                    this.failedReelVideoIds.delete(reelId);
+                    return;
+                } catch {
+                    return;
+                }
             }
 
             return;
         }
 
-        if (reelId) {
-            this.failedReelVideoIds.delete(reelId);
+        this.failedReelVideoIds.delete(reelId);
+    }
+
+    private appendCacheBustQuery(url: string): string {
+        try {
+            const parsed = new URL(url, window.location.origin);
+            parsed.searchParams.set('v', Date.now().toString());
+            return parsed.toString();
+        } catch {
+            const separator = url.includes('?') ? '&' : '?';
+            return `${url}${separator}v=${Date.now()}`;
         }
     }
 

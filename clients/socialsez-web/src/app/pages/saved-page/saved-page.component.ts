@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BlogPostDto, CommunityPostDto, ReelDto, SavedCollectionDto, SavedItemDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 import { SegmentedTabItem, SegmentedTabsComponent } from '../../shared/segmented-tabs/segmented-tabs.component';
@@ -25,6 +25,7 @@ interface SavedPostContentPart {
 export class SavedPageComponent implements OnInit {
     readonly session = inject(SessionService);
     private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
 
     isLoading = true;
@@ -202,8 +203,53 @@ export class SavedPageComponent implements OnInit {
         }
     }
 
-    openReel(reel: ReelDto): void {
-        this.session.requestOpenReelInModal(reel);
+    openReel(item: SavedItemDto): void {
+        if (!item.reel) {
+            return;
+        }
+
+        if (this.view === 'all') {
+            this.session.requestOpenReelInModal({ reel: item.reel });
+            return;
+        }
+
+        const { collectionId } = this.view;
+        this.session.requestOpenReelInModal({
+            reel: item.reel,
+            collectionId,
+            savedItemId: item.id,
+            onRemoveFromCollection: () => this.removeReelFromCollectionAsync(item.id, collectionId)
+        });
+    }
+
+    private async removeReelFromCollectionAsync(savedItemId: string, collectionId: string): Promise<boolean> {
+        try {
+            await this.session.removeFromCollectionAsync(collectionId, savedItemId);
+            this.items = this.items.filter(item => item.id !== savedItemId);
+
+            const collectionStillHasItems = await this.collectionHasItemsAsync(collectionId);
+            if (!collectionStillHasItems) {
+                await this.session.deleteCollectionAsync(collectionId);
+                this.view = 'all';
+                await this.router.navigate(['/saved'], {
+                    queryParams: { collectionId: null },
+                    queryParamsHandling: 'merge'
+                });
+                this.session.message = 'Collection deleted because it became empty.';
+                return true;
+            }
+
+            this.session.message = 'Removed from collection.';
+            return true;
+        } catch {
+            this.session.message = 'Failed to remove from collection.';
+            return false;
+        }
+    }
+
+    private async collectionHasItemsAsync(collectionId: string): Promise<boolean> {
+        const remaining = await this.session.loadCollectionItemsAsync(collectionId, 1, 0);
+        return remaining.length > 0;
     }
 
     postContentLines(content: string): SavedPostContentPart[][] {

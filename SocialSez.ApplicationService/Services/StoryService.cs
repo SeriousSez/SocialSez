@@ -232,6 +232,259 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
         return grouped;
     }
 
+    public async Task<IReadOnlyCollection<StoryDto>> GetByAuthorAsync(Guid requesterId, Guid authorId, bool includeExpired = false, int take = 100, CancellationToken cancellationToken = default)
+    {
+        await EnsureStorySchemaAsync(cancellationToken);
+
+        if (requesterId != authorId)
+        {
+            throw new UnauthorizedAccessException("You can only read your own story archive.");
+        }
+
+        take = Math.Clamp(take, 1, 250);
+        var nowUtc = DateTime.UtcNow;
+
+        var stories = await dbContext.Stories
+            .AsNoTracking()
+            .Include(x => x.Author)
+            .Include(x => x.Views)
+            .Where(x => x.AuthorId == authorId && (includeExpired || x.ExpiresAtUtc > nowUtc))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+
+        return stories
+            .Select(story => MapStory(story, story.Author, requesterId))
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyCollection<StoryCollectionDto>> GetCollectionsByAuthorHandleAsync(string handle, Guid? viewerId = null, CancellationToken cancellationToken = default)
+    {
+        await EnsureStorySchemaAsync(cancellationToken);
+
+        var normalizedHandle = handle.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(normalizedHandle))
+        {
+            return Array.Empty<StoryCollectionDto>();
+        }
+
+        var author = await dbContext.UserProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Handle == normalizedHandle, cancellationToken);
+
+        if (author is null)
+        {
+            return Array.Empty<StoryCollectionDto>();
+        }
+
+        if (!await CanViewerAccessAuthorStoriesAsync(author, viewerId, cancellationToken))
+        {
+            return Array.Empty<StoryCollectionDto>();
+        }
+
+        var collections = await dbContext.StoryCollections
+            .AsNoTracking()
+            .Where(x => x.ProfileId == author.Id)
+            .OrderBy(x => x.CreatedAtUtc)
+            .Include(x => x.Items)
+                .ThenInclude(item => item.Story)
+                    .ThenInclude(story => story.Author)
+            .Include(x => x.Items)
+                .ThenInclude(item => item.Story)
+                    .ThenInclude(story => story.Views)
+            .ToListAsync(cancellationToken);
+
+        var viewer = viewerId ?? Guid.Empty;
+        return collections
+            .Select(collection =>
+            {
+                var stories = collection.Items
+                    .OrderBy(item => item.AddedAtUtc)
+                    .Select(item => MapStory(item.Story, item.Story.Author, viewer))
+                    .ToArray();
+
+                var cover = collection.Items
+                    .OrderBy(item => item.AddedAtUtc)
+                    .Select(item => item.Story.MediaUrl)
+                    .FirstOrDefault();
+
+                return new StoryCollectionDto(
+                    collection.Id,
+                    author.Id,
+                    author.Handle,
+                    collection.Name,
+                    collection.CreatedAtUtc,
+                    stories.Length,
+                    cover,
+                    stories);
+            })
+            .ToArray();
+    }
+
+    public async Task<StoryCollectionDto> CreateCollectionAsync(Guid profileId, string name, CancellationToken cancellationToken = default)
+    {
+        await EnsureStorySchemaAsync(cancellationToken);
+
+        var trimmedName = name.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedName))
+        {
+            throw new ArgumentException("Collection name is required.", nameof(name));
+        }
+
+        if (trimmedName.Length > 80)
+        {
+            throw new ArgumentException("Collection name cannot exceed 80 characters.", nameof(name));
+        }
+
+        var author = await dbContext.UserProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == profileId, cancellationToken)
+            ?? throw new InvalidOperationException("Profile not found.");
+
+        var collection = new StoryCollection
+        {
+            Id = Guid.NewGuid(),
+            ProfileId = profileId,
+            Name = trimmedName,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        dbContext.StoryCollections.Add(collection);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return new StoryCollectionDto(
+            collection.Id,
+            profileId,
+            author.Handle,
+            collection.Name,
+            collection.CreatedAtUtc,
+            0,
+            null,
+            Array.Empty<StoryDto>());
+    }
+
+    public async Task DeleteCollectionAsync(Guid profileId, Guid collectionId, CancellationToken cancellationToken = default)
+    {
+        await EnsureStorySchemaAsync(cancellationToken);
+
+        var collection = await dbContext.StoryCollections
+            .FirstOrDefaultAsync(x => x.Id == collectionId && x.ProfileId == profileId, cancellationToken)
+            ?? throw new InvalidOperationException("Collection not found.");
+
+        dbContext.StoryCollections.Remove(collection);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<StoryCollectionDto> AddStoryToCollectionAsync(Guid profileId, Guid collectionId, Guid storyId, CancellationToken cancellationToken = default)
+    {
+        await EnsureStorySchemaAsync(cancellationToken);
+
+        var collection = await dbContext.StoryCollections
+            .Include(x => x.Profile)
+            .FirstOrDefaultAsync(x => x.Id == collectionId && x.ProfileId == profileId, cancellationToken)
+            ?? throw new InvalidOperationException("Collection not found.");
+
+        var story = await dbContext.Stories
+            .Include(x => x.Author)
+            .Include(x => x.Views)
+            .FirstOrDefaultAsync(x => x.Id == storyId && x.AuthorId == profileId, cancellationToken)
+            ?? throw new InvalidOperationException("Story not found.");
+
+        var exists = await dbContext.StoryCollectionItems
+            .AnyAsync(x => x.CollectionId == collectionId && x.StoryId == storyId, cancellationToken);
+
+        if (!exists)
+        {
+            dbContext.StoryCollectionItems.Add(new StoryCollectionItem
+            {
+                CollectionId = collectionId,
+                StoryId = storyId,
+                AddedAtUtc = DateTime.UtcNow
+            });
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var refreshed = await dbContext.StoryCollections
+            .AsNoTracking()
+            .Where(x => x.Id == collectionId)
+            .Include(x => x.Items)
+                .ThenInclude(item => item.Story)
+                    .ThenInclude(itemStory => itemStory.Author)
+            .Include(x => x.Items)
+                .ThenInclude(item => item.Story)
+                    .ThenInclude(itemStory => itemStory.Views)
+            .FirstAsync(cancellationToken);
+
+        var stories = refreshed.Items
+            .OrderBy(item => item.AddedAtUtc)
+            .Select(item => MapStory(item.Story, item.Story.Author, profileId))
+            .ToArray();
+
+        var cover = refreshed.Items
+            .OrderBy(item => item.AddedAtUtc)
+            .Select(item => item.Story.MediaUrl)
+            .FirstOrDefault();
+
+        return new StoryCollectionDto(
+            refreshed.Id,
+            profileId,
+            collection.Profile.Handle,
+            refreshed.Name,
+            refreshed.CreatedAtUtc,
+            stories.Length,
+            cover,
+            stories);
+    }
+
+    public async Task<StoryCollectionDto> RemoveStoryFromCollectionAsync(Guid profileId, Guid collectionId, Guid storyId, CancellationToken cancellationToken = default)
+    {
+        await EnsureStorySchemaAsync(cancellationToken);
+
+        var collection = await dbContext.StoryCollections
+            .Include(x => x.Profile)
+            .FirstOrDefaultAsync(x => x.Id == collectionId && x.ProfileId == profileId, cancellationToken)
+            ?? throw new InvalidOperationException("Collection not found.");
+
+        var item = await dbContext.StoryCollectionItems
+            .FirstOrDefaultAsync(x => x.CollectionId == collectionId && x.StoryId == storyId, cancellationToken)
+            ?? throw new InvalidOperationException("Story is not in this collection.");
+
+        dbContext.StoryCollectionItems.Remove(item);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var refreshed = await dbContext.StoryCollections
+            .AsNoTracking()
+            .Where(x => x.Id == collectionId)
+            .Include(x => x.Items)
+                .ThenInclude(collectionItem => collectionItem.Story)
+                    .ThenInclude(itemStory => itemStory.Author)
+            .Include(x => x.Items)
+                .ThenInclude(collectionItem => collectionItem.Story)
+                    .ThenInclude(itemStory => itemStory.Views)
+            .FirstAsync(cancellationToken);
+
+        var stories = refreshed.Items
+            .OrderBy(collectionItem => collectionItem.AddedAtUtc)
+            .Select(collectionItem => MapStory(collectionItem.Story, collectionItem.Story.Author, profileId))
+            .ToArray();
+
+        var cover = refreshed.Items
+            .OrderBy(collectionItem => collectionItem.AddedAtUtc)
+            .Select(collectionItem => collectionItem.Story.MediaUrl)
+            .FirstOrDefault();
+
+        return new StoryCollectionDto(
+            refreshed.Id,
+            profileId,
+            collection.Profile.Handle,
+            refreshed.Name,
+            refreshed.CreatedAtUtc,
+            stories.Length,
+            cover,
+            stories);
+    }
+
     public async Task<StoryDto?> GetPublicByIdAsync(Guid storyId, CancellationToken cancellationToken = default)
     {
         return await GetPublicByIdAsync(storyId, null, cancellationToken);
@@ -380,6 +633,45 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             .ToHashSet();
     }
 
+    private async Task<bool> CanViewerAccessAuthorStoriesAsync(UserProfile author, Guid? viewerId, CancellationToken cancellationToken)
+    {
+        if (!viewerId.HasValue)
+        {
+            return !author.IsPrivate;
+        }
+
+        var blockedProfileIds = await GetBlockedProfileIdsAsync(viewerId.Value, cancellationToken);
+        if (blockedProfileIds.Contains(author.Id))
+        {
+            return false;
+        }
+
+        if (!author.IsPrivate || viewerId.Value == author.Id)
+        {
+            return true;
+        }
+
+        return await dbContext.Follows
+            .AsNoTracking()
+            .AnyAsync(x => x.FollowerId == viewerId.Value && x.FollowedId == author.Id, cancellationToken);
+    }
+
+    private static StoryDto MapStory(Story story, UserProfile author, Guid viewerId)
+    {
+        return new StoryDto(
+            story.Id,
+            story.AuthorId,
+            author.Handle,
+            author.ImageUrl,
+            story.Caption,
+            story.MediaUrl,
+            story.IsSensitive,
+            story.CreatedAtUtc,
+            story.ExpiresAtUtc,
+            viewerId != Guid.Empty && story.Views.Any(view => view.ViewerId == viewerId),
+            story.Views.Count);
+    }
+
     private async Task EnsureStorySchemaAsync(CancellationToken cancellationToken)
     {
         if (storySchemaInitialized || !dbContext.Database.IsSqlite())
@@ -402,6 +694,29 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
             {
             }
+
+            await dbContext.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE IF NOT EXISTS StoryCollections (
+    Id TEXT NOT NULL PRIMARY KEY,
+    ProfileId TEXT NOT NULL,
+    Name TEXT NOT NULL,
+    CreatedAtUtc TEXT NOT NULL,
+    CONSTRAINT FK_StoryCollections_UserProfiles_ProfileId FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
+);", cancellationToken);
+
+            await dbContext.Database.ExecuteSqlRawAsync(@"
+CREATE TABLE IF NOT EXISTS StoryCollectionItems (
+    CollectionId TEXT NOT NULL,
+    StoryId TEXT NOT NULL,
+    AddedAtUtc TEXT NOT NULL,
+    CONSTRAINT PK_StoryCollectionItems PRIMARY KEY (CollectionId, StoryId),
+    CONSTRAINT FK_StoryCollectionItems_StoryCollections_CollectionId FOREIGN KEY (CollectionId) REFERENCES StoryCollections (Id) ON DELETE CASCADE,
+    CONSTRAINT FK_StoryCollectionItems_Stories_StoryId FOREIGN KEY (StoryId) REFERENCES Stories (Id) ON DELETE CASCADE
+);", cancellationToken);
+
+            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_StoryCollections_ProfileId_CreatedAtUtc ON StoryCollections (ProfileId, CreatedAtUtc);", cancellationToken);
+            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_StoryCollectionItems_CollectionId_AddedAtUtc ON StoryCollectionItems (CollectionId, AddedAtUtc);", cancellationToken);
+            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_StoryCollectionItems_StoryId ON StoryCollectionItems (StoryId);", cancellationToken);
 
             storySchemaInitialized = true;
         }

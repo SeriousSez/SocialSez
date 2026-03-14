@@ -21,3 +21,15 @@ public sealed record StoryGroupDto(
     string? AuthorImageUrl,
     bool HasUnseenStories,
     IReadOnlyCollection<StoryDto> Stories);
+
+public sealed record StoryCollectionDto(
+    Guid Id,
+    Guid ProfileId,
+    string ProfileHandle,
+    string Name,
+    DateTime CreatedAtUtc,
+    int StoryCount,
+    string? CoverMediaUrl,
+    IReadOnlyCollection<StoryDto> Stories);
+
+public sealed record CreateStoryCollectionRequest(string Name);

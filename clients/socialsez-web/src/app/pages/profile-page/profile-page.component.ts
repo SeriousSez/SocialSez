@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
-import { PostDto, ProfileActivitySummaryDto, ProfileDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
+import { PostDto, ProfileActivitySummaryDto, ProfileDto, ReelDto, StoryCollectionDto, StoryDto, StoryGroupDto } from '../../core/api.types';
 import { executePostShareAction, executePostShareToChat, executePostShareToFeedAndReload } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
 import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
@@ -48,7 +49,7 @@ type ProfileContentReportTarget =
 @Component({
     selector: 'app-profile-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent, ReportModalComponent, SegmentedTabsComponent, CreateContentMenuComponent],
+    imports: [CommonModule, FormsModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent, ReportModalComponent, SegmentedTabsComponent, CreateContentMenuComponent],
     templateUrl: './profile-page.component.html',
     styleUrl: './profile-page.component.scss'
 })
@@ -137,11 +138,22 @@ export class ProfilePageComponent implements OnDestroy {
     viewedProfileHasUnseenStory = false;
     activeStoryGroup: StoryGroupDto | null = null;
     activeStoryIndex = 0;
+    storyCollections: StoryCollectionDto[] = [];
+    storyArchive: StoryDto[] = [];
+    newStoryCollectionName = '';
+    selectedStoryCollectionId = '';
+    creatingStoryCollection = false;
+    addingStoryToCollection = false;
+    loadingStoryCollections = false;
+    showStoryCollectionCreateModal = false;
+    showStoryCollectionAddModal = false;
     storyViewerError = '';
     sendingStoryReply = false;
     sharingStoryMessage = false;
     deletingStory = false;
     pendingDeleteStoryId: string | null = null;
+    deletingStoryCollection = false;
+    pendingDeleteStoryCollectionId: string | null = null;
     activitySummary: ProfileActivitySummaryDto | null = null;
     private loadInFlight = false;
     private reloadQueued = false;
@@ -155,6 +167,9 @@ export class ProfilePageComponent implements OnDestroy {
     private storyComposerCloseTimerId: number | null = null;
     private storyMediaObjectUrl = '';
     private markingStoryId: string | null = null;
+    private activeStoryCollectionId: string | null = null;
+    private pendingStoryIdForCollectionAdd: string | null = null;
+    private readonly selectedStoryIdsForNewCollection = new Set<string>();
     private draggingStoryFrame = false;
     private storyFrameDragOriginClientX = 0;
     private storyFrameDragOriginClientY = 0;
@@ -612,13 +627,72 @@ export class ProfilePageComponent implements OnDestroy {
     }
 
     get canDeleteActiveStory(): boolean {
+        if (this.activeStoryCollectionId) {
+            return false;
+        }
+
         const story = this.activeStory;
         return !!story && !!this.currentProfileId && story.authorId === this.currentProfileId;
     }
 
     get canReportActiveStory(): boolean {
+        if (this.activeStoryCollectionId) {
+            return false;
+        }
+
         const story = this.activeStory;
         return !!story && !!this.currentProfileId && story.authorId !== this.currentProfileId;
+    }
+
+    get canCreateStoryCollection(): boolean {
+        return this.isOwnProfile && !!this.newStoryCollectionName.trim() && !this.creatingStoryCollection;
+    }
+
+    get hasSelectedStoriesForNewCollection(): boolean {
+        return this.selectedStoryIdsForNewCollection.size > 0;
+    }
+
+    get showStoryCollectionsSection(): boolean {
+        if (this.isBlockedView) {
+            return false;
+        }
+
+        return this.isOwnProfile || this.storyCollections.length > 0;
+    }
+
+    get canAddStoriesToCollection(): boolean {
+        return this.isOwnProfile
+            && !this.addingStoryToCollection
+            && !!this.selectedStoryCollectionId;
+    }
+
+    get selectedStoryCollection(): StoryCollectionDto | null {
+        return this.storyCollections.find(item => item.id === this.selectedStoryCollectionId) ?? null;
+    }
+
+    get canSaveActiveStoryToCollection(): boolean {
+        const story = this.activeStory;
+        return !!story && this.isOwnProfile && story.authorId === this.currentProfileId && !this.addingStoryToCollection;
+    }
+
+    get deleteSelectedStoryCollectionMessage(): string {
+        const pendingId = this.pendingDeleteStoryCollectionId;
+        const collectionName = this.storyCollections.find(collection => collection.id === pendingId)?.name
+            ?? this.selectedStoryCollection?.name
+            ?? 'this collection';
+        return `Delete "${collectionName}"? Stories will stay in your archive.`;
+    }
+
+    getStoryCollectionCoverUrl(collection: StoryCollectionDto): string | null {
+        return collection.stories[0]?.mediaUrl?.trim() || collection.coverMediaUrl?.trim() || null;
+    }
+
+    isStoryCollectionVideoCover(mediaUrl?: string | null): boolean {
+        if (!mediaUrl) {
+            return false;
+        }
+
+        return /\.(mp4|webm|mov|m4v|ogg)(?:$|[?#])/i.test(mediaUrl);
     }
 
     async copyProfileLinkAsync(): Promise<void> {
@@ -1301,10 +1375,21 @@ export class ProfilePageComponent implements OnDestroy {
                         this.posts = [];
                         this.reels = [];
                         this.activitySummary = null;
+                        this.storyCollections = [];
+                        this.storyArchive = [];
+                        this.selectedStoryCollectionId = '';
                         this.viewedProfileHasActiveStory = false;
                         this.viewedProfileHasUnseenStory = false;
                         this.closeStoryViewer();
                     } else {
+                        await this.loadStoryCollectionsAsync(profile.handle);
+
+                        if (this.isOwnProfile) {
+                            await this.loadStoryArchiveAsync();
+                        } else {
+                            this.storyArchive = [];
+                        }
+
                         const storyState = await this.loadStoryStateForHandleAsync(profile.handle);
                         this.viewedProfileHasActiveStory = storyState.hasActive;
                         this.viewedProfileHasUnseenStory = storyState.hasUnseen;
@@ -1337,6 +1422,9 @@ export class ProfilePageComponent implements OnDestroy {
                         ? 'Could not load this profile right now.'
                         : 'Could not load your profile details right now.';
                     this.viewedProfile = null;
+                    this.storyCollections = [];
+                    this.storyArchive = [];
+                    this.selectedStoryCollectionId = '';
                     this.viewedProfileHasActiveStory = false;
                     this.viewedProfileHasUnseenStory = false;
                     this.posts = [];
@@ -1713,6 +1801,7 @@ export class ProfilePageComponent implements OnDestroy {
     closeStoryViewer(): void {
         this.activeStoryGroup = null;
         this.activeStoryIndex = 0;
+        this.activeStoryCollectionId = null;
         this.storyViewerError = '';
         this.sendingStoryReply = false;
         this.sharingStoryMessage = false;
@@ -1819,6 +1908,289 @@ export class ProfilePageComponent implements OnDestroy {
 
     async shareStoryAsMessage(_story: StoryDto): Promise<void> {
         this.storyViewerError = 'Story sharing from profile is not available yet.';
+    }
+
+    async createStoryCollection(): Promise<void> {
+        if (!this.isOwnProfile || this.creatingStoryCollection) {
+            return;
+        }
+
+        const name = this.newStoryCollectionName.trim();
+        if (!name) {
+            this.error = 'Collection name is required.';
+            return;
+        }
+
+        this.creatingStoryCollection = true;
+        this.error = '';
+
+        try {
+            const created = await this.session.createStoryCollectionAsync(name);
+            let finalized = created;
+
+            for (const storyId of this.selectedStoryIdsForNewCollection) {
+                finalized = await this.session.addStoryToCollectionAsync(created.id, storyId);
+            }
+
+            this.storyCollections = [finalized, ...this.storyCollections.filter(collection => collection.id !== finalized.id)];
+            this.selectedStoryCollectionId = finalized.id;
+            this.newStoryCollectionName = '';
+            this.selectedStoryIdsForNewCollection.clear();
+            this.showStoryCollectionCreateModal = false;
+        } catch {
+            this.error = 'Could not create story collection right now.';
+        } finally {
+            this.creatingStoryCollection = false;
+            this.cdr.detectChanges();
+        }
+    }
+
+    openStoryCollectionCreateModal(): void {
+        if (!this.isOwnProfile || this.creatingStoryCollection) {
+            return;
+        }
+
+        this.selectedStoryIdsForNewCollection.clear();
+        this.showStoryCollectionCreateModal = true;
+        void this.refreshStoryArchiveForCollectionModalAsync();
+    }
+
+    closeStoryCollectionCreateModal(): void {
+        if (this.creatingStoryCollection) {
+            return;
+        }
+
+        this.showStoryCollectionCreateModal = false;
+        this.newStoryCollectionName = '';
+        this.selectedStoryIdsForNewCollection.clear();
+    }
+
+    onStoryCollectionCreateBackdropClick(event: MouseEvent): void {
+        if (event.target === event.currentTarget) {
+            this.closeStoryCollectionCreateModal();
+        }
+    }
+
+    toggleStoryForNewCollection(storyId: string): void {
+        const normalizedStoryId = storyId.trim();
+        if (!normalizedStoryId || this.creatingStoryCollection) {
+            return;
+        }
+
+        if (this.selectedStoryIdsForNewCollection.has(normalizedStoryId)) {
+            this.selectedStoryIdsForNewCollection.delete(normalizedStoryId);
+        } else {
+            this.selectedStoryIdsForNewCollection.add(normalizedStoryId);
+        }
+    }
+
+    isStorySelectedForNewCollection(storyId: string): boolean {
+        const normalizedStoryId = storyId.trim();
+        return !!normalizedStoryId && this.selectedStoryIdsForNewCollection.has(normalizedStoryId);
+    }
+
+    async addStoryToSelectedCollection(storyId: string): Promise<void> {
+        const normalizedStoryId = storyId.trim();
+        if (!this.canAddStoriesToCollection || !normalizedStoryId || !this.selectedStoryCollectionId) {
+            return;
+        }
+
+        this.addingStoryToCollection = true;
+        this.error = '';
+        this.storyViewerError = '';
+
+        try {
+            const updated = await this.session.addStoryToCollectionAsync(this.selectedStoryCollectionId, normalizedStoryId);
+            this.storyCollections = this.storyCollections.map(collection => collection.id === updated.id ? updated : collection);
+            if (this.pendingStoryIdForCollectionAdd === normalizedStoryId) {
+                this.pendingStoryIdForCollectionAdd = null;
+                this.showStoryCollectionAddModal = false;
+            }
+        } catch {
+            if (this.pendingStoryIdForCollectionAdd === normalizedStoryId) {
+                this.storyViewerError = 'Could not add story to collection right now.';
+            } else {
+                this.error = 'Could not add story to collection right now.';
+            }
+        } finally {
+            this.addingStoryToCollection = false;
+            this.cdr.detectChanges();
+        }
+    }
+
+    async removeStoryFromSelectedCollection(storyId: string): Promise<void> {
+        const normalizedStoryId = storyId.trim();
+        if (!this.canAddStoriesToCollection || !normalizedStoryId || !this.selectedStoryCollectionId) {
+            return;
+        }
+
+        this.addingStoryToCollection = true;
+        this.error = '';
+        this.storyViewerError = '';
+
+        try {
+            const updated = await this.session.removeStoryFromCollectionAsync(this.selectedStoryCollectionId, normalizedStoryId);
+            this.storyCollections = this.storyCollections.map(collection => collection.id === updated.id ? updated : collection);
+        } catch {
+            this.error = 'Could not remove story from collection right now.';
+        } finally {
+            this.addingStoryToCollection = false;
+            this.cdr.detectChanges();
+        }
+    }
+
+    async toggleStoryInSelectedCollection(storyId: string): Promise<void> {
+        if (this.isStoryInSelectedCollection(storyId)) {
+            await this.removeStoryFromSelectedCollection(storyId);
+            return;
+        }
+
+        await this.addStoryToSelectedCollection(storyId);
+    }
+
+    isStoryInSelectedCollection(storyId: string): boolean {
+        const normalizedStoryId = storyId.trim();
+        if (!normalizedStoryId) {
+            return false;
+        }
+
+        const collection = this.storyCollections.find(item => item.id === this.selectedStoryCollectionId);
+        if (!collection) {
+            return false;
+        }
+
+        return collection.stories.some(story => story.id === normalizedStoryId);
+    }
+
+    openStoryCollectionAddModal(storyId?: string, collectionId?: string): void {
+        if (!this.isOwnProfile || this.addingStoryToCollection || this.creatingStoryCollection) {
+            return;
+        }
+
+        const normalizedStoryId = storyId?.trim() ?? '';
+        this.pendingStoryIdForCollectionAdd = normalizedStoryId || null;
+        if (collectionId?.trim()) {
+            this.selectedStoryCollectionId = collectionId.trim();
+        } else if (!this.selectedStoryCollectionId && this.storyCollections.length > 0) {
+            this.selectedStoryCollectionId = this.storyCollections[0].id;
+        }
+
+        this.showStoryCollectionAddModal = true;
+        void this.refreshStoryArchiveForCollectionModalAsync();
+    }
+
+    closeStoryCollectionAddModal(): void {
+        if (this.addingStoryToCollection || this.deletingStoryCollection) {
+            return;
+        }
+
+        this.showStoryCollectionAddModal = false;
+        this.pendingStoryIdForCollectionAdd = null;
+    }
+
+    onStoryCollectionAddBackdropClick(event: MouseEvent): void {
+        if (event.target === event.currentTarget) {
+            this.closeStoryCollectionAddModal();
+        }
+    }
+
+    onSaveActiveStoryToCollectionRequested(story: StoryDto): void {
+        if (!this.canSaveActiveStoryToCollection) {
+            return;
+        }
+
+        if (!this.storyCollections.length) {
+            this.storyViewerError = 'Create a collection first.';
+            return;
+        }
+
+        this.storyViewerError = '';
+        this.openStoryCollectionAddModal(story.id);
+    }
+
+    openStoryCollectionManageModal(collectionId: string, event?: Event): void {
+        event?.preventDefault();
+        event?.stopPropagation();
+
+        if (!this.isOwnProfile) {
+            return;
+        }
+
+        this.error = '';
+        this.openStoryCollectionAddModal(undefined, collectionId);
+    }
+
+    requestDeleteSelectedStoryCollection(): void {
+        const collection = this.selectedStoryCollection;
+        if (!collection || this.deletingStoryCollection) {
+            return;
+        }
+
+        this.pendingDeleteStoryCollectionId = collection.id;
+    }
+
+    cancelDeleteStoryCollection(): void {
+        if (this.deletingStoryCollection) {
+            return;
+        }
+
+        this.pendingDeleteStoryCollectionId = null;
+    }
+
+    async confirmDeleteStoryCollection(): Promise<void> {
+        const collectionId = this.pendingDeleteStoryCollectionId;
+        if (!collectionId || this.deletingStoryCollection) {
+            return;
+        }
+
+        this.deletingStoryCollection = true;
+        this.error = '';
+
+        try {
+            await this.session.deleteStoryCollectionAsync(collectionId);
+            this.storyCollections = this.storyCollections.filter(collection => collection.id !== collectionId);
+
+            if (this.activeStoryCollectionId === collectionId) {
+                this.closeStoryViewer();
+            }
+
+            if (this.selectedStoryCollectionId === collectionId) {
+                this.selectedStoryCollectionId = this.storyCollections[0]?.id ?? '';
+            }
+
+            this.showStoryCollectionAddModal = false;
+            this.pendingStoryIdForCollectionAdd = null;
+        } catch {
+            this.error = 'Could not delete story collection right now.';
+        } finally {
+            this.pendingDeleteStoryCollectionId = null;
+            this.deletingStoryCollection = false;
+            this.cdr.detectChanges();
+        }
+    }
+
+    openStoryCollection(collectionId: string): void {
+        const profile = this.viewedProfile;
+        if (!profile) {
+            return;
+        }
+
+        const collection = this.storyCollections.find(item => item.id === collectionId);
+        if (!collection || !collection.stories.length) {
+            return;
+        }
+
+        this.activeStoryCollectionId = collection.id;
+        this.activeStoryGroup = {
+            authorId: profile.id,
+            authorHandle: profile.handle,
+            authorImageUrl: profile.imageUrl,
+            hasUnseenStories: false,
+            stories: collection.stories.map(story => ({ ...story, viewedByMe: true }))
+        };
+        this.activeStoryIndex = 0;
+        this.storyViewerError = '';
+        this.cdr.detectChanges();
     }
 
     openPostReport(post: PostDto): void {
@@ -2337,11 +2709,16 @@ export class ProfilePageComponent implements OnDestroy {
             return false;
         }
 
-        this.activeStoryGroup = group;
-        this.viewedProfileHasActiveStory = true;
-        this.viewedProfileHasUnseenStory = group.hasUnseenStories;
-        this.activeStoryIndex = this.getNewestUnseenStoryIndex(group.stories);
-        this.storyViewerError = '';
+        this.ngZone.run(() => {
+            this.activeStoryCollectionId = null;
+            this.activeStoryGroup = group;
+            this.viewedProfileHasActiveStory = true;
+            this.viewedProfileHasUnseenStory = group.hasUnseenStories;
+            this.activeStoryIndex = this.getNewestUnseenStoryIndex(group.stories);
+            this.storyViewerError = '';
+            this.cdr.detectChanges();
+        });
+
         void this.markActiveStoryViewed();
         return true;
     }
@@ -2393,6 +2770,10 @@ export class ProfilePageComponent implements OnDestroy {
     }
 
     private async markActiveStoryViewed(): Promise<void> {
+        if (this.activeStoryCollectionId) {
+            return;
+        }
+
         const story = this.activeStory;
         if (!story || story.viewedByMe || this.markingStoryId) {
             return;
@@ -2476,6 +2857,40 @@ export class ProfilePageComponent implements OnDestroy {
         };
         this.viewedProfileHasUnseenStory = this.activeStoryGroup.hasUnseenStories;
         this.activeStoryIndex = Math.min(this.activeStoryIndex, nextStories.length - 1);
+    }
+
+    private async loadStoryCollectionsAsync(handle: string): Promise<void> {
+        this.loadingStoryCollections = true;
+
+        try {
+            this.storyCollections = await this.session.loadPublicStoryCollectionsByAuthorHandleAsync(handle);
+
+            if (this.selectedStoryCollectionId && !this.storyCollections.some(item => item.id === this.selectedStoryCollectionId)) {
+                this.selectedStoryCollectionId = this.storyCollections[0]?.id ?? '';
+            }
+
+            if (!this.selectedStoryCollectionId && this.storyCollections.length > 0) {
+                this.selectedStoryCollectionId = this.storyCollections[0].id;
+            }
+        } catch {
+            this.storyCollections = [];
+            this.selectedStoryCollectionId = '';
+        } finally {
+            this.loadingStoryCollections = false;
+        }
+    }
+
+    private async loadStoryArchiveAsync(): Promise<void> {
+        try {
+            this.storyArchive = await this.session.loadMyStoriesAsync(true, 250);
+        } catch {
+            this.storyArchive = [];
+        }
+    }
+
+    private async refreshStoryArchiveForCollectionModalAsync(): Promise<void> {
+        await this.loadStoryArchiveAsync();
+        this.cdr.detectChanges();
     }
 
     private syncStoryPreviewToTrimRange(forceSeekToStart = false): void {

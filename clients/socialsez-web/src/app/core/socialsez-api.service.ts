@@ -42,6 +42,7 @@ import {
     SetConversationMuteRequest,
     SetReactionRequest,
     StoryDto,
+    StoryCollectionDto,
     StoryGroupDto,
     UpdateChatMessageRequest,
     UpdateGroupConversationTitleRequest,
@@ -402,6 +403,31 @@ export class SocialSezApiService {
 
     markStoryViewed(storyId: string): Observable<void> {
         return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/stories/${storyId}/view`, {}, { headers: this.authHeaders() }));
+    }
+
+    getMyStories(includeExpired = true, take = 200): Observable<StoryDto[]> {
+        return this.withAutoRefresh(() => this.http.get<StoryDto[]>(`${this.baseUrl}/stories/mine?includeExpired=${includeExpired}&take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getPublicStoryCollectionsByAuthorHandle(handle: string): Observable<StoryCollectionDto[]> {
+        const normalized = handle.trim().toLowerCase();
+        return this.http.get<StoryCollectionDto[]>(`${this.baseUrl}/stories/collections/by-author/${encodeURIComponent(normalized)}/public`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
+    }
+
+    createStoryCollection(name: string): Observable<StoryCollectionDto> {
+        return this.withAutoRefresh(() => this.http.post<StoryCollectionDto>(`${this.baseUrl}/stories/collections`, { name }, { headers: this.authHeaders() }));
+    }
+
+    deleteStoryCollection(collectionId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/stories/collections/${encodeURIComponent(collectionId)}`, { headers: this.authHeaders() }));
+    }
+
+    addStoryToCollection(collectionId: string, storyId: string): Observable<StoryCollectionDto> {
+        return this.withAutoRefresh(() => this.http.post<StoryCollectionDto>(`${this.baseUrl}/stories/collections/${encodeURIComponent(collectionId)}/stories/${encodeURIComponent(storyId)}`, {}, { headers: this.authHeaders() }));
+    }
+
+    removeStoryFromCollection(collectionId: string, storyId: string): Observable<StoryCollectionDto> {
+        return this.withAutoRefresh(() => this.http.delete<StoryCollectionDto>(`${this.baseUrl}/stories/collections/${encodeURIComponent(collectionId)}/stories/${encodeURIComponent(storyId)}`, { headers: this.authHeaders() }));
     }
 
     getReelFeed(take = 20, mode: FeedMode = 'for-you'): Observable<ReelDto[]> {
