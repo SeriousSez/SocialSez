@@ -494,3 +494,93 @@ textarea:focus {
 .muted-btn:hover {
     background: #f8fafc;
 }
+
+:host-context(.theme-dark) {
+
+    .head p,
+    .muted,
+    label,
+    .markdown-help,
+    .custom-css-hints p {
+        color: var(--color-text-muted);
+    }
+
+    .back-link,
+    .card,
+    .blog-chip,
+    .post-chip,
+    .editor-switcher,
+    .composer-switcher,
+    .markdown-toolbar button,
+    .muted-btn,
+    input,
+    select,
+    textarea,
+    .markdown-preview,
+    .custom-css-hints,
+    .custom-css-hints code {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text);
+        box-shadow: none;
+    }
+
+    .blog-chip,
+    .post-chip,
+    .editor-switcher,
+    .composer-switcher,
+    .markdown-preview,
+    .custom-css-hints {
+        background: var(--color-surface-muted);
+    }
+
+    .blog-chip span,
+    .post-chip span,
+    .blog-chip small,
+    .post-chip small,
+    .composer-switcher button,
+    .editor-switcher button,
+    .markdown-toolbar button,
+    .muted-btn {
+        color: var(--color-text-subtle);
+    }
+
+    .blog-chip.active,
+    .post-chip.active {
+        border-color: var(--color-border-strong);
+        background: color-mix(in srgb, var(--color-primary) 24%, var(--color-surface));
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 36%, var(--color-border));
+    }
+
+    .blog-chip:hover,
+    .post-chip:hover,
+    .muted-btn:hover,
+    .markdown-toolbar button:hover {
+        background: var(--color-surface-alt);
+        border-color: var(--color-border-strong);
+    }
+
+    .editor-switcher button.active {
+        background: var(--gradient-primary);
+        color: var(--color-text-on-dark);
+    }
+
+    .composer-switcher button.active {
+        color: var(--color-text-on-dark);
+    }
+
+    .markdown-preview pre {
+        background: var(--color-surface-alt);
+        color: var(--color-text);
+    }
+
+    .markdown-preview blockquote {
+        border-left-color: var(--color-primary);
+        color: var(--color-text-subtle);
+    }
+
+    .custom-css-hints code {
+        background: var(--color-surface-alt);
+        color: var(--color-text);
+    }
+}

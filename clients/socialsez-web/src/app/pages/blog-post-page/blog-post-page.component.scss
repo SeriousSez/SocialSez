@@ -5,7 +5,7 @@
     --blog-bg2: var(--background2, var(--theme-background2, var(--theme-background, #fff7ed)));
     --blog-surface: var(--surface, var(--theme-surface, #ffffff));
 
-    background: radial-gradient(circle at 20% 8%, #fff 0%, var(--blog-bg) 44%, var(--blog-bg2) 100%);
+    background: radial-gradient(circle at 20% 8%, var(--blog-surface) 0%, var(--blog-bg) 44%, var(--blog-bg2) 100%);
     border-radius: 18px;
     padding: 14px;
 }
@@ -16,12 +16,12 @@
     display: grid;
     gap: 12px;
     font-family: var(--blog-font);
-    color: #111827;
+    color: var(--color-text);
 }
 
 .post-head {
     background: var(--blog-surface);
-    border: 1px solid color-mix(in srgb, var(--blog-accent) 20%, #e2e8f0);
+    border: 1px solid color-mix(in srgb, var(--blog-accent) 20%, var(--color-border));
     border-radius: 16px;
     padding: 14px;
 }
@@ -39,7 +39,7 @@
 }
 
 .meta {
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 13px;
 }
 
@@ -49,14 +49,14 @@
     height: auto;
     object-fit: cover;
     border-radius: 14px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--color-border);
     margin: 0 auto;
 }
 
 .content {
     line-height: 1.7;
     background: var(--blog-surface);
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--color-border);
     border-radius: 14px;
     padding: 16px;
     overflow: hidden;
@@ -76,8 +76,8 @@
 }
 
 :host ::ng-deep .content pre {
-    background: #0f172a;
-    color: #f8fafc;
+    background: var(--color-surface-alt);
+    color: var(--color-text);
     border-radius: 10px;
     padding: 12px;
     overflow: auto;
@@ -91,7 +91,7 @@
     margin: 0;
     border-left: 4px solid var(--blog-accent);
     padding-left: 12px;
-    color: #374151;
+    color: var(--color-text-subtle);
 }
 
 :host ::ng-deep .content a {
@@ -107,8 +107,8 @@
     object-fit: contain !important;
     margin: 1rem auto;
     border-radius: 14px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--color-text) 10%, transparent);
 }
 
 :host ::ng-deep .content a img,
@@ -162,14 +162,18 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
+    background: var(--blog-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: 10px 12px;
 }
 
 .blog-actions .ghost {
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--color-border);
     border-radius: 999px;
     padding: 7px 12px;
-    background: #f8fafc;
-    color: #0f172a;
+    background: var(--color-surface-muted);
+    color: var(--color-text);
     font-size: 0.85rem;
     font-weight: 700;
 }
@@ -188,8 +192,8 @@
 
 .tags span,
 .tags a {
-    background: color-mix(in srgb, var(--blog-accent) 12%, #fff);
-    color: #9a3412;
+    background: color-mix(in srgb, var(--blog-accent) 12%, var(--blog-surface));
+    color: color-mix(in srgb, var(--blog-accent) 62%, var(--color-text) 38%);
     border-radius: 999px;
     padding: 2px 8px;
     font-size: 12px;
@@ -264,7 +268,49 @@
     width: 100%;
     height: clamp(220px, 42vw, 420px);
     border-radius: 14px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--color-border);
+}
+
+:host-context(.theme-dark) {
+    .blog-shell {
+        --blog-bg: color-mix(in srgb, var(--color-surface-alt) 84%, #020617 16%);
+        --blog-bg2: #020617;
+        --blog-surface: var(--color-surface);
+    }
+
+    .post {
+        color: var(--color-text);
+    }
+
+    .post-head,
+    .content,
+    .cover-media-img {
+        background: var(--blog-surface);
+        border-color: var(--color-border);
+    }
+
+    .meta,
+    :host ::ng-deep .content blockquote {
+        color: var(--color-text-muted);
+    }
+
+    :host ::ng-deep .content pre {
+        background: var(--color-surface-alt);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+    }
+
+    .blog-actions .ghost {
+        background: var(--color-surface-muted);
+        border-color: var(--color-border);
+        color: var(--color-text);
+    }
+
+    .tags span,
+    .tags a {
+        background: color-mix(in srgb, var(--blog-accent) 22%, var(--blog-surface));
+        color: color-mix(in srgb, var(--blog-accent) 70%, var(--color-text) 30%);
+    }
 }
 
 .skeleton-paragraph.short {

@@ -53,6 +53,9 @@ private readonly destroyRef = inject(DestroyRef);
 - Use CSS custom properties from `src/styles/_colors.scss` for all colors. Key tokens:
   - `--color-primary`, `--color-text`, `--color-border`, `--color-surface`, `--color-surface-alt`
   - `--gradient-primary`, `--gradient-surface`
+- Do not hard-code neutral UI colors in component SCSS (`#fff`, `#f8fafc`, `#e2e8f0`, etc.) for cards, panels, inputs, text, borders, or chips — use the existing color tokens instead.
+- If a literal color/gradient is required (for brand accents, media overlays, badges, etc.), add an explicit `:host-context(.theme-dark)` override so contrast remains correct in dark mode.
+- Any new/updated web UI styles must be visually valid in both light and dark themes before finishing.
 - Card / panel "resting" style: `background: #fff; border: 1px solid #dbe4f0; border-radius: 12px; padding: 12px;`
 - Button default style comes from `src/styles/_buttons.scss` — don't duplicate it.
 - Loading spinners: add class `is-loading` to the `<button>`.

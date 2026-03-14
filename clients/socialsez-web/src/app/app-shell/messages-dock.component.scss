@@ -6,13 +6,13 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 999px;
-    background: #fff;
-    color: #0f172a;
+    background: var(--color-surface);
+    color: var(--color-text);
     font-weight: 700;
     padding: 12px 18px;
-    box-shadow: 0 10px 26px -20px #0f172a;
+    box-shadow: 0 10px 26px -20px color-mix(in srgb, var(--color-text) 42%, transparent 58%);
 }
 
 .messages-dock i {
@@ -31,9 +31,9 @@
     border-radius: 999px;
     object-fit: cover;
     margin-left: -8px;
-    border: 2px solid #ffffff;
-    box-shadow: 0 0 0 1px #dbe4f0;
-    background: #e2e8f0;
+    border: 2px solid var(--color-surface);
+    box-shadow: 0 0 0 1px var(--color-border);
+    background: var(--color-surface-muted);
 }
 
 .messages-dock-recent-avatar:first-child {
@@ -1241,9 +1241,9 @@
 
 .dock-shared-link-card {
     width: 100%;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
-    background: #f8fafc;
+    background: var(--color-surface-muted);
     overflow: hidden;
     padding: 0;
     display: block;
@@ -1262,8 +1262,8 @@
     height: 74px;
     display: grid;
     place-items: center;
-    background: linear-gradient(135deg, #e2e8f0, #f1f5f9);
-    color: #475569;
+    background: linear-gradient(135deg, var(--color-surface-muted), var(--color-surface-alt));
+    color: var(--color-text-subtle);
     font-size: 1.05rem;
 }
 
@@ -1273,7 +1273,7 @@
 
 .dock-shared-link-title {
     margin: 0;
-    color: #0f172a;
+    color: var(--color-text);
     font-size: 0.84rem;
     font-weight: 700;
     line-height: 1.3;
@@ -1281,7 +1281,7 @@
 
 .dock-shared-link-desc {
     margin: 5px 0 0;
-    color: #475569;
+    color: var(--color-text-subtle);
     font-size: 0.75rem;
     line-height: 1.35;
 }

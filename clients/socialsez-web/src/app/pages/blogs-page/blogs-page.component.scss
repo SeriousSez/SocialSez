@@ -394,3 +394,99 @@
     width: 100%;
     height: 1px;
 }
+
+:host-context(.theme-dark) {
+    .blogs-head {
+        border-color: var(--color-border);
+        background:
+            radial-gradient(circle at top right, color-mix(in srgb, var(--color-secondary) 18%, transparent 82%), transparent 42%),
+            var(--color-surface);
+    }
+
+    .blogs-kicker {
+        color: var(--color-secondary-strong);
+    }
+
+    .blogs-head p,
+    .suggestions-label,
+    .blog-meta,
+    .muted,
+    .controls-row label,
+    .result-count,
+    .infinite-status span {
+        color: var(--color-text-muted);
+    }
+
+    .studio-link,
+    .blogs-toolbar,
+    .search-row,
+    .clear-btn,
+    .blog-card,
+    .sort-toggle,
+    .suggestion-pill {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text);
+        box-shadow: none;
+    }
+
+    .search-row {
+        background: var(--color-surface-muted);
+    }
+
+    .search-row i,
+    .clear-btn {
+        color: var(--color-text-muted);
+    }
+
+    .search-row input,
+    .sort-toggle i {
+        color: var(--color-text);
+    }
+
+    .clear-btn:hover,
+    .suggestion-pill:hover,
+    .sort-menu button:hover,
+    .sort-menu button.active {
+        background: var(--color-surface-alt);
+    }
+
+    .suggestion-pill {
+        background: color-mix(in srgb, var(--color-secondary) 14%, var(--color-surface));
+        color: var(--color-secondary-strong);
+    }
+
+    .blog-title,
+    .blog-description {
+        color: var(--color-text);
+    }
+
+    .blog-card {
+        border-color: var(--color-border);
+        background: var(--color-surface);
+    }
+
+    .blog-card::before {
+        background: linear-gradient(180deg, var(--blog-card-accent), color-mix(in srgb, var(--blog-card-accent) 58%, var(--color-surface) 42%));
+    }
+
+    .blog-card:hover {
+        border-color: color-mix(in srgb, var(--blog-card-accent) 35%, var(--color-border) 65%);
+        box-shadow: none;
+    }
+
+    .state-pill {
+        background: color-mix(in srgb, var(--color-success) 24%, var(--color-surface));
+        color: var(--color-success);
+    }
+
+    .state-pill.private {
+        background: color-mix(in srgb, var(--color-warning) 24%, var(--color-surface));
+        color: var(--color-warning);
+    }
+
+    .state-pill.owner {
+        background: color-mix(in srgb, var(--color-primary) 24%, var(--color-surface));
+        color: var(--color-primary-strong);
+    }
+}

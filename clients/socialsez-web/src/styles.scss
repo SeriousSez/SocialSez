@@ -6,6 +6,14 @@
 @use './styles/common';
 @use './styles/chat';
 
+:root {
+    color-scheme: light;
+}
+
+:root.theme-dark {
+    color-scheme: dark;
+}
+
 html,
 body {
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

@@ -1,8 +1,8 @@
 .saved-collections-rail {
     display: grid;
     gap: 10px;
-    background: #fff;
-    border: 1px solid #dbe4f0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 12px;
 }
@@ -22,9 +22,9 @@
     width: 30px;
     height: 30px;
     border-radius: 8px;
-    border: 1px solid #dbe4f0;
-    background: #eff6ff;
-    color: #475569;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-muted);
+    color: var(--color-text-subtle);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -32,7 +32,7 @@
 }
 
 .btn-icon:hover {
-    background: #dbeafe;
+    background: var(--color-surface-alt);
 }
 
 .new-collection-form {
@@ -42,8 +42,10 @@
 
 .new-collection-form input {
     width: 100%;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-text);
     padding: 8px 10px;
     font-size: 0.88rem;
     box-sizing: border-box;
@@ -80,9 +82,9 @@
 }
 
 .btn-ghost {
-    border: 1px solid #dbe4f0;
-    background: #ffffff;
-    color: #475569;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-subtle);
 }
 
 .saved-nav {
@@ -111,23 +113,23 @@
     padding: 8px 10px;
     text-align: left;
     cursor: pointer;
-    color: #334155;
+    color: var(--color-text-subtle);
     font-size: 0.88rem;
 }
 
 .nav-item:hover {
-    background: #f1f5f9;
+    background: var(--color-surface-alt);
 }
 
 .nav-item.active {
-    background: color-mix(in srgb, var(--color-accent) 14%, #ffffff);
+    background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface));
     color: var(--color-accent);
     font-weight: 600;
 }
 
 .count {
     margin-left: auto;
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 0.75rem;
 }
 
@@ -145,7 +147,7 @@
     border-radius: 6px;
     border: 0;
     background: transparent;
-    color: #64748b;
+    color: var(--color-text-muted);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -153,13 +155,13 @@
 }
 
 .btn-icon-xs:hover {
-    background: #f1f5f9;
-    color: #334155;
+    background: var(--color-surface-alt);
+    color: var(--color-text-subtle);
 }
 
 .btn-icon-xs.btn-danger:hover {
-    background: #ffe4e6;
-    color: #be123c;
+    background: color-mix(in srgb, var(--color-danger) 18%, var(--color-surface));
+    color: var(--color-danger-strong);
 }
 
 .rename-input {

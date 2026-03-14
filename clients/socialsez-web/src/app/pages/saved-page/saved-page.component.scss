@@ -277,8 +277,8 @@
 }
 
 .saved-simple-card {
-    background: #fff;
-    border: 1px solid #dbe4f0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 12px;
     display: grid;
@@ -310,7 +310,7 @@
     height: 34px;
     border-radius: 999px;
     object-fit: cover;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     flex-shrink: 0;
 }
 
@@ -318,8 +318,8 @@
     display: grid;
     place-items: center;
     font-weight: 700;
-    color: #334155;
-    background: #e2e8f0;
+    color: var(--color-text-subtle);
+    background: var(--color-surface-muted);
     text-transform: uppercase;
 }
 
@@ -345,7 +345,7 @@
 
 .hashtag,
 .mention {
-    color: #1d4ed8;
+    color: var(--color-link);
     font-weight: 700;
     text-decoration: none;
 }
