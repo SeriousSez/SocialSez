@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.Sqlite;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using SocialSez.ApplicationService.Interfaces;
@@ -1392,98 +1391,8 @@ public class SafetyService(SocialSezContext dbContext) : ISafetyService
                 return;
             }
 
-            if (dbContext.Database.IsSqlite())
-            {
-                await dbContext.Database.ExecuteSqlRawAsync(
-                    """
-                    CREATE TABLE IF NOT EXISTS ModerationQueueItems (
-                        Id TEXT NOT NULL PRIMARY KEY,
-                        CommunityId TEXT NULL,
-                        ReporterId TEXT NULL,
-                        TargetProfileId TEXT NULL,
-                        SourceEntityId TEXT NULL,
-                        SourceType TEXT NOT NULL,
-                        TriggerType TEXT NOT NULL,
-                        SpamScore INTEGER NOT NULL,
-                        LinkRiskScore INTEGER NOT NULL,
-                        RiskScore INTEGER NOT NULL,
-                        LinkUrl TEXT NULL,
-                        MatchedKeyword TEXT NULL,
-                        ContentSnippet TEXT NULL,
-                        Status TEXT NOT NULL,
-                        Resolution TEXT NULL,
-                        ResolutionNote TEXT NULL,
-                        ReviewedByProfileId TEXT NULL,
-                        CreatedAtUtc TEXT NOT NULL,
-                        ReviewedAtUtc TEXT NULL,
-                        FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE SET NULL,
-                        FOREIGN KEY (ReporterId) REFERENCES UserProfiles (Id) ON DELETE SET NULL,
-                        FOREIGN KEY (TargetProfileId) REFERENCES UserProfiles (Id) ON DELETE SET NULL,
-                        FOREIGN KEY (ReviewedByProfileId) REFERENCES UserProfiles (Id) ON DELETE SET NULL
-                    );
-                    """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_ModerationQueueItems_CommunityId_Status_CreatedAtUtc ON ModerationQueueItems (CommunityId, Status, CreatedAtUtc);", cancellationToken);
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_ModerationQueueItems_Status_CreatedAtUtc ON ModerationQueueItems (Status, CreatedAtUtc);", cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync(
-                    """
-                    CREATE TABLE IF NOT EXISTS CommunityModerationSettings (
-                        CommunityId TEXT NOT NULL PRIMARY KEY,
-                        RulePreset TEXT NOT NULL,
-                        KeywordFiltersJson TEXT NULL,
-                        AutoModerationEnabled INTEGER NOT NULL,
-                        SpamThreshold INTEGER NOT NULL,
-                        LinkRiskThreshold INTEGER NOT NULL,
-                        UpdatedAtUtc TEXT NOT NULL,
-                        FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE
-                    );
-                    """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync(
-                    """
-                    CREATE TABLE IF NOT EXISTS CommunityShadowMutes (
-                        CommunityId TEXT NOT NULL,
-                        ProfileId TEXT NOT NULL,
-                        CreatedByProfileId TEXT NOT NULL,
-                        Reason TEXT NULL,
-                        CreatedAtUtc TEXT NOT NULL,
-                        ExpiresAtUtc TEXT NULL,
-                        PRIMARY KEY (CommunityId, ProfileId),
-                        FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
-                        FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE,
-                        FOREIGN KEY (CreatedByProfileId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
-                    );
-                    """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityShadowMutes_ProfileId ON CommunityShadowMutes (ProfileId);", cancellationToken);
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityShadowMutes_CommunityId_ExpiresAtUtc ON CommunityShadowMutes (CommunityId, ExpiresAtUtc);", cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync(
-                    """
-                    CREATE TABLE IF NOT EXISTS CommunityBanAppeals (
-                        Id TEXT NOT NULL PRIMARY KEY,
-                        CommunityId TEXT NOT NULL,
-                        ProfileId TEXT NOT NULL,
-                        Reason TEXT NOT NULL,
-                        Status TEXT NOT NULL,
-                        ResolutionNote TEXT NULL,
-                        ReviewedByProfileId TEXT NULL,
-                        CreatedAtUtc TEXT NOT NULL,
-                        ReviewedAtUtc TEXT NULL,
-                        FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
-                        FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE,
-                        FOREIGN KEY (ReviewedByProfileId) REFERENCES UserProfiles (Id) ON DELETE SET NULL
-                    );
-                    """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityBanAppeals_CommunityId_Status_CreatedAtUtc ON CommunityBanAppeals (CommunityId, Status, CreatedAtUtc);", cancellationToken);
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityBanAppeals_ProfileId_CreatedAtUtc ON CommunityBanAppeals (ProfileId, CreatedAtUtc);", cancellationToken);
-            }
-            else
-            {
-                await dbContext.Database.ExecuteSqlRawAsync(
-                    """
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """
                     CREATE TABLE IF NOT EXISTS `ModerationQueueItems` (
                         `Id` char(36) NOT NULL,
                         `CommunityId` char(36) NULL,
@@ -1514,8 +1423,8 @@ public class SafetyService(SocialSezContext dbContext) : ISafetyService
                     );
                     """, cancellationToken);
 
-                await dbContext.Database.ExecuteSqlRawAsync(
-                    """
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """
                     CREATE TABLE IF NOT EXISTS `CommunityModerationSettings` (
                         `CommunityId` char(36) NOT NULL,
                         `RulePreset` varchar(24) NOT NULL,
@@ -1529,8 +1438,8 @@ public class SafetyService(SocialSezContext dbContext) : ISafetyService
                     );
                     """, cancellationToken);
 
-                await dbContext.Database.ExecuteSqlRawAsync(
-                    """
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """
                     CREATE TABLE IF NOT EXISTS `CommunityShadowMutes` (
                         `CommunityId` char(36) NOT NULL,
                         `ProfileId` char(36) NOT NULL,
@@ -1547,8 +1456,8 @@ public class SafetyService(SocialSezContext dbContext) : ISafetyService
                     );
                     """, cancellationToken);
 
-                await dbContext.Database.ExecuteSqlRawAsync(
-                    """
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """
                     CREATE TABLE IF NOT EXISTS `CommunityBanAppeals` (
                         `Id` char(36) NOT NULL,
                         `CommunityId` char(36) NOT NULL,
@@ -1567,13 +1476,8 @@ public class SafetyService(SocialSezContext dbContext) : ISafetyService
                         CONSTRAINT `FK_CommunityBanAppeals_UserProfiles_ReviewedByProfileId` FOREIGN KEY (`ReviewedByProfileId`) REFERENCES `UserProfiles` (`Id`) ON DELETE SET NULL
                     );
                     """, cancellationToken);
-            }
 
             safetySchemaInitialized = true;
-        }
-        catch (SqliteException)
-        {
-            // Keep startup resilient for legacy SQLite files. API methods will still function for existing data paths.
         }
         finally
         {

@@ -709,60 +709,36 @@ public class SavedCollectionService(SocialSezContext dbContext) : ISavedCollecti
                 return;
             }
 
-            if (dbContext.Database.IsSqlite())
+            try
             {
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SavedItems ADD COLUMN CommunityPostId TEXT NULL;");
-                }
-                catch
-                {
-                }
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SavedItems ADD COLUMN IF NOT EXISTS CommunityPostId char(36) NULL;");
+            }
+            catch
+            {
+            }
 
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SavedItems ADD COLUMN BlogPostId TEXT NULL;");
-                }
-                catch
-                {
-                }
+            try
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SavedItems ADD COLUMN IF NOT EXISTS BlogPostId char(36) NULL;");
+            }
+            catch
+            {
+            }
 
+            try
+            {
                 await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_SavedItems_ProfileId_CommunityPostId ON SavedItems (ProfileId, CommunityPostId);");
+            }
+            catch
+            {
+            }
+
+            try
+            {
                 await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_SavedItems_ProfileId_BlogPostId ON SavedItems (ProfileId, BlogPostId);");
             }
-            else
+            catch
             {
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SavedItems ADD COLUMN IF NOT EXISTS CommunityPostId char(36) NULL;");
-                }
-                catch
-                {
-                }
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SavedItems ADD COLUMN IF NOT EXISTS BlogPostId char(36) NULL;");
-                }
-                catch
-                {
-                }
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_SavedItems_ProfileId_CommunityPostId ON SavedItems (ProfileId, CommunityPostId);");
-                }
-                catch
-                {
-                }
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_SavedItems_ProfileId_BlogPostId ON SavedItems (ProfileId, BlogPostId);");
-                }
-                catch
-                {
-                }
             }
 
             savedSchemaInitialized = true;

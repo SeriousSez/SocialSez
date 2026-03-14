@@ -63,7 +63,7 @@
                         <span class="user-handle-wrap"><a class="user-link handle-link" [routerLink]="['/users', profile.handle]">@{{ profile.handle }}</a></span>
                     </h4>
                 </div>
-                <p>{{ profile.bio || 'No bio yet.' }}</p>
+                <p [innerHTML]="profileBioPreview(profile.bio)"></p>
                 <button *ngIf="isAuthenticated" type="button" (click)="follow(profile)">Follow User</button>
                 <a *ngIf="!isAuthenticated" class="ghost" routerLink="/auth">Sign in to follow</a>
             </article>
@@ -151,7 +151,7 @@
                         <span class="user-handle-wrap"><a class="user-link handle-link" [routerLink]="['/users', profile.handle]">@{{ profile.handle }}</a></span>
                     </h4>
                 </div>
-                <p>{{ profile.bio || 'No bio yet.' }}</p>
+                <p [innerHTML]="profileBioPreview(profile.bio)"></p>
                 <button type="button" (click)="follow(profile)">Follow User</button>
             </article>
         </section>

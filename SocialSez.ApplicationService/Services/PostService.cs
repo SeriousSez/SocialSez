@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Caching.Memory;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
@@ -20,8 +19,6 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
     {
         "Like", "Love", "Laugh", "Wow", "Sad", "Angry", "PartyHorn", "Clap"
     };
-    private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
-    private static volatile bool postSchemaInitialized;
     private static readonly TimeSpan SearchCacheTtl = TimeSpan.FromSeconds(30);
 
     public async Task<PostDto> CreateAsync(CreatePostRequest request, CancellationToken cancellationToken = default)
@@ -1677,55 +1674,6 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         }
     }
 
-    private async Task EnsurePostSchemaAsync(CancellationToken cancellationToken)
-    {
-        if (postSchemaInitialized || !dbContext.Database.IsSqlite())
-        {
-            return;
-        }
-
-        await SchemaInitLock.WaitAsync(cancellationToken);
-        try
-        {
-            if (postSchemaInitialized)
-            {
-                return;
-            }
-
-            try
-            {
-                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Comments ADD COLUMN ParentCommentId TEXT NULL;", cancellationToken);
-            }
-            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-            {
-            }
-
-            try
-            {
-                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Posts ADD COLUMN IsSensitive INTEGER NOT NULL DEFAULT 0;", cancellationToken);
-            }
-            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-            {
-            }
-
-            dbContext.Database.ExecuteSqlRaw("""
-            CREATE TABLE IF NOT EXISTS FollowedHashtags (
-                ProfileId TEXT NOT NULL,
-                Tag TEXT NOT NULL,
-                CreatedAtUtc TEXT NOT NULL,
-                PRIMARY KEY (ProfileId, Tag),
-                FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
-            );
-            """);
-
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_Comments_ParentCommentId ON Comments (ParentCommentId);", cancellationToken);
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_FollowedHashtags_ProfileId_CreatedAtUtc ON FollowedHashtags (ProfileId, CreatedAtUtc);", cancellationToken);
-            postSchemaInitialized = true;
-        }
-        finally
-        {
-            SchemaInitLock.Release();
-        }
-    }
+    private Task EnsurePostSchemaAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
 

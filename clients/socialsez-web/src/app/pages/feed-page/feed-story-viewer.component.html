@@ -45,7 +45,7 @@
                 <video #storyVideoEl *ngIf="isVideoStory(story.mediaUrl) && !videoPlaybackError; else imageStory" [src]="story.mediaUrl" [attr.poster]="story.thumbnailUrl || null" autoplay [muted]="storyMuted" playsinline preload="auto" (loadedmetadata)="onVideoLoadedMetadata(storyVideoEl)"
                     (play)="onVideoPlay()" (pause)="onVideoPause()" (timeupdate)="onVideoTimeUpdate(storyVideoEl)" (ended)="onVideoEnded()" (error)="onVideoError()"></video>
                 <ng-template #imageStory>
-                    <img [src]="story.mediaUrl" alt="Story" (error)="onImageError()" />
+                    <img [src]="getStoryImageUrl(story)" alt="Story" (error)="onImageError()" />
                 </ng-template>
             </ng-container>
 

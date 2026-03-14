@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
@@ -832,123 +831,7 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 return;
             }
 
-            if (dbContext.Database.IsSqlite())
-            {
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS Blogs (
-                    Id TEXT NOT NULL PRIMARY KEY,
-                    OwnerProfileId TEXT NOT NULL,
-                    Slug TEXT NOT NULL,
-                    Title TEXT NOT NULL,
-                    Description TEXT NULL,
-                    ThemeConfigJson TEXT NULL,
-                    IsPublic INTEGER NOT NULL,
-                    AllowLikes INTEGER NOT NULL DEFAULT 1,
-                    AllowComments INTEGER NOT NULL DEFAULT 1,
-                    AllowShares INTEGER NOT NULL DEFAULT 1,
-                    AllowEmbeds INTEGER NOT NULL DEFAULT 1,
-                    CreatedAtUtc TEXT NOT NULL,
-                    UpdatedAtUtc TEXT NOT NULL,
-                    FOREIGN KEY (OwnerProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
-                );
-                """, cancellationToken);
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Blogs ADD COLUMN AllowLikes INTEGER NOT NULL DEFAULT 1;", cancellationToken);
-                }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Blogs ADD COLUMN AllowComments INTEGER NOT NULL DEFAULT 1;", cancellationToken);
-                }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Blogs ADD COLUMN AllowShares INTEGER NOT NULL DEFAULT 1;", cancellationToken);
-                }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Blogs ADD COLUMN AllowEmbeds INTEGER NOT NULL DEFAULT 1;", cancellationToken);
-                }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE UNIQUE INDEX IF NOT EXISTS IX_Blogs_OwnerProfileId_Slug
-                ON Blogs (OwnerProfileId, Slug);
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE INDEX IF NOT EXISTS IX_Blogs_OwnerProfileId_UpdatedAtUtc
-                ON Blogs (OwnerProfileId, UpdatedAtUtc);
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS BlogPosts (
-                    Id TEXT NOT NULL PRIMARY KEY,
-                    BlogId TEXT NOT NULL,
-                    AuthorProfileId TEXT NOT NULL,
-                    Slug TEXT NOT NULL,
-                    Title TEXT NOT NULL,
-                    Content TEXT NOT NULL,
-                    Excerpt TEXT NULL,
-                    CoverImageUrl TEXT NULL,
-                    TagsJson TEXT NULL,
-                    IsPublished INTEGER NOT NULL,
-                    CreatedAtUtc TEXT NOT NULL,
-                    UpdatedAtUtc TEXT NOT NULL,
-                    PublishedAtUtc TEXT NULL,
-                    FOREIGN KEY (BlogId) REFERENCES Blogs (Id) ON DELETE CASCADE,
-                    FOREIGN KEY (AuthorProfileId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
-                );
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS BlogPostSaves (
-                    PostId TEXT NOT NULL,
-                    ProfileId TEXT NOT NULL,
-                    SavedAtUtc TEXT NOT NULL,
-                    PRIMARY KEY (PostId, ProfileId),
-                    FOREIGN KEY (PostId) REFERENCES BlogPosts (Id) ON DELETE CASCADE,
-                    FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
-                );
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE UNIQUE INDEX IF NOT EXISTS IX_BlogPosts_BlogId_Slug
-                ON BlogPosts (BlogId, Slug);
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE INDEX IF NOT EXISTS IX_BlogPosts_BlogId_IsPublished_PublishedAtUtc
-                ON BlogPosts (BlogId, IsPublished, PublishedAtUtc);
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE INDEX IF NOT EXISTS IX_BlogPostSaves_ProfileId
-                ON BlogPostSaves (ProfileId);
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE INDEX IF NOT EXISTS IX_BlogPostSaves_ProfileId_SavedAtUtc
-                ON BlogPostSaves (ProfileId, SavedAtUtc);
-                """, cancellationToken);
-            }
-            else if (dbContext.Database.IsMySql())
-            {
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `Blogs` (
                     `Id` char(36) NOT NULL,
                     `OwnerProfileId` char(36) NOT NULL,
@@ -969,43 +852,43 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 );
                 """, cancellationToken);
 
-                var allowLikesColumnExists = await dbContext.Database
-                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowLikes' LIMIT 1")
-                    .AnyAsync(cancellationToken);
+            var allowLikesColumnExists = await dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowLikes' LIMIT 1")
+                .AnyAsync(cancellationToken);
 
-                if (!allowLikesColumnExists)
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowLikes` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
-                }
+            if (!allowLikesColumnExists)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowLikes` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
+            }
 
-                var allowCommentsColumnExists = await dbContext.Database
-                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowComments' LIMIT 1")
-                    .AnyAsync(cancellationToken);
+            var allowCommentsColumnExists = await dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowComments' LIMIT 1")
+                .AnyAsync(cancellationToken);
 
-                if (!allowCommentsColumnExists)
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowComments` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
-                }
+            if (!allowCommentsColumnExists)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowComments` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
+            }
 
-                var allowSharesColumnExists = await dbContext.Database
-                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowShares' LIMIT 1")
-                    .AnyAsync(cancellationToken);
+            var allowSharesColumnExists = await dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowShares' LIMIT 1")
+                .AnyAsync(cancellationToken);
 
-                if (!allowSharesColumnExists)
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowShares` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
-                }
+            if (!allowSharesColumnExists)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowShares` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
+            }
 
-                var allowEmbedsColumnExists = await dbContext.Database
-                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowEmbeds' LIMIT 1")
-                    .AnyAsync(cancellationToken);
+            var allowEmbedsColumnExists = await dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Blogs' AND COLUMN_NAME = 'AllowEmbeds' LIMIT 1")
+                .AnyAsync(cancellationToken);
 
-                if (!allowEmbedsColumnExists)
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowEmbeds` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
-                }
+            if (!allowEmbedsColumnExists)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Blogs` ADD COLUMN `AllowEmbeds` tinyint(1) NOT NULL DEFAULT 1;", cancellationToken);
+            }
 
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `BlogPosts` (
                     `Id` char(36) NOT NULL,
                     `BlogId` char(36) NOT NULL,
@@ -1026,7 +909,7 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 );
                 """, cancellationToken);
 
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `BlogPostSaves` (
                     `PostId` char(36) NOT NULL,
                     `ProfileId` char(36) NOT NULL,
@@ -1036,12 +919,7 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                     KEY `IX_BlogPostSaves_ProfileId_SavedAtUtc` (`ProfileId`, `SavedAtUtc`)
                 );
                 """, cancellationToken);
-            }
 
-            schemaInitialized = true;
-        }
-        catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
-        {
             schemaInitialized = true;
         }
         finally

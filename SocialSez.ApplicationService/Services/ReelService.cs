@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.Sqlite;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 using SocialSez.Domain.Entities;
@@ -11,8 +10,6 @@ namespace SocialSez.ApplicationService.Services;
 public class ReelService(SocialSezContext dbContext) : IReelService
 {
     private static readonly Regex HashtagRegex = new(@"(?<![\p{L}\p{N}_])#(?<tag>[\p{L}\p{N}_]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
-    private static volatile bool reelSchemaInitialized;
 
     public async Task<ReelDto> CreateAsync(CreateReelRequest request, CancellationToken cancellationToken = default)
     {
@@ -718,43 +715,5 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             .ToArray();
     }
 
-    private async Task EnsureReelSchemaAsync(CancellationToken cancellationToken)
-    {
-        if (reelSchemaInitialized || !dbContext.Database.IsSqlite())
-        {
-            return;
-        }
-
-        await SchemaInitLock.WaitAsync(cancellationToken);
-        try
-        {
-            if (reelSchemaInitialized)
-            {
-                return;
-            }
-
-            try
-            {
-                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE ReelComments ADD COLUMN ParentCommentId TEXT NULL;", cancellationToken);
-            }
-            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-            {
-            }
-
-            try
-            {
-                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Reels ADD COLUMN IsSensitive INTEGER NOT NULL DEFAULT 0;", cancellationToken);
-            }
-            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-            {
-            }
-
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_ReelComments_ParentCommentId ON ReelComments (ParentCommentId);", cancellationToken);
-            reelSchemaInitialized = true;
-        }
-        finally
-        {
-            SchemaInitLock.Release();
-        }
-    }
+    private Task EnsureReelSchemaAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

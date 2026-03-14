@@ -10,11 +10,6 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddSocialSezInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var provider = FirstNonEmpty(
-            configuration["Database:Provider"],
-            configuration["Database__Provider"]
-        )?.Trim();
-
         var mysqlConnectionString = FirstNonEmpty(
             configuration.GetConnectionString("MySql"),
             configuration["ConnectionStrings:MySql"],
@@ -26,51 +21,21 @@ public static class ServiceCollectionExtensions
             configuration["Database__MySqlConnectionString"]
         );
 
-        var sqliteConnectionString = FirstNonEmpty(
-            configuration.GetConnectionString("Sqlite"),
-            configuration["ConnectionStrings:Sqlite"],
-            configuration["ConnectionStrings__Sqlite"],
-            configuration["SQLITECONNSTR_Sqlite"],
-            configuration["Database:SqliteConnectionString"],
-            configuration["Database__SqliteConnectionString"]
+        if (string.IsNullOrWhiteSpace(mysqlConnectionString))
+        {
+            throw new InvalidOperationException("Connection string 'MySql' was not found or is empty.");
+        }
+
+        var configuredMySqlVersion = FirstNonEmpty(
+            configuration["Database:MySqlServerVersion"],
+            configuration["Database__MySqlServerVersion"],
+            configuration["MYSQL_SERVER_VERSION"]
         );
 
-        if (string.IsNullOrWhiteSpace(provider))
-        {
-            provider = !string.IsNullOrWhiteSpace(mysqlConnectionString)
-                ? "MySql"
-                : !string.IsNullOrWhiteSpace(sqliteConnectionString)
-                    ? "Sqlite"
-                    : "MySql";
-        }
+        var mysqlServerVersion = ParseMySqlServerVersion(configuredMySqlVersion) ?? DefaultMySqlServerVersion;
 
-        if (provider.Equals("MySql", StringComparison.OrdinalIgnoreCase))
-        {
-            if (string.IsNullOrWhiteSpace(mysqlConnectionString))
-            {
-                throw new InvalidOperationException("Connection string 'MySql' was not found or is empty.");
-            }
-
-            var configuredMySqlVersion = FirstNonEmpty(
-                configuration["Database:MySqlServerVersion"],
-                configuration["Database__MySqlServerVersion"],
-                configuration["MYSQL_SERVER_VERSION"]
-            );
-
-            var mysqlServerVersion = ParseMySqlServerVersion(configuredMySqlVersion) ?? DefaultMySqlServerVersion;
-
-            services.AddDbContext<SocialSezContext>(options =>
-                options.UseMySql(mysqlConnectionString, mysqlServerVersion));
-        }
-        else
-        {
-            if (string.IsNullOrWhiteSpace(sqliteConnectionString))
-            {
-                throw new InvalidOperationException("Connection string 'Sqlite' was not found or is empty.");
-            }
-
-            services.AddDbContext<SocialSezContext>(options => options.UseSqlite(sqliteConnectionString));
-        }
+        services.AddDbContext<SocialSezContext>(options =>
+            options.UseMySql(mysqlConnectionString, mysqlServerVersion));
 
         return services;
     }

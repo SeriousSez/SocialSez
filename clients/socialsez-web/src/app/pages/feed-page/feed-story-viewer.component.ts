@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { StoryDto, StoryGroupDto } from '../../core/api.types';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
@@ -13,6 +13,8 @@ import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 })
 export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     constructor(private readonly router: Router, private readonly ngZone: NgZone) { }
+
+    private readonly cdr = inject(ChangeDetectorRef);
 
     @Input() activeStory: StoryDto | null = null;
     @Input() activeStoryGroup: StoryGroupDto | null = null;
@@ -69,7 +71,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['activeStory']) {
+        if (changes['activeStory'] || changes['activeStoryIndex'] || changes['activeStoryGroup']) {
             this.replyDraft = '';
             this.isClosing = false;
             this.copyLinkCopied = false;
@@ -208,10 +210,12 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     onVideoTimeUpdate(video: HTMLVideoElement): void {
         if (!Number.isFinite(video.duration) || video.duration <= 0) {
             this.currentStoryProgress = 0;
+            this.cdr.detectChanges();
             return;
         }
 
         this.currentStoryProgress = Math.max(0, Math.min(1, video.currentTime / video.duration));
+        this.cdr.detectChanges();
     }
 
     onVideoEnded(): void {
@@ -242,8 +246,17 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         }
 
         this.videoPlaybackError = true;
-        this.paused = true;
         this.stopVideoProgressLoop();
+
+        if (story.thumbnailUrl?.trim()) {
+            this.paused = false;
+            this.currentStoryProgress = 0;
+            this.imageProgressElapsedBeforePause = 0;
+            this.resumeImageProgress();
+            return;
+        }
+
+        this.paused = true;
     }
 
     onImageError(): void {
@@ -451,6 +464,14 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         return `${remainingDays}d left`;
     }
 
+    getStoryImageUrl(story: StoryDto): string {
+        if (this.videoPlaybackError && story.thumbnailUrl?.trim()) {
+            return story.thumbnailUrl;
+        }
+
+        return story.mediaUrl;
+    }
+
     private parseUtcDate(value: string): Date {
         const hasExplicitTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
         const normalized = hasExplicitTimezone ? value : `${value}Z`;
@@ -553,6 +574,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
 
             const elapsed = this.imageProgressElapsedBeforePause + Math.max(0, performance.now() - this.imageProgressStartTime);
             this.currentStoryProgress = Math.max(0, Math.min(1, elapsed / this.imageStoryDurationMs));
+            this.cdr.detectChanges();
 
             if (this.currentStoryProgress >= 1) {
                 this.currentStoryProgress = 1;
@@ -591,6 +613,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
 
             if (Number.isFinite(currentVideo.duration) && currentVideo.duration > 0) {
                 this.currentStoryProgress = Math.max(0, Math.min(1, currentVideo.currentTime / currentVideo.duration));
+                this.cdr.detectChanges();
             }
 
             this.videoProgressFrameId = window.requestAnimationFrame(tick);

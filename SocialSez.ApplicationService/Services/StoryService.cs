@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.Sqlite;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 using SocialSez.Domain.Entities;
@@ -10,8 +9,6 @@ namespace SocialSez.ApplicationService.Services;
 public class StoryService(SocialSezContext dbContext) : IStoryService
 {
     private const int StoryExpiryHours = 24;
-    private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
-    private static volatile bool storySchemaInitialized;
 
     public async Task<StoryDto> CreateAsync(CreateStoryRequest request, CancellationToken cancellationToken = default)
     {
@@ -684,65 +681,5 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             story.Views.Count);
     }
 
-    private async Task EnsureStorySchemaAsync(CancellationToken cancellationToken)
-    {
-        if (storySchemaInitialized || !dbContext.Database.IsSqlite())
-        {
-            return;
-        }
-
-        await SchemaInitLock.WaitAsync(cancellationToken);
-        try
-        {
-            if (storySchemaInitialized)
-            {
-                return;
-            }
-
-            try
-            {
-                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Stories ADD COLUMN IsSensitive INTEGER NOT NULL DEFAULT 0;", cancellationToken);
-            }
-            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-            {
-            }
-
-            try
-            {
-                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Stories ADD COLUMN ThumbnailUrl TEXT NULL;", cancellationToken);
-            }
-            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-            {
-            }
-
-            await dbContext.Database.ExecuteSqlRawAsync(@"
-CREATE TABLE IF NOT EXISTS StoryCollections (
-    Id TEXT NOT NULL PRIMARY KEY,
-    ProfileId TEXT NOT NULL,
-    Name TEXT NOT NULL,
-    CreatedAtUtc TEXT NOT NULL,
-    CONSTRAINT FK_StoryCollections_UserProfiles_ProfileId FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
-);", cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync(@"
-CREATE TABLE IF NOT EXISTS StoryCollectionItems (
-    CollectionId TEXT NOT NULL,
-    StoryId TEXT NOT NULL,
-    AddedAtUtc TEXT NOT NULL,
-    CONSTRAINT PK_StoryCollectionItems PRIMARY KEY (CollectionId, StoryId),
-    CONSTRAINT FK_StoryCollectionItems_StoryCollections_CollectionId FOREIGN KEY (CollectionId) REFERENCES StoryCollections (Id) ON DELETE CASCADE,
-    CONSTRAINT FK_StoryCollectionItems_Stories_StoryId FOREIGN KEY (StoryId) REFERENCES Stories (Id) ON DELETE CASCADE
-);", cancellationToken);
-
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_StoryCollections_ProfileId_CreatedAtUtc ON StoryCollections (ProfileId, CreatedAtUtc);", cancellationToken);
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_StoryCollectionItems_CollectionId_AddedAtUtc ON StoryCollectionItems (CollectionId, AddedAtUtc);", cancellationToken);
-            await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_StoryCollectionItems_StoryId ON StoryCollectionItems (StoryId);", cancellationToken);
-
-            storySchemaInitialized = true;
-        }
-        finally
-        {
-            SchemaInitLock.Release();
-        }
-    }
+    private Task EnsureStorySchemaAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

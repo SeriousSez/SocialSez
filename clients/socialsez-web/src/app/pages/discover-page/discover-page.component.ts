@@ -310,6 +310,112 @@ export class DiscoverPageComponent implements OnDestroy {
             .trim();
     }
 
+    profileBioPreview(bio: string | null | undefined): string {
+        const source = (bio ?? '').trim();
+        if (!source) {
+            return 'No bio yet.';
+        }
+
+        const displayText = this.normalizeBioTextSpacing(this.toDisplayBioText(source)).trim();
+        if (!displayText) {
+            return 'No bio yet.';
+        }
+
+        const expression = /((?:https?:\/\/|www\.)[^\s]+|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,})(?:\/[^\s]*)?)/gi;
+        let cursor = 0;
+        let rendered = '';
+
+        for (const match of displayText.matchAll(expression)) {
+            const value = match[0] ?? '';
+            const index = match.index ?? 0;
+            const cleanedValue = value.replace(/[),.;!?]+$/g, '');
+            const trailingPart = value.slice(cleanedValue.length);
+            const normalizedUrl = this.normalizeBioUrl(cleanedValue);
+
+            if (index > cursor) {
+                rendered += this.escapeHtml(displayText.slice(cursor, index));
+            }
+
+            if (normalizedUrl) {
+                rendered += `<a class="bio-link" href="${this.escapeHtml(normalizedUrl)}" target="_blank" rel="noopener noreferrer nofollow">${this.escapeHtml(cleanedValue)}</a>${this.escapeHtml(trailingPart)}`;
+            } else {
+                rendered += this.escapeHtml(value);
+            }
+
+            cursor = index + value.length;
+        }
+
+        if (cursor < displayText.length) {
+            rendered += this.escapeHtml(displayText.slice(cursor));
+        }
+
+        return (rendered || this.escapeHtml(displayText)).replace(/\r?\n/g, '<br />');
+    }
+
+    private normalizeBioUrl(rawUrl: string): string | null {
+        const trimmed = rawUrl.trim();
+        if (!trimmed) {
+            return null;
+        }
+
+        const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+        try {
+            const parsed = new URL(withProtocol);
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+                return null;
+            }
+
+            return parsed.toString();
+        } catch {
+            return null;
+        }
+    }
+
+    private toDisplayBioText(source: string): string {
+        if (!/[<>]|&(?:amp|lt|gt|quot|#39);/i.test(source)) {
+            return source;
+        }
+
+        return source
+            .replace(/<\s*br\s*\/?\s*>/gi, '\n')
+            .replace(/<\s*\/\s*(p|div|li|h[1-6])\s*>/gi, '\n')
+            .replace(/<\s*\/\s*tr\s*>/gi, '\n')
+            .replace(/<\s*(p|div|li|h[1-6]|tr)(?:\s+[^>]*)?>/gi, '')
+            .replace(/<\s*br\s*\/?\s*>/gi, '\n')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&amp;/gi, '&')
+            .replace(/&lt;/gi, '<')
+            .replace(/&gt;/gi, '>')
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;/gi, "'")
+            .replace(/\r\n/g, '\n')
+            .replace(/\r/g, '\n')
+            .replace(/\n{3,}/g, '\n\n');
+    }
+
+    private normalizeBioTextSpacing(value: string): string {
+        if (!value) {
+            return value;
+        }
+
+        return value
+            .replace(/([.!?])(?=(?:https?:\/\/|www\.))/gi, '$1 ')
+            .replace(/([^\s])(?=(?:https?:\/\/|www\.))/gi, '$1 ')
+            .replace(/[ \t]+\n/g, '\n')
+            .replace(/\n[ \t]+/g, '\n');
+    }
+
+    private escapeHtml(value: string): string {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     getPostRepostCount(postId: string): number {
         this.ensurePostRepostCounts();
         return this.repostCountsByPostId.get(postId) ?? 0;

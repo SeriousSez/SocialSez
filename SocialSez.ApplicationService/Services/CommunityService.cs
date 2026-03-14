@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Caching.Memory;
 using System.Text.Json;
 using SocialSez.ApplicationService.Interfaces;
@@ -1806,215 +1805,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 return;
             }
 
-            if (dbContext.Database.IsSqlite())
-            {
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS Communities (
-                    Id TEXT NOT NULL PRIMARY KEY,
-                    CreatedByProfileId TEXT NOT NULL,
-                    Slug TEXT NOT NULL,
-                    Name TEXT NOT NULL,
-                    Description TEXT NULL,
-                    RulesJson TEXT NULL,
-                    ImageUrl TEXT NULL,
-                    IsPrivate INTEGER NOT NULL,
-                    CreatedAtUtc TEXT NOT NULL,
-                    FOREIGN KEY (CreatedByProfileId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
-                );
-                """, cancellationToken);
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Communities ADD COLUMN RulesJson TEXT NULL;", cancellationToken);
-                }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Communities ADD COLUMN ImageUrl TEXT NULL;", cancellationToken);
-                }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE UNIQUE INDEX IF NOT EXISTS IX_Communities_Slug ON Communities (Slug);", cancellationToken);
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_Communities_CreatedAtUtc ON Communities (CreatedAtUtc);", cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS CommunityMembers (
-                    CommunityId TEXT NOT NULL,
-                    ProfileId TEXT NOT NULL,
-                    Role TEXT NOT NULL,
-                    JoinedAtUtc TEXT NOT NULL,
-                    MutedUntilUtc TEXT NULL,
-                    PRIMARY KEY (CommunityId, ProfileId),
-                    FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
-                    FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
-                );
-                """, cancellationToken);
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE CommunityMembers ADD COLUMN MutedUntilUtc TEXT NULL;", cancellationToken);
-                }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityMembers_ProfileId ON CommunityMembers (ProfileId);", cancellationToken);
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityMembers_CommunityId_Role ON CommunityMembers (CommunityId, Role);", cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS CommunityPosts (
-                    Id TEXT NOT NULL PRIMARY KEY,
-                    CommunityId TEXT NOT NULL,
-                    AuthorId TEXT NOT NULL,
-                    Title TEXT NULL,
-                    LinkUrl TEXT NULL,
-                    Content TEXT NULL,
-                    MediaContent TEXT NULL,
-                    ImageUrl TEXT NULL,
-                    CreatedAtUtc TEXT NOT NULL,
-                    FOREIGN KEY (CommunityId) REFERENCES Communities (Id) ON DELETE CASCADE,
-                    FOREIGN KEY (AuthorId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
-                );
-                """, cancellationToken);
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE CommunityPosts ADD COLUMN Title TEXT NULL;", cancellationToken);
-                }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE CommunityPosts ADD COLUMN LinkUrl TEXT NULL;", cancellationToken);
-                }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE CommunityPosts ADD COLUMN MediaContent TEXT NULL;", cancellationToken);
-                }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPosts_CommunityId_CreatedAtUtc ON CommunityPosts (CommunityId, CreatedAtUtc);", cancellationToken);
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPosts_AuthorId ON CommunityPosts (AuthorId);", cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS CommunityPostImages (
-                    Id TEXT NOT NULL PRIMARY KEY,
-                    PostId TEXT NOT NULL,
-                    Url TEXT NOT NULL,
-                    SortOrder INTEGER NOT NULL DEFAULT 0,
-                    FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE
-                );
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostImages_PostId_SortOrder ON CommunityPostImages (PostId, SortOrder);", cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS CommunityPostComments (
-                    Id TEXT NOT NULL PRIMARY KEY,
-                    PostId TEXT NOT NULL,
-                    ParentCommentId TEXT NULL,
-                    AuthorId TEXT NOT NULL,
-                    Content TEXT NOT NULL,
-                    CreatedAtUtc TEXT NOT NULL,
-                    FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE,
-                    FOREIGN KEY (ParentCommentId) REFERENCES CommunityPostComments (Id) ON DELETE RESTRICT,
-                    FOREIGN KEY (AuthorId) REFERENCES UserProfiles (Id) ON DELETE RESTRICT
-                );
-                """, cancellationToken);
-
-                try
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE CommunityPostComments ADD COLUMN ParentCommentId TEXT NULL;", cancellationToken);
-                }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                {
-                }
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostComments_PostId_CreatedAtUtc ON CommunityPostComments (PostId, CreatedAtUtc);", cancellationToken);
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostComments_AuthorId ON CommunityPostComments (AuthorId);", cancellationToken);
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostComments_ParentCommentId ON CommunityPostComments (ParentCommentId);", cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS CommunityPostVotes (
-                    PostId TEXT NOT NULL,
-                    ProfileId TEXT NOT NULL,
-                    Type TEXT NOT NULL,
-                    CreatedAtUtc TEXT NOT NULL,
-                    PRIMARY KEY (PostId, ProfileId),
-                    FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE,
-                    FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
-                );
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostVotes_PostId_Type ON CommunityPostVotes (PostId, Type);", cancellationToken);
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPostVotes_ProfileId ON CommunityPostVotes (ProfileId);", cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS CommunityPolls (
-                    Id TEXT NOT NULL PRIMARY KEY,
-                    PostId TEXT NOT NULL,
-                    Question TEXT NOT NULL,
-                    CreatedAtUtc TEXT NOT NULL,
-                    FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE
-                );
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE UNIQUE INDEX IF NOT EXISTS IX_CommunityPolls_PostId ON CommunityPolls (PostId);", cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS CommunityPollOptions (
-                    Id TEXT NOT NULL PRIMARY KEY,
-                    PollId TEXT NOT NULL,
-                    Text TEXT NOT NULL,
-                    FOREIGN KEY (PollId) REFERENCES CommunityPolls (Id) ON DELETE CASCADE
-                );
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPollOptions_PollId ON CommunityPollOptions (PollId);", cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS CommunityPollVotes (
-                    OptionId TEXT NOT NULL,
-                    VoterId TEXT NOT NULL,
-                    CreatedAtUtc TEXT NOT NULL,
-                    PRIMARY KEY (OptionId, VoterId),
-                    FOREIGN KEY (OptionId) REFERENCES CommunityPollOptions (Id) ON DELETE CASCADE,
-                    FOREIGN KEY (VoterId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
-                );
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunityPollVotes_VoterId ON CommunityPollVotes (VoterId);", cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS CommunitySavedPosts (
-                    PostId TEXT NOT NULL,
-                    ProfileId TEXT NOT NULL,
-                    SavedAtUtc TEXT NOT NULL,
-                    PRIMARY KEY (PostId, ProfileId),
-                    FOREIGN KEY (PostId) REFERENCES CommunityPosts (Id) ON DELETE CASCADE,
-                    FOREIGN KEY (ProfileId) REFERENCES UserProfiles (Id) ON DELETE CASCADE
-                );
-                """, cancellationToken);
-
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunitySavedPosts_ProfileId ON CommunitySavedPosts (ProfileId);", cancellationToken);
-                await dbContext.Database.ExecuteSqlRawAsync("CREATE INDEX IF NOT EXISTS IX_CommunitySavedPosts_ProfileId_SavedAtUtc ON CommunitySavedPosts (ProfileId, SavedAtUtc);", cancellationToken);
-            }
-            else if (dbContext.Database.IsMySql())
-            {
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `Communities` (
                     `Id` char(36) NOT NULL,
                     `CreatedByProfileId` char(36) NOT NULL,
@@ -2031,25 +1822,25 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 );
                 """, cancellationToken);
 
-                var communityImageColumnExists = await dbContext.Database
-                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Communities' AND COLUMN_NAME = 'ImageUrl' LIMIT 1")
-                    .AnyAsync(cancellationToken);
+            var communityImageColumnExists = await dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Communities' AND COLUMN_NAME = 'ImageUrl' LIMIT 1")
+                .AnyAsync(cancellationToken);
 
-                if (!communityImageColumnExists)
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Communities` ADD COLUMN `ImageUrl` varchar(1024) NULL;", cancellationToken);
-                }
+            if (!communityImageColumnExists)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Communities` ADD COLUMN `ImageUrl` varchar(1024) NULL;", cancellationToken);
+            }
 
-                var communityRulesColumnExists = await dbContext.Database
-                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Communities' AND COLUMN_NAME = 'RulesJson' LIMIT 1")
-                    .AnyAsync(cancellationToken);
+            var communityRulesColumnExists = await dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Communities' AND COLUMN_NAME = 'RulesJson' LIMIT 1")
+                .AnyAsync(cancellationToken);
 
-                if (!communityRulesColumnExists)
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Communities` ADD COLUMN `RulesJson` longtext NULL;", cancellationToken);
-                }
+            if (!communityRulesColumnExists)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `Communities` ADD COLUMN `RulesJson` longtext NULL;", cancellationToken);
+            }
 
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `CommunityMembers` (
                     `CommunityId` char(36) NOT NULL,
                     `ProfileId` char(36) NOT NULL,
@@ -2062,16 +1853,16 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 );
                 """, cancellationToken);
 
-                var memberMutedUntilColumnExists = await dbContext.Database
-                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityMembers' AND COLUMN_NAME = 'MutedUntilUtc' LIMIT 1")
-                    .AnyAsync(cancellationToken);
+            var memberMutedUntilColumnExists = await dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityMembers' AND COLUMN_NAME = 'MutedUntilUtc' LIMIT 1")
+                .AnyAsync(cancellationToken);
 
-                if (!memberMutedUntilColumnExists)
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityMembers` ADD COLUMN `MutedUntilUtc` datetime(6) NULL;", cancellationToken);
-                }
+            if (!memberMutedUntilColumnExists)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityMembers` ADD COLUMN `MutedUntilUtc` datetime(6) NULL;", cancellationToken);
+            }
 
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `CommunityPosts` (
                     `Id` char(36) NOT NULL,
                     `CommunityId` char(36) NOT NULL,
@@ -2088,34 +1879,34 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 );
                 """, cancellationToken);
 
-                var postTitleColumnExists = await dbContext.Database
-                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPosts' AND COLUMN_NAME = 'Title' LIMIT 1")
-                    .AnyAsync(cancellationToken);
+            var postTitleColumnExists = await dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPosts' AND COLUMN_NAME = 'Title' LIMIT 1")
+                .AnyAsync(cancellationToken);
 
-                if (!postTitleColumnExists)
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPosts` ADD COLUMN `Title` varchar(220) NULL;", cancellationToken);
-                }
+            if (!postTitleColumnExists)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPosts` ADD COLUMN `Title` varchar(220) NULL;", cancellationToken);
+            }
 
-                var postLinkUrlColumnExists = await dbContext.Database
-                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPosts' AND COLUMN_NAME = 'LinkUrl' LIMIT 1")
-                    .AnyAsync(cancellationToken);
+            var postLinkUrlColumnExists = await dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPosts' AND COLUMN_NAME = 'LinkUrl' LIMIT 1")
+                .AnyAsync(cancellationToken);
 
-                if (!postLinkUrlColumnExists)
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPosts` ADD COLUMN `LinkUrl` varchar(2048) NULL;", cancellationToken);
-                }
+            if (!postLinkUrlColumnExists)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPosts` ADD COLUMN `LinkUrl` varchar(2048) NULL;", cancellationToken);
+            }
 
-                var postMediaContentColumnExists = await dbContext.Database
-                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPosts' AND COLUMN_NAME = 'MediaContent' LIMIT 1")
-                    .AnyAsync(cancellationToken);
+            var postMediaContentColumnExists = await dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPosts' AND COLUMN_NAME = 'MediaContent' LIMIT 1")
+                .AnyAsync(cancellationToken);
 
-                if (!postMediaContentColumnExists)
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPosts` ADD COLUMN `MediaContent` varchar(5000) NULL;", cancellationToken);
-                }
+            if (!postMediaContentColumnExists)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPosts` ADD COLUMN `MediaContent` varchar(5000) NULL;", cancellationToken);
+            }
 
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `CommunityPostImages` (
                     `Id` char(36) NOT NULL,
                     `PostId` char(36) NOT NULL,
@@ -2126,7 +1917,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 );
                 """, cancellationToken);
 
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `CommunityPostComments` (
                     `Id` char(36) NOT NULL,
                     `PostId` char(36) NOT NULL,
@@ -2141,17 +1932,17 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 );
                 """, cancellationToken);
 
-                var commentParentColumnExists = await dbContext.Database
-                    .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPostComments' AND COLUMN_NAME = 'ParentCommentId' LIMIT 1")
-                    .AnyAsync(cancellationToken);
+            var commentParentColumnExists = await dbContext.Database
+                .SqlQueryRaw<int>("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CommunityPostComments' AND COLUMN_NAME = 'ParentCommentId' LIMIT 1")
+                .AnyAsync(cancellationToken);
 
-                if (!commentParentColumnExists)
-                {
-                    await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPostComments` ADD COLUMN `ParentCommentId` char(36) NULL;", cancellationToken);
-                }
+            if (!commentParentColumnExists)
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE `CommunityPostComments` ADD COLUMN `ParentCommentId` char(36) NULL;", cancellationToken);
+            }
 
 
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `CommunityPostVotes` (
                     `PostId` char(36) NOT NULL,
                     `ProfileId` char(36) NOT NULL,
@@ -2163,7 +1954,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 );
                 """, cancellationToken);
 
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `CommunityPolls` (
                     `Id` char(36) NOT NULL,
                     `PostId` char(36) NOT NULL,
@@ -2174,7 +1965,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 );
                 """, cancellationToken);
 
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `CommunityPollOptions` (
                     `Id` char(36) NOT NULL,
                     `PollId` char(36) NOT NULL,
@@ -2184,7 +1975,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 );
                 """, cancellationToken);
 
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `CommunityPollVotes` (
                     `OptionId` char(36) NOT NULL,
                     `VoterId` char(36) NOT NULL,
@@ -2194,7 +1985,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 );
                 """, cancellationToken);
 
-                await dbContext.Database.ExecuteSqlRawAsync("""
+            await dbContext.Database.ExecuteSqlRawAsync("""
                 CREATE TABLE IF NOT EXISTS `CommunitySavedPosts` (
                     `PostId` char(36) NOT NULL,
                     `ProfileId` char(36) NOT NULL,
@@ -2204,7 +1995,6 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                     KEY `IX_CommunitySavedPosts_ProfileId_SavedAtUtc` (`ProfileId`, `SavedAtUtc`)
                 );
                 """, cancellationToken);
-            }
 
             communitySchemaInitialized = true;
         }

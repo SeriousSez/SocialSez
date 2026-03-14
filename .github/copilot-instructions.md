@@ -7,7 +7,7 @@ SocialSez is a social platform with:
 - **`SocialSez.API`** — ASP.NET Core 8 Web API
 - **`SocialSez.ApplicationService`** — application logic layer (interfaces + services + models)
 - **`SocialSez.Domain`** — domain entities
-- **`SocialSez.Infrastructure`** — EF Core `SocialSezContext`, migrations, DB config (MySQL or SQLite)
+- **`SocialSez.Infrastructure`** — EF Core `SocialSezContext`, migrations, DB config (MySQL)
 - **`clients/socialsez-web`** — Angular 17 standalone web client
 - **`clients/socialsez_mobile`** — Flutter mobile client
 
