@@ -1453,6 +1453,24 @@ export class SessionService {
                 return undefined;
             }
 
+            if (parsed.protocol === 'http:' && typeof window !== 'undefined' && window.location.protocol === 'https:') {
+                const currentHost = window.location.hostname.trim().toLowerCase();
+                const apiHost = this.apiOrigin
+                    ? (() => {
+                        try {
+                            return new URL(this.apiOrigin).hostname.trim().toLowerCase();
+                        } catch {
+                            return '';
+                        }
+                    })()
+                    : '';
+                const parsedHost = parsed.hostname.trim().toLowerCase();
+
+                if (parsedHost === currentHost || (!!apiHost && parsedHost === apiHost)) {
+                    parsed.protocol = 'https:';
+                }
+            }
+
             const isLocalHost = parsed.hostname === 'localhost'
                 || parsed.hostname === '127.0.0.1'
                 || parsed.hostname === '0.0.0.0';

@@ -31,6 +31,14 @@ export function readRefreshToken(): string {
     return safeGet(localStorage, refreshTokenKey) || safeGet(sessionStorage, refreshTokenKey);
 }
 
+export function hasLocalSessionTokens(): boolean {
+    return !!safeGet(localStorage, accessTokenKey) && !!safeGet(localStorage, refreshTokenKey);
+}
+
+export function hasSessionStorageTokens(): boolean {
+    return !!safeGet(sessionStorage, accessTokenKey) && !!safeGet(sessionStorage, refreshTokenKey);
+}
+
 export function writeSessionTokens(accessToken: string, refreshToken: string, staySignedIn: boolean): void {
     clearSessionTokens();
 

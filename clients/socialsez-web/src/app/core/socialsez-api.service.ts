@@ -51,28 +51,37 @@ import {
     UpdateProfileRequest,
     UploadImageResponse
 } from './api.types';
-import { clearSessionTokens, readAccessToken, readRefreshToken, writeSessionTokens } from './auth-storage.util';
+import { clearSessionTokens, hasLocalSessionTokens, hasSessionStorageTokens, readAccessToken, readRefreshToken, writeSessionTokens } from './auth-storage.util';
 
 @Injectable({ providedIn: 'root' })
 export class SocialSezApiService {
     private readonly baseUrl = environment.apiBaseUrl;
     private token = '';
     private refreshToken = '';
+    private staySignedInPreference = true;
 
     constructor(private readonly http: HttpClient) {
         this.token = readAccessToken();
         this.refreshToken = readRefreshToken();
+
+        if (hasLocalSessionTokens()) {
+            this.staySignedInPreference = true;
+        } else if (hasSessionStorageTokens()) {
+            this.staySignedInPreference = false;
+        }
     }
 
-    private setSession(auth: AuthResponse, staySignedIn = true): void {
+    private setSession(auth: AuthResponse, staySignedIn = this.staySignedInPreference): void {
         this.token = auth.token;
         this.refreshToken = auth.refreshToken;
+        this.staySignedInPreference = staySignedIn;
         writeSessionTokens(auth.token, auth.refreshToken, staySignedIn);
     }
 
     clearToken(): void {
         this.token = '';
         this.refreshToken = '';
+        this.staySignedInPreference = true;
         clearSessionTokens();
     }
 
