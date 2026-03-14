@@ -1793,13 +1793,27 @@ export class MessagesDockComponent {
         const metaRegex = new RegExp(`<meta[^>]*${keyName}=[\"']${escapedKey}[\"'][^>]*content=[\"']([^\"']+)[\"'][^>]*>`, 'i');
         const reverseMetaRegex = new RegExp(`<meta[^>]*content=[\"']([^\"']+)[\"'][^>]*${keyName}=[\"']${escapedKey}[\"'][^>]*>`, 'i');
 
-        const directMatch = html.match(metaRegex)?.[1]?.trim();
+        const directMatch = this.decodeHtmlEntities(html.match(metaRegex)?.[1]?.trim() ?? '');
         if (directMatch) {
             return directMatch;
         }
 
-        const reverseMatch = html.match(reverseMetaRegex)?.[1]?.trim();
+        const reverseMatch = this.decodeHtmlEntities(html.match(reverseMetaRegex)?.[1]?.trim() ?? '');
         return reverseMatch || null;
+    }
+
+    private decodeHtmlEntities(value: string): string {
+        if (!value) {
+            return '';
+        }
+
+        if (typeof document === 'undefined') {
+            return value;
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = value;
+        return (textarea.value || value).trim();
     }
 
     private extractCanonicalHref(html: string): string | null {

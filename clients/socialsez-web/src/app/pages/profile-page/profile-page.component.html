@@ -350,12 +350,11 @@
         </section>
 
         <div class="post-list" *ngIf="activeTab === 'posts' && !loading && posts.length; else noPostsYet">
-            <app-post-card *ngFor="let post of posts" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [showActions]="isOwnProfile" [showBottomMeta]="true" [showCommentsCount]="true"
-                [hideSensitiveMedia]="hideSensitiveMediaEnabled" [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id"
-                [canInteract]="session.isAuthenticated()" [savedByMe]="isPostSaved(post.id)" (editValueChange)="editContent = $event" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (startEdit)="startEdit(post)"
-                (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)"
-                (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)" (saveToggled)="toggleSavedPost(post)"
-                (reportPost)="openPostReport(post)" (reportComment)="openPostCommentReport(post, $event.id)">
+            <app-post-card *ngFor="let post of posts" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [showActions]="isOwnProfile" [hideSensitiveMedia]="hideSensitiveMediaEnabled"
+                [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" [canInteract]="session.isAuthenticated()" [savedByMe]="isPostSaved(post.id)"
+                (editValueChange)="editContent = $event" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)"
+                (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)" (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)"
+                (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)" (saveToggled)="toggleSavedPost(post)" (reportPost)="openPostReport(post)" (reportComment)="openPostCommentReport(post, $event.id)">
                 <div post-header class="author">
                     <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)">
                         <img class="avatar" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"

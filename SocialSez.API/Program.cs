@@ -1,5 +1,6 @@
 using System.Text;
 using System.Net;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Caching.Memory;
@@ -554,18 +555,41 @@ static async Task<UnfurlMeta> ResolveUnfurlMetaAsync(
 
 static string Truncate(string? value, int maxLength)
 {
-    if (string.IsNullOrWhiteSpace(value))
+    var normalized = NormalizeMetaText(value);
+    if (string.IsNullOrWhiteSpace(normalized))
     {
         return string.Empty;
     }
 
-    var normalized = string.Join(' ', value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
     if (normalized.Length <= maxLength)
     {
         return normalized;
     }
 
     return $"{normalized[..Math.Max(0, maxLength - 1)].TrimEnd()}...";
+}
+
+static string NormalizeMetaText(string? value)
+{
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        return string.Empty;
+    }
+
+    var decoded = value;
+    for (var attempt = 0; attempt < 2; attempt += 1)
+    {
+        var next = WebUtility.HtmlDecode(decoded);
+        if (string.Equals(next, decoded, StringComparison.Ordinal))
+        {
+            break;
+        }
+
+        decoded = next;
+    }
+
+    var withoutTags = Regex.Replace(decoded, "<[^>]*>", " ", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    return string.Join(' ', withoutTags.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 }
 
 static string ToAbsoluteUrl(HttpContext context, string? value, string? publicAppOrigin = null)
