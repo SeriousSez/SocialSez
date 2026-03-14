@@ -1,8 +1,8 @@
 .media-composer {
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 12px;
-    background: #fff;
+    background: var(--color-surface);
     display: grid;
     gap: 10px;
 }
@@ -132,13 +132,13 @@
 
 .upload-title {
     margin: 0;
-    color: #0f172a;
+    color: var(--color-text);
     font-weight: 700;
 }
 
 .upload-subtitle {
     margin: 0;
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 0.82rem;
 }
 
@@ -176,7 +176,7 @@
     gap: 6px;
     font-size: 0.9rem;
     font-weight: 700;
-    color: #334155;
+    color: var(--color-text);
 }
 
 .media-composer textarea,
@@ -194,9 +194,9 @@
     list-style: none;
     margin: 6px 0 0;
     padding: 4px;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 10px;
-    background: #fff;
+    background: var(--color-surface);
     position: absolute;
     z-index: 15;
     left: 0;
@@ -210,15 +210,15 @@
     text-align: left;
     border: 1px solid transparent;
     border-radius: 8px;
-    background: #fff;
-    color: #0f172a;
+    background: var(--color-surface);
+    color: var(--color-text);
     padding: 8px 10px;
     display: grid;
     gap: 2px;
 }
 
 .autocomplete-item:hover {
-    border-color: #dbe4f0;
+    border-color: var(--color-border);
     box-shadow: none;
     transform: none;
 }
@@ -230,7 +230,7 @@
 
 .autocomplete-sub {
     font-size: 12px;
-    color: #64748b;
+    color: var(--color-text-muted);
 }
 
 .media-composer textarea {
@@ -239,7 +239,7 @@
 
 .media-file {
     margin: 0;
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 0.86rem;
 }
 
@@ -250,12 +250,12 @@
 }
 
 .reel-editor {
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 10px;
     display: grid;
     gap: 10px;
-    background: #fff;
+    background: var(--color-surface);
 }
 
 .reel-frame-editor {
@@ -310,7 +310,7 @@
 }
 
 .frame-controls-hint {
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 0.82rem;
 }
 
@@ -323,7 +323,7 @@
     position: relative;
     border-radius: 10px;
     overflow: hidden;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     background: #0f172a;
     height: 64px;
     touch-action: none;
@@ -394,7 +394,7 @@
     display: flex;
     justify-content: space-between;
     font-size: 12px;
-    color: #64748b;
+    color: var(--color-text-muted);
 }
 
 .reel-cover-panel {
@@ -404,7 +404,7 @@
 
 .cover-upload-note {
     margin: 0;
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 0.82rem;
 }
 
@@ -434,11 +434,11 @@
 }
 
 .reel-cover-option {
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 10px;
     padding: 4px;
-    background: #fff;
-    color: #334155;
+    background: var(--color-surface);
+    color: var(--color-text);
     font-size: 11px;
     display: grid;
     gap: 4px;
@@ -474,12 +474,15 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #334155;
+    color: var(--color-text);
     font-size: 0.9rem;
 }
 
 .sensitive-toggle input {
     margin: 0;
+    width: auto;
+    min-width: 0;
+    accent-color: var(--color-primary);
 }
 
 .reel-publish-preview {
@@ -489,7 +492,7 @@
 }
 
 .reel-publish-preview-frame {
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 10px;
     overflow: hidden;
     background: #020617;
@@ -573,7 +576,7 @@ button:disabled {
     gap: 12px;
     margin-bottom: 0.75rem;
     font-size: 0.82rem;
-    color: #64748b;
+    color: var(--color-text-muted);
 }
 
 .composer-steps span.active {

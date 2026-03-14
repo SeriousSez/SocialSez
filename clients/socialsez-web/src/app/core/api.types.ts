@@ -257,6 +257,7 @@ export interface StoryDto {
     authorImageUrl?: string;
     caption?: string;
     mediaUrl: string;
+    thumbnailUrl?: string;
     isSensitive?: boolean;
     createdAtUtc: string;
     expiresAtUtc: string;

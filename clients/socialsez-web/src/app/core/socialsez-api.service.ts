@@ -174,13 +174,17 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<PostDto>(`${this.baseUrl}/posts`, formData, { headers: this.authHeaders() }));
     }
 
-    createStory(mediaFile: File, caption?: string, isSensitive = false): Observable<StoryDto> {
+    createStory(mediaFile: File, caption?: string, isSensitive = false, thumbnailFile?: File): Observable<StoryDto> {
         const formData = new FormData();
         formData.append('media', mediaFile);
         formData.append('isSensitive', `${isSensitive}`);
 
         if (caption?.trim()) {
             formData.append('caption', caption.trim());
+        }
+
+        if (thumbnailFile) {
+            formData.append('thumbnail', thumbnailFile);
         }
 
         return this.withAutoRefresh(() => this.http.post<StoryDto>(`${this.baseUrl}/stories`, formData, { headers: this.authHeaders() }));

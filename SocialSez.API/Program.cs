@@ -297,6 +297,7 @@ using (var scope = app.Services.CreateScope())
                 AuthorId TEXT NOT NULL,
                 Caption TEXT NULL,
                 MediaUrl TEXT NOT NULL,
+                ThumbnailUrl TEXT NULL,
                 CreatedAtUtc TEXT NOT NULL,
                 ExpiresAtUtc TEXT NOT NULL,
                 FOREIGN KEY (AuthorId) REFERENCES UserProfiles (Id) ON DELETE CASCADE

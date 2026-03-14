@@ -48,10 +48,10 @@ h2 {
     width: min(820px, 100%);
     max-height: 92vh;
     overflow: auto;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 12px;
-    background: #fff;
+    background: var(--color-surface);
     display: grid;
     gap: 10px;
     animation: feed-compose-card-in 180ms ease-out;
@@ -123,7 +123,7 @@ h2 {
 
 .close {
     background: transparent;
-    color: #334155;
+    color: var(--color-text-muted);
     width: 34px;
     height: 34px;
     padding: 0;
@@ -170,13 +170,13 @@ h2 {
 
 .upload-title {
     margin: 0;
-    color: #0f172a;
+    color: var(--color-text);
     font-weight: 700;
 }
 
 .upload-subtitle {
     margin: 0;
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 0.82rem;
 }
 
@@ -354,6 +354,12 @@ h2 {
     color: #334155;
 }
 
+.media-composer .sensitive-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .media-composer textarea,
 .media-composer input[type='text'],
 .media-composer input[type='number'],
@@ -368,7 +374,7 @@ h2 {
 
 .media-file {
     margin: 0;
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 0.86rem;
 }
 
@@ -376,19 +382,22 @@ h2 {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #334155;
+    color: var(--color-text);
     font-size: 0.9rem;
 }
 
 .sensitive-toggle input {
     margin: 0;
+    width: auto;
+    min-width: 0;
+    accent-color: var(--color-primary);
 }
 
 .composer-steps {
     display: flex;
     gap: 12px;
     font-size: 0.82rem;
-    color: #64748b;
+    color: var(--color-text-muted);
 }
 
 .composer-steps span.active {
@@ -417,7 +426,7 @@ h2 {
 .stories-tabs {
     display: flex;
     gap: 16px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 8px;
 }
 
@@ -509,14 +518,14 @@ h2 {
     border-radius: 50%;
     display: grid;
     place-items: center;
-    background: #e2e8f0;
+    background: var(--color-surface);
     padding: 2px;
     margin: 0 auto;
     position: relative;
 }
 
 .story-ring.seen {
-    background: #cbd5e1;
+    background: var(--color-surface-muted);
 }
 
 .story-ring.is-uploading {
@@ -532,7 +541,7 @@ h2 {
     position: absolute;
     inset: -1px;
     border-radius: 50%;
-    border: 3px solid #e2e8f0;
+    border: 3px solid var(--color-border);
     border-top-color: #6366f1;
     border-right-color: #6366f1;
     animation: story-upload-spin 0.9s linear infinite;
@@ -567,10 +576,10 @@ h2 {
     aspect-ratio: 1 / 1;
     box-sizing: border-box;
     border-radius: 50%;
-    border: 2px solid #fff;
+    border: 2px solid var(--color-surface);
     object-fit: cover;
-    background: #dbeafe;
-    color: #1e3a8a;
+    background: var(--color-surface-muted);
+    color: var(--color-primary-strong);
     font-weight: 800;
     text-transform: uppercase;
     display: grid;
@@ -580,18 +589,18 @@ h2 {
 
 .story-ring.seen img,
 .story-ring.seen .story-initial {
-    box-shadow: 0 0 0 2px #94a3b8;
+    box-shadow: 0 0 0 2px var(--color-border-strong);
 }
 
 .story-ring.is-empty img,
 .story-ring.is-empty .story-initial {
     box-shadow: none;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--color-border);
 }
 
 .story-handle {
     font-size: 12px;
-    color: #334155;
+    color: var(--color-text-muted);
     max-width: 76px;
     text-align: center;
     line-height: 1.15;
@@ -607,7 +616,7 @@ h2 {
 .stories-empty,
 .stories-error {
     margin: 0;
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 13px;
 }
 
@@ -626,9 +635,9 @@ h2 {
 }
 
 .feed-skeleton-card {
-    border: 1px solid #e2e8f0;
     border-radius: 12px;
-    background: #fff;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
     padding: 12px;
     display: grid;
     gap: 9px;

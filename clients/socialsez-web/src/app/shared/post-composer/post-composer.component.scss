@@ -1,8 +1,8 @@
 .composer {
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 12px;
-    background: #fff;
+    background: var(--color-surface);
     display: grid;
     gap: 10px;
 }
@@ -13,7 +13,7 @@
 
 .sub {
     margin: 0;
-    color: #475569;
+    color: var(--color-text-muted);
 }
 
 textarea {
@@ -33,10 +33,10 @@ textarea {
     right: 0;
     top: calc(100% + 4px);
     z-index: 20;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 10px;
-    background: #fff;
-    box-shadow: 0 12px 26px -20px #0f172a;
+    background: var(--color-surface);
+    box-shadow: 0 12px 26px -20px rgba(15, 23, 42, 0.45);
     display: grid;
     max-height: 220px;
     overflow: auto;
@@ -44,10 +44,10 @@ textarea {
 
 .mention-suggestions button {
     border: none;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--color-border);
     border-radius: 0;
-    background: #fff;
-    color: #0f172a;
+    background: var(--color-surface);
+    color: var(--color-text);
     text-align: left;
     padding: 9px 10px;
     display: grid;
@@ -63,7 +63,7 @@ textarea {
 }
 
 .mention-suggestions button:hover {
-    background: #f8fafc;
+    background: var(--color-surface-alt);
     box-shadow: none;
     transform: none;
 }
@@ -82,7 +82,7 @@ textarea {
 .mention-subline,
 .mention-hint {
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--color-text-muted);
 }
 
 .mention-avatar {
@@ -134,7 +134,7 @@ textarea {
     text-align: center;
     gap: 6px;
     border-radius: 12px;
-    background: #fff;
+    background: var(--color-surface);
 }
 
 .upload-icon {
@@ -144,13 +144,13 @@ textarea {
 
 .upload-title {
     margin: 0;
-    color: #0f172a;
+    color: var(--color-text);
     font-weight: 700;
 }
 
 .upload-subtitle {
     margin: 0;
-    color: #64748b;
+    color: var(--color-text-muted);
     font-size: 0.82rem;
 }
 
@@ -163,17 +163,17 @@ textarea {
     max-height: 460px;
     object-fit: contain;
     border-radius: 10px;
-    border: 1px solid #dbe4f0;
-    background: #fff;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
 }
 
 .crop-panel {
     display: grid;
     gap: 10px;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 10px;
-    background: #fff;
+    background: var(--color-surface);
 }
 
 image-cropper {
@@ -182,7 +182,7 @@ image-cropper {
     max-height: 540px;
     border-radius: 10px;
     overflow: hidden;
-    border: 1px solid #dbe4f0;
+    border: 1px solid var(--color-border);
 }
 
 .actions {
@@ -227,19 +227,20 @@ button:disabled {
 
 .meta {
     font-size: 0.86rem;
-    color: #64748b;
+    color: var(--color-text-muted);
 }
 
 .sensitive-toggle {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #334155;
+    color: var(--color-text);
     font-size: 0.9rem;
 }
 
 .sensitive-toggle input {
     margin: 0;
+    accent-color: var(--color-primary);
 }
 
 .preview-grid {

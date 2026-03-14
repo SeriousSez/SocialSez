@@ -11,9 +11,18 @@
     transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
+:host-context(.theme-dark) .comment-compose-shell {
+    border-color: color-mix(in srgb, var(--color-border) 68%, var(--color-surface));
+}
+
 .comment-compose-shell.expanded {
-    border-color: var(--color-text-subtle);
+    border-color: var(--color-border-strong);
     box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2);
+}
+
+:host-context(.theme-dark) .comment-compose-shell.expanded {
+    border-color: color-mix(in srgb, var(--color-border-strong) 72%, var(--color-surface));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 
 .comment-compose-top {

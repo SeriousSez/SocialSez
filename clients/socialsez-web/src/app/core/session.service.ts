@@ -456,8 +456,8 @@ export class SessionService {
         this.emitAppChange('posts');
     }
 
-    async createStoryAsync(mediaFile: File, caption?: string, isSensitive = false): Promise<StoryDto> {
-        const story = this.normalizeStory(await firstValueFrom(this.api.createStory(mediaFile, caption, isSensitive)));
+    async createStoryAsync(mediaFile: File, caption?: string, isSensitive = false, thumbnailFile?: File): Promise<StoryDto> {
+        const story = this.normalizeStory(await firstValueFrom(this.api.createStory(mediaFile, caption, isSensitive, thumbnailFile)));
         this.message = 'Story created.';
         this.emitAppChange('posts');
         return story;
@@ -1219,7 +1219,8 @@ export class SessionService {
             ...story,
             isSensitive: story.isSensitive === true,
             authorImageUrl: this.normalizeMediaUrl(story.authorImageUrl),
-            mediaUrl: this.normalizeMediaUrl(story.mediaUrl) ?? story.mediaUrl
+            mediaUrl: this.normalizeMediaUrl(story.mediaUrl) ?? story.mediaUrl,
+            thumbnailUrl: this.normalizeMediaUrl(story.thumbnailUrl)
         };
     }
 

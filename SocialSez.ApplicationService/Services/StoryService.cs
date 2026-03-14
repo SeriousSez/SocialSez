@@ -32,6 +32,12 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             throw new ArgumentException("Story media is required.", nameof(request));
         }
 
+        var thumbnailUrl = request.ThumbnailUrl?.Trim();
+        if (string.IsNullOrWhiteSpace(thumbnailUrl))
+        {
+            thumbnailUrl = null;
+        }
+
         var caption = request.Caption?.Trim();
         if (caption?.Length > 300)
         {
@@ -44,6 +50,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             AuthorId = request.AuthorId,
             Caption = string.IsNullOrWhiteSpace(caption) ? null : caption,
             MediaUrl = mediaUrl,
+            ThumbnailUrl = thumbnailUrl,
             IsSensitive = request.IsSensitive,
             CreatedAtUtc = DateTime.UtcNow,
             ExpiresAtUtc = DateTime.UtcNow.AddHours(StoryExpiryHours)
@@ -59,6 +66,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             author.ImageUrl,
             story.Caption,
             story.MediaUrl,
+            story.ThumbnailUrl,
             story.IsSensitive,
             story.CreatedAtUtc,
             story.ExpiresAtUtc,
@@ -213,6 +221,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
                         story.Author.ImageUrl,
                         story.Caption,
                         story.MediaUrl,
+                        story.ThumbnailUrl,
                         story.IsSensitive,
                         story.CreatedAtUtc,
                         story.ExpiresAtUtc,
@@ -305,7 +314,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
                 var cover = collection.Items
                     .OrderBy(item => item.AddedAtUtc)
-                    .Select(item => item.Story.MediaUrl)
+                    .Select(item => item.Story.ThumbnailUrl ?? item.Story.MediaUrl)
                     .FirstOrDefault();
 
                 return new StoryCollectionDto(
@@ -423,7 +432,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
         var cover = refreshed.Items
             .OrderBy(item => item.AddedAtUtc)
-            .Select(item => item.Story.MediaUrl)
+            .Select(item => item.Story.ThumbnailUrl ?? item.Story.MediaUrl)
             .FirstOrDefault();
 
         return new StoryCollectionDto(
@@ -471,7 +480,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
 
         var cover = refreshed.Items
             .OrderBy(collectionItem => collectionItem.AddedAtUtc)
-            .Select(collectionItem => collectionItem.Story.MediaUrl)
+            .Select(collectionItem => collectionItem.Story.ThumbnailUrl ?? collectionItem.Story.MediaUrl)
             .FirstOrDefault();
 
         return new StoryCollectionDto(
@@ -523,6 +532,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             story.Author.ImageUrl,
             story.Caption,
             story.MediaUrl,
+            story.ThumbnailUrl,
             story.IsSensitive,
             story.CreatedAtUtc,
             story.ExpiresAtUtc,
@@ -599,6 +609,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
                 author.ImageUrl,
                 story.Caption,
                 story.MediaUrl,
+                story.ThumbnailUrl,
                 story.IsSensitive,
                 story.CreatedAtUtc,
                 story.ExpiresAtUtc,
@@ -665,6 +676,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             author.ImageUrl,
             story.Caption,
             story.MediaUrl,
+            story.ThumbnailUrl,
             story.IsSensitive,
             story.CreatedAtUtc,
             story.ExpiresAtUtc,
@@ -690,6 +702,14 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             try
             {
                 await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Stories ADD COLUMN IsSensitive INTEGER NOT NULL DEFAULT 0;", cancellationToken);
+            }
+            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+            {
+            }
+
+            try
+            {
+                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Stories ADD COLUMN ThumbnailUrl TEXT NULL;", cancellationToken);
             }
             catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
             {

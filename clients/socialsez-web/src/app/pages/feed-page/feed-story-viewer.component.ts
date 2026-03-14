@@ -28,6 +28,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     @Input() canReport = false;
     @Input() reportingStory = false;
     @Input() canSaveToCollection = false;
+    @Input() savedToCollection = false;
     @Input() savingToCollection = false;
     @Input() errorMessage = '';
     @Input() hideSensitiveMedia = false;

@@ -32,8 +32,11 @@ public class StoriesController(IStoryService storyService, SocialSezContext dbCo
             }
 
             var mediaUrl = await SaveMediaAsync(profileId, request.Media, cancellationToken);
+            var thumbnailUrl = request.Thumbnail is { Length: > 0 }
+                ? await SaveThumbnailAsync(profileId, request.Thumbnail, cancellationToken)
+                : null;
             var story = await storyService.CreateAsync(
-                new CreateStoryRequest(profileId, request.Caption, mediaUrl, request.IsSensitive),
+                new CreateStoryRequest(profileId, request.Caption, mediaUrl, thumbnailUrl, request.IsSensitive),
                 cancellationToken);
 
             return Ok(story);
@@ -274,6 +277,34 @@ public class StoriesController(IStoryService storyService, SocialSezContext dbCo
         return BuildUploadedMediaUrl(uploaded.Id);
     }
 
+    private async Task<string> SaveThumbnailAsync(Guid profileId, IFormFile file, CancellationToken cancellationToken)
+    {
+        var extension = Path.GetExtension(file.FileName);
+        if (!AllowedThumbnailExtensions.Contains(extension))
+        {
+            throw new ArgumentException("Allowed story thumbnail files: .jpg, .jpeg, .png, .webp.");
+        }
+
+        await using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, cancellationToken);
+
+        var uploaded = new UploadedImage
+        {
+            Id = Guid.NewGuid(),
+            UploadedByProfileId = profileId,
+            ContentType = NormalizeThumbnailContentType(file.ContentType, extension),
+            OriginalFileName = Path.GetFileName(file.FileName),
+            FileExtension = extension.ToLowerInvariant(),
+            Content = memoryStream.ToArray(),
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        dbContext.UploadedImages.Add(uploaded);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return BuildUploadedMediaUrl(uploaded.Id);
+    }
+
     private string BuildUploadedMediaUrl(Guid id)
     {
         var pathBase = Request.PathBase.HasValue ? Request.PathBase.Value : string.Empty;
@@ -304,10 +335,31 @@ public class StoriesController(IStoryService storyService, SocialSezContext dbCo
         };
     }
 
+    private static string NormalizeThumbnailContentType(string? contentType, string extension)
+    {
+        if (!string.IsNullOrWhiteSpace(contentType)
+            && contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            return contentType;
+        }
+
+        return extension.ToLowerInvariant() switch
+        {
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            _ => "image/jpeg"
+        };
+    }
+
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm", ".mov", ".m4v", ".ogv"
     };
 
-    public sealed record CreateStoryFormRequest(string? Caption, IFormFile? Media, bool IsSensitive = false);
+    private static readonly HashSet<string> AllowedThumbnailExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg", ".jpeg", ".png", ".webp"
+    };
+
+    public sealed record CreateStoryFormRequest(string? Caption, IFormFile? Media, IFormFile? Thumbnail, bool IsSensitive = false);
 }

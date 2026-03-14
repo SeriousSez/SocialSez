@@ -1,6 +1,6 @@
 namespace SocialSez.ApplicationService.Models;
 
-public sealed record CreateStoryRequest(Guid AuthorId, string? Caption, string MediaUrl, bool IsSensitive = false);
+public sealed record CreateStoryRequest(Guid AuthorId, string? Caption, string MediaUrl, string? ThumbnailUrl = null, bool IsSensitive = false);
 
 public sealed record StoryDto(
     Guid Id,
@@ -9,6 +9,7 @@ public sealed record StoryDto(
     string? AuthorImageUrl,
     string? Caption,
     string MediaUrl,
+    string? ThumbnailUrl,
     bool IsSensitive,
     DateTime CreatedAtUtc,
     DateTime ExpiresAtUtc,

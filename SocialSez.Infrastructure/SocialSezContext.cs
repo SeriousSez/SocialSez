@@ -302,6 +302,7 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Caption).HasMaxLength(300);
             entity.Property(x => x.MediaUrl).HasMaxLength(1024).IsRequired();
+            entity.Property(x => x.ThumbnailUrl).HasMaxLength(1024);
 
             entity.HasOne(x => x.Author)
                 .WithMany(x => x.Stories)

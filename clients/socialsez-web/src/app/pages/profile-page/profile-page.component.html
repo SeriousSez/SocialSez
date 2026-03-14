@@ -352,10 +352,10 @@
         <div class="post-list" *ngIf="activeTab === 'posts' && !loading && posts.length; else noPostsYet">
             <app-post-card *ngFor="let post of posts" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [showActions]="isOwnProfile" [showBottomMeta]="true" [showCommentsCount]="true"
                 [hideSensitiveMedia]="hideSensitiveMediaEnabled" [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id"
-                [canInteract]="session.isAuthenticated()" (editValueChange)="editContent = $event" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()"
-                (deletePost)="requestDeletePost(post.id)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)"
-                (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)" (reportPost)="openPostReport(post)"
-                (reportComment)="openPostCommentReport(post, $event.id)">
+                [canInteract]="session.isAuthenticated()" [savedByMe]="isPostSaved(post.id)" (editValueChange)="editContent = $event" (toggleLike)="toggleLike(post)" (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (startEdit)="startEdit(post)"
+                (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)"
+                (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)" (saveToggled)="toggleSavedPost(post)"
+                (reportPost)="openPostReport(post)" (reportComment)="openPostCommentReport(post, $event.id)">
                 <div post-header class="author">
                     <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)">
                         <img class="avatar" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
@@ -371,9 +371,10 @@
 
         <section class="profile-reels" *ngIf="activeTab === 'reels' && !loading && reels.length; else noReelsYet">
             <app-feed-reels-list [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="activeUnseenStoryAuthorHandles" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId" [viewerProfileId]="currentProfileId"
-                [hideSensitiveMedia]="hideSensitiveMediaEnabled" [sharingReelId]="sharingReelId" [canInteract]="session.isAuthenticated()" [showOwnerActions]="isOwnProfile" [updatingReelId]="updatingReelId" [deletingReelId]="deletingReelId" (authorAvatarClicked)="openProfileOrStory($event)"
-                (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelUpdated)="updateReelCaption($event.reel, $event.caption)" (reelCommentUpdated)="updateReelComment($event)"
-                (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)" (reelDeleted)="deleteReel($event)" (reportRequested)="openReelReport($event)" (reelCommentReportRequested)="openReelCommentReport($event)">
+                [hideSensitiveMedia]="hideSensitiveMediaEnabled" [sharingReelId]="sharingReelId" [savedReelIds]="savedReelIds" [canInteract]="session.isAuthenticated()" [showOwnerActions]="isOwnProfile" [updatingReelId]="updatingReelId" [deletingReelId]="deletingReelId"
+                (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelUpdated)="updateReelCaption($event.reel, $event.caption)"
+                (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)" (saveToggled)="toggleSavedReel($event)" (reelDeleted)="deleteReel($event)" (reportRequested)="openReelReport($event)"
+                (reelCommentReportRequested)="openReelCommentReport($event)">
             </app-feed-reels-list>
         </section>
 
@@ -440,8 +441,8 @@
 
 <app-feed-story-viewer *ngIf="!isBlockedView" [activeStory]="activeStory" [activeStoryGroup]="activeStoryGroup" [activeStoryIndex]="activeStoryIndex" [storyCount]="activeStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousStory" [hasNextStory]="hasNextStory"
     [hideSensitiveMedia]="hideSensitiveMediaEnabled" [liked]="activeStory ? isStoryLiked(activeStory.id) : false" [sendingReply]="sendingStoryReply" [sharingStory]="sharingStoryMessage" [canDelete]="canDeleteActiveStory" [deletingStory]="deletingStory" [canReport]="canReportActiveStory"
-    [reportingStory]="reportingContent" [canSaveToCollection]="canSaveActiveStoryToCollection" [savingToCollection]="addingStoryToCollection" [errorMessage]="storyViewerError" (closed)="closeStoryViewer()" (previous)="showPreviousStory()" (next)="showNextStory()"
-    (replySubmitted)="sendStoryReply($event)" (likeToggled)="toggleStoryLike($event)" (shareRequested)="shareStoryAsMessage($event)" (saveToCollectionRequested)="onSaveActiveStoryToCollectionRequested($event)" (deleteRequested)="requestDeleteStory($event)"
+    [reportingStory]="reportingContent" [canSaveToCollection]="canSaveActiveStoryToCollection" [savedToCollection]="isActiveStorySavedToCollection" [savingToCollection]="addingStoryToCollection" [errorMessage]="storyViewerError" (closed)="closeStoryViewer()" (previous)="showPreviousStory()"
+    (next)="showNextStory()" (replySubmitted)="sendStoryReply($event)" (likeToggled)="toggleStoryLike($event)" (shareRequested)="shareStoryAsMessage($event)" (saveToCollectionRequested)="onSaveActiveStoryToCollectionRequested($event)" (deleteRequested)="requestDeleteStory($event)"
     (reportRequested)="openStoryReport($event)">
 </app-feed-story-viewer>
 

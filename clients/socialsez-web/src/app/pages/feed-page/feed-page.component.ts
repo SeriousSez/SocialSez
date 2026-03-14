@@ -781,8 +781,9 @@ export class FeedPageComponent implements OnDestroy {
         void (async () => {
             try {
                 const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile!);
+                const storyThumbnail = await this.buildStoryThumbnailForUpload(uploadStoryMedia);
                 const isSensitive = this.markStorySensitive;
-                await this.session.createStoryAsync(uploadStoryMedia, undefined, isSensitive);
+                await this.session.createStoryAsync(uploadStoryMedia, undefined, isSensitive, storyThumbnail);
                 await this.load();
                 handle.succeed('Story published!');
             } catch {
@@ -2323,7 +2324,14 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     private async captureStoryVideoFrame(file: File, timeSeconds: number): Promise<StoryTrimPreviewOption> {
-        return new Promise<StoryTrimPreviewOption>((resolve, reject) => {
+        const blob = await this.captureStoryVideoFrameBlob(file, timeSeconds);
+        return {
+            previewUrl: URL.createObjectURL(blob)
+        };
+    }
+
+    private async captureStoryVideoFrameBlob(file: File, timeSeconds: number): Promise<Blob> {
+        return new Promise<Blob>((resolve, reject) => {
             const url = URL.createObjectURL(file);
             const video = document.createElement('video');
             video.src = url;
@@ -2355,7 +2363,7 @@ export class FeedPageComponent implements OnDestroy {
                     context.drawImage(video, 0, 0, canvas.width, canvas.height);
                     const blob = await this.canvasToBlob(canvas, 'image/jpeg', 0.85);
                     cleanup();
-                    resolve({ previewUrl: URL.createObjectURL(blob) });
+                    resolve(blob);
                 } catch (error) {
                     cleanup();
                     reject(error);
@@ -2367,6 +2375,20 @@ export class FeedPageComponent implements OnDestroy {
                 reject(new Error('Could not load video for frame capture.'));
             };
         });
+    }
+
+    private async buildStoryThumbnailForUpload(file: File): Promise<File | undefined> {
+        if (!file.type.startsWith('video/')) {
+            return undefined;
+        }
+
+        try {
+            const captureTime = Math.min(0.1, Math.max(0, this.storyTrimStartSeconds));
+            const blob = await this.captureStoryVideoFrameBlob(file, captureTime);
+            return new File([blob], `story-thumb-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        } catch {
+            return undefined;
+        }
     }
 
     private getStoryAspectCrop(width: number, height: number): { x: number; y: number; width: number; height: number } {

@@ -6,6 +6,7 @@ public class Story
     public Guid AuthorId { get; set; }
     public string? Caption { get; set; }
     public string MediaUrl { get; set; } = string.Empty;
+    public string? ThumbnailUrl { get; set; }
     public bool IsSensitive { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime ExpiresAtUtc { get; set; }

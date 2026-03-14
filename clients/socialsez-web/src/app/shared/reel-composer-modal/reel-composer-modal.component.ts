@@ -48,7 +48,7 @@ export class ReelComposerModalComponent implements OnDestroy {
     private static readonly ReelOutputAspect = 9 / 16;
     private static readonly MaxTrimDurationSeconds = 180;
     private static readonly CloseAnimationDurationMs = 180;
-    private static readonly ReelCoverFrameCount = 4;
+    private static readonly ReelCoverFrameCount = 9;
     private static readonly ReelOutputWidth = 540;
     private static readonly ReelOutputFps = 24;
     private readonly draftStorageKey = 'socialsez.reel-composer.draft.v1';
