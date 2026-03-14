@@ -62,6 +62,23 @@ interface DeviceSessionEntry {
 
 type SettingsSectionKey = 'profile' | 'account' | 'privacy' | 'session' | 'preferences' | 'notifications' | 'safety' | 'security' | 'data' | 'blocked' | 'logout';
 type AccountActionKind = 'deactivate' | 'delete';
+type SettingsDropdownKey =
+    'birthDay'
+    | 'birthMonth'
+    | 'birthYear'
+    | 'country'
+    | 'commentsAudience'
+    | 'mentionsAudience'
+    | 'messagesAudience'
+    | 'storyRepliesAudience'
+    | 'language'
+    | 'region'
+    | 'sensitiveContentLevel';
+
+interface SettingsSelectOption {
+    value: string;
+    label: string;
+}
 
 const settingsSectionByFragment: Record<string, SettingsSectionKey> = {
     'settings-section-profile': 'profile',
@@ -130,6 +147,7 @@ export class SettingsPageComponent implements OnDestroy {
     dataActionWorking = false;
     addMutedKeywordValue = '';
     addMutedHandleValue = '';
+    openSettingsDropdown: SettingsDropdownKey | null = null;
     mutedHandleSuggestions: ProfileDto[] = [];
     mutedHandleSuggestionsOpen = false;
     mutedHandleSuggestionsLoading = false;
@@ -213,6 +231,22 @@ export class SettingsPageComponent implements OnDestroy {
         { value: 'UA', label: 'Ukraine' },
         { value: 'US', label: 'United States' },
         { value: 'ZA', label: 'South Africa' }
+    ];
+    readonly daySelectOptions: ReadonlyArray<SettingsSelectOption> = [
+        { value: '', label: 'Day' },
+        ...this.dayOptions.map(day => ({ value: day, label: day }))
+    ];
+    readonly monthSelectOptions: ReadonlyArray<SettingsSelectOption> = [
+        { value: '', label: 'Month' },
+        ...this.monthOptions.map(month => ({ value: month, label: month }))
+    ];
+    readonly yearSelectOptions: ReadonlyArray<SettingsSelectOption> = [
+        { value: '', label: 'Year' },
+        ...this.yearOptions.map(year => ({ value: `${year}`, label: `${year}` }))
+    ];
+    readonly countrySelectOptions: ReadonlyArray<SettingsSelectOption> = [
+        { value: '', label: 'Select country (optional)' },
+        ...this.countryOptions.map(country => ({ value: country.value, label: country.label }))
     ];
 
     @ViewChild('avatarFileInput') private avatarFileInputRef?: ElementRef<HTMLInputElement>;
@@ -325,6 +359,8 @@ export class SettingsPageComponent implements OnDestroy {
     }
 
     toggleSection(section: SettingsSectionKey): void {
+        this.openSettingsDropdown = null;
+
         for (const key of Object.keys(this.sectionOpenState) as SettingsSectionKey[]) {
             this.sectionOpenState[key] = key === section;
         }
@@ -477,6 +513,147 @@ export class SettingsPageComponent implements OnDestroy {
             || this.hasNotificationChanges
             || this.hasSafetyChanges
             || this.hasAccessibilityChanges;
+    }
+
+    isSettingsDropdownOpen(key: SettingsDropdownKey): boolean {
+        return this.openSettingsDropdown === key;
+    }
+
+    toggleSettingsDropdown(key: SettingsDropdownKey): void {
+        this.openSettingsDropdown = this.openSettingsDropdown === key ? null : key;
+    }
+
+    closeSettingsDropdown(): void {
+        this.openSettingsDropdown = null;
+    }
+
+    selectSettingsOption(key: SettingsDropdownKey, value: string): void {
+        switch (key) {
+            case 'birthDay':
+                this.birthDay = value;
+                break;
+            case 'birthMonth':
+                this.birthMonth = value;
+                break;
+            case 'birthYear':
+                this.birthYear = value;
+                break;
+            case 'country':
+                this.countryCode = value;
+                break;
+            case 'commentsAudience':
+                this.discoveryPrivacyPrefs.commentsAudience = value as AudiencePreference;
+                break;
+            case 'mentionsAudience':
+                this.discoveryPrivacyPrefs.mentionsAudience = value as AudiencePreference;
+                break;
+            case 'messagesAudience':
+                this.discoveryPrivacyPrefs.messagesAudience = value as AudiencePreference;
+                break;
+            case 'storyRepliesAudience':
+                this.discoveryPrivacyPrefs.storyRepliesAudience = value as AudiencePreference;
+                break;
+            case 'language':
+                this.accessibilityPrefs.language = value;
+                break;
+            case 'region':
+                this.accessibilityPrefs.region = value;
+                break;
+            case 'sensitiveContentLevel':
+                this.safetyPrefs.sensitiveContentLevel = value as SensitiveContentLevel;
+                break;
+            default:
+                break;
+        }
+
+        this.openSettingsDropdown = null;
+    }
+
+    getSettingsDropdownLabel(key: SettingsDropdownKey): string {
+        const options = this.getSettingsDropdownOptions(key);
+        const currentValue = this.getSettingsDropdownValue(key);
+        const selected = options.find(option => option.value === currentValue);
+        if (selected) {
+            return selected.label;
+        }
+
+        return options[0]?.label ?? '';
+    }
+
+    getSettingsDropdownOptions(key: SettingsDropdownKey): ReadonlyArray<SettingsSelectOption> {
+        switch (key) {
+            case 'birthDay':
+                return this.daySelectOptions;
+            case 'birthMonth':
+                return this.monthSelectOptions;
+            case 'birthYear':
+                return this.yearSelectOptions;
+            case 'country':
+                return this.countrySelectOptions;
+            case 'commentsAudience':
+            case 'mentionsAudience':
+            case 'messagesAudience':
+            case 'storyRepliesAudience':
+                return this.audienceOptions;
+            case 'language':
+                return this.languageOptions;
+            case 'region':
+                return this.regionOptions;
+            case 'sensitiveContentLevel':
+                return this.sensitiveContentOptions;
+            default:
+                return [];
+        }
+    }
+
+    getSettingsDropdownValue(key: SettingsDropdownKey): string {
+        switch (key) {
+            case 'birthDay':
+                return this.birthDay;
+            case 'birthMonth':
+                return this.birthMonth;
+            case 'birthYear':
+                return this.birthYear;
+            case 'country':
+                return this.countryCode;
+            case 'commentsAudience':
+                return this.discoveryPrivacyPrefs.commentsAudience;
+            case 'mentionsAudience':
+                return this.discoveryPrivacyPrefs.mentionsAudience;
+            case 'messagesAudience':
+                return this.discoveryPrivacyPrefs.messagesAudience;
+            case 'storyRepliesAudience':
+                return this.discoveryPrivacyPrefs.storyRepliesAudience;
+            case 'language':
+                return this.accessibilityPrefs.language;
+            case 'region':
+                return this.accessibilityPrefs.region;
+            case 'sensitiveContentLevel':
+                return this.safetyPrefs.sensitiveContentLevel;
+            default:
+                return '';
+        }
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent): void {
+        if (!this.openSettingsDropdown) {
+            return;
+        }
+
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+
+        if (!target.closest('.settings-dropdown')) {
+            this.openSettingsDropdown = null;
+        }
+    }
+
+    @HostListener('document:keydown.escape')
+    onEscapePressed(): void {
+        this.openSettingsDropdown = null;
     }
 
     resetPrivacyChanges(): void {

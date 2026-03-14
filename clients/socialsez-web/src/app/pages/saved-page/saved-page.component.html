@@ -5,6 +5,28 @@
             <p>{{ activeCount }} item{{ activeCount === 1 ? '' : 's' }}</p>
         </div>
 
+        <div class="mobile-collection-picker" *ngIf="collections.length">
+            <label id="savedCollectionLabel">Collection</label>
+
+            <div class="collection-dropdown" [class.open]="collectionMenuOpen">
+                <button type="button" class="collection-dropdown-trigger" aria-labelledby="savedCollectionLabel" [attr.aria-expanded]="collectionMenuOpen" aria-haspopup="listbox" (click)="toggleCollectionMenu()">
+                    <span>{{ selectedCollectionLabel }}</span>
+                    <i class="fa-duotone fa-light fa-chevron-down" aria-hidden="true"></i>
+                </button>
+
+                <div class="collection-dropdown-menu" role="listbox" *ngIf="collectionMenuOpen">
+                    <button type="button" role="option" class="collection-dropdown-option" [class.active]="selectedCollectionOption === 'all'" [attr.aria-selected]="selectedCollectionOption === 'all'" (click)="chooseCollectionOption('all')">
+                        All Saved
+                    </button>
+
+                    <button type="button" role="option" class="collection-dropdown-option" *ngFor="let collection of collections" [class.active]="selectedCollectionOption === collection.id" [attr.aria-selected]="selectedCollectionOption === collection.id"
+                        (click)="chooseCollectionOption(collection.id)">
+                        {{ collection.name }} ({{ collection.itemCount }})
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <app-segmented-tabs class="content-tabs" [tabs]="contentTabs" [activeTab]="activeContentTab" ariaLabel="Saved content type" (activeTabChange)="onContentTabChanged($event)">
         </app-segmented-tabs>
 

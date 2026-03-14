@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BlogPostDto, CommunityPostDto, ReelDto, SavedCollectionDto, SavedItemDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
@@ -18,7 +17,7 @@ interface SavedPostContentPart {
 @Component({
     selector: 'app-saved-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, SegmentedTabsComponent],
+    imports: [CommonModule, RouterLink, SegmentedTabsComponent],
     templateUrl: './saved-page.component.html',
     styleUrl: './saved-page.component.scss'
 })
@@ -39,6 +38,7 @@ export class SavedPageComponent implements OnInit {
     communityPosts: CommunityPostDto[] = [];
     blogPosts: BlogPostDto[] = [];
     view: SavedView = 'all';
+    collectionMenuOpen = false;
     activeContentTab: 'posts' | 'reels' | 'community-posts' | 'blog-posts' = 'posts';
     readonly contentTabs: readonly SegmentedTabItem[] = [
         { id: 'posts', label: 'Posts' },
@@ -46,6 +46,18 @@ export class SavedPageComponent implements OnInit {
         { id: 'community-posts', label: 'Community posts' },
         { id: 'blog-posts', label: 'Blog posts' }
     ];
+
+    get selectedCollectionOption(): string {
+        return this.view === 'all' ? 'all' : this.view.collectionId;
+    }
+
+    get selectedCollectionLabel(): string {
+        if (this.view === 'all') {
+            return 'All Saved';
+        }
+
+        return `${this.view.name}`;
+    }
 
     async ngOnInit(): Promise<void> {
         this.route.queryParamMap
@@ -57,6 +69,7 @@ export class SavedPageComponent implements OnInit {
 
     private async loadForViewAsync(collectionId: string | null): Promise<void> {
         this.isLoading = true;
+        this.collectionMenuOpen = false;
         try {
             this.collections = await this.session.loadCollectionsAsync();
 
@@ -170,6 +183,55 @@ export class SavedPageComponent implements OnInit {
 
     get isAllView(): boolean {
         return this.view === 'all';
+    }
+
+    toggleCollectionMenu(): void {
+        this.collectionMenuOpen = !this.collectionMenuOpen;
+    }
+
+    async chooseCollectionOption(selection: string): Promise<void> {
+        this.collectionMenuOpen = false;
+        await this.onCollectionSelectionChanged(selection);
+    }
+
+    closeCollectionMenu(): void {
+        this.collectionMenuOpen = false;
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent): void {
+        if (!this.collectionMenuOpen) {
+            return;
+        }
+
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+
+        if (!target.closest('.collection-dropdown')) {
+            this.collectionMenuOpen = false;
+        }
+    }
+
+    @HostListener('document:keydown.escape')
+    onEscapePressed(): void {
+        this.collectionMenuOpen = false;
+    }
+
+    async onCollectionSelectionChanged(selection: string): Promise<void> {
+        if (selection === 'all') {
+            await this.router.navigate(['/saved'], {
+                queryParams: { collectionId: null },
+                queryParamsHandling: 'merge'
+            });
+            return;
+        }
+
+        await this.router.navigate(['/saved'], {
+            queryParams: { collectionId: selection },
+            queryParamsHandling: 'merge'
+        });
     }
 
     onContentTabChanged(tabId: string): void {

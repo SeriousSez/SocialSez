@@ -60,25 +60,57 @@
                 <p class="meta"><strong>Joined:</strong> {{ profile.createdAtUtc | date:'mediumDate' }}</p>
                 <label>Date of birth
                     <div class="dob-select-row" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
-                        <select class="dob-select" [(ngModel)]="birthDay" name="settingsBirthDay" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
-                            <option value="">Day</option>
-                            <option *ngFor="let day of dayOptions" [value]="day">{{ day }}</option>
-                        </select>
-                        <select class="dob-select" [(ngModel)]="birthMonth" name="settingsBirthMonth" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
-                            <option value="">Month</option>
-                            <option *ngFor="let month of monthOptions" [value]="month">{{ month }}</option>
-                        </select>
-                        <select class="dob-select" [(ngModel)]="birthYear" name="settingsBirthYear" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
-                            <option value="">Year</option>
-                            <option *ngFor="let year of yearOptions" [value]="year">{{ year }}</option>
-                        </select>
+                        <div class="settings-dropdown dob-select" [class.open]="isSettingsDropdownOpen('birthDay')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('birthDay')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('birthDay')">
+                                <span>{{ getSettingsDropdownLabel('birthDay') }}</span>
+                                <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
+                            </button>
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('birthDay')">
+                                <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('birthDay')" [class.active]="getSettingsDropdownValue('birthDay') === option.value"
+                                    [attr.aria-selected]="getSettingsDropdownValue('birthDay') === option.value" (click)="selectSettingsOption('birthDay', option.value)">
+                                    {{ option.label }}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-dropdown dob-select" [class.open]="isSettingsDropdownOpen('birthMonth')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('birthMonth')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('birthMonth')">
+                                <span>{{ getSettingsDropdownLabel('birthMonth') }}</span>
+                                <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
+                            </button>
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('birthMonth')">
+                                <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('birthMonth')" [class.active]="getSettingsDropdownValue('birthMonth') === option.value"
+                                    [attr.aria-selected]="getSettingsDropdownValue('birthMonth') === option.value" (click)="selectSettingsOption('birthMonth', option.value)">
+                                    {{ option.label }}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-dropdown dob-select" [class.open]="isSettingsDropdownOpen('birthYear')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('birthYear')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('birthYear')">
+                                <span>{{ getSettingsDropdownLabel('birthYear') }}</span>
+                                <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
+                            </button>
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('birthYear')">
+                                <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('birthYear')" [class.active]="getSettingsDropdownValue('birthYear') === option.value"
+                                    [attr.aria-selected]="getSettingsDropdownValue('birthYear') === option.value" (click)="selectSettingsOption('birthYear', option.value)">
+                                    {{ option.label }}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </label>
                 <label>Country
-                    <select [(ngModel)]="countryCode">
-                        <option value="">Select country (optional)</option>
-                        <option *ngFor="let country of countryOptions" [ngValue]="country.value">{{ country.label }}</option>
-                    </select>
+                    <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('country')">
+                        <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('country')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('country')">
+                            <span>{{ getSettingsDropdownLabel('country') }}</span>
+                            <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('country')">
+                            <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('country')" [class.active]="getSettingsDropdownValue('country') === option.value"
+                                [attr.aria-selected]="getSettingsDropdownValue('country') === option.value" (click)="selectSettingsOption('country', option.value)">
+                                {{ option.label }}
+                            </button>
+                        </div>
+                    </div>
                 </label>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="marketingOptIn" />
@@ -114,24 +146,60 @@
 
                 <div class="field-group">
                     <label>Who can comment on your content?
-                        <select [(ngModel)]="discoveryPrivacyPrefs.commentsAudience">
-                            <option *ngFor="let option of audienceOptions" [ngValue]="option.value">{{ option.label }}</option>
-                        </select>
+                        <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('commentsAudience')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('commentsAudience')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('commentsAudience')">
+                                <span>{{ getSettingsDropdownLabel('commentsAudience') }}</span>
+                                <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
+                            </button>
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('commentsAudience')">
+                                <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('commentsAudience')" [class.active]="getSettingsDropdownValue('commentsAudience') === option.value"
+                                    [attr.aria-selected]="getSettingsDropdownValue('commentsAudience') === option.value" (click)="selectSettingsOption('commentsAudience', option.value)">
+                                    {{ option.label }}
+                                </button>
+                            </div>
+                        </div>
                     </label>
                     <label>Who can mention or tag you?
-                        <select [(ngModel)]="discoveryPrivacyPrefs.mentionsAudience">
-                            <option *ngFor="let option of audienceOptions" [ngValue]="option.value">{{ option.label }}</option>
-                        </select>
+                        <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('mentionsAudience')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('mentionsAudience')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('mentionsAudience')">
+                                <span>{{ getSettingsDropdownLabel('mentionsAudience') }}</span>
+                                <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
+                            </button>
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('mentionsAudience')">
+                                <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('mentionsAudience')" [class.active]="getSettingsDropdownValue('mentionsAudience') === option.value"
+                                    [attr.aria-selected]="getSettingsDropdownValue('mentionsAudience') === option.value" (click)="selectSettingsOption('mentionsAudience', option.value)">
+                                    {{ option.label }}
+                                </button>
+                            </div>
+                        </div>
                     </label>
                     <label>Who can message you?
-                        <select [(ngModel)]="discoveryPrivacyPrefs.messagesAudience">
-                            <option *ngFor="let option of audienceOptions" [ngValue]="option.value">{{ option.label }}</option>
-                        </select>
+                        <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('messagesAudience')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('messagesAudience')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('messagesAudience')">
+                                <span>{{ getSettingsDropdownLabel('messagesAudience') }}</span>
+                                <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
+                            </button>
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('messagesAudience')">
+                                <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('messagesAudience')" [class.active]="getSettingsDropdownValue('messagesAudience') === option.value"
+                                    [attr.aria-selected]="getSettingsDropdownValue('messagesAudience') === option.value" (click)="selectSettingsOption('messagesAudience', option.value)">
+                                    {{ option.label }}
+                                </button>
+                            </div>
+                        </div>
                     </label>
                     <label>Who can reply to your stories?
-                        <select [(ngModel)]="discoveryPrivacyPrefs.storyRepliesAudience">
-                            <option *ngFor="let option of audienceOptions" [ngValue]="option.value">{{ option.label }}</option>
-                        </select>
+                        <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('storyRepliesAudience')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('storyRepliesAudience')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('storyRepliesAudience')">
+                                <span>{{ getSettingsDropdownLabel('storyRepliesAudience') }}</span>
+                                <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
+                            </button>
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('storyRepliesAudience')">
+                                <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('storyRepliesAudience')" [class.active]="getSettingsDropdownValue('storyRepliesAudience') === option.value"
+                                    [attr.aria-selected]="getSettingsDropdownValue('storyRepliesAudience') === option.value" (click)="selectSettingsOption('storyRepliesAudience', option.value)">
+                                    {{ option.label }}
+                                </button>
+                            </div>
+                        </div>
                     </label>
                 </div>
 
@@ -211,14 +279,32 @@
                     High contrast mode
                 </label>
                 <label>Language
-                    <select [(ngModel)]="accessibilityPrefs.language">
-                        <option *ngFor="let option of languageOptions" [ngValue]="option.value">{{ option.label }}</option>
-                    </select>
+                    <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('language')">
+                        <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('language')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('language')">
+                            <span>{{ getSettingsDropdownLabel('language') }}</span>
+                            <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('language')">
+                            <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('language')" [class.active]="getSettingsDropdownValue('language') === option.value"
+                                [attr.aria-selected]="getSettingsDropdownValue('language') === option.value" (click)="selectSettingsOption('language', option.value)">
+                                {{ option.label }}
+                            </button>
+                        </div>
+                    </div>
                 </label>
                 <label>Region
-                    <select [(ngModel)]="accessibilityPrefs.region">
-                        <option *ngFor="let option of regionOptions" [ngValue]="option.value">{{ option.label }}</option>
-                    </select>
+                    <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('region')">
+                        <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('region')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('region')">
+                            <span>{{ getSettingsDropdownLabel('region') }}</span>
+                            <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('region')">
+                            <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('region')" [class.active]="getSettingsDropdownValue('region') === option.value" [attr.aria-selected]="getSettingsDropdownValue('region') === option.value"
+                                (click)="selectSettingsOption('region', option.value)">
+                                {{ option.label }}
+                            </button>
+                        </div>
+                    </div>
                 </label>
                 <div class="actions">
                     <button type="button" (click)="saveAccessibilityPrefs()" [disabled]="!hasAccessibilityChanges || accessibilitySaving">{{ accessibilitySaving ? 'Saving...' : 'Save Accessibility' }}</button>
@@ -269,9 +355,18 @@
         <div class="section-body" [class.open]="sectionOpenState.safety" [attr.aria-hidden]="!sectionOpenState.safety" [attr.inert]="!sectionOpenState.safety ? '' : null">
             <div class="section-inner">
                 <label>Sensitive content level
-                    <select [(ngModel)]="safetyPrefs.sensitiveContentLevel">
-                        <option *ngFor="let option of sensitiveContentOptions" [ngValue]="option.value">{{ option.label }}</option>
-                    </select>
+                    <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('sensitiveContentLevel')">
+                        <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('sensitiveContentLevel')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('sensitiveContentLevel')">
+                            <span>{{ getSettingsDropdownLabel('sensitiveContentLevel') }}</span>
+                            <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('sensitiveContentLevel')">
+                            <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('sensitiveContentLevel')" [class.active]="getSettingsDropdownValue('sensitiveContentLevel') === option.value"
+                                [attr.aria-selected]="getSettingsDropdownValue('sensitiveContentLevel') === option.value" (click)="selectSettingsOption('sensitiveContentLevel', option.value)">
+                                {{ option.label }}
+                            </button>
+                        </div>
+                    </div>
                 </label>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="safetyPrefs.hideSensitiveMedia" />
