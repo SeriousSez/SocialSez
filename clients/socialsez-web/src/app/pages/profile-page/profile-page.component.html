@@ -355,6 +355,62 @@
             <app-skeleton *ngFor="let _ of [1, 2]" width="100%" height="500px" radius="12px"></app-skeleton>
         </section>
 
+        @if (activeTab === 'analytics' && !loading && isOwnProfile) {
+        <section class="creator-analytics" aria-label="Creator analytics">
+            <header class="creator-analytics-header">
+                <h3>Creator Analytics</h3>
+                <span>Last {{ creatorAnalyticsWindowDays }} days</span>
+            </header>
+
+            @if (loadingCreatorAnalytics) {
+            <div class="creator-analytics-skeleton" aria-label="Loading creator analytics">
+                <app-skeleton *ngFor="let _ of [1, 2, 3, 4]" width="100%" height="78px" radius="12px"></app-skeleton>
+            </div>
+            } @else {
+            <div class="creator-analytics-grid">
+                <article class="creator-analytics-metric">
+                    <span class="label">Views</span>
+                    <strong>{{ creatorAnalytics?.totalViews ?? 0 | number }}</strong>
+                </article>
+                <article class="creator-analytics-metric">
+                    <span class="label">Watch Time</span>
+                    <strong>{{ formatWatchTime(creatorAnalytics?.totalWatchSeconds ?? 0) }}</strong>
+                </article>
+                <article class="creator-analytics-metric">
+                    <span class="label">Saves</span>
+                    <strong>{{ creatorAnalytics?.totalSaves ?? 0 | number }}</strong>
+                </article>
+                <article class="creator-analytics-metric">
+                    <span class="label">Follower Growth</span>
+                    <strong [class.negative]="(creatorAnalytics?.followerGrowth ?? 0) < 0">{{ formatFollowerGrowth(creatorAnalytics?.followerGrowth ?? 0) }}</strong>
+                </article>
+            </div>
+
+            @if (creatorAnalyticsTopReels.length) {
+            <section class="creator-top-reels" aria-label="Top performing reels">
+                <h4>Top Reels</h4>
+                @for (item of creatorAnalyticsTopReels; track item.reelId) {
+                <article class="creator-top-reel-row">
+                    <div class="copy">
+                        <strong>{{ item.caption?.trim() || 'Untitled reel' }}</strong>
+                        <span>{{ item.createdAtUtc | date:'mediumDate' }}</span>
+                    </div>
+                    <div class="stats">
+                        <span>{{ item.views | number }} views</span>
+                        <span>{{ item.saves | number }} saves</span>
+                    </div>
+                </article>
+                }
+            </section>
+            }
+
+            @if (creatorAnalyticsError) {
+            <p class="creator-analytics-error">{{ creatorAnalyticsError }}</p>
+            }
+            }
+        </section>
+        }
+
         <div class="post-list" *ngIf="activeTab === 'posts' && !loading && posts.length; else noPostsYet">
             <app-post-card *ngFor="let post of posts" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [showActions]="isOwnProfile" [hideSensitiveMedia]="hideSensitiveMediaEnabled"
                 [reacting]="reactingPostId === post.id" [busy]="reactingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [savingEdit]="savingPost" [deleting]="deletingPostId === post.id" [canInteract]="session.isAuthenticated()" [savedByMe]="isPostSaved(post.id)"

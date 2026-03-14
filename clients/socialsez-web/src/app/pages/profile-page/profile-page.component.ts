@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
-import { PostDto, ProfileActivitySummaryDto, ProfileDto, ReelDto, StoryCollectionDto, StoryDto, StoryGroupDto } from '../../core/api.types';
+import { CreatorAnalyticsSummaryDto, CreatorReelAnalyticsItemDto, PostDto, ProfileActivitySummaryDto, ProfileDto, ReelDto, StoryCollectionDto, StoryDto, StoryGroupDto } from '../../core/api.types';
 import { executePostShareAction, executePostShareToChat, executePostShareToFeedAndReload } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
 import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
@@ -62,8 +62,13 @@ export class ProfilePageComponent implements OnDestroy {
 
     @ViewChild('storyPreviewVideo') private readonly storyPreviewVideoRef?: ElementRef<HTMLVideoElement>;
 
-    activeTab: 'posts' | 'reels' = 'posts';
-    readonly contentTabs: readonly SegmentedTabItem[] = [
+    activeTab: 'posts' | 'reels' | 'analytics' = 'posts';
+    private readonly ownContentTabs: readonly SegmentedTabItem[] = [
+        { id: 'posts', label: 'Posts' },
+        { id: 'reels', label: 'Reels' },
+        { id: 'analytics', label: 'Analytics' }
+    ];
+    private readonly guestContentTabs: readonly SegmentedTabItem[] = [
         { id: 'posts', label: 'Posts' },
         { id: 'reels', label: 'Reels' }
     ];
@@ -156,6 +161,9 @@ export class ProfilePageComponent implements OnDestroy {
     deletingStoryCollection = false;
     pendingDeleteStoryCollectionId: string | null = null;
     activitySummary: ProfileActivitySummaryDto | null = null;
+    creatorAnalytics: CreatorAnalyticsSummaryDto | null = null;
+    creatorAnalyticsError = '';
+    loadingCreatorAnalytics = false;
     private loadInFlight = false;
     private reloadQueued = false;
     private hasLoadedProfileOnce = false;
@@ -554,6 +562,52 @@ export class ProfilePageComponent implements OnDestroy {
         return this.activitySummary?.followingCount ?? 0;
     }
 
+    get contentTabs(): readonly SegmentedTabItem[] {
+        return this.isOwnProfile ? this.ownContentTabs : this.guestContentTabs;
+    }
+
+    get creatorAnalyticsWindowDays(): number {
+        return this.creatorAnalytics?.days ?? 30;
+    }
+
+    get creatorAnalyticsTopReels(): CreatorReelAnalyticsItemDto[] {
+        const reels = this.creatorAnalytics?.reels ?? [];
+        return reels
+            .slice()
+            .sort((left, right) => right.views - left.views)
+            .slice(0, 3);
+    }
+
+    formatFollowerGrowth(value: number): string {
+        if (value === 0) {
+            return '0';
+        }
+
+        const sign = value > 0 ? '+' : '';
+        return `${sign}${value.toLocaleString()}`;
+    }
+
+    formatWatchTime(totalSeconds: number): string {
+        if (totalSeconds <= 0) {
+            return '0s';
+        }
+
+        const roundedSeconds = Math.round(totalSeconds);
+        const hours = Math.floor(roundedSeconds / 3600);
+        const minutes = Math.floor((roundedSeconds % 3600) / 60);
+        const seconds = roundedSeconds % 60;
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        }
+
+        if (minutes > 0) {
+            return `${minutes}m ${seconds}s`;
+        }
+
+        return `${seconds}s`;
+    }
+
     get isEstablishedAccount(): boolean {
         const createdAt = this.viewedProfile?.createdAtUtc;
         if (!createdAt) {
@@ -739,12 +793,16 @@ export class ProfilePageComponent implements OnDestroy {
         }
     }
 
-    setActiveTab(tab: 'posts' | 'reels'): void {
+    setActiveTab(tab: 'posts' | 'reels' | 'analytics'): void {
         this.activeTab = tab;
     }
 
     onActiveTabChanged(tabId: string): void {
-        if (tabId !== 'posts' && tabId !== 'reels') {
+        if (tabId !== 'posts' && tabId !== 'reels' && tabId !== 'analytics') {
+            return;
+        }
+
+        if (tabId === 'analytics' && !this.isOwnProfile) {
             return;
         }
 
@@ -1353,10 +1411,16 @@ export class ProfilePageComponent implements OnDestroy {
                         this.viewedProfile = null;
                         this.posts = [];
                         this.activitySummary = null;
+                        this.creatorAnalytics = null;
+                        this.creatorAnalyticsError = '';
+                        this.loadingCreatorAnalytics = false;
                         continue;
                     }
 
                     this.viewedProfile = profile;
+                    if (!this.isOwnProfile && this.activeTab === 'analytics') {
+                        this.activeTab = 'posts';
+                    }
                     this.hasLoadedProfileOnce = true;
                     this.lastLoadedProfileKey = currentProfileKey;
                     this.showComposer = false;
@@ -1396,6 +1460,9 @@ export class ProfilePageComponent implements OnDestroy {
                         this.posts = [];
                         this.reels = [];
                         this.activitySummary = null;
+                        this.creatorAnalytics = null;
+                        this.creatorAnalyticsError = '';
+                        this.loadingCreatorAnalytics = false;
                         this.storyCollections = [];
                         this.storyArchive = [];
                         this.selectedStoryCollectionId = '';
@@ -1437,6 +1504,14 @@ export class ProfilePageComponent implements OnDestroy {
                         } catch {
                             this.activitySummary = null;
                         }
+
+                        if (this.isOwnProfile) {
+                            void this.loadCreatorAnalyticsAsync(profile.id);
+                        } else {
+                            this.creatorAnalytics = null;
+                            this.creatorAnalyticsError = '';
+                            this.loadingCreatorAnalytics = false;
+                        }
                     }
                 } catch {
                     this.error = this.viewedHandle
@@ -1450,6 +1525,9 @@ export class ProfilePageComponent implements OnDestroy {
                     this.viewedProfileHasUnseenStory = false;
                     this.posts = [];
                     this.activitySummary = null;
+                    this.creatorAnalytics = null;
+                    this.creatorAnalyticsError = '';
+                    this.loadingCreatorAnalytics = false;
                     this.isBlocked = false;
                     this.isBlockedByTarget = false;
                     this.isMuted = false;
@@ -1460,6 +1538,38 @@ export class ProfilePageComponent implements OnDestroy {
             } while (this.reloadQueued);
         } finally {
             this.loadInFlight = false;
+        }
+    }
+
+    private async loadCreatorAnalyticsAsync(profileId: string): Promise<void> {
+        if (!this.isOwnProfile || this.viewedProfile?.id !== profileId) {
+            return;
+        }
+
+        this.loadingCreatorAnalytics = true;
+        this.creatorAnalyticsError = '';
+        this.creatorAnalytics = null;
+        this.cdr.detectChanges();
+
+        try {
+            const summary = await this.session.loadCreatorReelAnalyticsAsync(30);
+            if (!this.isOwnProfile || this.viewedProfile?.id !== profileId) {
+                return;
+            }
+
+            this.creatorAnalytics = summary;
+        } catch {
+            if (!this.isOwnProfile || this.viewedProfile?.id !== profileId) {
+                return;
+            }
+
+            this.creatorAnalytics = null;
+            this.creatorAnalyticsError = 'Could not load creator analytics right now.';
+        } finally {
+            if (this.isOwnProfile && this.viewedProfile?.id === profileId) {
+                this.loadingCreatorAnalytics = false;
+                this.cdr.detectChanges();
+            }
         }
     }
 
