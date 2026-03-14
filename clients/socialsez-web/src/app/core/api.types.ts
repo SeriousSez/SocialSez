@@ -248,6 +248,9 @@ export interface PostDto {
     reactions: ReactionSummaryDto[];
     reactionDetails: PostReactionDetailDto[];
     comments: CommentDto[];
+    isDraft?: boolean;
+    scheduledPublishAtUtc?: string;
+    publishedAtUtc?: string;
 }
 
 export interface StoryDto {
@@ -263,6 +266,9 @@ export interface StoryDto {
     expiresAtUtc: string;
     viewedByMe: boolean;
     viewCount: number;
+    isDraft?: boolean;
+    scheduledPublishAtUtc?: string;
+    publishedAtUtc?: string;
 }
 
 export interface StoryGroupDto {
@@ -284,6 +290,13 @@ export interface StoryCollectionDto {
     stories: StoryDto[];
 }
 
+export interface StoryPlaybackProgressDto {
+    authorId: string;
+    storyId: string;
+    lastPositionSeconds: number;
+    updatedAtUtc: string;
+}
+
 export interface ReelDto {
     id: string;
     authorId: string;
@@ -297,7 +310,69 @@ export interface ReelDto {
     createdAtUtc: string;
     likeCount: number;
     likedByMe: boolean;
+    viewCount?: number;
+    totalWatchSeconds?: number;
+    saveCount?: number;
     comments: ReelCommentDto[];
+    isDraft?: boolean;
+    scheduledPublishAtUtc?: string;
+    publishedAtUtc?: string;
+}
+
+export interface ReelPlaybackDto {
+    reelId: string;
+    lastPositionSeconds: number;
+    totalWatchedSeconds: number;
+    isCompleted: boolean;
+    lastViewedAtUtc: string;
+}
+
+export interface CreateReelAbTestRequest {
+    variantATitle: string;
+    variantAThumbnailUrl?: string;
+    variantBTitle: string;
+    variantBThumbnailUrl?: string;
+}
+
+export interface ReelAbVariantStatsDto {
+    key: string;
+    title: string;
+    thumbnailUrl?: string;
+    impressions: number;
+    views: number;
+    watchSeconds: number;
+    averageWatchSecondsPerView: number;
+    viewRatePercent: number;
+}
+
+export interface ReelAbTestDto {
+    reelId: string;
+    isActive: boolean;
+    winningVariantKey?: string;
+    createdAtUtc: string;
+    updatedAtUtc: string;
+    variantA: ReelAbVariantStatsDto;
+    variantB: ReelAbVariantStatsDto;
+}
+
+export interface CreatorReelAnalyticsItemDto {
+    reelId: string;
+    caption?: string;
+    createdAtUtc: string;
+    views: number;
+    totalWatchSeconds: number;
+    averageWatchSeconds: number;
+    saves: number;
+    activeAbTest?: ReelAbTestDto;
+}
+
+export interface CreatorAnalyticsSummaryDto {
+    days: number;
+    totalViews: number;
+    totalWatchSeconds: number;
+    totalSaves: number;
+    followerGrowth: number;
+    reels: CreatorReelAnalyticsItemDto[];
 }
 
 export interface ReelCommentDto {

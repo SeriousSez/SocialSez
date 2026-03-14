@@ -36,7 +36,14 @@ public class StoriesController(IStoryService storyService, SocialSezContext dbCo
                 ? await SaveThumbnailAsync(profileId, request.Thumbnail, cancellationToken)
                 : null;
             var story = await storyService.CreateAsync(
-                new CreateStoryRequest(profileId, request.Caption, mediaUrl, thumbnailUrl, request.IsSensitive),
+                new CreateStoryRequest(
+                    profileId,
+                    request.Caption,
+                    mediaUrl,
+                    thumbnailUrl,
+                    request.IsSensitive,
+                    request.SaveAsDraft,
+                    request.ScheduledPublishAtUtc),
                 cancellationToken);
 
             return Ok(story);
@@ -82,6 +89,45 @@ public class StoriesController(IStoryService storyService, SocialSezContext dbCo
 
         var marked = await storyService.MarkViewedAsync(storyId, profileId, cancellationToken);
         return marked ? NoContent() : NotFound();
+    }
+
+    [Authorize]
+    [HttpPut("progress/{authorId:guid}")]
+    public async Task<ActionResult<StoryPlaybackProgressDto>> UpsertPlaybackProgress(Guid authorId, [FromBody] UpsertStoryPlaybackProgressRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var updated = await storyService.UpsertPlaybackProgressAsync(profileId, authorId, request, cancellationToken);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [Authorize]
+    [HttpGet("progress/{authorId:guid}")]
+    public async Task<ActionResult<StoryPlaybackProgressDto>> GetPlaybackProgress(Guid authorId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var progress = await storyService.GetPlaybackProgressAsync(profileId, authorId, cancellationToken);
+        return progress is null ? NotFound() : Ok(progress);
+    }
+
+    [Authorize]
+    [HttpGet("drafts/mine")]
+    public async Task<ActionResult<IReadOnlyCollection<StoryDto>>> GetMyDrafts([FromQuery] int take = 50, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var drafts = await storyService.GetDraftsAsync(profileId, take, cancellationToken);
+        return Ok(drafts);
     }
 
     [Authorize]
@@ -361,5 +407,11 @@ public class StoriesController(IStoryService storyService, SocialSezContext dbCo
         ".jpg", ".jpeg", ".png", ".webp"
     };
 
-    public sealed record CreateStoryFormRequest(string? Caption, IFormFile? Media, IFormFile? Thumbnail, bool IsSensitive = false);
+    public sealed record CreateStoryFormRequest(
+        string? Caption,
+        IFormFile? Media,
+        IFormFile? Thumbnail,
+        bool IsSensitive = false,
+        bool SaveAsDraft = false,
+        DateTime? ScheduledPublishAtUtc = null);
 }

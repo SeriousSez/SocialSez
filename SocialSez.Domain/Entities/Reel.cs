@@ -8,6 +8,9 @@ public class Reel
     public string VideoUrl { get; set; } = string.Empty;
     public string? ThumbnailUrl { get; set; }
     public bool IsSensitive { get; set; }
+    public bool IsDraft { get; set; }
+    public DateTime? ScheduledPublishAtUtc { get; set; }
+    public DateTime? PublishedAtUtc { get; set; }
     public int DurationSeconds { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 

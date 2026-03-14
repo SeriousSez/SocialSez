@@ -328,12 +328,18 @@
                     </div>
 
                     <p class="media-file">Stories expire automatically after 24 hours.</p>
+
+                    <label>
+                        <span class="media-file">Schedule publish (optional)</span>
+                        <input type="datetime-local" [value]="storyScheduledPublishLocal" (input)="onStoryScheduledPublishChanged($any($event.target).value)" [disabled]="postingStory" />
+                    </label>
                 </ng-container>
 
                 <p class="error" *ngIf="storyComposerError">{{ storyComposerError }}</p>
                 <div class="media-actions">
                     <button type="button" class="ghost" (click)="cancelStoryComposer()" [disabled]="postingStory">Cancel</button>
                     <button type="button" class="ghost" *ngIf="storyComposerStep === 2" (click)="goToStoryComposerStep(1)" [disabled]="postingStory">Back</button>
+                    <button type="button" class="ghost" *ngIf="storyComposerStep === 2" (click)="publishStory(true)" [disabled]="!storyMediaFile || (storyMediaIsVideo && !storyPreviewReady) || postingStory">Save Draft</button>
                     <button type="button" *ngIf="storyComposerStep === 2" (click)="publishStory()" [disabled]="!storyMediaFile || (storyMediaIsVideo && !storyPreviewReady) || postingStory">{{ postingStory ? 'Publishing...' : 'Publish Story' }}</button>
                 </div>
             </section>

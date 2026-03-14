@@ -1,0 +1,103 @@
+<div class="drafts-page">
+    <div class="drafts-content">
+        <div class="content-header">
+            <h3>My Drafts</h3>
+            <p>{{ activeCount }} item{{ activeCount === 1 ? '' : 's' }}</p>
+        </div>
+
+        <app-segmented-tabs class="content-tabs" [tabs]="contentTabs" [activeTab]="activeTab" ariaLabel="Draft type" (activeTabChange)="onContentTabChanged($event)">
+        </app-segmented-tabs>
+
+        @if (isLoading) {
+        <div class="skeleton-list" aria-hidden="true">
+            @for (item of skeletonItems; track item) {
+            <article class="skeleton-card">
+                <span class="skeleton-line title"></span>
+                <span class="skeleton-line body"></span>
+                <span class="skeleton-line body short"></span>
+                <span class="skeleton-line meta"></span>
+            </article>
+            }
+        </div>
+        } @else if (activeTab === 'posts' && postDrafts.length === 0) {
+        <div class="empty-state">
+            <i class="fa-duotone fa-thin fa-pen"></i>
+            <p>No post drafts yet.</p>
+            <a routerLink="/feed">Create a post draft</a>
+        </div>
+        } @else if (activeTab === 'reels' && reelDrafts.length === 0) {
+        <div class="empty-state">
+            <i class="fa-duotone fa-thin fa-film"></i>
+            <p>No reel drafts yet.</p>
+            <a routerLink="/feed">Create a reel draft</a>
+        </div>
+        } @else if (activeTab === 'stories' && storyDrafts.length === 0) {
+        <div class="empty-state">
+            <i class="fa-duotone fa-thin fa-camera"></i>
+            <p>No story drafts yet.</p>
+            <a routerLink="/feed">Create a story draft</a>
+        </div>
+        } @else if (activeTab === 'posts') {
+        <div class="draft-list">
+            @for (post of postDrafts; track post.id) {
+            <article class="draft-card" [class.is-busy]="openingDraftId === post.id || deletingDraftId === post.id" (click)="editPostDraft(post)" role="button" tabindex="0" (keydown.enter)="editPostDraft(post)" (keydown.space)="$event.preventDefault(); editPostDraft(post)">
+                <p class="draft-type">Post draft</p>
+                <p class="draft-text">{{ post.content || 'No text content yet.' }}</p>
+                <div class="draft-meta">
+                    @if (post.scheduledPublishAtUtc) {
+                    <span>Scheduled: {{ post.scheduledPublishAtUtc | date:'short' }}</span>
+                    }
+                    <span>Updated: {{ post.createdAtUtc | date:'short' }}</span>
+                </div>
+                <div class="draft-actions" (click)="$event.stopPropagation()">
+                    <button type="button" class="ghost" [disabled]="openingDraftId === post.id || deletingDraftId === post.id" (click)="editPostDraft(post)">{{ openingDraftId === post.id ? 'Opening...' : 'Edit draft' }}</button>
+                    <button type="button" class="danger ghost" [disabled]="openingDraftId === post.id || deletingDraftId === post.id" (click)="requestDeletePostDraft(post, $event)">{{ deletingDraftId === post.id ? 'Deleting...' : 'Delete' }}</button>
+                </div>
+            </article>
+            }
+        </div>
+        } @else if (activeTab === 'reels') {
+        <div class="draft-list">
+            @for (reel of reelDrafts; track reel.id) {
+            <article class="draft-card" [class.is-busy]="openingDraftId === reel.id || deletingDraftId === reel.id" (click)="editReelDraft(reel)" role="button" tabindex="0" (keydown.enter)="editReelDraft(reel)" (keydown.space)="$event.preventDefault(); editReelDraft(reel)">
+                <p class="draft-type">Reel draft</p>
+                <p class="draft-text">{{ reel.caption || 'No caption yet.' }}</p>
+                <div class="draft-meta">
+                    <span>Duration: {{ reel.durationSeconds }}s</span>
+                    @if (reel.scheduledPublishAtUtc) {
+                    <span>Scheduled: {{ reel.scheduledPublishAtUtc | date:'short' }}</span>
+                    }
+                    <span>Updated: {{ reel.createdAtUtc | date:'short' }}</span>
+                </div>
+                <div class="draft-actions" (click)="$event.stopPropagation()">
+                    <button type="button" class="ghost" [disabled]="openingDraftId === reel.id || deletingDraftId === reel.id" (click)="editReelDraft(reel)">{{ openingDraftId === reel.id ? 'Opening...' : 'Edit draft' }}</button>
+                    <button type="button" class="danger ghost" [disabled]="openingDraftId === reel.id || deletingDraftId === reel.id" (click)="requestDeleteReelDraft(reel, $event)">{{ deletingDraftId === reel.id ? 'Deleting...' : 'Delete' }}</button>
+                </div>
+            </article>
+            }
+        </div>
+        } @else {
+        <div class="draft-list">
+            @for (story of storyDrafts; track story.id) {
+            <article class="draft-card" [class.is-busy]="openingDraftId === story.id || deletingDraftId === story.id" (click)="editStoryDraft(story)" role="button" tabindex="0" (keydown.enter)="editStoryDraft(story)" (keydown.space)="$event.preventDefault(); editStoryDraft(story)">
+                <p class="draft-type">Story draft</p>
+                <p class="draft-text">{{ story.caption || 'No caption yet.' }}</p>
+                <div class="draft-meta">
+                    @if (story.scheduledPublishAtUtc) {
+                    <span>Scheduled: {{ story.scheduledPublishAtUtc | date:'short' }}</span>
+                    }
+                    <span>Updated: {{ story.createdAtUtc | date:'short' }}</span>
+                </div>
+                <div class="draft-actions" (click)="$event.stopPropagation()">
+                    <button type="button" class="ghost" [disabled]="openingDraftId === story.id || deletingDraftId === story.id" (click)="editStoryDraft(story)">{{ openingDraftId === story.id ? 'Opening...' : 'Edit draft' }}</button>
+                    <button type="button" class="danger ghost" [disabled]="openingDraftId === story.id || deletingDraftId === story.id" (click)="requestDeleteStoryDraft(story, $event)">{{ deletingDraftId === story.id ? 'Deleting...' : 'Delete' }}</button>
+                </div>
+            </article>
+            }
+        </div>
+        }
+    </div>
+</div>
+
+<app-confirm-modal [open]="!!pendingDeleteDraft" [title]="deleteDraftModalTitle" [message]="deleteDraftModalMessage" confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingDraftId" (cancel)="cancelDeleteDraft()" (confirm)="confirmDeleteDraft()">
+</app-confirm-modal>

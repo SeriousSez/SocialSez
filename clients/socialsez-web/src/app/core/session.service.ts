@@ -14,6 +14,7 @@ import {
     CommunityDto,
     CommunityPollDto,
     CommunityPostDto,
+    CreatorAnalyticsSummaryDto,
     FeedMode,
     FollowActionResultDto,
     FollowRequestDto,
@@ -33,11 +34,13 @@ import {
     ProfileActivitySummaryDto,
     ProfileDto,
     ReelDto,
+    ReelAbTestDto,
     RegisterRequest,
     SafetyStatusDto,
     StoryDto,
     StoryCollectionDto,
     StoryGroupDto,
+    StoryPlaybackProgressDto,
     UpdateProfileRequest,
     SavedCollectionDto,
     SavedItemDto,
@@ -73,6 +76,32 @@ export interface OpenReelInModalRequest {
     onRemoveFromCollection?: () => Promise<boolean>;
 }
 
+export interface PendingPostComposerDraft {
+    sourceDraftId?: string;
+    content: string;
+    markSensitive: boolean;
+    scheduledPublishLocal: string;
+    mediaFiles?: File[];
+}
+
+export interface PendingReelComposerDraft {
+    sourceDraftId?: string;
+    reelCaption: string;
+    reelLocation: string;
+    reelCollaborators: string;
+    markSensitive: boolean;
+    scheduledPublishLocal: string;
+    reelVideoFile?: File;
+    reelThumbnailFile?: File;
+}
+
+export interface PendingStoryComposerDraft {
+    sourceDraftId?: string;
+    markSensitive: boolean;
+    scheduledPublishLocal: string;
+    storyMediaFile?: File;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SessionService {
     profile: ProfileDto | null = null;
@@ -92,9 +121,42 @@ export class SessionService {
     readonly openReelInModal$ = this.openReelInModalSource.asObservable();
     private readonly openSaveToCollectionModalSource = new Subject<PendingSaveToCollectionRequest>();
     readonly openSaveToCollectionModal$ = this.openSaveToCollectionModalSource.asObservable();
+    private pendingPostComposerDraft: PendingPostComposerDraft | null = null;
+    private pendingReelComposerDraft: PendingReelComposerDraft | null = null;
+    private pendingStoryComposerDraft: PendingStoryComposerDraft | null = null;
 
     requestOpenReelInModal(request: OpenReelInModalRequest): void {
         this.openReelInModalSource.next(request);
+    }
+
+    setPendingPostComposerDraft(draft: PendingPostComposerDraft | null): void {
+        this.pendingPostComposerDraft = draft;
+    }
+
+    consumePendingPostComposerDraft(): PendingPostComposerDraft | null {
+        const draft = this.pendingPostComposerDraft;
+        this.pendingPostComposerDraft = null;
+        return draft;
+    }
+
+    setPendingReelComposerDraft(draft: PendingReelComposerDraft | null): void {
+        this.pendingReelComposerDraft = draft;
+    }
+
+    consumePendingReelComposerDraft(): PendingReelComposerDraft | null {
+        const draft = this.pendingReelComposerDraft;
+        this.pendingReelComposerDraft = null;
+        return draft;
+    }
+
+    setPendingStoryComposerDraft(draft: PendingStoryComposerDraft | null): void {
+        this.pendingStoryComposerDraft = draft;
+    }
+
+    consumePendingStoryComposerDraft(): PendingStoryComposerDraft | null {
+        const draft = this.pendingStoryComposerDraft;
+        this.pendingStoryComposerDraft = null;
+        return draft;
     }
 
     openSaveToCollectionModalAsync(request: SaveToCollectionRequest): Promise<boolean> {
@@ -263,6 +325,27 @@ export class SessionService {
         return reels.map(reel => this.normalizeReel(reel));
     }
 
+    async trackReelPlaybackAsync(reelId: string, lastPositionSeconds: number, watchedSeconds: number, isCompleted = false): Promise<void> {
+        await firstValueFrom(this.api.trackReelPlayback(reelId, lastPositionSeconds, watchedSeconds, isCompleted));
+    }
+
+    async loadCreatorReelAnalyticsAsync(days = 7): Promise<CreatorAnalyticsSummaryDto> {
+        return firstValueFrom(this.api.getCreatorReelAnalytics(days));
+    }
+
+    async configureReelAbTestAsync(reelId: string, variantATitle: string, variantBTitle: string, variantAThumbnailUrl?: string, variantBThumbnailUrl?: string): Promise<ReelAbTestDto> {
+        return firstValueFrom(this.api.configureReelAbTest(reelId, {
+            variantATitle,
+            variantAThumbnailUrl,
+            variantBTitle,
+            variantBThumbnailUrl
+        }));
+    }
+
+    async disableReelAbTestAsync(reelId: string): Promise<ReelAbTestDto> {
+        return firstValueFrom(this.api.disableReelAbTest(reelId));
+    }
+
     async loadReelsByAuthorHandleAsync(handle: string, take = 25): Promise<ReelDto[]> {
         const reels = await firstValueFrom(this.api.getReelsByAuthorHandle(handle, take));
         return reels.map(reel => this.normalizeReel(reel));
@@ -314,6 +397,18 @@ export class SessionService {
     async loadMyStoriesAsync(includeExpired = true, take = 200): Promise<StoryDto[]> {
         const stories = await firstValueFrom(this.api.getMyStories(includeExpired, take));
         return stories.map(story => this.normalizeStory(story));
+    }
+
+    async upsertStoryPlaybackProgressAsync(authorId: string, storyId: string, lastPositionSeconds: number): Promise<StoryPlaybackProgressDto> {
+        return firstValueFrom(this.api.upsertStoryPlaybackProgress(authorId, storyId, lastPositionSeconds));
+    }
+
+    async getStoryPlaybackProgressAsync(authorId: string): Promise<StoryPlaybackProgressDto | null> {
+        try {
+            return await firstValueFrom(this.api.getStoryPlaybackProgress(authorId));
+        } catch {
+            return null;
+        }
     }
 
     async loadPublicStoryCollectionsByAuthorHandleAsync(handle: string): Promise<StoryCollectionDto[]> {
@@ -450,24 +545,39 @@ export class SessionService {
         return profiles.map(profile => this.normalizeProfile(profile));
     }
 
-    async createPostAsync(content: string, imageFiles?: File[], isSensitive = false): Promise<void> {
-        await firstValueFrom(this.api.createPost(content, imageFiles, isSensitive));
+    async createPostAsync(content: string, imageFiles?: File[], isSensitive = false, saveAsDraft = false, scheduledPublishAtUtc?: string): Promise<void> {
+        await firstValueFrom(this.api.createPost(content, imageFiles, isSensitive, saveAsDraft, scheduledPublishAtUtc));
         this.message = 'Post created.';
         this.emitAppChange('posts');
     }
 
-    async createStoryAsync(mediaFile: File, caption?: string, isSensitive = false, thumbnailFile?: File): Promise<StoryDto> {
-        const story = this.normalizeStory(await firstValueFrom(this.api.createStory(mediaFile, caption, isSensitive, thumbnailFile)));
+    async createStoryAsync(mediaFile: File, caption?: string, isSensitive = false, thumbnailFile?: File, saveAsDraft = false, scheduledPublishAtUtc?: string): Promise<StoryDto> {
+        const story = this.normalizeStory(await firstValueFrom(this.api.createStory(mediaFile, caption, isSensitive, thumbnailFile, saveAsDraft, scheduledPublishAtUtc)));
         this.message = 'Story created.';
         this.emitAppChange('posts');
         return story;
     }
 
-    async createReelAsync(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File, isSensitive = false): Promise<ReelDto> {
-        const reel = this.normalizeReel(await firstValueFrom(this.api.createReel(videoFile, durationSeconds, caption, thumbnailFile, isSensitive)));
+    async createReelAsync(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File, isSensitive = false, saveAsDraft = false, scheduledPublishAtUtc?: string): Promise<ReelDto> {
+        const reel = this.normalizeReel(await firstValueFrom(this.api.createReel(videoFile, durationSeconds, caption, thumbnailFile, isSensitive, saveAsDraft, scheduledPublishAtUtc)));
         this.message = 'Reel created.';
         this.emitAppChange('posts');
         return reel;
+    }
+
+    async loadMyPostDraftsAsync(take = 50): Promise<PostDto[]> {
+        const posts = await firstValueFrom(this.api.getMyPostDrafts(take));
+        return posts.map(post => this.normalizePost(post));
+    }
+
+    async loadMyReelDraftsAsync(take = 50): Promise<ReelDto[]> {
+        const reels = await firstValueFrom(this.api.getMyReelDrafts(take));
+        return reels.map(reel => this.normalizeReel(reel));
+    }
+
+    async loadMyStoryDraftsAsync(take = 50): Promise<StoryDto[]> {
+        const stories = await firstValueFrom(this.api.getMyStoryDrafts(take));
+        return stories.map(story => this.normalizeStory(story));
     }
 
     getHideSensitiveMediaPreference(): boolean {

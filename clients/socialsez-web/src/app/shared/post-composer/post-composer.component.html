@@ -21,6 +21,11 @@
         <span>Mark this post as sensitive media</span>
     </label>
 
+    <label class="field">
+        <span class="meta">Schedule publish (optional)</span>
+        <input type="datetime-local" [ngModel]="scheduledPublishLocal" (ngModelChange)="onScheduledPublishChanged($event)" [disabled]="uploadingMedia" />
+    </label>
+
     <section class="crop-panel" *ngIf="mediaPreviewUrl || mediaPreviewUrls.length > 0">
         <image-cropper *ngIf="mediaKind === 'image-croppable'" [imageFile]="selectedMediaFiles[0] || undefined" [maintainAspectRatio]="false" [resizeToWidth]="1200" [onlyScaleDown]="true" [format]="cropOutputFormat" (imageCropped)="onImageCropped($event)" (imageLoaded)="onImageLoaded($event)"
             (loadImageFailed)="onLoadImageFailed()"></image-cropper>
@@ -37,6 +42,7 @@
         <div class="action-buttons">
             <button *ngIf="showCancel" class="ghost" type="button" (click)="cancel()" [disabled]="uploadingMedia">Cancel</button>
             <button class="ghost" type="button" (click)="removePostMedia()" [disabled]="selectedMediaFiles.length === 0 || uploadingMedia">Remove Media</button>
+            <button class="ghost" type="button" (click)="saveDraft()" [disabled]="uploadingMedia">Save Draft</button>
             <button type="button" (click)="publish()" [disabled]="(!content.trim() && selectedMediaFiles.length === 0) || uploadingMedia">Publish</button>
         </div>
     </div>

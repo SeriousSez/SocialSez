@@ -41,7 +41,15 @@ public class ReelsController(IReelService reelService, SocialSezContext dbContex
             }
 
             var reel = await reelService.CreateAsync(
-                new CreateReelRequest(profileId, request.Caption, videoUrl, thumbnailUrl, request.DurationSeconds, request.IsSensitive),
+                new CreateReelRequest(
+                    profileId,
+                    request.Caption,
+                    videoUrl,
+                    thumbnailUrl,
+                    request.DurationSeconds,
+                    request.IsSensitive,
+                    request.SaveAsDraft,
+                    request.ScheduledPublishAtUtc),
                 cancellationToken);
 
             return Ok(reel);
@@ -192,6 +200,89 @@ public class ReelsController(IReelService reelService, SocialSezContext dbContex
 
         var updated = await reelService.ToggleCommentLikeAsync(reelId, commentId, profileId, cancellationToken);
         return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [Authorize]
+    [HttpPost("{reelId:guid}/playback")]
+    public async Task<ActionResult<ReelPlaybackDto>> TrackPlayback(Guid reelId, [FromBody] TrackReelPlaybackRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var updated = await reelService.TrackPlaybackAsync(reelId, profileId, request, cancellationToken);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [Authorize]
+    [HttpGet("creator/analytics")]
+    public async Task<ActionResult<CreatorAnalyticsSummaryDto>> GetCreatorAnalytics([FromQuery] int days = 7, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var analytics = await reelService.GetCreatorAnalyticsAsync(profileId, days, cancellationToken);
+        return Ok(analytics);
+    }
+
+    [Authorize]
+    [HttpPost("{reelId:guid}/ab-test")]
+    public async Task<ActionResult<ReelAbTestDto>> ConfigureAbTest(Guid reelId, [FromBody] CreateReelAbTestRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var test = await reelService.ConfigureAbTestAsync(reelId, profileId, request, cancellationToken);
+            return test is null ? NotFound() : Ok(test);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpDelete("{reelId:guid}/ab-test")]
+    public async Task<ActionResult<ReelAbTestDto>> DisableAbTest(Guid reelId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var test = await reelService.DisableAbTestAsync(reelId, profileId, cancellationToken);
+            return test is null ? NotFound() : Ok(test);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [Authorize]
+    [HttpGet("drafts/mine")]
+    public async Task<ActionResult<IReadOnlyCollection<ReelDto>>> GetMyDrafts([FromQuery] int take = 50, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var drafts = await reelService.GetDraftsAsync(profileId, take, cancellationToken);
+        return Ok(drafts);
     }
 
     [Authorize]
@@ -528,5 +619,12 @@ public class ReelsController(IReelService reelService, SocialSezContext dbContex
     public sealed record CreateReelCommentBody(string Content, Guid? ParentCommentId = null);
     public sealed record UpdateReelCommentBody(string Content);
     public sealed record UpdateReelBody(string? Caption);
-    public sealed record CreateReelFormRequest(string? Caption, int DurationSeconds, IFormFile? Video, IFormFile? Thumbnail, bool IsSensitive = false);
+    public sealed record CreateReelFormRequest(
+        string? Caption,
+        int DurationSeconds,
+        IFormFile? Video,
+        IFormFile? Thumbnail,
+        bool IsSensitive = false,
+        bool SaveAsDraft = false,
+        DateTime? ScheduledPublishAtUtc = null);
 }

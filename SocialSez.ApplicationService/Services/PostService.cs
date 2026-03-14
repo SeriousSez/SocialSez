@@ -39,10 +39,21 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             throw new ArgumentException($"Post content cannot exceed {MaxPostContentLength} characters.", nameof(request));
         }
 
-        if (string.IsNullOrWhiteSpace(content) && imageUrls.Length == 0)
+        var scheduledPublishAtUtc = request.ScheduledPublishAtUtc?.ToUniversalTime();
+        if (scheduledPublishAtUtc.HasValue && scheduledPublishAtUtc.Value <= DateTime.UtcNow)
+        {
+            scheduledPublishAtUtc = null;
+        }
+
+        var saveAsDraft = request.SaveAsDraft || scheduledPublishAtUtc.HasValue;
+
+        if (!saveAsDraft && string.IsNullOrWhiteSpace(content) && imageUrls.Length == 0)
         {
             throw new ArgumentException("Post content or image is required.", nameof(request));
         }
+
+        var shouldPublishNow = !saveAsDraft;
+        var nowUtc = DateTime.UtcNow;
 
         var post = new Post
         {
@@ -51,7 +62,10 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             Content = content,
             ImageUrl = SerializePostMediaUrls(imageUrls),
             IsSensitive = request.IsSensitive,
-            CreatedAtUtc = DateTime.UtcNow
+            IsDraft = !shouldPublishNow,
+            ScheduledPublishAtUtc = scheduledPublishAtUtc,
+            PublishedAtUtc = shouldPublishNow ? nowUtc : null,
+            CreatedAtUtc = nowUtc
         };
 
         dbContext.Posts.Add(post);
@@ -73,7 +87,10 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             null,
             Array.Empty<ReactionSummaryDto>(),
             Array.Empty<PostReactionDetailDto>(),
-            Array.Empty<CommentDto>());
+            Array.Empty<CommentDto>(),
+            post.IsDraft,
+            post.ScheduledPublishAtUtc,
+            post.PublishedAtUtc);
     }
 
     public async Task<PostDto?> AddCommentAsync(Guid postId, CreateCommentRequest request, CancellationToken cancellationToken = default)
@@ -508,9 +525,35 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         return MapToPostDto(post, profileId);
     }
 
+    public async Task<IReadOnlyCollection<PostDto>> GetDraftsAsync(Guid profileId, int take = 50, CancellationToken cancellationToken = default)
+    {
+        await EnsurePostSchemaAsync(cancellationToken);
+        await PublishDuePostsAsync(cancellationToken);
+
+        take = Math.Clamp(take, 1, 100);
+        var drafts = await dbContext.Posts
+            .AsNoTracking()
+            .Include(x => x.Author)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Author)
+            .Include(x => x.Comments)
+                .ThenInclude(x => x.Reactions)
+            .Include(x => x.Reactions)
+                .ThenInclude(x => x.Profile)
+            .Where(x => x.AuthorId == profileId && x.IsDraft)
+            .OrderByDescending(x => x.ScheduledPublishAtUtc ?? x.CreatedAtUtc)
+            .Take(take)
+            .ToArrayAsync(cancellationToken);
+
+        return drafts
+            .Select(post => MapToPostDto(post, profileId))
+            .ToArray();
+    }
+
     public async Task<IReadOnlyCollection<PostDto>> GetFeedAsync(Guid profileId, int take = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
+        await PublishDuePostsAsync(cancellationToken);
 
         take = Math.Clamp(take, 1, 100);
         var nowUtc = DateTime.UtcNow;
@@ -543,7 +586,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                     .ThenInclude(x => x.Reactions)
                 .Include(x => x.Reactions)
                     .ThenInclude(x => x.Profile)
-                .Where(x => followedIds.Contains(x.AuthorId))
+                .Where(x => followedIds.Contains(x.AuthorId) && !x.IsDraft)
                 .OrderByDescending(x => x.CreatedAtUtc)
                 .Take(take)
                 .ToArrayAsync(cancellationToken);
@@ -618,7 +661,8 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .Include(x => x.Reactions)
                 .ThenInclude(x => x.Profile)
             .Where(x => (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
-                && !blockedProfileIds.Contains(x.AuthorId))
+                && !blockedProfileIds.Contains(x.AuthorId)
+                && !x.IsDraft)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(Math.Clamp(take * 40, 120, 2000))
             .ToArrayAsync(cancellationToken);
@@ -659,6 +703,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
     public async Task<IReadOnlyCollection<PostDto>> SearchPostsAsync(Guid? viewerId, string query, int take = 25, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
+        await PublishDuePostsAsync(cancellationToken);
 
         var normalizedQuery = DiscoverySearchBackend.NormalizeQuery(query);
         var expandedTerms = DiscoverySearchBackend.ExpandTerms(normalizedQuery);
@@ -689,7 +734,8 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                     .ThenInclude(x => x.Profile)
                 .Where(x =>
                     (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
-                    && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
+                    && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId))
+                    && !x.IsDraft)
                 .OrderByDescending(x => x.CreatedAtUtc)
                 .Take(candidateTake)
                 .ToArrayAsync(cancellationToken);
@@ -720,6 +766,8 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
 
     public async Task<IReadOnlyCollection<HashtagSearchResultDto>> GetTrendingHashtagsAsync(int take = 10, Guid? viewerId = null, CancellationToken cancellationToken = default)
     {
+        await PublishDuePostsAsync(cancellationToken);
+        await PublishDueReelsAsync(cancellationToken);
         take = Math.Clamp(take, 1, 100);
         var viewerHasId = viewerId.HasValue;
         var viewerProfileId = viewerId.GetValueOrDefault();
@@ -738,6 +786,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 .Where(x =>
                     !string.IsNullOrWhiteSpace(x.Content)
                     && x.Content.Contains("#")
+                    && !x.IsDraft
                     && (!recentOnly || x.CreatedAtUtc >= sinceUtc)
                     && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                     && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
@@ -751,6 +800,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 .Where(x =>
                     !string.IsNullOrWhiteSpace(x.Caption)
                     && x.Caption.Contains("#")
+                    && !x.IsDraft
                     && (!recentOnly || x.CreatedAtUtc >= sinceUtc)
                     && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                     && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
@@ -858,6 +908,8 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
 
     public async Task<IReadOnlyCollection<HashtagSearchResultDto>> SearchHashtagsAsync(string query, int take = 20, Guid? viewerId = null, CancellationToken cancellationToken = default)
     {
+        await PublishDuePostsAsync(cancellationToken);
+        await PublishDueReelsAsync(cancellationToken);
         var normalizedQuery = NormalizeHashtag(query);
         if (string.IsNullOrWhiteSpace(normalizedQuery))
         {
@@ -877,6 +929,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .Where(x =>
                 !string.IsNullOrWhiteSpace(x.Content)
                 && x.Content.Contains("#")
+                && !x.IsDraft
                 && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                 && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
             .OrderByDescending(x => x.CreatedAtUtc)
@@ -889,6 +942,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .Where(x =>
                 !string.IsNullOrWhiteSpace(x.Caption)
                 && x.Caption.Contains("#")
+                && !x.IsDraft
                 && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                 && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
             .OrderByDescending(x => x.CreatedAtUtc)
@@ -1053,6 +1107,8 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
     public async Task<HashtagContentDto> GetHashtagContentAsync(Guid? viewerId, string hashtag, int takePerType = 25, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
+        await PublishDuePostsAsync(cancellationToken);
+        await PublishDueReelsAsync(cancellationToken);
 
         var normalizedHashtag = NormalizeHashtag(hashtag);
         if (string.IsNullOrEmpty(normalizedHashtag))
@@ -1081,6 +1137,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 .ThenInclude(x => x.Profile)
             .Where(x => (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                 && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId))
+                && !x.IsDraft
                 && !string.IsNullOrWhiteSpace(x.Content)
                 && x.Content.ToLower().Contains(needle))
             .OrderByDescending(x => x.CreatedAtUtc)
@@ -1099,6 +1156,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .Include(x => x.Author)
             .Where(x =>
                 !string.IsNullOrWhiteSpace(x.Caption)
+                && !x.IsDraft
                 && x.Caption.ToLower().Contains(needle)
                 && (!x.Author.IsPrivate || (allowedPrivateAuthorIds != null && allowedPrivateAuthorIds.Contains(x.AuthorId)))
                 && (blockedProfileIds == null || !blockedProfileIds.Contains(x.AuthorId)))
@@ -1250,6 +1308,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
     public async Task<IReadOnlyCollection<PostDto>> GetByAuthorHandleAsync(Guid profileId, string handle, int take = 25, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
+        await PublishDuePostsAsync(cancellationToken);
 
         var normalizedHandle = handle.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalizedHandle))
@@ -1284,7 +1343,8 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 .ThenInclude(x => x.Profile)
             .Where(x => x.Author.Handle == normalizedHandle
                 && (followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
-                && !blockedProfileIds.Contains(x.AuthorId))
+                && !blockedProfileIds.Contains(x.AuthorId)
+                && !x.IsDraft)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
             .ToArrayAsync(cancellationToken);
@@ -1297,6 +1357,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
     public async Task<PostDto?> GetPublicByIdAsync(Guid postId, Guid? viewerId = null, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
+        await PublishDuePostsAsync(cancellationToken);
 
         var post = await dbContext.Posts
             .AsNoTracking()
@@ -1307,7 +1368,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
                 .ThenInclude(x => x.Profile)
-            .FirstOrDefaultAsync(x => x.Id == postId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == postId && !x.IsDraft, cancellationToken);
 
         if (post is null)
         {
@@ -1329,6 +1390,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
     public async Task<IReadOnlyCollection<PostDto>> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, int take = 25, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
+        await PublishDuePostsAsync(cancellationToken);
 
         var normalizedHandle = handle.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalizedHandle))
@@ -1379,7 +1441,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 .ThenInclude(x => x.Reactions)
             .Include(x => x.Reactions)
                 .ThenInclude(x => x.Profile)
-            .Where(x => x.AuthorId == author.Id)
+            .Where(x => x.AuthorId == author.Id && !x.IsDraft)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
             .ToArrayAsync(cancellationToken);
@@ -1475,7 +1537,54 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             myReactionType,
             reactions,
             reactionDetails,
-            comments);
+                comments,
+                post.IsDraft,
+                post.ScheduledPublishAtUtc,
+                post.PublishedAtUtc);
+    }
+
+    private async Task PublishDuePostsAsync(CancellationToken cancellationToken)
+    {
+        var nowUtc = DateTime.UtcNow;
+        var dueDrafts = await dbContext.Posts
+            .Where(x => x.IsDraft && x.ScheduledPublishAtUtc.HasValue && x.ScheduledPublishAtUtc <= nowUtc)
+            .ToArrayAsync(cancellationToken);
+
+        if (dueDrafts.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var draft in dueDrafts)
+        {
+            draft.IsDraft = false;
+            draft.PublishedAtUtc = draft.ScheduledPublishAtUtc ?? nowUtc;
+            draft.ScheduledPublishAtUtc = null;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task PublishDueReelsAsync(CancellationToken cancellationToken)
+    {
+        var nowUtc = DateTime.UtcNow;
+        var dueDrafts = await dbContext.Reels
+            .Where(x => x.IsDraft && x.ScheduledPublishAtUtc.HasValue && x.ScheduledPublishAtUtc <= nowUtc)
+            .ToArrayAsync(cancellationToken);
+
+        if (dueDrafts.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var draft in dueDrafts)
+        {
+            draft.IsDraft = false;
+            draft.PublishedAtUtc = draft.ScheduledPublishAtUtc ?? nowUtc;
+            draft.ScheduledPublishAtUtc = null;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private static string[] NormalizeImageUrls(IEnumerable<string>? imageUrls)

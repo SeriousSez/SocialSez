@@ -12,6 +12,11 @@ public interface IReelService
     Task<ReelDto?> UpdateCommentAsync(Guid reelId, Guid commentId, Guid profileId, UpdateReelCommentRequest request, CancellationToken cancellationToken = default);
     Task<ReelDto?> DeleteCommentAsync(Guid reelId, Guid commentId, Guid profileId, CancellationToken cancellationToken = default);
     Task<ReelDto?> ToggleCommentLikeAsync(Guid reelId, Guid commentId, Guid profileId, CancellationToken cancellationToken = default);
+    Task<ReelPlaybackDto?> TrackPlaybackAsync(Guid reelId, Guid profileId, TrackReelPlaybackRequest request, CancellationToken cancellationToken = default);
+    Task<CreatorAnalyticsSummaryDto> GetCreatorAnalyticsAsync(Guid profileId, int days = 7, CancellationToken cancellationToken = default);
+    Task<ReelAbTestDto?> ConfigureAbTestAsync(Guid reelId, Guid profileId, CreateReelAbTestRequest request, CancellationToken cancellationToken = default);
+    Task<ReelAbTestDto?> DisableAbTestAsync(Guid reelId, Guid profileId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<ReelDto>> GetDraftsAsync(Guid profileId, int take = 50, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ReelDto>> GetFeedAsync(Guid profileId, int take = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ReelDto>> GetByAuthorHandleAsync(Guid profileId, string handle, int take = 25, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ReelDto>> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, int take = 25, CancellationToken cancellationToken = default);

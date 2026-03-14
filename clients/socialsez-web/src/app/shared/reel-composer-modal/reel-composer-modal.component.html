@@ -131,6 +131,10 @@
                         <input type="checkbox" [checked]="markSensitive" (change)="onSensitiveToggleChanged($any($event.target).checked)" />
                         <span>Mark this reel as sensitive media</span>
                     </label>
+
+                    <label>Schedule publish (optional)
+                        <input type="datetime-local" [value]="scheduledPublishLocal" (input)="onScheduledPublishChanged($any($event.target).value)" />
+                    </label>
                 </div>
             </section>
         </ng-template>
@@ -143,6 +147,7 @@
             <button type="button" class="ghost" (click)="cancel()" [disabled]="postingReel">Cancel</button>
             <button type="button" class="ghost" *ngIf="reelComposerStep === 2" (click)="goToStep(1)" [disabled]="postingReel">Back</button>
             <button type="button" *ngIf="reelComposerStep === 1" (click)="goToStep(2)" [disabled]="!reelVideoFile || !reelPreviewReady || postingReel">Next</button>
+            <button type="button" class="ghost" *ngIf="reelComposerStep === 2" (click)="saveDraft()" [disabled]="!reelVideoFile || postingReel">Save Draft</button>
             <button type="button" *ngIf="reelComposerStep === 2" (click)="publish()" [disabled]="!reelVideoFile || postingReel">{{ postingReel ? 'Publishing...' : 'Publish Reel' }}</button>
         </div>
     </section>

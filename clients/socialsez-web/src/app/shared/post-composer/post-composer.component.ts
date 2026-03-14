@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ImageCroppedEvent, ImageCropperComponent, LoadedImage } from 'ngx-image-cropper';
 import { ProfileDto } from '../../core/api.types';
 import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.component';
-import { SessionService } from '../../core/session.service';
+import { PendingPostComposerDraft, SessionService } from '../../core/session.service';
 import { UploadProgressService } from '../../core/upload-progress.service';
 
 @Component({
@@ -31,6 +31,7 @@ export class PostComposerComponent implements OnDestroy {
     status = '';
     uploadingMedia = false;
     markSensitive = false;
+    scheduledPublishLocal = '';
     mediaKind: 'none' | 'image-croppable' | 'image-static' | 'video' | 'multi-image' = 'none';
     cropOutputFormat: 'jpeg' | 'png' = 'jpeg';
 
@@ -57,6 +58,7 @@ export class PostComposerComponent implements OnDestroy {
         private readonly uploadProgress: UploadProgressService
     ) {
         this.restoreDraft();
+        this.applyPendingDraft(this.session.consumePendingPostComposerDraft());
     }
 
     ngOnDestroy(): void {
@@ -120,27 +122,59 @@ export class PostComposerComponent implements OnDestroy {
     }
 
     async publish(): Promise<void> {
-        if ((!this.content.trim() && this.selectedMediaFiles.length === 0) || this.uploadingMedia) {
+        await this.submit(false);
+    }
+
+    async saveDraft(): Promise<void> {
+        await this.submit(true);
+    }
+
+    private async submit(saveAsDraft: boolean): Promise<void> {
+        if (this.uploadingMedia) {
             return;
         }
 
+        if (!saveAsDraft && !this.content.trim() && this.selectedMediaFiles.length === 0) {
+            return;
+        }
+
+        const scheduledPublishAtUtc = this.toScheduledPublishUtcIso(this.scheduledPublishLocal);
+
         this.uploadingMedia = true;
         this.status = '';
-        const handle = this.uploadProgress.begin('Publishing post...');
+        const handle = this.uploadProgress.begin(saveAsDraft ? 'Saving post draft...' : scheduledPublishAtUtc ? 'Scheduling post...' : 'Publishing post...');
 
         try {
             const mediaFiles = this.buildUploadFiles();
-            await this.session.createPostAsync(this.content.trim(), mediaFiles.length > 0 ? mediaFiles : undefined, this.markSensitive);
-            this.content = '';
-            this.markSensitive = false;
-            this.clearSelectedMedia();
-            this.clearDraft();
-            this.status = 'Posted.';
-            handle.succeed('Post published!');
-            this.posted.emit();
+            await this.session.createPostAsync(
+                this.content.trim(),
+                mediaFiles.length > 0 ? mediaFiles : undefined,
+                this.markSensitive,
+                saveAsDraft,
+                scheduledPublishAtUtc ?? undefined);
+
+            if (!saveAsDraft) {
+                this.content = '';
+                this.markSensitive = false;
+                this.scheduledPublishLocal = '';
+                this.clearSelectedMedia();
+                this.clearDraft();
+            } else {
+                this.persistDraft();
+            }
+
+            this.status = saveAsDraft
+                ? 'Draft saved.'
+                : scheduledPublishAtUtc
+                    ? 'Post scheduled.'
+                    : 'Posted.';
+            handle.succeed(saveAsDraft ? 'Post draft saved!' : scheduledPublishAtUtc ? 'Post scheduled!' : 'Post published!');
+            if (!saveAsDraft) {
+                this.posted.emit();
+            }
         } catch {
-            this.status = 'Could not create post.';
-            handle.fail('Post failed');
+            this.status = saveAsDraft ? 'Could not save draft.' : 'Could not create post.';
+            handle.fail(saveAsDraft ? 'Draft save failed' : 'Post failed');
         } finally {
             this.uploadingMedia = false;
         }
@@ -153,6 +187,7 @@ export class PostComposerComponent implements OnDestroy {
 
         this.content = '';
         this.markSensitive = false;
+        this.scheduledPublishLocal = '';
         this.clearSelectedMedia();
         this.clearDraft();
         this.status = '';
@@ -161,6 +196,11 @@ export class PostComposerComponent implements OnDestroy {
 
     onSensitiveToggleChanged(value: boolean): void {
         this.markSensitive = value;
+        this.persistDraft();
+    }
+
+    onScheduledPublishChanged(value: string): void {
+        this.scheduledPublishLocal = value;
         this.persistDraft();
     }
 
@@ -293,7 +333,8 @@ export class PostComposerComponent implements OnDestroy {
 
         localStorage.setItem(this.draftStorageKey, JSON.stringify({
             content: this.content,
-            markSensitive: this.markSensitive
+            markSensitive: this.markSensitive,
+            scheduledPublishLocal: this.scheduledPublishLocal
         }));
     }
 
@@ -307,13 +348,79 @@ export class PostComposerComponent implements OnDestroy {
             const parsed = JSON.parse(raw) as {
                 content?: string;
                 markSensitive?: boolean;
+                scheduledPublishLocal?: string;
             };
 
             this.content = this.normalizeContentLength(parsed.content ?? '');
             this.markSensitive = parsed.markSensitive === true;
+            this.scheduledPublishLocal = parsed.scheduledPublishLocal ?? '';
         } catch {
             localStorage.removeItem(this.draftStorageKey);
         }
+    }
+
+    private applyPendingDraft(draft: PendingPostComposerDraft | null): void {
+        if (!draft) {
+            return;
+        }
+
+        this.content = this.normalizeContentLength(draft.content ?? '');
+        this.markSensitive = draft.markSensitive === true;
+        this.scheduledPublishLocal = draft.scheduledPublishLocal ?? '';
+
+        if (draft.mediaFiles?.length) {
+            this.applySelectedMediaFiles(draft.mediaFiles);
+        }
+    }
+
+    private applySelectedMediaFiles(files: File[]): void {
+        this.clearSelectedMedia();
+
+        const validFiles = files.filter(file => file.type.startsWith('image/') || file.type.startsWith('video/'));
+        if (validFiles.length === 0) {
+            return;
+        }
+
+        const videoFiles = validFiles.filter(file => file.type.startsWith('video/'));
+        const imageFiles = validFiles.filter(file => file.type.startsWith('image/'));
+
+        if (imageFiles.length > 1 && videoFiles.length === 0) {
+            this.selectedMediaFiles = imageFiles.slice(0, 12);
+            this.previewObjectUrls = this.selectedMediaFiles.map(file => URL.createObjectURL(file));
+            this.mediaPreviewUrls = [...this.previewObjectUrls];
+            this.mediaKind = 'multi-image';
+            this.cropOutputFormat = 'jpeg';
+            this.status = `${this.selectedMediaFiles.length} images attached.`;
+            return;
+        }
+
+        const file = validFiles[0];
+        if (!file) {
+            return;
+        }
+
+        this.selectedMediaFiles = [file];
+        this.previewObjectUrls = [URL.createObjectURL(file)];
+        this.mediaPreviewUrl = this.previewObjectUrls[0] ?? '';
+        this.mediaPreviewUrls = [this.mediaPreviewUrl];
+
+        if (file.type.startsWith('video/')) {
+            this.mediaKind = 'video';
+            this.cropOutputFormat = 'jpeg';
+            this.status = 'Video attached.';
+            return;
+        }
+
+        if (file.type === 'image/gif') {
+            this.mediaKind = 'image-static';
+            this.cropOutputFormat = 'jpeg';
+            this.status = 'Image attached.';
+            return;
+        }
+
+        this.mediaKind = 'image-croppable';
+        this.cropOutputFormat = 'jpeg';
+        this.status = 'Image attached. Drag the crop frame and corners to crop.';
     }
 
     private clearDraft(): void {
@@ -444,5 +551,19 @@ export class PostComposerComponent implements OnDestroy {
         }
 
         return value.slice(0, this.maxContentLength);
+    }
+
+    private toScheduledPublishUtcIso(localValue: string): string | null {
+        const normalized = localValue.trim();
+        if (!normalized) {
+            return null;
+        }
+
+        const parsed = new Date(normalized);
+        if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) {
+            return null;
+        }
+
+        return parsed.toISOString();
     }
 }

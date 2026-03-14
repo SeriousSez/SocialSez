@@ -15,6 +15,7 @@ public interface IPostService
     Task<PostDto?> ToggleLikeAsync(Guid postId, Guid profileId, CancellationToken cancellationToken = default);
     Task<PostDto?> SetReactionAsync(Guid postId, Guid profileId, SetReactionRequest request, CancellationToken cancellationToken = default);
     Task<PostDto?> ClearReactionAsync(Guid postId, Guid profileId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<PostDto>> GetDraftsAsync(Guid profileId, int take = 50, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<PostDto>> GetFeedAsync(Guid profileId, int take = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<PostDto>> SearchPostsAsync(Guid? viewerId, string query, int take = 25, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<HashtagSearchResultDto>> GetTrendingHashtagsAsync(int take = 10, Guid? viewerId = null, CancellationToken cancellationToken = default);

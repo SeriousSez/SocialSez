@@ -102,12 +102,18 @@
                 </div>
 
                 <p class="media-file">Stories expire automatically after 24 hours.</p>
+
+                <label>
+                    <span class="media-file">Schedule publish (optional)</span>
+                    <input type="datetime-local" [value]="storyScheduledPublishLocal" (input)="onStoryScheduledPublishChanged($any($event.target).value)" [disabled]="postingStory" />
+                </label>
             </ng-container>
 
             <p class="error" *ngIf="storyComposerError">{{ storyComposerError }}</p>
             <div class="media-actions">
                 <button type="button" class="ghost" (click)="cancelStoryComposer()" [disabled]="postingStory">Cancel</button>
                 <button type="button" class="ghost" *ngIf="storyComposerStep === 2" (click)="goToStoryComposerStep(1)" [disabled]="postingStory">Back</button>
+                <button type="button" class="ghost" *ngIf="storyComposerStep === 2" (click)="publishStory(true)" [disabled]="!storyMediaFile || (storyMediaIsVideo && !storyPreviewReady) || postingStory">Save Draft</button>
                 <button type="button" *ngIf="storyComposerStep === 2" (click)="publishStory()" [disabled]="!storyMediaFile || (storyMediaIsVideo && !storyPreviewReady) || postingStory">{{ postingStory ? 'Publishing...' : 'Publish Story' }}</button>
             </div>
         </section>
@@ -119,6 +125,11 @@
         <div class="stories-tabs">
             <button type="button" [class.active]="selectedFeedMode === 'for-you'" (click)="selectFeedMode('for-you')">For you</button>
             <button type="button" [class.active]="selectedFeedMode === 'following'" (click)="selectFeedMode('following')">Following</button>
+        </div>
+
+        <div class="stories-tabs" *ngIf="canResumeReel || canResumeStory">
+            <button type="button" class="ghost" *ngIf="canResumeReel" (click)="resumeReel()">Resume Reel</button>
+            <button type="button" class="ghost" *ngIf="canResumeStory" (click)="resumeStory()">Resume Story</button>
         </div>
 
         <div class="visually-hidden" aria-hidden="true" *ngIf="firstStoryToPreload as firstStoryMedia">
@@ -224,8 +235,8 @@
     <app-feed-reels-list *ngIf="selectedContentTab === 'reels' && !reelsLoading && !reelsError && reels.length; else reelsEmptyState" [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="activeUnseenStoryAuthorHandles" [reactingReelId]="reactingReelId"
         [commentingReelId]="commentingReelId" [sharingReelId]="sharingReelId" [savedReelIds]="savedReelIds" [showOwnerActions]="true" [viewerProfileId]="currentProfileId" [deletingReelId]="deletingReelId" [hideSensitiveMedia]="hideSensitiveMediaEnabled"
         (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelCommentUpdated)="updateReelComment($event)"
-        (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)" (saveToggled)="toggleSavedReel($event)" (reelDeleted)="deleteReel($event)" (reportRequested)="openReelReport($event)"
-        (reelCommentReportRequested)="openReelCommentReport($event)"></app-feed-reels-list>
+        (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)" (saveToggled)="toggleSavedReel($event)" (reelDeleted)="deleteReel($event)" (reportRequested)="openReelReport($event)" (reelCommentReportRequested)="openReelCommentReport($event)"
+        (playbackProgress)="onReelPlaybackProgress($event)"></app-feed-reels-list>
 
     <ng-template #postsEmptyState>
         <p class="empty" *ngIf="selectedContentTab === 'posts' && !loading && !error">No posts yet. Follow people or create your first post to kick off your timeline.</p>

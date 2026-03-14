@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, Output, ViewChild } from '@angular/core';
 import { ProfileDto } from '../../core/api.types';
 import { environment } from '../../../environments/environment';
-import { SessionService } from '../../core/session.service';
+import { PendingReelComposerDraft, SessionService } from '../../core/session.service';
 import { UploadProgressService } from '../../core/upload-progress.service';
 
 interface ReelCoverOption {
@@ -69,6 +69,7 @@ export class ReelComposerModalComponent implements OnDestroy {
             this.isClosing = false;
             this.isRendered = true;
             this.restoreDraft();
+            this.applyPendingDraft(this.session.consumePendingReelComposerDraft());
             return;
         }
 
@@ -90,6 +91,7 @@ export class ReelComposerModalComponent implements OnDestroy {
     reelLocation = '';
     reelCollaborators = '';
     markSensitive = false;
+    scheduledPublishLocal = '';
     reelComposerStep: 1 | 2 = 1;
     isRendered = false;
     isClosing = false;
@@ -544,9 +546,24 @@ export class ReelComposerModalComponent implements OnDestroy {
     }
 
     async publish(): Promise<void> {
+        await this.submit(false);
+    }
+
+    async saveDraft(): Promise<void> {
+        await this.submit(true);
+    }
+
+    onScheduledPublishChanged(rawValue: string): void {
+        this.scheduledPublishLocal = rawValue;
+        this.persistDraft();
+    }
+
+    private async submit(saveAsDraft: boolean): Promise<void> {
         if (!this.reelVideoFile || this.postingReel) {
             return;
         }
+
+        const scheduledPublishAtUtc = this.toScheduledPublishUtcIso(this.scheduledPublishLocal);
 
         this.postingReel = true;
         this.reelComposerError = '';
@@ -558,7 +575,7 @@ export class ReelComposerModalComponent implements OnDestroy {
         });
         this.closed.emit();
 
-        const handle = this.uploadProgress.begin('Uploading reel...');
+        const handle = this.uploadProgress.begin(saveAsDraft ? 'Saving reel draft...' : scheduledPublishAtUtc ? 'Scheduling reel...' : 'Uploading reel...');
         const session = this.session;
         const uploadStatus = this.uploadStatus;
         const published = this.published;
@@ -577,19 +594,25 @@ export class ReelComposerModalComponent implements OnDestroy {
 
                 this.resetComposer();
 
-                await session.createReelAsync(uploadVideo, durationSeconds, captionPayload, thumbnail, isSensitive);
-                this.clearDraft();
+                await session.createReelAsync(uploadVideo, durationSeconds, captionPayload, thumbnail, isSensitive, saveAsDraft, scheduledPublishAtUtc ?? undefined);
+                if (!saveAsDraft) {
+                    this.clearDraft();
+                }
                 published.emit();
-                handle.succeed('Reel uploaded!');
+                handle.succeed(saveAsDraft ? 'Reel draft saved!' : scheduledPublishAtUtc ? 'Reel scheduled!' : 'Reel uploaded!');
                 uploadStatus.emit({
                     state: 'success',
-                    message: 'Reel uploaded successfully.'
+                    message: saveAsDraft
+                        ? 'Reel draft saved successfully.'
+                        : scheduledPublishAtUtc
+                            ? 'Reel scheduled successfully.'
+                            : 'Reel uploaded successfully.'
                 });
             } catch {
-                handle.fail('Reel upload failed');
+                handle.fail(saveAsDraft ? 'Reel draft save failed' : 'Reel upload failed');
                 uploadStatus.emit({
                     state: 'failed',
-                    message: 'Reel upload failed. Please try again.'
+                    message: saveAsDraft ? 'Reel draft save failed. Please try again.' : 'Reel upload failed. Please try again.'
                 });
             } finally {
                 this.postingReel = false;
@@ -654,6 +677,7 @@ export class ReelComposerModalComponent implements OnDestroy {
         this.reelLocation = '';
         this.reelCollaborators = '';
         this.markSensitive = false;
+        this.scheduledPublishLocal = '';
         this.reelComposerStep = 1;
         this.locationHint = 'Type at least 2 characters to search locations.';
         this.loadingLocationSuggestions = false;
@@ -671,7 +695,8 @@ export class ReelComposerModalComponent implements OnDestroy {
         const hasDraft = !!this.reelCaption.trim()
             || !!this.reelLocation.trim()
             || !!this.reelCollaborators.trim()
-            || this.markSensitive;
+            || this.markSensitive
+            || !!this.scheduledPublishLocal.trim();
 
         if (!hasDraft) {
             localStorage.removeItem(this.draftStorageKey);
@@ -682,7 +707,8 @@ export class ReelComposerModalComponent implements OnDestroy {
             reelCaption: this.reelCaption,
             reelLocation: this.reelLocation,
             reelCollaborators: this.reelCollaborators,
-            markSensitive: this.markSensitive
+            markSensitive: this.markSensitive,
+            scheduledPublishLocal: this.scheduledPublishLocal
         }));
     }
 
@@ -698,15 +724,56 @@ export class ReelComposerModalComponent implements OnDestroy {
                 reelLocation?: string;
                 reelCollaborators?: string;
                 markSensitive?: boolean;
+                scheduledPublishLocal?: string;
             };
 
             this.reelCaption = parsed.reelCaption ?? '';
             this.reelLocation = parsed.reelLocation ?? '';
             this.reelCollaborators = parsed.reelCollaborators ?? '';
             this.markSensitive = parsed.markSensitive === true;
+            this.scheduledPublishLocal = parsed.scheduledPublishLocal ?? '';
         } catch {
             localStorage.removeItem(this.draftStorageKey);
         }
+    }
+
+    private applyPendingDraft(draft: PendingReelComposerDraft | null): void {
+        if (!draft) {
+            return;
+        }
+
+        this.reelCaption = draft.reelCaption ?? '';
+        this.reelLocation = draft.reelLocation ?? '';
+        this.reelCollaborators = draft.reelCollaborators ?? '';
+        this.markSensitive = draft.markSensitive === true;
+        this.scheduledPublishLocal = draft.scheduledPublishLocal ?? '';
+
+        if (draft.reelVideoFile) {
+            this.clearReelVideoSelection();
+            this.reelVideoFile = draft.reelVideoFile;
+            this.reelVideoPreviewUrl = URL.createObjectURL(draft.reelVideoFile);
+            this.reelPreviewReady = false;
+            this.reelComposerStep = 2;
+            this.reelComposerError = '';
+            this.reelTrimStartSeconds = 0;
+            this.reelTrimEndSeconds = 0;
+        }
+
+        this.reelThumbnailFile = draft.reelThumbnailFile ?? null;
+    }
+
+    private toScheduledPublishUtcIso(localValue: string): string | null {
+        const normalized = localValue.trim();
+        if (!normalized) {
+            return null;
+        }
+
+        const parsed = new Date(normalized);
+        if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) {
+            return null;
+        }
+
+        return parsed.toISOString();
     }
 
     private clearDraft(): void {

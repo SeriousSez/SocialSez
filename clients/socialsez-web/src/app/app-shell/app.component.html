@@ -42,6 +42,7 @@
             <a class="tab-communities" routerLink="/communities" routerLinkActive="active"><i class="fa-duotone fa-light fa-users" aria-hidden="true"></i><span>Communities</span></a>
             <a class="tab-chat" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i><span>Chat</span></a>
             <a class="tab-saved" routerLink="/saved" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-bookmark" aria-hidden="true"></i><span>Saved</span></a>
+            <a class="tab-drafts" routerLink="/drafts" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i><span>Drafts</span></a>
             <a class="tab-notifications" routerLink="/notifications" routerLinkActive="active" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-bell" aria-hidden="true"></i>
                 <span class="tab-content">
@@ -194,6 +195,10 @@
             <a class="mobile-footer-more-item" routerLink="/saved" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-bookmark" aria-hidden="true"></i>
                 <span>Saved</span>
+            </a>
+            <a class="mobile-footer-more-item" routerLink="/drafts" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="session.isAuthenticated()">
+                <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
+                <span>Drafts</span>
             </a>
             <a class="mobile-footer-more-item" routerLink="/profile" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-user" aria-hidden="true"></i>

@@ -41,6 +41,17 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             throw new ArgumentException("Story caption cannot exceed 300 characters.", nameof(request));
         }
 
+        var scheduledPublishAtUtc = request.ScheduledPublishAtUtc?.ToUniversalTime();
+        if (scheduledPublishAtUtc.HasValue && scheduledPublishAtUtc.Value <= DateTime.UtcNow)
+        {
+            scheduledPublishAtUtc = null;
+        }
+
+        var saveAsDraft = request.SaveAsDraft || scheduledPublishAtUtc.HasValue;
+        var shouldPublishNow = !saveAsDraft;
+        var nowUtc = DateTime.UtcNow;
+        var publishAtUtc = scheduledPublishAtUtc ?? nowUtc;
+
         var story = new Story
         {
             Id = Guid.NewGuid(),
@@ -49,8 +60,11 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             MediaUrl = mediaUrl,
             ThumbnailUrl = thumbnailUrl,
             IsSensitive = request.IsSensitive,
-            CreatedAtUtc = DateTime.UtcNow,
-            ExpiresAtUtc = DateTime.UtcNow.AddHours(StoryExpiryHours)
+            IsDraft = !shouldPublishNow,
+            ScheduledPublishAtUtc = scheduledPublishAtUtc,
+            PublishedAtUtc = shouldPublishNow ? nowUtc : null,
+            CreatedAtUtc = nowUtc,
+            ExpiresAtUtc = publishAtUtc.AddHours(StoryExpiryHours)
         };
 
         dbContext.Stories.Add(story);
@@ -68,7 +82,10 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             story.CreatedAtUtc,
             story.ExpiresAtUtc,
             false,
-            0);
+                0,
+                story.IsDraft,
+                story.ScheduledPublishAtUtc,
+                story.PublishedAtUtc);
     }
 
     public async Task<bool> DeleteAsync(Guid storyId, Guid profileId, CancellationToken cancellationToken = default)
@@ -132,9 +149,106 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
         return true;
     }
 
+    public async Task<IReadOnlyCollection<StoryDto>> GetDraftsAsync(Guid profileId, int take = 50, CancellationToken cancellationToken = default)
+    {
+        await EnsureStorySchemaAsync(cancellationToken);
+        await PublishDueStoriesAsync(cancellationToken);
+
+        take = Math.Clamp(take, 1, 100);
+        var author = await dbContext.UserProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == profileId, cancellationToken);
+
+        if (author is null)
+        {
+            return Array.Empty<StoryDto>();
+        }
+
+        var drafts = await dbContext.Stories
+            .AsNoTracking()
+            .Include(x => x.Views)
+            .Where(x => x.AuthorId == profileId && x.IsDraft)
+            .OrderByDescending(x => x.ScheduledPublishAtUtc ?? x.CreatedAtUtc)
+            .Take(take)
+            .ToArrayAsync(cancellationToken);
+
+        return drafts
+            .Select(story => MapStory(story, author, profileId))
+            .ToArray();
+    }
+
+    public async Task<StoryPlaybackProgressDto?> UpsertPlaybackProgressAsync(Guid viewerId, Guid authorId, UpsertStoryPlaybackProgressRequest request, CancellationToken cancellationToken = default)
+    {
+        await EnsureStorySchemaAsync(cancellationToken);
+
+        var story = await dbContext.Stories
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == request.StoryId && x.AuthorId == authorId, cancellationToken);
+
+        if (story is null)
+        {
+            return null;
+        }
+
+        var boundedPosition = Math.Clamp(request.LastPositionSeconds, 0, 300);
+        var nowUtc = DateTime.UtcNow;
+
+        var existing = await dbContext.StoryPlaybackProgresses
+            .FirstOrDefaultAsync(x => x.ViewerId == viewerId && x.AuthorId == authorId, cancellationToken);
+
+        if (existing is null)
+        {
+            existing = new StoryPlaybackProgress
+            {
+                ViewerId = viewerId,
+                AuthorId = authorId,
+                StoryId = request.StoryId,
+                LastPositionSeconds = boundedPosition,
+                UpdatedAtUtc = nowUtc
+            };
+
+            dbContext.StoryPlaybackProgresses.Add(existing);
+        }
+        else
+        {
+            existing.StoryId = request.StoryId;
+            existing.LastPositionSeconds = boundedPosition;
+            existing.UpdatedAtUtc = nowUtc;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return new StoryPlaybackProgressDto(
+            existing.AuthorId,
+            existing.StoryId,
+            existing.LastPositionSeconds,
+            existing.UpdatedAtUtc);
+    }
+
+    public async Task<StoryPlaybackProgressDto?> GetPlaybackProgressAsync(Guid viewerId, Guid authorId, CancellationToken cancellationToken = default)
+    {
+        await EnsureStorySchemaAsync(cancellationToken);
+
+        var existing = await dbContext.StoryPlaybackProgresses
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ViewerId == viewerId && x.AuthorId == authorId, cancellationToken);
+
+        if (existing is null)
+        {
+            return null;
+        }
+
+        return new StoryPlaybackProgressDto(
+            existing.AuthorId,
+            existing.StoryId,
+            existing.LastPositionSeconds,
+            existing.UpdatedAtUtc);
+    }
+
     public async Task<IReadOnlyCollection<StoryGroupDto>> GetFeedAsync(Guid profileId, int takeAuthors = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default)
     {
         await EnsureStorySchemaAsync(cancellationToken);
+        await PublishDueStoriesAsync(cancellationToken);
 
         var nowUtc = DateTime.UtcNow;
         takeAuthors = Math.Clamp(takeAuthors, 1, 100);
@@ -161,6 +275,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             .Include(x => x.Author)
             .Include(x => x.Views)
             .Where(x => x.ExpiresAtUtc > nowUtc)
+            .Where(x => !x.IsDraft)
             .Where(x => !blockedProfileIds.Contains(x.AuthorId));
 
         var activeStories = await (mode == FeedMode.Following
@@ -223,7 +338,10 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
                         story.CreatedAtUtc,
                         story.ExpiresAtUtc,
                         story.Views.Any(view => view.ViewerId == profileId),
-                        story.Views.Count))
+                        story.Views.Count,
+                        story.IsDraft,
+                        story.ScheduledPublishAtUtc,
+                        story.PublishedAtUtc))
                     .ToArray();
 
                 return new StoryGroupDto(
@@ -241,6 +359,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
     public async Task<IReadOnlyCollection<StoryDto>> GetByAuthorAsync(Guid requesterId, Guid authorId, bool includeExpired = false, int take = 100, CancellationToken cancellationToken = default)
     {
         await EnsureStorySchemaAsync(cancellationToken);
+        await PublishDueStoriesAsync(cancellationToken);
 
         if (requesterId != authorId)
         {
@@ -254,7 +373,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             .AsNoTracking()
             .Include(x => x.Author)
             .Include(x => x.Views)
-            .Where(x => x.AuthorId == authorId && (includeExpired || x.ExpiresAtUtc > nowUtc))
+            .Where(x => x.AuthorId == authorId && !x.IsDraft && (includeExpired || x.ExpiresAtUtc > nowUtc))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
             .ToListAsync(cancellationToken);
@@ -499,6 +618,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
     public async Task<StoryDto?> GetPublicByIdAsync(Guid storyId, Guid? viewerId, CancellationToken cancellationToken = default)
     {
         await EnsureStorySchemaAsync(cancellationToken);
+        await PublishDueStoriesAsync(cancellationToken);
 
         var nowUtc = DateTime.UtcNow;
 
@@ -506,7 +626,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             .AsNoTracking()
             .Include(x => x.Author)
             .Include(x => x.Views)
-            .FirstOrDefaultAsync(x => x.Id == storyId && x.ExpiresAtUtc > nowUtc, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == storyId && !x.IsDraft && x.ExpiresAtUtc > nowUtc, cancellationToken);
 
         if (story is null)
         {
@@ -534,12 +654,16 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             story.CreatedAtUtc,
             story.ExpiresAtUtc,
             false,
-            story.Views.Count);
+            story.Views.Count,
+            story.IsDraft,
+            story.ScheduledPublishAtUtc,
+            story.PublishedAtUtc);
     }
 
     public async Task<StoryGroupDto?> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, CancellationToken cancellationToken = default)
     {
         await EnsureStorySchemaAsync(cancellationToken);
+        await PublishDueStoriesAsync(cancellationToken);
 
         var normalizedHandle = handle.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalizedHandle))
@@ -583,7 +707,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
         var stories = await dbContext.Stories
             .AsNoTracking()
             .Include(x => x.Views)
-            .Where(x => x.AuthorId == author.Id && x.ExpiresAtUtc > nowUtc)
+            .Where(x => x.AuthorId == author.Id && !x.IsDraft && x.ExpiresAtUtc > nowUtc)
             .OrderBy(x => x.CreatedAtUtc)
             .ToArrayAsync(cancellationToken);
 
@@ -611,7 +735,10 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
                 story.CreatedAtUtc,
                 story.ExpiresAtUtc,
                 viewerId.HasValue && story.Views.Any(view => view.ViewerId == viewer),
-                story.Views.Count))
+                story.Views.Count,
+                story.IsDraft,
+                story.ScheduledPublishAtUtc,
+                story.PublishedAtUtc))
             .ToArray();
 
         return new StoryGroupDto(
@@ -678,7 +805,33 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             story.CreatedAtUtc,
             story.ExpiresAtUtc,
             viewerId != Guid.Empty && story.Views.Any(view => view.ViewerId == viewerId),
-            story.Views.Count);
+                story.Views.Count,
+                story.IsDraft,
+                story.ScheduledPublishAtUtc,
+                story.PublishedAtUtc);
+    }
+
+    private async Task PublishDueStoriesAsync(CancellationToken cancellationToken)
+    {
+        var nowUtc = DateTime.UtcNow;
+        var dueDrafts = await dbContext.Stories
+            .Where(x => x.IsDraft && x.ScheduledPublishAtUtc.HasValue && x.ScheduledPublishAtUtc <= nowUtc)
+            .ToArrayAsync(cancellationToken);
+
+        if (dueDrafts.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var draft in dueDrafts)
+        {
+            draft.IsDraft = false;
+            draft.PublishedAtUtc = draft.ScheduledPublishAtUtc ?? nowUtc;
+            draft.ExpiresAtUtc = (draft.PublishedAtUtc ?? nowUtc).AddHours(StoryExpiryHours);
+            draft.ScheduledPublishAtUtc = null;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private Task EnsureStorySchemaAsync(CancellationToken cancellationToken) => Task.CompletedTask;

@@ -26,6 +26,9 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<ReelLike> ReelLikes => Set<ReelLike>();
     public DbSet<ReelComment> ReelComments => Set<ReelComment>();
     public DbSet<ReelCommentLike> ReelCommentLikes => Set<ReelCommentLike>();
+    public DbSet<ReelPlayback> ReelPlaybacks => Set<ReelPlayback>();
+    public DbSet<ReelAbTest> ReelAbTests => Set<ReelAbTest>();
+    public DbSet<StoryPlaybackProgress> StoryPlaybackProgresses => Set<StoryPlaybackProgress>();
     public DbSet<ProfileFollowRequest> ProfileFollowRequests => Set<ProfileFollowRequest>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
@@ -112,6 +115,8 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(x => new { x.AuthorId, x.CreatedAtUtc });
+            entity.HasIndex(x => new { x.AuthorId, x.IsDraft, x.ScheduledPublishAtUtc });
+            entity.HasIndex(x => new { x.IsDraft, x.ScheduledPublishAtUtc });
         });
 
         modelBuilder.Entity<UploadedImage>(entity =>
@@ -311,6 +316,8 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
 
             entity.HasIndex(x => new { x.AuthorId, x.CreatedAtUtc });
             entity.HasIndex(x => x.ExpiresAtUtc);
+            entity.HasIndex(x => new { x.AuthorId, x.IsDraft, x.ScheduledPublishAtUtc });
+            entity.HasIndex(x => new { x.IsDraft, x.ScheduledPublishAtUtc });
         });
 
         modelBuilder.Entity<StoryCollection>(entity =>
@@ -379,6 +386,8 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
 
             entity.HasIndex(x => x.CreatedAtUtc);
             entity.HasIndex(x => x.AuthorId);
+            entity.HasIndex(x => new { x.AuthorId, x.IsDraft, x.ScheduledPublishAtUtc });
+            entity.HasIndex(x => new { x.IsDraft, x.ScheduledPublishAtUtc });
         });
 
         modelBuilder.Entity<ReelLike>(entity =>
@@ -441,6 +450,73 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(x => x.ProfileId);
+        });
+
+        modelBuilder.Entity<ReelPlayback>(entity =>
+        {
+            entity.ToTable("ReelPlaybacks");
+            entity.HasKey(x => new { x.ReelId, x.ViewerId });
+            entity.Property(x => x.VariantKey).HasMaxLength(1);
+
+            entity.HasOne(x => x.Reel)
+                .WithMany()
+                .HasForeignKey(x => x.ReelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Viewer)
+                .WithMany()
+                .HasForeignKey(x => x.ViewerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.ViewerId);
+            entity.HasIndex(x => x.LastViewedAtUtc);
+        });
+
+        modelBuilder.Entity<ReelAbTest>(entity =>
+        {
+            entity.ToTable("ReelAbTests");
+            entity.HasKey(x => x.ReelId);
+            entity.Property(x => x.VariantATitle).HasMaxLength(220).IsRequired();
+            entity.Property(x => x.VariantAThumbnailUrl).HasMaxLength(1024);
+            entity.Property(x => x.VariantBTitle).HasMaxLength(220).IsRequired();
+            entity.Property(x => x.VariantBThumbnailUrl).HasMaxLength(1024);
+            entity.Property(x => x.WinningVariantKey).HasMaxLength(1);
+
+            entity.HasOne(x => x.Reel)
+                .WithMany()
+                .HasForeignKey(x => x.ReelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Owner)
+                .WithMany()
+                .HasForeignKey(x => x.OwnerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.OwnerId, x.IsActive, x.UpdatedAtUtc });
+        });
+
+        modelBuilder.Entity<StoryPlaybackProgress>(entity =>
+        {
+            entity.ToTable("StoryPlaybackProgresses");
+            entity.HasKey(x => new { x.ViewerId, x.AuthorId });
+
+            entity.HasOne(x => x.Viewer)
+                .WithMany()
+                .HasForeignKey(x => x.ViewerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Author)
+                .WithMany()
+                .HasForeignKey(x => x.AuthorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Story)
+                .WithMany()
+                .HasForeignKey(x => x.StoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.StoryId);
+            entity.HasIndex(x => x.UpdatedAtUtc);
         });
 
         modelBuilder.Entity<ProfileFollowRequest>(entity =>

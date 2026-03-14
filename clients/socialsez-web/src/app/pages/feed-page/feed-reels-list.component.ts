@@ -28,6 +28,13 @@ export interface ReelCommentReportEvent {
     comment: ReelCommentDto;
 }
 
+export interface ReelPlaybackProgressEvent {
+    reelId: string;
+    positionSeconds: number;
+    durationSeconds: number;
+    completed: boolean;
+}
+
 @Component({
     selector: 'app-feed-reels-list',
     standalone: true,
@@ -64,6 +71,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     @Output() reelUpdated = new EventEmitter<{ reel: ReelDto; caption: string }>();
     @Output() reelDeleted = new EventEmitter<ReelDto>();
     @Output() authorAvatarClicked = new EventEmitter<string>();
+    @Output() playbackProgress = new EventEmitter<ReelPlaybackProgressEvent>();
 
     activeReelId: string | null = null;
     editingReelId: string | null = null;
@@ -86,6 +94,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     private readonly replyingToReelCommentByReelId = new Map<string, string | null>();
     private readonly reelMetadataCache = new Map<string, { source: string; location: string; collaborators: string[]; caption: string; frameZoom: number; frameOffsetX: number; frameOffsetY: number }>();
     private readonly pointerHandledActionKeys = new Map<string, number>();
+    private readonly lastProgressEmitAtByReelId = new Map<string, number>();
     private copyLinkResetTimerId: number | null = null;
     private readonly ngZone = inject(NgZone);
     private readonly preciseDateFormatter = new Intl.DateTimeFormat(resolveAppLocale(), {
@@ -790,6 +799,20 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.activeReelId === reelId && !this.pausedByUserReelIds.has(reelId)) {
             void this.playVideo(video);
         }
+
+        this.emitPlaybackProgress(reelId, video.currentTime, video.duration, false, true);
+    }
+
+    onReelVideoTimeUpdate(reelId: string, event: Event): void {
+        const video = event.target as HTMLVideoElement | null;
+        if (!video) {
+            return;
+        }
+
+        const duration = Number.isFinite(video.duration) ? video.duration : 0;
+        const position = Number.isFinite(video.currentTime) ? video.currentTime : 0;
+        const completed = duration > 0 && (duration - position) <= 0.8;
+        this.emitPlaybackProgress(reelId, position, duration, completed);
     }
 
     onReelVideoError(reelId: string): void {
@@ -1105,6 +1128,22 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         }
 
         this.failedReelVideoIds.delete(reelId);
+    }
+
+    private emitPlaybackProgress(reelId: string, positionSeconds: number, durationSeconds: number, completed: boolean, force = false): void {
+        const now = Date.now();
+        const lastEmitted = this.lastProgressEmitAtByReelId.get(reelId) ?? 0;
+        if (!force && !completed && (now - lastEmitted) < 2000) {
+            return;
+        }
+
+        this.lastProgressEmitAtByReelId.set(reelId, now);
+        this.playbackProgress.emit({
+            reelId,
+            positionSeconds: Math.max(0, positionSeconds || 0),
+            durationSeconds: Math.max(0, durationSeconds || 0),
+            completed
+        });
     }
 
     private appendCacheBustQuery(url: string): string {

@@ -43,7 +43,15 @@ public class PostsController(IPostService postService, SocialSezContext dbContex
                 postMediaUrls.Add(mediaUrl);
             }
 
-            var post = await postService.CreateAsync(new CreatePostRequest(profileId, request.Content, postMediaUrls, request.IsSensitive), cancellationToken);
+            var post = await postService.CreateAsync(
+                new CreatePostRequest(
+                    profileId,
+                    request.Content,
+                    postMediaUrls,
+                    request.IsSensitive,
+                    request.SaveAsDraft,
+                    request.ScheduledPublishAtUtc),
+                cancellationToken);
             return Ok(post);
         }
         catch (ArgumentException ex)
@@ -245,6 +253,19 @@ public class PostsController(IPostService postService, SocialSezContext dbContex
 
         var updated = await postService.ClearReactionAsync(postId, profileId, cancellationToken);
         return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [Authorize]
+    [HttpGet("drafts/mine")]
+    public async Task<ActionResult<IReadOnlyCollection<PostDto>>> GetMyDrafts([FromQuery] int take = 50, CancellationToken cancellationToken = default)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var drafts = await postService.GetDraftsAsync(profileId, take, cancellationToken);
+        return Ok(drafts);
     }
 
     [Authorize]
@@ -472,7 +493,13 @@ public class PostsController(IPostService postService, SocialSezContext dbContex
         ".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm", ".mov", ".m4v", ".ogv"
     };
 
-    public sealed record CreatePostFormRequest(string? Content, IReadOnlyCollection<IFormFile>? Images, IFormFile? Image, bool IsSensitive = false);
+    public sealed record CreatePostFormRequest(
+        string? Content,
+        IReadOnlyCollection<IFormFile>? Images,
+        IFormFile? Image,
+        bool IsSensitive = false,
+        bool SaveAsDraft = false,
+        DateTime? ScheduledPublishAtUtc = null);
     public sealed record CreateCommentBody(string Content, Guid? ParentCommentId = null);
     public sealed record UpdateCommentBody(string Content);
 }

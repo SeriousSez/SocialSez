@@ -109,6 +109,7 @@ export class ProfilePageComponent implements OnDestroy {
     storyComposerError = '';
     postingStory = false;
     markStorySensitive = false;
+    storyScheduledPublishLocal = '';
     sharingPostId: string | null = null;
     sharingReelId: string | null = null;
     pendingSharePost: PostDto | null = null;
@@ -1257,14 +1258,20 @@ export class ProfilePageComponent implements OnDestroy {
         this.beginStoryTrimDragging('range', event.clientX, track);
     }
 
-    async publishStory(): Promise<void> {
+    onStoryScheduledPublishChanged(value: string): void {
+        this.storyScheduledPublishLocal = value;
+    }
+
+    async publishStory(saveAsDraft = false): Promise<void> {
         if (!this.storyMediaFile || this.postingStory) {
             return;
         }
 
+        const scheduledPublishAtUtc = this.toScheduledPublishUtcIso(this.storyScheduledPublishLocal);
+
         this.postingStory = true;
         this.storyComposerError = '';
-        const handle = this.uploadProgress.begin('Uploading story...', 'story');
+        const handle = this.uploadProgress.begin(saveAsDraft ? 'Saving story draft...' : scheduledPublishAtUtc ? 'Scheduling story...' : 'Uploading story...', 'story');
 
         this.showStoryComposer = false;
         this.storyComposerClosing = false;
@@ -1276,12 +1283,12 @@ export class ProfilePageComponent implements OnDestroy {
                 const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile!);
                 const storyThumbnail = await this.buildStoryThumbnailForUpload(uploadStoryMedia);
                 const isSensitive = this.markStorySensitive;
-                await this.session.createStoryAsync(uploadStoryMedia, undefined, isSensitive, storyThumbnail);
+                await this.session.createStoryAsync(uploadStoryMedia, undefined, isSensitive, storyThumbnail, saveAsDraft, scheduledPublishAtUtc ?? undefined);
                 await this.load();
-                handle.succeed('Story published!');
+                handle.succeed(saveAsDraft ? 'Story draft saved!' : scheduledPublishAtUtc ? 'Story scheduled!' : 'Story published!');
             } catch {
-                this.error = 'Could not publish story right now.';
-                handle.fail('Story upload failed');
+                this.error = saveAsDraft ? 'Could not save story draft right now.' : 'Could not publish story right now.';
+                handle.fail(saveAsDraft ? 'Story draft save failed' : 'Story upload failed');
             } finally {
                 this.postingStory = false;
                 this.storyComposerStep = 1;
@@ -3485,6 +3492,7 @@ export class ProfilePageComponent implements OnDestroy {
         this.storyMediaObjectUrl = '';
         this.storyMediaFile = null;
         this.markStorySensitive = false;
+        this.storyScheduledPublishLocal = '';
         this.storyMediaPreviewUrl = '';
         this.storyMediaIsVideo = false;
         this.storyMediaDurationSeconds = 0;
@@ -3515,6 +3523,20 @@ export class ProfilePageComponent implements OnDestroy {
             window.clearTimeout(this.followStateResetTimerId);
             this.followStateResetTimerId = null;
         }
+    }
+
+    private toScheduledPublishUtcIso(localValue: string): string | null {
+        const normalized = localValue.trim();
+        if (!normalized) {
+            return null;
+        }
+
+        const parsed = new Date(normalized);
+        if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) {
+            return null;
+        }
+
+        return parsed.toISOString();
     }
 
     private buildAvatarImage(displayName: string, handle: string): string {

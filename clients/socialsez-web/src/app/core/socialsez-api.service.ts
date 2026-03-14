@@ -10,6 +10,8 @@ import {
     BlogThemeConfigDto,
     ChatConversationDto,
     CommunityRuleDto,
+    CreateReelAbTestRequest,
+    CreatorAnalyticsSummaryDto,
     ChatMessageDto,
     CommunityDto,
     CommunityPollDto,
@@ -32,6 +34,8 @@ import {
     ProfileActivitySummaryDto,
     ProfileDto,
     ReelDto,
+    ReelPlaybackDto,
+    ReelAbTestDto,
     RevokeOtherSessionsResponse,
     RegisterRequest,
     SavedCollectionDto,
@@ -43,6 +47,7 @@ import {
     SetReactionRequest,
     StoryDto,
     StoryCollectionDto,
+    StoryPlaybackProgressDto,
     StoryGroupDto,
     UpdateChatMessageRequest,
     UpdateGroupConversationTitleRequest,
@@ -169,10 +174,15 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.get<ProfileDto>(`${this.baseUrl}/profiles/me`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
-    createPost(content: string, imageFiles?: File[], isSensitive = false): Observable<PostDto> {
+    createPost(content: string, imageFiles?: File[], isSensitive = false, saveAsDraft = false, scheduledPublishAtUtc?: string): Observable<PostDto> {
         const formData = new FormData();
         formData.append('content', content);
         formData.append('isSensitive', `${isSensitive}`);
+        formData.append('saveAsDraft', `${saveAsDraft}`);
+
+        if (scheduledPublishAtUtc) {
+            formData.append('scheduledPublishAtUtc', scheduledPublishAtUtc);
+        }
 
         if (imageFiles?.length) {
             for (const imageFile of imageFiles) {
@@ -183,10 +193,15 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<PostDto>(`${this.baseUrl}/posts`, formData, { headers: this.authHeaders() }));
     }
 
-    createStory(mediaFile: File, caption?: string, isSensitive = false, thumbnailFile?: File): Observable<StoryDto> {
+    createStory(mediaFile: File, caption?: string, isSensitive = false, thumbnailFile?: File, saveAsDraft = false, scheduledPublishAtUtc?: string): Observable<StoryDto> {
         const formData = new FormData();
         formData.append('media', mediaFile);
         formData.append('isSensitive', `${isSensitive}`);
+        formData.append('saveAsDraft', `${saveAsDraft}`);
+
+        if (scheduledPublishAtUtc) {
+            formData.append('scheduledPublishAtUtc', scheduledPublishAtUtc);
+        }
 
         if (caption?.trim()) {
             formData.append('caption', caption.trim());
@@ -203,11 +218,16 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/stories/${storyId}`, { headers: this.authHeaders() }));
     }
 
-    createReel(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File, isSensitive = false): Observable<ReelDto> {
+    createReel(videoFile: File, durationSeconds: number, caption?: string, thumbnailFile?: File, isSensitive = false, saveAsDraft = false, scheduledPublishAtUtc?: string): Observable<ReelDto> {
         const formData = new FormData();
         formData.append('video', videoFile);
         formData.append('durationSeconds', `${Math.max(1, Math.round(durationSeconds))}`);
         formData.append('isSensitive', `${isSensitive}`);
+        formData.append('saveAsDraft', `${saveAsDraft}`);
+
+        if (scheduledPublishAtUtc) {
+            formData.append('scheduledPublishAtUtc', scheduledPublishAtUtc);
+        }
 
         if (caption?.trim()) {
             formData.append('caption', caption.trim());
@@ -218,6 +238,18 @@ export class SocialSezApiService {
         }
 
         return this.withAutoRefresh(() => this.http.post<ReelDto>(`${this.baseUrl}/reels`, formData, { headers: this.authHeaders() }));
+    }
+
+    getMyPostDrafts(take = 50): Observable<PostDto[]> {
+        return this.withAutoRefresh(() => this.http.get<PostDto[]>(`${this.baseUrl}/posts/drafts/mine?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getMyReelDrafts(take = 50): Observable<ReelDto[]> {
+        return this.withAutoRefresh(() => this.http.get<ReelDto[]>(`${this.baseUrl}/reels/drafts/mine?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getMyStoryDrafts(take = 50): Observable<StoryDto[]> {
+        return this.withAutoRefresh(() => this.http.get<StoryDto[]>(`${this.baseUrl}/stories/drafts/mine?take=${take}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
     updateReel(reelId: string, caption?: string): Observable<ReelDto> {
@@ -488,6 +520,37 @@ export class SocialSezApiService {
 
     toggleReelCommentLike(reelId: string, commentId: string): Observable<ReelDto> {
         return this.withAutoRefresh(() => this.http.post<ReelDto>(`${this.baseUrl}/reels/${reelId}/comments/${commentId}/like`, {}, { headers: this.authHeaders() }));
+    }
+
+    trackReelPlayback(reelId: string, lastPositionSeconds: number, watchedSeconds: number, isCompleted = false): Observable<ReelPlaybackDto> {
+        return this.withAutoRefresh(() => this.http.post<ReelPlaybackDto>(`${this.baseUrl}/reels/${encodeURIComponent(reelId)}/playback`, {
+            lastPositionSeconds,
+            watchedSeconds,
+            isCompleted
+        }, { headers: this.authHeaders() }));
+    }
+
+    getCreatorReelAnalytics(days = 7): Observable<CreatorAnalyticsSummaryDto> {
+        return this.withAutoRefresh(() => this.http.get<CreatorAnalyticsSummaryDto>(`${this.baseUrl}/reels/creator/analytics?days=${days}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    configureReelAbTest(reelId: string, request: CreateReelAbTestRequest): Observable<ReelAbTestDto> {
+        return this.withAutoRefresh(() => this.http.post<ReelAbTestDto>(`${this.baseUrl}/reels/${encodeURIComponent(reelId)}/ab-test`, request, { headers: this.authHeaders() }));
+    }
+
+    disableReelAbTest(reelId: string): Observable<ReelAbTestDto> {
+        return this.withAutoRefresh(() => this.http.delete<ReelAbTestDto>(`${this.baseUrl}/reels/${encodeURIComponent(reelId)}/ab-test`, { headers: this.authHeaders() }));
+    }
+
+    upsertStoryPlaybackProgress(authorId: string, storyId: string, lastPositionSeconds: number): Observable<StoryPlaybackProgressDto> {
+        return this.withAutoRefresh(() => this.http.put<StoryPlaybackProgressDto>(`${this.baseUrl}/stories/progress/${encodeURIComponent(authorId)}`, {
+            storyId,
+            lastPositionSeconds
+        }, { headers: this.authHeaders() }));
+    }
+
+    getStoryPlaybackProgress(authorId: string): Observable<StoryPlaybackProgressDto> {
+        return this.withAutoRefresh(() => this.http.get<StoryPlaybackProgressDto>(`${this.baseUrl}/stories/progress/${encodeURIComponent(authorId)}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
     follow(followedId: string): Observable<FollowActionResultDto> {

@@ -1,6 +1,13 @@
 namespace SocialSez.ApplicationService.Models;
 
-public sealed record CreateStoryRequest(Guid AuthorId, string? Caption, string MediaUrl, string? ThumbnailUrl = null, bool IsSensitive = false);
+public sealed record CreateStoryRequest(
+    Guid AuthorId,
+    string? Caption,
+    string MediaUrl,
+    string? ThumbnailUrl = null,
+    bool IsSensitive = false,
+    bool SaveAsDraft = false,
+    DateTime? ScheduledPublishAtUtc = null);
 
 public sealed record StoryDto(
     Guid Id,
@@ -14,7 +21,10 @@ public sealed record StoryDto(
     DateTime CreatedAtUtc,
     DateTime ExpiresAtUtc,
     bool ViewedByMe,
-    int ViewCount);
+    int ViewCount,
+    bool IsDraft = false,
+    DateTime? ScheduledPublishAtUtc = null,
+    DateTime? PublishedAtUtc = null);
 
 public sealed record StoryGroupDto(
     Guid AuthorId,
@@ -34,3 +44,11 @@ public sealed record StoryCollectionDto(
     IReadOnlyCollection<StoryDto> Stories);
 
 public sealed record CreateStoryCollectionRequest(string Name);
+
+public sealed record UpsertStoryPlaybackProgressRequest(Guid StoryId, double LastPositionSeconds);
+
+public sealed record StoryPlaybackProgressDto(
+    Guid AuthorId,
+    Guid StoryId,
+    double LastPositionSeconds,
+    DateTime UpdatedAtUtc);

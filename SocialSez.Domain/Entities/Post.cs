@@ -7,6 +7,9 @@ public class Post
     public string Content { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
     public bool IsSensitive { get; set; }
+    public bool IsDraft { get; set; }
+    public DateTime? ScheduledPublishAtUtc { get; set; }
+    public DateTime? PublishedAtUtc { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public UserProfile Author { get; set; } = null!;

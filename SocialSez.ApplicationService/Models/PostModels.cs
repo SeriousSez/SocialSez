@@ -1,6 +1,12 @@
 namespace SocialSez.ApplicationService.Models;
 
-public sealed record CreatePostRequest(Guid AuthorId, string? Content, IReadOnlyCollection<string>? ImageUrls, bool IsSensitive = false);
+public sealed record CreatePostRequest(
+    Guid AuthorId,
+    string? Content,
+    IReadOnlyCollection<string>? ImageUrls,
+    bool IsSensitive = false,
+    bool SaveAsDraft = false,
+    DateTime? ScheduledPublishAtUtc = null);
 
 public sealed record UpdatePostRequest(string? Content);
 
@@ -109,4 +115,7 @@ public sealed record PostDto(
     string? MyReactionType,
     IReadOnlyCollection<ReactionSummaryDto> Reactions,
     IReadOnlyCollection<PostReactionDetailDto> ReactionDetails,
-    IReadOnlyCollection<CommentDto> Comments);
+    IReadOnlyCollection<CommentDto> Comments,
+    bool IsDraft = false,
+    DateTime? ScheduledPublishAtUtc = null,
+    DateTime? PublishedAtUtc = null);

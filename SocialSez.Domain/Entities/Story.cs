@@ -8,6 +8,9 @@ public class Story
     public string MediaUrl { get; set; } = string.Empty;
     public string? ThumbnailUrl { get; set; }
     public bool IsSensitive { get; set; }
+    public bool IsDraft { get; set; }
+    public DateTime? ScheduledPublishAtUtc { get; set; }
+    public DateTime? PublishedAtUtc { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime ExpiresAtUtc { get; set; }
 
