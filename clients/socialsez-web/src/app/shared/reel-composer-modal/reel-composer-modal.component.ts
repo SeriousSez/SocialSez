@@ -48,6 +48,9 @@ export class ReelComposerModalComponent implements OnDestroy {
     private static readonly ReelOutputAspect = 9 / 16;
     private static readonly MaxTrimDurationSeconds = 180;
     private static readonly CloseAnimationDurationMs = 180;
+    private static readonly ReelCoverFrameCount = 4;
+    private static readonly ReelOutputWidth = 540;
+    private static readonly ReelOutputFps = 24;
     private readonly draftStorageKey = 'socialsez.reel-composer.draft.v1';
 
     @Input()
@@ -788,7 +791,7 @@ export class ReelComposerModalComponent implements OnDestroy {
             URL.revokeObjectURL(option.previewUrl);
         }
 
-        const frameCount = Math.min(6, Math.max(3, durationSeconds >= 12 ? 6 : 4));
+        const frameCount = Math.min(ReelComposerModalComponent.ReelCoverFrameCount, Math.max(3, durationSeconds >= 12 ? ReelComposerModalComponent.ReelCoverFrameCount : 3));
         const coverOptions: ReelCoverOption[] = [];
         const trimOptions: ReelCoverOption[] = [];
 
@@ -900,7 +903,7 @@ export class ReelComposerModalComponent implements OnDestroy {
                     const sourceWidth = video.videoWidth || 720;
                     const sourceHeight = video.videoHeight || 1280;
                     const crop = this.getFrameCropForSource(sourceWidth, sourceHeight);
-                    const outputWidth = 720;
+                    const outputWidth = ReelComposerModalComponent.ReelOutputWidth;
                     const outputHeight = Math.max(1, Math.round(outputWidth / ReelComposerModalComponent.ReelOutputAspect));
 
                     const canvas = document.createElement('canvas');
@@ -915,7 +918,7 @@ export class ReelComposerModalComponent implements OnDestroy {
                         return;
                     }
 
-                    const stream = (canvas as HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }).captureStream?.(30);
+                    const stream = (canvas as HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }).captureStream?.(ReelComposerModalComponent.ReelOutputFps);
                     if (!stream) {
                         this.reelComposerError = 'Trim preview saved, but this browser does not support video trimming upload.';
                         cleanup();
@@ -931,8 +934,8 @@ export class ReelComposerModalComponent implements OnDestroy {
                     }
 
                     const chunks: BlobPart[] = [];
-                    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-                        ? 'video/webm;codecs=vp9'
+                    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
+                        ? 'video/webm;codecs=vp8'
                         : 'video/webm';
 
                     const recorder = new MediaRecorder(stream, { mimeType });

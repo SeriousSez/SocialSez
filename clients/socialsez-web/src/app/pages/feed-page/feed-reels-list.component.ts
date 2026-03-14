@@ -770,7 +770,12 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     getReelPreloadMode(index: number): 'auto' | 'metadata' {
-        return index < 3 ? 'auto' : 'metadata';
+        const firstReelId = this.reels[0]?.id ?? null;
+        if (index === 0 || (this.activeReelId !== null && this.activeReelId === this.reels[index]?.id) || (firstReelId !== null && this.activeReelId === null && this.reels[index]?.id === firstReelId)) {
+            return 'auto';
+        }
+
+        return 'metadata';
     }
 
     onReelVideoLoadedMetadata(reelId: string): void {
