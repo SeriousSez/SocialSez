@@ -128,6 +128,7 @@ export class ProfilePageComponent implements OnDestroy {
     isFollowing = false;
     isRequested = false;
     followRequiresApproval = false;
+    messagingProfile = false;
     profileSafetyMenuOpen = false;
     isBlocked = false;
     isBlockedByTarget = false;
@@ -299,6 +300,18 @@ export class ProfilePageComponent implements OnDestroy {
         }
 
         return this.isFollowing ? 'Unfollow' : 'Follow';
+    }
+
+    get messageButtonLabel(): string {
+        if (this.messagingProfile) {
+            return 'Working...';
+        }
+
+        if (!this.viewedProfile) {
+            return 'Message';
+        }
+
+        return !this.isFollowing ? 'Request Message' : 'Message';
     }
 
     renderBioHtml(bio: string): string {
@@ -2605,6 +2618,36 @@ export class ProfilePageComponent implements OnDestroy {
             this.setFollowState('success', 1100);
         } catch {
             this.setFollowState('failure', 1400);
+        }
+    }
+
+    async startDirectMessageAsync(): Promise<void> {
+        if (!this.session.isAuthenticated()) {
+            await this.router.navigate(['/auth']);
+            return;
+        }
+
+        if (this.isOwnProfile || !this.viewedProfile || this.messagingProfile || this.isBlockedView) {
+            return;
+        }
+
+        this.messagingProfile = true;
+        this.error = '';
+
+        try {
+            const conversation = await this.session.createDirectConversationAsync(this.viewedProfile.id);
+            if (!this.isFollowing) {
+                this.session.message = 'Message request sent.';
+            }
+
+            await this.router.navigate(['/chat'], { queryParams: { conversation: conversation.id } });
+        } catch {
+            this.error = !this.isFollowing
+                ? 'Could not send message request right now.'
+                : 'Could not open chat right now.';
+        } finally {
+            this.messagingProfile = false;
+            this.cdr.detectChanges();
         }
     }
 

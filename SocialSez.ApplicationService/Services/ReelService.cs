@@ -163,6 +163,8 @@ public class ReelService(SocialSezContext dbContext) : IReelService
         }
 
         var existingLike = reel.Likes.FirstOrDefault(x => x.ProfileId == profileId);
+        var shouldNotifyLike = false;
+
         if (existingLike is null)
         {
             reel.Likes.Add(new ReelLike
@@ -171,10 +173,36 @@ public class ReelService(SocialSezContext dbContext) : IReelService
                 ProfileId = profileId,
                 CreatedAtUtc = DateTime.UtcNow
             });
+
+            shouldNotifyLike = true;
         }
         else
         {
             dbContext.ReelLikes.Remove(existingLike);
+        }
+
+        if (shouldNotifyLike && reel.AuthorId != profileId)
+        {
+            var actorHandle = await dbContext.UserProfiles
+                .AsNoTracking()
+                .Where(x => x.Id == profileId)
+                .Select(x => x.Handle)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(actorHandle))
+            {
+                dbContext.Notifications.Add(new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    RecipientId = reel.AuthorId,
+                    ActorId = profileId,
+                    Type = "ReelLike",
+                    Message = $"@{actorHandle} liked your reel.",
+                    ReferenceId = reel.Id.ToString(),
+                    IsRead = false,
+                    CreatedAtUtc = DateTime.UtcNow
+                });
+            }
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -199,11 +227,13 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             return null;
         }
 
-        var authorExists = await dbContext.UserProfiles
+        var authorHandle = await dbContext.UserProfiles
             .AsNoTracking()
-            .AnyAsync(x => x.Id == request.AuthorId, cancellationToken);
+            .Where(x => x.Id == request.AuthorId)
+            .Select(x => x.Handle)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (!authorExists)
+        if (string.IsNullOrWhiteSpace(authorHandle))
         {
             throw new InvalidOperationException("Author does not exist.");
         }
@@ -237,6 +267,21 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             Content = content,
             CreatedAtUtc = DateTime.UtcNow
         });
+
+        if (reel.AuthorId != request.AuthorId)
+        {
+            dbContext.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = reel.AuthorId,
+                ActorId = request.AuthorId,
+                Type = "ReelComment",
+                Message = $"@{authorHandle} commented on your reel.",
+                ReferenceId = reel.Id.ToString(),
+                IsRead = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return MapToReelDto(reel, request.AuthorId);

@@ -98,7 +98,7 @@ builder.Services.AddAuthentication(options =>
         {
             var accessToken = context.Request.Query["access_token"];
             var path = context.HttpContext.Request.Path;
-            if (!string.IsNullOrWhiteSpace(accessToken) && path.StartsWithSegments("/hubs/chat"))
+            if (!string.IsNullOrWhiteSpace(accessToken) && (path.StartsWithSegments("/hubs/chat") || path.StartsWithSegments("/hubs/notifications")))
             {
                 context.Token = accessToken;
             }
@@ -279,6 +279,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
+app.MapHub<NotificationsHub>("/hubs/notifications");
 
 app.MapGet("/api/unfurl/{**targetPath}", async (
     HttpContext context,

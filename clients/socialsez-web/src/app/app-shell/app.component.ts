@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, HostListener, OnDestroy, OnInit, inject, isDevMode } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, HostListener, OnDestroy, OnInit, inject, isDevMode } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
@@ -9,6 +9,7 @@ import { filter, firstValueFrom } from 'rxjs';
 import { CommunityDto, CommunityRuleDto, HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
 import { SharedReelCommentPreview } from '../core/shared-reel.utils';
 import { OpenReelInModalRequest, PendingSaveToCollectionRequest, SessionNoticeEntry, SessionService } from '../core/session.service';
+import { NotificationsRealtimeService } from '../core/notifications-realtime.service';
 import { SocialSezApiService } from '../core/socialsez-api.service';
 import { UploadProgressService } from '../core/upload-progress.service';
 import { ProgressItem } from '../core/upload-progress.service';
@@ -99,6 +100,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private markingProfileChipStoryId: string | null = null;
     private pendingProfileChipViewedSync = false;
     private storyStatusPollTimerId: number | null = null;
+    private notificationsPollTimerId: number | null = null;
     private topNoticeAutoDismissTimerId: number | null = null;
     private topNoticeHideTimerId: number | null = null;
     private updateCheckTimerId: number | null = null;
@@ -115,8 +117,11 @@ export class AppComponent implements OnInit, OnDestroy {
     private appUpdateAvailable = false;
     private appUpdateVersionLabel = '';
     private reloadingForUpdate = false;
+    private readonly seenRealtimeNotificationIds = new Set<string>();
 
     private readonly destroyRef = inject(DestroyRef);
+    private readonly cdr = inject(ChangeDetectorRef);
+    private readonly notificationsRealtime = inject(NotificationsRealtimeService);
 
     constructor(
         public readonly session: SessionService,
@@ -358,6 +363,27 @@ export class AppComponent implements OnInit, OnDestroy {
         this.applyThemePreference();
         this.initializeVersionUpdates();
         void this.updateRouteMetaAsync(this.router.url);
+        void this.syncNotificationsRealtimeConnectionAsync();
+
+        this.notificationsRealtime.notificationCreated$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(notification => {
+                const currentProfileId = this.session.profile?.id ?? null;
+                if (currentProfileId && notification.recipientId === currentProfileId && !notification.isRead && !this.seenRealtimeNotificationIds.has(notification.id)) {
+                    this.seenRealtimeNotificationIds.add(notification.id);
+                    this.unreadNotificationsCount += 1;
+
+                    if (this.seenRealtimeNotificationIds.size > 400) {
+                        const first = this.seenRealtimeNotificationIds.values().next().value as string | undefined;
+                        if (first) {
+                            this.seenRealtimeNotificationIds.delete(first);
+                        }
+                    }
+                }
+
+                this.session.notifyNotificationsUpdated();
+                this.cdr.detectChanges();
+            });
 
         this.session.appChanges$
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -369,6 +395,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
                 if (change === 'session' || change === 'notifications') {
                     void this.loadUnreadNotificationsCountAsync();
+                }
+
+                if (change === 'session') {
+                    void this.syncNotificationsRealtimeConnectionAsync();
                 }
 
                 if ((change === 'profile' || change === 'posts' || change === 'session') && this.isCommunityPageRoute) {
@@ -442,9 +472,12 @@ export class AppComponent implements OnInit, OnDestroy {
 
         void this.initializeAsync();
         this.startStoryStatusPolling();
+        this.startUnreadNotificationsPolling();
     }
 
     ngOnDestroy(): void {
+        void this.notificationsRealtime.disconnect();
+
         if (this.saveToCollectionRequest) {
             this.saveToCollectionRequest.resolve(false);
             this.saveToCollectionRequest = null;
@@ -453,6 +486,11 @@ export class AppComponent implements OnInit, OnDestroy {
         if (this.storyStatusPollTimerId !== null) {
             window.clearInterval(this.storyStatusPollTimerId);
             this.storyStatusPollTimerId = null;
+        }
+
+        if (this.notificationsPollTimerId !== null) {
+            window.clearInterval(this.notificationsPollTimerId);
+            this.notificationsPollTimerId = null;
         }
 
         if (this.updateCheckTimerId !== null) {
@@ -1768,5 +1806,28 @@ export class AppComponent implements OnInit, OnDestroy {
 
             void this.refreshProfileChipStoryStatus();
         }, 30000);
+    }
+
+    private startUnreadNotificationsPolling(): void {
+        if (this.notificationsPollTimerId !== null) {
+            return;
+        }
+
+        this.notificationsPollTimerId = window.setInterval(() => {
+            if (!this.session.isAuthenticated() || document.hidden) {
+                return;
+            }
+
+            void this.loadUnreadNotificationsCountAsync();
+        }, 5000);
+    }
+
+    private async syncNotificationsRealtimeConnectionAsync(): Promise<void> {
+        if (this.session.isAuthenticated()) {
+            await this.notificationsRealtime.connect();
+            return;
+        }
+
+        await this.notificationsRealtime.disconnect();
     }
 }

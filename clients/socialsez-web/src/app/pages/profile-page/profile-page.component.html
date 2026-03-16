@@ -71,6 +71,8 @@
                                 <button type="button" (click)="toggleFollow()" [disabled]="followState === 'loading' || isBlockedView" [class.ghost]="isFollowing && followState === 'idle'" [class.is-loading]="followState === 'loading'" [class.is-success]="followState === 'success'"
                                     [class.is-failure]="followState === 'failure'">{{ followButtonLabel }}</button>
 
+                                <button type="button" class="ghost" (click)="startDirectMessageAsync()" [disabled]="messagingProfile || isBlockedView">{{ messageButtonLabel }}</button>
+
                                 <button type="button" class="hero-icon-link" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? 'Profile link copied' : 'Copy profile link'" [attr.title]="profileLinkCopied ? 'Copied' : 'Copy profile link'">
                                     <i class="fa-duotone" [class.fa-light]="!profileLinkCopied" [class.fa-solid]="profileLinkCopied" [class.fa-share-nodes]="!profileLinkCopied" [class.fa-check]="profileLinkCopied" aria-hidden="true"></i>
                                 </button>

@@ -589,6 +589,22 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
         };
 
         dbContext.CommunityPostComments.Add(comment);
+
+        if (post.AuthorId != request.AuthorId)
+        {
+            dbContext.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = post.AuthorId,
+                ActorId = request.AuthorId,
+                Type = "CommunityPostComment",
+                Message = $"@{author.Handle} commented on your community post.",
+                ReferenceId = post.Id.ToString(),
+                IsRead = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         SearchCacheVersionStamp.BumpCommunity();
         return MapPost(post, request.AuthorId);
@@ -914,6 +930,7 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
 
         var normalizedVoteType = NormalizeVoteType(request.VoteType);
         var existingVote = post.Votes.FirstOrDefault(x => x.ProfileId == request.VoterId);
+        var shouldNotifyUpvote = false;
 
         if (normalizedVoteType is null)
         {
@@ -932,6 +949,8 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
                 Type = normalizedVoteType,
                 CreatedAtUtc = DateTime.UtcNow
             });
+
+            shouldNotifyUpvote = string.Equals(normalizedVoteType, UpvoteType, StringComparison.OrdinalIgnoreCase);
         }
         else if (string.Equals(existingVote.Type, normalizedVoteType, StringComparison.OrdinalIgnoreCase))
         {
@@ -942,6 +961,31 @@ public class CommunityService(SocialSezContext dbContext, IMemoryCache memoryCac
         {
             existingVote.Type = normalizedVoteType;
             existingVote.CreatedAtUtc = DateTime.UtcNow;
+            shouldNotifyUpvote = string.Equals(normalizedVoteType, UpvoteType, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (shouldNotifyUpvote && post.AuthorId != request.VoterId)
+        {
+            var actorHandle = await dbContext.UserProfiles
+                .AsNoTracking()
+                .Where(x => x.Id == request.VoterId)
+                .Select(x => x.Handle)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(actorHandle))
+            {
+                dbContext.Notifications.Add(new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    RecipientId = post.AuthorId,
+                    ActorId = request.VoterId,
+                    Type = "CommunityPostUpvote",
+                    Message = $"@{actorHandle} upvoted your community post.",
+                    ReferenceId = post.Id.ToString(),
+                    IsRead = false,
+                    CreatedAtUtc = DateTime.UtcNow
+                });
+            }
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);

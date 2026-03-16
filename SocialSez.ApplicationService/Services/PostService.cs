@@ -112,8 +112,13 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             return null;
         }
 
-        var authorExists = await dbContext.UserProfiles.AnyAsync(x => x.Id == request.AuthorId, cancellationToken);
-        if (!authorExists)
+        var authorHandle = await dbContext.UserProfiles
+            .AsNoTracking()
+            .Where(x => x.Id == request.AuthorId)
+            .Select(x => x.Handle)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(authorHandle))
         {
             throw new InvalidOperationException("Comment author does not exist.");
         }
@@ -144,6 +149,22 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         };
 
         dbContext.Comments.Add(comment);
+
+        if (post.AuthorId != request.AuthorId)
+        {
+            dbContext.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = post.AuthorId,
+                ActorId = request.AuthorId,
+                Type = "PostComment",
+                Message = $"@{authorHandle} commented on your post.",
+                ReferenceId = post.Id.ToString(),
+                IsRead = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         SearchCacheVersionStamp.BumpPost();
         return MapToPostDto(post, request.AuthorId);
@@ -425,6 +446,8 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         }
 
         var existingReaction = post.Reactions.FirstOrDefault(x => x.ProfileId == profileId);
+        var shouldNotifyLike = false;
+
         if (existingReaction is not null && string.Equals(existingReaction.Type, LikeReactionType, StringComparison.OrdinalIgnoreCase))
         {
             dbContext.PostReactions.Remove(existingReaction);
@@ -438,10 +461,37 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 Type = LikeReactionType,
                 CreatedAtUtc = DateTime.UtcNow
             });
+
+            shouldNotifyLike = true;
         }
         else
         {
             existingReaction.Type = LikeReactionType;
+            shouldNotifyLike = true;
+        }
+
+        if (shouldNotifyLike && post.AuthorId != profileId)
+        {
+            var actorHandle = await dbContext.UserProfiles
+                .AsNoTracking()
+                .Where(x => x.Id == profileId)
+                .Select(x => x.Handle)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(actorHandle))
+            {
+                dbContext.Notifications.Add(new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    RecipientId = post.AuthorId,
+                    ActorId = profileId,
+                    Type = "PostReaction",
+                    Message = $"@{actorHandle} reacted to your post.",
+                    ReferenceId = post.Id.ToString(),
+                    IsRead = false,
+                    CreatedAtUtc = DateTime.UtcNow
+                });
+            }
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -475,6 +525,9 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         }
 
         var existingReaction = post.Reactions.FirstOrDefault(x => x.ProfileId == profileId);
+        var notificationType = string.Empty;
+        var notificationMessage = string.Empty;
+
         if (existingReaction is null)
         {
             post.Reactions.Add(new PostReaction
@@ -484,10 +537,56 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                 Type = normalizedType,
                 CreatedAtUtc = DateTime.UtcNow
             });
+
+            if (string.Equals(normalizedType, LikeReactionType, StringComparison.OrdinalIgnoreCase))
+            {
+                notificationType = "PostLike";
+                notificationMessage = "liked your post";
+            }
+            else
+            {
+                notificationType = "PostReaction";
+                notificationMessage = $"reacted ({normalizedType}) to your post";
+            }
         }
         else
         {
             existingReaction.Type = normalizedType;
+
+            if (string.Equals(normalizedType, LikeReactionType, StringComparison.OrdinalIgnoreCase))
+            {
+                notificationType = "PostLike";
+                notificationMessage = "liked your post";
+            }
+            else
+            {
+                notificationType = "PostReaction";
+                notificationMessage = $"reacted ({normalizedType}) to your post";
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(notificationType) && post.AuthorId != profileId)
+        {
+            var actorHandle = await dbContext.UserProfiles
+                .AsNoTracking()
+                .Where(x => x.Id == profileId)
+                .Select(x => x.Handle)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(actorHandle))
+            {
+                dbContext.Notifications.Add(new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    RecipientId = post.AuthorId,
+                    ActorId = profileId,
+                    Type = notificationType,
+                    Message = $"@{actorHandle} {notificationMessage}.",
+                    ReferenceId = post.Id.ToString(),
+                    IsRead = false,
+                    CreatedAtUtc = DateTime.UtcNow
+                });
+            }
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);

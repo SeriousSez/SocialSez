@@ -6,21 +6,37 @@
         </div>
         <div class="actions">
             <a class="ghost-link" routerLink="/notifications/requests">Requests</a>
-            <button class="ghost" type="button" (click)="markAllRead()" [disabled]="!notifications.length">Mark all read</button>
+            <button class="ghost" type="button" (click)="markAllRead()" [disabled]="!unreadCount">Mark all read</button>
             <button class="ghost refresh-icon-btn" type="button" (click)="loadNotifications()" aria-label="Refresh notifications" title="Refresh notifications">
                 <i class="fa-duotone fa-light fa-arrows-rotate" aria-hidden="true"></i>
             </button>
         </div>
     </header>
 
-    <section class="card">
-        <p class="meta" *ngIf="loading">Loading notifications...</p>
-        <p class="meta" *ngIf="!loading && !notifications.length">No notifications yet.</p>
+    <nav class="filters" aria-label="Notification filters">
+        <button type="button" class="ghost" [class.is-active]="activeFilter === 'all'" (click)="setFilter('all')">All ({{ notifications.length }})</button>
+        <button type="button" class="ghost" [class.is-active]="activeFilter === 'unread'" (click)="setFilter('unread')">Unread ({{ unreadCount }})</button>
+    </nav>
 
-        <article class="notification" *ngFor="let notification of notifications" [class.request-row]="isFollowRequest(notification)" (click)="openRequest(notification)">
-            <div>
+    <section class="card">
+        <div class="notification-skeleton" *ngIf="loading">
+            <article class="notification" *ngFor="let row of skeletonRows">
+                <div class="body">
+                    <span class="line line-lg"></span>
+                    <span class="line line-sm"></span>
+                </div>
+                <div class="action-skeleton"></div>
+            </article>
+        </div>
+
+        <p class="meta" *ngIf="!loading && !filteredNotifications.length && activeFilter === 'all'">No notifications yet.</p>
+        <p class="meta" *ngIf="!loading && !filteredNotifications.length && activeFilter === 'unread'">You’re all caught up.</p>
+
+        <article class="notification" *ngFor="let notification of filteredNotifications; trackBy: trackByNotification" [class.request-row]="isFollowRequest(notification)" [class.unread]="!notification.isRead" (click)="openRequest(notification)">
+            <div class="body">
+                <span class="unread-dot" *ngIf="!notification.isRead" aria-hidden="true"></span>
                 <a class="profile-link" *ngIf="isFollowRequest(notification) && notification.actorHandle" [routerLink]="['/users', notification.actorHandle]" (click)="$event.stopPropagation()">@{{ notification.actorHandle }}</a>
-                <strong [style.opacity]="notification.isRead ? 0.65 : 1">{{ notification.message }}</strong>
+                <strong>{{ notification.message }}</strong>
                 <p class="meta">{{ notification.createdAtUtc | date:'medium' }}</p>
             </div>
             <div class="actions">

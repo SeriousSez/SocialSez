@@ -1225,6 +1225,10 @@ export class SessionService {
         return response.updatedCount;
     }
 
+    notifyNotificationsUpdated(): void {
+        this.emitAppChange('notifications');
+    }
+
     async updateProfileAsync(request: UpdateProfileRequest): Promise<void> {
         const updated = await firstValueFrom(this.api.updateMyProfile(request));
         this.profile = this.normalizeProfile(updated);

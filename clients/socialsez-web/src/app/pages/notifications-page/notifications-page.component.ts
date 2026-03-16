@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { NotificationDto } from '../../core/api.types';
+import { NotificationsRealtimeService } from '../../core/notifications-realtime.service';
 import { SessionService } from '../../core/session.service';
 
 @Component({
@@ -16,9 +18,53 @@ export class NotificationsPageComponent {
     loading = false;
     status = '';
     statusTone: 'neutral' | 'success' | 'error' = 'neutral';
+    activeFilter: 'all' | 'unread' = 'all';
+    readonly skeletonRows = Array.from({ length: 4 }, (_, index) => index);
+    private readonly session = inject(SessionService);
+    private readonly router = inject(Router);
+    private readonly cdr = inject(ChangeDetectorRef);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly notificationsRealtime = inject(NotificationsRealtimeService);
 
-    constructor(private readonly session: SessionService, private readonly router: Router) {
+    constructor() {
+        this.notificationsRealtime.notificationCreated$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(notification => {
+                const currentProfileId = this.session.profile?.id;
+                if (!currentProfileId || notification.recipientId !== currentProfileId) {
+                    return;
+                }
+
+                const exists = this.notifications.some(item => item.id === notification.id);
+                if (exists) {
+                    return;
+                }
+
+                this.notifications = [notification, ...this.notifications].slice(0, 100);
+                this.cdr.detectChanges();
+            });
+
         void this.loadNotifications();
+    }
+
+    get unreadCount(): number {
+        return this.notifications.filter(notification => !notification.isRead).length;
+    }
+
+    get filteredNotifications(): NotificationDto[] {
+        if (this.activeFilter === 'unread') {
+            return this.notifications.filter(notification => !notification.isRead);
+        }
+
+        return this.notifications;
+    }
+
+    setFilter(filter: 'all' | 'unread'): void {
+        this.activeFilter = filter;
+    }
+
+    trackByNotification(_index: number, notification: NotificationDto): string {
+        return notification.id;
     }
 
     isFollowRequest(notification: NotificationDto): boolean {
@@ -36,19 +82,27 @@ export class NotificationsPageComponent {
             this.statusTone = 'error';
         } finally {
             this.loading = false;
+            this.cdr.detectChanges();
         }
     }
 
     async markRead(notificationId: string): Promise<void> {
+        const target = this.notifications.find(notification => notification.id === notificationId);
+        if (!target || target.isRead) {
+            return;
+        }
+
         this.resetStatus();
 
         try {
             await this.session.markNotificationReadAsync(notificationId);
             this.notifications = this.notifications.map(notification =>
                 notification.id === notificationId ? { ...notification, isRead: true } : notification);
+            this.cdr.detectChanges();
         } catch {
             this.status = 'Could not mark notification as read.';
             this.statusTone = 'error';
+            this.cdr.detectChanges();
         }
     }
 
@@ -60,9 +114,11 @@ export class NotificationsPageComponent {
             this.notifications = this.notifications.map(notification => ({ ...notification, isRead: true }));
             this.status = updatedCount > 0 ? `${updatedCount} notifications marked as read.` : 'No unread notifications.';
             this.statusTone = updatedCount > 0 ? 'success' : 'neutral';
+            this.cdr.detectChanges();
         } catch {
             this.status = 'Could not mark notifications as read.';
             this.statusTone = 'error';
+            this.cdr.detectChanges();
         }
     }
 
@@ -98,9 +154,11 @@ export class NotificationsPageComponent {
                 item.id === notification.id ? { ...item, isRead: true } : item);
             this.status = 'Follow request approved.';
             this.statusTone = 'success';
+            this.cdr.detectChanges();
         } catch {
             this.status = 'Could not approve request.';
             this.statusTone = 'error';
+            this.cdr.detectChanges();
         }
     }
 
@@ -124,9 +182,11 @@ export class NotificationsPageComponent {
                 item.id === notification.id ? { ...item, isRead: true } : item);
             this.status = 'Follow request declined.';
             this.statusTone = 'success';
+            this.cdr.detectChanges();
         } catch {
             this.status = 'Could not decline request.';
             this.statusTone = 'error';
+            this.cdr.detectChanges();
         }
     }
 

@@ -1,6 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using SocialSez.API.Hubs;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 using SocialSez.Domain.Entities;
@@ -10,7 +13,11 @@ namespace SocialSez.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PostsController(IPostService postService, SocialSezContext dbContext) : ControllerBase
+public class PostsController(
+    IPostService postService,
+    INotificationService notificationService,
+    IHubContext<NotificationsHub> notificationsHubContext,
+    SocialSezContext dbContext) : ControllerBase
 {
     [Authorize]
     [HttpPost]
@@ -120,7 +127,27 @@ public class PostsController(IPostService postService, SocialSezContext dbContex
         try
         {
             var comment = await postService.AddCommentAsync(postId, new CreateCommentRequest(profileId, request.Content, request.ParentCommentId), cancellationToken);
-            return comment is null ? NotFound() : Ok(comment);
+
+            if (comment is null)
+            {
+                return NotFound();
+            }
+
+            // Query the post to get its author ID to publish notification
+            var post = await dbContext.Posts
+                .AsNoTracking()
+                .Where(x => x.Id == postId)
+                .Select(x => new { x.AuthorId })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            // Publish notification if posted by different user
+            // (notification was already created in service layer)
+            if (post is not null && post.AuthorId != profileId)
+            {
+                await PublishLatestNotificationAsync(post.AuthorId, cancellationToken);
+            }
+
+            return Ok(comment);
         }
         catch (ArgumentException ex)
         {
@@ -219,6 +246,15 @@ public class PostsController(IPostService postService, SocialSezContext dbContex
         }
 
         var updated = await postService.ToggleLikeAsync(postId, profileId, cancellationToken);
+
+        if (updated is not null
+            && updated.AuthorId != profileId
+            && updated.LikedByMe
+            && string.Equals(updated.MyReactionType, "Like", StringComparison.OrdinalIgnoreCase))
+        {
+            await PublishLatestNotificationAsync(updated.AuthorId, cancellationToken);
+        }
+
         return updated is null ? NotFound() : Ok(updated);
     }
 
@@ -234,6 +270,14 @@ public class PostsController(IPostService postService, SocialSezContext dbContex
         try
         {
             var updated = await postService.SetReactionAsync(postId, profileId, request, cancellationToken);
+
+            if (updated is not null
+                && updated.AuthorId != profileId
+                && !string.IsNullOrWhiteSpace(updated.MyReactionType))
+            {
+                await PublishLatestNotificationAsync(updated.AuthorId, cancellationToken);
+            }
+
             return updated is null ? NotFound() : Ok(updated);
         }
         catch (ArgumentException ex)
@@ -416,6 +460,19 @@ public class PostsController(IPostService postService, SocialSezContext dbContex
             ?? User.FindFirstValue("sub");
 
         return Guid.TryParse(raw, out profileId);
+    }
+
+    private async Task PublishLatestNotificationAsync(Guid recipientId, CancellationToken cancellationToken)
+    {
+        var latest = (await notificationService.GetForRecipientAsync(recipientId, 1, cancellationToken)).FirstOrDefault();
+        if (latest is null)
+        {
+            return;
+        }
+
+        await notificationsHubContext.Clients
+            .Group(NotificationsHub.RecipientGroup(recipientId))
+            .SendAsync(NotificationsHub.NotificationCreatedEvent, latest, cancellationToken);
     }
 
     private Guid? TryGetOptionalProfileId()

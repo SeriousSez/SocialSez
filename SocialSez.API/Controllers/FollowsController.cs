@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using SocialSez.API.Hubs;
 using SocialSez.ApplicationService.Interfaces;
 using SocialSez.ApplicationService.Models;
 
@@ -8,7 +10,10 @@ namespace SocialSez.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class FollowsController(IFollowService followService) : ControllerBase
+public class FollowsController(
+    IFollowService followService,
+    INotificationService notificationService,
+    IHubContext<NotificationsHub> notificationsHubContext) : ControllerBase
 {
     [Authorize]
     [HttpPost]
@@ -20,6 +25,13 @@ public class FollowsController(IFollowService followService) : ControllerBase
         }
 
         var result = await followService.FollowAsync(followerId, request.FollowedId, cancellationToken);
+
+        if (string.Equals(result.Status, FollowActionStatuses.Followed, StringComparison.Ordinal)
+            || string.Equals(result.Status, FollowActionStatuses.RequestPending, StringComparison.Ordinal))
+        {
+            await PublishLatestNotificationAsync(request.FollowedId, cancellationToken);
+        }
+
         return string.Equals(result.Status, FollowActionStatuses.Invalid, StringComparison.Ordinal)
             ? BadRequest(new { message = "Unable to follow user." })
             : Ok(result);
@@ -74,6 +86,12 @@ public class FollowsController(IFollowService followService) : ControllerBase
         }
 
         var success = await followService.ApproveRequestAsync(profileId, followerId, cancellationToken);
+        if (success)
+        {
+            await PublishLatestNotificationAsync(profileId, cancellationToken);
+            await PublishLatestNotificationAsync(followerId, cancellationToken);
+        }
+
         return success ? NoContent() : NotFound();
     }
 
@@ -87,6 +105,11 @@ public class FollowsController(IFollowService followService) : ControllerBase
         }
 
         var success = await followService.DeclineRequestAsync(profileId, followerId, cancellationToken);
+        if (success)
+        {
+            await PublishLatestNotificationAsync(followerId, cancellationToken);
+        }
+
         return success ? NoContent() : NotFound();
     }
 
@@ -124,5 +147,18 @@ public class FollowsController(IFollowService followService) : ControllerBase
             ?? User.FindFirstValue("sub");
 
         return Guid.TryParse(raw, out profileId);
+    }
+
+    private async Task PublishLatestNotificationAsync(Guid recipientId, CancellationToken cancellationToken)
+    {
+        var latest = (await notificationService.GetForRecipientAsync(recipientId, 1, cancellationToken)).FirstOrDefault();
+        if (latest is null)
+        {
+            return;
+        }
+
+        await notificationsHubContext.Clients
+            .Group(NotificationsHub.RecipientGroup(recipientId))
+            .SendAsync(NotificationsHub.NotificationCreatedEvent, latest, cancellationToken);
     }
 }

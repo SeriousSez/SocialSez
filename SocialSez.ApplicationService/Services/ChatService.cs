@@ -59,11 +59,32 @@ public class ChatService(SocialSezContext dbContext) : IChatService
         }
 
         var profileIds = new[] { profileId, request.OtherProfileId };
-        var profileCount = await dbContext.UserProfiles.CountAsync(x => profileIds.Contains(x.Id), cancellationToken);
-        if (profileCount != 2)
+        var profiles = await dbContext.UserProfiles
+            .AsNoTracking()
+            .Where(x => profileIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.Handle, x.IsPrivate })
+            .ToListAsync(cancellationToken);
+
+        if (profiles.Count != 2)
         {
             throw new InvalidOperationException("One or more profiles do not exist.");
         }
+
+        var requester = profiles.First(x => x.Id == profileId);
+        var target = profiles.First(x => x.Id == request.OtherProfileId);
+
+        var requesterFollowsTarget = await dbContext.Follows
+            .AsNoTracking()
+            .AnyAsync(x => x.FollowerId == profileId && x.FollowedId == request.OtherProfileId, cancellationToken);
+
+        var hasAcceptedMessageRequestHistory = await dbContext.ChatConversations
+            .AsNoTracking()
+            .Where(x => !x.IsGroup
+                && x.Members.Any(m => m.ProfileId == profileId)
+                && x.Members.Any(m => m.ProfileId == request.OtherProfileId))
+            .AnyAsync(x => x.Messages.Any(message => message.AuthorProfileId == request.OtherProfileId), cancellationToken);
+
+        var shouldCreateMessageRequestNotification = !requesterFollowsTarget && !hasAcceptedMessageRequestHistory;
 
         var directConversations = await dbContext.ChatConversations
             .AsNoTracking()
@@ -112,6 +133,22 @@ public class ChatService(SocialSezContext dbContext) : IChatService
         });
 
         dbContext.ChatConversations.Add(conversation);
+
+        if (shouldCreateMessageRequestNotification)
+        {
+            dbContext.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = request.OtherProfileId,
+                ActorId = profileId,
+                Type = "MessageRequest",
+                Message = $"@{requester.Handle} sent you a message request.",
+                ReferenceId = conversation.Id.ToString(),
+                IsRead = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var created = await dbContext.ChatConversations
