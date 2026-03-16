@@ -490,33 +490,34 @@ h2 {
     top: calc(100% + 6px);
     right: 0;
     min-width: 170px;
-    border: 1px solid #dbe4f0;
-    border-radius: 0;
-    background: #fff;
-    box-shadow: 0 16px 30px -24px #0f172a;
+    display: grid;
+    gap: 4px;
+    padding: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
     z-index: 20;
-    overflow: hidden;
 }
 
 .profile-safety-dropdown button {
+    display: block;
     width: 100%;
-    border: 0;
-    border-bottom: 1px solid #e2e8f0;
-    border-radius: 0;
-    background: #fff;
-    color: #1e293b;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-text);
     text-align: left;
-    padding: 10px 12px;
-    font-weight: 600;
+    padding: 8px 10px;
+    font-weight: 700;
+    box-shadow: none;
+    transform: none;
     cursor: pointer;
 }
 
-.profile-safety-dropdown button:last-child {
-    border-bottom: 0;
-}
-
 .profile-safety-dropdown button:hover {
-    background: #f8fafc;
+    background: var(--color-surface-alt);
+    box-shadow: none;
+    transform: none;
 }
 
 .profile-safety-dropdown button:disabled {
