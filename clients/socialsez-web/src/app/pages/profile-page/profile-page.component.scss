@@ -462,10 +462,10 @@ h2 {
 .profile-safety-trigger {
     width: 40px;
     height: 40px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
-    background: #f1f5f9;
-    color: #94a3b8;
+    background: var(--color-surface-alt);
+    color: var(--color-text);
     display: grid;
     place-items: center;
     font-size: 1rem;
@@ -477,7 +477,7 @@ h2 {
 }
 
 .profile-safety-trigger:hover {
-    background: #e2e8f0;
+    background: var(--color-border);
 }
 
 .profile-safety-trigger:disabled {

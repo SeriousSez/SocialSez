@@ -16,7 +16,8 @@
     </ng-container>
 
     <ng-container *ngIf="!isEditing">
-        <div class="content" *ngIf="content">
+        <div class="content content--html" *ngIf="content && displayAsHtml" [innerHTML]="fullContentText"></div>
+        <div class="content" *ngIf="content && !displayAsHtml">
             <ng-container *ngFor="let line of contentLines; let isLastLine = last">
                 <ng-container *ngFor="let part of line">
                     <a *ngIf="part.hashtag; else maybeMention" class="hashtag" [href]="'/hashtags/' + part.hashtag" (click)="navigateToHashtag(part.hashtag, $event)">{{ part.text }}</a>

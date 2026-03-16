@@ -66,8 +66,12 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         const parsed = extractSharedPostFromContent(this._content);
         this.sharedPost = parsed.sharedPost;
         this.fullContentText = parsed.text;
+        this.contentIsHtml = /<[a-zA-Z]/.test(this.fullContentText);
         this.contentExpanded = false;
-        this.isContentTruncated = this.fullContentText.length > PostCardComponent.PostContentPreviewLength;
+        const textLength = this.contentIsHtml
+            ? this.extractTextFromHtml(this.fullContentText).length
+            : this.fullContentText.length;
+        this.isContentTruncated = textLength > PostCardComponent.PostContentPreviewLength;
         this.refreshVisibleContent();
     }
 
@@ -136,6 +140,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     fullContentText = '';
     isContentTruncated = false;
     contentExpanded = false;
+    contentIsHtml = false;
     sharedPost: SharedPostPreview | null = null;
     mentionResults: ProfileDto[] = [];
     mentionOpen = false;
@@ -1318,7 +1323,22 @@ export class PostCardComponent implements OnChanges, OnDestroy {
             .map(line => this.parseLineParts(line));
     }
 
+    get displayAsHtml(): boolean {
+        return this.contentIsHtml && (!this.isContentTruncated || this.contentExpanded);
+    }
+
     private refreshVisibleContent(): void {
+        if (this.contentIsHtml) {
+            if (this.isContentTruncated && !this.contentExpanded) {
+                const textContent = this.extractTextFromHtml(this.fullContentText);
+                const previewText = `${textContent.slice(0, PostCardComponent.PostContentPreviewLength).trimEnd()}…`;
+                this.contentLines = this.parseContentLines(previewText);
+            } else {
+                this.contentLines = [];
+            }
+            return;
+        }
+
         if (!this.isContentTruncated || this.contentExpanded) {
             this.contentLines = this.parseContentLines(this.fullContentText);
             return;
@@ -1326,6 +1346,12 @@ export class PostCardComponent implements OnChanges, OnDestroy {
 
         const previewText = `${this.fullContentText.slice(0, PostCardComponent.PostContentPreviewLength).trimEnd()}…`;
         this.contentLines = this.parseContentLines(previewText);
+    }
+
+    private extractTextFromHtml(html: string): string {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return (div.textContent ?? '').replace(/\u00A0/g, ' ').trim();
     }
 
     private normalizePostContentLength(value: string): string {

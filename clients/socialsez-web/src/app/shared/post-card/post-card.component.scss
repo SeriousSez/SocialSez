@@ -412,6 +412,41 @@
     overflow-wrap: anywhere;
 }
 
+.content--html {
+    white-space: normal;
+
+    p {
+        margin: 0;
+    }
+
+    ul,
+    ol {
+        padding-left: 1.4em;
+        margin: 0.25em 0;
+    }
+
+    li {
+        margin: 0.1em 0;
+    }
+
+    blockquote {
+        border-left: 3px solid var(--color-border);
+        margin: 0.5em 0;
+        padding: 0 0 0 0.75em;
+        opacity: 0.8;
+    }
+
+    a {
+        color: #1d4ed8;
+        font-weight: 700;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
 .content-see-more {
     justify-self: start;
     border: 0;
