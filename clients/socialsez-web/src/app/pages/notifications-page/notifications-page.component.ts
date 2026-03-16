@@ -16,8 +16,6 @@ import { SessionService } from '../../core/session.service';
 export class NotificationsPageComponent {
     notifications: NotificationDto[] = [];
     loading = false;
-    status = '';
-    statusTone: 'neutral' | 'success' | 'error' = 'neutral';
     activeFilter: 'all' | 'unread' = 'all';
     readonly skeletonRows = Array.from({ length: 4 }, (_, index) => index);
     private readonly session = inject(SessionService);
@@ -73,13 +71,11 @@ export class NotificationsPageComponent {
 
     async loadNotifications(): Promise<void> {
         this.loading = true;
-        this.resetStatus();
 
         try {
             this.notifications = await this.session.loadNotificationsAsync();
         } catch {
-            this.status = 'Could not load notifications.';
-            this.statusTone = 'error';
+            this.session.message = 'Could not load notifications.';
         } finally {
             this.loading = false;
             this.cdr.detectChanges();
@@ -92,32 +88,27 @@ export class NotificationsPageComponent {
             return;
         }
 
-        this.resetStatus();
-
         try {
             await this.session.markNotificationReadAsync(notificationId);
             this.notifications = this.notifications.map(notification =>
                 notification.id === notificationId ? { ...notification, isRead: true } : notification);
             this.cdr.detectChanges();
         } catch {
-            this.status = 'Could not mark notification as read.';
-            this.statusTone = 'error';
+            this.session.message = 'Could not mark notification as read.';
             this.cdr.detectChanges();
         }
     }
 
     async markAllRead(): Promise<void> {
-        this.resetStatus();
-
         try {
             const updatedCount = await this.session.markAllNotificationsReadAsync();
             this.notifications = this.notifications.map(notification => ({ ...notification, isRead: true }));
-            this.status = updatedCount > 0 ? `${updatedCount} notifications marked as read.` : 'No unread notifications.';
-            this.statusTone = updatedCount > 0 ? 'success' : 'neutral';
+            this.session.message = updatedCount > 0
+                ? 'All notifications marked as read.'
+                : 'No unread notifications to mark as read.';
             this.cdr.detectChanges();
         } catch {
-            this.status = 'Could not mark notifications as read.';
-            this.statusTone = 'error';
+            this.session.message = 'Could not mark all notifications as read.';
             this.cdr.detectChanges();
         }
     }
@@ -136,11 +127,9 @@ export class NotificationsPageComponent {
 
     async approveRequest(notification: NotificationDto, event: Event): Promise<void> {
         event.stopPropagation();
-        this.resetStatus();
 
         if (!notification.actorId) {
-            this.status = 'Request information is missing.';
-            this.statusTone = 'neutral';
+            this.session.message = 'This request is missing profile details.';
             return;
         }
 
@@ -152,23 +141,19 @@ export class NotificationsPageComponent {
 
             this.notifications = this.notifications.map(item =>
                 item.id === notification.id ? { ...item, isRead: true } : item);
-            this.status = 'Follow request approved.';
-            this.statusTone = 'success';
+            this.session.message = 'Follow request approved.';
             this.cdr.detectChanges();
         } catch {
-            this.status = 'Could not approve request.';
-            this.statusTone = 'error';
+            this.session.message = 'Could not approve follow request.';
             this.cdr.detectChanges();
         }
     }
 
     async declineRequest(notification: NotificationDto, event: Event): Promise<void> {
         event.stopPropagation();
-        this.resetStatus();
 
         if (!notification.actorId) {
-            this.status = 'Request information is missing.';
-            this.statusTone = 'neutral';
+            this.session.message = 'This request is missing profile details.';
             return;
         }
 
@@ -180,18 +165,11 @@ export class NotificationsPageComponent {
 
             this.notifications = this.notifications.map(item =>
                 item.id === notification.id ? { ...item, isRead: true } : item);
-            this.status = 'Follow request declined.';
-            this.statusTone = 'success';
+            this.session.message = 'Follow request declined.';
             this.cdr.detectChanges();
         } catch {
-            this.status = 'Could not decline request.';
-            this.statusTone = 'error';
+            this.session.message = 'Could not decline follow request.';
             this.cdr.detectChanges();
         }
-    }
-
-    private resetStatus(): void {
-        this.status = '';
-        this.statusTone = 'neutral';
     }
 }
