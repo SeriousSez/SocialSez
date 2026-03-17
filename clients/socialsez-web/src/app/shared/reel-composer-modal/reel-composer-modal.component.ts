@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, Output, ViewChild } from '@angular/core';
-import { ProfileDto } from '../../core/api.types';
+import { HashtagSearchResultDto, ProfileDto } from '../../core/api.types';
 import { environment } from '../../../environments/environment';
 import { PendingReelComposerDraft, SessionService } from '../../core/session.service';
 import { UploadProgressService } from '../../core/upload-progress.service';
@@ -120,6 +120,8 @@ export class ReelComposerModalComponent implements OnDestroy {
     collaboratorSuggestions: ProfileDto[] = [];
     showCollaboratorSuggestions = false;
     collaboratorsHint = 'Collaborators can be separated by commas.';
+    hashtagSuggestions: HashtagSearchResultDto[] = [];
+    showHashtagSuggestions = false;
     private draggingTrimPart: 'start' | 'end' | 'range' | null = null;
     private dragOriginClientX = 0;
     private dragOriginStartSeconds = 0;
@@ -129,6 +131,8 @@ export class ReelComposerModalComponent implements OnDestroy {
     private locationSearchToken = 0;
     private collaboratorSearchDebounceId: number | null = null;
     private collaboratorSearchToken = 0;
+    private hashtagSearchDebounceId: number | null = null;
+    private hashtagSearchToken = 0;
     private frameCoverRefreshToken = 0;
     private placesAutocompleteService: any | null = null;
     private googlePlacesLoadPromise: Promise<boolean> | null = null;
@@ -166,6 +170,7 @@ export class ReelComposerModalComponent implements OnDestroy {
         this.detachFrameDragListeners();
         this.closeLocationSuggestions();
         this.closeCollaboratorSuggestions();
+        this.closeHashtagSuggestions();
         if (this.closeAnimationTimerId !== null) {
             window.clearTimeout(this.closeAnimationTimerId);
             this.closeAnimationTimerId = null;
@@ -365,6 +370,23 @@ export class ReelComposerModalComponent implements OnDestroy {
 
     onCaptionInput(rawValue: string): void {
         this.reelCaption = rawValue;
+        this.updateHashtagSuggestions(rawValue);
+        this.persistDraft();
+    }
+
+    onCaptionFocus(): void {
+        this.updateHashtagSuggestions(this.reelCaption, true);
+    }
+
+    onCaptionBlur(): void {
+        window.setTimeout(() => {
+            this.showHashtagSuggestions = false;
+        }, 120);
+    }
+
+    selectHashtagSuggestion(hashtag: HashtagSearchResultDto): void {
+        this.reelCaption = this.replaceCurrentHashtagToken(this.reelCaption, `#${hashtag.tag}`);
+        this.closeHashtagSuggestions();
         this.persistDraft();
     }
 
@@ -685,6 +707,7 @@ export class ReelComposerModalComponent implements OnDestroy {
         this.clearReelComposerMedia();
         this.closeLocationSuggestions();
         this.closeCollaboratorSuggestions();
+        this.closeHashtagSuggestions();
         this.reelComposerError = '';
         this.reelPreviewReady = false;
         this.generatingReelCovers = false;
@@ -1435,9 +1458,61 @@ export class ReelComposerModalComponent implements OnDestroy {
         }, immediate ? 0 : 220);
     }
 
+    private updateHashtagSuggestions(rawValue: string, immediate = false): void {
+        const query = this.getCurrentHashtagQuery(rawValue);
+        if (!query) {
+            this.closeHashtagSuggestions();
+            return;
+        }
+
+        if (this.hashtagSearchDebounceId !== null) {
+            window.clearTimeout(this.hashtagSearchDebounceId);
+            this.hashtagSearchDebounceId = null;
+        }
+
+        const token = ++this.hashtagSearchToken;
+        this.hashtagSearchDebounceId = window.setTimeout(async () => {
+            this.hashtagSearchDebounceId = null;
+            try {
+                const results = await this.session.searchHashtagsAsync(query);
+                if (token !== this.hashtagSearchToken) {
+                    return;
+                }
+
+                const alreadyAddedTags = this.extractCaptionHashtags(rawValue);
+                const loweredQuery = query.toLowerCase();
+
+                const options = results
+                    .map(item => ({
+                        ...item,
+                        tag: item.tag.replace(/^#+/, '').trim().toLowerCase()
+                    }))
+                    .filter(item => !!item.tag)
+                    .filter(item => !alreadyAddedTags.has(item.tag))
+                    .filter(item => item.tag.includes(loweredQuery))
+                    .slice(0, 6);
+
+                this.hashtagSuggestions = options;
+                this.showHashtagSuggestions = options.length > 0;
+            } catch {
+                if (token !== this.hashtagSearchToken) {
+                    return;
+                }
+
+                this.hashtagSuggestions = [];
+                this.showHashtagSuggestions = false;
+            }
+        }, immediate ? 0 : 220);
+    }
+
     private getCurrentCollaboratorQuery(value: string): string {
         const query = value.split(',').pop()?.trim() ?? '';
         return query.replace(/^@/, '').trim();
+    }
+
+    private getCurrentHashtagQuery(value: string): string {
+        const query = value.split(/[\n,]+/).pop()?.trim() ?? '';
+        return query.replace(/^#/, '').trim();
     }
 
     private extractCollaboratorHandles(value: string): Set<string> {
@@ -1465,6 +1540,31 @@ export class ReelComposerModalComponent implements OnDestroy {
         return `${segments.join(', ')}, `;
     }
 
+    private replaceCurrentHashtagToken(value: string, hashtag: string): string {
+        const segments = value.split(/[\n,]+/).map(segment => segment.trim()).filter(segment => !!segment);
+        if (!segments.length) {
+            return `${hashtag}, `;
+        }
+
+        segments[segments.length - 1] = hashtag;
+        return `${segments.join(', ')}, `;
+    }
+
+    private extractCaptionHashtags(value: string): Set<string> {
+        const currentToken = this.getCurrentHashtagQuery(value).toLowerCase();
+        const tags = value
+            .split(/[\n,]+/)
+            .map(segment => segment.trim())
+            .filter(segment => !!segment)
+            .map(segment => segment.replace(/^#/, '').toLowerCase());
+
+        if (currentToken) {
+            return new Set(tags.filter(tag => tag !== currentToken));
+        }
+
+        return new Set(tags);
+    }
+
     private closeLocationSuggestions(): void {
         this.locationSearchToken += 1;
         this.loadingLocationSuggestions = false;
@@ -1483,6 +1583,16 @@ export class ReelComposerModalComponent implements OnDestroy {
         if (this.collaboratorSearchDebounceId !== null) {
             window.clearTimeout(this.collaboratorSearchDebounceId);
             this.collaboratorSearchDebounceId = null;
+        }
+    }
+
+    private closeHashtagSuggestions(): void {
+        this.hashtagSearchToken += 1;
+        this.hashtagSuggestions = [];
+        this.showHashtagSuggestions = false;
+        if (this.hashtagSearchDebounceId !== null) {
+            window.clearTimeout(this.hashtagSearchDebounceId);
+            this.hashtagSearchDebounceId = null;
         }
     }
 

@@ -130,6 +130,9 @@ export class ProfilePageComponent implements OnDestroy {
     followRequiresApproval = false;
     messagingProfile = false;
     profileSafetyMenuOpen = false;
+    showNicknameEditor = false;
+    nicknameDraft = '';
+    savingNickname = false;
     isBlocked = false;
     isBlockedByTarget = false;
     isMuted = false;
@@ -312,6 +315,19 @@ export class ProfilePageComponent implements OnDestroy {
         }
 
         return !this.isFollowing ? 'Request Message' : 'Message';
+    }
+
+    get canNicknameProfile(): boolean {
+        return !!this.viewedProfile && !this.isOwnProfile && this.session.isAuthenticated();
+    }
+
+    get hasNicknameForViewedProfile(): boolean {
+        const handle = this.viewedProfile?.handle;
+        if (!handle) {
+            return false;
+        }
+
+        return !!this.session.getProfileNickname(handle);
     }
 
     renderBioHtml(bio: string): string {
@@ -867,6 +883,82 @@ export class ProfilePageComponent implements OnDestroy {
     closeProfileSafetyMenu(): void {
         this.profileSafetyMenuOpen = false;
         this.cdr.detectChanges();
+    }
+
+    openNicknameEditor(): void {
+        if (!this.canNicknameProfile || this.savingNickname) {
+            return;
+        }
+
+        this.nicknameDraft = this.session.getProfileNickname(this.viewedProfile!.handle) ?? '';
+        this.showNicknameEditor = true;
+        this.cdr.detectChanges();
+    }
+
+    cancelNicknameEditor(): void {
+        if (this.savingNickname) {
+            return;
+        }
+
+        this.showNicknameEditor = false;
+        this.nicknameDraft = '';
+        this.cdr.detectChanges();
+    }
+
+    async saveNicknameAsync(): Promise<void> {
+        const profile = this.viewedProfile;
+        if (!profile || !this.canNicknameProfile || this.savingNickname) {
+            return;
+        }
+
+        const nickname = this.nicknameDraft.trim();
+        if (!nickname) {
+            return;
+        }
+
+        this.savingNickname = true;
+        this.error = '';
+
+        try {
+            const saved = this.session.setProfileNickname(profile.handle, nickname);
+            if (!saved) {
+                this.error = 'Could not save nickname right now.';
+                return;
+            }
+
+            if (this.viewedProfile) {
+                this.viewedProfile = {
+                    ...this.viewedProfile,
+                    displayName: nickname
+                };
+            }
+
+            this.showNicknameEditor = false;
+            this.nicknameDraft = '';
+        } catch {
+            this.error = 'Could not save nickname right now.';
+        } finally {
+            this.savingNickname = false;
+            this.cdr.detectChanges();
+        }
+    }
+
+    clearNickname(): void {
+        const profile = this.viewedProfile;
+        if (!profile || !this.canNicknameProfile || this.savingNickname) {
+            return;
+        }
+
+        const cleared = this.session.clearProfileNickname(profile.handle);
+        if (!cleared) {
+            this.error = 'Could not remove nickname right now.';
+            this.cdr.detectChanges();
+            return;
+        }
+
+        this.showNicknameEditor = false;
+        this.nicknameDraft = '';
+        void this.load();
     }
 
     onSafetyActionSelected(action: 'mute' | 'block' | 'report'): void {
@@ -1431,6 +1523,8 @@ export class ProfilePageComponent implements OnDestroy {
                     }
 
                     this.viewedProfile = profile;
+                    this.showNicknameEditor = false;
+                    this.nicknameDraft = '';
                     if (!this.isOwnProfile && this.activeTab === 'analytics') {
                         this.activeTab = 'posts';
                     }
@@ -2635,8 +2729,16 @@ export class ProfilePageComponent implements OnDestroy {
         this.error = '';
 
         try {
-            const conversation = await this.session.createDirectConversationAsync(this.viewedProfile.id);
+            let hadExistingDirectConversation = false;
             if (!this.isFollowing) {
+                const conversations = await this.session.loadChatConversationsAsync();
+                hadExistingDirectConversation = conversations.some(conversation =>
+                    !conversation.isGroup
+                    && conversation.participants.some(participant => participant.profileId === this.viewedProfile!.id));
+            }
+
+            const conversation = await this.session.createDirectConversationAsync(this.viewedProfile.id);
+            if (!this.isFollowing && !hadExistingDirectConversation) {
                 this.session.message = 'Message request sent.';
             }
 

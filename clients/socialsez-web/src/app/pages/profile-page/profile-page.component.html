@@ -71,18 +71,25 @@
                                 <button type="button" (click)="toggleFollow()" [disabled]="followState === 'loading' || isBlockedView" [class.ghost]="isFollowing && followState === 'idle'" [class.is-loading]="followState === 'loading'" [class.is-success]="followState === 'success'"
                                     [class.is-failure]="followState === 'failure'">{{ followButtonLabel }}</button>
 
-                                <button type="button" class="ghost" (click)="startDirectMessageAsync()" [disabled]="messagingProfile || isBlockedView">{{ messageButtonLabel }}</button>
+                                <button type="button" class="message-request-button" [class.ghost]="isFollowing" [class.icon-only]="!isFollowing" [class.hero-action-icon]="!isFollowing" (click)="startDirectMessageAsync()" [disabled]="messagingProfile || isBlockedView"
+                                    [attr.aria-label]="messageButtonLabel" [attr.title]="!isFollowing ? messageButtonLabel : null">
+                                    <ng-container *ngIf="isFollowing; else requestMessageIcon">{{ messageButtonLabel }}</ng-container>
+                                    <ng-template #requestMessageIcon>
+                                        <i class="fa-duotone fa-thin" [class.fa-paper-plane]="!messagingProfile" [class.fa-spinner-third]="messagingProfile" [class.fa-spin]="messagingProfile" aria-hidden="true"></i>
+                                    </ng-template>
+                                </button>
 
-                                <button type="button" class="hero-icon-link" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? 'Profile link copied' : 'Copy profile link'" [attr.title]="profileLinkCopied ? 'Copied' : 'Copy profile link'">
+                                <button type="button" class="hero-action-icon" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? 'Profile link copied' : 'Copy profile link'" [attr.title]="profileLinkCopied ? 'Copied' : 'Copy profile link'">
                                     <i class="fa-duotone" [class.fa-light]="!profileLinkCopied" [class.fa-solid]="profileLinkCopied" [class.fa-share-nodes]="!profileLinkCopied" [class.fa-check]="profileLinkCopied" aria-hidden="true"></i>
                                 </button>
 
                                 <div class="profile-safety-menu" [class.open]="profileSafetyMenuOpen">
-                                    <button type="button" class="profile-safety-trigger" (click)="toggleProfileSafetyMenu($event)" [disabled]="blockingProfile || mutingProfile || reportingProfile" aria-label="Open profile safety options" title="More options">
+                                    <button type="button" class="profile-safety-trigger hero-action-icon" (click)="toggleProfileSafetyMenu($event)" [disabled]="blockingProfile || mutingProfile || reportingProfile" aria-label="Open profile safety options" title="More options">
                                         <span aria-hidden="true">•••</span>
                                     </button>
 
                                     <div class="profile-safety-dropdown" *ngIf="profileSafetyMenuOpen">
+                                        <button type="button" (click)="closeProfileSafetyMenu(); openNicknameEditor()" [disabled]="!canNicknameProfile || savingNickname || isBlockedView">Nickname</button>
                                         <button type="button" (click)="onSafetyActionSelected('mute')" [disabled]="mutingProfile || blockingProfile || reportingProfile">{{ mutingProfile ? 'Working...' : (isMuted ? 'Unmute' : 'Mute') }}</button>
                                         <button type="button" (click)="onSafetyActionSelected('block')" [disabled]="blockingProfile || mutingProfile || reportingProfile">{{ blockingProfile ? 'Working...' : (isBlocked ? 'Unblock' : 'Block') }}</button>
                                         <button type="button" (click)="onSafetyActionSelected('report')" [disabled]="reportingProfile || blockingProfile || mutingProfile">{{ reportingProfile ? 'Reporting...' : 'Report' }}</button>
@@ -95,6 +102,24 @@
                     </ng-template>
                 </div>
             </header>
+
+            <div class="compose-modal" *ngIf="showNicknameEditor && canNicknameProfile" (click)="cancelNicknameEditor()" role="dialog" aria-modal="true" aria-label="Set nickname">
+                <section class="compose-modal-card nickname-modal-card" (click)="$event.stopPropagation()">
+                    <header class="compose-modal-head">
+                        <h3>Nickname for you</h3>
+                        <button type="button" class="close" (click)="cancelNicknameEditor()" [disabled]="savingNickname" aria-label="Close nickname editor">✕</button>
+                    </header>
+
+                    <label class="nickname-modal-label" for="profileNicknameInput">Nickname</label>
+                    <input id="profileNicknameInput" type="text" [(ngModel)]="nicknameDraft" maxlength="60" placeholder="Enter nickname" [disabled]="savingNickname" />
+
+                    <div class="media-actions nickname-modal-actions">
+                        <button type="button" class="ghost" *ngIf="hasNicknameForViewedProfile" (click)="clearNickname()" [disabled]="savingNickname">Clear</button>
+                        <button type="button" class="ghost" (click)="cancelNicknameEditor()" [disabled]="savingNickname">Cancel</button>
+                        <button type="button" (click)="saveNicknameAsync()" [disabled]="savingNickname || !nicknameDraft.trim()">{{ savingNickname ? 'Saving...' : 'Save' }}</button>
+                    </div>
+                </section>
+            </div>
 
             <section class="story-collections" *ngIf="showStoryCollectionsSection">
                 <div class="story-collections-row" aria-label="Story collections">

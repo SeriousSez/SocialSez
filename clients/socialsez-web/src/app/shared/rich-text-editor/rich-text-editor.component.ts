@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ProfileDto } from '../../core/api.types';
+import { HashtagSearchResultDto, ProfileDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 
 @Component({
@@ -48,6 +48,9 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
     mentionResults: ProfileDto[] = [];
     mentionOpen = false;
     mentionLoading = false;
+    hashtagResults: HashtagSearchResultDto[] = [];
+    hashtagOpen = false;
+    hashtagLoading = false;
 
     linkModalOpen = false;
     linkModalUrl = '';
@@ -58,7 +61,12 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
     private mentionRangeEnd = -1;
     private mentionSearchDebounceId: number | null = null;
     private mentionSearchToken = 0;
+    private hashtagRangeStart = -1;
+    private hashtagRangeEnd = -1;
+    private hashtagSearchDebounceId: number | null = null;
+    private hashtagSearchToken = 0;
     private pendingRichMentionRange: Range | null = null;
+    private pendingRichHashtagRange: Range | null = null;
     private pendingLinkSelectionRange: Range | null = null;
 
     private readonly defaultSpoilerPlaceholder = '|';
@@ -191,6 +199,63 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
         }
 
         this.pendingRichMentionRange = null;
+        this.closeMentionSuggestions();
+        this.updateRichCommandStates();
+        this.refreshView();
+        this.emitLiveContent();
+        editor.focus();
+    }
+
+    async selectHashtag(hashtag: HashtagSearchResultDto): Promise<void> {
+        if (!this.hashtagOpen) {
+            return;
+        }
+
+        const replacement = `#${hashtag.tag} `;
+
+        if (this.editorMode === 'markdown') {
+            if (this.hashtagRangeStart < 0 || this.hashtagRangeEnd < this.hashtagRangeStart) {
+                return;
+            }
+
+            const mergedContent = `${this.markdownDraft.slice(0, this.hashtagRangeStart)}${replacement}${this.markdownDraft.slice(this.hashtagRangeEnd)}`;
+            this.markdownDraft = mergedContent;
+            this.emitLiveContent();
+
+            const nextCaret = this.hashtagRangeStart + replacement.length;
+            this.closeMentionSuggestions();
+
+            await Promise.resolve();
+            const textarea = this.markdownTextarea?.nativeElement;
+            if (!textarea) {
+                return;
+            }
+
+            textarea.focus();
+            textarea.setSelectionRange(nextCaret, nextCaret);
+            return;
+        }
+
+        const editor = this.richEditor?.nativeElement;
+        const hashtagRange = this.pendingRichHashtagRange;
+        if (!editor || !hashtagRange) {
+            return;
+        }
+
+        const replacementNode = document.createTextNode(replacement);
+        hashtagRange.deleteContents();
+        hashtagRange.insertNode(replacementNode);
+
+        const selection = window.getSelection();
+        if (selection) {
+            const cursor = document.createRange();
+            cursor.setStart(replacementNode, replacementNode.textContent?.length ?? replacement.length);
+            cursor.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(cursor);
+        }
+
+        this.pendingRichHashtagRange = null;
         this.closeMentionSuggestions();
         this.updateRichCommandStates();
         this.refreshView();
@@ -494,6 +559,7 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
         this.resetRichCommandStates();
         this.closeMentionSuggestions();
         this.pendingRichMentionRange = null;
+        this.pendingRichHashtagRange = null;
         if (this.richEditor) {
             this.richEditor.nativeElement.innerHTML = '';
         }
@@ -506,6 +572,7 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
     private applyInitialContent(content: string): void {
         this.closeMentionSuggestions();
         this.pendingRichMentionRange = null;
+        this.pendingRichHashtagRange = null;
         if (this.initialContentIsHtml) {
             const editorHtml = this.storageHtmlToEditorHtml(content);
             this.markdownDraft = this.editorHtmlToText(editorHtml);
@@ -591,45 +658,64 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
             ? selection.anchorOffset
             : text.length;
         const beforeCaret = text.slice(0, caretOffset);
-        const match = beforeCaret.match(/(^|\s)@([\p{L}\p{N}_]{1,30})$/u);
+        const match = beforeCaret.match(/(^|\s)([@#])([\p{L}\p{N}_]{1,50})$/u);
         if (!match) {
             this.pendingRichMentionRange = null;
+            this.pendingRichHashtagRange = null;
             this.closeMentionSuggestions();
             return;
         }
 
-        const query = match[2] ?? '';
+        const tokenType = match[2] ?? '';
+        const query = match[3] ?? '';
         if (!query) {
             this.pendingRichMentionRange = null;
+            this.pendingRichHashtagRange = null;
             this.closeMentionSuggestions();
             return;
         }
 
-        const atIndex = beforeCaret.lastIndexOf('@');
-        if (atIndex < 0) {
+        const tokenIndex = beforeCaret.lastIndexOf(tokenType);
+        if (tokenIndex < 0) {
             this.pendingRichMentionRange = null;
+            this.pendingRichHashtagRange = null;
             this.closeMentionSuggestions();
             return;
         }
 
         const range = document.createRange();
-        range.setStart(textNode, atIndex);
+        range.setStart(textNode, tokenIndex);
         range.setEnd(textNode, caretOffset);
-        this.pendingRichMentionRange = range;
+        if (tokenType === '@') {
+            this.pendingRichMentionRange = range;
+            this.pendingRichHashtagRange = null;
+            this.searchMentionProfiles(query);
+            return;
+        }
 
-        this.searchMentionProfiles(query);
+        this.pendingRichHashtagRange = range;
+        this.pendingRichMentionRange = null;
+        this.searchHashtags(query);
     }
 
     private updateMentionSuggestions(value: string, caret: number): void {
-        const context = this.extractMentionContext(value, caret);
-        if (!context || !context.query) {
+        const mentionContext = this.extractMentionContext(value, caret);
+        if (mentionContext?.query) {
+            this.mentionRangeStart = mentionContext.start;
+            this.mentionRangeEnd = caret;
+            this.searchMentionProfiles(mentionContext.query);
+            return;
+        }
+
+        const hashtagContext = this.extractHashtagContext(value, caret);
+        if (!hashtagContext?.query) {
             this.closeMentionSuggestions();
             return;
         }
 
-        this.mentionRangeStart = context.start;
-        this.mentionRangeEnd = caret;
-        this.searchMentionProfiles(context.query);
+        this.hashtagRangeStart = hashtagContext.start;
+        this.hashtagRangeEnd = caret;
+        this.searchHashtags(hashtagContext.query);
     }
 
     private searchMentionProfiles(query: string): void {
@@ -674,10 +760,22 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
         this.mentionRangeStart = -1;
         this.mentionRangeEnd = -1;
         this.mentionSearchToken += 1;
+        this.hashtagOpen = false;
+        this.hashtagResults = [];
+        this.hashtagLoading = false;
+        this.hashtagRangeStart = -1;
+        this.hashtagRangeEnd = -1;
+        this.hashtagSearchToken += 1;
+        this.pendingRichHashtagRange = null;
 
         if (this.mentionSearchDebounceId !== null) {
             window.clearTimeout(this.mentionSearchDebounceId);
             this.mentionSearchDebounceId = null;
+        }
+
+        if (this.hashtagSearchDebounceId !== null) {
+            window.clearTimeout(this.hashtagSearchDebounceId);
+            this.hashtagSearchDebounceId = null;
         }
     }
 
@@ -697,6 +795,66 @@ export class RichTextEditorComponent implements OnChanges, AfterViewInit {
             query,
             start: caret - query.length - 1
         };
+    }
+
+    private extractHashtagContext(value: string, caret: number): { query: string; start: number } | null {
+        const prefix = value.slice(0, caret);
+        const match = prefix.match(/(^|\s)#([\p{L}\p{N}_]{1,50})$/u);
+        if (!match) {
+            return null;
+        }
+
+        const query = match[2] ?? '';
+        if (!query) {
+            return null;
+        }
+
+        return {
+            query,
+            start: caret - query.length - 1
+        };
+    }
+
+    private searchHashtags(query: string): void {
+        if (this.hashtagSearchDebounceId !== null) {
+            window.clearTimeout(this.hashtagSearchDebounceId);
+            this.hashtagSearchDebounceId = null;
+        }
+
+        this.hashtagLoading = true;
+        const token = ++this.hashtagSearchToken;
+        this.hashtagSearchDebounceId = window.setTimeout(async () => {
+            this.hashtagSearchDebounceId = null;
+
+            try {
+                const hashtags = await this.session.searchHashtagsAsync(query);
+                if (token !== this.hashtagSearchToken) {
+                    return;
+                }
+
+                const normalizedQuery = query.trim().toLowerCase();
+                this.hashtagResults = hashtags
+                    .map(item => ({
+                        ...item,
+                        tag: item.tag.replace(/^#+/, '').trim().toLowerCase()
+                    }))
+                    .filter(item => !!item.tag)
+                    .filter(item => item.tag.includes(normalizedQuery))
+                    .slice(0, 6);
+                this.hashtagOpen = this.hashtagResults.length > 0;
+            } catch {
+                if (token !== this.hashtagSearchToken) {
+                    return;
+                }
+
+                this.hashtagResults = [];
+                this.hashtagOpen = false;
+            } finally {
+                if (token === this.hashtagSearchToken) {
+                    this.hashtagLoading = false;
+                }
+            }
+        }, 200);
     }
 
     private emitLiveContent(): void {

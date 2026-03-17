@@ -51,4 +51,5 @@ public class UserProfile
     public ICollection<UserReport> ReportsReceived { get; set; } = new List<UserReport>();
     public ICollection<SavedItem> SavedItems { get; set; } = new List<SavedItem>();
     public ICollection<SavedCollection> SavedCollections { get; set; } = new List<SavedCollection>();
+    public ICollection<CustomFeed> CustomFeeds { get; set; } = new List<CustomFeed>();
 }

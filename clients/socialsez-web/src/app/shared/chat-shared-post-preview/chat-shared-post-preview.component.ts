@@ -17,17 +17,34 @@ export class ChatSharedPostPreviewComponent {
 
     constructor(private readonly router: Router) { }
 
-    get previewText(): string {
+    get previewHtml(): string {
         const source = (this.shared?.content ?? '').trim();
         if (!source) {
             return '';
         }
 
-        if (source.length <= this.sharedPreviewMaxChars) {
+        if (this.isLikelyHtml(source)) {
             return source;
         }
 
-        return `${source.slice(0, this.sharedPreviewMaxChars).trimEnd()}...`;
+        const truncated = source.length <= this.sharedPreviewMaxChars
+            ? source
+            : `${source.slice(0, this.sharedPreviewMaxChars).trimEnd()}...`;
+
+        return this.escapeHtml(truncated).replace(/\r?\n/g, '<br>');
+    }
+
+    private isLikelyHtml(value: string): boolean {
+        return /<[a-z][\s\S]*>/i.test(value);
+    }
+
+    private escapeHtml(value: string): string {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     openPost(event: MouseEvent): void {

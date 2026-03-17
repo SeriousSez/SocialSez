@@ -17,7 +17,7 @@ public interface IReelService
     Task<ReelAbTestDto?> ConfigureAbTestAsync(Guid reelId, Guid profileId, CreateReelAbTestRequest request, CancellationToken cancellationToken = default);
     Task<ReelAbTestDto?> DisableAbTestAsync(Guid reelId, Guid profileId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ReelDto>> GetDraftsAsync(Guid profileId, int take = 50, CancellationToken cancellationToken = default);
-    Task<IReadOnlyCollection<ReelDto>> GetFeedAsync(Guid profileId, int take = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<ReelDto>> GetFeedAsync(Guid profileId, int take = 25, FeedMode mode = FeedMode.ForYou, Guid? customFeedId = null, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ReelDto>> GetByAuthorHandleAsync(Guid profileId, string handle, int take = 25, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ReelDto>> GetPublicByAuthorHandleAsync(string handle, Guid? viewerId = null, int take = 25, CancellationToken cancellationToken = default);
     Task<ReelDto?> GetPublicByIdAsync(Guid reelId, Guid? viewerId = null, CancellationToken cancellationToken = default);

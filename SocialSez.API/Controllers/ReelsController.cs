@@ -287,7 +287,7 @@ public class ReelsController(IReelService reelService, SocialSezContext dbContex
 
     [Authorize]
     [HttpGet("feed")]
-    public async Task<ActionResult<IReadOnlyCollection<ReelDto>>> GetFeed([FromQuery] int take = 25, [FromQuery] string mode = "for-you", CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IReadOnlyCollection<ReelDto>>> GetFeed([FromQuery] int take = 25, [FromQuery] string mode = "for-you", [FromQuery] Guid? customFeedId = null, CancellationToken cancellationToken = default)
     {
         if (!TryGetProfileId(out var profileId))
         {
@@ -295,8 +295,15 @@ public class ReelsController(IReelService reelService, SocialSezContext dbContex
         }
 
         var feedMode = ParseFeedMode(mode);
-        var feed = await reelService.GetFeedAsync(profileId, take, feedMode, cancellationToken);
-        return Ok(feed);
+        try
+        {
+            var feed = await reelService.GetFeedAsync(profileId, take, feedMode, customFeedId, cancellationToken);
+            return Ok(feed);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [Authorize]

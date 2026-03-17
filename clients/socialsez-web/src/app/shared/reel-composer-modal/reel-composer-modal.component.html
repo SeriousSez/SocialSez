@@ -96,7 +96,17 @@
 
                 <div class="reel-publish-form">
                     <label>Caption
-                        <textarea rows="3" [value]="reelCaption" (input)="onCaptionInput($any($event.target).value)"></textarea>
+                        <div class="autocomplete-field">
+                            <textarea rows="3" [value]="reelCaption" (input)="onCaptionInput($any($event.target).value)" (focus)="onCaptionFocus()" (blur)="onCaptionBlur()"></textarea>
+                            <ul class="autocomplete-list" *ngIf="showHashtagSuggestions && hashtagSuggestions.length">
+                                <li *ngFor="let hashtag of hashtagSuggestions">
+                                    <button type="button" class="autocomplete-item" (mousedown)="$event.preventDefault()" (click)="selectHashtagSuggestion(hashtag)">
+                                        <span class="autocomplete-main">#{{ hashtag.tag }}</span>
+                                        <span class="autocomplete-sub">{{ hashtag.count }} posts</span>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
                     </label>
                     <label>Location
                         <div class="autocomplete-field">

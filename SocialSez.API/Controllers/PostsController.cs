@@ -314,7 +314,7 @@ public class PostsController(
 
     [Authorize]
     [HttpGet("feed")]
-    public async Task<ActionResult<IReadOnlyCollection<PostDto>>> GetFeed([FromQuery] int take = 25, [FromQuery] string mode = "for-you", CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IReadOnlyCollection<PostDto>>> GetFeed([FromQuery] int take = 25, [FromQuery] string mode = "for-you", [FromQuery] Guid? customFeedId = null, CancellationToken cancellationToken = default)
     {
         if (!TryGetProfileId(out var profileId))
         {
@@ -322,8 +322,15 @@ public class PostsController(
         }
 
         var feedMode = ParseFeedMode(mode);
-        var feed = await postService.GetFeedAsync(profileId, take, feedMode, cancellationToken);
-        return Ok(feed);
+        try
+        {
+            var feed = await postService.GetFeedAsync(profileId, take, feedMode, customFeedId, cancellationToken);
+            return Ok(feed);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpGet("search")]

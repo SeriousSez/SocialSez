@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace SocialSez.ApplicationService.Services;
 
-public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) : IPostService
+public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache, ICustomFeedService customFeedService) : IPostService
 {
     private const string LikeReactionType = "Like";
     private const int MaxPostContentLength = 3000;
@@ -649,7 +649,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .ToArray();
     }
 
-    public async Task<IReadOnlyCollection<PostDto>> GetFeedAsync(Guid profileId, int take = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<PostDto>> GetFeedAsync(Guid profileId, int take = 25, FeedMode mode = FeedMode.ForYou, Guid? customFeedId = null, CancellationToken cancellationToken = default)
     {
         await EnsurePostSchemaAsync(cancellationToken);
         await PublishDuePostsAsync(cancellationToken);
@@ -657,6 +657,21 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
         take = Math.Clamp(take, 1, 100);
         var nowUtc = DateTime.UtcNow;
         var blockedProfileIds = await GetBlockedProfileIdsAsync(profileId, cancellationToken);
+        var customFeed = customFeedId.HasValue
+            ? await customFeedService.GetByIdAsync(profileId, customFeedId.Value, cancellationToken)
+            : null;
+
+        if (customFeedId.HasValue && customFeed is null)
+        {
+            throw new InvalidOperationException("Custom feed not found.");
+        }
+
+        var (customFeedAuthorHandles, customFeedExcludedAuthorHandles) = customFeed is null
+            ? (new HashSet<string>(StringComparer.Ordinal), new HashSet<string>(StringComparer.Ordinal))
+            : CustomFeedMatcher.SplitHandleRules(customFeed.AuthorHandles);
+        var customFeedHashtags = customFeed is null
+            ? new HashSet<string>(StringComparer.Ordinal)
+            : customFeed.Hashtags.ToHashSet(StringComparer.Ordinal);
 
         var followedIds = await dbContext.Follows
             .AsNoTracking()
@@ -676,6 +691,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
 
         if (mode == FeedMode.Following)
         {
+            var followingLoadTake = customFeed is null ? take : Math.Clamp(take * 8, take, 400);
             var followingPosts = await dbContext.Posts
                 .AsNoTracking()
                 .Include(x => x.Author)
@@ -687,10 +703,17 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                     .ThenInclude(x => x.Profile)
                 .Where(x => followedIds.Contains(x.AuthorId) && !x.IsDraft)
                 .OrderByDescending(x => x.CreatedAtUtc)
-                .Take(take)
+                .Take(followingLoadTake)
                 .ToArrayAsync(cancellationToken);
 
-            return followingPosts
+            var filteredFollowingPosts = customFeed is null
+                ? followingPosts
+                : followingPosts
+                    .Where(post => CustomFeedMatcher.Matches(post.Author.Handle, post.Content, customFeedAuthorHandles, customFeedExcludedAuthorHandles, customFeedHashtags))
+                    .ToArray();
+
+            return filteredFollowingPosts
+                .Take(take)
                 .Select(post => MapToPostDto(post, profileId))
                 .ToArray();
         }
@@ -770,7 +793,6 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             .Select(post =>
             {
                 var authorScore = authorAffinity.TryGetValue(post.AuthorId, out var affinity) ? affinity : 0d;
-
                 var tags = ExtractHashtags(post.Content);
                 var hashtagScore = tags.Sum(tag => hashtagAffinity.TryGetValue(tag, out var score) ? score : 0d);
 
@@ -788,6 +810,7 @@ public class PostService(SocialSezContext dbContext, IMemoryCache memoryCache) :
                     Score = totalScore
                 };
             })
+            .Where(item => customFeed is null || CustomFeedMatcher.Matches(item.Post.Author.Handle, item.Post.Content, customFeedAuthorHandles, customFeedExcludedAuthorHandles, customFeedHashtags))
             .OrderByDescending(x => x.Score)
             .ThenByDescending(x => x.Post.CreatedAtUtc)
             .Take(take)

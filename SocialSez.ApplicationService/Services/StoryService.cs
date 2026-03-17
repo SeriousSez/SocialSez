@@ -6,7 +6,7 @@ using SocialSez.Infrastructure;
 
 namespace SocialSez.ApplicationService.Services;
 
-public class StoryService(SocialSezContext dbContext) : IStoryService
+public class StoryService(SocialSezContext dbContext, ICustomFeedService customFeedService) : IStoryService
 {
     private const int StoryExpiryHours = 24;
 
@@ -245,7 +245,7 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             existing.UpdatedAtUtc);
     }
 
-    public async Task<IReadOnlyCollection<StoryGroupDto>> GetFeedAsync(Guid profileId, int takeAuthors = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<StoryGroupDto>> GetFeedAsync(Guid profileId, int takeAuthors = 25, FeedMode mode = FeedMode.ForYou, Guid? customFeedId = null, CancellationToken cancellationToken = default)
     {
         await EnsureStorySchemaAsync(cancellationToken);
         await PublishDueStoriesAsync(cancellationToken);
@@ -253,6 +253,21 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
         var nowUtc = DateTime.UtcNow;
         takeAuthors = Math.Clamp(takeAuthors, 1, 100);
         var blockedProfileIds = await GetBlockedProfileIdsAsync(profileId, cancellationToken);
+        var customFeed = customFeedId.HasValue
+            ? await customFeedService.GetByIdAsync(profileId, customFeedId.Value, cancellationToken)
+            : null;
+
+        if (customFeedId.HasValue && customFeed is null)
+        {
+            throw new InvalidOperationException("Custom feed not found.");
+        }
+
+        var (customFeedAuthorHandles, customFeedExcludedAuthorHandles) = customFeed is null
+            ? (new HashSet<string>(StringComparer.Ordinal), new HashSet<string>(StringComparer.Ordinal))
+            : CustomFeedMatcher.SplitHandleRules(customFeed.AuthorHandles);
+        var customFeedHashtags = customFeed is null
+            ? new HashSet<string>(StringComparer.Ordinal)
+            : customFeed.Hashtags.ToHashSet(StringComparer.Ordinal);
 
         var followedIds = await dbContext.Follows
             .AsNoTracking()
@@ -282,12 +297,19 @@ public class StoryService(SocialSezContext dbContext) : IStoryService
             ? baseStoriesQuery
                 .Where(x => followedIds.Contains(x.AuthorId))
                 .OrderByDescending(x => x.CreatedAtUtc)
-                .Take(takeAuthors * 10)
+                .Take((customFeed is null ? takeAuthors * 10 : takeAuthors * 25))
             : baseStoriesQuery
                 .Where(x => followedIds.Contains(x.AuthorId) || !x.Author.IsPrivate)
                 .OrderByDescending(x => x.CreatedAtUtc)
-                .Take(takeAuthors * 20))
+                .Take((customFeed is null ? takeAuthors * 20 : takeAuthors * 40)))
             .ToListAsync(cancellationToken);
+
+        if (customFeed is not null)
+        {
+            activeStories = activeStories
+                .Where(story => CustomFeedMatcher.Matches(story.Author.Handle, story.Caption, customFeedAuthorHandles, customFeedExcludedAuthorHandles, customFeedHashtags))
+                .ToList();
+        }
 
         Dictionary<Guid, double> watchAffinityByAuthor = new();
         if (mode == FeedMode.ForYou)

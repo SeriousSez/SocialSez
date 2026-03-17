@@ -14,7 +14,9 @@ import {
     CommunityDto,
     CommunityPollDto,
     CommunityPostDto,
+    CreateCustomFeedRequest,
     CreatorAnalyticsSummaryDto,
+    CustomFeedDto,
     FeedMode,
     FollowActionResultDto,
     FollowRequestDto,
@@ -41,6 +43,7 @@ import {
     StoryCollectionDto,
     StoryGroupDto,
     StoryPlaybackProgressDto,
+    UpdateCustomFeedRequest,
     UpdateProfileRequest,
     SavedCollectionDto,
     SavedItemDto,
@@ -104,6 +107,8 @@ export interface PendingStoryComposerDraft {
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
+    private static readonly ProfileNicknameStorageKey = 'socialsez-web-profile-nicknames-v1';
+
     profile: ProfileDto | null = null;
     private _message = '';
     private _messageVersion = 0;
@@ -124,6 +129,8 @@ export class SessionService {
     private pendingPostComposerDraft: PendingPostComposerDraft | null = null;
     private pendingReelComposerDraft: PendingReelComposerDraft | null = null;
     private pendingStoryComposerDraft: PendingStoryComposerDraft | null = null;
+    private nicknameScopeProfileId: string | null = null;
+    private nicknamesByHandle = new Map<string, string>();
 
     requestOpenReelInModal(request: OpenReelInModalRequest): void {
         this.openReelInModalSource.next(request);
@@ -299,13 +306,13 @@ export class SessionService {
         await firstValueFrom(this.api.deleteMyAccount());
     }
 
-    async loadFeedAsync(mode: FeedMode = 'for-you'): Promise<PostDto[]> {
-        const feed = await firstValueFrom(this.api.getFeed(25, mode));
+    async loadFeedAsync(mode: FeedMode = 'for-you', customFeedId?: string): Promise<PostDto[]> {
+        const feed = await firstValueFrom(this.api.getFeed(25, mode, customFeedId));
         return feed.map(post => this.normalizePost(post));
     }
 
-    async loadStoryFeedAsync(takeAuthors = 25, mode: FeedMode = 'for-you'): Promise<StoryGroupDto[]> {
-        const groups = await firstValueFrom(this.api.getStoryFeed(takeAuthors, mode));
+    async loadStoryFeedAsync(takeAuthors = 25, mode: FeedMode = 'for-you', customFeedId?: string): Promise<StoryGroupDto[]> {
+        const groups = await firstValueFrom(this.api.getStoryFeed(takeAuthors, mode, customFeedId));
         return groups.map(group => this.normalizeStoryGroup(group));
     }
 
@@ -320,9 +327,30 @@ export class SessionService {
         this.emitAppChange('posts');
     }
 
-    async loadReelFeedAsync(take = 20, mode: FeedMode = 'for-you'): Promise<ReelDto[]> {
-        const reels = await firstValueFrom(this.api.getReelFeed(take, mode));
+    async loadReelFeedAsync(take = 20, mode: FeedMode = 'for-you', customFeedId?: string): Promise<ReelDto[]> {
+        const reels = await firstValueFrom(this.api.getReelFeed(take, mode, customFeedId));
         return reels.map(reel => this.normalizeReel(reel));
+    }
+
+    async loadCustomFeedsAsync(): Promise<CustomFeedDto[]> {
+        return firstValueFrom(this.api.getMyCustomFeeds());
+    }
+
+    async createCustomFeedAsync(request: CreateCustomFeedRequest): Promise<CustomFeedDto> {
+        const feed = await firstValueFrom(this.api.createCustomFeed(request));
+        this.message = `Created custom feed ${feed.name}.`;
+        return feed;
+    }
+
+    async updateCustomFeedAsync(customFeedId: string, request: UpdateCustomFeedRequest): Promise<CustomFeedDto> {
+        const feed = await firstValueFrom(this.api.updateCustomFeed(customFeedId, request));
+        this.message = `Updated custom feed ${feed.name}.`;
+        return feed;
+    }
+
+    async deleteCustomFeedAsync(customFeedId: string): Promise<void> {
+        await firstValueFrom(this.api.deleteCustomFeed(customFeedId));
+        this.message = 'Custom feed deleted.';
     }
 
     async trackReelPlaybackAsync(reelId: string, lastPositionSeconds: number, watchedSeconds: number, isCompleted = false): Promise<void> {
@@ -1208,6 +1236,45 @@ export class SessionService {
         return this.savedReelIds.get(reelId);
     }
 
+    getProfileNickname(handle: string): string | null {
+        return this.resolveNicknameForHandle(handle) ?? null;
+    }
+
+    setProfileNickname(handle: string, nickname: string): boolean {
+        const normalizedHandle = this.normalizeHandleValue(handle);
+        const normalizedNickname = nickname.trim();
+        if (!normalizedHandle || !normalizedNickname) {
+            return false;
+        }
+
+        this.ensureNicknamesLoaded();
+        this.nicknamesByHandle.set(normalizedHandle, normalizedNickname);
+        this.persistNicknames();
+        this.message = `Nickname saved for @${normalizedHandle}.`;
+        this.emitAppChange('profile');
+        this.emitAppChange('posts');
+        return true;
+    }
+
+    clearProfileNickname(handle: string): boolean {
+        const normalizedHandle = this.normalizeHandleValue(handle);
+        if (!normalizedHandle) {
+            return false;
+        }
+
+        this.ensureNicknamesLoaded();
+        const removed = this.nicknamesByHandle.delete(normalizedHandle);
+        if (!removed) {
+            return false;
+        }
+
+        this.persistNicknames();
+        this.message = `Nickname removed for @${normalizedHandle}.`;
+        this.emitAppChange('profile');
+        this.emitAppChange('posts');
+        return true;
+    }
+
     // --- End Saved Collections ---
 
     async loadNotificationsAsync(take = 50): Promise<NotificationDto[]> {
@@ -1249,19 +1316,23 @@ export class SessionService {
     }
 
     async loadChatConversationsAsync(): Promise<ChatConversationDto[]> {
-        return firstValueFrom(this.api.getChatConversations());
+        const conversations = await firstValueFrom(this.api.getChatConversations());
+        return conversations.map(conversation => this.normalizeChatConversation(conversation));
     }
 
     async createDirectConversationAsync(otherProfileId: string): Promise<ChatConversationDto> {
-        return firstValueFrom(this.api.createOrGetDirectConversation({ otherProfileId }));
+        const conversation = await firstValueFrom(this.api.createOrGetDirectConversation({ otherProfileId }));
+        return this.normalizeChatConversation(conversation);
     }
 
     async createGroupConversationAsync(title: string, memberProfileIds: string[]): Promise<ChatConversationDto> {
-        return firstValueFrom(this.api.createGroupConversation({ title, memberProfileIds }));
+        const conversation = await firstValueFrom(this.api.createGroupConversation({ title, memberProfileIds }));
+        return this.normalizeChatConversation(conversation);
     }
 
     async renameGroupConversationAsync(conversationId: string, title: string): Promise<ChatConversationDto> {
-        return firstValueFrom(this.api.updateGroupConversationTitle(conversationId, { title }));
+        const conversation = await firstValueFrom(this.api.updateGroupConversationTitle(conversationId, { title }));
+        return this.normalizeChatConversation(conversation);
     }
 
     async leaveGroupConversationAsync(conversationId: string): Promise<void> {
@@ -1269,27 +1340,33 @@ export class SessionService {
     }
 
     async setConversationMuteAsync(conversationId: string, isMuted: boolean): Promise<ChatConversationDto> {
-        return firstValueFrom(this.api.setConversationMute(conversationId, { isMuted }));
+        const conversation = await firstValueFrom(this.api.setConversationMute(conversationId, { isMuted }));
+        return this.normalizeChatConversation(conversation);
     }
 
     async loadChatMessagesAsync(conversationId: string, take = 50, skip = 0): Promise<ChatMessageDto[]> {
-        return firstValueFrom(this.api.getChatMessages(conversationId, take, skip));
+        const messages = await firstValueFrom(this.api.getChatMessages(conversationId, take, skip));
+        return messages.map(message => this.normalizeChatMessage(message));
     }
 
     async sendChatMessageAsync(conversationId: string, content: string): Promise<ChatMessageDto> {
-        return firstValueFrom(this.api.sendChatMessage(conversationId, { content }));
+        const message = await firstValueFrom(this.api.sendChatMessage(conversationId, { content }));
+        return this.normalizeChatMessage(message);
     }
 
     async updateChatMessageAsync(messageId: string, content: string): Promise<ChatMessageDto> {
-        return firstValueFrom(this.api.updateChatMessage(messageId, { content }));
+        const message = await firstValueFrom(this.api.updateChatMessage(messageId, { content }));
+        return this.normalizeChatMessage(message);
     }
 
     async setMessageReactionAsync(messageId: string, reactionType: string): Promise<ChatMessageDto> {
-        return firstValueFrom(this.api.setMessageReaction(messageId, { type: reactionType }));
+        const message = await firstValueFrom(this.api.setMessageReaction(messageId, { type: reactionType }));
+        return this.normalizeChatMessage(message);
     }
 
     async clearMessageReactionAsync(messageId: string): Promise<ChatMessageDto> {
-        return firstValueFrom(this.api.clearMessageReaction(messageId));
+        const message = await firstValueFrom(this.api.clearMessageReaction(messageId));
+        return this.normalizeChatMessage(message);
     }
 
     async refreshMeAsync(): Promise<void> {
@@ -1307,6 +1384,7 @@ export class SessionService {
         const normalizedImageUrl = this.normalizeMediaUrl(profile.imageUrl);
         return {
             ...profile,
+            displayName: this.applyNicknameToDisplayName(profile.handle, profile.displayName),
             imageUrl: normalizedImageUrl
         };
     }
@@ -1326,6 +1404,10 @@ export class SessionService {
             imageUrls: normalizedImageUrls.length > 0
                 ? normalizedImageUrls
                 : (normalizedPrimaryImage ? [normalizedPrimaryImage] : []),
+            reactionDetails: (post.reactionDetails ?? []).map(reaction => ({
+                ...reaction,
+                displayName: this.applyNicknameToDisplayName(reaction.handle, reaction.displayName)
+            })),
             comments: (post.comments ?? []).map(comment => ({
                 ...comment,
                 authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
@@ -1361,6 +1443,28 @@ export class SessionService {
             comments: (reel.comments ?? []).map(comment => ({
                 ...comment,
                 authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
+            }))
+        };
+    }
+
+    private normalizeChatConversation(conversation: ChatConversationDto): ChatConversationDto {
+        return {
+            ...conversation,
+            participants: (conversation.participants ?? []).map(participant => ({
+                ...participant,
+                displayName: this.applyNicknameToDisplayName(participant.handle, participant.displayName),
+                imageUrl: this.normalizeMediaUrl(participant.imageUrl)
+            }))
+        };
+    }
+
+    private normalizeChatMessage(message: ChatMessageDto): ChatMessageDto {
+        return {
+            ...message,
+            authorImageUrl: this.normalizeMediaUrl(message.authorImageUrl),
+            reactionDetails: (message.reactionDetails ?? []).map(reaction => ({
+                ...reaction,
+                displayName: this.applyNicknameToDisplayName(reaction.handle, reaction.displayName)
             }))
         };
     }
@@ -1608,6 +1712,127 @@ export class SessionService {
         this.api.clearToken();
         this.stopSilentRefresh();
         this.profile = null;
+        this.nicknameScopeProfileId = null;
+        this.nicknamesByHandle = new Map<string, string>();
+    }
+
+    private applyNicknameToDisplayName(handle: string | null | undefined, fallbackDisplayName: string): string {
+        const nickname = this.resolveNicknameForHandle(handle);
+        if (nickname) {
+            return nickname;
+        }
+
+        return fallbackDisplayName;
+    }
+
+    private resolveNicknameForHandle(handle: string | null | undefined): string | undefined {
+        this.ensureNicknamesLoaded();
+        const normalizedHandle = this.normalizeHandleValue(handle);
+        if (!normalizedHandle) {
+            return undefined;
+        }
+
+        const nickname = this.nicknamesByHandle.get(normalizedHandle)?.trim();
+        return nickname ? nickname : undefined;
+    }
+
+    private ensureNicknamesLoaded(): void {
+        const profileId = this.normalizeProfileId(this.profile?.id);
+        if (this.nicknameScopeProfileId === profileId) {
+            return;
+        }
+
+        this.nicknameScopeProfileId = profileId;
+        this.nicknamesByHandle = this.readNicknamesForProfile(profileId);
+    }
+
+    private persistNicknames(): void {
+        const profileId = this.nicknameScopeProfileId;
+        if (!profileId) {
+            return;
+        }
+
+        const storage = this.readNicknamesStorage();
+        const serialized: Record<string, string> = {};
+        for (const [handle, nickname] of this.nicknamesByHandle.entries()) {
+            const normalizedHandle = this.normalizeHandleValue(handle);
+            const normalizedNickname = nickname.trim();
+            if (normalizedHandle && normalizedNickname) {
+                serialized[normalizedHandle] = normalizedNickname;
+            }
+        }
+
+        storage[profileId] = serialized;
+        try {
+            localStorage.setItem(SessionService.ProfileNicknameStorageKey, JSON.stringify(storage));
+        } catch {
+            return;
+        }
+    }
+
+    private readNicknamesForProfile(profileId: string | null): Map<string, string> {
+        if (!profileId) {
+            return new Map<string, string>();
+        }
+
+        const storage = this.readNicknamesStorage();
+        const scoped = storage[profileId] ?? {};
+        const result = new Map<string, string>();
+        for (const [rawHandle, rawNickname] of Object.entries(scoped)) {
+            const normalizedHandle = this.normalizeHandleValue(rawHandle);
+            const normalizedNickname = typeof rawNickname === 'string' ? rawNickname.trim() : '';
+            if (normalizedHandle && normalizedNickname) {
+                result.set(normalizedHandle, normalizedNickname);
+            }
+        }
+
+        return result;
+    }
+
+    private readNicknamesStorage(): Record<string, Record<string, string>> {
+        const raw = localStorage.getItem(SessionService.ProfileNicknameStorageKey);
+        if (!raw) {
+            return {};
+        }
+
+        try {
+            const parsed = JSON.parse(raw) as unknown;
+            if (!parsed || typeof parsed !== 'object') {
+                return {};
+            }
+
+            const output: Record<string, Record<string, string>> = {};
+            for (const [rawProfileId, scopedNicknames] of Object.entries(parsed as Record<string, unknown>)) {
+                const normalizedProfileId = this.normalizeProfileId(rawProfileId);
+                if (!normalizedProfileId || !scopedNicknames || typeof scopedNicknames !== 'object') {
+                    continue;
+                }
+
+                const scopedOutput: Record<string, string> = {};
+                for (const [rawHandle, rawNickname] of Object.entries(scopedNicknames as Record<string, unknown>)) {
+                    const normalizedHandle = this.normalizeHandleValue(rawHandle);
+                    const normalizedNickname = typeof rawNickname === 'string' ? rawNickname.trim() : '';
+                    if (normalizedHandle && normalizedNickname) {
+                        scopedOutput[normalizedHandle] = normalizedNickname;
+                    }
+                }
+
+                output[normalizedProfileId] = scopedOutput;
+            }
+
+            return output;
+        } catch {
+            return {};
+        }
+    }
+
+    private normalizeHandleValue(value: string | null | undefined): string {
+        return (value ?? '').trim().replace(/^@+/, '').toLowerCase();
+    }
+
+    private normalizeProfileId(value: string | null | undefined): string | null {
+        const normalized = (value ?? '').trim().toLowerCase();
+        return normalized || null;
     }
 
     private scheduleSilentRefresh(expiresAtUtc: string): void {

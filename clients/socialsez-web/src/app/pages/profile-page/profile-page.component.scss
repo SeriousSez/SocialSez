@@ -455,29 +455,80 @@ h2 {
     white-space: nowrap;
 }
 
+.hero-action-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    display: grid;
+    place-items: center;
+    box-shadow: none;
+    transform: none;
+    line-height: 1;
+    transition: background 120ms ease, border-color 120ms ease;
+}
+
+.hero-action-icon:hover {
+    background: var(--color-surface-alt);
+}
+
+:host-context(.theme-dark) .hero-action-icon:hover {
+    background: var(--color-surface-muted);
+    border-color: var(--color-border-strong);
+}
+
+.hero-action-icon i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.message-request-button.icon-only {
+    white-space: nowrap;
+}
+
+.message-request-button.icon-only i {
+    font-size: 1rem;
+}
+
+.nickname-modal-card {
+    width: min(460px, 100%);
+    display: grid;
+    gap: 10px;
+}
+
+.nickname-modal-label {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    font-weight: 600;
+}
+
+.nickname-modal-card input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.nickname-modal-actions {
+    justify-content: flex-end;
+}
+
 .profile-safety-menu {
     position: relative;
 }
 
 .profile-safety-trigger {
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    background: var(--color-surface-alt);
-    color: var(--color-text);
-    display: grid;
-    place-items: center;
     font-size: 1rem;
     font-weight: 800;
     letter-spacing: 1px;
-    line-height: 1;
     cursor: pointer;
-    padding: 0;
 }
 
 .profile-safety-trigger:hover {
-    background: var(--color-border);
+    box-shadow: none;
+    transform: none;
 }
 
 .profile-safety-trigger:disabled {

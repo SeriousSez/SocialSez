@@ -132,7 +132,7 @@ public class StoriesController(IStoryService storyService, SocialSezContext dbCo
 
     [Authorize]
     [HttpGet("feed")]
-    public async Task<ActionResult<IReadOnlyCollection<StoryGroupDto>>> GetFeed([FromQuery] int takeAuthors = 25, [FromQuery] string mode = "for-you", CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IReadOnlyCollection<StoryGroupDto>>> GetFeed([FromQuery] int takeAuthors = 25, [FromQuery] string mode = "for-you", [FromQuery] Guid? customFeedId = null, CancellationToken cancellationToken = default)
     {
         if (!TryGetProfileId(out var profileId))
         {
@@ -140,8 +140,15 @@ public class StoriesController(IStoryService storyService, SocialSezContext dbCo
         }
 
         var feedMode = ParseFeedMode(mode);
-        var feed = await storyService.GetFeedAsync(profileId, takeAuthors, feedMode, cancellationToken);
-        return Ok(feed);
+        try
+        {
+            var feed = await storyService.GetFeedAsync(profileId, takeAuthors, feedMode, customFeedId, cancellationToken);
+            return Ok(feed);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [Authorize]

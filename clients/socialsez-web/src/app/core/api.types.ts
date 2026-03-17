@@ -390,6 +390,27 @@ export interface ReelCommentDto {
 
 export type FeedMode = 'for-you' | 'following';
 
+export interface CustomFeedDto {
+    id: string;
+    name: string;
+    authorHandles: string[];
+    hashtags: string[];
+    createdAtUtc: string;
+    updatedAtUtc: string;
+}
+
+export interface CreateCustomFeedRequest {
+    name: string;
+    authorHandles: string[];
+    hashtags: string[];
+}
+
+export interface UpdateCustomFeedRequest {
+    name: string;
+    authorHandles: string[];
+    hashtags: string[];
+}
+
 export interface UploadImageResponse {
     url: string;
 }

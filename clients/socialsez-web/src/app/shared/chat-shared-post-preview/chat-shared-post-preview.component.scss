@@ -74,6 +74,14 @@
     overflow-wrap: anywhere;
 }
 
+.shared-post-content :where(p) {
+    margin: 0;
+}
+
+.shared-post-content :where(strong, b) {
+    color: var(--color-text);
+}
+
 .shared-post-open {
     border: 1px solid var(--color-border);
     border-radius: 999px;

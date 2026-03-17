@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace SocialSez.ApplicationService.Services;
 
-public class ReelService(SocialSezContext dbContext) : IReelService
+public class ReelService(SocialSezContext dbContext, ICustomFeedService customFeedService) : IReelService
 {
     private static readonly Regex HashtagRegex = new(@"(?<![\p{L}\p{N}_])#(?<tag>[\p{L}\p{N}_]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     private const string VariantA = "A";
@@ -723,7 +723,7 @@ public class ReelService(SocialSezContext dbContext) : IReelService
             .ToArray();
     }
 
-    public async Task<IReadOnlyCollection<ReelDto>> GetFeedAsync(Guid profileId, int take = 25, FeedMode mode = FeedMode.ForYou, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<ReelDto>> GetFeedAsync(Guid profileId, int take = 25, FeedMode mode = FeedMode.ForYou, Guid? customFeedId = null, CancellationToken cancellationToken = default)
     {
         await EnsureReelSchemaAsync(cancellationToken);
         await PublishDueReelsAsync(cancellationToken);
@@ -731,6 +731,21 @@ public class ReelService(SocialSezContext dbContext) : IReelService
         take = Math.Clamp(take, 1, 100);
         var nowUtc = DateTime.UtcNow;
         var blockedProfileIds = await GetBlockedProfileIdsAsync(profileId, cancellationToken);
+        var customFeed = customFeedId.HasValue
+            ? await customFeedService.GetByIdAsync(profileId, customFeedId.Value, cancellationToken)
+            : null;
+
+        if (customFeedId.HasValue && customFeed is null)
+        {
+            throw new InvalidOperationException("Custom feed not found.");
+        }
+
+        var (customFeedAuthorHandles, customFeedExcludedAuthorHandles) = customFeed is null
+            ? (new HashSet<string>(StringComparer.Ordinal), new HashSet<string>(StringComparer.Ordinal))
+            : CustomFeedMatcher.SplitHandleRules(customFeed.AuthorHandles);
+        var customFeedHashtags = customFeed is null
+            ? new HashSet<string>(StringComparer.Ordinal)
+            : customFeed.Hashtags.ToHashSet(StringComparer.Ordinal);
 
         var followedIds = await dbContext.Follows
             .AsNoTracking()
@@ -750,6 +765,7 @@ public class ReelService(SocialSezContext dbContext) : IReelService
 
         if (mode == FeedMode.Following)
         {
+            var followingLoadTake = customFeed is null ? take : Math.Clamp(take * 8, take, 400);
             var followingReels = await dbContext.Reels
                 .AsNoTracking()
                 .Include(x => x.Author)
@@ -762,10 +778,17 @@ public class ReelService(SocialSezContext dbContext) : IReelService
                     && !blockedProfileIds.Contains(x.AuthorId)
                     && !x.IsDraft)
                 .OrderByDescending(x => x.CreatedAtUtc)
-                .Take(take)
+                .Take(followingLoadTake)
                 .ToArrayAsync(cancellationToken);
 
-            return await MapWithVariantsAsync(followingReels, profileId, cancellationToken);
+            var filteredFollowingReels = customFeed is null
+                ? followingReels
+                : followingReels
+                    .Where(reel => CustomFeedMatcher.Matches(reel.Author.Handle, reel.Caption, customFeedAuthorHandles, customFeedExcludedAuthorHandles, customFeedHashtags))
+                    .Take(take)
+                    .ToArray();
+
+            return await MapWithVariantsAsync(filteredFollowingReels, profileId, cancellationToken);
         }
 
         var authorAffinity = new Dictionary<Guid, double>();
@@ -856,6 +879,7 @@ public class ReelService(SocialSezContext dbContext) : IReelService
                     Score = totalScore
                 };
             })
+            .Where(item => customFeed is null || CustomFeedMatcher.Matches(item.Reel.Author.Handle, item.Reel.Caption, customFeedAuthorHandles, customFeedExcludedAuthorHandles, customFeedHashtags))
             .OrderByDescending(x => x.Score)
             .ThenByDescending(x => x.Reel.CreatedAtUtc)
             .Take(take)

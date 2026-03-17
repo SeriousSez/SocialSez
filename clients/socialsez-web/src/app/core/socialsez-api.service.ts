@@ -10,6 +10,7 @@ import {
     BlogThemeConfigDto,
     ChatConversationDto,
     CommunityRuleDto,
+    CreateCustomFeedRequest,
     CreateReelAbTestRequest,
     CreatorAnalyticsSummaryDto,
     ChatMessageDto,
@@ -19,6 +20,7 @@ import {
     CreateChatMessageRequest,
     CreateDirectConversationRequest,
     CreateGroupConversationRequest,
+    CustomFeedDto,
     FollowActionResultDto,
     FollowRequestDto,
     FollowedHashtagDto,
@@ -50,6 +52,7 @@ import {
     StoryPlaybackProgressDto,
     StoryGroupDto,
     UpdateChatMessageRequest,
+    UpdateCustomFeedRequest,
     UpdateGroupConversationTitleRequest,
     UpdatePostRequest,
     UpdateProfilePrivacyRequest,
@@ -384,8 +387,9 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/blogs/${encodeURIComponent(blogId)}/posts/${encodeURIComponent(postId)}/save`, { headers: this.authHeaders() }));
     }
 
-    getFeed(take = 25, mode: FeedMode = 'for-you'): Observable<PostDto[]> {
-        return this.withAutoRefresh(() => this.http.get<PostDto[]>(`${this.baseUrl}/posts/feed?take=${take}&mode=${mode}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    getFeed(take = 25, mode: FeedMode = 'for-you', customFeedId?: string): Observable<PostDto[]> {
+        const customFeedQuery = customFeedId ? `&customFeedId=${encodeURIComponent(customFeedId)}` : '';
+        return this.withAutoRefresh(() => this.http.get<PostDto[]>(`${this.baseUrl}/posts/feed?take=${take}&mode=${mode}${customFeedQuery}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
     getPostsByHashtag(hashtag: string, take = 25): Observable<PostDto[]> {
@@ -442,8 +446,9 @@ export class SocialSezApiService {
         return this.http.get<HashtagSearchResultDto[]>(`${this.baseUrl}/posts/hashtags/trending?take=${take}`, { headers: this.optionalAuthHeaders() }).pipe(timeout(15000));
     }
 
-    getStoryFeed(takeAuthors = 25, mode: FeedMode = 'for-you'): Observable<StoryGroupDto[]> {
-        return this.withAutoRefresh(() => this.http.get<StoryGroupDto[]>(`${this.baseUrl}/stories/feed?takeAuthors=${takeAuthors}&mode=${mode}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    getStoryFeed(takeAuthors = 25, mode: FeedMode = 'for-you', customFeedId?: string): Observable<StoryGroupDto[]> {
+        const customFeedQuery = customFeedId ? `&customFeedId=${encodeURIComponent(customFeedId)}` : '';
+        return this.withAutoRefresh(() => this.http.get<StoryGroupDto[]>(`${this.baseUrl}/stories/feed?takeAuthors=${takeAuthors}&mode=${mode}${customFeedQuery}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
     markStoryViewed(storyId: string): Observable<void> {
@@ -475,8 +480,25 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.delete<StoryCollectionDto>(`${this.baseUrl}/stories/collections/${encodeURIComponent(collectionId)}/stories/${encodeURIComponent(storyId)}`, { headers: this.authHeaders() }));
     }
 
-    getReelFeed(take = 20, mode: FeedMode = 'for-you'): Observable<ReelDto[]> {
-        return this.withAutoRefresh(() => this.http.get<ReelDto[]>(`${this.baseUrl}/reels/feed?take=${take}&mode=${mode}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    getReelFeed(take = 20, mode: FeedMode = 'for-you', customFeedId?: string): Observable<ReelDto[]> {
+        const customFeedQuery = customFeedId ? `&customFeedId=${encodeURIComponent(customFeedId)}` : '';
+        return this.withAutoRefresh(() => this.http.get<ReelDto[]>(`${this.baseUrl}/reels/feed?take=${take}&mode=${mode}${customFeedQuery}`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getMyCustomFeeds(): Observable<CustomFeedDto[]> {
+        return this.withAutoRefresh(() => this.http.get<CustomFeedDto[]>(`${this.baseUrl}/customfeeds/mine`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    createCustomFeed(request: CreateCustomFeedRequest): Observable<CustomFeedDto> {
+        return this.withAutoRefresh(() => this.http.post<CustomFeedDto>(`${this.baseUrl}/customfeeds`, request, { headers: this.authHeaders() }));
+    }
+
+    updateCustomFeed(customFeedId: string, request: UpdateCustomFeedRequest): Observable<CustomFeedDto> {
+        return this.withAutoRefresh(() => this.http.put<CustomFeedDto>(`${this.baseUrl}/customfeeds/${encodeURIComponent(customFeedId)}`, request, { headers: this.authHeaders() }));
+    }
+
+    deleteCustomFeed(customFeedId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.delete<void>(`${this.baseUrl}/customfeeds/${encodeURIComponent(customFeedId)}`, { headers: this.authHeaders() }));
     }
 
     getReelsByAuthorHandle(handle: string, take = 25): Observable<ReelDto[]> {

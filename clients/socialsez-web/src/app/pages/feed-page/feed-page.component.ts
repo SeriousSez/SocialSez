@@ -3,7 +3,7 @@ import { Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, Vie
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter, skip } from 'rxjs';
-import { FeedMode, PostDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
+import { CustomFeedDto, FeedMode, HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
 import { parseUtcDate, resolveAppLocale } from '../../core/date-time.util';
 import { executePostShareAction, executePostShareToChat, executePostShareToFeedAndReload } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
@@ -63,10 +63,12 @@ export class FeedPageComponent implements OnDestroy {
     feed: PostDto[] = [];
     reels: ReelDto[] = [];
     storyGroups: StoryGroupDto[] = [];
+    customFeeds: CustomFeedDto[] = [];
     private readonly likedStoryIds = new Set<string>();
     storiesLoading = true;
     storiesError = '';
     selectedFeedMode: FeedMode = 'for-you';
+    selectedCustomFeedId: string | null = null;
     selectedContentTab: 'posts' | 'reels' = 'posts';
     readonly contentTabs: readonly SegmentedTabItem[] = [
         { id: 'posts', label: 'Posts' },
@@ -131,6 +133,21 @@ export class FeedPageComponent implements OnDestroy {
     sharingStoryMessage = false;
     showReelComposer = false;
     createMenuOpen = false;
+    showCustomFeedModal = false;
+    customFeedModalMode: 'create' | 'edit' = 'create';
+    customFeedDraftName = '';
+    customFeedDraftHandles = '';
+    customFeedDraftHashtags = '';
+    customFeedHandleSuggestions: ProfileDto[] = [];
+    customFeedHandleSuggestionsOpen = false;
+    customFeedHandleSuggestionsLoading = false;
+    customFeedHashtagSuggestions: HashtagSearchResultDto[] = [];
+    customFeedHashtagSuggestionsOpen = false;
+    customFeedHashtagSuggestionsLoading = false;
+    customFeedModalError = '';
+    savingCustomFeed = false;
+    pendingDeleteCustomFeed: CustomFeedDto | null = null;
+    deletingCustomFeed = false;
     compactFeedEnabled = false;
     reelUploadStatus: ReelUploadStatusEvent | null = null;
     private reelUploadStatusHideTimeoutId: number | null = null;
@@ -159,6 +176,10 @@ export class FeedPageComponent implements OnDestroy {
     private storyTrimDragOriginEndSeconds = 0;
     private storyTrimDragTrackWidth = 1;
     private storyTrimPreviewRefreshToken = 0;
+    private customFeedHandleSearchDebounceId: number | null = null;
+    private customFeedHandleSearchToken = 0;
+    private customFeedHashtagSearchDebounceId: number | null = null;
+    private customFeedHashtagSearchToken = 0;
     private readonly onGlobalStoryTrimPointerMove = (event: PointerEvent) => {
         this.handleStoryTrimPointerMove(event);
     };
@@ -229,6 +250,7 @@ export class FeedPageComponent implements OnDestroy {
         this.syncCompactFeedPreference();
 
         queueMicrotask(() => {
+            void this.loadCustomFeeds();
             if (!this.loadInFlight && !this.hasLoadedAtLeastOnce) {
                 void this.load();
             }
@@ -246,6 +268,49 @@ export class FeedPageComponent implements OnDestroy {
 
     get currentProfileId(): string | null {
         return this.session.profile?.id ?? null;
+    }
+
+    get selectedCustomFeed(): CustomFeedDto | null {
+        return this.customFeeds.find(feed => feed.id === this.selectedCustomFeedId) ?? null;
+    }
+
+    get customFeedDraftHandleValues(): string[] {
+        return this.parseCustomFeedHandleRules(this.customFeedDraftHandles);
+    }
+
+    get customFeedDraftHashtagValues(): string[] {
+        return this.parseCustomFeedRules(this.customFeedDraftHashtags, '#');
+    }
+
+    get canSaveCustomFeed(): boolean {
+        return !!this.customFeedDraftName.trim()
+            && (this.customFeedDraftHandleValues.length > 0 || this.customFeedDraftHashtagValues.length > 0);
+    }
+
+    get storiesEmptyMessage(): string {
+        if (this.selectedCustomFeed) {
+            return 'No stories match this custom feed yet.';
+        }
+
+        return this.selectedFeedMode === 'following'
+            ? 'No stories from people you follow yet.'
+            : 'No active stories yet.';
+    }
+
+    get postsEmptyMessage(): string {
+        if (this.selectedCustomFeed) {
+            return 'No posts match this custom feed yet. Add more handles or hashtags to broaden it.';
+        }
+
+        return 'No posts yet. Follow people or create your first post to kick off your timeline.';
+    }
+
+    get reelsEmptyMessage(): string {
+        if (this.selectedCustomFeed) {
+            return 'No reels match this custom feed yet.';
+        }
+
+        return 'No reels available right now.';
     }
 
     get visibleStoryGroups(): StoryGroupDto[] {
@@ -515,6 +580,8 @@ export class FeedPageComponent implements OnDestroy {
 
         this.detachStoryFrameDragListeners();
         this.detachStoryTrimDragListeners();
+        this.closeCustomFeedHandleSuggestions();
+        this.closeCustomFeedHashtagSuggestions();
         this.clearStoryMediaSelection();
     }
 
@@ -891,9 +958,10 @@ export class FeedPageComponent implements OnDestroy {
                 });
 
                 const mode = this.selectedFeedMode;
+                const customFeedId = this.selectedCustomFeedId ?? undefined;
                 const [postsResult, reelsResult] = await Promise.allSettled([
-                    this.session.loadFeedAsync(mode),
-                    this.session.loadReelFeedAsync(20, mode)
+                    this.session.loadFeedAsync(mode, customFeedId),
+                    this.session.loadReelFeedAsync(20, mode, customFeedId)
                 ]);
 
                 this.ngZone.run(() => {
@@ -926,7 +994,7 @@ export class FeedPageComponent implements OnDestroy {
                     }
                 }
 
-                await this.loadStories(mode);
+                await this.loadStories(mode, customFeedId);
             } while (this.reloadQueued);
         } finally {
             this.hasLoadedAtLeastOnce = true;
@@ -942,6 +1010,226 @@ export class FeedPageComponent implements OnDestroy {
         this.selectedFeedMode = mode;
         this.closeStoryViewer();
         void this.load();
+    }
+
+    selectCustomFeed(customFeedId: string | null): void {
+        if (this.selectedCustomFeedId === customFeedId) {
+            return;
+        }
+
+        this.selectedCustomFeedId = customFeedId;
+        this.closeStoryViewer();
+        void this.load();
+    }
+
+    openCreateCustomFeedModal(): void {
+        this.customFeedModalMode = 'create';
+        this.customFeedDraftName = '';
+        this.customFeedDraftHandles = '';
+        this.customFeedDraftHashtags = '';
+        this.customFeedModalError = '';
+        this.closeCustomFeedHandleSuggestions();
+        this.closeCustomFeedHashtagSuggestions();
+        this.showCustomFeedModal = true;
+    }
+
+    openEditCustomFeedModal(): void {
+        const selectedFeed = this.selectedCustomFeed;
+        if (!selectedFeed) {
+            return;
+        }
+
+        this.customFeedModalMode = 'edit';
+        this.customFeedDraftName = selectedFeed.name;
+        this.customFeedDraftHandles = selectedFeed.authorHandles
+            .map(handle => handle.startsWith('!') ? `!@${handle.slice(1)}` : `@${handle}`)
+            .join(', ');
+        this.customFeedDraftHashtags = selectedFeed.hashtags.map(tag => `#${tag}`).join(', ');
+        this.customFeedModalError = '';
+        this.closeCustomFeedHandleSuggestions();
+        this.closeCustomFeedHashtagSuggestions();
+        this.showCustomFeedModal = true;
+    }
+
+    closeCustomFeedModal(): void {
+        if (this.savingCustomFeed) {
+            return;
+        }
+
+        this.showCustomFeedModal = false;
+        this.customFeedModalError = '';
+        this.closeCustomFeedHandleSuggestions();
+        this.closeCustomFeedHashtagSuggestions();
+    }
+
+    onCustomFeedHandlesChanged(value: string): void {
+        this.customFeedDraftHandles = value;
+
+        const query = this.extractCustomFeedHandleQuery(value);
+        if (!query) {
+            this.closeCustomFeedHandleSuggestions();
+            return;
+        }
+
+        this.searchCustomFeedHandleSuggestions(query);
+    }
+
+    onCustomFeedHandlesFocus(): void {
+        const query = this.extractCustomFeedHandleQuery(this.customFeedDraftHandles);
+        if (!query) {
+            return;
+        }
+
+        this.searchCustomFeedHandleSuggestions(query);
+    }
+
+    onCustomFeedHandlesBlur(): void {
+        window.setTimeout(() => {
+            this.closeCustomFeedHandleSuggestions();
+        }, 120);
+    }
+
+    onCustomFeedHandlesEnter(event: Event): void {
+        event.preventDefault();
+
+        if (this.customFeedHandleSuggestions.length > 0) {
+            this.selectCustomFeedHandleSuggestion(this.customFeedHandleSuggestions[0]);
+            return;
+        }
+
+        const query = this.extractCustomFeedHandleQuery(this.customFeedDraftHandles);
+        if (!query) {
+            return;
+        }
+
+        this.applyCustomFeedHandle(query, this.isCustomFeedHandleExclusionToken(this.customFeedDraftHandles));
+    }
+
+    selectCustomFeedHandleSuggestion(profile: ProfileDto): void {
+        this.applyCustomFeedHandle(profile.handle, this.isCustomFeedHandleExclusionToken(this.customFeedDraftHandles));
+    }
+
+    onCustomFeedHashtagsChanged(value: string): void {
+        this.customFeedDraftHashtags = value;
+
+        const query = this.extractCustomFeedHashtagQuery(value);
+        if (!query) {
+            this.closeCustomFeedHashtagSuggestions();
+            return;
+        }
+
+        this.searchCustomFeedHashtagSuggestions(query);
+    }
+
+    onCustomFeedHashtagsFocus(): void {
+        const query = this.extractCustomFeedHashtagQuery(this.customFeedDraftHashtags);
+        if (!query) {
+            return;
+        }
+
+        this.searchCustomFeedHashtagSuggestions(query);
+    }
+
+    onCustomFeedHashtagsBlur(): void {
+        window.setTimeout(() => {
+            this.closeCustomFeedHashtagSuggestions();
+        }, 120);
+    }
+
+    onCustomFeedHashtagsEnter(event: Event): void {
+        event.preventDefault();
+
+        if (this.customFeedHashtagSuggestions.length > 0) {
+            this.selectCustomFeedHashtagSuggestion(this.customFeedHashtagSuggestions[0]);
+            return;
+        }
+
+        const query = this.extractCustomFeedHashtagQuery(this.customFeedDraftHashtags);
+        if (!query) {
+            return;
+        }
+
+        this.applyCustomFeedHashtag(query);
+    }
+
+    selectCustomFeedHashtagSuggestion(hashtag: HashtagSearchResultDto): void {
+        this.applyCustomFeedHashtag(hashtag.tag);
+    }
+
+    requestDeleteSelectedCustomFeed(): void {
+        if (!this.selectedCustomFeed) {
+            return;
+        }
+
+        this.pendingDeleteCustomFeed = this.selectedCustomFeed;
+    }
+
+    cancelDeleteCustomFeed(): void {
+        if (this.deletingCustomFeed) {
+            return;
+        }
+
+        this.pendingDeleteCustomFeed = null;
+    }
+
+    async confirmDeleteCustomFeed(): Promise<void> {
+        const selectedFeed = this.pendingDeleteCustomFeed;
+        if (!selectedFeed || this.deletingCustomFeed) {
+            return;
+        }
+
+        this.deletingCustomFeed = true;
+        try {
+            await this.session.deleteCustomFeedAsync(selectedFeed.id);
+            this.customFeeds = this.sortCustomFeeds(this.customFeeds.filter(feed => feed.id !== selectedFeed.id));
+            this.pendingDeleteCustomFeed = null;
+
+            if (this.selectedCustomFeedId === selectedFeed.id) {
+                this.selectedCustomFeedId = null;
+                await this.load();
+            }
+        } catch {
+            this.error = 'Could not delete this custom feed right now.';
+        } finally {
+            this.deletingCustomFeed = false;
+        }
+    }
+
+    async saveCustomFeed(): Promise<void> {
+        if (this.savingCustomFeed) {
+            return;
+        }
+
+        const name = this.customFeedDraftName.trim();
+        const authorHandles = this.customFeedDraftHandleValues;
+        const hashtags = this.customFeedDraftHashtagValues;
+        if (!name || (authorHandles.length === 0 && hashtags.length === 0)) {
+            this.customFeedModalError = 'Add a name and at least one handle or hashtag.';
+            return;
+        }
+
+        this.savingCustomFeed = true;
+        this.customFeedModalError = '';
+
+        try {
+            const request = { name, authorHandles, hashtags };
+            const saved = this.customFeedModalMode === 'edit' && this.selectedCustomFeedId
+                ? await this.session.updateCustomFeedAsync(this.selectedCustomFeedId, request)
+                : await this.session.createCustomFeedAsync(request);
+
+            const nextFeeds = this.customFeedModalMode === 'edit'
+                ? this.customFeeds.map(feed => feed.id === saved.id ? saved : feed)
+                : [saved, ...this.customFeeds.filter(feed => feed.id !== saved.id)];
+
+            this.customFeeds = this.sortCustomFeeds(nextFeeds);
+            this.selectedCustomFeedId = saved.id;
+            this.showCustomFeedModal = false;
+            await this.load();
+        } catch {
+            this.customFeedModalError = 'Could not save this custom feed right now.';
+        } finally {
+            this.savingCustomFeed = false;
+        }
     }
 
     selectContentTab(tab: 'posts' | 'reels'): void {
@@ -1871,14 +2159,14 @@ export class FeedPageComponent implements OnDestroy {
         this.feed = this.feed.map(post => post.id === updated.id ? updated : post);
     }
 
-    private async loadStories(mode: FeedMode): Promise<void> {
+    private async loadStories(mode: FeedMode, customFeedId?: string): Promise<void> {
         this.ngZone.run(() => {
             this.storiesLoading = true;
             this.storiesError = '';
         });
 
         try {
-            const loadedStoryGroups = await this.session.loadStoryFeedAsync(25, mode);
+            const loadedStoryGroups = await this.session.loadStoryFeedAsync(25, mode, customFeedId);
 
             this.ngZone.run(() => {
                 this.storyGroups = loadedStoryGroups;
@@ -1903,6 +2191,279 @@ export class FeedPageComponent implements OnDestroy {
                 this.storiesLoading = false;
             });
         }
+    }
+
+    private async loadCustomFeeds(): Promise<void> {
+        try {
+            const feeds = await this.session.loadCustomFeedsAsync();
+            this.customFeeds = this.sortCustomFeeds(feeds);
+
+            if (this.selectedCustomFeedId && !this.customFeeds.some(feed => feed.id === this.selectedCustomFeedId)) {
+                this.selectedCustomFeedId = null;
+            }
+        } catch {
+            this.customFeeds = [];
+        }
+    }
+
+    private sortCustomFeeds(feeds: CustomFeedDto[]): CustomFeedDto[] {
+        return [...feeds].sort((left, right) => Date.parse(right.updatedAtUtc) - Date.parse(left.updatedAtUtc));
+    }
+
+    private searchCustomFeedHandleSuggestions(query: string): void {
+        if (this.customFeedHandleSearchDebounceId !== null) {
+            window.clearTimeout(this.customFeedHandleSearchDebounceId);
+            this.customFeedHandleSearchDebounceId = null;
+        }
+
+        this.customFeedHandleSuggestionsLoading = true;
+        const token = ++this.customFeedHandleSearchToken;
+        this.customFeedHandleSearchDebounceId = window.setTimeout(async () => {
+            this.customFeedHandleSearchDebounceId = null;
+
+            try {
+                const profiles = await this.session.searchProfilesAsync(query);
+                if (token !== this.customFeedHandleSearchToken) {
+                    return;
+                }
+
+                const selectedHandles = new Set(this.customFeedDraftHandleValues.map(handle => handle.replace(/^!/, '').toLowerCase()));
+                this.customFeedHandleSuggestions = profiles
+                    .filter(profile => !selectedHandles.has(profile.handle.toLowerCase()))
+                    .slice(0, 6);
+                this.customFeedHandleSuggestionsOpen = this.customFeedHandleSuggestions.length > 0;
+            } catch {
+                if (token !== this.customFeedHandleSearchToken) {
+                    return;
+                }
+
+                this.customFeedHandleSuggestions = [];
+                this.customFeedHandleSuggestionsOpen = false;
+            } finally {
+                if (token === this.customFeedHandleSearchToken) {
+                    this.customFeedHandleSuggestionsLoading = false;
+                }
+            }
+        }, 200);
+    }
+
+    private closeCustomFeedHandleSuggestions(): void {
+        this.customFeedHandleSuggestions = [];
+        this.customFeedHandleSuggestionsOpen = false;
+        this.customFeedHandleSuggestionsLoading = false;
+        this.customFeedHandleSearchToken += 1;
+
+        if (this.customFeedHandleSearchDebounceId !== null) {
+            window.clearTimeout(this.customFeedHandleSearchDebounceId);
+            this.customFeedHandleSearchDebounceId = null;
+        }
+    }
+
+    private searchCustomFeedHashtagSuggestions(query: string): void {
+        if (this.customFeedHashtagSearchDebounceId !== null) {
+            window.clearTimeout(this.customFeedHashtagSearchDebounceId);
+            this.customFeedHashtagSearchDebounceId = null;
+        }
+
+        this.customFeedHashtagSuggestionsLoading = true;
+        const token = ++this.customFeedHashtagSearchToken;
+        this.customFeedHashtagSearchDebounceId = window.setTimeout(async () => {
+            this.customFeedHashtagSearchDebounceId = null;
+
+            try {
+                const hashtags = await this.session.searchHashtagsAsync(query);
+                if (token !== this.customFeedHashtagSearchToken) {
+                    return;
+                }
+
+                const selectedHashtags = new Set(this.customFeedDraftHashtagValues.map(tag => tag.toLowerCase()));
+                this.customFeedHashtagSuggestions = hashtags
+                    .map(item => ({
+                        ...item,
+                        tag: item.tag.replace(/^#+/, '').trim().toLowerCase()
+                    }))
+                    .filter(item => !!item.tag && !selectedHashtags.has(item.tag))
+                    .slice(0, 6);
+                this.customFeedHashtagSuggestionsOpen = this.customFeedHashtagSuggestions.length > 0;
+            } catch {
+                if (token !== this.customFeedHashtagSearchToken) {
+                    return;
+                }
+
+                this.customFeedHashtagSuggestions = [];
+                this.customFeedHashtagSuggestionsOpen = false;
+            } finally {
+                if (token === this.customFeedHashtagSearchToken) {
+                    this.customFeedHashtagSuggestionsLoading = false;
+                }
+            }
+        }, 200);
+    }
+
+    private closeCustomFeedHashtagSuggestions(): void {
+        this.customFeedHashtagSuggestions = [];
+        this.customFeedHashtagSuggestionsOpen = false;
+        this.customFeedHashtagSuggestionsLoading = false;
+        this.customFeedHashtagSearchToken += 1;
+
+        if (this.customFeedHashtagSearchDebounceId !== null) {
+            window.clearTimeout(this.customFeedHashtagSearchDebounceId);
+            this.customFeedHashtagSearchDebounceId = null;
+        }
+    }
+
+    private extractCustomFeedHandleQuery(value: string): string {
+        const parts = value
+            .split(/[,\n]+/)
+            .map(part => part.trim())
+            .filter(Boolean);
+        const lastPart = parts.length > 0 ? parts[parts.length - 1] : '';
+        return lastPart
+            .replace(/^!/, '')
+            .replace(/^@/, '')
+            .trim()
+            .toLowerCase()
+            .slice(0, 30);
+    }
+
+    private applyCustomFeedHandle(handle: string, excluded = false): void {
+        const normalized = handle.replace(/^@/, '').replace(/^!/, '').trim().toLowerCase();
+        if (!normalized) {
+            return;
+        }
+
+        const normalizedRule = excluded ? `!${normalized}` : normalized;
+
+        const tokens = this.customFeedDraftHandles.split(/[,\n]+/).map(token => token.trim());
+        const hasTokens = tokens.some(token => !!token);
+
+        if (!hasTokens) {
+            tokens.length = 0;
+            tokens.push(normalizedRule);
+        } else {
+            const lastTokenIndex = tokens.length - 1;
+            tokens[lastTokenIndex] = normalizedRule;
+        }
+
+        const orderedUniqueHandles: string[] = [];
+        const seen = new Set<string>();
+        for (const token of tokens) {
+            const isExcluded = token.trim().startsWith('!');
+            const normalizedToken = token.replace(/^!/, '').replace(/^@+/, '').trim().toLowerCase();
+            if (!normalizedToken) {
+                continue;
+            }
+
+            const dedupeKey = isExcluded ? `!${normalizedToken}` : normalizedToken;
+            if (seen.has(dedupeKey)) {
+                continue;
+            }
+
+            seen.add(dedupeKey);
+            orderedUniqueHandles.push(dedupeKey);
+            if (orderedUniqueHandles.length >= 20) {
+                break;
+            }
+        }
+
+        this.customFeedDraftHandles = orderedUniqueHandles
+            .map(value => value.startsWith('!') ? `!@${value.slice(1)}` : `@${value}`)
+            .join(', ');
+        this.closeCustomFeedHandleSuggestions();
+    }
+
+    private extractCustomFeedHashtagQuery(value: string): string {
+        const parts = value
+            .split(/[\n,]+/)
+            .map(part => part.trim())
+            .filter(Boolean);
+        const lastPart = parts.length > 0 ? parts[parts.length - 1] : '';
+        return lastPart
+            .replace(/^#/, '')
+            .trim()
+            .toLowerCase()
+            .slice(0, 50);
+    }
+
+    private applyCustomFeedHashtag(tag: string): void {
+        const normalized = tag.replace(/^#/, '').trim().toLowerCase();
+        if (!normalized) {
+            return;
+        }
+
+        const tokens = this.customFeedDraftHashtags.split(/[\n,]+/).map(token => token.trim());
+        const hasTokens = tokens.some(token => !!token);
+
+        if (!hasTokens) {
+            tokens.length = 0;
+            tokens.push(normalized);
+        } else {
+            const lastTokenIndex = tokens.length - 1;
+            tokens[lastTokenIndex] = normalized;
+        }
+
+        const orderedUniqueTags: string[] = [];
+        const seen = new Set<string>();
+        for (const token of tokens) {
+            const normalizedToken = token.replace(/^#+/, '').trim().toLowerCase();
+            if (!normalizedToken || seen.has(normalizedToken)) {
+                continue;
+            }
+
+            seen.add(normalizedToken);
+            orderedUniqueTags.push(normalizedToken);
+            if (orderedUniqueTags.length >= 20) {
+                break;
+            }
+        }
+
+        this.customFeedDraftHashtags = orderedUniqueTags.map(value => `#${value}`).join(', ');
+        this.closeCustomFeedHashtagSuggestions();
+    }
+
+    private parseCustomFeedRules(value: string, prefix: '@' | '#'): string[] {
+        const normalized = value
+            .split(/[\s,\n]+/)
+            .map(part => part.trim())
+            .filter(Boolean)
+            .map(part => prefix === '@'
+                ? part.replace(/^@+/, '').trim().toLowerCase()
+                : part.replace(/^#+/, '').trim().toLowerCase())
+            .filter(Boolean);
+
+        return Array.from(new Set(normalized)).slice(0, 20);
+    }
+
+    private parseCustomFeedHandleRules(value: string): string[] {
+        const normalized = value
+            .split(/[\s,\n]+/)
+            .map(part => part.trim())
+            .filter(Boolean)
+            .map(part => {
+                const isExcluded = part.startsWith('!');
+                const withoutExclude = isExcluded ? part.slice(1) : part;
+                const normalizedHandle = withoutExclude.replace(/^@+/, '').trim().toLowerCase();
+                if (!normalizedHandle) {
+                    return '';
+                }
+
+                return isExcluded ? `!${normalizedHandle}` : normalizedHandle;
+            })
+            .filter(Boolean);
+
+        return Array.from(new Set(normalized)).slice(0, 20);
+    }
+
+    private isCustomFeedHandleExclusionToken(value: string): boolean {
+        const parts = value
+            .split(/[,\n]+/)
+            .map(part => part.trim())
+            .filter(Boolean);
+        if (parts.length === 0) {
+            return false;
+        }
+
+        return parts[parts.length - 1].startsWith('!');
     }
 
     private async markActiveStoryViewed(): Promise<void> {

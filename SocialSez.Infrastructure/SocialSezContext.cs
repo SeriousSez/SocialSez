@@ -51,6 +51,7 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
     public DbSet<SavedItem> SavedItems => Set<SavedItem>();
     public DbSet<SavedCollection> SavedCollections => Set<SavedCollection>();
     public DbSet<SavedCollectionItem> SavedCollectionItems => Set<SavedCollectionItem>();
+    public DbSet<CustomFeed> CustomFeeds => Set<CustomFeed>();
     public DbSet<Blog> Blogs => Set<Blog>();
     public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
     public DbSet<BlogPostSave> BlogPostSaves => Set<BlogPostSave>();
@@ -228,6 +229,22 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(x => new { x.ProfileId, x.CreatedAtUtc });
+        });
+
+        modelBuilder.Entity<CustomFeed>(entity =>
+        {
+            entity.ToTable("CustomFeeds");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.AuthorHandlesJson);
+            entity.Property(x => x.HashtagsJson);
+
+            entity.HasOne(x => x.Profile)
+                .WithMany(x => x.CustomFeeds)
+                .HasForeignKey(x => x.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.ProfileId, x.UpdatedAtUtc });
         });
 
         modelBuilder.Entity<ChatConversation>(entity =>

@@ -127,6 +127,24 @@
             <button type="button" [class.active]="selectedFeedMode === 'following'" (click)="selectFeedMode('following')">Following</button>
         </div>
 
+        <div class="custom-feeds" aria-label="Custom feeds">
+            <div class="custom-feeds-scroll">
+                <button type="button" class="custom-feed-chip" [class.active]="!selectedCustomFeedId" (click)="selectCustomFeed(null)">All</button>
+                <button type="button" class="custom-feed-chip" *ngFor="let customFeed of customFeeds" [class.active]="selectedCustomFeedId === customFeed.id" (click)="selectCustomFeed(customFeed.id)">
+                    {{ customFeed.name }}
+                </button>
+                <button type="button" class="custom-feed-chip add" (click)="openCreateCustomFeedModal()">+ New feed</button>
+            </div>
+
+            <div class="custom-feed-actions" *ngIf="selectedCustomFeed as customFeed">
+                <p class="custom-feed-summary">{{ customFeed.authorHandles.length }} handles · {{ customFeed.hashtags.length }} hashtags</p>
+                <div class="custom-feed-action-row">
+                    <button type="button" class="ghost custom-feed-action" (click)="openEditCustomFeedModal()">Edit</button>
+                    <button type="button" class="ghost custom-feed-action danger" (click)="requestDeleteSelectedCustomFeed()">Delete</button>
+                </div>
+            </div>
+        </div>
+
         <div class="visually-hidden" aria-hidden="true" *ngIf="firstStoryToPreload as firstStoryMedia">
             <video *ngIf="isLikelyVideoStoryMedia(firstStoryMedia.mediaUrl); else firstStoryImagePreload" [src]="firstStoryMedia.mediaUrl" muted playsinline preload="auto"></video>
             <ng-template #firstStoryImagePreload>
@@ -168,7 +186,7 @@
         </div>
 
         <p class="stories-empty" *ngIf="!storiesLoading && !storiesError && !visibleStoryGroups.length && !storyUploadInProgress && !currentProfileHandle">
-            {{ selectedFeedMode === 'following' ? 'No stories from people you follow yet.' : 'No active stories yet.' }}
+            {{ storiesEmptyMessage }}
         </p>
     </section>
 
@@ -234,13 +252,80 @@
         (playbackProgress)="onReelPlaybackProgress($event)"></app-feed-reels-list>
 
     <ng-template #postsEmptyState>
-        <p class="empty" *ngIf="selectedContentTab === 'posts' && !loading && !error">No posts yet. Follow people or create your first post to kick off your timeline.</p>
+        <p class="empty" *ngIf="selectedContentTab === 'posts' && !loading && !error">{{ postsEmptyMessage }}</p>
     </ng-template>
 
     <ng-template #reelsEmptyState>
-        <p class="empty" *ngIf="selectedContentTab === 'reels' && !reelsLoading && !reelsError">No reels available right now.</p>
+        <p class="empty" *ngIf="selectedContentTab === 'reels' && !reelsLoading && !reelsError">{{ reelsEmptyMessage }}</p>
     </ng-template>
 </section>
+
+<div class="compose-modal" *ngIf="showCustomFeedModal" (click)="closeCustomFeedModal()" role="dialog" aria-modal="true" [attr.aria-label]="customFeedModalMode === 'edit' ? 'Edit custom feed' : 'Create custom feed'">
+    <section class="compose-modal-card custom-feed-modal" (click)="$event.stopPropagation()">
+        <header class="compose-modal-head">
+            <h3>{{ customFeedModalMode === 'edit' ? 'Edit custom feed' : 'Create custom feed' }}</h3>
+            <button type="button" class="close" (click)="closeCustomFeedModal()" [disabled]="savingCustomFeed" aria-label="Close custom feed editor">✕</button>
+        </header>
+
+        <p class="custom-feed-modal-copy">Build a focused feed from specific author handles, hashtags, or both.</p>
+
+        <label class="custom-feed-field">
+            <span>Name</span>
+            <input type="text" [value]="customFeedDraftName" (input)="customFeedDraftName = $any($event.target).value" maxlength="80" placeholder="For example: Design desk" [disabled]="savingCustomFeed" />
+        </label>
+
+        <label class="custom-feed-field">
+            <span>Author handles</span>
+            <div class="custom-feed-handle-autocomplete">
+                <input type="text" [value]="customFeedDraftHandles" (input)="onCustomFeedHandlesChanged($any($event.target).value)" (focus)="onCustomFeedHandlesFocus()" (blur)="onCustomFeedHandlesBlur()" (keydown.enter)="onCustomFeedHandlesEnter($event)"
+                    placeholder="@sez, !@spamaccount, @designteam" [disabled]="savingCustomFeed" />
+                <div class="custom-feed-handle-suggestions" *ngIf="customFeedHandleSuggestionsOpen || customFeedHandleSuggestionsLoading">
+                    <p class="custom-feed-suggestions-hint" *ngIf="customFeedHandleSuggestionsLoading">Searching users...</p>
+                    <button type="button" *ngFor="let profile of customFeedHandleSuggestions" (mousedown)="$event.preventDefault()" (click)="selectCustomFeedHandleSuggestion(profile)">
+                        <span class="custom-feed-suggestion-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
+                        <img class="custom-feed-suggestion-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
+                        <span class="custom-feed-suggestion-meta">
+                            <span class="custom-feed-suggestion-name">{{ profile.displayName }}</span>
+                            <span class="custom-feed-suggestion-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <p class="custom-feed-suggestions-hint">Tip: prefix a handle with ! to exclude that user (for example: !@spamaccount).</p>
+        </label>
+
+        <label class="custom-feed-field">
+            <span>Hashtags</span>
+            <div class="custom-feed-handle-autocomplete">
+                <input type="text" [value]="customFeedDraftHashtags" (input)="onCustomFeedHashtagsChanged($any($event.target).value)" (focus)="onCustomFeedHashtagsFocus()" (blur)="onCustomFeedHashtagsBlur()" (keydown.enter)="onCustomFeedHashtagsEnter($event)"
+                    placeholder="#angular, #designsystems, #social" [disabled]="savingCustomFeed" />
+                <div class="custom-feed-handle-suggestions" *ngIf="customFeedHashtagSuggestionsOpen || customFeedHashtagSuggestionsLoading">
+                    <p class="custom-feed-suggestions-hint" *ngIf="customFeedHashtagSuggestionsLoading">Searching hashtags...</p>
+                    <button type="button" *ngFor="let hashtag of customFeedHashtagSuggestions" (mousedown)="$event.preventDefault()" (click)="selectCustomFeedHashtagSuggestion(hashtag)">
+                        <span class="custom-feed-suggestion-meta">
+                            <span class="custom-feed-suggestion-name">#{{ hashtag.tag }}</span>
+                            <span class="custom-feed-suggestion-subline">{{ hashtag.count }} posts</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </label>
+
+        <div class="custom-feed-preview" *ngIf="customFeedDraftHandleValues.length || customFeedDraftHashtagValues.length">
+            <span class="custom-feed-preview-chip" *ngFor="let handle of customFeedDraftHandleValues">
+                {{ handle.startsWith('!') ? ('!@' + handle.slice(1)) : ('@' + handle) }}
+            </span>
+            <span class="custom-feed-preview-chip" *ngFor="let hashtag of customFeedDraftHashtagValues">#{{ hashtag }}</span>
+        </div>
+
+        <p class="error" *ngIf="customFeedModalError">{{ customFeedModalError }}</p>
+
+        <div class="media-actions">
+            <button type="button" class="ghost" (click)="closeCustomFeedModal()" [disabled]="savingCustomFeed">Cancel</button>
+            <button type="button" (click)="saveCustomFeed()" [disabled]="!canSaveCustomFeed || savingCustomFeed">{{ savingCustomFeed ? 'Saving...' : 'Save feed' }}</button>
+        </div>
+    </section>
+</div>
 
 <app-share-post-modal [open]="!!pendingSharePost && pendingShareTarget === 'feed'" [post]="pendingSharePost" [target]="'feed'" [busy]="!!sharingPostId" [initialText]="shareNote" (cancel)="cancelShareModal()" (confirm)="submitShare($event)">
 </app-share-post-modal>
@@ -273,4 +358,8 @@
 </app-confirm-modal>
 
 <app-confirm-modal [open]="!!pendingDeleteStoryId" title="Delete story" message="Delete this story? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingStory" (cancel)="cancelDeleteStory()" (confirm)="confirmDeleteStory()">
+</app-confirm-modal>
+
+<app-confirm-modal [open]="!!pendingDeleteCustomFeed" title="Delete custom feed" [message]="'Delete ' + (pendingDeleteCustomFeed?.name ?? 'this custom feed') + '? This will not delete any posts, reels, or stories.'" confirmText="Delete" cancelText="Cancel" confirmClass="danger"
+    [busy]="deletingCustomFeed" (cancel)="cancelDeleteCustomFeed()" (confirm)="confirmDeleteCustomFeed()">
 </app-confirm-modal>
