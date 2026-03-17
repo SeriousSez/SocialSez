@@ -653,6 +653,10 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/notifications/${notificationId}/read`, {}, { headers: this.authHeaders() }));
     }
 
+    markNotificationUnread(notificationId: string): Observable<void> {
+        return this.withAutoRefresh(() => this.http.post<void>(`${this.baseUrl}/notifications/${notificationId}/unread`, {}, { headers: this.authHeaders() }));
+    }
+
     markAllNotificationsRead(): Observable<MarkAllReadResponse> {
         return this.withAutoRefresh(() => this.http.post<MarkAllReadResponse>(`${this.baseUrl}/notifications/read-all`, {}, { headers: this.authHeaders() }));
     }

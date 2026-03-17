@@ -1219,6 +1219,11 @@ export class SessionService {
         this.emitAppChange('notifications');
     }
 
+    async markNotificationUnreadAsync(notificationId: string): Promise<void> {
+        await firstValueFrom(this.api.markNotificationUnread(notificationId));
+        this.emitAppChange('notifications');
+    }
+
     async markAllNotificationsReadAsync(): Promise<number> {
         const response = await firstValueFrom(this.api.markAllNotificationsRead());
         this.emitAppChange('notifications');

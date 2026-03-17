@@ -64,8 +64,7 @@ public class NotificationService(SocialSezContext dbContext) : INotificationServ
             }
 
             var group = notifications
-                .Where(x => !x.IsRead
-                    && string.Equals(GetAggregateType(x.Type), normalizedType, StringComparison.Ordinal)
+                .Where(x => string.Equals(GetAggregateType(x.Type), normalizedType, StringComparison.Ordinal)
                     && string.Equals(x.ReferenceId, notification.ReferenceId, StringComparison.Ordinal))
                 .ToArray();
 
@@ -83,8 +82,9 @@ public class NotificationService(SocialSezContext dbContext) : INotificationServ
                 .ToArray();
 
             var message = BuildAggregateMessage(normalizedType, actorNames);
+            var isRead = group.All(x => x.IsRead);
 
-            result.Add(normalizedNotification with { Type = normalizedType, Message = message });
+            result.Add(normalizedNotification with { Type = normalizedType, Message = message, IsRead = isRead });
         }
 
         return result.Take(normalizedTake).ToArray();
@@ -131,6 +131,47 @@ public class NotificationService(SocialSezContext dbContext) : INotificationServ
         return true;
     }
 
+    public async Task<bool> MarkUnreadAsync(Guid notificationId, Guid recipientId, CancellationToken cancellationToken = default)
+    {
+        var notification = await dbContext.Notifications
+            .FirstOrDefaultAsync(x => x.Id == notificationId && x.RecipientId == recipientId, cancellationToken);
+
+        if (notification is null)
+        {
+            return false;
+        }
+
+        if (notification.IsRead)
+        {
+            if (CanAggregateType(notification))
+            {
+                var normalizedType = GetAggregateType(notification.Type);
+
+                var groupItems = await dbContext.Notifications
+                    .Where(x => x.RecipientId == recipientId
+                        && x.IsRead
+                        && x.ReferenceId == notification.ReferenceId)
+                    .Where(x => normalizedType == "PostReaction"
+                        ? x.Type == "PostLike" || x.Type == "PostReaction"
+                        : x.Type == notification.Type)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var groupItem in groupItems)
+                {
+                    groupItem.IsRead = false;
+                }
+            }
+            else
+            {
+                notification.IsRead = false;
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return true;
+    }
+
     public async Task<int> MarkAllReadAsync(Guid recipientId, CancellationToken cancellationToken = default)
     {
         var notifications = await dbContext.Notifications
@@ -152,8 +193,7 @@ public class NotificationService(SocialSezContext dbContext) : INotificationServ
 
     private static bool CanAggregate(NotificationDto notification)
     {
-        return !notification.IsRead
-            && notification.ActorId.HasValue
+        return notification.ActorId.HasValue
             && !string.IsNullOrWhiteSpace(notification.ReferenceId)
             && AggregatableTypes.Contains(notification.Type);
     }
@@ -162,6 +202,12 @@ public class NotificationService(SocialSezContext dbContext) : INotificationServ
     {
         return !notification.IsRead
             && !string.IsNullOrWhiteSpace(notification.ReferenceId)
+            && AggregatableTypes.Contains(notification.Type);
+    }
+
+    private static bool CanAggregateType(Notification notification)
+    {
+        return !string.IsNullOrWhiteSpace(notification.ReferenceId)
             && AggregatableTypes.Contains(notification.Type);
     }
 

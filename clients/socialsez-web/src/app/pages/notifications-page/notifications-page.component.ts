@@ -82,19 +82,25 @@ export class NotificationsPageComponent {
         }
     }
 
-    async markRead(notificationId: string): Promise<void> {
-        const target = this.notifications.find(notification => notification.id === notificationId);
-        if (!target || target.isRead) {
-            return;
-        }
+    async toggleRead(notification: NotificationDto, event: Event): Promise<void> {
+        event.stopPropagation();
 
         try {
-            await this.session.markNotificationReadAsync(notificationId);
-            this.notifications = this.notifications.map(notification =>
-                notification.id === notificationId ? { ...notification, isRead: true } : notification);
+            if (notification.isRead) {
+                await this.session.markNotificationUnreadAsync(notification.id);
+                this.notifications = this.notifications.map(item =>
+                    item.id === notification.id ? { ...item, isRead: false } : item);
+            } else {
+                await this.session.markNotificationReadAsync(notification.id);
+                this.notifications = this.notifications.map(item =>
+                    item.id === notification.id ? { ...item, isRead: true } : item);
+            }
+
             this.cdr.detectChanges();
         } catch {
-            this.session.message = 'Could not mark notification as read.';
+            this.session.message = notification.isRead
+                ? 'Could not mark notification as unread.'
+                : 'Could not mark notification as read.';
             this.cdr.detectChanges();
         }
     }
@@ -119,7 +125,10 @@ export class NotificationsPageComponent {
         }
 
         if (!notification.isRead) {
-            await this.markRead(notification.id);
+            await this.session.markNotificationReadAsync(notification.id);
+            this.notifications = this.notifications.map(item =>
+                item.id === notification.id ? { ...item, isRead: true } : item);
+            this.cdr.detectChanges();
         }
 
         await this.router.navigateByUrl('/notifications/requests');

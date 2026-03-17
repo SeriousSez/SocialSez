@@ -34,15 +34,17 @@
 
         <article class="notification" *ngFor="let notification of filteredNotifications; trackBy: trackByNotification" [class.request-row]="isFollowRequest(notification)" [class.unread]="!notification.isRead" (click)="openRequest(notification)">
             <div class="body">
-                <span class="unread-dot" *ngIf="!notification.isRead" aria-hidden="true"></span>
                 <a class="profile-link" *ngIf="isFollowRequest(notification) && notification.actorHandle" [routerLink]="['/users', notification.actorHandle]" (click)="$event.stopPropagation()">@{{ notification.actorHandle }}</a>
-                <strong>{{ notification.message }}</strong>
+                <div class="message-row">
+                    <span class="unread-dot" *ngIf="!notification.isRead" aria-hidden="true"></span>
+                    <strong>{{ notification.message }}</strong>
+                </div>
                 <p class="meta">{{ notification.createdAtUtc | date:'medium' }}</p>
             </div>
             <div class="actions">
                 <button *ngIf="isFollowRequest(notification)" type="button" (click)="approveRequest(notification, $event)">Approve</button>
                 <button *ngIf="isFollowRequest(notification)" class="ghost" type="button" (click)="declineRequest(notification, $event)">Decline</button>
-                <button class="ghost" type="button" (click)="markRead(notification.id); $event.stopPropagation()" [disabled]="notification.isRead">Mark read</button>
+                <button class="ghost" type="button" (click)="toggleRead(notification, $event)">{{ notification.isRead ? 'Mark unread' : 'Mark read' }}</button>
             </div>
         </article>
     </section>

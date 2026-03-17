@@ -37,6 +37,19 @@ public class NotificationsController(INotificationService notificationService) :
     }
 
     [Authorize]
+    [HttpPost("{notificationId:guid}/unread")]
+    public async Task<ActionResult> MarkUnread(Guid notificationId, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var success = await notificationService.MarkUnreadAsync(notificationId, profileId, cancellationToken);
+        return success ? NoContent() : NotFound();
+    }
+
+    [Authorize]
     [HttpPost("read-all")]
     public async Task<ActionResult<MarkAllReadResponse>> MarkAllRead(CancellationToken cancellationToken)
     {
