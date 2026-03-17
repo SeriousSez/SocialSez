@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SessionService } from '../../core/session.service';
 import { HashtagSearchResultDto } from '../../core/api.types';
+import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
 
 @Component({
     selector: 'app-auth-page',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, RichTextEditorComponent],
     templateUrl: './auth-page.component.html',
     styleUrl: './auth-page.component.scss'
 })

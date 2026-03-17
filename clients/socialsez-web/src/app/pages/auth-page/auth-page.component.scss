@@ -174,10 +174,39 @@ label {
     grid-column: 1/-1;
 }
 
+.form-separator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 2px 0;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.form-separator::before,
+.form-separator::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid #dbe4f0;
+}
+
+.password-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
 .actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+}
+
+.bio-editor {
+    margin-top: -2px;
 }
 
 .checkbox {
@@ -270,6 +299,15 @@ label {
         color: var(--color-text-muted);
     }
 
+    .form-separator {
+        color: var(--color-text-muted);
+    }
+
+    .form-separator::before,
+    .form-separator::after {
+        border-top-color: var(--color-border);
+    }
+
     .interest-pill {
         border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
         background: color-mix(in srgb, var(--color-primary) 20%, transparent);
@@ -307,6 +345,10 @@ label {
 
 @media (max-width:760px) {
     .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .password-group {
         grid-template-columns: 1fr;
     }
 

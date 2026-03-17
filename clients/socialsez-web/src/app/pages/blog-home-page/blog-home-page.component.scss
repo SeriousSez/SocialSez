@@ -167,8 +167,9 @@
 
 :host-context(.theme-dark) {
     .blog-shell {
-        --blog-bg: color-mix(in srgb, var(--color-surface-alt) 84%, #020617 16%);
-        --blog-surface: var(--color-surface);
+        --blog-bg: var(--theme-dark-background, color-mix(in srgb, var(--color-surface-alt) 84%, #020617 16%));
+        --blog-surface: var(--theme-dark-surface, var(--color-surface));
+        --blog-accent: var(--theme-dark-accent, var(--theme-accent, #ea580c));
         background: radial-gradient(circle at 15% 10%, var(--blog-surface) 0%, var(--blog-bg) 45%, var(--blog-bg) 100%) !important;
     }
 

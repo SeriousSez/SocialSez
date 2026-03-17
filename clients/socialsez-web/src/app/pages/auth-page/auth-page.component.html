@@ -14,12 +14,11 @@
     <form class="auth-form" (ngSubmit)="submit()" autocomplete="off" data-lpignore="true" data-form-type="other">
         <div class="grid" *ngIf="mode === 'login' || registerStep === 'account'">
             <label>Email <input [(ngModel)]="email" name="email" placeholder="you@example.com" /></label>
-            <label>Password
+            <label *ngIf="mode === 'login'">Password
                 <div class="password-field">
-                    <input [(ngModel)]="password" name="password" [type]="mode === 'login' ? (showLoginPassword ? 'text' : 'password') : (showRegisterPassword ? 'text' : 'password')" placeholder="••••••••" />
-                    <button type="button" class="password-toggle" [attr.aria-label]="(mode === 'login' ? showLoginPassword : showRegisterPassword) ? 'Hide password' : 'Show password'" [attr.title]="(mode === 'login' ? showLoginPassword : showRegisterPassword) ? 'Hide password' : 'Show password'"
-                        (click)="mode === 'login' ? toggleLoginPasswordVisibility() : toggleRegisterPasswordVisibility()">
-                        <i class="fa-duotone" [class.fa-eye]="!(mode === 'login' ? showLoginPassword : showRegisterPassword)" [class.fa-eye-slash]="mode === 'login' ? showLoginPassword : showRegisterPassword" aria-hidden="true"></i>
+                    <input [(ngModel)]="password" name="password" [type]="showLoginPassword ? 'text' : 'password'" placeholder="••••••••" />
+                    <button type="button" class="password-toggle" [attr.aria-label]="showLoginPassword ? 'Hide password' : 'Show password'" [attr.title]="showLoginPassword ? 'Hide password' : 'Show password'" (click)="toggleLoginPasswordVisibility()">
+                        <i class="fa-duotone" [class.fa-eye]="!showLoginPassword" [class.fa-eye-slash]="showLoginPassword" aria-hidden="true"></i>
                     </button>
                 </div>
             </label>
@@ -30,15 +29,38 @@
             </label>
 
             <ng-container *ngIf="mode === 'register'">
-                <label>Confirm Password
-                    <div class="password-field">
-                        <input [(ngModel)]="confirmPassword" name="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" placeholder="••••••••" />
-                        <button type="button" class="password-toggle" [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'" [attr.title]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'" (click)="toggleConfirmPasswordVisibility()">
-                            <i class="fa-duotone" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </label>
                 <label>Handle <input [(ngModel)]="handle" name="handle" (ngModelChange)="onHandleInput($event)" placeholder="sez" /></label>
+
+                <div class="form-separator full" role="separator" aria-label="Security section">
+                    <span>Security</span>
+                </div>
+
+                <div class="password-group full">
+                    <label>Password
+                        <div class="password-field">
+                            <input [(ngModel)]="password" name="password" [type]="showRegisterPassword ? 'text' : 'password'" placeholder="••••••••" />
+                            <button type="button" class="password-toggle" [attr.aria-label]="showRegisterPassword ? 'Hide password' : 'Show password'" [attr.title]="showRegisterPassword ? 'Hide password' : 'Show password'" (click)="toggleRegisterPasswordVisibility()">
+                                <i class="fa-duotone" [class.fa-eye]="!showRegisterPassword" [class.fa-eye-slash]="showRegisterPassword" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </label>
+
+                    <label>Confirm Password
+                        <div class="password-field">
+                            <input [(ngModel)]="confirmPassword" name="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" placeholder="••••••••" />
+                            <button type="button" class="password-toggle" [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'" [attr.title]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'" (click)="toggleConfirmPasswordVisibility()">
+                                <i class="fa-duotone" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </label>
+                </div>
+
+                <p class="hint full">Password strength: <strong [class.weak]="passwordStrengthLabel === 'Weak'" [class.medium]="passwordStrengthLabel === 'Medium'" [class.strong]="passwordStrengthLabel === 'Strong'">{{ passwordStrengthLabel }}</strong></p>
+
+                <div class="form-separator full" role="separator" aria-label="Profile section">
+                    <span>Profile</span>
+                </div>
+
                 <label>Display Name <input [(ngModel)]="displayName" name="displayName" placeholder="Sez" /></label>
                 <label>Date of Birth
                     <div class="dob-select-row" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
@@ -62,10 +84,14 @@
                         <option *ngFor="let country of countries" [value]="country.code">{{ country.name }}</option>
                     </select>
                 </label>
-                <label class="full">Bio <input [(ngModel)]="bio" name="bio" placeholder="Builder" /></label>
+                <label class="full">Bio</label>
+                <app-comment-editor class="bio-editor full" [placeholder]="'Builder'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="140" [initialContent]="bio" [initialContentIsHtml]="true" (contentChanged)="bio = $event"></app-comment-editor>
 
                 <p class="hint full" *ngIf="normalizedHandlePreview">Your profile URL: /users/{{ normalizedHandlePreview }}</p>
-                <p class="hint full">Password strength: <strong [class.weak]="passwordStrengthLabel === 'Weak'" [class.medium]="passwordStrengthLabel === 'Medium'" [class.strong]="passwordStrengthLabel === 'Strong'">{{ passwordStrengthLabel }}</strong></p>
+
+                <div class="form-separator full" role="separator" aria-label="Preferences section">
+                    <span>Preferences</span>
+                </div>
 
                 <label class="checkbox full">
                     <input type="checkbox" [(ngModel)]="acceptedTerms" name="acceptedTerms" />

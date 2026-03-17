@@ -21,6 +21,9 @@ interface BlogFormState {
     accentColor: string;
     backgroundColor: string;
     surfaceColor: string;
+    darkAccentColor: string;
+    darkBackgroundColor: string;
+    darkSurfaceColor: string;
     headerLayout: string;
     postListLayout: string;
     customCss: string;
@@ -143,6 +146,18 @@ export class BlogStudioPageComponent {
 
     get surfaceColorPickerValue(): string {
         return this.resolvePickerColor(this.blogForm.surfaceColor, '#ffffff');
+    }
+
+    get darkAccentColorPickerValue(): string {
+        return this.resolvePickerColor(this.blogForm.darkAccentColor, '#818cf8');
+    }
+
+    get darkBackgroundColorPickerValue(): string {
+        return this.resolvePickerColor(this.blogForm.darkBackgroundColor, '#0b1022');
+    }
+
+    get darkSurfaceColorPickerValue(): string {
+        return this.resolvePickerColor(this.blogForm.darkSurfaceColor, '#11142a');
     }
 
     get showCustomFontFamilyInput(): boolean {
@@ -513,6 +528,18 @@ export class BlogStudioPageComponent {
         this.blogForm.surfaceColor = (value ?? '').trim();
     }
 
+    onDarkAccentColorPicked(value: string): void {
+        this.blogForm.darkAccentColor = (value ?? '').trim();
+    }
+
+    onDarkBackgroundColorPicked(value: string): void {
+        this.blogForm.darkBackgroundColor = (value ?? '').trim();
+    }
+
+    onDarkSurfaceColorPicked(value: string): void {
+        this.blogForm.darkSurfaceColor = (value ?? '').trim();
+    }
+
     onBlogSlugInput(value: string): void {
         this.blogForm.slug = this.normalizeSlugInput(value);
     }
@@ -651,6 +678,9 @@ export class BlogStudioPageComponent {
         this.blogForm.accentColor = blog.theme?.accentColor ?? '';
         this.blogForm.backgroundColor = blog.theme?.backgroundColor ?? '';
         this.blogForm.surfaceColor = blog.theme?.surfaceColor ?? '';
+        this.blogForm.darkAccentColor = blog.theme?.darkAccentColor ?? '';
+        this.blogForm.darkBackgroundColor = blog.theme?.darkBackgroundColor ?? '';
+        this.blogForm.darkSurfaceColor = blog.theme?.darkSurfaceColor ?? '';
         this.blogForm.headerLayout = blog.theme?.headerLayout ?? '';
         this.blogForm.postListLayout = blog.theme?.postListLayout ?? '';
         this.blogForm.customCss = blog.theme?.customCss ?? '';
@@ -668,6 +698,9 @@ export class BlogStudioPageComponent {
             accentColor: this.toOptional(this.blogForm.accentColor) ?? undefined,
             backgroundColor: this.toOptional(this.blogForm.backgroundColor) ?? undefined,
             surfaceColor: this.toOptional(this.blogForm.surfaceColor) ?? undefined,
+            darkAccentColor: this.toOptional(this.blogForm.darkAccentColor) ?? undefined,
+            darkBackgroundColor: this.toOptional(this.blogForm.darkBackgroundColor) ?? undefined,
+            darkSurfaceColor: this.toOptional(this.blogForm.darkSurfaceColor) ?? undefined,
             headerLayout: this.toOptional(this.blogForm.headerLayout) ?? undefined,
             postListLayout: this.toOptional(this.blogForm.postListLayout) ?? undefined,
             customCss: this.toOptional(this.blogForm.customCss) ?? undefined
@@ -706,6 +739,9 @@ export class BlogStudioPageComponent {
             accentColor: '',
             backgroundColor: '',
             surfaceColor: '',
+            darkAccentColor: '',
+            darkBackgroundColor: '',
+            darkSurfaceColor: '',
             headerLayout: '',
             postListLayout: '',
             customCss: ''

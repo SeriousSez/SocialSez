@@ -273,9 +273,10 @@
 
 :host-context(.theme-dark) {
     .blog-shell {
-        --blog-bg: color-mix(in srgb, var(--color-surface-alt) 84%, #020617 16%);
-        --blog-bg2: #020617;
-        --blog-surface: var(--color-surface);
+        --blog-bg: var(--theme-dark-background, color-mix(in srgb, var(--color-surface-alt) 84%, #020617 16%));
+        --blog-bg2: var(--theme-dark-background, #020617);
+        --blog-surface: var(--theme-dark-surface, var(--color-surface));
+        --blog-accent: var(--theme-dark-accent, var(--theme-accent, #ea580c));
         background: radial-gradient(circle at 20% 8%, var(--blog-surface) 0%, var(--blog-bg) 44%, var(--blog-bg2) 100%) !important;
     }
 

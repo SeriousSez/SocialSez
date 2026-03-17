@@ -54,7 +54,10 @@ export class BlogPostPageComponent implements OnDestroy {
             '--theme-accent': theme?.accentColor ?? '#ea580c',
             '--theme-background': theme?.backgroundColor ?? '#fff7ed',
             '--theme-background2': theme?.backgroundColor ?? '#fff7ed',
-            '--theme-surface': theme?.surfaceColor ?? '#ffffff'
+            '--theme-surface': theme?.surfaceColor ?? '#ffffff',
+            ...(theme?.darkAccentColor ? { '--theme-dark-accent': theme.darkAccentColor } : {}),
+            ...(theme?.darkBackgroundColor ? { '--theme-dark-background': theme.darkBackgroundColor } : {}),
+            ...(theme?.darkSurfaceColor ? { '--theme-dark-surface': theme.darkSurfaceColor } : {})
         };
     }
 

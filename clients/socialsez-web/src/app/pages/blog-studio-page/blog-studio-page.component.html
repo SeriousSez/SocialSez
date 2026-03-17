@@ -158,6 +158,32 @@
                             <input type="text" [(ngModel)]="blogForm.surfaceColor" placeholder="#ffffff or var(--surface)" />
                         </div>
                     </div>
+
+                    <div class="theme-separator" role="separator" aria-label="Dark theme options">
+                        <span>Dark theme</span>
+                    </div>
+
+                    <div class="theme-field">
+                        <label>Dark accent color</label>
+                        <div class="color-row">
+                            <input class="color-picker" type="color" [value]="darkAccentColorPickerValue" (input)="onDarkAccentColorPicked($any($event.target).value)" />
+                            <input type="text" [(ngModel)]="blogForm.darkAccentColor" placeholder="#818cf8 (optional)" />
+                        </div>
+                    </div>
+                    <div class="theme-field">
+                        <label>Dark background color</label>
+                        <div class="color-row">
+                            <input class="color-picker" type="color" [value]="darkBackgroundColorPickerValue" (input)="onDarkBackgroundColorPicked($any($event.target).value)" />
+                            <input type="text" [(ngModel)]="blogForm.darkBackgroundColor" placeholder="#0b1022 (optional)" />
+                        </div>
+                    </div>
+                    <div class="theme-field">
+                        <label>Dark surface color</label>
+                        <div class="color-row">
+                            <input class="color-picker" type="color" [value]="darkSurfaceColorPickerValue" (input)="onDarkSurfaceColorPicked($any($event.target).value)" />
+                            <input type="text" [(ngModel)]="blogForm.darkSurfaceColor" placeholder="#11142a (optional)" />
+                        </div>
+                    </div>
                     <div class="theme-field">
                         <label>Header layout</label>
                         <select [(ngModel)]="headerLayoutSelection" (ngModelChange)="onHeaderLayoutSelectionChange()">
@@ -180,7 +206,7 @@
                 <div class="custom-css-hints" aria-label="Custom CSS guide">
                     <p class="muted">Use this to style your blog pages. These selectors are supported:</p>
                     <p><code>.blog-shell</code> page wrapper, <code>.blog-header</code> header card, <code>.subtitle</code> subtitle/meta text, <code>.post-card</code> post cards, <code>.content</code> post content body.</p>
-                    <p>Theme variables you can override in your CSS: <code>--accent</code>, <code>--background</code>, <code>--background2</code>, <code>--surface</code>, <code>--font-family</code>.</p>
+                    <p>Theme variables you can override in your CSS: <code>--accent</code>, <code>--background</code>, <code>--background2</code>, <code>--surface</code>, <code>--dark-accent</code>, <code>--dark-background</code>, <code>--dark-surface</code>, <code>--font-family</code>.</p>
                     <p class="muted">Example: <code>.blog-shell &#123; --accent:#ff5c72; --background:#f4f7f9; --background2:#e8eff5; --surface:#ffffff; &#125;</code></p>
                 </div>
                 <textarea class="custom-css-textarea" #customCssEditor rows="5" [(ngModel)]="blogForm.customCss" maxlength="12000" (input)="autoResizeCustomCss($event)" (focus)="autoResizeCustomCss($event)" placeholder=".post-card { border-radius: 20px; }"></textarea>

@@ -503,6 +503,9 @@ export interface BlogThemeConfigDto {
     accentColor?: string;
     backgroundColor?: string;
     surfaceColor?: string;
+    darkAccentColor?: string;
+    darkBackgroundColor?: string;
+    darkSurfaceColor?: string;
     headerLayout?: string;
     postListLayout?: string;
     customCss?: string;

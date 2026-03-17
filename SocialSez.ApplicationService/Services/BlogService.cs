@@ -683,6 +683,9 @@ public class BlogService(SocialSezContext dbContext, IMemoryCache memoryCache) :
             NormalizeThemeField(theme?.AccentColor, 30),
             NormalizeThemeField(theme?.BackgroundColor, 30),
             NormalizeThemeField(theme?.SurfaceColor, 30),
+            NormalizeThemeField(theme?.DarkAccentColor, 30),
+            NormalizeThemeField(theme?.DarkBackgroundColor, 30),
+            NormalizeThemeField(theme?.DarkSurfaceColor, 30),
             NormalizeThemeField(theme?.HeaderLayout, 40),
             NormalizeThemeField(theme?.PostListLayout, 40),
             NormalizeThemeField(theme?.CustomCss, 12000));

@@ -5,6 +5,9 @@ public sealed record BlogThemeConfigDto(
     string? AccentColor,
     string? BackgroundColor,
     string? SurfaceColor,
+    string? DarkAccentColor,
+    string? DarkBackgroundColor,
+    string? DarkSurfaceColor,
     string? HeaderLayout,
     string? PostListLayout,
     string? CustomCss);
