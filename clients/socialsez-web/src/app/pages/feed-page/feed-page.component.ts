@@ -142,8 +142,6 @@ export class FeedPageComponent implements OnDestroy {
         year: 'numeric'
     });
     private readonly prefsStorageKey = 'socialsez-web-prefs';
-    private readonly reelResumeStorageKey = 'socialsez.feed.resume-reel.v1';
-    private readonly storyResumeStorageKey = 'socialsez.feed.resume-story.v1';
     private markingStoryId: string | null = null;
     private loadInFlight = false;
     private reloadQueued = false;
@@ -179,8 +177,6 @@ export class FeedPageComponent implements OnDestroy {
     private hasLoadedAtLeastOnce = false;
     private repostCountSource: PostDto[] | null = null;
     private repostCountsByPostId = new Map<string, number>();
-    resumeReelId: string | null = null;
-    resumeStoryHandle: string | null = null;
 
     constructor(
         private readonly session: SessionService,
@@ -231,7 +227,6 @@ export class FeedPageComponent implements OnDestroy {
             });
 
         this.syncCompactFeedPreference();
-        this.restoreResumeStoryState();
 
         queueMicrotask(() => {
             if (!this.loadInFlight && !this.hasLoadedAtLeastOnce) {
@@ -347,19 +342,6 @@ export class FeedPageComponent implements OnDestroy {
         }
 
         return this.activeStoryGroup.stories[this.activeStoryIndex] ?? null;
-    }
-
-    get canResumeReel(): boolean {
-        return !!this.resumeReelId && this.reels.some(reel => reel.id === this.resumeReelId);
-    }
-
-    get canResumeStory(): boolean {
-        if (!this.resumeStoryHandle) {
-            return false;
-        }
-
-        const normalized = this.resumeStoryHandle.trim().toLowerCase();
-        return this.storyGroups.some(group => group.authorHandle.trim().toLowerCase() === normalized);
     }
 
     get hasPreviousStory(): boolean {
@@ -924,10 +906,8 @@ export class FeedPageComponent implements OnDestroy {
 
                     if (reelsResult.status === 'fulfilled') {
                         this.reels = reelsResult.value;
-                        this.restoreResumeReelState();
                     } else {
                         this.reels = [];
-                        this.resumeReelId = null;
                         this.reelsError = 'Could not load reels right now. Please try again.';
                     }
 
@@ -1045,77 +1025,12 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     onReelPlaybackProgress(event: ReelPlaybackProgressEvent): void {
-        this.resumeReelId = event.reelId;
-
-        localStorage.setItem(this.reelResumeStorageKey, JSON.stringify({
-            reelId: event.reelId,
-            positionSeconds: event.positionSeconds,
-            durationSeconds: event.durationSeconds,
-            completed: event.completed,
-            updatedAtUtc: new Date().toISOString()
-        }));
-
         if (this.session.isAuthenticated()) {
             const watchedSeconds = event.completed
                 ? Math.max(1, Math.min(event.durationSeconds, 6))
                 : Math.max(0.2, Math.min(2.5, event.durationSeconds > 0 ? (event.positionSeconds / Math.max(event.durationSeconds, 1)) : 0.5));
 
             void this.session.trackReelPlaybackAsync(event.reelId, event.positionSeconds, watchedSeconds, event.completed);
-        }
-    }
-
-    resumeReel(): void {
-        const reelId = this.resumeReelId;
-        if (!reelId) {
-            return;
-        }
-
-        const index = this.reels.findIndex(reel => reel.id === reelId);
-        if (index <= 0) {
-            this.selectedContentTab = 'reels';
-            return;
-        }
-
-        const reel = this.reels[index];
-        const reordered = this.reels.filter((_, currentIndex) => currentIndex !== index);
-        reordered.unshift(reel);
-        this.reels = reordered;
-        this.selectedContentTab = 'reels';
-    }
-
-    resumeStory(): void {
-        if (!this.resumeStoryHandle) {
-            return;
-        }
-
-        const normalized = this.resumeStoryHandle.trim().toLowerCase();
-        const group = this.storyGroups.find(item => item.authorHandle.trim().toLowerCase() === normalized);
-        if (!group || !group.stories.length) {
-            return;
-        }
-
-        this.openStoryGroup(group);
-
-        const raw = localStorage.getItem(this.storyResumeStorageKey);
-        if (!raw) {
-            return;
-        }
-
-        try {
-            const parsed = JSON.parse(raw) as { storyId?: string; index?: number };
-            if (parsed.storyId) {
-                const foundIndex = group.stories.findIndex(story => story.id === parsed.storyId);
-                if (foundIndex >= 0) {
-                    this.activeStoryIndex = foundIndex;
-                    return;
-                }
-            }
-
-            if (typeof parsed.index === 'number' && Number.isFinite(parsed.index)) {
-                this.activeStoryIndex = Math.max(0, Math.min(group.stories.length - 1, Math.trunc(parsed.index)));
-            }
-        } catch {
-            localStorage.removeItem(this.storyResumeStorageKey);
         }
     }
 
@@ -1977,7 +1892,6 @@ export class FeedPageComponent implements OnDestroy {
                 }
 
                 this.tryOpenPendingStoryHandle();
-                this.restoreResumeStoryState();
             });
         } catch {
             this.ngZone.run(() => {
@@ -2061,53 +1975,12 @@ export class FeedPageComponent implements OnDestroy {
         return selectedIndex >= 0 ? selectedIndex : 0;
     }
 
-    private restoreResumeReelState(): void {
-        const raw = localStorage.getItem(this.reelResumeStorageKey);
-        if (!raw) {
-            this.resumeReelId = null;
-            return;
-        }
-
-        try {
-            const parsed = JSON.parse(raw) as { reelId?: string };
-            const reelId = (parsed.reelId ?? '').trim();
-            this.resumeReelId = reelId || null;
-        } catch {
-            localStorage.removeItem(this.reelResumeStorageKey);
-            this.resumeReelId = null;
-        }
-    }
-
-    private restoreResumeStoryState(): void {
-        const raw = localStorage.getItem(this.storyResumeStorageKey);
-        if (!raw) {
-            this.resumeStoryHandle = null;
-            return;
-        }
-
-        try {
-            const parsed = JSON.parse(raw) as { authorHandle?: string };
-            this.resumeStoryHandle = (parsed.authorHandle ?? '').trim().toLowerCase() || null;
-        } catch {
-            localStorage.removeItem(this.storyResumeStorageKey);
-            this.resumeStoryHandle = null;
-        }
-    }
-
     private persistActiveStoryResume(): void {
         const group = this.activeStoryGroup;
         const story = this.activeStory;
         if (!group || !story) {
             return;
         }
-
-        this.resumeStoryHandle = group.authorHandle.trim().toLowerCase();
-        localStorage.setItem(this.storyResumeStorageKey, JSON.stringify({
-            authorHandle: this.resumeStoryHandle,
-            storyId: story.id,
-            index: this.activeStoryIndex,
-            updatedAtUtc: new Date().toISOString()
-        }));
 
         if (this.session.isAuthenticated()) {
             void this.session.upsertStoryPlaybackProgressAsync(group.authorId, story.id, 0);
