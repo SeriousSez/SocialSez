@@ -127,11 +127,6 @@
             <button type="button" [class.active]="selectedFeedMode === 'following'" (click)="selectFeedMode('following')">Following</button>
         </div>
 
-        <div class="stories-tabs" *ngIf="canResumeReel || canResumeStory">
-            <button type="button" class="ghost" *ngIf="canResumeReel" (click)="resumeReel()">Resume Reel</button>
-            <button type="button" class="ghost" *ngIf="canResumeStory" (click)="resumeStory()">Resume Story</button>
-        </div>
-
         <div class="visually-hidden" aria-hidden="true" *ngIf="firstStoryToPreload as firstStoryMedia">
             <video *ngIf="isLikelyVideoStoryMedia(firstStoryMedia.mediaUrl); else firstStoryImagePreload" [src]="firstStoryMedia.mediaUrl" muted playsinline preload="auto"></video>
             <ng-template #firstStoryImagePreload>
