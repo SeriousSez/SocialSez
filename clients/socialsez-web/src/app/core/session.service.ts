@@ -569,8 +569,40 @@ export class SessionService {
     }
 
     async searchProfilesAsync(query: string): Promise<ProfileDto[]> {
-        const profiles = await firstValueFrom(this.api.searchProfiles(query));
-        return profiles.map(profile => this.normalizeProfile(profile));
+        const normalizedQuery = (query ?? '').trim();
+        if (!normalizedQuery) {
+            return [];
+        }
+
+        const nicknameMatchedHandles = this.getNicknameMatchedHandles(normalizedQuery, 3);
+        const searchTerms = Array.from(new Set([normalizedQuery, ...nicknameMatchedHandles]));
+
+        const profileGroups = await Promise.all(searchTerms.map(async term => {
+            try {
+                return await firstValueFrom(this.api.searchProfiles(term));
+            } catch {
+                return [] as ProfileDto[];
+            }
+        }));
+
+        const mergedById = new Map<string, ProfileDto>();
+        for (const group of profileGroups) {
+            for (const profile of group) {
+                const normalizedProfile = this.normalizeProfile(profile);
+                mergedById.set(normalizedProfile.id, normalizedProfile);
+            }
+        }
+
+        const loweredQuery = normalizedQuery.toLowerCase();
+        return Array.from(mergedById.values())
+            .sort((left, right) => {
+                const scoreDiff = this.getProfileSearchScore(right, loweredQuery) - this.getProfileSearchScore(left, loweredQuery);
+                if (scoreDiff !== 0) {
+                    return scoreDiff;
+                }
+
+                return left.handle.localeCompare(right.handle);
+            });
     }
 
     async createPostAsync(content: string, imageFiles?: File[], isSensitive = false, saveAsDraft = false, scheduledPublishAtUtc?: string): Promise<void> {
@@ -1734,6 +1766,70 @@ export class SessionService {
 
         const nickname = this.nicknamesByHandle.get(normalizedHandle)?.trim();
         return nickname ? nickname : undefined;
+    }
+
+    private getNicknameMatchedHandles(query: string, maxMatches: number): string[] {
+        this.ensureNicknamesLoaded();
+        const normalizedQuery = query.trim().toLowerCase();
+        if (!normalizedQuery) {
+            return [];
+        }
+
+        const matches = Array.from(this.nicknamesByHandle.entries())
+            .map(([handle, nickname]) => ({
+                handle,
+                nickname: nickname.trim(),
+                loweredNickname: nickname.trim().toLowerCase()
+            }))
+            .filter(entry => !!entry.loweredNickname && entry.loweredNickname.includes(normalizedQuery))
+            .sort((left, right) => {
+                const leftStarts = left.loweredNickname.startsWith(normalizedQuery) ? 1 : 0;
+                const rightStarts = right.loweredNickname.startsWith(normalizedQuery) ? 1 : 0;
+                if (leftStarts !== rightStarts) {
+                    return rightStarts - leftStarts;
+                }
+
+                return left.handle.localeCompare(right.handle);
+            })
+            .slice(0, Math.max(0, maxMatches));
+
+        return matches.map(entry => entry.handle);
+    }
+
+    private getProfileSearchScore(profile: ProfileDto, loweredQuery: string): number {
+        const handle = (profile.handle ?? '').trim().toLowerCase();
+        const displayName = (profile.displayName ?? '').trim().toLowerCase();
+        const nickname = this.resolveNicknameForHandle(profile.handle)?.toLowerCase() ?? '';
+
+        let score = 0;
+
+        if (nickname) {
+            if (nickname === loweredQuery) {
+                score += 120;
+            } else if (nickname.startsWith(loweredQuery)) {
+                score += 90;
+            } else if (nickname.includes(loweredQuery)) {
+                score += 60;
+            }
+        }
+
+        if (handle === loweredQuery) {
+            score += 50;
+        } else if (handle.startsWith(loweredQuery)) {
+            score += 30;
+        } else if (handle.includes(loweredQuery)) {
+            score += 12;
+        }
+
+        if (displayName === loweredQuery) {
+            score += 45;
+        } else if (displayName.startsWith(loweredQuery)) {
+            score += 24;
+        } else if (displayName.includes(loweredQuery)) {
+            score += 10;
+        }
+
+        return score;
     }
 
     private ensureNicknamesLoaded(): void {

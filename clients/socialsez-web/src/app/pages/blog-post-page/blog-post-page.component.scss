@@ -276,40 +276,54 @@
         --blog-bg: color-mix(in srgb, var(--color-surface-alt) 84%, #020617 16%);
         --blog-bg2: #020617;
         --blog-surface: var(--color-surface);
+        background: radial-gradient(circle at 20% 8%, var(--blog-surface) 0%, var(--blog-bg) 44%, var(--blog-bg2) 100%) !important;
     }
 
     .post {
-        color: var(--color-text);
+        color: var(--color-text) !important;
     }
 
     .post-head,
     .content,
     .cover-media-img {
-        background: var(--blog-surface);
-        border-color: var(--color-border);
+        background: var(--blog-surface) !important;
+        border-color: var(--color-border) !important;
+    }
+
+    .post-head h1,
+    .content,
+    :host ::ng-deep .content p,
+    :host ::ng-deep .content li,
+    :host ::ng-deep .content h1,
+    :host ::ng-deep .content h2,
+    :host ::ng-deep .content h3,
+    :host ::ng-deep .content h4,
+    :host ::ng-deep .content h5,
+    :host ::ng-deep .content h6 {
+        color: var(--color-text) !important;
     }
 
     .meta,
     :host ::ng-deep .content blockquote {
-        color: var(--color-text-muted);
+        color: var(--color-text-muted) !important;
     }
 
     :host ::ng-deep .content pre {
-        background: var(--color-surface-alt);
-        color: var(--color-text);
-        border: 1px solid var(--color-border);
+        background: var(--color-surface-alt) !important;
+        color: var(--color-text) !important;
+        border: 1px solid var(--color-border) !important;
     }
 
     .blog-actions .ghost {
-        background: var(--color-surface-muted);
-        border-color: var(--color-border);
-        color: var(--color-text);
+        background: var(--color-surface-muted) !important;
+        border-color: var(--color-border) !important;
+        color: var(--color-text) !important;
     }
 
     .tags span,
     .tags a {
-        background: color-mix(in srgb, var(--blog-accent) 22%, var(--blog-surface));
-        color: color-mix(in srgb, var(--blog-accent) 70%, var(--color-text) 30%);
+        background: color-mix(in srgb, var(--blog-accent) 22%, var(--blog-surface)) !important;
+        color: color-mix(in srgb, var(--blog-accent) 70%, var(--color-text) 30%) !important;
     }
 }
 

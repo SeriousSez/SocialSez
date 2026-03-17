@@ -169,30 +169,40 @@
     .blog-shell {
         --blog-bg: color-mix(in srgb, var(--color-surface-alt) 84%, #020617 16%);
         --blog-surface: var(--color-surface);
+        background: radial-gradient(circle at 15% 10%, var(--blog-surface) 0%, var(--blog-bg) 45%, var(--blog-bg) 100%) !important;
     }
 
     .blog-head,
     .post-card {
-        background: var(--blog-surface);
-        border-color: var(--color-border);
+        background: var(--blog-surface) !important;
+        border-color: var(--color-border) !important;
+    }
+
+    .blog-head h1,
+    .post-card h2 a {
+        color: var(--color-text) !important;
+    }
+
+    .post-card p {
+        color: var(--color-text-muted) !important;
     }
 
     .blog-head p,
     .meta,
     .muted {
-        color: var(--color-text-muted);
+        color: var(--color-text-muted) !important;
     }
 
     .save-post {
-        background: var(--color-surface-muted);
-        border-color: var(--color-border);
-        color: var(--color-text);
+        background: var(--color-surface-muted) !important;
+        border-color: var(--color-border) !important;
+        color: var(--color-text) !important;
     }
 
     .tags span,
     .tags a {
-        background: color-mix(in srgb, var(--blog-accent) 22%, var(--blog-surface));
-        color: color-mix(in srgb, var(--blog-accent) 70%, var(--color-text) 30%);
+        background: color-mix(in srgb, var(--blog-accent) 22%, var(--blog-surface)) !important;
+        color: color-mix(in srgb, var(--blog-accent) 70%, var(--color-text) 30%) !important;
     }
 }
 
