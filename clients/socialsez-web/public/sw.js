@@ -1,3 +1,5 @@
+importScripts('./ngsw-worker.js');
+
 const CACHE_NAME = 'venli-v1';
 
 self.addEventListener('install', () => {

@@ -22,7 +22,7 @@
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
-            "serviceWorker": false,
+            "serviceWorker": "ngsw-config.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
