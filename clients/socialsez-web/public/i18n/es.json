@@ -63,7 +63,7 @@
       "buttonAria": "Buscar",
       "scopeMenuAria": "Opciones de ámbito de búsqueda",
       "scopePrefix": "Ámbito",
-      "scopeAuto": "Auto",
+      "scopeAuto": "Coche",
       "removeOverride": "Quitar anulación",
       "context": {
         "communities": "Comunidades",
@@ -134,8 +134,8 @@
     "placeholders": {
       "email": "tú@ejemplo.com",
       "password": null,
-      "handle": "sez",
-      "displayName": "Sez",
+      "handle": "dice",
+      "displayName": "Dice",
       "country": "Seleccionar país (opcional)",
       "bio": "Desarrollador"
     },
@@ -484,7 +484,7 @@
       "follows": "Seguidores",
       "mentions": "Menciones",
       "messages": "Mensajes directos",
-      "marketing": "Marketing",
+      "marketing": "Mercadotecnia",
       "product": "Actualizaciones de producto",
       "quietHours": "Horas de silencio",
       "quietHoursStart": "Inicio",
@@ -575,17 +575,17 @@
       "system": "Predeterminado del sistema",
       "enUS": "Inglés (Estados Unidos)",
       "enGB": "Inglés (Reino Unido)",
-      "da": "Dansk",
+      "da": "Danés",
       "es": "Español",
       "de": "alemán",
       "fr": "francés",
-      "ptBR": "Português (Brasil)",
+      "ptBR": "Portugués (Brasil)",
       "nl": "Países Bajos",
       "sv": "Svenská",
       "nb": "bokmål noruego",
       "it": "italiano",
       "pl": "Polonia",
-      "ar": "العربية",
+      "ar": "árabe",
       "tr": "turco"
     },
     "messages": {
@@ -1581,7 +1581,7 @@
         "best": "Mejor",
         "top": "Arriba",
         "new": "Nuevo",
-        "controversial": "Controversial",
+        "controversial": "Controvertido",
         "old": "Antiguo",
         "qna": "Preguntas y respuestas"
       },

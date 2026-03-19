@@ -30,7 +30,7 @@
         "aria": "Upload- og udgivelsesaktivitet"
       },
       "trending": {
-        "title": "Trending",
+        "title": "Trendy",
         "loading": "Indlæser hashtags...",
         "empty": "Ingen trending hashtags endnu."
       },
@@ -63,7 +63,7 @@
       "buttonAria": "Sog",
       "scopeMenuAria": "Valg af sogeområde",
       "scopePrefix": "Område",
-      "scopeAuto": "Auto",
+      "scopeAuto": "Bil",
       "removeOverride": "Fjern tilsidesættelse",
       "context": {
         "communities": "Fællesskaber",
@@ -129,13 +129,13 @@
       "month": "Måned",
       "year": "År",
       "country": "Land",
-      "bio": "Bio"
+      "bio": "Biografi"
     },
     "placeholders": {
       "email": "dig@example.com",
       "password": null,
-      "handle": "sez",
-      "displayName": "Sez",
+      "handle": "siger",
+      "displayName": "Siger",
       "country": "Vælg land (valgfrit)",
       "bio": "Bygger"
     },
@@ -424,7 +424,7 @@
     },
     "profile": {
       "displayName": "Visningsnavn",
-      "bio": "Bio",
+      "bio": "Biografi",
       "bioPlaceholder": "Fortæl folk om dig selv",
       "changeImage": "Skift billede",
       "removeImage": "Fjern billede",
@@ -576,17 +576,17 @@
       "enUS": "engelsk (USA)",
       "enGB": "engelsk (UK)",
       "da": "Dansk",
-      "es": "Español",
-      "de": "Deutsch",
-      "fr": "Français",
-      "ptBR": "Português (Brasil)",
-      "nl": "Nederlands",
-      "sv": "Svenska",
-      "nb": "Norsk bokmål",
-      "it": "Italiano",
-      "pl": "Polski",
-      "ar": "العربية",
-      "tr": "Türkçe"
+      "es": "Spansk",
+      "de": "Tysk",
+      "fr": "Fransk",
+      "ptBR": "Portugisisk (Brasilien)",
+      "nl": "Hollands",
+      "sv": "Svensk",
+      "nb": "Norsk bogmål",
+      "it": "Italiensk",
+      "pl": "Polsk",
+      "ar": "arabisk",
+      "tr": "Tyrkisk"
     },
     "messages": {
       "birthDateInvalid": "Vælg en fuldstændig gyldig fødselsdato.",
@@ -1279,7 +1279,7 @@
       "startNewChat": "Start en ny chat"
     },
     "sidebar": {
-      "chats": "Chats"
+      "chats": "Kat"
     },
     "loading": {
       "conversations": "Indlæser samtaler",

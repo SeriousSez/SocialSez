@@ -12,11 +12,11 @@
       "skipToContent": "Ga naar inhoud",
       "brandSubtitle": "Communityplatform",
       "nav": {
-        "feed": "Feed",
+        "feed": "Voeden",
         "discover": "Ontdekken",
         "blogs": "Blogs",
         "communities": "Community's",
-        "chat": "Chat",
+        "chat": "Kletsen",
         "saved": "Opgeslagen",
         "drafts": "Concepten",
         "notifications": "Meldingen",
@@ -46,7 +46,16 @@
         "security": "Accountbeveiliging",
         "data": "Gegevens",
         "blocked": "Geblokkeerde gebruikers",
-        "logout": "Uitloggen"
+        "logout": "Uitloggen",
+        "aria": "Instellingen secties"
+      },
+      "mobileNav": {
+        "aria": "Primaire mobiele navigatie",
+        "openMore": "Open meer navigatie",
+        "more": "Meer",
+        "moreAria": "Meer navigatie",
+        "groups": "Groepen",
+        "alerts": "Waarschuwingen"
       }
     },
     "search": {
@@ -60,8 +69,42 @@
         "blogs": "Blogs",
         "users": "Gebruikers",
         "posts": "Berichten",
-        "reels": "Reels",
-        "hashtags": "Hashtags"
+        "reels": "Spoelen",
+        "hashtags": "Hashtags",
+        "communityPosts": "Communityberichten"
+      },
+      "scopeMenuAria": "Zoekbereik opties",
+      "removeOverride": "Overschrijving verwijderen",
+      "context": {
+        "communities": "Gemeenschappen",
+        "blogs": "Blogs",
+        "profiles": "Profielen",
+        "hashtags": "Hashtags",
+        "chat": "Kletsen",
+        "notifications": "Meldingen",
+        "discover": "Ontdek",
+        "settings": "Instellingen",
+        "compose": "Samenstellen",
+        "global": "Mondiaal"
+      },
+      "placeholder": {
+        "communities": "Zoek gemeenschappen, communityberichten, gebruikers, hashtags",
+        "blogs": "Zoek blogs, communities, berichten, hashtags",
+        "profiles": "Profielen, berichten, reels, hashtags zoeken",
+        "hashtags": "Zoek hashtags, berichten, reels",
+        "chat": "Zoek gebruikers, berichten, reels, hashtags",
+        "notifications": "Zoek gebruikers, berichten, reels, hashtags",
+        "discover": "Zoek gebruikers, gemeenschappen, community-berichten, blogs, reels, berichten, hashtags",
+        "global": "Zoek gebruikers, gemeenschappen, community-berichten, blogs, reels, berichten, hashtags"
+      },
+      "placeholderByScope": {
+        "communities": "Zoek gemeenschappen op naam, slug of beschrijving",
+        "communityPosts": "Doorzoek communityposts op titel, inhoud, auteur",
+        "blogs": "Zoek blogs op titel, naam of slug",
+        "users": "Zoek gebruikers en profielen",
+        "posts": "Zoek berichten en auteurs",
+        "reels": "Zoek reels op bijschrift, reacties of auteur",
+        "hashtags": "Zoek hashtags"
       }
     }
   },
@@ -76,22 +119,82 @@
       "email": "E-mail",
       "password": "Wachtwoord",
       "confirmPassword": "Bevestig wachtwoord",
-      "handle": "Handle",
+      "handle": "Handvat",
       "displayName": "Weergavenaam",
       "dateOfBirth": "Geboortedatum",
       "country": "Land",
-      "bio": "Bio"
+      "bio": "Bio",
+      "day": "Dag",
+      "month": "Maand",
+      "year": "Jaar"
     },
     "actions": {
       "signIn": "Inloggen",
       "createAccount": "Account maken",
       "continue": "Doorgaan",
       "finish": "Voltooien",
-      "skipForNow": "Nu overslaan"
+      "skipForNow": "Nu overslaan",
+      "staySignedIn": "Ingelogd blijven",
+      "showPassword": "Wachtwoord tonen",
+      "hidePassword": "Wachtwoord verbergen",
+      "showConfirmPassword": "Toon bevestig wachtwoord",
+      "hideConfirmPassword": "Bevestig wachtwoord verbergen",
+      "signingIn": "Aanmelden...",
+      "creatingAccount": "Account aanmaken...",
+      "finishingSetup": "Installatie afronden..."
     },
     "switch": {
       "newHere": "Nieuw hier?",
       "alreadyHaveAccount": "Heb je al een account?"
+    },
+    "mode": {
+      "aria": "Authenticatiemodus"
+    },
+    "placeholders": {
+      "email": "you@example.com",
+      "password": "••••••••",
+      "handle": "zegt",
+      "displayName": "Zegt",
+      "country": "Selecteer land (optioneel)",
+      "bio": "Bouwvakker"
+    },
+    "passwordStrength": {
+      "label": "Wachtwoordsterkte",
+      "weak": "Zwak",
+      "medium": "Medium",
+      "strong": "Sterk"
+    },
+    "preferences": {
+      "acceptTerms": "Ik ga akkoord met de voorwaarden en de richtlijnen van de gemeenschap.",
+      "privateByDefault": "Maak mijn account standaard privé.",
+      "marketingOptIn": "Stuur me productupdates en tips per e-mail."
+    },
+    "interests": {
+      "title": "Kies je interesses",
+      "subtitle": "Selecteer maximaal 12 hashtags. We zullen ze voor je volgen om je feed af te stemmen.",
+      "unavailable": "Trending interesses zijn momenteel niet beschikbaar. Je kunt dit overslaan en later configureren in Ontdekken."
+    },
+    "sections": {
+      "security": "Beveiliging",
+      "profile": "Profiel",
+      "preferences": "Voorkeuren"
+    },
+    "profileUrl": "Je profiel URL",
+    "validation": {
+      "emailRequired": "E-mail is verplicht.",
+      "passwordRequired": "Wachtwoord is verplicht.",
+      "passwordTooShort": "Wachtwoord moet minstens 8 tekens bevatten.",
+      "passwordsMismatch": "Wachtwoorden komen niet overeen.",
+      "handleRequired": "Handvat is verplicht.",
+      "displayNameRequired": "Weergavenaam is vereist.",
+      "birthDateInvalid": "Selecteer alstublieft een volledige geldige geboortedatum.",
+      "minimumAge": "Je moet minstens 13 jaar oud zijn om je te registreren.",
+      "acceptTerms": "Je moet de voorwaarden accepteren om een account aan te maken."
+    },
+    "errors": {
+      "registerFailed": "Kon niet registreren met deze gegevens.",
+      "invalidCredentials": "Ongeldige referenties.",
+      "interestsSaveFailed": "We hebben uw account aangemaakt, maar konden op dit moment de interesses niet opslaan."
     }
   },
   "settings": {
@@ -120,7 +223,14 @@
       "saving": "Opslaan...",
       "cancel": "Annuleren",
       "back": "Terug",
-      "add": "Toevoegen"
+      "add": "Toevoegen",
+      "processing": "Bezig met verwerken...",
+      "working": "Bezig met werken...",
+      "day": "Dag",
+      "month": "Maand",
+      "year": "Jaar",
+      "lastSaved": "Laatst opgeslagen: {{date}}",
+      "lastAction": "Laatste actie: {{date}}"
     },
     "preferences": {
       "compactFeed": "Compacte feed-indeling",
@@ -131,29 +241,185 @@
       "largerText": "Grotere tekstmodus",
       "highContrast": "Hoge contrastmodus",
       "language": "Taal",
-      "saveAccessibility": "Toegankelijkheid opslaan"
+      "saveAccessibility": "Toegankelijkheid opslaan",
+      "useSystemThemeHelp": "De donkere modus volgt het uiterlijk van je besturingssysteem zolang dit is ingeschakeld."
     },
     "language": {
       "system": "Systeemstandaard",
-      "enUS": "English (US)",
-      "enGB": "English (UK)",
-      "da": "Dansk",
-      "es": "Español",
-      "de": "Deutsch",
-      "fr": "Français",
-      "ptBR": "Português (Brasil)",
+      "enUS": "Engels (VS)",
+      "enGB": "Engels (VK)",
+      "da": "Deens",
+      "es": "Spaans",
+      "de": "Duits",
+      "fr": "Frans",
+      "ptBR": "Portugees (Brazilië)",
       "nl": "Nederlands",
-      "sv": "Svenska",
-      "nb": "Norsk bokmål",
-      "it": "Italiano",
-      "pl": "Polski",
-      "ar": "العربية",
-      "tr": "Türkçe"
+      "sv": "Zweeds",
+      "nb": "Noors bokmål",
+      "it": "Italiaans",
+      "pl": "Pools",
+      "ar": "Arabisch",
+      "tr": "Turks"
     },
     "messages": {
       "profileSaved": "Profielinstellingen opgeslagen.",
       "profileReloaded": "Profielinstellingen opnieuw geladen.",
-      "preferencesSaved": "Voorkeuren opgeslagen."
+      "preferencesSaved": "Voorkeuren opgeslagen.",
+      "birthDateInvalid": "Selecteer alstublieft een volledige geldige geboortedatum.",
+      "privacySaved": "Privacy-instelling opgeslagen.",
+      "discoverySaved": "Ontdekking en voorkeuren voor privacy van het publiek opgeslagen.",
+      "notificationsSaved": "Meldingsvoorkeuren opgeslagen.",
+      "safetySaved": "Veiligheidsvoorkeuren opgeslagen.",
+      "sessionRevoked": "Sessie ingetrokken.",
+      "otherSessionsLoggedOutOne": "Uitgelogd van 1 andere sessie.",
+      "otherSessionsLoggedOutMany": "Uitgelogd van {{count}} andere sessies.",
+      "noOtherSessions": "Geen andere actieve sessies om te intrekken.",
+      "dataExportDownloaded": "Gegevensexport gedownload.",
+      "deactivateTypeConfirm": "Typ DEACTIVATE om het verzoek tot deactivering van het account te bevestigen.",
+      "deleteTypeConfirm": "Typ DELETE om het verzoek tot accountverwijdering te bevestigen.",
+      "accountDeactivated": "Account gedeactiveerd en sessies ingetrokken.",
+      "accountDeleted": "Account verwijderd.",
+      "profileImageUpdated": "Profielfoto bijgewerkt.",
+      "imageRemoved": "Afbeelding verwijderd. Sla het profiel op om het toe te passen.",
+      "unblockedHandle": "Gedeblokkeerd @{{handle}}.",
+      "accessibilitySaved": "Toegankelijkheidsvoorkeuren opgeslagen."
+    },
+    "profile": {
+      "displayName": "Weergavenaam",
+      "bio": "Bio",
+      "bioPlaceholder": "Vertel mensen over jezelf",
+      "changeImage": "Afbeelding wijzigen",
+      "removeImage": "Afbeelding verwijderen",
+      "uploadingImage": "Afbeelding uploaden...",
+      "previewAlt": "Voorbeeld van profielfoto",
+      "save": "Profiel opslaan"
+    },
+    "account": {
+      "profileId": "Profiel-id:",
+      "handle": "Handvat",
+      "handleLimitedAvailable": "Aanpassingen van de gebruikersnaam zijn beperkt tot eenmaal per 30 dagen. Volgende wijziging beschikbaar op {{date}}.",
+      "handleLimitedNow": "De gebruikersnaam kan maximaal eens in de 30 dagen worden veranderd. Je kunt het nu wijzigen.",
+      "joined": "Toegetreden:",
+      "dateOfBirth": "Geboortedatum",
+      "country": "Land",
+      "countryPlaceholder": "Selecteer land (optioneel)",
+      "marketingOptIn": "Ontvang productupdates en tips per e-mail",
+      "save": "Accountgegevens opslaan"
+    },
+    "privacy": {
+      "privateProfile": "Privéprofiel",
+      "privateProfileHelp": "Wanneer ingeschakeld, kunnen alleen goedgekeurde volgers je berichten, reels en verhalen zien.",
+      "save": "Privacy opslaan",
+      "saveDiscovery": "Publiek en Ontdekking opslaan",
+      "commentsAudience": "Wie kan commentaar geven op je inhoud?",
+      "mentionsAudience": "Wie kan jou noemen of taggen?",
+      "messagesAudience": "Wie kan je berichten sturen?",
+      "storyRepliesAudience": "Wie kan op jouw verhalen reageren?",
+      "showInSearchSuggestions": "Account weergeven in zoeksuggesties",
+      "allowProfileIndexing": "Sta profielindexering door zoekmachines toe",
+      "showActivityStatus": "Toon activiteitsstatus / laatst gezien"
+    },
+    "session": {
+      "description": "Gebruik deze bedieningselementen voor uw huidige aanmeldingssessie.",
+      "refresh": "Sessie vernieuwen"
+    },
+    "audience": {
+      "everyone": "Iedereen",
+      "following": "Mensen die je volgt",
+      "nobody": "Niemand"
+    },
+    "notifications": {
+      "likes": "Vind-ik-leuks",
+      "comments": "Opmerkingen",
+      "follows": "Volgt",
+      "mentions": "Vermeldingen",
+      "messages": "Directe berichten",
+      "marketing": "Marketing",
+      "product": "Productupdates",
+      "quietHours": "Rusttijden",
+      "quietHoursStart": "Start",
+      "quietHoursEnd": "Einde",
+      "save": "Meldingen opslaan"
+    },
+    "safety": {
+      "sensitiveContentLevel": "Gevoeligheidsniveau van inhoud",
+      "hideSensitiveMedia": "Verberg gevoelige media standaard",
+      "mutedWords": "Gedempte woorden",
+      "addWordOrPhrase": "Voeg woord of zin toe",
+      "noMutedKeywords": "Nog geen gedempte zoekwoorden.",
+      "mutedUsers": "Gedempte gebruikers",
+      "addHandlePlaceholder": "Voeg handle toe (voorbeeld: @naam)",
+      "searchingUsers": "Gebruikers zoeken...",
+      "profileAvatarAlt": "Profielavatar",
+      "noMutedUsers": "Nog geen gedempte gebruikers in de voorkeuren.",
+      "save": "Veiligheid bewaren",
+      "sensitiveOptions": {
+        "standard": "Standaard",
+        "limited": "Beperkt",
+        "strict": "Streng"
+      }
+    },
+    "security": {
+      "description": "Waar je bent ingelogd.",
+      "currentDevice": "Huidig apparaat",
+      "signedInDevice": "Aangemeld apparaat",
+      "currentSessionLabel": "Huidige sessie",
+      "sessionLabel": "Sessie {{id}}",
+      "created": "Gemaakt {{date}}",
+      "expires": "Verloopt {{date}}",
+      "revoked": "Ingetrokken",
+      "revoke": "Intrekken",
+      "revoking": "Intrekken...",
+      "noSessions": "Geen actieve sessies gevonden.",
+      "logoutOtherSessions": "Uitloggen van andere sessies"
+    },
+    "data": {
+      "description": "Download uw accountgegevens en beheer verzoeken voor de levenscyclus van het account.",
+      "downloadMyData": "Download mijn gegevens",
+      "deactivateTitle": "Account deactiveren",
+      "deactivatePrompt": "Typ DEACTIVATE om het verzoek te bevestigen.",
+      "deactivatePlaceholder": "Typ DEACTIVATE",
+      "requestDeactivation": "Deactivering aanvragen",
+      "deleteTitle": "Account verwijderen",
+      "deletePrompt": "Typ DELETE om het verzoek te bevestigen.",
+      "deletePlaceholder": "Typ DELETE",
+      "requestDelete": "Verzoek om te verwijderen",
+      "immediateWarning": "Beide acties worden onmiddellijk toegepast en melden u af.",
+      "confirmDeactivateTitle": "Account deactiveren",
+      "confirmDeactivateMessage": "Je account nu deactiveren? Dit logt je onmiddellijk uit en beëindigt je actieve sessies.",
+      "confirmDeleteTitle": "Account verwijderen",
+      "confirmDeleteMessage": "Uw account permanent verwijderen? Dit kan niet ongedaan worden gemaakt en u wordt onmiddellijk uitgelogd."
+    },
+    "blocked": {
+      "description": "Beheer gebruikers die je hebt geblokkeerd.",
+      "loading": "Geblokkeerde gebruikers laden...",
+      "viewProfile": "Profiel bekijken",
+      "imageAlt": "Afbeelding van geblokkeerde gebruiker",
+      "unblock": "Deblokkeren",
+      "unblocking": "Deblokkeren...",
+      "empty": "Je hebt niemand geblokkeerd."
+    },
+    "logout": {
+      "description": "Meld je af bij je huidige account op dit apparaat.",
+      "action": "Uitloggen"
+    },
+    "avatarModal": {
+      "dialogAria": "Profielafbeelding bijwerken",
+      "title": "Profielafbeelding bijwerken",
+      "close": "Sluit avatarvenster",
+      "stepsAria": "Stappen voor het uploaden van een avatar",
+      "stepSelect": "1. Selecteer",
+      "stepCrop": "2. Bijsnijden & Uploaden",
+      "selectImageAria": "Avatarafbeelding selecteren",
+      "chooseTitle": "Kies een afbeelding voor je profiel",
+      "chooseSubtitle": "De volgende stap laat je het bijsnijden en positioneren.",
+      "selectImage": "Selecteer Afbeelding",
+      "selectedFile": "Geselecteerd: {{file}}",
+      "cropPreviewAlt": "Voorbeeld van avatar bijsnijden",
+      "zoom": "Zoom",
+      "dragHint": "Sleep de afbeelding om deze binnen de cirkel te verplaatsen.",
+      "upload": "Afbeelding uploaden",
+      "uploading": "Bezig met uploaden..."
     }
   },
   "discover": {
@@ -165,7 +431,7 @@
       "communities": "Community's",
       "communityPosts": "Communityberichten",
       "blogs": "Blogs",
-      "reels": "Reels",
+      "reels": "Spoelen",
       "posts": "Berichten",
       "hashtags": "Hashtags",
       "users": "Gebruikers"
@@ -176,23 +442,1180 @@
       "communities": "Community's",
       "communityPosts": "Communityberichten",
       "blogs": "Blogs",
-      "reels": "Reels",
+      "reels": "Spoelen",
       "hashtags": "Hashtags",
-      "posts": "Berichten"
+      "posts": "Berichten",
+      "followingHashtags": "Volgende hashtags",
+      "fromFollowedHashtags": "Van gevolgde hashtags",
+      "peopleYouMayKnow": "Mensen die je misschien kent"
+    },
+    "search": {
+      "label": "Zoeken",
+      "placeholder": "Zoek gebruikers, gemeenschappen, community-berichten, blogs, reels, berichten, hashtags"
+    },
+    "actions": {
+      "follow": "Volgen",
+      "unfollow": "Ontvolgen",
+      "followUser": "Volg gebruiker",
+      "signInToFollow": "Meld je aan om te volgen"
+    },
+    "profile": {
+      "openStoriesAria": "Open @{{handle}} verhalen",
+      "viewProfileAria": "Bekijk @{{handle}} profiel",
+      "imageAlt": "Profielfoto",
+      "authorImageAlt": "Auteur afbeelding",
+      "noBio": "Nog geen bio."
+    },
+    "reels": {
+      "recommendedAlt": "Aanbevolen rol"
+    },
+    "empty": {
+      "noRecommendedReelsTitle": "Nog geen aanbevolen reels",
+      "noRecommendedReelsMessage": "Interageer meer met reels, reacties en hashtags om je Discover-aanbevelingen te verbeteren."
+    },
+    "loading": {
+      "searchingAria": "Zoeken",
+      "recommendationsAria": "Aanbevelingen laden"
+    },
+    "community": {
+      "imageAlt": "Gemeenschapsbeeld",
+      "noDescription": "Nog geen beschrijving.",
+      "member": "lid",
+      "members": "leden"
+    },
+    "communityPost": {
+      "viewPost": "Bekijk communitybericht",
+      "openForDetails": "Open dit bericht om de details te bekijken.",
+      "postedBy": "Geplaatst door @{{handle}} · {{date}}"
+    },
+    "blog": {
+      "noDescription": "Nog geen beschrijving.",
+      "byUpdated": "Door @{{handle}} · Bijgewerkt {{date}}"
+    },
+    "confirm": {
+      "delete": "Verwijderen",
+      "cancel": "Annuleren",
+      "deletePostTitle": "Bericht verwijderen",
+      "deletePostMessage": "Deze post verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+      "deleteCommentTitle": "Opmerking verwijderen",
+      "deleteCommentMessage": "Deze opmerking verwijderen? Deze actie kan niet ongedaan worden gemaakt."
+    },
+    "status": {
+      "postShared": "Bericht gedeeld.",
+      "postSentAsMessage": "Post verzonden als bericht.",
+      "followRequestSent": "Volgverzoek verzonden naar @{{handle}}.",
+      "followedUser": "Volgde @{{handle}}.",
+      "unfollowedHashtag": "Niet meer gevolgd #{{tag}}.",
+      "followingHashtag": "Volgend #{{tag}}.",
+      "noResults": "Geen resultaten gevonden."
+    },
+    "errors": {
+      "updatePost": "Kan het bericht op dit moment niet bijwerken.",
+      "deletePost": "Kan bericht nu niet verwijderen.",
+      "sharePostNow": "Kon dit bericht momenteel niet delen.",
+      "sendPostToChatNow": "Kon dit bericht op dit moment niet naar de chat sturen.",
+      "followUser": "Kon deze gebruiker momenteel niet volgen.",
+      "updateLikeNow": "Kon op dit moment niet bijwerken zoals.",
+      "setReactionNow": "Kon de reactie nu niet instellen.",
+      "clearReactionNow": "Kon de reactie op dit moment niet wissen.",
+      "addCommentNow": "Kon op dit moment geen reactie toevoegen.",
+      "updateCommentNow": "Kan op dit moment de reactie niet bijwerken.",
+      "deleteCommentNow": "Kan commentaar op dit moment niet verwijderen.",
+      "reactToCommentNow": "Kon momenteel niet op reactie op opmerking reageren.",
+      "clearCommentReactionNow": "Kon de reactie op de opmerking nu niet verwijderen.",
+      "updateReelLike": "Kon de reel nu niet bijwerken.",
+      "addReelComment": "Kon momenteel geen reel-opmerking toevoegen.",
+      "updateReelComment": "Kan de reactie op de reel op dit moment niet bijwerken.",
+      "deleteReelComment": "Kon de reelreactie op dit moment niet verwijderen.",
+      "updateReelCommentLike": "Kon de reel-opmerking op dit moment niet bijwerken.",
+      "allSearchesFailed": "Alle zoekopdrachten zijn mislukt.",
+      "completeSearch": "Kan de zoekopdracht op dit moment niet voltooien.",
+      "loadRecommendedReels": "Aanbevolen reels kunnen momenteel niet worden geladen."
     }
   },
   "chatPage": {
     "title": "Berichten",
     "search": {
       "label": "Chats zoeken",
-      "startNewChat": "Nieuwe chat starten"
+      "startNewChat": "Nieuwe chat starten",
+      "marquee": "Zoek chats op naam, gebruikersnaam of bericht"
     },
     "sidebar": {
-      "chats": "Chats"
+      "chats": "Katten"
     },
     "noConversation": {
       "title": "Selecteer een chat om te beginnen met berichten",
-      "startNewChat": "Nieuwe chat starten"
+      "startNewChat": "Nieuwe chat starten",
+      "subtitle1": "Kies een gesprek aan de linkerkant om uw thread te openen.",
+      "subtitle2": "Zie je de persoon nog niet? Begin een nieuw gesprek."
+    },
+    "layoutAria": "Berichtenindeling",
+    "common": {
+      "you": "Jij",
+      "youLowercase": "jij",
+      "me": "Ik",
+      "gif": "GIF",
+      "cancel": "Annuleren",
+      "save": "Opslaan",
+      "saving": "Bezig met opslaan..."
+    },
+    "starterMessages": {
+      "hey": "Hoi 👋",
+      "howAreYou": "Hoe gaat het vandaag met je?",
+      "catchUp": "Wil je later bijpraten?"
+    },
+    "loading": {
+      "conversations": "Gesprekken laden",
+      "messages": "Berichten laden"
+    },
+    "conversation": {
+      "avatarAlt": "Gesprek avatar"
+    },
+    "empty": {
+      "noChatsFound": "Geen chats gevonden.",
+      "noActiveChats": "Nog geen actieve chats.",
+      "firstMessageTitle": "Deze chat wacht op zijn eerste bericht",
+      "firstMessageDescription": "Doorbreek de stilte en stuur een snelle hallo 👋",
+      "noMessagesFoundTitle": "Geen berichten gevonden",
+      "noMessagesFoundDescription": "Probeer een ander zoekwoord in te voeren."
+    },
+    "thread": {
+      "backToChats": "Terug naar chats",
+      "groupOptions": "Groepschatopties",
+      "searchMessages": "Berichten zoeken",
+      "changeChatName": "Wijzig chatnaam",
+      "leaveChat": "Chat verlaten",
+      "deleteChat": "Chat verwijderen",
+      "unmuteChat": "Chat dempen opheffen",
+      "muteChat": "Chat dempen",
+      "defaultGroupChatName": "Groepschat"
+    },
+    "messageSearch": {
+      "backToChat": "Terug naar chat",
+      "placeholder": "Berichten zoeken",
+      "clear": "Zoekopdracht bericht wissen",
+      "avatarAlt": "Avatar van de berichtauteur",
+      "noResults": "Geen berichten gevonden voor die zoekopdracht.",
+      "idleTitle": "Zoek deze chat",
+      "idleDescription": "Vind berichten, mediabenamingen en @handles in dit gesprek."
+    },
+    "messages": {
+      "fetchingOlder": "Oudere berichten ophalen…",
+      "noOlder": "Geen oudere berichten",
+      "senderAvatarAlt": "Avatar van de afzender",
+      "replyMediaPreviewAlt": "Voorbeeld van beantwoorde boodschap",
+      "sentImageAlt": "Afbeelding verzonden",
+      "sentGifAlt": "Verzonden GIF",
+      "replyToMessage": "Antwoord op bericht",
+      "options": "Berichtopties",
+      "actions": {
+        "edit": "Bewerken",
+        "report": "Rapport",
+        "copy": "Kopiëren"
+      }
+    },
+    "reactions": {
+      "show": "Reacties tonen",
+      "title": "Reacties",
+      "close": "Sluit reacties",
+      "all": "Alles",
+      "authorAvatarAlt": "Afbeelding van de auteur van de reactie"
+    },
+    "composer": {
+      "replyingTo": "Beantwoorden aan {{target}}",
+      "cancelReply": "Reactie annuleren",
+      "addEmoji": "Voeg emoji toe",
+      "messagePlaceholder": "Bericht...",
+      "addGif": "Voeg GIF toe",
+      "addImage": "Afbeelding toevoegen",
+      "searchEmojiPlaceholder": "Zoek emoji",
+      "searchGifsPlaceholder": "Zoek Giphy GIF's",
+      "search": "Zoeken",
+      "trendingNow": "Nu trending",
+      "noTrendingGifs": "Op dit moment zijn er geen populaire GIF's.",
+      "noGifsFound": "Geen GIF's gevonden.",
+      "sharing": "Delen",
+      "sharedPostPreviewAlt": "Voorvertoning van gedeelde berichtmedia",
+      "removeSharedPost": "Gedeelde bericht verwijderen",
+      "send": "Verzenden"
+    },
+    "sharedReel": {
+      "viewerAria": "Gedeelde reel-weergever",
+      "settings": "Spoelinstellingen",
+      "closeViewer": "Sluit reelviewer",
+      "unmute": "Dempen opheffen van reel",
+      "mute": "Dempen spoel",
+      "report": "Rapportrol",
+      "edit": "Bewerk reel",
+      "deleting": "Bezig met verwijderen…",
+      "delete": "Verwijder filmrol",
+      "authorAvatarAlt": "Avatar van de maker van de reel",
+      "like": "Zoals spoel",
+      "openComments": "Open spoel reacties",
+      "share": "Deel reel",
+      "replyToChatPlaceholder": "Beantwoord de chat...",
+      "sendingShort": "...",
+      "commentsAria": "Reacties op reels",
+      "comments": "Opmerkingen",
+      "closeComments": "Reacties sluiten",
+      "close": "Sluit",
+      "commentAuthorAlt": "Afbeelding van de auteur van de reactie",
+      "hideReplies": "Antwoorden verbergen",
+      "viewReplies": "Bekijk reacties ({{count}})",
+      "unlikeComment": "In tegenstelling tot opmerking",
+      "likeComment": "Vind ik leuk, reageer",
+      "reply": "Antwoord",
+      "reportComment": "Rapporteer opmerking",
+      "noCommentsYet": "Nog geen reacties.",
+      "addCommentPlaceholder": "Voeg een reactie toe...",
+      "post": "Plaats",
+      "editCaptionPlaceholder": "Bewerk reel-bijschrift...",
+      "saving": "Bezig met opslaan…",
+      "loadingDetails": "Bezig met laden van haspeldetails...",
+      "forYou": "Voor jou",
+      "replyingToComment": "Beantwoorden op opmerking",
+      "posting": "Bezig met posten..."
+    },
+    "replyPreview": {
+      "youRepliedTo": "Je hebt gereageerd op {{target}}",
+      "authorRepliedTo": "@{{authorHandle}} reageerde op {{target}}",
+      "image": "📷 Afbeelding",
+      "sharedPost": "Gedeeld bericht",
+      "sharedReel": "Gedeelde rol",
+      "sharedStory": "Gedeeld verhaal",
+      "message": "Bericht"
+    },
+    "conversationPreview": {
+      "sharedPostFrom": "Gedeelde post van @{{handle}}",
+      "sharedStoryFrom": "Gedeeld verhaal van @{{handle}}",
+      "sharedReelFrom": "Gedeelde reel van @{{handle}}",
+      "sharedLink": "Gedeelde link"
+    },
+    "unfurl": {
+      "previewUnavailable": "Voorbeeld van link niet beschikbaar. Open gedeelde link.",
+      "openSharedLink": "Open gedeelde link"
+    },
+    "status": {
+      "loadConversationsFailed": "Kon gesprekken niet laden.",
+      "startDirectChatFailed": "Kon geen direct gesprek starten.",
+      "startGroupChatFailed": "Kon groepschat niet starten.",
+      "loadMessagesFailed": "Kon berichten niet laden.",
+      "liveUpdatesUnavailable": "Live-updates zijn tijdelijk niet beschikbaar.",
+      "messageCopied": "Bericht gekopieerd.",
+      "copyMessageFailed": "Kon bericht niet kopiëren.",
+      "messageContentRequired": "Berichtinhoud is vereist.",
+      "updateMessageFailed": "Kon bericht niet bijwerken.",
+      "sendMessageFailed": "Kon bericht niet verzenden.",
+      "loadGifsFailed": "Kan GIF's niet laden van Giphy.",
+      "loadTrendingGifsFailed": "Kon populaire GIF's niet laden.",
+      "sendGifFailed": "Kon GIF niet verzenden.",
+      "uploadImageFailed": "Kon afbeelding niet uploaden.",
+      "reelDeleted": "Reel is verwijderd.",
+      "openReelFailed": "Kon deze reel momenteel niet openen.",
+      "sendReplyFailed": "Kon geen antwoord verzenden.",
+      "updateReelFailed": "Kon deze reel momenteel niet bijwerken.",
+      "deleteReelFailed": "Kon deze reel momenteel niet verwijderen.",
+      "updateReelCommentFailed": "Kan de reactie op de reel op dit moment niet bijwerken.",
+      "deleteReelCommentFailed": "Kon de reelreactie op dit moment niet verwijderen.",
+      "updateReelCommentLikeFailed": "Kon de reel-opmerking op dit moment niet bijwerken.",
+      "updateReelLikeFailed": "Kon de reel nu niet bijwerken.",
+      "addReelCommentFailed": "Kon momenteel geen reel-opmerking toevoegen.",
+      "loadOlderMessagesFailed": "Kon oude berichten niet laden.",
+      "setReactionFailed": "Kon de reactie niet instellen.",
+      "clearReactionFailed": "Kon de reactie niet wissen.",
+      "sendStoryReplyFailed": "Kon je verhaalantwoord op dit moment niet verzenden.",
+      "deleteStoryFailed": "Kon dit verhaal momenteel niet verwijderen.",
+      "submitReportFailed": "Kan het rapport op dit moment niet indienen.",
+      "chatNameEmpty": "Chatnaam mag niet leeg zijn.",
+      "chatNameUpdated": "Chatnaam bijgewerkt.",
+      "updateChatNameFailed": "Kon chatnaam niet bijwerken.",
+      "leftGroupChat": "Je hebt de groepschat verlaten.",
+      "chatDeleted": "Chat verwijderd.",
+      "leaveGroupChatFailed": "Kon de groepschat niet verlaten.",
+      "deleteChatFailed": "Kon chat niet verwijderen.",
+      "chatMuted": "Chat gedempt.",
+      "chatUnmuted": "Chat niet meer gedempt.",
+      "updateMuteFailed": "Kon de dempinstelling niet bijwerken.",
+      "searchUsersFailed": "Kan momenteel geen gebruikers zoeken.",
+      "loadSuggestionsFailed": "Kan momenteel geen suggesties laden."
+    },
+    "modals": {
+      "deleteComment": {
+        "title": "Opmerking verwijderen",
+        "message": "Deze opmerking verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+        "confirm": "Verwijderen"
+      },
+      "leave": {
+        "titleLeave": "Chat verlaten",
+        "titleDelete": "Chat verwijderen",
+        "confirmLeave": "Vertrekken",
+        "confirmDelete": "Verwijderen",
+        "busyLeaving": "Vertrekken...",
+        "displayNameFallback": "deze chat",
+        "deleteFallback": "Dit gesprek verwijderen?",
+        "groupMessage": "Verlaten {{name}}? Je kunt later door een ander lid weer worden toegevoegd.",
+        "directMessage": "Verwijder {{name}}? Dit verwijdert de chat uit je inbox."
+      },
+      "rename": {
+        "title": "Wijzig chatnaam",
+        "label": "Chatchatnaam",
+        "placeholder": "Voer chatnaam in",
+        "groupMessage": "Geef deze groepschat een duidelijke naam zodat leden deze snel kunnen vinden.",
+        "directMessage": "Stel een aangepaste chata naam in voor dit gesprek."
+      },
+      "deleteStory": {
+        "title": "Verhaal verwijderen",
+        "message": "Deze verhaal verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+        "confirm": "Verwijderen"
+      },
+      "deleteReel": {
+        "title": "Verwijder filmrol",
+        "message": "Deze reel verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+        "confirm": "Verwijderen"
+      }
+    }
+  },
+  "profile": {
+    "hero": {
+      "noBio": "Nog geen bio.",
+      "bioHidden": "Bio verborgen omdat dit profiel is geblokkeerd.",
+      "joined": "Lid sinds {{date}}",
+      "openStoriesAria": "Open @{{handle}} verhalen",
+      "viewProfileAria": "Bekijk @{{handle}} profiel",
+      "avatarAlt": "{{name}} avatar",
+      "authorImageAlt": "Auteur afbeelding",
+      "trustSignalsAria": "Profielvertrouwenssignalen",
+      "privateProfile": "Privéprofiel",
+      "publicProfile": "Openbaar profiel",
+      "establishedMember": "Toegewijd lid",
+      "activeOn": "Actief {{date}}",
+      "statsAria": "Profielstatistieken",
+      "posts": "berichten",
+      "followers": "volgers",
+      "following": "volgend"
+    },
+    "tabs": {
+      "posts": "Berichten",
+      "reels": "Spoelen",
+      "analytics": "Analyse",
+      "aria": "Profielinhoud tabbladen"
+    },
+    "actions": {
+      "working": "Bezig met werken...",
+      "blocked": "Geblokkeerd",
+      "requestSent": "Verzoek Verzonden",
+      "following": "Volgend",
+      "unfollowed": "Niet meer gevolgd",
+      "tryAgain": "Probeer opnieuw",
+      "cancelRequest": "Verzoek Annuleren",
+      "unfollow": "Ontvolgen",
+      "follow": "Volgen",
+      "message": "Bericht",
+      "requestMessage": "Verzoekbericht",
+      "profileLinkCopied": "Profielkoppeling gekopieerd",
+      "copyProfileLink": "Profielkoppeling kopiëren",
+      "copied": "Gekopieerd",
+      "signInToFollow": "Meld je aan om te volgen"
+    },
+    "safety": {
+      "openMenu": "Open profiel beveiligingsopties",
+      "moreOptions": "Meer opties",
+      "nickname": "Bijnaam",
+      "mute": "Dempen",
+      "unmute": "Dempen opheffen",
+      "block": "Blok",
+      "unblock": "Deblokkeren",
+      "report": "Rapport",
+      "reporting": "Rapporteren..."
+    },
+    "nickname": {
+      "dialogAria": "Bijnaam instellen",
+      "title": "Bijnaam voor jou",
+      "close": "Sluit bijnaam-editor",
+      "label": "Bijnaam",
+      "placeholder": "Voer bijnaam in"
+    },
+    "blocked": {
+      "byTarget": "Dit profiel heeft je geblokkeerd. Berichten, reels, verhalen en bio zijn verborgen.",
+      "byYou": "Je hebt dit profiel geblokkeerd. Berichten, reels, verhalen en bio zijn verborgen."
+    },
+    "privateLocked": "Dit profiel is privé. Volg en wacht op goedkeuring om berichten te zien.",
+    "empty": {
+      "blockedTitle": "Profiel geblokkeerd",
+      "posts": {
+        "title": "Nog geen berichten",
+        "own": "Begin met delen vanuit Opstellen.",
+        "guest": "Dit profiel heeft nog niets gepost.",
+        "private": "Geen berichten zichtbaar totdat dit privérekening je volgverzoek goedkeurt."
+      },
+      "reels": {
+        "title": "Nog geen reels",
+        "own": "Maak er een van je profiel.",
+        "guest": "Dit profiel heeft nog geen reels gedeeld.",
+        "blocked": "Reels zijn verborgen terwijl dit profiel is geblokkeerd.",
+        "private": "Geen reels zichtbaar totdat dit privérekening jouw volgverzoek goedkeurt."
+      }
+    },
+    "confirm": {
+      "delete": "Verwijderen",
+      "deletePostTitle": "Bericht verwijderen",
+      "deletePostMessage": "Deze post verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+      "deleteReelTitle": "Verwijder filmrol",
+      "deleteReelMessage": "Deze reel verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+      "deleteCommentTitle": "Opmerking verwijderen",
+      "deleteCommentMessage": "Deze opmerking verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+      "deleteStoryTitle": "Verhaal verwijderen",
+      "deleteStoryMessage": "Deze verhaal verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+      "deleteCollectionTitle": "Verwijder collectie",
+      "blockTitle": "Blokprofiel",
+      "blockMessage": "Blokkeren @{{handle}}? Dit verwijdert volglijnen.",
+      "block": "Blok",
+      "thisProfile": "dit profiel"
+    },
+    "common": {
+      "save": "Opslaan",
+      "saving": "Bezig met opslaan...",
+      "cancel": "Annuleren",
+      "clear": "Duidelijk",
+      "back": "Terug",
+      "retry": "Opnieuw proberen"
+    },
+    "storyCollections": {
+      "rowAria": "Verhalenbundels",
+      "createAria": "Verzamel verhalen",
+      "new": "Nieuw",
+      "openAria": "Open verhaalcollectie {{name}}",
+      "coverAlt": "Omslag van verhalenbundel",
+      "manageAria": "Beheer verhaalcollectie {{name}}",
+      "createDialogAria": "Verzamel verhalen",
+      "newCollectionTitle": "Nieuwe verhalenbundel",
+      "closeCreateDialog": "Sluit verhaalverzamelingsvenster",
+      "collectionName": "Collectienaam",
+      "collectionPlaceholder": "bijv. Zomer 2024",
+      "collectionNameAria": "Verzameling van verhalen",
+      "storyMediaAlt": "Verhalenmedia",
+      "storyFallback": "Verhaal",
+      "selected": "Geselecteerd",
+      "select": "Selecteren",
+      "noStoriesInArchive": "Nog geen verhalen in je archief.",
+      "creating": "Bezig met maken...",
+      "create": "Creëren",
+      "manageDialogAria": "Beheer verhalenverzameling",
+      "manageNamedTitle": "Beheer {{name}}",
+      "manageTitle": "Beheer Verhalenverzameling",
+      "closeManageDialog": "Sluit modal voor het toevoegen van verhalen",
+      "selectCollection": "Selecteer collectie",
+      "selectCollectionAria": "Selecteer verhalenbundel",
+      "remove": "Verwijderen",
+      "add": "Toevoegen",
+      "createFirstCollection": "Maak eerst je eerste collectie aan.",
+      "deleteCollection": "Verwijder collectie",
+      "close": "Sluit"
+    },
+    "compose": {
+      "postDialogAria": "Maak bericht",
+      "newPost": "Nieuwe post",
+      "closePostComposer": "Sluit berichtmaker",
+      "storyDialogAria": "Maak een verhaal",
+      "newStory": "Nieuw Verhaal",
+      "closeStoryComposer": "Sluit verhaalmaker",
+      "storyCreationStepsAria": "Stappen voor het creëren van een verhaal",
+      "storyStepMedia": "1. Media",
+      "storyStepCropTrimPublish": "2. Bijsnijden, Trimmen en Publiceren",
+      "storyMediaUploadAria": "Verhaal media upload",
+      "selectStoryMediaTitle": "Begin met het selecteren van je verhaalmedia",
+      "selectStoryMediaSubtitle": "Afbeeldingen, MP4, WebM, MOV en soortgelijke formaten worden ondersteund.",
+      "selectStoryMedia": "Selecteer Verhalenmedia",
+      "selectedFile": "Geselecteerd: {{file}}",
+      "storyExpires": "Verhalen verlopen automatisch na 24 uur.",
+      "markStorySensitive": "Markeer dit verhaal als gevoelige media",
+      "editingFile": "Bewerken: {{file}}",
+      "dragStoryFrameAria": "Slepen om verhaalkader in te stellen",
+      "dragFrameHint": "Sleep het 9:16-kader om je uitsnede in te stellen.",
+      "resetFraming": "Framing resetten",
+      "trimSummary": "Originele lengte: {{original}}s · Bijgesneden: {{trimmed}}",
+      "trimThumbnailAlt": "Verhaal bijgesneden miniatuur",
+      "trimStoryStartAria": "Begin verhaal bijsnijden",
+      "trimStoryEndAria": "Het verhaal eindigt",
+      "generatingTrimPreviews": "Trimvoorbeeldafbeeldingen genereren...",
+      "trimRange": "Bereik: {{start}}s tot {{end}}s",
+      "storyMediaPreviewAlt": "Verhaalmediavoorvertoning",
+      "schedulePublish": "Publicatie plannen (optioneel)",
+      "saveDraft": "Concept opslaan",
+      "publishing": "Bezig met publiceren...",
+      "publishStory": "Verhaal publiceren"
+    },
+    "analytics": {
+      "title": "Makeranalyse",
+      "lastDays": "Laatste {{days}} dagen",
+      "views": "weergaven",
+      "watchTime": "Kijktijd",
+      "saves": "redt",
+      "followerGrowth": "Volgersgroei",
+      "topReels": "Top Rollen",
+      "untitledReel": "Ongetitelde reel"
+    },
+    "messages": {
+      "messageRequestSent": "Berichtverzoek verzonden."
+    },
+    "errors": {
+      "loadData": "Kan profielgegevens niet laden. Probeer te vernieuwen.",
+      "copyLink": "Kon profielkoppeling op dit moment niet kopiëren.",
+      "sendMessageRequest": "Kon berichtverzoek op dit moment niet verzenden.",
+      "openChat": "Kan chat nu niet openen."
+    }
+  },
+  "blogs": {
+    "page": {
+      "kicker": "Uitgeven",
+      "title": "Blogs"
+    },
+    "tabs": {
+      "aria": "Bloglijsten",
+      "all": "Alle blogs",
+      "following": "Volgend",
+      "mine": "Mijn blogs"
+    },
+    "subtitle": {
+      "all": "Ontdek en doorzoek blogs over Venli.",
+      "following": "Blogs van makers die je volgt.",
+      "mine": "Beheer je eigen blogs en concepten."
+    },
+    "search": {
+      "placeholder": "Zoek blogs op titel, slug, handle...",
+      "try": "Probeer:"
+    },
+    "sort": {
+      "label": "Zwart",
+      "menuAria": "Zwarte blogs",
+      "recentlyUpdated": "Onlangs bijgewerkt",
+      "newestCreated": "Nieuwst gemaakt",
+      "titleAz": "Titel A-Z"
+    },
+    "actions": {
+      "openStudio": "Open Blog Studio",
+      "clear": "Duidelijk"
+    },
+    "visibility": {
+      "public": "Openbaar",
+      "private": "Privé",
+      "owner": "Eigenaar"
+    },
+    "meta": {
+      "updated": "Bijgewerkt {{date}}"
+    },
+    "resultCount": "{{visible}} van {{total}} blogs",
+    "loading": {
+      "aria": "Blogs laden"
+    },
+    "infinite": {
+      "more": "Scroll voor meer blogs..."
+    },
+    "empty": {
+      "noBlogsForTab": "Er zijn nog geen blogs gevonden voor dit tabblad."
+    },
+    "errors": {
+      "signInToViewTab": "Meld u aan om dit tabblad te bekijken.",
+      "loadNow": "Kan momenteel geen blogs laden."
+    }
+  },
+  "communities": {
+    "page": {
+      "title": "Gemeenschappen",
+      "subtitle": "Maak of sluit je aan bij gemeenschappen rond gedeelde interesses."
+    },
+    "tabs": {
+      "aria": "Gemeenschapsperspectieven",
+      "mine": "Mijn gemeenschappen",
+      "discover": "Ontdek gemeenschappen"
+    },
+    "actions": {
+      "newCommunity": "Nieuwe gemeenschap",
+      "refresh": "Gemeenschappen vernieuwen",
+      "search": "Zoeken",
+      "clear": "Duidelijk",
+      "join": "Deelnemen",
+      "joining": "Wordt lid…",
+      "leave": "Vertrekken",
+      "leaving": "Vertrekken…",
+      "signInToJoin": "Meld je aan om deel te nemen",
+      "cancel": "Annuleren",
+      "create": "Creëren",
+      "creating": "Bezig met maken…"
+    },
+    "search": {
+      "placeholder": "Gemeenschappen zoeken",
+      "try": "Probeer:"
+    },
+    "mine": {
+      "signInPrompt": "Meld u aan of maak een account aan om de gemeenschappen die u hebt bezocht te bekijken.",
+      "empty": "Je bent nog geen lid van een gemeenschap."
+    },
+    "discover": {
+      "empty": "Geen gemeenschappen gevonden."
+    },
+    "community": {
+      "members": "leden",
+      "createdBy": "Gemaakt door @{{handle}}",
+      "imageAlt": "Gemeenschapsbeeld",
+      "openAria": "Open {{name}}",
+      "owner": "Eigenaar",
+      "joined": "Deelnam"
+    },
+    "authAction": {
+      "create": "een gemeenschap creëren",
+      "join": "gemeenschappen joinen",
+      "leave": "gemeenschappen verlaten"
+    },
+    "visibility": {
+      "private": "Privé",
+      "public": "Openbaar"
+    },
+    "create": {
+      "dialogAria": "Creëer gemeenschap",
+      "title": "Creëer gemeenschap",
+      "close": "Sluit modal voor het creëren van community",
+      "name": "Naam",
+      "namePlaceholder": "Gemeenschapsnaam",
+      "description": "Beschrijving",
+      "descriptionPlaceholder": "Waar gaat deze gemeenschap over?",
+      "rules": "Regels",
+      "rulesPlaceholder": "Één regel per lijn",
+      "image": "Gemeenschapsbeeld",
+      "imagePreviewAlt": "Voorbeeld van gemeenschapsafbeelding",
+      "private": "Privégemeenschap"
+    },
+    "status": {
+      "created": "Gemeenschap gemaakt.",
+      "joined": "Lid geworden van de gemeenschap.",
+      "left": "De gemeenschap verlaten."
+    },
+    "errors": {
+      "load": "Kan momenteel geen gemeenschappen laden.",
+      "search": "Kan momenteel geen gemeenschappen zoeken.",
+      "create": "Kon op dit moment geen gemeenschap creëren.",
+      "join": "Kon op dit moment geen lid worden van de gemeenschap.",
+      "leave": "Kon de gemeenschap nu niet verlaten.",
+      "signInForAction": "Meld u alstublieft aan of maak een account om {{action}}."
+    }
+  },
+  "blogHome": {
+    "loading": {
+      "aria": "Blog laden"
+    },
+    "header": {
+      "moreBy": "Meer van @{{handle}}",
+      "editInStudio": "Bewerken in Studio"
+    },
+    "post": {
+      "draft": "Concept"
+    },
+    "actions": {
+      "save": "Opslaan",
+      "unsave": "Ontopslaan"
+    },
+    "empty": {
+      "noPosts": "Nog geen berichten."
+    },
+    "errors": {
+      "notFound": "Blog is niet gevonden.",
+      "notFoundOrPrivate": "Blog is niet gevonden of is privé.",
+      "loadNow": "Kon deze blog momenteel niet laden.",
+      "updateSavedStatus": "Kon de opgeslagen status op dit moment niet bijwerken."
+    }
+  },
+  "blogPost": {
+    "loading": {
+      "aria": "Blogpost laden"
+    },
+    "actions": {
+      "backToBlog": "Terug naar de blog",
+      "like": "Leuk",
+      "comment": "Hoe",
+      "save": "Opslaan",
+      "unsave": "Ontopslaan",
+      "share": "Delen",
+      "linkCopied": "Link gekopieerd",
+      "embed": "Inbedden"
+    },
+    "meta": {
+      "byDate": "Door @{{handle}} · {{date}}"
+    },
+    "hints": {
+      "likesSoon": "Bloglikes zullen binnenkort worden ingeschakeld",
+      "commentsSoon": "Blogreacties zullen binnenkort worden ingeschakeld"
+    },
+    "errors": {
+      "notFound": "Blogbericht niet gevonden.",
+      "notFoundOrPrivate": "Blogbericht is niet gevonden of is privé.",
+      "loadNow": "Kan dit blogbericht op dit moment niet laden.",
+      "updateSavedStatus": "Kon de opgeslagen status op dit moment niet bijwerken."
+    }
+  },
+  "blogEmbed": {
+    "loading": "Insluiten laden...",
+    "kicker": "Venli Blog",
+    "meta": {
+      "byAuthor": "Door @{{handle}}"
+    },
+    "footer": {
+      "readFullPost": "Lees de volledige post op Venli"
+    },
+    "aria": {
+      "loading": "Blogembed laden",
+      "openFullPost": "Open volledige blogpost"
+    },
+    "errors": {
+      "couldNotLoad": "Insluiter kon niet worden geladen.",
+      "postUnavailable": "Dit bericht op de blog is niet beschikbaar.",
+      "embeddingDisabled": "Insluiting is uitgeschakeld door de eigenaar van de blog.",
+      "loadNow": "Kon deze embed momenteel niet laden."
+    }
+  },
+  "blogEmbedTools": {
+    "loading": {
+      "aria": "Invoegtools laden",
+      "message": "Bezig met laden van ingebedde tools..."
+    },
+    "header": {
+      "kicker": "Insluitgereedschappen",
+      "subtitle": "Voorbeeld van de embed en kopieer de iframe-code voor elke website."
+    },
+    "preview": {
+      "title": "Voorbeeld",
+      "iframeTitle": "Blog insluiting voorbeeld"
+    },
+    "code": {
+      "title": "Insluitcode",
+      "aria": "Blog insluiten iframe-code"
+    },
+    "actions": {
+      "copyCode": "Code kopiëren",
+      "copied": "Gekopieerd",
+      "openRaw": "Open ruwe embedpagina",
+      "backToPost": "Terug naar bericht"
+    },
+    "embed": {
+      "defaultTitle": "Venli blog insluiten"
+    },
+    "errors": {
+      "notFound": "Blogbericht niet gevonden.",
+      "notFoundOrPrivate": "Blogbericht is niet gevonden of is privé.",
+      "embeddingDisabled": "Insluiting is uitgeschakeld door de eigenaar van de blog.",
+      "loadNow": "Kon de insluittools voor dit bericht momenteel niet laden."
+    }
+  },
+  "sharedStory": {
+    "loading": {
+      "story": "Verhaal laden..."
+    },
+    "notFound": {
+      "title": "Verhaal niet beschikbaar",
+      "message": "Dit verhaal is verlopen, verwijderd, of de link is ongeldig."
+    },
+    "errors": {
+      "title": "Er is iets misgegaan",
+      "load": "Kon dit gedeelde verhaal niet laden."
+    },
+    "author": {
+      "imageAlt": "Makerafbeelding"
+    },
+    "actions": {
+      "linkCopiedAria": "Verhaal link gekopieerd",
+      "copyStoryLinkAria": "Kopieer verhaal link",
+      "copied": "Gekopieerd",
+      "copyLink": "Kopieer link"
+    },
+    "media": {
+      "alt": "Gedeelde verhaalmedia"
+    }
+  },
+  "communityDetail": {
+    "timeoutOptions": {
+      "oneDay": "1 dag",
+      "sevenDays": "7 dagen",
+      "oneMonth": "1 maand"
+    },
+    "common": {
+      "cancel": "Annuleren",
+      "working": "Bezig…"
+    },
+    "status": {
+      "memberPromoted": "Lid gepromoveerd tot moderator.",
+      "moderatorRemoved": "Moderatorrol verwijderd.",
+      "memberBanned": "@{{handle}} is verbannen.",
+      "memberUnbanned": "@{{handle}} is weer toegelaten.",
+      "memberTimedOut": "@{{handle}} is tijdelijk geblokkeerd voor {{timeoutLabel}}.",
+      "joinedCommunity": "Lid geworden van de gemeenschap.",
+      "leftCommunity": "De gemeenschap verlaten.",
+      "communityLinkCopied": "Communitylink gekopieerd.",
+      "communityUpdated": "Community bijgewerkt.",
+      "postPublished": "Bericht gepubliceerd.",
+      "postRemovedFromSaved": "Bericht verwijderd uit opgeslagen items.",
+      "postSaved": "Bericht opgeslagen.",
+      "postLinkCopied": "Postlink gekopieerd.",
+      "voteSubmitted": "Stem ingediend.",
+      "postUpdated": "Bericht bijgewerkt.",
+      "postDeleted": "Bericht verwijderd."
+    },
+    "errors": {
+      "communityNotLoaded": "Gemeenschap niet geladen.",
+      "communityNotFound": "Gemeenschap werd niet gevonden.",
+      "signInToJoin": "Log alstublieft in of maak een account aan om lid te worden van deze gemeenschap.",
+      "copyFailed": "Kopiëren mislukt",
+      "copyCommunityLink": "Kan de link van de community niet kopiëren.",
+      "communityNameRequired": "Gemeenschapsnaam is vereist.",
+      "titleRequired": "Titel is vereist.",
+      "addContentBeforePosting": "Voeg tekst, afbeelding, link of stemming toe voordat u publiceert.",
+      "signInToCreatePost": "Log alstublieft in of maak een account aan om een communitybericht te maken.",
+      "copyPostLink": "Kan berichtlink niet kopiëren.",
+      "addContentBeforeSaving": "Voeg tekst, afbeelding, link of stemming toe voordat u opslaat.",
+      "linkMustStartHttp": "Link URL moet beginnen met http:// of https://.",
+      "linkInvalid": "Voer een geldige link in URL.",
+      "action": {
+        "promoteMember": "lid bevorderen",
+        "removeModerator": "verwijder moderator",
+        "banMember": "lid verbannen",
+        "unbanMember": "lid deblokkeren",
+        "timeoutMember": "time-out lid"
+      }
+    },
+    "moderation": {
+      "modalTitle": {
+        "confirm": "Actie bevestigen",
+        "ban": "Gebruiker blokkeren",
+        "unban": "Deblokkeer gebruiker",
+        "timeout": "Time-out gebruiker"
+      },
+      "modalMessage": {
+        "ban": "Verbannen @{{handle}}? Dit blokkeert ze van je account.",
+        "unban": "Deblokkeer @{{handle}}? Dit verwijdert de blokkering van je account.",
+        "timeout": "Time-out @{{handle}} voor {{timeoutLabel}}? Tijdens de time-out kunnen ze niet posten of reageren in deze community."
+      },
+      "confirmText": {
+        "confirm": "Bevestigen",
+        "ban": "Gebruiker blokkeren",
+        "unban": "Deblokkeer gebruiker",
+        "timeout": "Time-out gebruiker"
+      },
+      "timeoutLength": "Time-out lengte"
+    },
+    "community": {
+      "imageAlt": "Gemeenschapsbeeld",
+      "memberCount": "{{count}} leden",
+      "createdBy": "Gemaakt door @{{handle}}",
+      "visibility": {
+        "private": "Privé",
+        "public": "Openbaar"
+      }
+    },
+    "actions": {
+      "joining": "Wordt lid…",
+      "join": "Deelnemen",
+      "leaving": "Vertrekken…",
+      "leave": "Vertrekken",
+      "editCommunity": "Community bewerken",
+      "createPost": "Maak bericht",
+      "communityLinkCopiedAria": "Communitylink gekopieerd",
+      "copyCommunityLinkAria": "Kopieer gemeenschapslink",
+      "copied": "Gekopieerd",
+      "copyCommunityLink": "Kopieer gemeenschapslink"
+    },
+    "notice": {
+      "signInToPost": "Meld je aan of maak een account aan om berichten te plaatsen en te reageren in deze community.",
+      "joinToPost": "Word lid van deze community om berichten te maken.",
+      "timedOut": "Je bent tijdelijk geblokkeerd in deze community tot {{until}}. Plaatsen en reageren zijn uitgeschakeld.",
+      "later": "later"
+    },
+    "feed": {
+      "title": "Community-feed",
+      "subtitle": "Berichten van leden in /{{slug}}",
+      "searchPlaceholder": "Zoek berichten in deze community",
+      "loadingAria": "Communityposts laden",
+      "empty": {
+        "noSearchMatches": "Geen berichten komen overeen met deze zoekopdracht.",
+        "noPostsYet": "Nog geen berichten."
+      }
+    },
+    "post": {
+      "authorImageAlt": "Auteur afbeelding",
+      "untitled": "Ongetitelde bericht",
+      "pollVotes": "{{count}} stemmen",
+      "badges": {
+        "image": "Afbeelding",
+        "poll": "Peiling"
+      }
+    },
+    "media": {
+      "previousImage": "Vorige afbeelding",
+      "nextImage": "Volgende afbeelding",
+      "postImageAlt": "Afbeelding plaatsen",
+      "imageThumbAlt": "Afbeelding {{index}}",
+      "imagePreview": "Voorvertoning van afbeelding",
+      "closeImagePreview": "Sluit afbeeldingsvoorbeeld",
+      "fullscreenPostImageAlt": "Volledig scherm berichtafbeelding"
+    },
+    "postActions": {
+      "upvotePost": "Post omhoog stemmen",
+      "upvote": "Opwaarderen",
+      "downvotePost": "Post negatief beoordelen",
+      "downvote": "Neerwaarts stemmen",
+      "openComments": "Open opmerkingen",
+      "savePost": "Bericht opslaan",
+      "unsavePost": "Post niet opslaan",
+      "save": "Opslaan",
+      "saved": "Opgeslagen",
+      "postLinkCopiedAria": "Link van bericht gekopieerd",
+      "copyPostLinkAria": "Kopieer berichtlink",
+      "copied": "Gekopieerd",
+      "copyLink": "Kopieer link",
+      "editPost": "Bewerk bericht",
+      "deletePost": "Bericht verwijderen",
+      "deletePostConfirm": "Deze post verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+      "delete": "Verwijderen"
+    },
+    "members": {
+      "modalAria": "Gemeenschapsleden",
+      "title": "Leden",
+      "closeAria": "Sluit ledenmodal",
+      "tabsAria": "Community moderatie weergaven",
+      "tabs": {
+        "members": "Leden",
+        "bannedUsers": "Verboden gebruikers"
+      },
+      "search": {
+        "membersPlaceholder": "Zoek leden op @handle of rol",
+        "bannedPlaceholder": "Doorzoek geblokkeerde gebruikers op naam of @handle",
+        "membersAria": "Zoek leden",
+        "bannedAria": "Zoek geblokkeerde gebruikers"
+      },
+      "hint": {
+        "membersInCommunity": "{{count}} leden in /{{slug}}",
+        "bannedDescription": "Beheer gebruikers die van uw account zijn verbannen terwijl u /{{slug}} modereert"
+      },
+      "actions": {
+        "makeModerator": "Maak moderator",
+        "removeModerator": "Moderator verwijderen",
+        "timeoutUser": "Time-out gebruiker",
+        "banUser": "Gebruiker blokkeren",
+        "unbanUser": "Deblokkeer gebruiker"
+      },
+      "memberAvatarAlt": "Lid avatar",
+      "bannedUserAvatarAlt": "Verboden gebruikersavatar",
+      "bannedRole": "Verboden",
+      "empty": {
+        "noMembersMatchSearch": "Geen leden kwamen overeen met uw zoekopdracht.",
+        "noMembersYet": "Nog geen leden om te tonen.",
+        "loadingBannedUsers": "Geblokkeerde gebruikers laden...",
+        "noBannedUsersMatchSearch": "Geen geblokkeerde gebruikers kwamen overeen met uw zoekopdracht.",
+        "noBannedUsers": "Geen geblokkeerde gebruikers."
+      }
+    },
+    "postType": {
+      "text": "Tekst",
+      "media": "Afbeeldingen & Video",
+      "link": "Koppeling",
+      "poll": "Peiling"
+    },
+    "editPost": {
+      "modalAria": "Communitypost bewerken",
+      "title": "Bewerk bericht",
+      "closeAria": "Sluit bewerkingspost-modal",
+      "typeAria": "Berichttype bewerken",
+      "fields": {
+        "title": "Titel",
+        "linkUrl": "Link URL",
+        "addImages": "Voeg afbeeldingen toe (maximaal 10)",
+        "question": "Vraag",
+        "option": "Optie {{index}}"
+      },
+      "placeholders": {
+        "title": "Voeg een titel toe",
+        "updatePost": "Werk je bericht bij...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "Voeg optionele hoofdtekst toe...",
+        "askCommunity": "Vraag het de gemeenschap...",
+        "optionText": "Optietekst"
+      },
+      "previewAlt": "Geselecteerde bewerkte afbeeldingsvoorbeeld",
+      "removeCurrent": "Huidige verwijderen",
+      "remove": "Verwijderen",
+      "addOption": "Optie toevoegen",
+      "saving": "Bezig met opslaan…",
+      "saveChanges": "Wijzigingen opslaan"
+    },
+    "editCommunity": {
+      "modalAria": "Community bewerken",
+      "title": "Community bewerken",
+      "closeAria": "Sluit bewerkingscommunity-modal",
+      "fields": {
+        "name": "Naam",
+        "information": "Informatie",
+        "rules": "Regels",
+        "image": "Afbeelding"
+      },
+      "placeholders": {
+        "communityName": "Gemeenschapsnaam",
+        "describeCommunity": "Beschrijf deze gemeenschap",
+        "oneRulePerLine": "Één regel per lijn"
+      },
+      "imagePreviewAlt": "Voorbeeld van gemeenschapsafbeelding",
+      "saving": "Bezig met opslaan…",
+      "save": "Opslaan"
+    },
+    "createPost": {
+      "modalAria": "Maak een communitybericht",
+      "title": "Maak bericht",
+      "closeAria": "Sluit modal voor het maken van bericht",
+      "typeAria": "Berichttype",
+      "fields": {
+        "title": "Titel",
+        "linkUrl": "Link URL",
+        "attachImages": "Afbeeldingen bijvoegen (maximaal 10)",
+        "question": "Vraag",
+        "option": "Optie {{index}}"
+      },
+      "placeholders": {
+        "title": "Voeg een titel toe",
+        "shareThoughts": "Deel je gedachten...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "Voeg optionele hoofdtekst toe...",
+        "askCommunity": "Vraag het de gemeenschap...",
+        "optionText": "Optietekst"
+      },
+      "previewAlt": "Geselecteerde berichtafbeeldingvoorbeeld",
+      "removeCurrent": "Huidige verwijderen",
+      "imagesAttachedInTab": "{{count}} afbeelding(en) toegevoegd in het tabblad Afbeeldingen & Video.",
+      "linkAttachedInTab": "Link toegevoegd in het tabblad Link.",
+      "remove": "Verwijderen",
+      "addOption": "Optie toevoegen",
+      "posting": "Bezig met posten…",
+      "post": "Plaats"
+    },
+    "loading": {
+      "communityAria": "Community laden",
+      "feedAria": "Communityfeed laden",
+      "postsAria": "Communityposts laden"
+    }
+  },
+  "sharedCommunityPost": {
+    "loading": {
+      "aria": "Communitybericht laden"
+    },
+    "notFound": {
+      "title": "Bericht niet beschikbaar",
+      "message": "Dit communitybericht is verwijderd of de link is ongeldig."
+    },
+    "errors": {
+      "title": "Er is iets misgegaan",
+      "load": "Kon dit gedeelde communitybericht niet laden.",
+      "votePoll": "Op dit moment niet in staat om op de peiling te stemmen.",
+      "updateSavedState": "Kan opgeslagen status niet bijwerken.",
+      "updatePost": "Kan het bericht momenteel niet bijwerken.",
+      "deletePost": "Kan bericht momenteel niet verwijderen.",
+      "votePost": "Op dit moment niet in staat om op bericht te stemmen."
+    },
+    "confirm": {
+      "deletePost": "Dit bericht verwijderen?",
+      "deleteComment": "Dit commentaar verwijderen?"
+    },
+    "community": {
+      "imageAlt": "Gemeenschapsbeeld",
+      "fallbackSlug": "/gemeenschap"
+    },
+    "post": {
+      "untitled": "Ongetitelde bericht"
+    },
+    "media": {
+      "previousImage": "Vorige afbeelding",
+      "nextImage": "Volgende afbeelding",
+      "postAlt": "Gedeelde communitypostmedia",
+      "thumbAlt": "Afbeelding {{index}}",
+      "imagePreview": "Voorvertoning van afbeelding",
+      "closeImagePreview": "Sluit afbeeldingsvoorbeeld",
+      "fullscreenAlt": "Volledig scherm berichtafbeelding"
+    },
+    "poll": {
+      "votes": "{{count}} stemmen"
+    },
+    "actions": {
+      "upvotePost": "Post omhoog stemmen",
+      "upvote": "Opwaarderen",
+      "downvotePost": "Post negatief beoordelen",
+      "downvote": "Neerwaarts stemmen",
+      "comments": "Opmerkingen",
+      "savePost": "Bericht opslaan",
+      "unsavePost": "Post niet opslaan",
+      "save": "Opslaan",
+      "saved": "Opgeslagen",
+      "copyPostLinkAria": "Kopieer berichtlink",
+      "postLinkCopiedAria": "Link van bericht gekopieerd",
+      "copyLink": "Kopieer link",
+      "copied": "Gekopieerd",
+      "editPost": "Bewerk bericht",
+      "deletePost": "Bericht verwijderen"
+    },
+    "comments": {
+      "later": "later",
+      "timedOut": "Je bent tijdelijk geblokkeerd in deze community tot {{until}}. Plaatsen en reageren zijn uitgeschakeld.",
+      "joinToComment": "Word lid van deze gemeenschap om te reageren.",
+      "signIn": "Inloggen",
+      "signInSuffix": "om deel te nemen aan het gesprek.",
+      "authorImageAlt": "Afbeelding van de auteur van de reactie",
+      "spoilerAria": "Spoilertekst. Klik om te onthullen.",
+      "editor": {
+        "placeholder": "Doe mee aan het gesprek",
+        "submit": "Hoe",
+        "submitting": "Bezig met posten..."
+      },
+      "edit": {
+        "placeholder": "Bewerk je opmerking",
+        "save": "Opslaan",
+        "saving": "Bezig met opslaan..."
+      },
+      "reply": {
+        "placeholder": "Beantwoord u/{{handle}}"
+      },
+      "sort": {
+        "label": "Sorteren op:",
+        "best": "Beste",
+        "top": "Top",
+        "new": "Nieuw",
+        "controversial": "Controversieel",
+        "old": "Oud",
+        "qna": "Vragen en antwoorden"
+      },
+      "search": {
+        "placeholder": "Zoek opmerkingen",
+        "aria": "Zoek opmerkingen"
+      },
+      "empty": {
+        "noneYet": "Nog geen reacties.",
+        "noSearchMatch": "Geen opmerkingen komen overeen met uw zoekopdracht."
+      },
+      "actions": {
+        "upvote": "Opwaarderen",
+        "downvote": "Neerwaarts stemmen",
+        "reply": "Antwoord",
+        "shareComment": "Opmerking delen",
+        "share": "Delen",
+        "commentLinkCopiedAria": "Link gekopieerd",
+        "openCommentActions": "Open commentacties",
+        "moreActions": "Meer acties",
+        "commentActions": "Acties uitleggen",
+        "edit": "Bewerken",
+        "cancelEdit": "Bewerking annuleren",
+        "delete": "Verwijderen",
+        "deleting": "Bezig met verwijderen..."
+      },
+      "errors": {
+        "timedOut": "Je bent tijdelijk geblokkeerd in deze community tot {{until}}.",
+        "postComment": "Kan momenteel geen reactie plaatsen.",
+        "contentRequired": "Inhoud van het commentaar is vereist.",
+        "updateComment": "Kan op dit moment de reactie niet bijwerken.",
+        "deleteComment": "Kan commentaar op dit moment niet verwijderen.",
+        "postReply": "Kan momenteel geen reactie plaatsen."
+      }
     }
   }
 }

@@ -135,7 +135,7 @@
       "email": "du@beispiel.de",
       "password": null,
       "handle": "Sez",
-      "displayName": "Sez",
+      "displayName": "Sagt",
       "country": "Land auswählen (optional)",
       "bio": "Entwickler"
     },
@@ -566,7 +566,7 @@
       "selectImage": "Bild auswählen",
       "selectedFile": "Ausgewählt: {{file}}",
       "cropPreviewAlt": "Avatar-Zuschnitt-Vorschau",
-      "zoom": "Zoom",
+      "zoom": "Zoomen",
       "dragHint": "Ziehe das Bild, um es innerhalb des Kreises neu zu positionieren.",
       "upload": "Bild hochladen",
       "uploading": "Wird hochgeladen..."
@@ -575,18 +575,18 @@
       "system": "Systemstandard",
       "enUS": "Englisch (USA)",
       "enGB": "Englisch (UK)",
-      "da": "Dansk",
+      "da": "Dänisch",
       "es": "Spanisch",
       "de": "Deutsch",
       "fr": "Französisch",
       "ptBR": "Português (Brasilien)",
       "nl": "Niederlande",
-      "sv": "Svenska",
-      "nb": "Norsk bokmål",
+      "sv": "Schwedisch",
+      "nb": "Norwegisches Bokmål",
       "it": "Italienisch",
       "pl": "Polnisch",
-      "ar": "العربية",
-      "tr": "Türkçe"
+      "ar": "Arabisch",
+      "tr": "Türkisch"
     },
     "messages": {
       "birthDateInvalid": "Bitte wähle ein vollständiges und gültiges Geburtsdatum aus.",
@@ -1279,7 +1279,7 @@
       "startNewChat": "Neuen Chat starten"
     },
     "sidebar": {
-      "chats": "Chats"
+      "chats": "Katzen"
     },
     "loading": {
       "conversations": "Gespräche werden geladen",

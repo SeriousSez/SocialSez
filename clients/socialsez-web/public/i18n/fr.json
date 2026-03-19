@@ -62,7 +62,7 @@
       "label": "Rechercher",
       "buttonAria": "Rechercher",
       "scopePrefix": "Portée",
-      "scopeAuto": "Auto",
+      "scopeAuto": "Voiture",
       "scope": {
         "all": "Tous les résultats",
         "communities": "Communautés",
@@ -153,7 +153,7 @@
     "placeholders": {
       "email": "vous@exemple.com",
       "password": null,
-      "handle": "sez",
+      "handle": "dites",
       "displayName": "Séz",
       "country": "Sélectionnez le pays (facultatif)",
       "bio": "Constructeur"
@@ -356,7 +356,7 @@
       "sensitiveOptions": {
         "standard": "Standard",
         "limited": "Limité",
-        "strict": "Strict"
+        "strict": "strict"
       }
     },
     "security": {

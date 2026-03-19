@@ -36,6 +36,7 @@
       },
       "settingsQuickNav": {
         "title": "Inställningar",
+        "aria": "Inställningssektioner",
         "profile": "Profil",
         "account": "Konto",
         "privacy": "Integritet",
@@ -47,13 +48,35 @@
         "data": "Data",
         "blocked": "Blockerade användare",
         "logout": "Logga ut"
+      },
+      "mobileNav": {
+        "aria": "Primär mobilnavigering",
+        "openMore": "Öppna mer navigering",
+        "more": "Mer",
+        "moreAria": "Mer navigering",
+        "groups": "Grupper",
+        "alerts": "Aviseringar"
       }
     },
     "search": {
       "label": "Sök",
       "buttonAria": "Sök",
+      "scopeMenuAria": "Alternativ för sökområde",
       "scopePrefix": "Omfattning",
       "scopeAuto": "Auto",
+      "removeOverride": "Ta bort åsidosättning",
+      "context": {
+        "communities": "Gemenskaper",
+        "blogs": "Bloggar",
+        "profiles": "Profiler",
+        "hashtags": "Hashtags",
+        "chat": "Chatt",
+        "notifications": "Notiser",
+        "discover": "Upptäck",
+        "settings": "Inställningar",
+        "compose": "Skriv",
+        "global": "Global"
+      },
       "scope": {
         "all": "Alla resultat",
         "communities": "Gemenskaper",
@@ -61,7 +84,27 @@
         "users": "Användare",
         "posts": "Inlägg",
         "reels": "Reels",
-        "hashtags": "Hashtags"
+        "hashtags": "Hashtags",
+        "communityPosts": "Communityinlägg"
+      },
+      "placeholder": {
+        "communities": "Sök gemenskaper, communityinlägg, användare, hashtags",
+        "blogs": "Sök bloggar, gemenskaper, inlägg, hashtags",
+        "profiles": "Sök profiler, inlägg, reels, hashtags",
+        "hashtags": "Sök hashtags, inlägg, reels",
+        "chat": "Sök användare, inlägg, reels, hashtags",
+        "notifications": "Sök användare, inlägg, reels, hashtags",
+        "discover": "Sök användare, gemenskaper, communityinlägg, bloggar, reels, inlägg, hashtags",
+        "global": "Sök användare, gemenskaper, communityinlägg, bloggar, reels, inlägg, hashtags"
+      },
+      "placeholderByScope": {
+        "communities": "Sök gemenskaper efter namn, slug eller beskrivning",
+        "communityPosts": "Sök communityinlägg efter titel, innehåll eller författare",
+        "blogs": "Sök bloggar efter titel, handle eller slug",
+        "users": "Sök användare och profiler",
+        "posts": "Sök inlägg och författare",
+        "reels": "Sök reels efter bildtext, kommentarer eller författare",
+        "hashtags": "Sök hashtags"
       }
     }
   },
@@ -79,19 +122,79 @@
       "handle": "Handle",
       "displayName": "Visningsnamn",
       "dateOfBirth": "Födelsedatum",
+      "day": "Dag",
+      "month": "Månad",
+      "year": "År",
       "country": "Land",
       "bio": "Bio"
+    },
+    "placeholders": {
+      "email": "du@example.com",
+      "password": "••••••••",
+      "handle": "sez",
+      "displayName": "Sez",
+      "country": "Välj land (valfritt)",
+      "bio": "Byggare"
     },
     "actions": {
       "signIn": "Logga in",
       "createAccount": "Skapa konto",
+      "staySignedIn": "Håll mig inloggad",
+      "showPassword": "Visa lösenord",
+      "hidePassword": "Dölj lösenord",
+      "showConfirmPassword": "Visa bekräftelselösenord",
+      "hideConfirmPassword": "Dölj bekräftelselösenord",
+      "signingIn": "Loggar in...",
+      "creatingAccount": "Skapar konto...",
+      "finishingSetup": "Slutför konfiguration...",
       "continue": "Fortsätt",
       "finish": "Slutför",
       "skipForNow": "Hoppa över nu"
     },
+    "passwordStrength": {
+      "label": "Lösenordsstyrka",
+      "weak": "Svag",
+      "medium": "Medel",
+      "strong": "Stark"
+    },
+    "preferences": {
+      "acceptTerms": "Jag godkänner villkoren och communityriktlinjerna.",
+      "privateByDefault": "Gör mitt konto privat som standard.",
+      "marketingOptIn": "Skicka produktuppdateringar och tips via e-post."
+    },
+    "interests": {
+      "title": "Välj dina intressen",
+      "subtitle": "Välj upp till 12 hashtags. Vi följer dem åt dig för att anpassa ditt flöde.",
+      "unavailable": "Trendande intressen är inte tillgängliga just nu. Du kan hoppa över och konfigurera detta senare i Upptäck."
+    },
     "switch": {
       "newHere": "Ny här?",
       "alreadyHaveAccount": "Har du redan ett konto?"
+    },
+    "mode": {
+      "aria": "Autentiseringsläge"
+    },
+    "sections": {
+      "security": "Säkerhet",
+      "profile": "Profil",
+      "preferences": "Preferenser"
+    },
+    "profileUrl": "Din profil-URL",
+    "validation": {
+      "emailRequired": "E-post krävs.",
+      "passwordRequired": "Lösenord krävs.",
+      "passwordTooShort": "Lösenordet måste vara minst 8 tecken.",
+      "passwordsMismatch": "Lösenorden matchar inte.",
+      "handleRequired": "Handle krävs.",
+      "displayNameRequired": "Visningsnamn krävs.",
+      "birthDateInvalid": "Välj ett fullständigt giltigt födelsedatum.",
+      "minimumAge": "Du måste vara minst 13 år för att registrera dig.",
+      "acceptTerms": "Du måste godkänna villkoren för att skapa ett konto."
+    },
+    "errors": {
+      "registerFailed": "Kunde inte registrera med dessa uppgifter.",
+      "invalidCredentials": "Ogiltiga inloggningsuppgifter.",
+      "interestsSaveFailed": "Vi skapade ditt konto, men kunde inte spara intressen just nu."
     }
   },
   "settings": {
@@ -118,9 +221,16 @@
       "reload": "Ladda om",
       "discard": "Kasta",
       "saving": "Sparar...",
+      "processing": "Bearbetar...",
+      "working": "Arbetar...",
       "cancel": "Avbryt",
       "back": "Tillbaka",
-      "add": "Lägg till"
+      "add": "Lägg till",
+      "day": "Dag",
+      "month": "Månad",
+      "year": "År",
+      "lastSaved": "Senast sparad: {{date}}",
+      "lastAction": "Senaste åtgärd: {{date}}"
     },
     "preferences": {
       "compactFeed": "Kompakt flödeslayout",
@@ -131,7 +241,8 @@
       "largerText": "Större textläge",
       "highContrast": "Högkontrastläge",
       "language": "Språk",
-      "saveAccessibility": "Spara tillgänglighet"
+      "saveAccessibility": "Spara tillgänglighet",
+      "useSystemThemeHelp": "Mörkt läge följer operativsystemets utseende när detta är aktiverat."
     },
     "language": {
       "system": "Systemstandard",
@@ -151,9 +262,125 @@
       "tr": "Türkçe"
     },
     "messages": {
+      "birthDateInvalid": "Välj ett fullständigt giltigt födelsedatum.",
       "profileSaved": "Profilinställningar sparade.",
       "profileReloaded": "Profilinställningar omladdade.",
+      "privacySaved": "Integritetsinställning sparad.",
+      "discoverySaved": "Upptäckts- och publikintegritetsinställningar sparade.",
+      "notificationsSaved": "Notisinställningar sparade.",
+      "safetySaved": "Säkerhetsinställningar sparade.",
+      "sessionRevoked": "Session återkallad.",
+      "otherSessionsLoggedOutOne": "Loggade ut 1 annan session.",
+      "otherSessionsLoggedOutMany": "Loggade ut {{count}} andra sessioner.",
+      "noOtherSessions": "Inga andra aktiva sessioner att återkalla.",
+      "dataExportDownloaded": "Dataexport nedladdad.",
+      "deactivateTypeConfirm": "Skriv DEACTIVATE för att bekräfta begäran om kontoinaktivering.",
+      "deleteTypeConfirm": "Skriv DELETE för att bekräfta begäran om kontoborttagning.",
+      "accountDeactivated": "Konto inaktiverat och sessioner återkallade.",
+      "accountDeleted": "Konto borttaget.",
+      "profileImageUpdated": "Profilbild uppdaterad.",
+      "imageRemoved": "Bild borttagen. Spara profil för att tillämpa.",
+      "unblockedHandle": "Avblockerade @{{handle}}.",
+      "accessibilitySaved": "Tillgänglighetsinställningar sparade.",
       "preferencesSaved": "Preferenser sparade."
+    },
+    "audience": {
+      "everyone": "Alla",
+      "following": "Personer du följer",
+      "nobody": "Ingen"
+    },
+    "notifications": {
+      "likes": "Gilla-markeringar",
+      "comments": "Kommentarer",
+      "follows": "Följare",
+      "mentions": "Omnämnanden",
+      "messages": "Direktmeddelanden",
+      "marketing": "Marknadsföring",
+      "product": "Produktuppdateringar",
+      "quietHours": "Tysta timmar",
+      "quietHoursStart": "Start",
+      "quietHoursEnd": "Slut",
+      "save": "Spara notiser"
+    },
+    "safety": {
+      "sensitiveContentLevel": "Känslighetsnivå för innehåll",
+      "hideSensitiveMedia": "Dölj känsligt media som standard",
+      "mutedWords": "Tystade ord",
+      "addWordOrPhrase": "Lägg till ord eller fras",
+      "noMutedKeywords": "Inga tystade nyckelord ännu.",
+      "mutedUsers": "Tystade användare",
+      "addHandlePlaceholder": "Lägg till handle (exempel: @namn)",
+      "searchingUsers": "Söker användare...",
+      "profileAvatarAlt": "Profilavatar",
+      "noMutedUsers": "Inga tystade användare i inställningarna ännu.",
+      "save": "Spara säkerhet",
+      "sensitiveOptions": {
+        "standard": "Standard",
+        "limited": "Begränsad",
+        "strict": "Strikt"
+      }
+    },
+    "security": {
+      "description": "Var du är inloggad.",
+      "currentDevice": "Nuvarande enhet",
+      "signedInDevice": "Inloggad enhet",
+      "currentSessionLabel": "Nuvarande session",
+      "sessionLabel": "Session {{id}}",
+      "created": "Skapad {{date}}",
+      "expires": "Upphör {{date}}",
+      "revoked": "Återkallad",
+      "revoke": "Återkalla",
+      "revoking": "Återkallar...",
+      "noSessions": "Inga aktiva sessioner hittades.",
+      "logoutOtherSessions": "Logga ut andra sessioner"
+    },
+    "data": {
+      "description": "Ladda ner dina kontodata och hantera begäranden för kontots livscykel.",
+      "downloadMyData": "Ladda ner mina data",
+      "deactivateTitle": "Inaktivera konto",
+      "deactivatePrompt": "Skriv DEACTIVATE för att bekräfta begäran.",
+      "deactivatePlaceholder": "Skriv DEACTIVATE",
+      "requestDeactivation": "Begär inaktivering",
+      "deleteTitle": "Ta bort konto",
+      "deletePrompt": "Skriv DELETE för att bekräfta begäran.",
+      "deletePlaceholder": "Skriv DELETE",
+      "requestDelete": "Begär borttagning",
+      "immediateWarning": "Båda åtgärderna tillämpas omedelbart och loggar ut dig.",
+      "confirmDeactivateTitle": "Inaktivera konto",
+      "confirmDeactivateMessage": "Inaktivera ditt konto nu? Detta loggar ut dig direkt och återkallar aktiva sessioner.",
+      "confirmDeleteTitle": "Ta bort konto",
+      "confirmDeleteMessage": "Ta bort ditt konto permanent? Detta kan inte ångras och loggar ut dig direkt."
+    },
+    "blocked": {
+      "description": "Hantera användare du har blockerat.",
+      "loading": "Läser in blockerade användare...",
+      "viewProfile": "Visa profil",
+      "imageAlt": "Bild för blockerad användare",
+      "unblock": "Avblockera",
+      "unblocking": "Avblockerar...",
+      "empty": "Du har inte blockerat någon."
+    },
+    "logout": {
+      "description": "Logga ut från ditt nuvarande konto på denna enhet.",
+      "action": "Logga ut"
+    },
+    "avatarModal": {
+      "dialogAria": "Uppdatera profilbild",
+      "title": "Uppdatera profilbild",
+      "close": "Stäng avatarfönster",
+      "stepsAria": "Steg för avataruppladdning",
+      "stepSelect": "1. Välj",
+      "stepCrop": "2. Beskär & Ladda upp",
+      "selectImageAria": "Välj avatarbild",
+      "chooseTitle": "Välj en bild för din profil",
+      "chooseSubtitle": "Nästa steg låter dig beskära och placera den.",
+      "selectImage": "Välj bild",
+      "selectedFile": "Vald: {{file}}",
+      "cropPreviewAlt": "Förhandsvisning av avatarbeskärning",
+      "zoom": "Zoom",
+      "dragHint": "Dra bilden för att flytta den inom cirkeln.",
+      "upload": "Ladda upp bild",
+      "uploading": "Laddar upp..."
     }
   },
   "discover": {
