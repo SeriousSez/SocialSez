@@ -1,4 +1,4 @@
-<a class="skip-link" href="#main-content" *ngIf="!isEmbedRoute">Skip to content</a>
+<a class="skip-link" href="#main-content" *ngIf="!isEmbedRoute">{{ 'app.shell.skipToContent' | translate }}</a>
 
 <section class="top-notice" [class.is-error]="isTopNoticeError" [class.is-hiding]="topNoticeHiding" *ngIf="showTopNotice && !isEmbedRoute" [attr.role]="isTopNoticeError ? 'alert' : 'status'" [attr.aria-live]="isTopNoticeError ? 'assertive' : 'polite'" aria-atomic="true">
     <span class="top-notice-icon" [class.is-error]="isTopNoticeError" aria-hidden="true">
@@ -7,7 +7,7 @@
     <div class="top-notice-copy">
         <span class="banner-title">{{ topNoticeMessage }}</span>
     </div>
-    <button type="button" class="top-notice-action" *ngIf="showTopNoticeAction" (click)="onTopNoticeAction()" aria-label="Dismiss notification">{{ topNoticeActionLabel }}</button>
+    <button type="button" class="top-notice-action" *ngIf="showTopNoticeAction" (click)="onTopNoticeAction()" [attr.aria-label]="'app.notice.dismissAria' | translate">{{ topNoticeActionLabel }}</button>
 </section>
 
 <main class="shell" [class.chat-mode]="isChatThreadRoute" *ngIf="!isEmbedRoute">
@@ -16,7 +16,7 @@
             <img class="brand-mark" src="/assets/images/v-blue-close.png" alt="Venli logo" />
             <div>
                 <h1>Venli</h1>
-                <p class="brand-sub">Community Platform</p>
+                <p class="brand-sub">{{ 'app.shell.brandSubtitle' | translate }}</p>
             </div>
         </div>
 
@@ -36,29 +36,29 @@
         </div>
 
         <nav class="tabs">
-            <a class="tab-feed" routerLink="/feed" routerLinkActive="active"><i class="fa-duotone fa-light fa-house" aria-hidden="true"></i><span>Feed</span></a>
-            <a class="tab-discover" routerLink="/discover" routerLinkActive="active"><i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i><span>Discover</span></a>
-            <a class="tab-blogs" routerLink="/blogs" routerLinkActive="active"><i class="fa-duotone fa-light fa-blog" aria-hidden="true"></i><span>Blogs</span></a>
-            <a class="tab-communities" routerLink="/communities" routerLinkActive="active"><i class="fa-duotone fa-light fa-users" aria-hidden="true"></i><span>Communities</span></a>
-            <a class="tab-chat" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i><span>Chat</span></a>
-            <a class="tab-saved" routerLink="/saved" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-bookmark" aria-hidden="true"></i><span>Saved</span></a>
-            <a class="tab-drafts" routerLink="/drafts" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i><span>Drafts</span></a>
+            <a class="tab-feed" routerLink="/feed" routerLinkActive="active"><i class="fa-duotone fa-light fa-house" aria-hidden="true"></i><span>{{ 'app.shell.nav.feed' | translate }}</span></a>
+            <a class="tab-discover" routerLink="/discover" routerLinkActive="active"><i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i><span>{{ 'app.shell.nav.discover' | translate }}</span></a>
+            <a class="tab-blogs" routerLink="/blogs" routerLinkActive="active"><i class="fa-duotone fa-light fa-blog" aria-hidden="true"></i><span>{{ 'app.shell.nav.blogs' | translate }}</span></a>
+            <a class="tab-communities" routerLink="/communities" routerLinkActive="active"><i class="fa-duotone fa-light fa-users" aria-hidden="true"></i><span>{{ 'app.shell.nav.communities' | translate }}</span></a>
+            <a class="tab-chat" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i><span>{{ 'app.shell.nav.chat' | translate }}</span></a>
+            <a class="tab-saved" routerLink="/saved" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-bookmark" aria-hidden="true"></i><span>{{ 'app.shell.nav.saved' | translate }}</span></a>
+            <a class="tab-drafts" routerLink="/drafts" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i><span>{{ 'app.shell.nav.drafts' | translate }}</span></a>
             <a class="tab-notifications" routerLink="/notifications" routerLinkActive="active" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-bell" aria-hidden="true"></i>
                 <span class="tab-content">
-                    <span>Notifications</span>
+                    <span>{{ 'app.shell.nav.notifications' | translate }}</span>
                     <span class="tab-badge" *ngIf="unreadNotificationsCount > 0">{{ unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount }}</span>
                 </span>
             </a>
-            <a class="tab-profile" routerLink="/profile" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-user" aria-hidden="true"></i><span>Profile</span></a>
-            <a class="tab-settings" routerLink="/settings" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i><span>Settings</span></a>
-            <a class="tab-auth" routerLink="/auth" routerLinkActive="active" *ngIf="!session.isAuthenticated()"><i class="fa-duotone fa-light fa-right-to-bracket" aria-hidden="true"></i><span>Auth</span></a>
+            <a class="tab-profile" routerLink="/profile" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-user" aria-hidden="true"></i><span>{{ 'app.shell.nav.profile' | translate }}</span></a>
+            <a class="tab-settings" routerLink="/settings" routerLinkActive="active" *ngIf="session.isAuthenticated()"><i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i><span>{{ 'app.shell.nav.settings' | translate }}</span></a>
+            <a class="tab-auth" routerLink="/auth" routerLinkActive="active" *ngIf="!session.isAuthenticated()"><i class="fa-duotone fa-light fa-right-to-bracket" aria-hidden="true"></i><span>{{ 'app.shell.nav.auth' | translate }}</span></a>
         </nav>
 
         <div class="side-card side-card-mobile-fallback">
-            <h3>Activity</h3>
-            <p class="hint" *ngIf="!progressItems.length">Nothing in progress.</p>
-            <ul *ngIf="progressItems.length" aria-label="Upload and publish activity">
+            <h3>{{ 'app.shell.activity.title' | translate }}</h3>
+            <p class="hint" *ngIf="!progressItems.length">{{ 'app.shell.activity.empty' | translate }}</p>
+            <ul *ngIf="progressItems.length" [attr.aria-label]="'app.shell.activity.aria' | translate">
                 <li *ngFor="let item of progressItems; trackBy: trackProgressItemById">
                     <span class="progress-row">
                         <i class="fa-duotone fa-light" [class.fa-spinner]="item.status === 'pending'" [class.fa-spin]="item.status === 'pending'" [class.fa-circle-check]="item.status === 'success'" [class.fa-circle-exclamation]="item.status === 'failed'" aria-hidden="true"></i>
@@ -72,7 +72,7 @@
     <section class="main-column">
         <header class="topbar">
             <label class="search-box">
-                <span>Search</span>
+                <span>{{ 'app.search.label' | translate }}</span>
                 <div class="search-row">
                     <div class="search-scope-picker">
                         <button class="search-context-chip" type="button" [class.overridden]="isSearchScopeOverridden" [attr.aria-label]="'Search scope: ' + searchChipLabel" [attr.aria-expanded]="searchScopePickerOpen" aria-haspopup="menu" (click)="toggleSearchScopePicker($event)">
@@ -80,27 +80,27 @@
                             <i class="fa-duotone fa-light fa-chevron-down" aria-hidden="true"></i>
                         </button>
 
-                        <div class="search-scope-menu" *ngIf="searchScopePickerOpen" role="menu" aria-label="Search scope options">
+                        <div class="search-scope-menu" *ngIf="searchScopePickerOpen" role="menu" [attr.aria-label]="'app.search.scopeMenuAria' | translate">
                             <button type="button" class="search-scope-option" [class.active]="!isSearchScopeOverridden" (click)="clearSearchScopeOverride($event)">
-                                Auto ({{ autoSearchScopeLabel }})
+                                {{ 'app.search.scopeAuto' | translate }} ({{ autoSearchScopeLabel }})
                             </button>
                             <button type="button" class="search-scope-option" *ngFor="let option of searchScopeOptions" [class.active]="manualSearchScope === option.value" (click)="selectSearchScope(option.value, $event)">
                                 {{ option.label }}
                             </button>
                             <button type="button" class="search-scope-remove" *ngIf="isSearchScopeOverridden" (click)="clearSearchScopeOverride($event)">
-                                Remove override
+                                {{ 'app.search.removeOverride' | translate }}
                             </button>
                         </div>
                     </div>
                     <input [placeholder]="searchPlaceholder" [(ngModel)]="searchText" (keydown.enter)="searchNow()" />
-                    <button class="search-btn" type="button" (click)="searchNow()" aria-label="Search">
+                    <button class="search-btn" type="button" (click)="searchNow()" [attr.aria-label]="'app.search.buttonAria' | translate">
                         <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
                     </button>
                 </div>
             </label>
 
             <div class="top-actions" *ngIf="!session.isAuthenticated()">
-                <a class="signin-link" routerLink="/auth">Sign in</a>
+                <a class="signin-link" routerLink="/auth">{{ 'auth.actions.signIn' | translate }}</a>
             </div>
         </header>
 
@@ -112,20 +112,20 @@
     <aside class="right-rail">
         <ng-container *ngIf="!isCommunityPageRoute">
             <div class="side-card">
-                <h3>Trending</h3>
-                <p class="hint" *ngIf="loadingTrending">Loading hashtags...</p>
+                <h3>{{ 'app.shell.trending.title' | translate }}</h3>
+                <p class="hint" *ngIf="loadingTrending">{{ 'app.shell.trending.loading' | translate }}</p>
                 <ul *ngIf="!loadingTrending && trendingHashtags.length">
                     <li *ngFor="let hashtag of trendingHashtags">
                         <a [routerLink]="['/hashtags', hashtag.tag]">#{{ hashtag.tag }}</a>
                         <span class="trend-count">{{ hashtag.count }}</span>
                     </li>
                 </ul>
-                <p class="hint" *ngIf="!loadingTrending && !trendingHashtags.length">No trending hashtags yet.</p>
+                <p class="hint" *ngIf="!loadingTrending && !trendingHashtags.length">{{ 'app.shell.trending.empty' | translate }}</p>
             </div>
             <div class="side-card">
-                <h3>Activity</h3>
-                <p class="hint" *ngIf="!progressItems.length">Nothing in progress.</p>
-                <ul *ngIf="progressItems.length" aria-label="Upload and publish activity">
+                <h3>{{ 'app.shell.activity.title' | translate }}</h3>
+                <p class="hint" *ngIf="!progressItems.length">{{ 'app.shell.activity.empty' | translate }}</p>
+                <ul *ngIf="progressItems.length" [attr.aria-label]="'app.shell.activity.aria' | translate">
                     <li *ngFor="let item of progressItems; trackBy: trackProgressItemById">
                         <span class="progress-row">
                             <i class="fa-duotone fa-light" [class.fa-spinner]="item.status === 'pending'" [class.fa-spin]="item.status === 'pending'" [class.fa-circle-check]="item.status === 'success'" [class.fa-circle-exclamation]="item.status === 'failed'" aria-hidden="true"></i>
@@ -136,19 +136,19 @@
             </div>
 
             <div class="side-card settings-quick-nav" *ngIf="isSettingsRoute && session.isAuthenticated()">
-                <h3>Settings</h3>
-                <nav class="settings-quick-nav-links" aria-label="Settings sections">
-                    <a href="/settings#settings-section-profile">Profile</a>
-                    <a href="/settings#settings-section-account">Account</a>
-                    <a href="/settings#settings-section-privacy">Privacy</a>
-                    <a href="/settings#settings-section-session">Session</a>
-                    <a href="/settings#settings-section-preferences">Preferences</a>
-                    <a href="/settings#settings-section-notifications">Notifications</a>
-                    <a href="/settings#settings-section-safety">Safety</a>
-                    <a href="/settings#settings-section-security">Security</a>
-                    <a href="/settings#settings-section-data">Data</a>
-                    <a href="/settings#settings-section-blocked">Blocked users</a>
-                    <a href="/settings#settings-section-logout">Logout</a>
+                <h3>{{ 'app.shell.settingsQuickNav.title' | translate }}</h3>
+                <nav class="settings-quick-nav-links" [attr.aria-label]="'app.shell.settingsQuickNav.aria' | translate">
+                    <a href="/settings#settings-section-profile">{{ 'app.shell.settingsQuickNav.profile' | translate }}</a>
+                    <a href="/settings#settings-section-account">{{ 'app.shell.settingsQuickNav.account' | translate }}</a>
+                    <a href="/settings#settings-section-privacy">{{ 'app.shell.settingsQuickNav.privacy' | translate }}</a>
+                    <a href="/settings#settings-section-session">{{ 'app.shell.settingsQuickNav.session' | translate }}</a>
+                    <a href="/settings#settings-section-preferences">{{ 'app.shell.settingsQuickNav.preferences' | translate }}</a>
+                    <a href="/settings#settings-section-notifications">{{ 'app.shell.settingsQuickNav.notifications' | translate }}</a>
+                    <a href="/settings#settings-section-safety">{{ 'app.shell.settingsQuickNav.safety' | translate }}</a>
+                    <a href="/settings#settings-section-security">{{ 'app.shell.settingsQuickNav.security' | translate }}</a>
+                    <a href="/settings#settings-section-data">{{ 'app.shell.settingsQuickNav.data' | translate }}</a>
+                    <a href="/settings#settings-section-blocked">{{ 'app.shell.settingsQuickNav.blocked' | translate }}</a>
+                    <a href="/settings#settings-section-logout">{{ 'app.shell.settingsQuickNav.logout' | translate }}</a>
                 </nav>
             </div>
 
@@ -159,58 +159,58 @@
     </aside>
 </main>
 
-<nav class="mobile-footer-tabs" [class.hidden-on-chat]="isChatThreadRoute" aria-label="Primary mobile navigation" *ngIf="!isEmbedRoute">
+<nav class="mobile-footer-tabs" [class.hidden-on-chat]="isChatThreadRoute" [attr.aria-label]="'app.shell.mobileNav.aria' | translate" *ngIf="!isEmbedRoute">
     <a class="mobile-footer-tab" routerLink="/feed" routerLinkActive="active">
         <i class="fa-duotone fa-light fa-house" aria-hidden="true"></i>
-        <span>Feed</span>
+        <span>{{ 'app.shell.nav.feed' | translate }}</span>
     </a>
     <a class="mobile-footer-tab" routerLink="/discover" routerLinkActive="active">
         <i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i>
-        <span>Discover</span>
+        <span>{{ 'app.shell.nav.discover' | translate }}</span>
     </a>
     <a class="mobile-footer-tab" routerLink="/blogs" routerLinkActive="active">
         <i class="fa-duotone fa-light fa-blog" aria-hidden="true"></i>
-        <span>Blogs</span>
+        <span>{{ 'app.shell.nav.blogs' | translate }}</span>
     </a>
     <a class="mobile-footer-tab" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()">
         <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
-        <span>Chat</span>
+        <span>{{ 'app.shell.nav.chat' | translate }}</span>
     </a>
 
     <div class="mobile-footer-more" [class.open]="mobileFooterMenuOpen">
-        <button type="button" class="mobile-footer-tab mobile-footer-more-trigger" [class.active]="mobileFooterMenuOpen" (click)="toggleMobileFooterMenu()" [attr.aria-expanded]="mobileFooterMenuOpen" aria-haspopup="menu" aria-label="Open more navigation">
+        <button type="button" class="mobile-footer-tab mobile-footer-more-trigger" [class.active]="mobileFooterMenuOpen" (click)="toggleMobileFooterMenu()" [attr.aria-expanded]="mobileFooterMenuOpen" aria-haspopup="menu" [attr.aria-label]="'app.shell.mobileNav.openMore' | translate">
             <i class="fa-duotone fa-light fa-bars" aria-hidden="true"></i>
-            <span>More</span>
+            <span>{{ 'app.shell.mobileNav.more' | translate }}</span>
         </button>
 
-        <div class="mobile-footer-more-menu" *ngIf="mobileFooterMenuOpen" role="menu" aria-label="More navigation">
+        <div class="mobile-footer-more-menu" *ngIf="mobileFooterMenuOpen" role="menu" [attr.aria-label]="'app.shell.mobileNav.moreAria' | translate">
             <a class="mobile-footer-more-item" routerLink="/communities" (click)="closeMobileFooterMenu()" role="menuitem">
                 <i class="fa-duotone fa-light fa-users" aria-hidden="true"></i>
-                <span>Groups</span>
+                <span>{{ 'app.shell.mobileNav.groups' | translate }}</span>
             </a>
             <a class="mobile-footer-more-item" routerLink="/notifications" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-bell" aria-hidden="true"></i>
-                <span>Alerts</span>
+                <span>{{ 'app.shell.mobileNav.alerts' | translate }}</span>
             </a>
             <a class="mobile-footer-more-item" routerLink="/saved" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-bookmark" aria-hidden="true"></i>
-                <span>Saved</span>
+                <span>{{ 'app.shell.nav.saved' | translate }}</span>
             </a>
             <a class="mobile-footer-more-item" routerLink="/drafts" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-pen-to-square" aria-hidden="true"></i>
-                <span>Drafts</span>
+                <span>{{ 'app.shell.nav.drafts' | translate }}</span>
             </a>
             <a class="mobile-footer-more-item" routerLink="/profile" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-user" aria-hidden="true"></i>
-                <span>Profile</span>
+                <span>{{ 'app.shell.nav.profile' | translate }}</span>
             </a>
             <a class="mobile-footer-more-item" routerLink="/settings" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i>
-                <span>Settings</span>
+                <span>{{ 'app.shell.nav.settings' | translate }}</span>
             </a>
             <a class="mobile-footer-more-item" routerLink="/auth" (click)="closeMobileFooterMenu()" role="menuitem" *ngIf="!session.isAuthenticated()">
                 <i class="fa-duotone fa-light fa-right-to-bracket" aria-hidden="true"></i>
-                <span>Auth</span>
+                <span>{{ 'app.shell.nav.auth' | translate }}</span>
             </a>
         </div>
     </div>

@@ -97,11 +97,6 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     private readonly lastProgressEmitAtByReelId = new Map<string, number>();
     private copyLinkResetTimerId: number | null = null;
     private readonly ngZone = inject(NgZone);
-    private readonly preciseDateFormatter = new Intl.DateTimeFormat(resolveAppLocale(), {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
 
     ngAfterViewInit(): void {
         this.setupVisibilityObserver();
@@ -916,7 +911,11 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
             return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
         }
 
-        return this.preciseDateFormatter.format(createdAt);
+        return new Intl.DateTimeFormat(resolveAppLocale(), {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        }).format(createdAt);
     }
 
     private parseReelMetadata(reel: ReelDto): { location: string; collaborators: string[]; caption: string; frameZoom: number; frameOffsetX: number; frameOffsetY: number } {

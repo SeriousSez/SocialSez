@@ -1,3 +1,5 @@
+import { resolveFormattingLocale } from './app-language.util';
+
 function hasExplicitTimezone(value: string): boolean {
     return /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
 }
@@ -41,22 +43,7 @@ export function normalizeUtcDateFields<T>(value: T): T {
 }
 
 export function resolveAppLocale(): string {
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
-    const browserLocales = typeof navigator === 'undefined'
-        ? []
-        : [navigator.language, ...(navigator.languages ?? [])]
-            .filter((locale): locale is string => !!locale)
-            .map(locale => locale.toLowerCase());
-
-    if (browserLocales.some(locale => locale.startsWith('da')) || timeZone === 'Europe/Copenhagen') {
-        return 'da';
-    }
-
-    if (browserLocales.some(locale => locale.startsWith('en-gb'))) {
-        return 'en-GB';
-    }
-
-    return 'en-US';
+    return resolveFormattingLocale();
 }
 
 export function prefers24HourClock(): boolean {

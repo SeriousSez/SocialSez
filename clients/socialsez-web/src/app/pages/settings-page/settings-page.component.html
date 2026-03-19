@@ -1,41 +1,41 @@
 <section class="page" *ngIf="session.profile as profile">
     <header class="page-head">
         <div>
-            <h2>Settings</h2>
-            <p>Manage your account, profile and app preferences.</p>
+            <h2>{{ 'settings.page.title' | translate }}</h2>
+            <p>{{ 'settings.page.subtitle' | translate }}</p>
         </div>
         <div class="chip">@{{ profile.handle }}</div>
     </header>
 
     <section class="card unsaved-banner" *ngIf="hasAnyUnsavedChanges">
-        <p class="meta">You have unsaved settings changes.</p>
+        <p class="meta">{{ 'settings.page.unsavedChanges' | translate }}</p>
         <div class="actions">
-            <button type="button" class="ghost" (click)="resetAllUnsavedChanges()">Discard all unsaved changes</button>
+            <button type="button" class="ghost" (click)="resetAllUnsavedChanges()">{{ 'settings.page.discardAll' | translate }}</button>
         </div>
     </section>
 
     <section class="card" id="settings-section-profile">
         <button type="button" class="section-toggle" (click)="toggleSection('profile')" [attr.aria-expanded]="sectionOpenState.profile">
-            <h3>Profile</h3>
+            <h3>{{ 'settings.sections.profile' | translate }}</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.profile">▾</span>
         </button>
 
         <div class="section-body" [class.open]="sectionOpenState.profile" [attr.aria-hidden]="!sectionOpenState.profile" [attr.inert]="!sectionOpenState.profile ? '' : null">
             <div class="section-inner">
-                <label>Display Name <input [(ngModel)]="displayName" /></label>
+                <label>{{ 'settings.profile.displayName' | translate }} <input [(ngModel)]="displayName" /></label>
                 <div class="editor-field">
-                    <span class="field-label">Bio</span>
-                    <app-comment-editor [placeholder]="'Tell people about yourself'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="bio" [initialContentIsHtml]="true" (contentChanged)="bio = $event"></app-comment-editor>
+                    <span class="field-label">{{ 'settings.profile.bio' | translate }}</span>
+                    <app-comment-editor [placeholder]="'settings.profile.bioPlaceholder' | translate" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="bio" [initialContentIsHtml]="true" (contentChanged)="bio = $event"></app-comment-editor>
                 </div>
                 <div class="profile-image-actions">
-                    <button type="button" class="ghost" (click)="openAvatarModal()" [disabled]="uploadingProfileImage">Change Image</button>
-                    <button class="ghost" type="button" (click)="removeProfileImage()" [disabled]="!imageUrl.trim() || uploadingProfileImage">Remove Image</button>
+                    <button type="button" class="ghost" (click)="openAvatarModal()" [disabled]="uploadingProfileImage">{{ 'settings.profile.changeImage' | translate }}</button>
+                    <button class="ghost" type="button" (click)="removeProfileImage()" [disabled]="!imageUrl.trim() || uploadingProfileImage">{{ 'settings.profile.removeImage' | translate }}</button>
                 </div>
-                <p class="meta" *ngIf="uploadingProfileImage">Uploading image...</p>
-                <img class="preview" *ngIf="imageUrl.trim()" [src]="imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile image preview" />
+                <p class="meta" *ngIf="uploadingProfileImage">{{ 'settings.profile.uploadingImage' | translate }}</p>
+                <img class="preview" *ngIf="imageUrl.trim()" [src]="imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'settings.profile.previewAlt' | translate" />
                 <div class="actions">
-                    <button (click)="saveProfile()">Save Profile</button>
-                    <button class="ghost" (click)="reloadProfile()">Reload</button>
+                    <button (click)="saveProfile()">{{ 'settings.profile.save' | translate }}</button>
+                    <button class="ghost" (click)="reloadProfile()">{{ 'settings.common.reload' | translate }}</button>
                 </div>
             </div>
         </div>
@@ -43,70 +43,70 @@
 
     <section class="card" id="settings-section-account">
         <button type="button" class="section-toggle" (click)="toggleSection('account')" [attr.aria-expanded]="sectionOpenState.account">
-            <h3>Account</h3>
+            <h3>{{ 'settings.sections.account' | translate }}</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.account">▾</span>
         </button>
 
         <div class="section-body" [class.open]="sectionOpenState.account" [attr.aria-hidden]="!sectionOpenState.account" [attr.inert]="!sectionOpenState.account ? '' : null">
             <div class="section-inner">
-                <p class="meta"><strong>Profile Id:</strong> {{ profile.id }}</p>
-                <label>Handle <input [(ngModel)]="handle" (ngModelChange)="onHandleInput($event)" /></label>
+                <p class="meta"><strong>{{ 'settings.account.profileId' | translate }}</strong> {{ profile.id }}</p>
+                <label>{{ 'settings.account.handle' | translate }} <input [(ngModel)]="handle" (ngModelChange)="onHandleInput($event)" /></label>
                 <p class="meta" *ngIf="handleChangeAvailableAtUtc as availableAt; else handleReadyNow">
-                    Handle changes are limited to once every 30 days. Next change available on {{ availableAt | date:'mediumDate' }}.
+                    {{ 'settings.account.handleLimitedAvailable' | translate:{ date: (availableAt | date:'mediumDate') } }}
                 </p>
                 <ng-template #handleReadyNow>
-                    <p class="meta">Handle changes are limited to once every 30 days. You can change it now.</p>
+                    <p class="meta">{{ 'settings.account.handleLimitedNow' | translate }}</p>
                 </ng-template>
-                <p class="meta"><strong>Joined:</strong> {{ profile.createdAtUtc | date:'mediumDate' }}</p>
-                <label>Date of birth
+                <p class="meta"><strong>{{ 'settings.account.joined' | translate }}</strong> {{ profile.createdAtUtc | date:'mediumDate' }}</p>
+                <label>{{ 'settings.account.dateOfBirth' | translate }}
                     <div class="dob-select-row" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
                         <div class="settings-dropdown dob-select" [class.open]="isSettingsDropdownOpen('birthDay')">
-                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('birthDay')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('birthDay')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('birthDay')" aria-haspopup="listbox" (mousedown)="$event.preventDefault(); $event.stopPropagation(); toggleSettingsDropdown('birthDay')">
                                 <span>{{ getSettingsDropdownLabel('birthDay') }}</span>
                                 <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
                             </button>
-                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('birthDay')">
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('birthDay')" (mousedown)="$event.preventDefault(); $event.stopPropagation()">
                                 <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('birthDay')" [class.active]="getSettingsDropdownValue('birthDay') === option.value"
-                                    [attr.aria-selected]="getSettingsDropdownValue('birthDay') === option.value" (click)="selectSettingsOption('birthDay', option.value)">
+                                    [attr.aria-selected]="getSettingsDropdownValue('birthDay') === option.value" (mousedown)="$event.preventDefault(); $event.stopPropagation(); selectSettingsOption('birthDay', option.value)">
                                     {{ option.label }}
                                 </button>
                             </div>
                         </div>
                         <div class="settings-dropdown dob-select" [class.open]="isSettingsDropdownOpen('birthMonth')">
-                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('birthMonth')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('birthMonth')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('birthMonth')" aria-haspopup="listbox" (mousedown)="$event.preventDefault(); $event.stopPropagation(); toggleSettingsDropdown('birthMonth')">
                                 <span>{{ getSettingsDropdownLabel('birthMonth') }}</span>
                                 <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
                             </button>
-                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('birthMonth')">
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('birthMonth')" (mousedown)="$event.preventDefault(); $event.stopPropagation()">
                                 <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('birthMonth')" [class.active]="getSettingsDropdownValue('birthMonth') === option.value"
-                                    [attr.aria-selected]="getSettingsDropdownValue('birthMonth') === option.value" (click)="selectSettingsOption('birthMonth', option.value)">
+                                    [attr.aria-selected]="getSettingsDropdownValue('birthMonth') === option.value" (mousedown)="$event.preventDefault(); $event.stopPropagation(); selectSettingsOption('birthMonth', option.value)">
                                     {{ option.label }}
                                 </button>
                             </div>
                         </div>
                         <div class="settings-dropdown dob-select" [class.open]="isSettingsDropdownOpen('birthYear')">
-                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('birthYear')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('birthYear')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('birthYear')" aria-haspopup="listbox" (mousedown)="$event.preventDefault(); $event.stopPropagation(); toggleSettingsDropdown('birthYear')">
                                 <span>{{ getSettingsDropdownLabel('birthYear') }}</span>
                                 <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
                             </button>
-                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('birthYear')">
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('birthYear')" (mousedown)="$event.preventDefault(); $event.stopPropagation()">
                                 <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('birthYear')" [class.active]="getSettingsDropdownValue('birthYear') === option.value"
-                                    [attr.aria-selected]="getSettingsDropdownValue('birthYear') === option.value" (click)="selectSettingsOption('birthYear', option.value)">
+                                    [attr.aria-selected]="getSettingsDropdownValue('birthYear') === option.value" (mousedown)="$event.preventDefault(); $event.stopPropagation(); selectSettingsOption('birthYear', option.value)">
                                     {{ option.label }}
                                 </button>
                             </div>
                         </div>
                     </div>
                 </label>
-                <label>Country
+                <label>{{ 'settings.account.country' | translate }}
                     <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('country')">
-                        <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('country')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('country')">
+                        <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('country')" aria-haspopup="listbox" (mousedown)="$event.preventDefault(); $event.stopPropagation(); toggleSettingsDropdown('country')">
                             <span>{{ getSettingsDropdownLabel('country') }}</span>
                             <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
                         </button>
-                        <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('country')">
+                        <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('country')" (mousedown)="$event.preventDefault(); $event.stopPropagation()">
                             <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('country')" [class.active]="getSettingsDropdownValue('country') === option.value"
-                                [attr.aria-selected]="getSettingsDropdownValue('country') === option.value" (click)="selectSettingsOption('country', option.value)">
+                                [attr.aria-selected]="getSettingsDropdownValue('country') === option.value" (mousedown)="$event.preventDefault(); $event.stopPropagation(); selectSettingsOption('country', option.value)">
                                 {{ option.label }}
                             </button>
                         </div>
@@ -114,11 +114,11 @@
                 </label>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="marketingOptIn" />
-                    Receive product updates and tips by email
+                    {{ 'settings.account.marketingOptIn' | translate }}
                 </label>
                 <div class="actions">
-                    <button type="button" (click)="saveProfile()">Save Account Details</button>
-                    <button type="button" class="ghost" (click)="reloadProfile()">Reload</button>
+                    <button type="button" (click)="saveProfile()">{{ 'settings.account.save' | translate }}</button>
+                    <button type="button" class="ghost" (click)="reloadProfile()">{{ 'settings.common.reload' | translate }}</button>
                 </div>
             </div>
         </div>
@@ -126,7 +126,7 @@
 
     <section class="card" id="settings-section-privacy">
         <button type="button" class="section-toggle" (click)="toggleSection('privacy')" [attr.aria-expanded]="sectionOpenState.privacy">
-            <h3>Privacy</h3>
+            <h3>{{ 'settings.sections.privacy' | translate }}</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.privacy">▾</span>
         </button>
 
@@ -134,68 +134,68 @@
             <div class="section-inner">
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="isPrivate" />
-                    Private profile
+                    {{ 'settings.privacy.privateProfile' | translate }}
                 </label>
-                <p class="meta">When enabled, only approved followers can see your posts, reels, and stories.</p>
+                <p class="meta">{{ 'settings.privacy.privateProfileHelp' | translate }}</p>
                 <div class="actions">
-                    <button type="button" (click)="savePrivacy()" [disabled]="!hasPrivacyChanges || savingPrivacy">{{ savingPrivacy ? 'Saving...' : 'Save Privacy' }}</button>
-                    <button type="button" class="ghost" (click)="resetPrivacyChanges()" [disabled]="!hasPrivacyChanges || savingPrivacy">Discard</button>
+                    <button type="button" (click)="savePrivacy()" [disabled]="!hasPrivacyChanges || savingPrivacy">{{ savingPrivacy ? ('settings.common.saving' | translate) : ('settings.privacy.save' | translate) }}</button>
+                    <button type="button" class="ghost" (click)="resetPrivacyChanges()" [disabled]="!hasPrivacyChanges || savingPrivacy">{{ 'settings.common.discard' | translate }}</button>
                 </div>
 
                 <hr />
 
                 <div class="field-group">
-                    <label>Who can comment on your content?
+                    <label>{{ 'settings.privacy.commentsAudience' | translate }}
                         <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('commentsAudience')">
-                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('commentsAudience')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('commentsAudience')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('commentsAudience')" aria-haspopup="listbox" (mousedown)="$event.preventDefault(); $event.stopPropagation(); toggleSettingsDropdown('commentsAudience')">
                                 <span>{{ getSettingsDropdownLabel('commentsAudience') }}</span>
                                 <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
                             </button>
-                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('commentsAudience')">
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('commentsAudience')" (mousedown)="$event.preventDefault(); $event.stopPropagation()">
                                 <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('commentsAudience')" [class.active]="getSettingsDropdownValue('commentsAudience') === option.value"
-                                    [attr.aria-selected]="getSettingsDropdownValue('commentsAudience') === option.value" (click)="selectSettingsOption('commentsAudience', option.value)">
+                                    [attr.aria-selected]="getSettingsDropdownValue('commentsAudience') === option.value" (mousedown)="$event.preventDefault(); $event.stopPropagation(); selectSettingsOption('commentsAudience', option.value)">
                                     {{ option.label }}
                                 </button>
                             </div>
                         </div>
                     </label>
-                    <label>Who can mention or tag you?
+                    <label>{{ 'settings.privacy.mentionsAudience' | translate }}
                         <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('mentionsAudience')">
-                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('mentionsAudience')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('mentionsAudience')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('mentionsAudience')" aria-haspopup="listbox" (mousedown)="$event.preventDefault(); $event.stopPropagation(); toggleSettingsDropdown('mentionsAudience')">
                                 <span>{{ getSettingsDropdownLabel('mentionsAudience') }}</span>
                                 <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
                             </button>
-                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('mentionsAudience')">
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('mentionsAudience')" (mousedown)="$event.preventDefault(); $event.stopPropagation()">
                                 <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('mentionsAudience')" [class.active]="getSettingsDropdownValue('mentionsAudience') === option.value"
-                                    [attr.aria-selected]="getSettingsDropdownValue('mentionsAudience') === option.value" (click)="selectSettingsOption('mentionsAudience', option.value)">
+                                    [attr.aria-selected]="getSettingsDropdownValue('mentionsAudience') === option.value" (mousedown)="$event.preventDefault(); $event.stopPropagation(); selectSettingsOption('mentionsAudience', option.value)">
                                     {{ option.label }}
                                 </button>
                             </div>
                         </div>
                     </label>
-                    <label>Who can message you?
+                    <label>{{ 'settings.privacy.messagesAudience' | translate }}
                         <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('messagesAudience')">
-                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('messagesAudience')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('messagesAudience')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('messagesAudience')" aria-haspopup="listbox" (mousedown)="$event.preventDefault(); $event.stopPropagation(); toggleSettingsDropdown('messagesAudience')">
                                 <span>{{ getSettingsDropdownLabel('messagesAudience') }}</span>
                                 <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
                             </button>
-                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('messagesAudience')">
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('messagesAudience')" (mousedown)="$event.preventDefault(); $event.stopPropagation()">
                                 <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('messagesAudience')" [class.active]="getSettingsDropdownValue('messagesAudience') === option.value"
-                                    [attr.aria-selected]="getSettingsDropdownValue('messagesAudience') === option.value" (click)="selectSettingsOption('messagesAudience', option.value)">
+                                    [attr.aria-selected]="getSettingsDropdownValue('messagesAudience') === option.value" (mousedown)="$event.preventDefault(); $event.stopPropagation(); selectSettingsOption('messagesAudience', option.value)">
                                     {{ option.label }}
                                 </button>
                             </div>
                         </div>
                     </label>
-                    <label>Who can reply to your stories?
+                    <label>{{ 'settings.privacy.storyRepliesAudience' | translate }}
                         <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('storyRepliesAudience')">
-                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('storyRepliesAudience')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('storyRepliesAudience')">
+                            <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('storyRepliesAudience')" aria-haspopup="listbox" (mousedown)="$event.preventDefault(); $event.stopPropagation(); toggleSettingsDropdown('storyRepliesAudience')">
                                 <span>{{ getSettingsDropdownLabel('storyRepliesAudience') }}</span>
                                 <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
                             </button>
-                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('storyRepliesAudience')">
+                            <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('storyRepliesAudience')" (mousedown)="$event.preventDefault(); $event.stopPropagation()">
                                 <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('storyRepliesAudience')" [class.active]="getSettingsDropdownValue('storyRepliesAudience') === option.value"
-                                    [attr.aria-selected]="getSettingsDropdownValue('storyRepliesAudience') === option.value" (click)="selectSettingsOption('storyRepliesAudience', option.value)">
+                                    [attr.aria-selected]="getSettingsDropdownValue('storyRepliesAudience') === option.value" (mousedown)="$event.preventDefault(); $event.stopPropagation(); selectSettingsOption('storyRepliesAudience', option.value)">
                                     {{ option.label }}
                                 </button>
                             </div>
@@ -205,37 +205,37 @@
 
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="discoveryPrivacyPrefs.showInSearchSuggestions" />
-                    Show account in search suggestions
+                    {{ 'settings.privacy.showInSearchSuggestions' | translate }}
                 </label>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="discoveryPrivacyPrefs.allowProfileIndexing" />
-                    Allow profile indexing by search engines
+                    {{ 'settings.privacy.allowProfileIndexing' | translate }}
                 </label>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="discoveryPrivacyPrefs.showActivityStatus" />
-                    Show activity status / last seen
+                    {{ 'settings.privacy.showActivityStatus' | translate }}
                 </label>
 
                 <div class="actions">
-                    <button type="button" (click)="saveDiscoveryPrivacyPrefs()" [disabled]="!hasDiscoveryPrivacyChanges || privacyPrefsSaving">{{ privacyPrefsSaving ? 'Saving...' : 'Save Audience & Discovery' }}</button>
-                    <button type="button" class="ghost" (click)="resetDiscoveryPrivacyPrefs()" [disabled]="!hasDiscoveryPrivacyChanges || privacyPrefsSaving">Discard</button>
+                    <button type="button" (click)="saveDiscoveryPrivacyPrefs()" [disabled]="!hasDiscoveryPrivacyChanges || privacyPrefsSaving">{{ privacyPrefsSaving ? ('settings.common.saving' | translate) : ('settings.privacy.saveDiscovery' | translate) }}</button>
+                    <button type="button" class="ghost" (click)="resetDiscoveryPrivacyPrefs()" [disabled]="!hasDiscoveryPrivacyChanges || privacyPrefsSaving">{{ 'settings.common.discard' | translate }}</button>
                 </div>
-                <p class="meta" *ngIf="sectionSavedAt.privacy as savedAt">Last saved: {{ savedAt | date:'short' }}</p>
+                <p class="meta" *ngIf="sectionSavedAt.privacy as savedAt">{{ 'settings.common.lastSaved' | translate:{ date: (savedAt | date:'short') } }}</p>
             </div>
         </div>
     </section>
 
     <section class="card" id="settings-section-session">
         <button type="button" class="section-toggle" (click)="toggleSection('session')" [attr.aria-expanded]="sectionOpenState.session">
-            <h3>Session</h3>
+            <h3>{{ 'settings.sections.session' | translate }}</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.session">▾</span>
         </button>
 
         <div class="section-body" [class.open]="sectionOpenState.session" [attr.aria-hidden]="!sectionOpenState.session" [attr.inert]="!sectionOpenState.session ? '' : null">
             <div class="section-inner">
-                <p class="meta">Use these controls for your current login session.</p>
+                <p class="meta">{{ 'settings.session.description' | translate }}</p>
                 <div class="actions">
-                    <button (click)="refreshSession()">Refresh Session</button>
+                    <button (click)="refreshSession()">{{ 'settings.session.refresh' | translate }}</button>
                 </div>
             </div>
         </div>
@@ -243,7 +243,7 @@
 
     <section class="card" id="settings-section-preferences">
         <button type="button" class="section-toggle" (click)="toggleSection('preferences')" [attr.aria-expanded]="sectionOpenState.preferences">
-            <h3>Preferences</h3>
+            <h3>{{ 'settings.sections.preferences' | translate }}</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.preferences">▾</span>
         </button>
 
@@ -251,118 +251,104 @@
             <div class="section-inner">
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="prefs.compactFeed" (change)="savePrefs()" />
-                    Compact feed layout
+                    {{ 'settings.preferences.compactFeed' | translate }}
                 </label>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="prefs.useSystemTheme" (change)="onUseSystemThemeChanged()" />
-                    Use system theme
+                    {{ 'settings.preferences.useSystemTheme' | translate }}
                 </label>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="prefs.darkMode" (change)="savePrefs()" [disabled]="prefs.useSystemTheme" />
-                    Dark mode
+                    {{ 'settings.preferences.darkMode' | translate }}
                 </label>
-                <p class="meta" *ngIf="prefs.useSystemTheme">Dark mode follows your operating system appearance while this is enabled.</p>
+                <p class="meta" *ngIf="prefs.useSystemTheme">{{ 'settings.preferences.useSystemThemeHelp' | translate }}</p>
 
                 <hr />
 
-                <h4>Accessibility & Region</h4>
+                <h4>{{ 'settings.preferences.accessibility' | translate }}</h4>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="accessibilityPrefs.reducedMotion" />
-                    Reduced motion
+                    {{ 'settings.preferences.reducedMotion' | translate }}
                 </label>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="accessibilityPrefs.largerText" />
-                    Larger text mode
+                    {{ 'settings.preferences.largerText' | translate }}
                 </label>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="accessibilityPrefs.highContrast" />
-                    High contrast mode
+                    {{ 'settings.preferences.highContrast' | translate }}
                 </label>
-                <label>Language
+                <label>{{ 'settings.preferences.language' | translate }}
                     <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('language')">
-                        <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('language')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('language')">
+                        <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('language')" aria-haspopup="listbox" (mousedown)="$event.preventDefault(); $event.stopPropagation(); toggleSettingsDropdown('language')">
                             <span>{{ getSettingsDropdownLabel('language') }}</span>
                             <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
                         </button>
-                        <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('language')">
+                        <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('language')" (mousedown)="$event.preventDefault(); $event.stopPropagation()">
                             <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('language')" [class.active]="getSettingsDropdownValue('language') === option.value"
-                                [attr.aria-selected]="getSettingsDropdownValue('language') === option.value" (click)="selectSettingsOption('language', option.value)">
-                                {{ option.label }}
-                            </button>
-                        </div>
-                    </div>
-                </label>
-                <label>Region
-                    <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('region')">
-                        <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('region')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('region')">
-                            <span>{{ getSettingsDropdownLabel('region') }}</span>
-                            <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
-                        </button>
-                        <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('region')">
-                            <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('region')" [class.active]="getSettingsDropdownValue('region') === option.value" [attr.aria-selected]="getSettingsDropdownValue('region') === option.value"
-                                (click)="selectSettingsOption('region', option.value)">
+                                [attr.aria-selected]="getSettingsDropdownValue('language') === option.value" (mousedown)="$event.preventDefault(); $event.stopPropagation(); selectSettingsOption('language', option.value)">
                                 {{ option.label }}
                             </button>
                         </div>
                     </div>
                 </label>
                 <div class="actions">
-                    <button type="button" (click)="saveAccessibilityPrefs()" [disabled]="!hasAccessibilityChanges || accessibilitySaving">{{ accessibilitySaving ? 'Saving...' : 'Save Accessibility' }}</button>
-                    <button type="button" class="ghost" (click)="resetAccessibilityPrefs()" [disabled]="!hasAccessibilityChanges || accessibilitySaving">Discard</button>
+                    <button type="button" (click)="saveAccessibilityPrefs()" [disabled]="!hasAccessibilityChanges || accessibilitySaving">{{ accessibilitySaving ? ('settings.common.saving' | translate) : ('settings.preferences.saveAccessibility' | translate) }}</button>
+                    <button type="button" class="ghost" (click)="resetAccessibilityPrefs()" [disabled]="!hasAccessibilityChanges || accessibilitySaving">{{ 'settings.common.discard' | translate }}</button>
                 </div>
-                <p class="meta" *ngIf="sectionSavedAt.accessibility as savedAt">Last saved: {{ savedAt | date:'short' }}</p>
+                <p class="meta" *ngIf="sectionSavedAt.accessibility as savedAt">{{ 'settings.common.lastSaved' | translate:{ date: (savedAt | date:'short') } }}</p>
             </div>
         </div>
     </section>
 
     <section class="card" id="settings-section-notifications">
         <button type="button" class="section-toggle" (click)="toggleSection('notifications')" [attr.aria-expanded]="sectionOpenState.notifications">
-            <h3>Notifications</h3>
+            <h3>{{ 'settings.sections.notifications' | translate }}</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.notifications">▾</span>
         </button>
 
         <div class="section-body" [class.open]="sectionOpenState.notifications" [attr.aria-hidden]="!sectionOpenState.notifications" [attr.inert]="!sectionOpenState.notifications ? '' : null">
             <div class="section-inner">
-                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.likes" /> Likes</label>
-                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.comments" /> Comments</label>
-                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.follows" /> Follows</label>
-                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.mentions" /> Mentions</label>
-                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.messages" /> Direct messages</label>
-                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.marketing" /> Marketing</label>
-                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.product" /> Product updates</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.likes" /> {{ 'settings.notifications.likes' | translate }}</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.comments" /> {{ 'settings.notifications.comments' | translate }}</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.follows" /> {{ 'settings.notifications.follows' | translate }}</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.mentions" /> {{ 'settings.notifications.mentions' | translate }}</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.messages" /> {{ 'settings.notifications.messages' | translate }}</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.marketing" /> {{ 'settings.notifications.marketing' | translate }}</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.product" /> {{ 'settings.notifications.product' | translate }}</label>
 
-                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.quietHoursEnabled" /> Quiet hours</label>
+                <label class="toggle"><input type="checkbox" [(ngModel)]="notificationPrefs.quietHoursEnabled" /> {{ 'settings.notifications.quietHours' | translate }}</label>
                 <div class="inline-time-range" *ngIf="notificationPrefs.quietHoursEnabled">
-                    <label>Start <input type="time" [(ngModel)]="notificationPrefs.quietHoursStart" /></label>
-                    <label>End <input type="time" [(ngModel)]="notificationPrefs.quietHoursEnd" /></label>
+                    <label>{{ 'settings.notifications.quietHoursStart' | translate }} <input type="time" [(ngModel)]="notificationPrefs.quietHoursStart" /></label>
+                    <label>{{ 'settings.notifications.quietHoursEnd' | translate }} <input type="time" [(ngModel)]="notificationPrefs.quietHoursEnd" /></label>
                 </div>
 
                 <div class="actions">
-                    <button type="button" (click)="saveNotificationPrefs()" [disabled]="!hasNotificationChanges || notificationsSaving">{{ notificationsSaving ? 'Saving...' : 'Save Notifications' }}</button>
-                    <button type="button" class="ghost" (click)="resetNotificationPrefs()" [disabled]="!hasNotificationChanges || notificationsSaving">Discard</button>
+                    <button type="button" (click)="saveNotificationPrefs()" [disabled]="!hasNotificationChanges || notificationsSaving">{{ notificationsSaving ? ('settings.common.saving' | translate) : ('settings.notifications.save' | translate) }}</button>
+                    <button type="button" class="ghost" (click)="resetNotificationPrefs()" [disabled]="!hasNotificationChanges || notificationsSaving">{{ 'settings.common.discard' | translate }}</button>
                 </div>
-                <p class="meta" *ngIf="sectionSavedAt.notifications as savedAt">Last saved: {{ savedAt | date:'short' }}</p>
+                <p class="meta" *ngIf="sectionSavedAt.notifications as savedAt">{{ 'settings.common.lastSaved' | translate:{ date: (savedAt | date:'short') } }}</p>
             </div>
         </div>
     </section>
 
     <section class="card" id="settings-section-safety">
         <button type="button" class="section-toggle" (click)="toggleSection('safety')" [attr.aria-expanded]="sectionOpenState.safety">
-            <h3>Safety</h3>
+            <h3>{{ 'settings.sections.safety' | translate }}</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.safety">▾</span>
         </button>
 
         <div class="section-body" [class.open]="sectionOpenState.safety" [attr.aria-hidden]="!sectionOpenState.safety" [attr.inert]="!sectionOpenState.safety ? '' : null">
             <div class="section-inner">
-                <label>Sensitive content level
+                <label>{{ 'settings.safety.sensitiveContentLevel' | translate }}
                     <div class="settings-dropdown" [class.open]="isSettingsDropdownOpen('sensitiveContentLevel')">
-                        <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('sensitiveContentLevel')" aria-haspopup="listbox" (click)="toggleSettingsDropdown('sensitiveContentLevel')">
+                        <button type="button" class="settings-dropdown-trigger" [attr.aria-expanded]="isSettingsDropdownOpen('sensitiveContentLevel')" aria-haspopup="listbox" (mousedown)="$event.preventDefault(); $event.stopPropagation(); toggleSettingsDropdown('sensitiveContentLevel')">
                             <span>{{ getSettingsDropdownLabel('sensitiveContentLevel') }}</span>
                             <i class="fa-duotone fa-thin fa-chevron-down" aria-hidden="true"></i>
                         </button>
-                        <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('sensitiveContentLevel')">
+                        <div class="settings-dropdown-menu" role="listbox" *ngIf="isSettingsDropdownOpen('sensitiveContentLevel')" (mousedown)="$event.preventDefault(); $event.stopPropagation()">
                             <button type="button" role="option" class="settings-dropdown-option" *ngFor="let option of getSettingsDropdownOptions('sensitiveContentLevel')" [class.active]="getSettingsDropdownValue('sensitiveContentLevel') === option.value"
-                                [attr.aria-selected]="getSettingsDropdownValue('sensitiveContentLevel') === option.value" (click)="selectSettingsOption('sensitiveContentLevel', option.value)">
+                                [attr.aria-selected]="getSettingsDropdownValue('sensitiveContentLevel') === option.value" (mousedown)="$event.preventDefault(); $event.stopPropagation(); selectSettingsOption('sensitiveContentLevel', option.value)">
                                 {{ option.label }}
                             </button>
                         </div>
@@ -370,30 +356,31 @@
                 </label>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="safetyPrefs.hideSensitiveMedia" />
-                    Hide sensitive media by default
+                    {{ 'settings.safety.hideSensitiveMedia' | translate }}
                 </label>
 
-                <h4>Muted words</h4>
+                <h4>{{ 'settings.safety.mutedWords' | translate }}</h4>
                 <div class="chip-input-row">
-                    <input [(ngModel)]="addMutedKeywordValue" placeholder="Add word or phrase" />
-                    <button type="button" class="ghost" (click)="addMutedKeyword()">Add</button>
+                    <input [(ngModel)]="addMutedKeywordValue" [placeholder]="'settings.safety.addWordOrPhrase' | translate" />
+                    <button type="button" class="ghost" (click)="addMutedKeyword()">{{ 'settings.common.add' | translate }}</button>
                 </div>
                 <div class="chip-list" *ngIf="safetyPrefs.mutedKeywords.length; else noMutedKeywords">
                     <button type="button" class="chip removable" *ngFor="let keyword of safetyPrefs.mutedKeywords" (click)="removeMutedKeyword(keyword)">{{ keyword }} ✕</button>
                 </div>
                 <ng-template #noMutedKeywords>
-                    <p class="meta">No muted keywords yet.</p>
+                    <p class="meta">{{ 'settings.safety.noMutedKeywords' | translate }}</p>
                 </ng-template>
 
-                <h4>Muted users</h4>
+                <h4>{{ 'settings.safety.mutedUsers' | translate }}</h4>
                 <div class="chip-input-row muted-handle-input-row">
                     <div class="muted-handle-autocomplete">
-                        <input [(ngModel)]="addMutedHandleValue" (ngModelChange)="onMutedHandleInputChanged($event)" (focus)="onMutedHandleInputFocus()" (blur)="onMutedHandleInputBlur()" (keydown.enter)="onMutedHandleInputEnter($event)" placeholder="Add handle (example: @name)" />
+                        <input [(ngModel)]="addMutedHandleValue" (ngModelChange)="onMutedHandleInputChanged($event)" (focus)="onMutedHandleInputFocus()" (blur)="onMutedHandleInputBlur()" (keydown.enter)="onMutedHandleInputEnter($event)"
+                            [placeholder]="'settings.safety.addHandlePlaceholder' | translate" />
                         <div class="mention-suggestions muted-handle-suggestions" *ngIf="mutedHandleSuggestionsOpen || mutedHandleSuggestionsLoading">
-                            <p class="mention-hint" *ngIf="mutedHandleSuggestionsLoading">Searching users...</p>
+                            <p class="mention-hint" *ngIf="mutedHandleSuggestionsLoading">{{ 'settings.safety.searchingUsers' | translate }}</p>
                             <button type="button" *ngFor="let profile of mutedHandleSuggestions" (mousedown)="$event.preventDefault()" (click)="selectMutedHandleSuggestion(profile)">
                                 <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
-                                <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
+                                <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'settings.safety.profileAvatarAlt' | translate" />
                                 <span class="mention-meta">
                                     <span class="mention-name">{{ profile.displayName }}</span>
                                     <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
@@ -401,110 +388,110 @@
                             </button>
                         </div>
                     </div>
-                    <button type="button" class="ghost" (click)="addMutedHandle()">Add</button>
+                    <button type="button" class="ghost" (click)="addMutedHandle()">{{ 'settings.common.add' | translate }}</button>
                 </div>
                 <div class="chip-list" *ngIf="safetyPrefs.mutedHandles.length; else noMutedHandles">
                     <button type="button" class="chip removable" *ngFor="let handle of safetyPrefs.mutedHandles" (click)="removeMutedHandle(handle)">@{{ handle }} ✕</button>
                 </div>
                 <ng-template #noMutedHandles>
-                    <p class="meta">No muted users in preferences yet.</p>
+                    <p class="meta">{{ 'settings.safety.noMutedUsers' | translate }}</p>
                 </ng-template>
 
                 <div class="actions">
-                    <button type="button" (click)="saveSafetyPrefs()" [disabled]="!hasSafetyChanges || safetySaving">{{ safetySaving ? 'Saving...' : 'Save Safety' }}</button>
-                    <button type="button" class="ghost" (click)="resetSafetyPrefs()" [disabled]="!hasSafetyChanges || safetySaving">Discard</button>
+                    <button type="button" (click)="saveSafetyPrefs()" [disabled]="!hasSafetyChanges || safetySaving">{{ safetySaving ? ('settings.common.saving' | translate) : ('settings.safety.save' | translate) }}</button>
+                    <button type="button" class="ghost" (click)="resetSafetyPrefs()" [disabled]="!hasSafetyChanges || safetySaving">{{ 'settings.common.discard' | translate }}</button>
                 </div>
-                <p class="meta" *ngIf="sectionSavedAt.safety as savedAt">Last saved: {{ savedAt | date:'short' }}</p>
+                <p class="meta" *ngIf="sectionSavedAt.safety as savedAt">{{ 'settings.common.lastSaved' | translate:{ date: (savedAt | date:'short') } }}</p>
             </div>
         </div>
     </section>
 
     <section class="card" id="settings-section-security">
         <button type="button" class="section-toggle" (click)="toggleSection('security')" [attr.aria-expanded]="sectionOpenState.security">
-            <h3>Security</h3>
+            <h3>{{ 'settings.sections.security' | translate }}</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.security">▾</span>
         </button>
 
         <div class="section-body" [class.open]="sectionOpenState.security" [attr.aria-hidden]="!sectionOpenState.security" [attr.inert]="!sectionOpenState.security ? '' : null">
             <div class="section-inner">
-                <p class="meta">Where you are logged in.</p>
+                <p class="meta">{{ 'settings.security.description' | translate }}</p>
                 <div class="blocked-list" *ngIf="deviceSessions.length; else noSessions">
                     <article class="blocked-item" *ngFor="let loginSession of deviceSessions">
                         <div class="blocked-meta">
-                            <span class="blocked-name">{{ loginSession.current ? 'Current device' : 'Signed-in device' }}</span>
+                            <span class="blocked-name">{{ loginSession.current ? ('settings.security.currentDevice' | translate) : ('settings.security.signedInDevice' | translate) }}</span>
                             <span class="blocked-handle">{{ loginSession.label }}</span>
-                            <span class="blocked-handle">Created {{ loginSession.createdAtUtc | date:'short' }}</span>
-                            <span class="blocked-handle">Expires {{ loginSession.expiresAtUtc | date:'short' }}</span>
-                            <span class="blocked-handle" *ngIf="loginSession.revoked">Revoked</span>
+                            <span class="blocked-handle">{{ 'settings.security.created' | translate:{ date: (loginSession.createdAtUtc | date:'short') } }}</span>
+                            <span class="blocked-handle">{{ 'settings.security.expires' | translate:{ date: (loginSession.expiresAtUtc | date:'short') } }}</span>
+                            <span class="blocked-handle" *ngIf="loginSession.revoked">{{ 'settings.security.revoked' | translate }}</span>
                         </div>
                         <button type="button" class="ghost" *ngIf="!loginSession.current" [disabled]="securitySaving || loginSession.revoked || revokeSessionId === loginSession.id" (click)="revokeDeviceSession(loginSession.id)">
-                            {{ revokeSessionId === loginSession.id ? 'Revoking...' : 'Revoke' }}
+                            {{ revokeSessionId === loginSession.id ? ('settings.security.revoking' | translate) : ('settings.security.revoke' | translate) }}
                         </button>
                     </article>
                 </div>
                 <ng-template #noSessions>
-                    <p class="meta">No active sessions found.</p>
+                    <p class="meta">{{ 'settings.security.noSessions' | translate }}</p>
                 </ng-template>
 
                 <div class="actions">
-                    <button type="button" class="ghost" (click)="logoutOtherSessions()" [disabled]="securitySaving">{{ securitySaving ? 'Processing...' : 'Log out other sessions' }}</button>
+                    <button type="button" class="ghost" (click)="logoutOtherSessions()" [disabled]="securitySaving">{{ securitySaving ? ('settings.common.processing' | translate) : ('settings.security.logoutOtherSessions' | translate) }}</button>
                 </div>
-                <p class="meta" *ngIf="sectionSavedAt.security as savedAt">Last saved: {{ savedAt | date:'short' }}</p>
+                <p class="meta" *ngIf="sectionSavedAt.security as savedAt">{{ 'settings.common.lastSaved' | translate:{ date: (savedAt | date:'short') } }}</p>
             </div>
         </div>
     </section>
 
     <section class="card" id="settings-section-data">
         <button type="button" class="section-toggle" (click)="toggleSection('data')" [attr.aria-expanded]="sectionOpenState.data">
-            <h3>Data controls</h3>
+            <h3>{{ 'settings.sections.data' | translate }}</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.data">▾</span>
         </button>
 
         <div class="section-body" [class.open]="sectionOpenState.data" [attr.aria-hidden]="!sectionOpenState.data" [attr.inert]="!sectionOpenState.data ? '' : null">
             <div class="section-inner">
-                <p class="meta">Download your account data and manage account lifecycle requests.</p>
+                <p class="meta">{{ 'settings.data.description' | translate }}</p>
                 <div class="actions">
-                    <button type="button" (click)="exportMyData()" [disabled]="dataActionWorking">{{ dataActionWorking ? 'Working...' : 'Download my data' }}</button>
+                    <button type="button" (click)="exportMyData()" [disabled]="dataActionWorking">{{ dataActionWorking ? ('settings.common.working' | translate) : ('settings.data.downloadMyData' | translate) }}</button>
                 </div>
 
                 <div class="danger-zone">
-                    <h4>Deactivate account</h4>
-                    <p class="meta">Type DEACTIVATE to confirm request.</p>
+                    <h4>{{ 'settings.data.deactivateTitle' | translate }}</h4>
+                    <p class="meta">{{ 'settings.data.deactivatePrompt' | translate }}</p>
                     <div class="inline-confirm-row">
-                        <input [(ngModel)]="deactivateConfirmValue" placeholder="Type DEACTIVATE" />
-                        <button type="button" class="ghost" (click)="requestDeactivation()" [disabled]="dataActionWorking || deactivateConfirmValue.trim().toUpperCase() !== 'DEACTIVATE'">Request deactivation</button>
+                        <input [(ngModel)]="deactivateConfirmValue" [placeholder]="'settings.data.deactivatePlaceholder' | translate" />
+                        <button type="button" class="ghost" (click)="requestDeactivation()" [disabled]="dataActionWorking || deactivateConfirmValue.trim().toUpperCase() !== 'DEACTIVATE'">{{ 'settings.data.requestDeactivation' | translate }}</button>
                     </div>
 
-                    <h4>Delete account</h4>
-                    <p class="meta">Type DELETE to confirm request.</p>
+                    <h4>{{ 'settings.data.deleteTitle' | translate }}</h4>
+                    <p class="meta">{{ 'settings.data.deletePrompt' | translate }}</p>
                     <div class="inline-confirm-row">
-                        <input [(ngModel)]="deleteConfirmValue" placeholder="Type DELETE" />
-                        <button type="button" class="danger" (click)="requestDeleteAccount()" [disabled]="dataActionWorking || deleteConfirmValue.trim().toUpperCase() !== 'DELETE'">Request delete</button>
+                        <input [(ngModel)]="deleteConfirmValue" [placeholder]="'settings.data.deletePlaceholder' | translate" />
+                        <button type="button" class="danger" (click)="requestDeleteAccount()" [disabled]="dataActionWorking || deleteConfirmValue.trim().toUpperCase() !== 'DELETE'">{{ 'settings.data.requestDelete' | translate }}</button>
                     </div>
-                    <p class="meta">Both actions are applied immediately and sign you out.</p>
+                    <p class="meta">{{ 'settings.data.immediateWarning' | translate }}</p>
                 </div>
 
-                <p class="meta" *ngIf="sectionSavedAt.data as savedAt">Last action: {{ savedAt | date:'short' }}</p>
+                <p class="meta" *ngIf="sectionSavedAt.data as savedAt">{{ 'settings.common.lastAction' | translate:{ date: (savedAt | date:'short') } }}</p>
             </div>
         </div>
     </section>
 
     <section class="card" id="settings-section-blocked">
         <button type="button" class="section-toggle" (click)="toggleSection('blocked')" [attr.aria-expanded]="sectionOpenState.blocked">
-            <h3>Blocked users</h3>
+            <h3>{{ 'settings.sections.blocked' | translate }}</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.blocked">▾</span>
         </button>
 
         <div class="section-body" [class.open]="sectionOpenState.blocked" [attr.aria-hidden]="!sectionOpenState.blocked" [attr.inert]="!sectionOpenState.blocked ? '' : null">
             <div class="section-inner">
-                <p class="meta">Manage users you have blocked.</p>
+                <p class="meta">{{ 'settings.blocked.description' | translate }}</p>
 
-                <p class="meta" *ngIf="loadingBlockedProfiles">Loading blocked users...</p>
+                <p class="meta" *ngIf="loadingBlockedProfiles">{{ 'settings.blocked.loading' | translate }}</p>
 
                 <div class="blocked-list" *ngIf="!loadingBlockedProfiles && blockedProfiles.length; else emptyBlockedState">
                     <article class="blocked-item" *ngFor="let blocked of blockedProfiles">
-                        <a class="blocked-avatar-link" [attr.href]="'/users/' + blocked.handle" aria-label="View profile">
-                            <img class="blocked-avatar" *ngIf="blocked.imageUrl; else blockedInitial" [src]="blocked.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Blocked user image" />
+                        <a class="blocked-avatar-link" [attr.href]="'/users/' + blocked.handle" [attr.aria-label]="'settings.blocked.viewProfile' | translate">
+                            <img class="blocked-avatar" *ngIf="blocked.imageUrl; else blockedInitial" [src]="blocked.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'settings.blocked.imageAlt' | translate" />
                             <ng-template #blockedInitial>
                                 <div class="blocked-avatar initial">{{ blocked.displayName[0] || blocked.handle[0] }}</div>
                             </ng-template>
@@ -516,13 +503,13 @@
                         </div>
 
                         <button type="button" class="ghost" [disabled]="unblockingProfileId === blocked.id" (click)="unblock(blocked)">
-                            {{ unblockingProfileId === blocked.id ? 'Unblocking...' : 'Unblock' }}
+                            {{ unblockingProfileId === blocked.id ? ('settings.blocked.unblocking' | translate) : ('settings.blocked.unblock' | translate) }}
                         </button>
                     </article>
                 </div>
 
                 <ng-template #emptyBlockedState>
-                    <p class="meta" *ngIf="!loadingBlockedProfiles">You have not blocked anyone.</p>
+                    <p class="meta" *ngIf="!loadingBlockedProfiles">{{ 'settings.blocked.empty' | translate }}</p>
                 </ng-template>
             </div>
         </div>
@@ -530,15 +517,15 @@
 
     <section class="card logout-card" id="settings-section-logout">
         <button type="button" class="section-toggle" (click)="toggleSection('logout')" [attr.aria-expanded]="sectionOpenState.logout">
-            <h3>Sign out</h3>
+            <h3>{{ 'settings.sections.logout' | translate }}</h3>
             <span class="section-toggle-icon" [class.open]="sectionOpenState.logout">▾</span>
         </button>
 
         <div class="section-body" [class.open]="sectionOpenState.logout" [attr.aria-hidden]="!sectionOpenState.logout" [attr.inert]="!sectionOpenState.logout ? '' : null">
             <div class="section-inner">
-                <p class="meta">Sign out of your current account on this device.</p>
+                <p class="meta">{{ 'settings.logout.description' | translate }}</p>
                 <div class="actions">
-                    <button class="danger" (click)="logout()">Logout</button>
+                    <button class="danger" (click)="logout()">{{ 'settings.logout.action' | translate }}</button>
                 </div>
             </div>
         </div>
@@ -546,52 +533,53 @@
 
 </section>
 
-<app-confirm-modal [open]="!!pendingAccountAction" [title]="accountActionModalTitle" [message]="accountActionModalMessage" [confirmText]="accountActionModalConfirmText" cancelText="Cancel" confirmClass="danger" [busy]="dataActionWorking" (cancel)="cancelPendingAccountAction()"
-    (confirm)="confirmPendingAccountAction()">
+<app-confirm-modal [open]="!!pendingAccountAction" [title]="accountActionModalTitle" [message]="accountActionModalMessage" [confirmText]="accountActionModalConfirmText" [cancelText]="'settings.common.cancel' | translate" confirmClass="danger" [busy]="dataActionWorking"
+    (cancel)="cancelPendingAccountAction()" (confirm)="confirmPendingAccountAction()">
 </app-confirm-modal>
 
-<div class="compose-modal" *ngIf="avatarModalOpen" role="dialog" aria-modal="true" aria-label="Update profile image" (click)="closeAvatarModal()">
+<div class="compose-modal" *ngIf="avatarModalOpen" role="dialog" aria-modal="true" [attr.aria-label]="'settings.avatarModal.dialogAria' | translate" (click)="closeAvatarModal()">
     <section class="compose-modal-card avatar-modal" (click)="$event.stopPropagation()">
         <header class="compose-modal-head">
-            <h3>Update Profile Image</h3>
-            <button type="button" class="close" (click)="closeAvatarModal()" [disabled]="uploadingProfileImage" aria-label="Close avatar modal">✕</button>
+            <h3>{{ 'settings.avatarModal.title' | translate }}</h3>
+            <button type="button" class="close" (click)="closeAvatarModal()" [disabled]="uploadingProfileImage" [attr.aria-label]="'settings.avatarModal.close' | translate">✕</button>
         </header>
 
-        <div class="composer-steps" aria-label="Avatar upload steps">
-            <span [class.active]="avatarModalStep === 1">1. Select</span>
-            <span [class.active]="avatarModalStep === 2">2. Crop & Upload</span>
+        <div class="composer-steps" [attr.aria-label]="'settings.avatarModal.stepsAria' | translate">
+            <span [class.active]="avatarModalStep === 1">{{ 'settings.avatarModal.stepSelect' | translate }}</span>
+            <span [class.active]="avatarModalStep === 2">{{ 'settings.avatarModal.stepCrop' | translate }}</span>
         </div>
 
         <input #avatarFileInput type="file" class="visually-hidden" accept="image/*" (change)="onProfileImageSelected($event)" [disabled]="uploadingProfileImage" />
 
         <ng-container *ngIf="avatarModalStep === 1">
-            <section class="upload-picker" aria-label="Select avatar image">
+            <section class="upload-picker" [attr.aria-label]="'settings.avatarModal.selectImageAria' | translate">
                 <span class="upload-icon" aria-hidden="true">🖼️</span>
-                <p class="upload-title">Choose an image for your profile</p>
-                <p class="upload-subtitle">Next step lets you crop and position it.</p>
-                <button type="button" class="upload-button" (click)="triggerAvatarFilePicker()" [disabled]="uploadingProfileImage">Select Image</button>
+                <p class="upload-title">{{ 'settings.avatarModal.chooseTitle' | translate }}</p>
+                <p class="upload-subtitle">{{ 'settings.avatarModal.chooseSubtitle' | translate }}</p>
+                <button type="button" class="upload-button" (click)="triggerAvatarFilePicker()" [disabled]="uploadingProfileImage">{{ 'settings.avatarModal.selectImage' | translate }}</button>
             </section>
-            <p class="media-file" *ngIf="selectedAvatarFileName">Selected: {{ selectedAvatarFileName }}</p>
+            <p class="media-file" *ngIf="selectedAvatarFileName">{{ 'settings.avatarModal.selectedFile' | translate:{ file: selectedAvatarFileName } }}</p>
         </ng-container>
 
         <ng-container *ngIf="avatarModalStep === 2">
             <div class="avatar-crop-panel" *ngIf="hasAvatarCropSelection">
                 <div class="avatar-crop-frame" [class.dragging]="uploadingProfileImage" (pointerdown)="onAvatarCropPointerDown($event)" (wheel)="onAvatarCropWheel($event)">
-                    <img class="avatar-crop-image" [ngStyle]="avatarCropImageStyle" [src]="avatarCropPreviewUrl" alt="Avatar crop preview" />
+                    <img class="avatar-crop-image" [ngStyle]="avatarCropImageStyle" [src]="avatarCropPreviewUrl" [alt]="'settings.avatarModal.cropPreviewAlt' | translate" />
                     <div class="avatar-crop-overlay" aria-hidden="true"></div>
                 </div>
 
-                <label class="zoom-control">Zoom
+                <label class="zoom-control">{{ 'settings.avatarModal.zoom' | translate }}
                     <input type="range" min="1" max="3" step="0.01" [ngModel]="avatarCropZoom" (ngModelChange)="onAvatarCropZoomInput($event)" />
                 </label>
-                <p class="media-file">Drag image to reposition within the circle.</p>
+                <p class="media-file">{{ 'settings.avatarModal.dragHint' | translate }}</p>
             </div>
         </ng-container>
 
         <div class="media-actions">
-            <button type="button" class="ghost" (click)="closeAvatarModal()" [disabled]="uploadingProfileImage">Cancel</button>
-            <button type="button" class="ghost" *ngIf="avatarModalStep === 2" (click)="backToAvatarSelectStep()" [disabled]="uploadingProfileImage">Back</button>
-            <button type="button" *ngIf="avatarModalStep === 2" [class.is-loading]="uploadingProfileImage" [disabled]="!hasAvatarCropSelection || uploadingProfileImage" (click)="uploadCroppedAvatar()">{{ uploadingProfileImage ? 'Uploading...' : 'Upload Image' }}</button>
+            <button type="button" class="ghost" (click)="closeAvatarModal()" [disabled]="uploadingProfileImage">{{ 'settings.common.cancel' | translate }}</button>
+            <button type="button" class="ghost" *ngIf="avatarModalStep === 2" (click)="backToAvatarSelectStep()" [disabled]="uploadingProfileImage">{{ 'settings.common.back' | translate }}</button>
+            <button type="button" *ngIf="avatarModalStep === 2" [class.is-loading]="uploadingProfileImage" [disabled]="!hasAvatarCropSelection || uploadingProfileImage" (click)="uploadCroppedAvatar()">{{ uploadingProfileImage ? ('settings.avatarModal.uploading' | translate) :
+                ('settings.avatarModal.upload' | translate) }}</button>
         </div>
     </section>
 </div>

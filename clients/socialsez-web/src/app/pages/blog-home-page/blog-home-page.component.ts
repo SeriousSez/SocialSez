@@ -1,6 +1,7 @@
 import { CommonModule, NgStyle } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BlogDto, BlogPostDto } from '../../core/api.types';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { SessionService } from '../../core/session.service';
@@ -10,7 +11,7 @@ import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 @Component({
     selector: 'app-blog-home-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, NgStyle, LazyImageComponent, SkeletonComponent],
+    imports: [CommonModule, RouterLink, NgStyle, TranslatePipe, LazyImageComponent, SkeletonComponent],
     templateUrl: './blog-home-page.component.html',
     styleUrl: './blog-home-page.component.scss'
 })
@@ -25,6 +26,7 @@ export class BlogHomePageComponent implements OnDestroy {
     private loadVersion = 0;
     private customCssStyleEl: HTMLStyleElement | null = null;
     private appliedCustomCss = '';
+    private readonly translate = inject(TranslateService);
 
     constructor(
         private readonly route: ActivatedRoute,
@@ -77,7 +79,7 @@ export class BlogHomePageComponent implements OnDestroy {
         const loadVersion = ++this.loadVersion;
 
         if (!this.handle || !this.blogSlug) {
-            this.error = 'Blog was not found.';
+            this.error = this.t('blogHome.errors.notFound');
             this.loading = false;
             this.applyCustomCss('');
             this.cdr.detectChanges();
@@ -95,7 +97,7 @@ export class BlogHomePageComponent implements OnDestroy {
             }
 
             if (!loadedBlog) {
-                this.error = 'Blog was not found or is private.';
+                this.error = this.t('blogHome.errors.notFoundOrPrivate');
                 this.blog = null;
                 this.posts = [];
                 this.applyCustomCss('');
@@ -113,7 +115,7 @@ export class BlogHomePageComponent implements OnDestroy {
                 return;
             }
 
-            this.error = 'Could not load this blog right now.';
+            this.error = this.t('blogHome.errors.loadNow');
             this.blog = null;
             this.posts = [];
             this.applyCustomCss('');
@@ -200,7 +202,7 @@ export class BlogHomePageComponent implements OnDestroy {
                 }
             }
         } catch {
-            this.error = 'Could not update saved status right now.';
+            this.error = this.t('blogHome.errors.updateSavedStatus');
         } finally {
             this.savingPostId = null;
             this.cdr.detectChanges();
@@ -209,5 +211,9 @@ export class BlogHomePageComponent implements OnDestroy {
 
     splitHashtagText(content: string | null | undefined): HashtagTextPart[][] {
         return splitHashtagText(content);
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 }

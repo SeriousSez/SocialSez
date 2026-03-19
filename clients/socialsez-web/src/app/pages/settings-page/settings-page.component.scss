@@ -93,6 +93,9 @@ h2 {
     grid-template-rows: 1fr;
     opacity: 1;
     pointer-events: auto;
+    overflow: visible;
+    position: relative;
+    z-index: 60;
 }
 
 .section-inner {
@@ -101,6 +104,10 @@ h2 {
     display: grid;
     gap: 10px;
     padding: 0 12px 12px;
+}
+
+.section-body.open .section-inner {
+    overflow: visible;
 }
 
 .section-body hr {
@@ -133,6 +140,10 @@ label {
 .settings-dropdown {
     margin-top: 6px;
     position: relative;
+}
+
+.settings-dropdown.open {
+    z-index: 70;
 }
 
 .settings-dropdown-trigger {

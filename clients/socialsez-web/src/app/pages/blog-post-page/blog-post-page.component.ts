@@ -1,6 +1,7 @@
 import { CommonModule, NgStyle } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BlogDto, BlogPostDto } from '../../core/api.types';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { renderMarkdownToHtml } from '../../core/markdown.util';
@@ -10,7 +11,7 @@ import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 @Component({
     selector: 'app-blog-post-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, NgStyle],
+    imports: [CommonModule, RouterLink, NgStyle, TranslatePipe],
     templateUrl: './blog-post-page.component.html',
     styleUrl: './blog-post-page.component.scss'
 })
@@ -29,6 +30,7 @@ export class BlogPostPageComponent implements OnDestroy {
     private loadVersion = 0;
     private customCssStyleEl: HTMLStyleElement | null = null;
     private appliedCustomCss = '';
+    private readonly translate = inject(TranslateService);
 
     constructor(
         private readonly route: ActivatedRoute,
@@ -169,7 +171,7 @@ export class BlogPostPageComponent implements OnDestroy {
                 }
             }
         } catch {
-            this.error = 'Could not update saved status right now.';
+            this.error = this.t('blogPost.errors.updateSavedStatus');
         } finally {
             this.savingPost = false;
             this.cdr.detectChanges();
@@ -180,7 +182,7 @@ export class BlogPostPageComponent implements OnDestroy {
         const loadVersion = ++this.loadVersion;
 
         if (!this.handle || !this.blogSlug || !this.postSlug) {
-            this.error = 'Blog post was not found.';
+            this.error = this.t('blogPost.errors.notFound');
             this.loading = false;
             this.applyCustomCss('');
             this.cdr.detectChanges();
@@ -199,7 +201,7 @@ export class BlogPostPageComponent implements OnDestroy {
             }
 
             if (!loadedBlog || !loadedPost) {
-                this.error = 'Blog post was not found or is private.';
+                this.error = this.t('blogPost.errors.notFoundOrPrivate');
                 this.blog = null;
                 this.post = null;
                 this.applyCustomCss('');
@@ -214,7 +216,7 @@ export class BlogPostPageComponent implements OnDestroy {
                 return;
             }
 
-            this.error = 'Could not load this blog post right now.';
+            this.error = this.t('blogPost.errors.loadNow');
             this.blog = null;
             this.post = null;
             this.applyCustomCss('');
@@ -251,5 +253,9 @@ export class BlogPostPageComponent implements OnDestroy {
 
         this.customCssStyleEl.textContent = normalized;
         this.appliedCustomCss = normalized;
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 }

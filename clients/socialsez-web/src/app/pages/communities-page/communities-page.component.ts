@@ -1,18 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CommunityDto, CommunityRuleDto } from '../../core/api.types';
 import { buildDiscoverySuggestions, DISCOVERY_TOPICS, rankByDiscoveryQuery, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { SessionService } from '../../core/session.service';
-import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
+import { toUserErrorMessage } from '../../core/user-error.utils';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
 
 @Component({
     selector: 'app-communities-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, RichTextEditorComponent],
+    imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, RichTextEditorComponent],
     templateUrl: './communities-page.component.html',
     styleUrl: './communities-page.component.scss'
 })
@@ -26,6 +27,7 @@ export class CommunitiesPageComponent implements OnDestroy {
     suggestions: string[] = [];
     private readonly suggestionSeed = new Set<string>(DISCOVERY_TOPICS.map(topic => topic.canonical));
     private queryDebounceTimerId: number | null = null;
+    private readonly translate = inject(TranslateService);
     createName = '';
     createDescription = '';
     createRulesText = '';
@@ -67,7 +69,7 @@ export class CommunitiesPageComponent implements OnDestroy {
                 this.myCommunities = [];
             }
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('load communities'));
+            this.status = toUserErrorMessage(error, this.t('communities.errors.load'));
             this.statusTone = 'error';
         } finally {
             this.loading = false;
@@ -82,7 +84,7 @@ export class CommunitiesPageComponent implements OnDestroy {
             const backendQuery = this.query.trim() || undefined;
             this.applyDiscoverResults(await this.session.discoverCommunitiesAsync(backendQuery, 120));
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('search communities'));
+            this.status = toUserErrorMessage(error, this.t('communities.errors.search'));
             this.statusTone = 'error';
         } finally {
             this.loading = false;
@@ -124,7 +126,7 @@ export class CommunitiesPageComponent implements OnDestroy {
     }
 
     async createCommunityAsync(): Promise<void> {
-        if (this.requireAuthForAction('create a community')) {
+        if (this.requireAuthForAction('create')) {
             return;
         }
 
@@ -164,10 +166,10 @@ export class CommunitiesPageComponent implements OnDestroy {
             this.createImageFile = null;
             this.createImagePreviewUrl = null;
             this.createModalOpen = false;
-            this.status = 'Community created.';
+            this.status = this.t('communities.status.created');
             this.statusTone = 'success';
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('create community'));
+            this.status = toUserErrorMessage(error, this.t('communities.errors.create'));
             this.statusTone = 'error';
         } finally {
             this.creating = false;
@@ -195,7 +197,7 @@ export class CommunitiesPageComponent implements OnDestroy {
     }
 
     async joinCommunityAsync(community: CommunityDto): Promise<void> {
-        if (this.requireAuthForAction('join communities')) {
+        if (this.requireAuthForAction('join')) {
             return;
         }
 
@@ -211,10 +213,10 @@ export class CommunitiesPageComponent implements OnDestroy {
             this.myCommunities = [joined, ...this.myCommunities.filter(item => item.id !== joined.id)];
             this.discoverSourceCommunities = this.discoverSourceCommunities.map(item => item.id === joined.id ? joined : item);
             this.discoverCommunities = this.filterAndRankDiscover(this.discoverSourceCommunities, this.query);
-            this.status = 'Joined community.';
+            this.status = this.t('communities.status.joined');
             this.statusTone = 'success';
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('join community'));
+            this.status = toUserErrorMessage(error, this.t('communities.errors.join'));
             this.statusTone = 'error';
         } finally {
             this.busyCommunityId = null;
@@ -222,7 +224,7 @@ export class CommunitiesPageComponent implements OnDestroy {
     }
 
     async leaveCommunityAsync(community: CommunityDto): Promise<void> {
-        if (this.requireAuthForAction('leave communities')) {
+        if (this.requireAuthForAction('leave')) {
             return;
         }
 
@@ -238,10 +240,10 @@ export class CommunitiesPageComponent implements OnDestroy {
             this.myCommunities = this.myCommunities.filter(item => item.id !== community.id);
             this.discoverSourceCommunities = this.discoverSourceCommunities.map(item => item.id === community.id ? { ...item, joinedByMe: false, myRole: undefined } : item);
             this.discoverCommunities = this.filterAndRankDiscover(this.discoverSourceCommunities, this.query);
-            this.status = 'Left community.';
+            this.status = this.t('communities.status.left');
             this.statusTone = 'success';
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('leave community'));
+            this.status = toUserErrorMessage(error, this.t('communities.errors.leave'));
             this.statusTone = 'error';
         } finally {
             this.busyCommunityId = null;
@@ -307,12 +309,12 @@ export class CommunitiesPageComponent implements OnDestroy {
             .map(rule => ({ text: rule }));
     }
 
-    private requireAuthForAction(action: string): boolean {
+    private requireAuthForAction(action: 'create' | 'join' | 'leave'): boolean {
         if (this.session.isAuthenticated()) {
             return false;
         }
 
-        this.session.message = `Please sign in or create an account to ${action}.`;
+        this.session.message = this.t('communities.errors.signInForAction', { action: this.t(`communities.authAction.${action}`) });
         void this.router.navigate(['/auth']);
         return true;
     }
@@ -374,5 +376,9 @@ export class CommunitiesPageComponent implements OnDestroy {
         }
 
         return !!target.closest('a, button, input, textarea, select, label, [role="button"]');
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 }

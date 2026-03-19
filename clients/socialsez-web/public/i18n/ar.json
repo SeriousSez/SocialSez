@@ -1,0 +1,198 @@
+{
+  "app": {
+    "notice": {
+      "update": "إصدار جديد متاح. أعد التحميل للتحديث.",
+      "updateReady": "التحديث جاهز",
+      "reload": "إعادة تحميل",
+      "reloading": "جارٍ إعادة التحميل...",
+      "dismiss": "إغلاق",
+      "dismissAria": "إغلاق الإشعار"
+    },
+    "shell": {
+      "skipToContent": "الانتقال إلى المحتوى",
+      "brandSubtitle": "منصة مجتمعية",
+      "nav": {
+        "feed": "الخلاصة",
+        "discover": "اكتشف",
+        "blogs": "المدونات",
+        "communities": "المجتمعات",
+        "chat": "الدردشة",
+        "saved": "المحفوظات",
+        "drafts": "المسودات",
+        "notifications": "الإشعارات",
+        "profile": "الملف الشخصي",
+        "settings": "الإعدادات",
+        "auth": "المصادقة"
+      },
+      "activity": {
+        "title": "النشاط",
+        "empty": "لا يوجد شيء قيد التقدم.",
+        "aria": "نشاط الرفع والنشر"
+      },
+      "trending": {
+        "title": "الرائج",
+        "loading": "جارٍ تحميل الوسوم...",
+        "empty": "لا توجد وسوم رائجة بعد."
+      },
+      "settingsQuickNav": {
+        "title": "الإعدادات",
+        "profile": "الملف الشخصي",
+        "account": "الحساب",
+        "privacy": "الخصوصية",
+        "session": "الجلسة",
+        "preferences": "التفضيلات",
+        "notifications": "الإشعارات",
+        "safety": "الأمان",
+        "security": "أمان الحساب",
+        "data": "البيانات",
+        "blocked": "المستخدمون المحظورون",
+        "logout": "تسجيل الخروج"
+      }
+    },
+    "search": {
+      "label": "بحث",
+      "buttonAria": "بحث",
+      "scopePrefix": "النطاق",
+      "scopeAuto": "تلقائي",
+      "scope": {
+        "all": "كل النتائج",
+        "communities": "المجتمعات",
+        "blogs": "المدونات",
+        "users": "المستخدمون",
+        "posts": "المنشورات",
+        "reels": "ريلز",
+        "hashtags": "الوسوم"
+      }
+    }
+  },
+  "auth": {
+    "hero": {
+      "title": "مرحبًا بك في Venli",
+      "loginSubtitle": "سجّل الدخول باستخدام البريد الإلكتروني وكلمة المرور.",
+      "registerSubtitle": "أنشئ حسابك لبدء النشر ومتابعة الآخرين.",
+      "interestsSubtitle": "اختر اهتماماتك لتخصيص صفحة الاكتشاف منذ اليوم الأول."
+    },
+    "fields": {
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "handle": "المعرّف",
+      "displayName": "الاسم الظاهر",
+      "dateOfBirth": "تاريخ الميلاد",
+      "country": "البلد",
+      "bio": "نبذة"
+    },
+    "actions": {
+      "signIn": "تسجيل الدخول",
+      "createAccount": "إنشاء حساب",
+      "continue": "متابعة",
+      "finish": "إنهاء",
+      "skipForNow": "تخطي الآن"
+    },
+    "switch": {
+      "newHere": "جديد هنا؟",
+      "alreadyHaveAccount": "هل لديك حساب بالفعل؟"
+    }
+  },
+  "settings": {
+    "page": {
+      "title": "الإعدادات",
+      "subtitle": "إدارة حسابك وملفك الشخصي وتفضيلات التطبيق.",
+      "unsavedChanges": "لديك تغييرات إعدادات غير محفوظة.",
+      "discardAll": "تجاهل كل التغييرات غير المحفوظة"
+    },
+    "sections": {
+      "profile": "الملف الشخصي",
+      "account": "الحساب",
+      "privacy": "الخصوصية",
+      "session": "الجلسة",
+      "preferences": "التفضيلات",
+      "notifications": "الإشعارات",
+      "safety": "الأمان",
+      "security": "الأمان",
+      "data": "عناصر التحكم بالبيانات",
+      "blocked": "المستخدمون المحظورون",
+      "logout": "تسجيل الخروج"
+    },
+    "common": {
+      "reload": "إعادة تحميل",
+      "discard": "تجاهل",
+      "saving": "جارٍ الحفظ...",
+      "cancel": "إلغاء",
+      "back": "رجوع",
+      "add": "إضافة"
+    },
+    "preferences": {
+      "compactFeed": "تخطيط خلاصة مضغوط",
+      "useSystemTheme": "استخدام سمة النظام",
+      "darkMode": "الوضع الداكن",
+      "accessibility": "إمكانية الوصول",
+      "reducedMotion": "تقليل الحركة",
+      "largerText": "وضع النص الأكبر",
+      "highContrast": "وضع التباين العالي",
+      "language": "اللغة",
+      "saveAccessibility": "حفظ إمكانية الوصول"
+    },
+    "language": {
+      "system": "إعداد النظام",
+      "enUS": "English (US)",
+      "enGB": "English (UK)",
+      "da": "Dansk",
+      "es": "Español",
+      "de": "Deutsch",
+      "fr": "Français",
+      "ptBR": "Português (Brasil)",
+      "nl": "Nederlands",
+      "sv": "Svenska",
+      "nb": "Norsk bokmål",
+      "it": "Italiano",
+      "pl": "Polski",
+      "ar": "العربية",
+      "tr": "Türkçe"
+    },
+    "messages": {
+      "profileSaved": "تم حفظ إعدادات الملف الشخصي.",
+      "profileReloaded": "تمت إعادة تحميل إعدادات الملف الشخصي.",
+      "preferencesSaved": "تم حفظ التفضيلات."
+    }
+  },
+  "discover": {
+    "page": {
+      "title": "اكتشف"
+    },
+    "scope": {
+      "all": "الكل",
+      "communities": "المجتمعات",
+      "communityPosts": "منشورات المجتمع",
+      "blogs": "المدونات",
+      "reels": "ريلز",
+      "posts": "المنشورات",
+      "hashtags": "الوسوم",
+      "users": "المستخدمون"
+    },
+    "sections": {
+      "forYou": "مخصص لك",
+      "users": "المستخدمون",
+      "communities": "المجتمعات",
+      "communityPosts": "منشورات المجتمع",
+      "blogs": "المدونات",
+      "reels": "ريلز",
+      "hashtags": "الوسوم",
+      "posts": "المنشورات"
+    }
+  },
+  "chatPage": {
+    "title": "الرسائل",
+    "search": {
+      "label": "البحث في المحادثات",
+      "startNewChat": "بدء محادثة جديدة"
+    },
+    "sidebar": {
+      "chats": "المحادثات"
+    },
+    "noConversation": {
+      "title": "اختر محادثة لبدء المراسلة",
+      "startNewChat": "بدء محادثة جديدة"
+    }
+  }
+}

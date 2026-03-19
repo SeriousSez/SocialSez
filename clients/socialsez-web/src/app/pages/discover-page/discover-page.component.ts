@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, DestroyRef, NgZone, OnDestroy, inject } f
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs';
 import { BlogDto, BlogPostDto, CommunityDto, CommunityPostDto, HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryGroupDto } from '../../core/api.types';
 import { buildDiscoverySuggestions, canonicalizeTopicOrTag, expandDiscoveryTerms, matchesDiscoveryValue, rankByDiscoveryQuery, scoreDiscoveryFields, scoreDiscoveryText } from '../../core/discovery-search.util';
@@ -13,7 +14,7 @@ import { ReelInteractionsService } from '../../core/reel-interactions.service';
 import { StoryPresenceService } from '../../core/story-presence.service';
 import { buildSharedPostReferenceCounts } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
-import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
+import { toUserErrorMessage } from '../../core/user-error.utils';
 import { FeedReelsListComponent, ReelCommentCreateEvent, ReelCommentDeleteEvent, ReelCommentUpdateEvent } from '../feed-page/feed-reels-list.component';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { PostCardComponent } from '../../shared/post-card/post-card.component';
@@ -26,7 +27,7 @@ type SearchScope = 'all' | 'posts' | 'hashtags' | 'users' | 'reels' | 'communiti
 @Component({
     selector: 'app-discover-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, PostCardComponent, FeedReelsListComponent, SharePostModalComponent, SharePostMessageModalComponent, SkeletonComponent, ConfirmModalComponent],
+    imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, PostCardComponent, FeedReelsListComponent, SharePostModalComponent, SharePostMessageModalComponent, SkeletonComponent, ConfirmModalComponent],
     templateUrl: './discover-page.component.html',
     styleUrl: './discover-page.component.scss'
 })
@@ -62,16 +63,18 @@ export class DiscoverPageComponent implements OnDestroy {
     pendingShareTarget: 'feed' | 'chat' | null = null;
     shareNote = '';
 
-    readonly scopes: ReadonlyArray<{ value: SearchScope; label: string }> = [
-        { value: 'all', label: 'All' },
-        { value: 'communities', label: 'Communities' },
-        { value: 'community-posts', label: 'Community posts' },
-        { value: 'blogs', label: 'Blogs' },
-        { value: 'reels', label: 'Reels' },
-        { value: 'posts', label: 'Posts' },
-        { value: 'hashtags', label: 'Hashtags' },
-        { value: 'users', label: 'Users' }
-    ];
+    get scopes(): ReadonlyArray<{ value: SearchScope; label: string }> {
+        return [
+            { value: 'all', label: this.t('discover.scope.all') },
+            { value: 'communities', label: this.t('discover.scope.communities') },
+            { value: 'community-posts', label: this.t('discover.scope.communityPosts') },
+            { value: 'blogs', label: this.t('discover.scope.blogs') },
+            { value: 'reels', label: this.t('discover.scope.reels') },
+            { value: 'posts', label: this.t('discover.scope.posts') },
+            { value: 'hashtags', label: this.t('discover.scope.hashtags') },
+            { value: 'users', label: this.t('discover.scope.users') }
+        ];
+    }
     suggestions: string[] = [];
     private suggestionSeedTags: string[] = [];
 
@@ -80,6 +83,7 @@ export class DiscoverPageComponent implements OnDestroy {
     private loadingRecommendedReels = false;
     private reloadRecommendedReelsQueued = false;
     private readonly destroyRef = inject(DestroyRef);
+    private readonly translate = inject(TranslateService);
     private activeStoryGroups: StoryGroupDto[] = [];
     private refreshingStoryPresence = false;
     private repostCountSource: PostDto[] | null = null;
@@ -313,12 +317,12 @@ export class DiscoverPageComponent implements OnDestroy {
     profileBioPreview(bio: string | null | undefined): string {
         const source = (bio ?? '').trim();
         if (!source) {
-            return 'No bio yet.';
+            return this.t('discover.profile.noBio');
         }
 
         const displayText = this.normalizeBioTextSpacing(this.toDisplayBioText(source)).trim();
         if (!displayText) {
-            return 'No bio yet.';
+            return this.t('discover.profile.noBio');
         }
 
         const expression = /((?:https?:\/\/|www\.)[^\s]+|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,})(?:\/[^\s]*)?)/gi;
@@ -468,7 +472,7 @@ export class DiscoverPageComponent implements OnDestroy {
             this.postResults = this.postResults.map(post => post.id === postId ? { ...post, content: updatedContent } : post);
             this.cancelEdit();
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('update post'));
+            this.status = toUserErrorMessage(error, this.t('discover.errors.updatePost'));
         } finally {
             this.savingPost = false;
         }
@@ -506,7 +510,7 @@ export class DiscoverPageComponent implements OnDestroy {
                 this.cancelEdit();
             }
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('delete post'));
+            this.status = toUserErrorMessage(error, this.t('discover.errors.deletePost'));
         } finally {
             this.pendingDeletePostId = null;
             this.deletingPostId = null;
@@ -570,7 +574,7 @@ export class DiscoverPageComponent implements OnDestroy {
             state,
             post.id,
             () => this.postInteractions.shareToFeed(post, shareText),
-            'Could not share this post right now.',
+            this.t('discover.errors.sharePostNow'),
             this.savingPost,
             !!this.deletingPostId
         );
@@ -578,7 +582,7 @@ export class DiscoverPageComponent implements OnDestroy {
         this.sharingPostId = state.sharingPostId;
         this.status = state.errorMessage;
         if (succeeded) {
-            this.status = 'Post shared.';
+            this.status = this.t('discover.status.postShared');
         }
 
         return succeeded;
@@ -596,7 +600,7 @@ export class DiscoverPageComponent implements OnDestroy {
             request.recipientIds,
             request.groupChatIds,
             () => this.postInteractions.shareToChat(post, request),
-            'Could not send this post to chat right now.',
+            this.t('discover.errors.sendPostToChatNow'),
             this.savingPost,
             !!this.deletingPostId
         );
@@ -604,7 +608,7 @@ export class DiscoverPageComponent implements OnDestroy {
         this.sharingPostId = state.sharingPostId;
         this.status = state.errorMessage;
         if (succeeded) {
-            this.status = 'Post sent as message.';
+            this.status = this.t('discover.status.postSentAsMessage');
         }
 
         return succeeded;
@@ -619,10 +623,10 @@ export class DiscoverPageComponent implements OnDestroy {
         try {
             const result = await this.session.followAsync(profile.id);
             this.status = result.status === 'RequestPending'
-                ? `Follow request sent to @${profile.handle}.`
-                : `Followed @${profile.handle}.`;
+                ? this.t('discover.status.followRequestSent', { handle: profile.handle })
+                : this.t('discover.status.followedUser', { handle: profile.handle });
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('follow this user'));
+            this.status = toUserErrorMessage(error, this.t('discover.errors.followUser'));
         }
     }
 
@@ -646,7 +650,7 @@ export class DiscoverPageComponent implements OnDestroy {
             }
 
             this.followedHashtags = this.followedHashtags.filter(item => item !== normalized);
-            this.status = `Unfollowed #${normalized}.`;
+            this.status = this.t('discover.status.unfollowedHashtag', { tag: normalized });
         } else {
             if (this.isAuthenticated) {
                 const followed = await this.session.followHashtagAsync(normalized);
@@ -654,7 +658,7 @@ export class DiscoverPageComponent implements OnDestroy {
             }
 
             this.followedHashtags = [normalized, ...this.followedHashtags.filter(item => item !== normalized)].slice(0, 20);
-            this.status = `Following #${normalized}.`;
+            this.status = this.t('discover.status.followingHashtag', { tag: normalized });
         }
 
         this.saveFollowedHashtags();
@@ -662,15 +666,15 @@ export class DiscoverPageComponent implements OnDestroy {
     }
 
     async toggleLike(post: PostDto): Promise<void> {
-        await this.runPostMutation(post.id, () => this.postInteractions.toggleLike(post.id), 'Could not update like right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.toggleLike(post.id), this.t('discover.errors.updateLikeNow'));
     }
 
     async setReaction(post: PostDto, reactionType: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.postInteractions.setReaction(post.id, reactionType), 'Could not set reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.setReaction(post.id, reactionType), this.t('discover.errors.setReactionNow'));
     }
 
     async clearReaction(post: PostDto): Promise<void> {
-        await this.runPostMutation(post.id, () => this.postInteractions.clearReaction(post.id), 'Could not clear reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.clearReaction(post.id), this.t('discover.errors.clearReactionNow'));
     }
 
     async addComment(post: PostDto, payload: string | { content: string; parentCommentId?: string | null }): Promise<void> {
@@ -680,23 +684,23 @@ export class DiscoverPageComponent implements OnDestroy {
 
         const content = typeof payload === 'string' ? payload : payload.content;
         const parentCommentId = typeof payload === 'string' ? null : (payload.parentCommentId ?? null);
-        await this.runPostMutation(post.id, () => this.postInteractions.addComment(post.id, content, parentCommentId), 'Could not add comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.addComment(post.id, content, parentCommentId), this.t('discover.errors.addCommentNow'));
     }
 
     async updateComment(post: PostDto, commentId: string, content: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.postInteractions.updateComment(post.id, commentId, content), 'Could not update comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.updateComment(post.id, commentId, content), this.t('discover.errors.updateCommentNow'));
     }
 
     async deleteComment(post: PostDto, commentId: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.postInteractions.deleteComment(post.id, commentId), 'Could not delete comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.deleteComment(post.id, commentId), this.t('discover.errors.deleteCommentNow'));
     }
 
     async setCommentReaction(post: PostDto, commentId: string, reactionType: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.postInteractions.setCommentReaction(post.id, commentId, reactionType), 'Could not react to comment right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.setCommentReaction(post.id, commentId, reactionType), this.t('discover.errors.reactToCommentNow'));
     }
 
     async clearCommentReaction(post: PostDto, commentId: string): Promise<void> {
-        await this.runPostMutation(post.id, () => this.postInteractions.clearCommentReaction(post.id, commentId), 'Could not clear comment reaction right now.');
+        await this.runPostMutation(post.id, () => this.postInteractions.clearCommentReaction(post.id, commentId), this.t('discover.errors.clearCommentReactionNow'));
     }
 
     async toggleReelLike(reel: ReelDto): Promise<void> {
@@ -710,7 +714,7 @@ export class DiscoverPageComponent implements OnDestroy {
             const updated = await this.reelInteractions.toggleLike(reel.id);
             this.applyReelUpdate(updated);
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('update reel like'));
+            this.status = toUserErrorMessage(error, this.t('discover.errors.updateReelLike'));
         } finally {
             this.reactingReelId = null;
         }
@@ -733,7 +737,7 @@ export class DiscoverPageComponent implements OnDestroy {
             this.pendingDeleteReelComment = null;
             this.applyReelUpdate(updated);
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('add reel comment'));
+            this.status = toUserErrorMessage(error, this.t('discover.errors.addReelComment'));
         } finally {
             this.commentingReelId = null;
         }
@@ -751,7 +755,7 @@ export class DiscoverPageComponent implements OnDestroy {
             const updated = await this.reelInteractions.updateComment(reel.id, commentId, content);
             this.applyReelUpdate(updated);
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('update reel comment'));
+            this.status = toUserErrorMessage(error, this.t('discover.errors.updateReelComment'));
         } finally {
             this.commentingReelId = null;
         }
@@ -778,7 +782,7 @@ export class DiscoverPageComponent implements OnDestroy {
             const updated = await this.reelInteractions.deleteComment(pending.reelId, pending.commentId);
             this.applyReelUpdate(updated);
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('delete reel comment'));
+            this.status = toUserErrorMessage(error, this.t('discover.errors.deleteReelComment'));
         } finally {
             this.pendingDeleteReelComment = null;
             this.commentingReelId = null;
@@ -798,7 +802,7 @@ export class DiscoverPageComponent implements OnDestroy {
             const updated = await this.reelInteractions.toggleCommentLike(reel.id, commentId);
             this.applyReelUpdate(updated);
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('update reel comment like'));
+            this.status = toUserErrorMessage(error, this.t('discover.errors.updateReelCommentLike'));
         } finally {
             this.reactingReelId = null;
         }
@@ -935,7 +939,7 @@ export class DiscoverPageComponent implements OnDestroy {
                                 && communityPosts.status === 'rejected'
                                 && blogs.status === 'rejected'
                             ) {
-                                throw new Error('All searches failed.');
+                                throw new Error(this.t('discover.errors.allSearchesFailed'));
                             }
                             break;
                         }
@@ -944,10 +948,10 @@ export class DiscoverPageComponent implements OnDestroy {
                     this.updateSuggestions();
 
                     if (!this.hasAnyResults) {
-                        this.status = 'No results found.';
+                        this.status = this.t('discover.status.noResults');
                     }
                 } catch (error) {
-                    this.status = toUserErrorMessage(error, actionError('complete search'));
+                    this.status = toUserErrorMessage(error, this.t('discover.errors.completeSearch'));
                 } finally {
                     this.loading = false;
                     this.cdr.detectChanges();
@@ -1127,7 +1131,7 @@ export class DiscoverPageComponent implements OnDestroy {
 
                     this.recommendedProfiles = Array.from(uniqueProfiles.values()).slice(0, 10);
                 } catch (error) {
-                    this.status = toUserErrorMessage(error, actionError('load recommended reels'));
+                    this.status = toUserErrorMessage(error, this.t('discover.errors.loadRecommendedReels'));
                 } finally {
                     this.loading = false;
                     this.cdr.detectChanges();
@@ -1699,5 +1703,9 @@ export class DiscoverPageComponent implements OnDestroy {
 
     private normalizeHashtagTag(value: string | null | undefined): string {
         return canonicalizeTopicOrTag((value ?? '').replace(/^#/, ''));
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 }

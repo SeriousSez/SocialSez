@@ -1,6 +1,6 @@
 <section class="page blog-shell" [ngStyle]="themeStyles">
     <p class="error" *ngIf="!loading && error">{{ error }}</p>
-    <article class="post post-skeleton" *ngIf="loading" aria-label="Loading blog post">
+    <article class="post post-skeleton" *ngIf="loading" [attr.aria-label]="'blogPost.loading.aria' | translate">
         <header class="post-head blog-header">
             <span class="skeleton-line skeleton-back"></span>
             <span class="skeleton-line skeleton-title"></span>
@@ -28,7 +28,7 @@
 
     <article class="post" *ngIf="!loading && !error && post as item">
         <header class="post-head">
-            <a class="back-link" [routerLink]="['/blogs', handle, blogSlug]">Back to Blog</a>
+            <a class="back-link" [routerLink]="['/blogs', handle, blogSlug]">{{ 'blogPost.actions.backToBlog' | translate }}</a>
             <h1>
                 <ng-container *ngFor="let line of splitHashtagText(item.title); let isLast = last">
                     <ng-container *ngFor="let part of line">
@@ -38,7 +38,7 @@
                     <br *ngIf="!isLast" />
                 </ng-container>
             </h1>
-            <p class="meta subtitle">By @{{ item.authorHandle }} · {{ (item.publishedAtUtc ?? item.updatedAtUtc) | date:'medium' }}</p>
+            <p class="meta subtitle">{{ 'blogPost.meta.byDate' | translate:{ handle: item.authorHandle, date: ((item.publishedAtUtc ?? item.updatedAtUtc) | date:'medium') } }}</p>
             <div class="tags" *ngIf="item.tags.length">
                 <a *ngFor="let tag of item.tags" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: tag, type: 'all' }">#{{ tag }}</a>
             </div>
@@ -49,11 +49,11 @@
         <div class="content" [innerHTML]="renderedPostContent"></div>
 
         <section class="blog-actions" *ngIf="allowLikes || allowComments || allowShares || allowEmbeds || canToggleSave">
-            <button type="button" class="ghost" *ngIf="allowLikes" disabled title="Blog likes will be enabled soon">Like</button>
-            <button type="button" class="ghost" *ngIf="allowComments" disabled title="Blog comments will be enabled soon">Comment</button>
-            <button type="button" class="ghost" *ngIf="canToggleSave" [disabled]="savingPost" (click)="toggleSavePostAsync()">{{ item.isSavedByMe ? 'Unsave' : 'Save' }}</button>
-            <button type="button" class="ghost" *ngIf="allowShares" (click)="copyShareLinkAsync()">{{ copiedShareLink ? 'Link copied' : 'Share' }}</button>
-            <button type="button" class="ghost" *ngIf="allowEmbeds" (click)="openEmbedToolsInNewTab()">Embed</button>
+            <button type="button" class="ghost" *ngIf="allowLikes" disabled [attr.title]="'blogPost.hints.likesSoon' | translate">{{ 'blogPost.actions.like' | translate }}</button>
+            <button type="button" class="ghost" *ngIf="allowComments" disabled [attr.title]="'blogPost.hints.commentsSoon' | translate">{{ 'blogPost.actions.comment' | translate }}</button>
+            <button type="button" class="ghost" *ngIf="canToggleSave" [disabled]="savingPost" (click)="toggleSavePostAsync()">{{ item.isSavedByMe ? ('blogPost.actions.unsave' | translate) : ('blogPost.actions.save' | translate) }}</button>
+            <button type="button" class="ghost" *ngIf="allowShares" (click)="copyShareLinkAsync()">{{ copiedShareLink ? ('blogPost.actions.linkCopied' | translate) : ('blogPost.actions.share' | translate) }}</button>
+            <button type="button" class="ghost" *ngIf="allowEmbeds" (click)="openEmbedToolsInNewTab()">{{ 'blogPost.actions.embed' | translate }}</button>
         </section>
     </article>
 </section>

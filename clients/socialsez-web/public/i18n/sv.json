@@ -1,0 +1,198 @@
+{
+  "app": {
+    "notice": {
+      "update": "Ny version tillgänglig. Ladda om för att uppdatera.",
+      "updateReady": "Uppdatering klar",
+      "reload": "Ladda om",
+      "reloading": "Laddar om...",
+      "dismiss": "Stäng",
+      "dismissAria": "Stäng notis"
+    },
+    "shell": {
+      "skipToContent": "Hoppa till innehåll",
+      "brandSubtitle": "Communityplattform",
+      "nav": {
+        "feed": "Flöde",
+        "discover": "Upptäck",
+        "blogs": "Bloggar",
+        "communities": "Gemenskaper",
+        "chat": "Chatt",
+        "saved": "Sparade",
+        "drafts": "Utkast",
+        "notifications": "Notiser",
+        "profile": "Profil",
+        "settings": "Inställningar",
+        "auth": "Logga in"
+      },
+      "activity": {
+        "title": "Aktivitet",
+        "empty": "Inget pågår.",
+        "aria": "Uppladdnings- och publiceringsaktivitet"
+      },
+      "trending": {
+        "title": "Trender",
+        "loading": "Läser in hashtags...",
+        "empty": "Inga trendande hashtags ännu."
+      },
+      "settingsQuickNav": {
+        "title": "Inställningar",
+        "profile": "Profil",
+        "account": "Konto",
+        "privacy": "Integritet",
+        "session": "Session",
+        "preferences": "Preferenser",
+        "notifications": "Notiser",
+        "safety": "Säkerhet",
+        "security": "Kontosäkerhet",
+        "data": "Data",
+        "blocked": "Blockerade användare",
+        "logout": "Logga ut"
+      }
+    },
+    "search": {
+      "label": "Sök",
+      "buttonAria": "Sök",
+      "scopePrefix": "Omfattning",
+      "scopeAuto": "Auto",
+      "scope": {
+        "all": "Alla resultat",
+        "communities": "Gemenskaper",
+        "blogs": "Bloggar",
+        "users": "Användare",
+        "posts": "Inlägg",
+        "reels": "Reels",
+        "hashtags": "Hashtags"
+      }
+    }
+  },
+  "auth": {
+    "hero": {
+      "title": "Välkommen till Venli",
+      "loginSubtitle": "Logga in med din e-post och ditt lösenord.",
+      "registerSubtitle": "Skapa ditt konto för att börja posta och följa.",
+      "interestsSubtitle": "Välj intressen för att anpassa Upptäck från första dagen."
+    },
+    "fields": {
+      "email": "E-post",
+      "password": "Lösenord",
+      "confirmPassword": "Bekräfta lösenord",
+      "handle": "Handle",
+      "displayName": "Visningsnamn",
+      "dateOfBirth": "Födelsedatum",
+      "country": "Land",
+      "bio": "Bio"
+    },
+    "actions": {
+      "signIn": "Logga in",
+      "createAccount": "Skapa konto",
+      "continue": "Fortsätt",
+      "finish": "Slutför",
+      "skipForNow": "Hoppa över nu"
+    },
+    "switch": {
+      "newHere": "Ny här?",
+      "alreadyHaveAccount": "Har du redan ett konto?"
+    }
+  },
+  "settings": {
+    "page": {
+      "title": "Inställningar",
+      "subtitle": "Hantera ditt konto, din profil och appinställningar.",
+      "unsavedChanges": "Du har osparade ändringar.",
+      "discardAll": "Kasta alla osparade ändringar"
+    },
+    "sections": {
+      "profile": "Profil",
+      "account": "Konto",
+      "privacy": "Integritet",
+      "session": "Session",
+      "preferences": "Preferenser",
+      "notifications": "Notiser",
+      "safety": "Säkerhet",
+      "security": "Säkerhet",
+      "data": "Datakontroller",
+      "blocked": "Blockerade användare",
+      "logout": "Logga ut"
+    },
+    "common": {
+      "reload": "Ladda om",
+      "discard": "Kasta",
+      "saving": "Sparar...",
+      "cancel": "Avbryt",
+      "back": "Tillbaka",
+      "add": "Lägg till"
+    },
+    "preferences": {
+      "compactFeed": "Kompakt flödeslayout",
+      "useSystemTheme": "Använd systemtema",
+      "darkMode": "Mörkt läge",
+      "accessibility": "Tillgänglighet",
+      "reducedMotion": "Minskad rörelse",
+      "largerText": "Större textläge",
+      "highContrast": "Högkontrastläge",
+      "language": "Språk",
+      "saveAccessibility": "Spara tillgänglighet"
+    },
+    "language": {
+      "system": "Systemstandard",
+      "enUS": "English (US)",
+      "enGB": "English (UK)",
+      "da": "Dansk",
+      "es": "Español",
+      "de": "Deutsch",
+      "fr": "Français",
+      "ptBR": "Português (Brasil)",
+      "nl": "Nederlands",
+      "sv": "Svenska",
+      "nb": "Norsk bokmål",
+      "it": "Italiano",
+      "pl": "Polski",
+      "ar": "العربية",
+      "tr": "Türkçe"
+    },
+    "messages": {
+      "profileSaved": "Profilinställningar sparade.",
+      "profileReloaded": "Profilinställningar omladdade.",
+      "preferencesSaved": "Preferenser sparade."
+    }
+  },
+  "discover": {
+    "page": {
+      "title": "Upptäck"
+    },
+    "scope": {
+      "all": "Allt",
+      "communities": "Gemenskaper",
+      "communityPosts": "Communityinlägg",
+      "blogs": "Bloggar",
+      "reels": "Reels",
+      "posts": "Inlägg",
+      "hashtags": "Hashtags",
+      "users": "Användare"
+    },
+    "sections": {
+      "forYou": "För dig",
+      "users": "Användare",
+      "communities": "Gemenskaper",
+      "communityPosts": "Communityinlägg",
+      "blogs": "Bloggar",
+      "reels": "Reels",
+      "hashtags": "Hashtags",
+      "posts": "Inlägg"
+    }
+  },
+  "chatPage": {
+    "title": "Meddelanden",
+    "search": {
+      "label": "Sök chattar",
+      "startNewChat": "Starta ny chatt"
+    },
+    "sidebar": {
+      "chats": "Chattar"
+    },
+    "noConversation": {
+      "title": "Välj en chatt för att börja skicka meddelanden",
+      "startNewChat": "Starta ny chatt"
+    }
+  }
+}

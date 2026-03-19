@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgZone } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { StoryDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
@@ -14,7 +15,7 @@ interface SharedContentPart {
 @Component({
     selector: 'app-shared-story-page',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, TranslateModule],
     templateUrl: './shared-story-page.component.html',
     styleUrl: './shared-story-page.component.scss'
 })
@@ -136,7 +137,7 @@ export class SharedStoryPageComponent {
                 this.notFound = true;
             }
         } catch {
-            this.error = 'Could not load this shared story.';
+            this.error = 'sharedStory.errors.load';
         } finally {
             this.loading = false;
         }

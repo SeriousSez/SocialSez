@@ -1,8 +1,8 @@
 <section class="page">
-    <h2>Discover</h2>
+    <h2>{{ 'discover.page.title' | translate }}</h2>
     <div class="search-row">
-        <label class="search-label">Search
-            <input [(ngModel)]="query" placeholder="Search users, communities, community posts, blogs, reels, posts, hashtags" (input)="onQueryInput($event)" />
+        <label class="search-label">{{ 'discover.search.label' | translate }}
+            <input [(ngModel)]="query" [placeholder]="'discover.search.placeholder' | translate" (input)="onQueryInput($event)" />
         </label>
     </div>
 
@@ -16,17 +16,17 @@
 
     <section class="results" *ngIf="!loading && showRecommendedReelsSection">
         <section class="section" *ngIf="showFollowedHashtagsSection">
-            <h3>Following hashtags</h3>
+            <h3>{{ 'discover.sections.followingHashtags' | translate }}</h3>
             <div class="hashtags followed-hashtags">
                 <div class="hashtag-follow-item" *ngFor="let tag of followedHashtags">
                     <a [routerLink]="['/hashtags', tag]" class="hashtag-pill">#{{ tag }}</a>
-                    <button type="button" class="ghost hashtag-follow-btn" (click)="toggleHashtagFollow(tag, $event)">Unfollow</button>
+                    <button type="button" class="ghost hashtag-follow-btn" (click)="toggleHashtagFollow(tag, $event)">{{ 'discover.actions.unfollow' | translate }}</button>
                 </div>
             </div>
         </section>
 
         <section class="section" *ngIf="showFollowedHashtagsSection && followedHashtagPosts.length">
-            <h3>From followed hashtags</h3>
+            <h3>{{ 'discover.sections.fromFollowedHashtags' | translate }}</h3>
             <div class="post-list">
                 <app-post-card *ngFor="let post of followedHashtagPosts" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [reacting]="reactingPostId === post.id"
                     [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [canInteract]="isAuthenticated" [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent"
@@ -34,9 +34,10 @@
                     (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)"
                     (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
                     <div post-header class="author">
-                        <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? ('Open @' + post.authorHandle + ' stories') : ('View @' + post.authorHandle + ' profile')">
+                        <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)"
+                            [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? (('discover.profile.openStoriesAria' | translate:{ handle: post.authorHandle })) : (('discover.profile.viewProfileAria' | translate:{ handle: post.authorHandle }))">
                             <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else followedAuthorInitial"
-                                [src]="post.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Author image" />
+                                [src]="post.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'discover.profile.authorImageAlt' | translate" />
                         </a>
                         <ng-template #followedAuthorInitial>
                             <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
@@ -48,12 +49,13 @@
         </section>
 
         <section class="section" *ngIf="showRecommendedProfilesSection && recommendedProfiles.length">
-            <h3>People you may know</h3>
+            <h3>{{ 'discover.sections.peopleYouMayKnow' | translate }}</h3>
             <article class="card" *ngFor="let profile of recommendedProfiles">
                 <div class="identity">
-                    <a class="avatar-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)" [attr.aria-label]="hasActiveStoryForHandle(profile.handle) ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
+                    <a class="avatar-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)"
+                        [attr.aria-label]="hasActiveStoryForHandle(profile.handle) ? (('discover.profile.openStoriesAria' | translate:{ handle: profile.handle })) : (('discover.profile.viewProfileAria' | translate:{ handle: profile.handle }))">
                         <img class="avatar" [class.story-active]="hasActiveStoryForHandle(profile.handle)" [class.story-seen]="hasActiveStoryForHandle(profile.handle) && !hasUnseenStoryForHandle(profile.handle)" *ngIf="profile.imageUrl; else recommendedUserInitial" [src]="profile.imageUrl"
-                            onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile image" />
+                            onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'discover.profile.imageAlt' | translate" />
                         <ng-template #recommendedUserInitial>
                             <div class="avatar" [class.story-active]="hasActiveStoryForHandle(profile.handle)" [class.story-seen]="hasActiveStoryForHandle(profile.handle) && !hasUnseenStoryForHandle(profile.handle)">{{ profile.displayName[0] || profile.handle[0] }}</div>
                         </ng-template>
@@ -64,17 +66,17 @@
                     </h4>
                 </div>
                 <p [innerHTML]="profileBioPreview(profile.bio)"></p>
-                <button *ngIf="isAuthenticated" type="button" (click)="follow(profile)">Follow User</button>
-                <a *ngIf="!isAuthenticated" class="ghost" routerLink="/auth">Sign in to follow</a>
+                <button *ngIf="isAuthenticated" type="button" (click)="follow(profile)">{{ 'discover.actions.followUser' | translate }}</button>
+                <a *ngIf="!isAuthenticated" class="ghost" routerLink="/auth">{{ 'discover.actions.signInToFollow' | translate }}</a>
             </article>
         </section>
 
         <section class="section" *ngIf="showRecommendedReelsSection && recommendedReels.length">
-            <h3>For you</h3>
+            <h3>{{ 'discover.sections.forYou' | translate }}</h3>
 
             <div class="recommended-reel-mosaic" *ngIf="showRecommendedReelsMosaic; else recommendedReelsFallback">
                 <article class="recommended-reel-tile" *ngFor="let reel of recommendedReels | slice:0:18">
-                    <img class="recommended-reel-image" *ngIf="reel.thumbnailUrl; else noRecommendedReelImage" [src]="reel.thumbnailUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Recommended reel" />
+                    <img class="recommended-reel-image" *ngIf="reel.thumbnailUrl; else noRecommendedReelImage" [src]="reel.thumbnailUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'discover.reels.recommendedAlt' | translate" />
                     <ng-template #noRecommendedReelImage>
                         <div class="recommended-reel-image recommended-reel-image-fallback">@{{ reel.authorHandle }}</div>
                     </ng-template>
@@ -102,13 +104,13 @@
                     <span class="dot dot-c"></span>
                 </div>
 
-                <h4>No recommended reels yet</h4>
-                <p>{{ 'Interact more with reels, comments, and hashtags to improve your Discover recommendations.' }}</p>
+                <h4>{{ 'discover.empty.noRecommendedReelsTitle' | translate }}</h4>
+                <p>{{ 'discover.empty.noRecommendedReelsMessage' | translate }}</p>
             </section>
         </section>
     </section>
 
-    <section class="discover-skeleton" *ngIf="loading" [attr.aria-label]="showingSearchResults ? 'Searching' : 'Loading recommendations'">
+    <section class="discover-skeleton" *ngIf="loading" [attr.aria-label]="showingSearchResults ? ('discover.loading.searchingAria' | translate) : ('discover.loading.recommendationsAria' | translate)">
         <div class="section">
             <app-skeleton width="70px" height="16px"></app-skeleton>
             <article class="card" *ngFor="let _ of [1, 2]">
@@ -136,12 +138,13 @@
 
     <section class="results" *ngIf="!loading && showingSearchResults && hasAnyResults">
         <section class="section" *ngIf="showUsersSection && profileResults.length">
-            <h3>Users</h3>
+            <h3>{{ 'discover.sections.users' | translate }}</h3>
             <article class="card" *ngFor="let profile of profileResults">
                 <div class="identity">
-                    <a class="avatar-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)" [attr.aria-label]="hasActiveStoryForHandle(profile.handle) ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
+                    <a class="avatar-link" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)"
+                        [attr.aria-label]="hasActiveStoryForHandle(profile.handle) ? (('discover.profile.openStoriesAria' | translate:{ handle: profile.handle })) : (('discover.profile.viewProfileAria' | translate:{ handle: profile.handle }))">
                         <img class="avatar" [class.story-active]="hasActiveStoryForHandle(profile.handle)" [class.story-seen]="hasActiveStoryForHandle(profile.handle) && !hasUnseenStoryForHandle(profile.handle)" *ngIf="profile.imageUrl; else discoverUserInitial" [src]="profile.imageUrl"
-                            onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile image" />
+                            onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'discover.profile.imageAlt' | translate" />
                         <ng-template #discoverUserInitial>
                             <div class="avatar" [class.story-active]="hasActiveStoryForHandle(profile.handle)" [class.story-seen]="hasActiveStoryForHandle(profile.handle) && !hasUnseenStoryForHandle(profile.handle)">{{ profile.displayName[0] || profile.handle[0] }}</div>
                         </ng-template>
@@ -152,64 +155,64 @@
                     </h4>
                 </div>
                 <p [innerHTML]="profileBioPreview(profile.bio)"></p>
-                <button type="button" (click)="follow(profile)">Follow User</button>
+                <button type="button" (click)="follow(profile)">{{ 'discover.actions.followUser' | translate }}</button>
             </article>
         </section>
 
         <section class="section" *ngIf="showCommunitiesSection && communityResults.length">
-            <h3>Communities</h3>
+            <h3>{{ 'discover.sections.communities' | translate }}</h3>
             <article class="card clickable-card" *ngFor="let community of communityResults" role="link" tabindex="0" (click)="openCommunityAsync(community, $event)" (keydown.enter)="openCommunityAsync(community, $event)"
                 (keydown.space)="$event.preventDefault(); openCommunityAsync(community, $event)">
                 <div class="identity">
-                    <img class="avatar" *ngIf="community.imageUrl; else communityInitial" [src]="community.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Community image" />
+                    <img class="avatar" *ngIf="community.imageUrl; else communityInitial" [src]="community.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'discover.community.imageAlt' | translate" />
                     <ng-template #communityInitial>
                         <div class="avatar">{{ community.name[0] || community.slug[0] }}</div>
                     </ng-template>
                     <h4><a class="user-link" [routerLink]="['/c', community.slug]">c/{{ community.slug }}</a></h4>
                 </div>
-                <p>{{ community.description || 'No description yet.' }}</p>
-                <div class="meta">{{ community.memberCount }} member{{ community.memberCount === 1 ? '' : 's' }}</div>
+                <p>{{ community.description || ('discover.community.noDescription' | translate) }}</p>
+                <div class="meta">{{ community.memberCount }} {{ community.memberCount === 1 ? ('discover.community.member' | translate) : ('discover.community.members' | translate) }}</div>
             </article>
         </section>
 
         <section class="section" *ngIf="showCommunityPostsSection && communityPostResults.length">
-            <h3>Community Posts</h3>
+            <h3>{{ 'discover.sections.communityPosts' | translate }}</h3>
             <article class="card clickable-card" *ngFor="let post of communityPostResults" role="link" tabindex="0" (click)="openCommunityPostAsync(post, $event)" (keydown.enter)="openCommunityPostAsync(post, $event)" (keydown.space)="$event.preventDefault(); openCommunityPostAsync(post, $event)">
                 <h4>
-                    <a class="user-link" [routerLink]="['/cp', post.id]">{{ post.title || 'View community post' }}</a>
+                    <a class="user-link" [routerLink]="['/cp', post.id]">{{ post.title || ('discover.communityPost.viewPost' | translate) }}</a>
                 </h4>
-                <p>{{ post.content || post.linkUrl || 'Open this post to view details.' }}</p>
-                <div class="meta">Posted by @{{ post.authorHandle }} · {{ post.createdAtUtc | date:'short' }}</div>
+                <p>{{ post.content || post.linkUrl || ('discover.communityPost.openForDetails' | translate) }}</p>
+                <div class="meta">{{ 'discover.communityPost.postedBy' | translate:{ handle: post.authorHandle, date: (post.createdAtUtc | date:'short') } }}</div>
             </article>
         </section>
 
         <section class="section" *ngIf="showBlogsSection && blogResults.length">
-            <h3>Blogs</h3>
+            <h3>{{ 'discover.sections.blogs' | translate }}</h3>
             <article class="card clickable-card" *ngFor="let blog of blogResults" role="link" tabindex="0" (click)="openBlogAsync(blog, $event)" (keydown.enter)="openBlogAsync(blog, $event)" (keydown.space)="$event.preventDefault(); openBlogAsync(blog, $event)">
                 <h4>
                     <a class="user-link" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">{{ blog.title }}</a>
                 </h4>
-                <p>{{ blog.description || 'No description yet.' }}</p>
-                <div class="meta">By @{{ blog.ownerHandle }} · Updated {{ blog.updatedAtUtc | date:'short' }}</div>
+                <p>{{ blog.description || ('discover.blog.noDescription' | translate) }}</p>
+                <div class="meta">{{ 'discover.blog.byUpdated' | translate:{ handle: blog.ownerHandle, date: (blog.updatedAtUtc | date:'short') } }}</div>
             </article>
         </section>
 
         <ng-container *ngIf="showReelsSection">
-            <ng-container *ngTemplateOutlet="reelsSectionTemplate; context: { title: 'Reels', reels: reelResults }"></ng-container>
+            <ng-container *ngTemplateOutlet="reelsSectionTemplate; context: { title: 'discover.sections.reels', reels: reelResults }"></ng-container>
         </ng-container>
 
         <section class="section" *ngIf="showHashtagsSection && hashtagResults.length">
-            <h3>Hashtags</h3>
+            <h3>{{ 'discover.sections.hashtags' | translate }}</h3>
             <div class="hashtags">
                 <div class="hashtag-follow-item" *ngFor="let hashtag of hashtagResults">
                     <a [routerLink]="['/hashtags', hashtag.tag]" class="hashtag-pill">#{{ hashtag.tag }} <span>{{ hashtag.count }}</span></a>
-                    <button type="button" class="ghost hashtag-follow-btn" (click)="toggleHashtagFollow(hashtag.tag, $event)">{{ isHashtagFollowed(hashtag.tag) ? 'Unfollow' : 'Follow' }}</button>
+                    <button type="button" class="ghost hashtag-follow-btn" (click)="toggleHashtagFollow(hashtag.tag, $event)">{{ isHashtagFollowed(hashtag.tag) ? ('discover.actions.unfollow' | translate) : ('discover.actions.follow' | translate) }}</button>
                 </div>
             </div>
         </section>
 
         <section class="section" *ngIf="showPostsSection && postResults.length">
-            <h3>Posts</h3>
+            <h3>{{ 'discover.sections.posts' | translate }}</h3>
             <div class="post-list">
                 <app-post-card *ngFor="let post of postResults" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [reacting]="reactingPostId === post.id"
                     [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [canInteract]="isAuthenticated" [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent"
@@ -217,9 +220,10 @@
                     (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)"
                     (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)">
                     <div post-header class="author">
-                        <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? ('Open @' + post.authorHandle + ' stories') : ('View @' + post.authorHandle + ' profile')">
+                        <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)"
+                            [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? (('discover.profile.openStoriesAria' | translate:{ handle: post.authorHandle })) : (('discover.profile.viewProfileAria' | translate:{ handle: post.authorHandle }))">
                             <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
-                                onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Author image" />
+                                onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'discover.profile.authorImageAlt' | translate" />
                         </a>
                         <ng-template #authorInitial>
                             <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
@@ -236,7 +240,7 @@
 
 <ng-template #reelsSectionTemplate let-title="title" let-reels="reels">
     <section class="section" *ngIf="reels.length">
-        <h3>{{ title }}</h3>
+        <h3>{{ title | translate }}</h3>
         <app-feed-reels-list [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="unseenStoryAuthorHandles" [reactingReelId]="reactingReelId" [commentingReelId]="commentingReelId" [viewerProfileId]="currentProfileId" [canInteract]="isAuthenticated"
             (likeToggled)="toggleReelLike($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (commentAdded)="addReelComment($event)" (reelCommentUpdated)="updateReelComment($event)" (reelCommentDeleteRequested)="requestDeleteReelComment($event)"
             (authorAvatarClicked)="openProfileByHandle($event)">
@@ -250,9 +254,10 @@
 <app-share-post-message-modal [open]="!!pendingSharePost && pendingShareTarget === 'chat'" [post]="pendingSharePost" [busy]="!!sharingPostId" (cancel)="cancelShareModal()" (confirm)="submitShareAsMessage($event)">
 </app-share-post-message-modal>
 
-<app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
+<app-confirm-modal [open]="!!pendingDeletePostId" [title]="'discover.confirm.deletePostTitle' | translate" [message]="'discover.confirm.deletePostMessage' | translate" [confirmText]="'discover.confirm.delete' | translate" [cancelText]="'discover.confirm.cancel' | translate" confirmClass="danger"
+    [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
 </app-confirm-modal>
 
-<app-confirm-modal [open]="!!pendingDeleteReelComment" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingReelCommentId" (cancel)="cancelDeleteReelComment()"
-    (confirm)="confirmDeleteReelComment()">
+<app-confirm-modal [open]="!!pendingDeleteReelComment" [title]="'discover.confirm.deleteCommentTitle' | translate" [message]="'discover.confirm.deleteCommentMessage' | translate" [confirmText]="'discover.confirm.delete' | translate" [cancelText]="'discover.confirm.cancel' | translate"
+    confirmClass="danger" [busy]="!!deletingReelCommentId" (cancel)="cancelDeleteReelComment()" (confirm)="confirmDeleteReelComment()">
 </app-confirm-modal>

@@ -1,23 +1,24 @@
 <section class="page">
     <div class="hero">
-        <h2>Welcome to Venli</h2>
-        <p class="sub" *ngIf="mode === 'login'">Sign in with your email and password.</p>
-        <p class="sub" *ngIf="mode === 'register' && registerStep === 'account'">Create your account to start posting and following.</p>
-        <p class="sub" *ngIf="mode === 'register' && registerStep === 'interests'">Pick interests to personalize Discover from day one.</p>
+        <h2>{{ 'auth.hero.title' | translate }}</h2>
+        <p class="sub" *ngIf="mode === 'login'">{{ 'auth.hero.loginSubtitle' | translate }}</p>
+        <p class="sub" *ngIf="mode === 'register' && registerStep === 'account'">{{ 'auth.hero.registerSubtitle' | translate }}</p>
+        <p class="sub" *ngIf="mode === 'register' && registerStep === 'interests'">{{ 'auth.hero.interestsSubtitle' | translate }}</p>
     </div>
 
-    <div class="mode-switch" role="tablist" aria-label="Authentication mode">
-        <button type="button" class="mode-btn" role="tab" [attr.aria-selected]="mode === 'login'" [class.active]="mode === 'login'" [disabled]="mode === 'login' || isSubmitting" (click)="setMode('login')">Sign in</button>
-        <button type="button" class="mode-btn" role="tab" [attr.aria-selected]="mode === 'register'" [class.active]="mode === 'register'" [disabled]="mode === 'register' || isSubmitting" (click)="setMode('register')">Create account</button>
+    <div class="mode-switch" role="tablist" [attr.aria-label]="'auth.mode.aria' | translate">
+        <button type="button" class="mode-btn" role="tab" [attr.aria-selected]="mode === 'login'" [class.active]="mode === 'login'" [disabled]="mode === 'login' || isSubmitting" (click)="setMode('login')">{{ 'auth.actions.signIn' | translate }}</button>
+        <button type="button" class="mode-btn" role="tab" [attr.aria-selected]="mode === 'register'" [class.active]="mode === 'register'" [disabled]="mode === 'register' || isSubmitting" (click)="setMode('register')">{{ 'auth.actions.createAccount' | translate }}</button>
     </div>
 
     <form class="auth-form" (ngSubmit)="submit()" autocomplete="off" data-lpignore="true" data-form-type="other">
         <div class="grid" *ngIf="mode === 'login' || registerStep === 'account'">
-            <label>Email <input [(ngModel)]="email" name="email" placeholder="you@example.com" /></label>
-            <label *ngIf="mode === 'login'">Password
+            <label>{{ 'auth.fields.email' | translate }} <input [(ngModel)]="email" name="email" [placeholder]="'auth.placeholders.email' | translate" /></label>
+            <label *ngIf="mode === 'login'">{{ 'auth.fields.password' | translate }}
                 <div class="password-field">
-                    <input [(ngModel)]="password" name="password" [type]="showLoginPassword ? 'text' : 'password'" placeholder="••••••••" />
-                    <button type="button" class="password-toggle" [attr.aria-label]="showLoginPassword ? 'Hide password' : 'Show password'" [attr.title]="showLoginPassword ? 'Hide password' : 'Show password'" (click)="toggleLoginPasswordVisibility()">
+                    <input [(ngModel)]="password" name="password" [type]="showLoginPassword ? 'text' : 'password'" [placeholder]="'auth.placeholders.password' | translate" />
+                    <button type="button" class="password-toggle" [attr.aria-label]="(showLoginPassword ? 'auth.actions.hidePassword' : 'auth.actions.showPassword') | translate" [attr.title]="(showLoginPassword ? 'auth.actions.hidePassword' : 'auth.actions.showPassword') | translate"
+                        (click)="toggleLoginPasswordVisibility()">
                         <i class="fa-duotone" [class.fa-eye]="!showLoginPassword" [class.fa-eye-slash]="showLoginPassword" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -25,94 +26,103 @@
 
             <label class="checkbox full" *ngIf="mode === 'login'">
                 <input type="checkbox" [(ngModel)]="staySignedIn" name="staySignedIn" />
-                <span>Stay signed in</span>
+                <span>{{ 'auth.actions.staySignedIn' | translate }}</span>
             </label>
 
             <ng-container *ngIf="mode === 'register'">
-                <label>Handle <input [(ngModel)]="handle" name="handle" (ngModelChange)="onHandleInput($event)" placeholder="sez" /></label>
+                <label>{{ 'auth.fields.handle' | translate }} <input [(ngModel)]="handle" name="handle" (ngModelChange)="onHandleInput($event)" [placeholder]="'auth.placeholders.handle' | translate" /></label>
 
-                <div class="form-separator full" role="separator" aria-label="Security section">
-                    <span>Security</span>
+                <div class="form-separator full" role="separator" [attr.aria-label]="'auth.sections.security' | translate">
+                    <span>{{ 'auth.sections.security' | translate }}</span>
                 </div>
 
                 <div class="password-group full">
-                    <label>Password
+                    <label>{{ 'auth.fields.password' | translate }}
                         <div class="password-field">
-                            <input [(ngModel)]="password" name="password" [type]="showRegisterPassword ? 'text' : 'password'" placeholder="••••••••" />
-                            <button type="button" class="password-toggle" [attr.aria-label]="showRegisterPassword ? 'Hide password' : 'Show password'" [attr.title]="showRegisterPassword ? 'Hide password' : 'Show password'" (click)="toggleRegisterPasswordVisibility()">
+                            <input [(ngModel)]="password" name="password" [type]="showRegisterPassword ? 'text' : 'password'" [placeholder]="'auth.placeholders.password' | translate" />
+                            <button type="button" class="password-toggle" [attr.aria-label]="(showRegisterPassword ? 'auth.actions.hidePassword' : 'auth.actions.showPassword') | translate" [attr.title]="(showRegisterPassword ? 'auth.actions.hidePassword' : 'auth.actions.showPassword') | translate"
+                                (click)="toggleRegisterPasswordVisibility()">
                                 <i class="fa-duotone" [class.fa-eye]="!showRegisterPassword" [class.fa-eye-slash]="showRegisterPassword" aria-hidden="true"></i>
                             </button>
                         </div>
                     </label>
 
-                    <label>Confirm Password
+                    <label>{{ 'auth.fields.confirmPassword' | translate }}
                         <div class="password-field">
-                            <input [(ngModel)]="confirmPassword" name="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" placeholder="••••••••" />
-                            <button type="button" class="password-toggle" [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'" [attr.title]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'" (click)="toggleConfirmPasswordVisibility()">
+                            <input [(ngModel)]="confirmPassword" name="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" [placeholder]="'auth.placeholders.password' | translate" />
+                            <button type="button" class="password-toggle" [attr.aria-label]="(showConfirmPassword ? 'auth.actions.hideConfirmPassword' : 'auth.actions.showConfirmPassword') | translate"
+                                [attr.title]="(showConfirmPassword ? 'auth.actions.hideConfirmPassword' : 'auth.actions.showConfirmPassword') | translate" (click)="toggleConfirmPasswordVisibility()">
                                 <i class="fa-duotone" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword" aria-hidden="true"></i>
                             </button>
                         </div>
                     </label>
                 </div>
 
-                <p class="hint full">Password strength: <strong [class.weak]="passwordStrengthLabel === 'Weak'" [class.medium]="passwordStrengthLabel === 'Medium'" [class.strong]="passwordStrengthLabel === 'Strong'">{{ passwordStrengthLabel }}</strong></p>
+                <p class="hint full">{{ 'auth.passwordStrength.label' | translate }}: <strong [class.weak]="passwordStrengthLabel === 'Weak'" [class.medium]="passwordStrengthLabel === 'Medium'" [class.strong]="passwordStrengthLabel === 'Strong'">{{ passwordStrengthTranslationKey | translate
+                        }}</strong></p>
 
-                <div class="form-separator full" role="separator" aria-label="Profile section">
-                    <span>Profile</span>
+                <div class="form-separator full" role="separator" [attr.aria-label]="'auth.sections.profile' | translate">
+                    <span>{{ 'auth.sections.profile' | translate }}</span>
                 </div>
 
-                <label>Display Name <input [(ngModel)]="displayName" name="displayName" placeholder="Sez" /></label>
-                <label>Date of Birth
+                <label>{{ 'auth.fields.displayName' | translate }} <input [(ngModel)]="displayName" name="displayName" [placeholder]="'auth.placeholders.displayName' | translate" /></label>
+                <label>{{ 'auth.fields.dateOfBirth' | translate }}
                     <div class="dob-select-row" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
                         <select class="country-select dob-select" [(ngModel)]="birthDay" name="birthDay" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
-                            <option value="">Day</option>
+                            <option value="">{{ 'auth.fields.day' | translate }}</option>
                             <option *ngFor="let day of dayOptions" [value]="day">{{ day }}</option>
                         </select>
                         <select class="country-select dob-select" [(ngModel)]="birthMonth" name="birthMonth" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
-                            <option value="">Month</option>
+                            <option value="">{{ 'auth.fields.month' | translate }}</option>
                             <option *ngFor="let month of monthOptions" [value]="month">{{ month }}</option>
                         </select>
                         <select class="country-select dob-select" [(ngModel)]="birthYear" name="birthYear" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
-                            <option value="">Year</option>
+                            <option value="">{{ 'auth.fields.year' | translate }}</option>
                             <option *ngFor="let year of yearOptions" [value]="year">{{ year }}</option>
                         </select>
                     </div>
                 </label>
-                <label>Country
+                <label>{{ 'auth.fields.country' | translate }}
                     <select class="country-select" [(ngModel)]="countryCode" name="countryCode" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
-                        <option value="">Select country (optional)</option>
+                        <option value="">{{ 'auth.placeholders.country' | translate }}</option>
                         <option *ngFor="let country of countries" [value]="country.code">{{ country.name }}</option>
                     </select>
                 </label>
-                <label class="full">Bio</label>
-                <app-comment-editor class="bio-editor full" [placeholder]="'Builder'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="140" [initialContent]="bio" [initialContentIsHtml]="true" (contentChanged)="bio = $event"></app-comment-editor>
+                <label>{{ 'settings.preferences.language' | translate }}
+                    <select class="country-select" [(ngModel)]="registrationLanguagePreference" (ngModelChange)="onRegistrationLanguagePreferenceChange($event)" name="registrationLanguagePreference" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+                        <option *ngFor="let language of languageOptions" [value]="language.value">{{ language.label }}</option>
+                    </select>
+                </label>
+                <label class="full">{{ 'auth.fields.bio' | translate }}</label>
+                <app-comment-editor class="bio-editor full" [placeholder]="'auth.placeholders.bio' | translate" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="140" [initialContent]="bio" [initialContentIsHtml]="true"
+                    (contentChanged)="bio = $event"></app-comment-editor>
 
-                <p class="hint full" *ngIf="normalizedHandlePreview">Your profile URL: /users/{{ normalizedHandlePreview }}</p>
+                <p class="hint full" *ngIf="normalizedHandlePreview">{{ 'auth.profileUrl' | translate }}: /users/{{ normalizedHandlePreview }}</p>
 
-                <div class="form-separator full" role="separator" aria-label="Preferences section">
-                    <span>Preferences</span>
+                <div class="form-separator full" role="separator" [attr.aria-label]="'auth.sections.preferences' | translate">
+                    <span>{{ 'auth.sections.preferences' | translate }}</span>
                 </div>
 
                 <label class="checkbox full">
                     <input type="checkbox" [(ngModel)]="acceptedTerms" name="acceptedTerms" />
-                    <span>I agree to the terms and community guidelines.</span>
+                    <span>{{ 'auth.preferences.acceptTerms' | translate }}</span>
                 </label>
 
                 <label class="checkbox full">
                     <input type="checkbox" [(ngModel)]="isPrivateByDefault" name="isPrivateByDefault" />
-                    <span>Make my account private by default.</span>
+                    <span>{{ 'auth.preferences.privateByDefault' | translate }}</span>
                 </label>
 
                 <label class="checkbox full">
                     <input type="checkbox" [(ngModel)]="marketingOptIn" name="marketingOptIn" />
-                    <span>Send me product updates and tips by email.</span>
+                    <span>{{ 'auth.preferences.marketingOptIn' | translate }}</span>
                 </label>
             </ng-container>
         </div>
 
         <section class="interests-step" *ngIf="mode === 'register' && registerStep === 'interests'">
-            <h3>Choose your interests</h3>
-            <p class="hint">Select up to 12 hashtags. We’ll follow them for you to tune your feed.</p>
+            <h3>{{ 'auth.interests.title' | translate }}</h3>
+            <p class="hint">{{ 'auth.interests.subtitle' | translate }}</p>
 
             <div class="interest-pills" *ngIf="suggestedInterests.length; else noInterestsTemplate">
                 <button type="button" class="interest-pill" *ngFor="let interest of suggestedInterests" [class.selected]="isInterestSelected(interest.tag)" (click)="toggleInterest(interest.tag)">
@@ -121,7 +131,7 @@
             </div>
 
             <ng-template #noInterestsTemplate>
-                <p class="hint">Trending interests are unavailable right now. You can skip and configure this later in Discover.</p>
+                <p class="hint">{{ 'auth.interests.unavailable' | translate }}</p>
             </ng-template>
         </section>
 
@@ -130,23 +140,23 @@
                 <span class="btn-loader" *ngIf="isSubmitting" aria-hidden="true"></span>
                 <span>
                     {{ isSubmitting
-                    ? (mode === 'login' ? 'Signing in...' : (registerStep === 'account' ? 'Creating account...' : 'Finishing setup...'))
-                    : (mode === 'login' ? 'Sign in' : (registerStep === 'account' ? 'Continue' : 'Finish')) }}
+                    ? (mode === 'login' ? ('auth.actions.signingIn' | translate) : (registerStep === 'account' ? ('auth.actions.creatingAccount' | translate) : ('auth.actions.finishingSetup' | translate)))
+                    : (mode === 'login' ? ('auth.actions.signIn' | translate) : (registerStep === 'account' ? ('auth.actions.continue' | translate) : ('auth.actions.finish' | translate))) }}
                 </span>
             </button>
 
-            <button *ngIf="mode === 'register' && registerStep === 'interests'" type="button" class="ghost" [disabled]="isSubmitting" (click)="skipInterests()">Skip for now</button>
+            <button *ngIf="mode === 'register' && registerStep === 'interests'" type="button" class="ghost" [disabled]="isSubmitting" (click)="skipInterests()">{{ 'auth.actions.skipForNow' | translate }}</button>
         </div>
     </form>
 
     <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
 
     <p class="switch-cta" *ngIf="mode === 'login'">
-        New here?
-        <button type="button" class="link-btn" [disabled]="isSubmitting" (click)="setMode('register')">Create an account</button>
+        {{ 'auth.switch.newHere' | translate }}
+        <button type="button" class="link-btn" [disabled]="isSubmitting" (click)="setMode('register')">{{ 'auth.actions.createAccount' | translate }}</button>
     </p>
     <p class="switch-cta" *ngIf="mode === 'register' && registerStep === 'account'">
-        Already have an account?
-        <button type="button" class="link-btn" [disabled]="isSubmitting" (click)="setMode('login')">Sign in</button>
+        {{ 'auth.switch.alreadyHaveAccount' | translate }}
+        <button type="button" class="link-btn" [disabled]="isSubmitting" (click)="setMode('login')">{{ 'auth.actions.signIn' | translate }}</button>
     </p>
 </section>

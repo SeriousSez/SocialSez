@@ -153,11 +153,6 @@ export class FeedPageComponent implements OnDestroy {
     private reelUploadStatusHideTimeoutId: number | null = null;
     private composerCloseTimerId: number | null = null;
     private storyComposerCloseTimerId: number | null = null;
-    private readonly preciseDateFormatter = new Intl.DateTimeFormat(resolveAppLocale(), {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
     private readonly prefsStorageKey = 'socialsez-web-prefs';
     private markingStoryId: string | null = null;
     private loadInFlight = false;
@@ -1912,7 +1907,11 @@ export class FeedPageComponent implements OnDestroy {
             return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
         }
 
-        return this.preciseDateFormatter.format(createdAt);
+        return new Intl.DateTimeFormat(resolveAppLocale(), {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        }).format(createdAt);
     }
 
     private removeStoryFromCollections(storyId: string): void {

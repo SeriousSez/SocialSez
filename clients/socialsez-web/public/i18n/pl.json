@@ -1,0 +1,198 @@
+{
+  "app": {
+    "notice": {
+      "update": "Dostępna jest nowa wersja. Odśwież, aby zaktualizować.",
+      "updateReady": "Aktualizacja gotowa",
+      "reload": "Odśwież",
+      "reloading": "Odświeżanie...",
+      "dismiss": "Zamknij",
+      "dismissAria": "Zamknij powiadomienie"
+    },
+    "shell": {
+      "skipToContent": "Przejdź do treści",
+      "brandSubtitle": "Platforma społecznościowa",
+      "nav": {
+        "feed": "Kanał",
+        "discover": "Odkrywaj",
+        "blogs": "Blogi",
+        "communities": "Społeczności",
+        "chat": "Czat",
+        "saved": "Zapisane",
+        "drafts": "Szkice",
+        "notifications": "Powiadomienia",
+        "profile": "Profil",
+        "settings": "Ustawienia",
+        "auth": "Logowanie"
+      },
+      "activity": {
+        "title": "Aktywność",
+        "empty": "Nic nie jest w toku.",
+        "aria": "Aktywność przesyłania i publikowania"
+      },
+      "trending": {
+        "title": "Trendy",
+        "loading": "Ładowanie hashtagów...",
+        "empty": "Brak trendujących hashtagów."
+      },
+      "settingsQuickNav": {
+        "title": "Ustawienia",
+        "profile": "Profil",
+        "account": "Konto",
+        "privacy": "Prywatność",
+        "session": "Sesja",
+        "preferences": "Preferencje",
+        "notifications": "Powiadomienia",
+        "safety": "Bezpieczeństwo",
+        "security": "Bezpieczeństwo konta",
+        "data": "Dane",
+        "blocked": "Zablokowani użytkownicy",
+        "logout": "Wyloguj"
+      }
+    },
+    "search": {
+      "label": "Szukaj",
+      "buttonAria": "Szukaj",
+      "scopePrefix": "Zakres",
+      "scopeAuto": "Auto",
+      "scope": {
+        "all": "Wszystkie wyniki",
+        "communities": "Społeczności",
+        "blogs": "Blogi",
+        "users": "Użytkownicy",
+        "posts": "Posty",
+        "reels": "Reels",
+        "hashtags": "Hashtagi"
+      }
+    }
+  },
+  "auth": {
+    "hero": {
+      "title": "Witamy w Venli",
+      "loginSubtitle": "Zaloguj się e-mailem i hasłem.",
+      "registerSubtitle": "Utwórz konto, aby publikować i obserwować innych.",
+      "interestsSubtitle": "Wybierz zainteresowania, aby spersonalizować Odkrywaj od pierwszego dnia."
+    },
+    "fields": {
+      "email": "E-mail",
+      "password": "Hasło",
+      "confirmPassword": "Potwierdź hasło",
+      "handle": "Nazwa użytkownika",
+      "displayName": "Nazwa wyświetlana",
+      "dateOfBirth": "Data urodzenia",
+      "country": "Kraj",
+      "bio": "Bio"
+    },
+    "actions": {
+      "signIn": "Zaloguj",
+      "createAccount": "Utwórz konto",
+      "continue": "Dalej",
+      "finish": "Zakończ",
+      "skipForNow": "Pomiń na razie"
+    },
+    "switch": {
+      "newHere": "Nowy tutaj?",
+      "alreadyHaveAccount": "Masz już konto?"
+    }
+  },
+  "settings": {
+    "page": {
+      "title": "Ustawienia",
+      "subtitle": "Zarządzaj kontem, profilem i preferencjami aplikacji.",
+      "unsavedChanges": "Masz niezapisane zmiany ustawień.",
+      "discardAll": "Odrzuć wszystkie niezapisane zmiany"
+    },
+    "sections": {
+      "profile": "Profil",
+      "account": "Konto",
+      "privacy": "Prywatność",
+      "session": "Sesja",
+      "preferences": "Preferencje",
+      "notifications": "Powiadomienia",
+      "safety": "Bezpieczeństwo",
+      "security": "Bezpieczeństwo",
+      "data": "Kontrola danych",
+      "blocked": "Zablokowani użytkownicy",
+      "logout": "Wyloguj"
+    },
+    "common": {
+      "reload": "Odśwież",
+      "discard": "Odrzuć",
+      "saving": "Zapisywanie...",
+      "cancel": "Anuluj",
+      "back": "Wstecz",
+      "add": "Dodaj"
+    },
+    "preferences": {
+      "compactFeed": "Kompaktowy układ kanału",
+      "useSystemTheme": "Użyj motywu systemowego",
+      "darkMode": "Tryb ciemny",
+      "accessibility": "Dostępność",
+      "reducedMotion": "Ograniczony ruch",
+      "largerText": "Większy tekst",
+      "highContrast": "Wysoki kontrast",
+      "language": "Język",
+      "saveAccessibility": "Zapisz dostępność"
+    },
+    "language": {
+      "system": "Domyślne ustawienie systemu",
+      "enUS": "English (US)",
+      "enGB": "English (UK)",
+      "da": "Dansk",
+      "es": "Español",
+      "de": "Deutsch",
+      "fr": "Français",
+      "ptBR": "Português (Brasil)",
+      "nl": "Nederlands",
+      "sv": "Svenska",
+      "nb": "Norsk bokmål",
+      "it": "Italiano",
+      "pl": "Polski",
+      "ar": "العربية",
+      "tr": "Türkçe"
+    },
+    "messages": {
+      "profileSaved": "Ustawienia profilu zapisane.",
+      "profileReloaded": "Ustawienia profilu ponownie wczytane.",
+      "preferencesSaved": "Preferencje zapisane."
+    }
+  },
+  "discover": {
+    "page": {
+      "title": "Odkrywaj"
+    },
+    "scope": {
+      "all": "Wszystko",
+      "communities": "Społeczności",
+      "communityPosts": "Posty społeczności",
+      "blogs": "Blogi",
+      "reels": "Reels",
+      "posts": "Posty",
+      "hashtags": "Hashtagi",
+      "users": "Użytkownicy"
+    },
+    "sections": {
+      "forYou": "Dla Ciebie",
+      "users": "Użytkownicy",
+      "communities": "Społeczności",
+      "communityPosts": "Posty społeczności",
+      "blogs": "Blogi",
+      "reels": "Reels",
+      "hashtags": "Hashtagi",
+      "posts": "Posty"
+    }
+  },
+  "chatPage": {
+    "title": "Wiadomości",
+    "search": {
+      "label": "Szukaj czatów",
+      "startNewChat": "Rozpocznij nowy czat"
+    },
+    "sidebar": {
+      "chats": "Czaty"
+    },
+    "noConversation": {
+      "title": "Wybierz czat, aby rozpocząć rozmowę",
+      "startNewChat": "Rozpocznij nowy czat"
+    }
+  }
+}

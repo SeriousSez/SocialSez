@@ -1,0 +1,1621 @@
+{
+  "app": {
+    "notice": {
+      "update": "En ny version er tilgængelig. Genindlæs for at opdatere.",
+      "updateReady": "Opdatering klar",
+      "reload": "Genindlæs",
+      "reloading": "Genindlæser...",
+      "dismiss": "Luk",
+      "dismissAria": "Luk notifikation"
+    },
+    "shell": {
+      "skipToContent": "Spring til indhold",
+      "brandSubtitle": "Community-platform",
+      "nav": {
+        "feed": "Foder",
+        "discover": "Opdag",
+        "blogs": "Blogs",
+        "communities": "Fællesskaber",
+        "chat": "Snak",
+        "saved": "Gemt",
+        "drafts": "Kladder",
+        "notifications": "Notifikationer",
+        "profile": "Profil",
+        "settings": "Indstillinger",
+        "auth": "Login"
+      },
+      "activity": {
+        "title": "Aktivitet",
+        "empty": "Intet i gang.",
+        "aria": "Upload- og udgivelsesaktivitet"
+      },
+      "trending": {
+        "title": "Trending",
+        "loading": "Indlæser hashtags...",
+        "empty": "Ingen trending hashtags endnu."
+      },
+      "settingsQuickNav": {
+        "title": "Indstillinger",
+        "aria": "Sektioner i indstillinger",
+        "profile": "Profil",
+        "account": "Konto",
+        "privacy": "Privatliv",
+        "session": "Session",
+        "preferences": "Præferencer",
+        "notifications": "Notifikationer",
+        "safety": "Sikkerhed",
+        "security": "Sikring",
+        "data": "Data",
+        "blocked": "Blokerede brugere",
+        "logout": "Log ud"
+      },
+      "mobileNav": {
+        "aria": "Primær mobilnavigation",
+        "openMore": "Åbn mere navigation",
+        "more": "Mere",
+        "moreAria": "Mere navigation",
+        "groups": "Grupper",
+        "alerts": "Advarsler"
+      }
+    },
+    "search": {
+      "label": "Sog",
+      "buttonAria": "Sog",
+      "scopeMenuAria": "Valg af sogeområde",
+      "scopePrefix": "Område",
+      "scopeAuto": "Auto",
+      "removeOverride": "Fjern tilsidesættelse",
+      "context": {
+        "communities": "Fællesskaber",
+        "blogs": "Blogs",
+        "profiles": "Profiler",
+        "hashtags": "Hashtags",
+        "chat": "Snak",
+        "notifications": "Notifikationer",
+        "discover": "Opdag",
+        "settings": "Indstillinger",
+        "compose": "Opret",
+        "global": "Global"
+      },
+      "scope": {
+        "all": "Alle resultater",
+        "communities": "Fællesskaber",
+        "communityPosts": "Fællesskabsindlæg",
+        "blogs": "Blogs",
+        "users": "Brugere",
+        "posts": "Indlæg",
+        "reels": "Hjul",
+        "hashtags": "Hashtags"
+      },
+      "placeholder": {
+        "communities": "Sog efter fællesskaber, fællesskabsindlæg, brugere og hashtags",
+        "blogs": "Sog efter blogs, fællesskaber, indlæg og hashtags",
+        "profiles": "Sog efter profiler, indlæg, reels og hashtags",
+        "hashtags": "Sog efter hashtags, indlæg og reels",
+        "chat": "Sog efter brugere, indlæg, reels og hashtags",
+        "notifications": "Sog efter brugere, indlæg, reels og hashtags",
+        "discover": "Sog efter brugere, fællesskaber, fællesskabsindlæg, blogs, reels, indlæg og hashtags",
+        "global": "Sog efter brugere, fællesskaber, fællesskabsindlæg, blogs, reels, indlæg og hashtags"
+      },
+      "placeholderByScope": {
+        "communities": "Sog fællesskaber efter navn, slug eller beskrivelse",
+        "communityPosts": "Sog fællesskabsindlæg efter titel, indhold eller forfatter",
+        "blogs": "Sog blogs efter titel, handle eller slug",
+        "users": "Sog brugere og profiler",
+        "posts": "Sog indlæg og forfattere",
+        "reels": "Sog reels efter billedtekst, kommentarer eller forfatter",
+        "hashtags": "Sog hashtags"
+      }
+    }
+  },
+  "auth": {
+    "hero": {
+      "title": "Velkommen til Venli",
+      "loginSubtitle": "Log ind med din e-mail og adgangskode.",
+      "registerSubtitle": "Opret din konto for at begynde at poste og folge.",
+      "interestsSubtitle": "Vælg interesser for at tilpasse Opdag fra dag et."
+    },
+    "mode": {
+      "aria": "Autentificeringstilstand"
+    },
+    "fields": {
+      "email": "E-mail",
+      "password": "Adgangskode",
+      "confirmPassword": "Bekræft adgangskode",
+      "handle": "Håndtag",
+      "displayName": "Visningsnavn",
+      "dateOfBirth": "Fødselsdato",
+      "day": "Dag",
+      "month": "Måned",
+      "year": "År",
+      "country": "Land",
+      "bio": "Bio"
+    },
+    "placeholders": {
+      "email": "dig@example.com",
+      "password": null,
+      "handle": "sez",
+      "displayName": "Sez",
+      "country": "Vælg land (valgfrit)",
+      "bio": "Bygger"
+    },
+    "actions": {
+      "signIn": "Log ind",
+      "createAccount": "Opret konto",
+      "staySignedIn": "Forbliv logget ind",
+      "showPassword": "Vis adgangskode",
+      "hidePassword": "Skjul adgangskode",
+      "showConfirmPassword": "Vis bekræft adgangskode",
+      "hideConfirmPassword": "Skjul bekræft adgangskode",
+      "signingIn": "Logger ind...",
+      "creatingAccount": "Opretter konto...",
+      "finishingSetup": "Færdiggør opsætning...",
+      "continue": "Fortsæt",
+      "finish": "Færdig",
+      "skipForNow": "Spring over nu"
+    },
+    "passwordStrength": {
+      "label": "Adgangskodestyrke",
+      "weak": "Svag",
+      "medium": "Middel",
+      "strong": "Stærk"
+    },
+    "preferences": {
+      "acceptTerms": "Jeg accepterer vilkårene og retningslinjerne for fællesskabet.",
+      "privateByDefault": "Gør min konto privat som standard.",
+      "marketingOptIn": "Send mig produktopdateringer og tips via e-mail."
+    },
+    "interests": {
+      "title": "Vælg dine interesser",
+      "subtitle": "Vælg op til 12 hashtags. Vi folger dem for dig for at tilpasse dit feed.",
+      "unavailable": "Trending interesser er ikke tilgængelige lige nu. Du kan springe over og konfigurere dette senere i Opdag."
+    },
+    "switch": {
+      "newHere": "Ny her?",
+      "alreadyHaveAccount": "Har du allerede en konto?"
+    },
+    "sections": {
+      "security": "Sikkerhed",
+      "profile": "Profil",
+      "preferences": "Præferencer"
+    },
+    "profileUrl": "Din profil-URL",
+    "validation": {
+      "emailRequired": "E-mail er påkrævet.",
+      "passwordRequired": "Adgangskode er påkrævet.",
+      "passwordTooShort": "Adgangskoden skal være mindst 8 tegn.",
+      "passwordsMismatch": "Adgangskoderne matcher ikke.",
+      "handleRequired": "Handle er påkrævet.",
+      "displayNameRequired": "Visningsnavn er påkrævet.",
+      "birthDateInvalid": "Vælg en fuldstændig gyldig fødselsdato.",
+      "minimumAge": "Du skal være mindst 13 år for at registrere dig.",
+      "acceptTerms": "Du skal acceptere vilkårene for at oprette en konto."
+    },
+    "errors": {
+      "registerFailed": "Kunne ikke registrere med disse oplysninger.",
+      "invalidCredentials": "Ugyldige loginoplysninger.",
+      "interestsSaveFailed": "Vi oprettede din konto, men kunne ikke gemme interesser lige nu."
+    }
+  },
+  "profile": {
+    "hero": {
+      "noBio": "Ingen bio endnu.",
+      "bioHidden": "Bio er skjult, fordi denne profil er blokeret.",
+      "joined": "Tilmeldt {{date}}",
+      "openStoriesAria": "Åbn @{{handle}} stories",
+      "viewProfileAria": "Vis @{{handle}} profil",
+      "avatarAlt": "{{name}} avatar",
+      "authorImageAlt": "Forfatterbillede",
+      "trustSignalsAria": "Profilens tillidssignaler",
+      "privateProfile": "Privat profil",
+      "publicProfile": "Offentlig profil",
+      "establishedMember": "Etableret medlem",
+      "activeOn": "Aktiv {{date}}",
+      "statsAria": "Profilstatistik",
+      "posts": "indlæg",
+      "followers": "følgere",
+      "following": "følger"
+    },
+    "tabs": {
+      "posts": "Indlæg",
+      "reels": "Hjul",
+      "analytics": "Analyser",
+      "aria": "Profilens indholdsfaner"
+    },
+    "actions": {
+      "working": "Arbejder...",
+      "blocked": "Blokeret",
+      "requestSent": "Anmodning sendt",
+      "following": "Følger",
+      "unfollowed": "Følger ikke",
+      "tryAgain": "Prøv igen",
+      "cancelRequest": "Annuller anmodning",
+      "unfollow": "Stop med at følge",
+      "follow": "Følg",
+      "message": "Besked",
+      "requestMessage": "Anmod om besked",
+      "profileLinkCopied": "Profillink kopieret",
+      "copyProfileLink": "Kopiér profillink",
+      "copied": "Kopieret",
+      "signInToFollow": "Log ind for at følge"
+    },
+    "safety": {
+      "openMenu": "Åbn profilsikkerhedsindstillinger",
+      "moreOptions": "Flere muligheder",
+      "nickname": "Kaldenavn",
+      "mute": "Lydløs",
+      "unmute": "Fjern lydløs",
+      "block": "Bloker",
+      "unblock": "Fjern blokering",
+      "report": "Rapporter",
+      "reporting": "Rapporterer..."
+    },
+    "nickname": {
+      "dialogAria": "Sæt kaldenavn",
+      "title": "Kaldenavn til dig",
+      "close": "Luk kaldenavnseditor",
+      "label": "Kaldenavn",
+      "placeholder": "Indtast kaldenavn"
+    },
+    "blocked": {
+      "byTarget": "Denne profil har blokeret dig. Indlæg, reels, stories og bio er skjult.",
+      "byYou": "Du har blokeret denne profil. Indlæg, reels, stories og bio er skjult."
+    },
+    "privateLocked": "Denne profil er privat. Følg og vent på godkendelse for at se indlæg.",
+    "empty": {
+      "blockedTitle": "Profil blokeret",
+      "posts": {
+        "title": "Ingen indlæg endnu",
+        "own": "Begynd at dele fra Compose.",
+        "guest": "Denne profil har endnu ikke delt noget.",
+        "private": "Ingen indlæg er synlige, før denne private profil godkender din følgeanmodning."
+      },
+      "reels": {
+        "title": "Ingen reels endnu",
+        "own": "Opret en fra din profil.",
+        "guest": "Denne profil har endnu ikke delt reels.",
+        "blocked": "Reels er skjult, mens denne profil er blokeret.",
+        "private": "Ingen reels er synlige, før denne private profil godkender din følgeanmodning."
+      }
+    },
+    "confirm": {
+      "delete": "Slet",
+      "deletePostTitle": "Slet indlæg",
+      "deletePostMessage": "Slet dette indlæg? Denne handling kan ikke fortrydes.",
+      "deleteReelTitle": "Slet reel",
+      "deleteReelMessage": "Slet denne reel? Denne handling kan ikke fortrydes.",
+      "deleteCommentTitle": "Slet kommentar",
+      "deleteCommentMessage": "Slet denne kommentar? Denne handling kan ikke fortrydes.",
+      "deleteStoryTitle": "Slet story",
+      "deleteStoryMessage": "Slet denne story? Denne handling kan ikke fortrydes.",
+      "deleteCollectionTitle": "Slet samling",
+      "blockTitle": "Bloker profil",
+      "blockMessage": "Bloker @{{handle}}? Dette fjerner følgeforbindelser.",
+      "block": "Bloker",
+      "thisProfile": "denne profil"
+    },
+    "common": {
+      "save": "Gem",
+      "saving": "Gemmer...",
+      "cancel": "Annuller",
+      "clear": "Ryd",
+      "back": "Tilbage",
+      "retry": "Prøv igen"
+    },
+    "storyCollections": {
+      "rowAria": "Story-samlinger",
+      "createAria": "Opret story-samling",
+      "new": "Ny",
+      "openAria": "Åbn story-samling {{name}}",
+      "coverAlt": "Story-samlingens forside",
+      "manageAria": "Administrer story-samling {{name}}",
+      "createDialogAria": "Opret story-samling",
+      "newCollectionTitle": "Ny story-samling",
+      "closeCreateDialog": "Luk story-samlingsmodal",
+      "collectionName": "Samlingsnavn",
+      "collectionPlaceholder": "f.eks. Sommer 2024",
+      "collectionNameAria": "Navn på story-samling",
+      "storyMediaAlt": "Story-medie",
+      "storyFallback": "Historie",
+      "selected": "Valgt",
+      "select": "Vælg",
+      "noStoriesInArchive": "Ingen stories i dit arkiv endnu.",
+      "creating": "Opretter...",
+      "create": "Opret",
+      "manageDialogAria": "Administrer story-samling",
+      "manageNamedTitle": "Administrer {{name}}",
+      "manageTitle": "Administrer story-samling",
+      "closeManageDialog": "Luk modal for tilføjelse af stories",
+      "selectCollection": "Vælg samling",
+      "selectCollectionAria": "Vælg story-samling",
+      "remove": "Fjern",
+      "add": "Tilføj",
+      "createFirstCollection": "Opret din første samling først.",
+      "deleteCollection": "Slet samling",
+      "close": "Luk"
+    },
+    "compose": {
+      "postDialogAria": "Opret indlæg",
+      "newPost": "Nyt indlæg",
+      "closePostComposer": "Luk indlægseditor",
+      "storyDialogAria": "Opret story",
+      "newStory": "Ny story",
+      "closeStoryComposer": "Luk story-editor",
+      "storyCreationStepsAria": "Trin i story-oprettelse",
+      "storyStepMedia": "1. Medie",
+      "storyStepCropTrimPublish": "2. Beskær, trim og udgiv",
+      "storyMediaUploadAria": "Upload af story-medie",
+      "selectStoryMediaTitle": "Start med at vælge dit story-medie",
+      "selectStoryMediaSubtitle": "Billeder, MP4, WebM, MOV og lignende formater understøttes.",
+      "selectStoryMedia": "Vælg story-medie",
+      "selectedFile": "Valgt: {{file}}",
+      "storyExpires": "Stories udløber automatisk efter 24 timer.",
+      "markStorySensitive": "Marker denne story som følsomt medie",
+      "editingFile": "Redigerer: {{file}}",
+      "dragStoryFrameAria": "Træk for at sætte story-udsnit",
+      "dragFrameHint": "Træk 9:16-rammen for at sætte dit udsnit.",
+      "resetFraming": "Nulstil udsnit",
+      "trimSummary": "Oprindelig længde: {{original}}s · Trimmet: {{trimmed}}",
+      "trimThumbnailAlt": "Miniature for story-trimning",
+      "trimStoryStartAria": "Trim story-start",
+      "trimStoryEndAria": "Trim story-slut",
+      "generatingTrimPreviews": "Genererer billeder til trim-forhåndsvisning...",
+      "trimRange": "Område: {{start}}s til {{end}}s",
+      "storyMediaPreviewAlt": "Forhåndsvisning af story-medie",
+      "schedulePublish": "Planlæg udgivelse (valgfrit)",
+      "saveDraft": "Gem kladde",
+      "publishing": "Udgiver...",
+      "publishStory": "Udgiv story"
+    },
+    "analytics": {
+      "title": "Creator-analyser",
+      "lastDays": "Seneste {{days}} dage",
+      "views": "visninger",
+      "watchTime": "Seertid",
+      "saves": "gemte",
+      "followerGrowth": "Følgervækst",
+      "topReels": "Top-reels",
+      "untitledReel": "Unavngivet reel"
+    },
+    "messages": {
+      "messageRequestSent": "Beskedanmodning sendt."
+    },
+    "errors": {
+      "loadData": "Kunne ikke indlæse profildata. Prøv at opdatere.",
+      "copyLink": "Kunne ikke kopiere profillink lige nu.",
+      "sendMessageRequest": "Kunne ikke sende beskedanmodning lige nu.",
+      "openChat": "Kunne ikke åbne chat lige nu."
+    }
+  },
+  "settings": {
+    "page": {
+      "title": "Indstillinger",
+      "subtitle": "Administrer din konto, profil og app-præferencer.",
+      "unsavedChanges": "Du har indstillingsændringer, der ikke er gemt.",
+      "discardAll": "Kassér alle ikke-gemte ændringer"
+    },
+    "sections": {
+      "profile": "Profil",
+      "account": "Konto",
+      "privacy": "Privatliv",
+      "session": "Session",
+      "preferences": "Præferencer",
+      "notifications": "Notifikationer",
+      "safety": "Sikkerhed",
+      "security": "Sikring",
+      "data": "Datakontroller",
+      "blocked": "Blokerede brugere",
+      "logout": "Log ud"
+    },
+    "common": {
+      "reload": "Genindlæs",
+      "discard": "Kassér",
+      "saving": "Gemmer...",
+      "processing": "Behandler...",
+      "working": "Arbejder...",
+      "cancel": "Annuller",
+      "back": "Tilbage",
+      "add": "Tilføj",
+      "day": "Dag",
+      "month": "Måned",
+      "year": "År",
+      "lastSaved": "Sidst gemt: {{date}}",
+      "lastAction": "Seneste handling: {{date}}"
+    },
+    "profile": {
+      "displayName": "Visningsnavn",
+      "bio": "Bio",
+      "bioPlaceholder": "Fortæl folk om dig selv",
+      "changeImage": "Skift billede",
+      "removeImage": "Fjern billede",
+      "uploadingImage": "Uploader billede...",
+      "previewAlt": "Forhåndsvisning af profilbillede",
+      "save": "Gem profil"
+    },
+    "account": {
+      "profileId": "Profil-id:",
+      "handle": "Håndtag",
+      "handleLimitedAvailable": "Handle-ændringer er begrænset til en gang hver 30. dag. Næste ændring er mulig den {{date}}.",
+      "handleLimitedNow": "Handle-ændringer er begrænset til en gang hver 30. dag. Du kan ændre den nu.",
+      "joined": "Tilmeldt:",
+      "dateOfBirth": "Fødselsdato",
+      "country": "Land",
+      "countryPlaceholder": "Vælg land (valgfrit)",
+      "marketingOptIn": "Modtag produktopdateringer og tips via e-mail",
+      "save": "Gem kontooplysninger"
+    },
+    "privacy": {
+      "privateProfile": "Privat profil",
+      "privateProfileHelp": "Når dette er aktiveret, kan kun godkendte følgere se dine indlæg, reels og stories.",
+      "save": "Gem privatliv",
+      "saveDiscovery": "Gem mælgruppe og opdagelse",
+      "commentsAudience": "Hvem kan kommentere dit indhold?",
+      "mentionsAudience": "Hvem kan nævne eller tagge dig?",
+      "messagesAudience": "Hvem kan sende dig beskeder?",
+      "storyRepliesAudience": "Hvem kan svare på dine stories?",
+      "showInSearchSuggestions": "Vis konto i sogeforslag",
+      "allowProfileIndexing": "Tillad profilindeksering af sogemaskiner",
+      "showActivityStatus": "Vis aktivitetsstatus / sidst set"
+    },
+    "session": {
+      "description": "Brug disse kontroller til din nuværende login-session.",
+      "refresh": "Opdater session"
+    },
+    "preferences": {
+      "compactFeed": "Kompakt feedlayout",
+      "useSystemTheme": "Brug systemtema",
+      "darkMode": "Mork tilstand",
+      "useSystemThemeHelp": "Mork tilstand folger dit operativsystems udseende, mens dette er aktiveret.",
+      "accessibility": "Tilgængelighed",
+      "reducedMotion": "Reduceret bevagelse",
+      "largerText": "Stor teksttilstand",
+      "highContrast": "Høkontrasttilstand",
+      "language": "Sprog",
+      "saveAccessibility": "Gem tilgængelighed"
+    },
+    "audience": {
+      "everyone": "Alle",
+      "following": "Personer du folger",
+      "nobody": "Ingen"
+    },
+    "notifications": {
+      "likes": "Synes godt om",
+      "comments": "Kommentarer",
+      "follows": "Følgere",
+      "mentions": "Nævnelser",
+      "messages": "Direkte beskeder",
+      "marketing": "Markedsføring",
+      "product": "Produktopdateringer",
+      "quietHours": "Stille timer",
+      "quietHoursStart": "Starte",
+      "quietHoursEnd": "Slut",
+      "save": "Gem notifikationer"
+    },
+    "safety": {
+      "sensitiveContentLevel": "Niveau for følsomt indhold",
+      "hideSensitiveMedia": "Skjul følsomme medier som standard",
+      "mutedWords": "Ignorerede ord",
+      "addWordOrPhrase": "Tilføj ord eller frase",
+      "noMutedKeywords": "Ingen ignorerede nøgleord endnu.",
+      "mutedUsers": "Ignorerede brugere",
+      "addHandlePlaceholder": "Tilføj handle (eksempel: @navn)",
+      "searchingUsers": "Soger efter brugere...",
+      "profileAvatarAlt": "Profilavatar",
+      "noMutedUsers": "Ingen ignorerede brugere i præferencer endnu.",
+      "save": "Gem sikkerhed",
+      "sensitiveOptions": {
+        "standard": "Standard",
+        "limited": "Begrænset",
+        "strict": "Streng"
+      }
+    },
+    "security": {
+      "description": "Hvor du er logget ind.",
+      "currentDevice": "Nuværende enhed",
+      "signedInDevice": "Enhed med aktiv login",
+      "currentSessionLabel": "Nuværende session",
+      "sessionLabel": "Session {{id}}",
+      "created": "Oprettet {{date}}",
+      "expires": "Udlober {{date}}",
+      "revoked": "Tilbagekaldt",
+      "revoke": "Tilbagekald",
+      "revoking": "Tilbagekalder...",
+      "noSessions": "Ingen aktive sessioner fundet.",
+      "logoutOtherSessions": "Log ud af andre sessioner"
+    },
+    "data": {
+      "description": "Download dine kontodata og administrer forespørgsler om kontøns livscyklus.",
+      "downloadMyData": "Download mine data",
+      "deactivateTitle": "Deaktiver konto",
+      "deactivatePrompt": "Skriv DEACTIVATE for at bekræfte anmodningen.",
+      "deactivatePlaceholder": "Skriv DEACTIVATE",
+      "requestDeactivation": "Anmod om deaktivering",
+      "deleteTitle": "Slet konto",
+      "deletePrompt": "Skriv DELETE for at bekræfte anmodningen.",
+      "deletePlaceholder": "Skriv DELETE",
+      "requestDelete": "Anmod om sletning",
+      "immediateWarning": "Begge handlinger anvendes med det samme og logger dig ud.",
+      "confirmDeactivateTitle": "Deaktiver konto",
+      "confirmDeactivateMessage": "Vil du deaktivere din konto nu? Det logger dig straks ud og tilbagekalder dine aktive sessioner.",
+      "confirmDeleteTitle": "Slet konto",
+      "confirmDeleteMessage": "Vil du slette din konto permanent? Det kan ikke fortrydes og logger dig straks ud."
+    },
+    "blocked": {
+      "description": "Administrer brugere, du har blokeret.",
+      "loading": "Indlæser blokerede brugere...",
+      "viewProfile": "Vis profil",
+      "imageAlt": "Billede af blokeret bruger",
+      "unblock": "Fjern blokering",
+      "unblocking": "Fjerner blokering...",
+      "empty": "Du har ikke blokeret nogen."
+    },
+    "logout": {
+      "description": "Log ud af din nuværende konto på denne enhed.",
+      "action": "Log ud"
+    },
+    "avatarModal": {
+      "dialogAria": "Opdater profilbillede",
+      "title": "Opdater profilbillede",
+      "close": "Luk avatar-modal",
+      "stepsAria": "Trin til avatarupload",
+      "stepSelect": "1. Vælg",
+      "stepCrop": "2. Beskær og upload",
+      "selectImageAria": "Vælg avatarbillede",
+      "chooseTitle": "Vælg et billede til din profil",
+      "chooseSubtitle": "Næste trin lader dig beskære og placere det.",
+      "selectImage": "Vælg billede",
+      "selectedFile": "Valgt: {{file}}",
+      "cropPreviewAlt": "Forhåndsvisning af avatarbeskæring",
+      "zoom": "Zoom",
+      "dragHint": "Træk billedet for at flytte det inden for cirklen.",
+      "upload": "Upload billede",
+      "uploading": "Uploader..."
+    },
+    "language": {
+      "system": "Systemstandard",
+      "enUS": "engelsk (USA)",
+      "enGB": "engelsk (UK)",
+      "da": "Dansk",
+      "es": "Español",
+      "de": "Deutsch",
+      "fr": "Français",
+      "ptBR": "Português (Brasil)",
+      "nl": "Nederlands",
+      "sv": "Svenska",
+      "nb": "Norsk bokmål",
+      "it": "Italiano",
+      "pl": "Polski",
+      "ar": "العربية",
+      "tr": "Türkçe"
+    },
+    "messages": {
+      "birthDateInvalid": "Vælg en fuldstændig gyldig fødselsdato.",
+      "profileSaved": "Profilindstillinger gemt.",
+      "profileReloaded": "Profilindstillinger genindlæst.",
+      "privacySaved": "Privatlivsindstilling gemt.",
+      "discoverySaved": "Præferencer for opdagelse og mælgruppe er gemt.",
+      "notificationsSaved": "Notifikationspræferencer gemt.",
+      "safetySaved": "Sikkerhedspræferencer gemt.",
+      "sessionRevoked": "Session tilbagekaldt.",
+      "otherSessionsLoggedOutOne": "Loggede ud af 1 anden session.",
+      "otherSessionsLoggedOutMany": "Loggede ud af {{count}} andre sessioner.",
+      "noOtherSessions": "Ingen andre aktive sessioner at tilbagekalde.",
+      "dataExportDownloaded": "Datæksport downloadet.",
+      "deactivateTypeConfirm": "Skriv DEACTIVATE for at bekræfte anmodning om kontodeaktivering.",
+      "deleteTypeConfirm": "Skriv DELETE for at bekræfte anmodning om kontosletning.",
+      "accountDeactivated": "Konto deaktiveret og sessioner tilbagekaldt.",
+      "accountDeleted": "Konto slettet.",
+      "profileImageUpdated": "Profilbillede opdateret.",
+      "imageRemoved": "Billede fjernet. Gem profilen for at anvende det.",
+      "unblockedHandle": "Blokering fjernet for @{{handle}}.",
+      "accessibilitySaved": "Tilgængelighedsindstillinger gemt.",
+      "preferencesSaved": "Præferencer gemt."
+    }
+  },
+  "discover": {
+    "page": {
+      "title": "Opdag"
+    },
+    "search": {
+      "label": "Søg",
+      "placeholder": "Søg efter brugere, fællesskaber, fællesskabsindlæg, blogs, reels, indlæg og hashtags"
+    },
+    "scope": {
+      "all": "Alle",
+      "communities": "Fællesskaber",
+      "communityPosts": "Fællesskabsindlæg",
+      "blogs": "Blogs",
+      "reels": "Hjul",
+      "posts": "Indlæg",
+      "hashtags": "Hashtags",
+      "users": "Brugere"
+    },
+    "sections": {
+      "followingHashtags": "Fulgte hashtags",
+      "fromFollowedHashtags": "Fra fulgte hashtags",
+      "peopleYouMayKnow": "Personer du måske kender",
+      "forYou": "Til dig",
+      "users": "Brugere",
+      "communities": "Fællesskaber",
+      "communityPosts": "Fællesskabsindlæg",
+      "blogs": "Blogs",
+      "reels": "Hjul",
+      "hashtags": "Hashtags",
+      "posts": "Indlæg"
+    },
+    "actions": {
+      "follow": "Følg",
+      "unfollow": "Stop med at følge",
+      "followUser": "Følg bruger",
+      "signInToFollow": "Log ind for at følge"
+    },
+    "profile": {
+      "openStoriesAria": "Åbn @{{handle}} stories",
+      "viewProfileAria": "Vis @{{handle}} profil",
+      "imageAlt": "Profilbillede",
+      "authorImageAlt": "Forfatterbillede",
+      "noBio": "Ingen bio endnu."
+    },
+    "reels": {
+      "recommendedAlt": "Anbefalet reel"
+    },
+    "empty": {
+      "noRecommendedReelsTitle": "Ingen anbefalede reels endnu",
+      "noRecommendedReelsMessage": "Interagér mere med reels, kommentarer og hashtags for at forbedre dine Opdag-anbefalinger."
+    },
+    "loading": {
+      "searchingAria": "Søger",
+      "recommendationsAria": "Indlæser anbefalinger"
+    },
+    "community": {
+      "imageAlt": "Fællesskabsbillede",
+      "noDescription": "Ingen beskrivelse endnu.",
+      "member": "medlem",
+      "members": "medlemmer"
+    },
+    "communityPost": {
+      "viewPost": "Vis fællesskabsindlæg",
+      "openForDetails": "Åbn dette indlæg for at se detaljer.",
+      "postedBy": "Slået op af @{{handle}} · {{date}}"
+    },
+    "blog": {
+      "noDescription": "Ingen beskrivelse endnu.",
+      "byUpdated": "Af @{{handle}} · Opdateret {{date}}"
+    },
+    "confirm": {
+      "delete": "Slet",
+      "cancel": "Annuller",
+      "deletePostTitle": "Slet indlæg",
+      "deletePostMessage": "Slet dette indlæg? Denne handling kan ikke fortrydes.",
+      "deleteCommentTitle": "Slet kommentar",
+      "deleteCommentMessage": "Slet denne kommentar? Denne handling kan ikke fortrydes."
+    },
+    "status": {
+      "postShared": "Indlæg delt.",
+      "postSentAsMessage": "Indlæg sendt som besked.",
+      "followRequestSent": "Følgeanmodning sendt til @{{handle}}.",
+      "followedUser": "Følger nu @{{handle}}.",
+      "unfollowedHashtag": "Stop med at følge #{{tag}}.",
+      "followingHashtag": "Følger #{{tag}}.",
+      "noResults": "Ingen resultater fundet."
+    },
+    "errors": {
+      "updatePost": "Kunne ikke opdatere indlæg lige nu.",
+      "deletePost": "Kunne ikke slette indlæg lige nu.",
+      "sharePostNow": "Kunne ikke dele dette indlæg lige nu.",
+      "sendPostToChatNow": "Kunne ikke sende dette indlæg til chat lige nu.",
+      "followUser": "Kunne ikke følge denne bruger lige nu.",
+      "updateLikeNow": "Kunne ikke opdatere like lige nu.",
+      "setReactionNow": "Kunne ikke sætte reaktion lige nu.",
+      "clearReactionNow": "Kunne ikke fjerne reaktion lige nu.",
+      "addCommentNow": "Kunne ikke tilføje kommentar lige nu.",
+      "updateCommentNow": "Kunne ikke opdatere kommentar lige nu.",
+      "deleteCommentNow": "Kunne ikke slette kommentar lige nu.",
+      "reactToCommentNow": "Kunne ikke reagere på kommentar lige nu.",
+      "clearCommentReactionNow": "Kunne ikke fjerne kommentarreaktion lige nu.",
+      "updateReelLike": "Kunne ikke opdatere reel-like lige nu.",
+      "addReelComment": "Kunne ikke tilføje reel-kommentar lige nu.",
+      "updateReelComment": "Kunne ikke opdatere reel-kommentar lige nu.",
+      "deleteReelComment": "Kunne ikke slette reel-kommentar lige nu.",
+      "updateReelCommentLike": "Kunne ikke opdatere reel-kommentar-like lige nu.",
+      "allSearchesFailed": "Alle søgninger mislykkedes.",
+      "completeSearch": "Kunne ikke gennemføre søgning lige nu.",
+      "loadRecommendedReels": "Kunne ikke indlæse anbefalede reels lige nu."
+    }
+  },
+  "blogs": {
+    "page": {
+      "kicker": "Udgivelse",
+      "title": "Blogs"
+    },
+    "tabs": {
+      "aria": "Bloglister",
+      "all": "Alle blogs",
+      "following": "Følger",
+      "mine": "Mine blogs"
+    },
+    "subtitle": {
+      "all": "Opdag og søg i blogs på tværs af Venli.",
+      "following": "Blogs fra creators, du følger.",
+      "mine": "Administrér dine egne blogs og kladder."
+    },
+    "search": {
+      "placeholder": "Søg blogs efter titel, slug eller handle...",
+      "try": "Prøv:"
+    },
+    "sort": {
+      "label": "Sortér",
+      "menuAria": "Sortér blogs",
+      "recentlyUpdated": "Senest opdateret",
+      "newestCreated": "Nyest oprettet",
+      "titleAz": "Titel A-Å"
+    },
+    "actions": {
+      "openStudio": "Åbn Blog Studio",
+      "clear": "Ryd"
+    },
+    "visibility": {
+      "public": "Offentlig",
+      "private": "Privat",
+      "owner": "Ejer"
+    },
+    "meta": {
+      "updated": "Opdateret {{date}}"
+    },
+    "resultCount": "{{visible}} af {{total}} blogs",
+    "loading": {
+      "aria": "Indlæser blogs"
+    },
+    "infinite": {
+      "more": "Rul for flere blogs..."
+    },
+    "empty": {
+      "noBlogsForTab": "Ingen blogs fundet i denne fane endnu."
+    },
+    "errors": {
+      "signInToViewTab": "Log ind for at se denne fane.",
+      "loadNow": "Kunne ikke indlæse blogs lige nu."
+    }
+  },
+  "communities": {
+    "page": {
+      "title": "Fællesskaber",
+      "subtitle": "Opret eller deltag i fællesskaber omkring fælles interesser."
+    },
+    "tabs": {
+      "aria": "Fællesskabsvisninger",
+      "mine": "Mine fællesskaber",
+      "discover": "Opdag fællesskaber"
+    },
+    "actions": {
+      "newCommunity": "Nyt fællesskab",
+      "refresh": "Opdater fællesskaber",
+      "search": "Søg",
+      "clear": "Ryd",
+      "join": "Deltag",
+      "joining": "Deltager…",
+      "leave": "Forlad",
+      "leaving": "Forlader…",
+      "signInToJoin": "Log ind for at deltage",
+      "cancel": "Annuller",
+      "create": "Opret",
+      "creating": "Opretter…"
+    },
+    "search": {
+      "placeholder": "Søg fællesskaber",
+      "try": "Prøv:"
+    },
+    "mine": {
+      "signInPrompt": "Log ind eller opret en konto for at se fællesskaber, du har deltaget i.",
+      "empty": "Du har endnu ikke deltaget i nogen fællesskaber."
+    },
+    "discover": {
+      "empty": "Ingen fællesskaber fundet."
+    },
+    "community": {
+      "members": "medlemmer",
+      "createdBy": "Oprettet af @{{handle}}",
+      "imageAlt": "Fællesskabsbillede",
+      "openAria": "Åbn {{name}}",
+      "owner": "Ejer",
+      "joined": "Deltaget"
+    },
+    "authAction": {
+      "create": "oprette et fællesskab",
+      "join": "deltage i fællesskaber",
+      "leave": "forlade fællesskaber"
+    },
+    "visibility": {
+      "private": "Privat",
+      "public": "Offentlig"
+    },
+    "create": {
+      "dialogAria": "Opret fællesskab",
+      "title": "Opret fællesskab",
+      "close": "Luk modal for oprettelse af fællesskab",
+      "name": "Navn",
+      "namePlaceholder": "Fællesskabsnavn",
+      "description": "Beskrivelse",
+      "descriptionPlaceholder": "Hvad handler dette fællesskab om?",
+      "rules": "Regler",
+      "rulesPlaceholder": "Én regel pr. linje",
+      "image": "Fællesskabsbillede",
+      "imagePreviewAlt": "Forhåndsvisning af fællesskabsbillede",
+      "private": "Privat fællesskab"
+    },
+    "status": {
+      "created": "Fællesskab oprettet.",
+      "joined": "Du har deltaget i fællesskabet.",
+      "left": "Du har forladt fællesskabet."
+    },
+    "errors": {
+      "load": "Kunne ikke indlæse fællesskaber lige nu.",
+      "search": "Kunne ikke søge i fællesskaber lige nu.",
+      "create": "Kunne ikke oprette fællesskab lige nu.",
+      "join": "Kunne ikke deltage i fællesskab lige nu.",
+      "leave": "Kunne ikke forlade fællesskab lige nu.",
+      "signInForAction": "Log ind eller opret en konto for at {{action}}."
+    }
+  },
+  "blogHome": {
+    "loading": {
+      "aria": "Indlæser blog"
+    },
+    "header": {
+      "moreBy": "Mere fra @{{handle}}",
+      "editInStudio": "Redigér i Studio"
+    },
+    "post": {
+      "draft": "Kladde"
+    },
+    "actions": {
+      "save": "Gem",
+      "unsave": "Fjern gemt"
+    },
+    "empty": {
+      "noPosts": "Ingen indlæg endnu."
+    },
+    "errors": {
+      "notFound": "Bloggen blev ikke fundet.",
+      "notFoundOrPrivate": "Bloggen blev ikke fundet eller er privat.",
+      "loadNow": "Kunne ikke indlæse denne blog lige nu.",
+      "updateSavedStatus": "Kunne ikke opdatere gemt-status lige nu."
+    }
+  },
+  "blogPost": {
+    "loading": {
+      "aria": "Indlæser blogindlæg"
+    },
+    "actions": {
+      "backToBlog": "Tilbage til blog",
+      "like": "Ligesom",
+      "comment": "Kommentér",
+      "save": "Gem",
+      "unsave": "Fjern gemt",
+      "share": "Del",
+      "linkCopied": "Link kopieret",
+      "embed": "Indlejr"
+    },
+    "meta": {
+      "byDate": "Af @{{handle}} · {{date}}"
+    },
+    "hints": {
+      "likesSoon": "Blog-likes bliver tilgængelige snart",
+      "commentsSoon": "Blog-kommentarer bliver tilgængelige snart"
+    },
+    "errors": {
+      "notFound": "Blogindlægget blev ikke fundet.",
+      "notFoundOrPrivate": "Blogindlægget blev ikke fundet eller er privat.",
+      "loadNow": "Kunne ikke indlæse dette blogindlæg lige nu.",
+      "updateSavedStatus": "Kunne ikke opdatere gemt-status lige nu."
+    }
+  },
+  "blogEmbed": {
+    "loading": "Indlæser indlejring...",
+    "kicker": "Venli Blog",
+    "meta": {
+      "byAuthor": "Af @{{handle}}"
+    },
+    "footer": {
+      "readFullPost": "Læs hele indlægget på Venli"
+    },
+    "aria": {
+      "loading": "Indlæser blogindlejring",
+      "openFullPost": "Åbn hele blogindlægget"
+    },
+    "errors": {
+      "couldNotLoad": "Indlejringen kunne ikke indlæses.",
+      "postUnavailable": "Dette blogindlæg er ikke tilgængeligt.",
+      "embeddingDisabled": "Indlejring er deaktiveret af blogejeren.",
+      "loadNow": "Kunne ikke indlæse denne indlejring lige nu."
+    }
+  },
+  "blogEmbedTools": {
+    "loading": {
+      "aria": "Indlæser indlejringsværktøjer",
+      "message": "Indlæser indlejringsværktøjer..."
+    },
+    "header": {
+      "kicker": "Indlejringsværktøjer",
+      "subtitle": "Forhåndsvis indlejringen og kopiér iframe-koden til ethvert website."
+    },
+    "preview": {
+      "title": "Forhåndsvisning",
+      "iframeTitle": "Forhåndsvisning af blogindlejring"
+    },
+    "code": {
+      "title": "Indlejringskode",
+      "aria": "Iframe-kode til blogindlejring"
+    },
+    "actions": {
+      "copyCode": "Kopiér kode",
+      "copied": "Kopieret",
+      "openRaw": "Åbn rå indlejringsside",
+      "backToPost": "Tilbage til indlæg"
+    },
+    "embed": {
+      "defaultTitle": "Venli blogindlejring"
+    },
+    "errors": {
+      "notFound": "Blogindlægget blev ikke fundet.",
+      "notFoundOrPrivate": "Blogindlægget blev ikke fundet eller er privat.",
+      "embeddingDisabled": "Indlejring er deaktiveret af blogejeren.",
+      "loadNow": "Kunne ikke indlæse indlejringsværktøjer til dette indlæg lige nu."
+    }
+  },
+  "sharedStory": {
+    "loading": {
+      "story": "Indlæser story..."
+    },
+    "notFound": {
+      "title": "Story utilgængelig",
+      "message": "Denne story er udløbet, fjernet, eller linket er ugyldigt."
+    },
+    "errors": {
+      "title": "Noget gik galt",
+      "load": "Kunne ikke indlæse denne delte story."
+    },
+    "author": {
+      "imageAlt": "Creator-billede"
+    },
+    "actions": {
+      "linkCopiedAria": "Story-link kopieret",
+      "copyStoryLinkAria": "Kopiér story-link",
+      "copied": "Kopieret",
+      "copyLink": "Kopiér link"
+    },
+    "media": {
+      "alt": "Delt story-medie"
+    }
+  },
+  "communityDetail": {
+    "timeoutOptions": {
+      "oneDay": "1 dag",
+      "sevenDays": "7 dage",
+      "oneMonth": "1 måned"
+    },
+    "common": {
+      "cancel": "Annuller",
+      "working": "Arbejder…"
+    },
+    "status": {
+      "memberPromoted": "Medlem gjort til moderator.",
+      "moderatorRemoved": "Moderatorrolle fjernet.",
+      "memberBanned": "@{{handle}} er blevet bannet.",
+      "memberUnbanned": "@{{handle}} er blevet unbannet.",
+      "memberTimedOut": "@{{handle}} er sat i timeout i {{timeoutLabel}}.",
+      "joinedCommunity": "Du er nu med i fællesskabet.",
+      "leftCommunity": "Du har forladt fællesskabet.",
+      "communityLinkCopied": "Fællesskabslink kopieret.",
+      "communityUpdated": "Fællesskab opdateret.",
+      "postPublished": "Indlæg udgivet.",
+      "postRemovedFromSaved": "Indlæg fjernet fra gemte.",
+      "postSaved": "Indlæg gemt.",
+      "postLinkCopied": "Indlægslink kopieret.",
+      "voteSubmitted": "Stemme afgivet.",
+      "postUpdated": "Indlæg opdateret.",
+      "postDeleted": "Indlæg slettet."
+    },
+    "errors": {
+      "communityNotLoaded": "Fællesskabet er ikke indlæst.",
+      "communityNotFound": "Fællesskabet blev ikke fundet.",
+      "signInToJoin": "Log ind eller opret en konto for at deltage i dette fællesskab.",
+      "copyFailed": "Kopiering mislykkedes",
+      "copyCommunityLink": "Kunne ikke kopiere fællesskabslink.",
+      "communityNameRequired": "Fællesskabsnavn er påkrævet.",
+      "titleRequired": "Titel er påkrævet.",
+      "addContentBeforePosting": "Tilføj tekst, billede, link eller afstemning før du udgiver.",
+      "signInToCreatePost": "Log ind eller opret en konto for at oprette et fællesskabsindlæg.",
+      "copyPostLink": "Kunne ikke kopiere indlægslink.",
+      "addContentBeforeSaving": "Tilføj tekst, billede, link eller afstemning før du gemmer.",
+      "linkMustStartHttp": "Link-URL skal starte med http:// eller https://.",
+      "linkInvalid": "Angiv en gyldig link-URL.",
+      "action": {
+        "promoteMember": "gøre medlem til moderator",
+        "removeModerator": "fjerne moderator",
+        "banMember": "banne medlem",
+        "unbanMember": "fjerne ban fra medlem",
+        "timeoutMember": "sætte medlem i timeout"
+      }
+    },
+    "moderation": {
+      "modalTitle": {
+        "confirm": "Bekræft handling",
+        "ban": "Ban bruger",
+        "unban": "Fjern ban",
+        "timeout": "Sæt i timeout"
+      },
+      "modalMessage": {
+        "ban": "Ban @{{handle}}? Dette blokerer personen fra din konto.",
+        "unban": "Fjern ban for @{{handle}}? Dette fjerner blokeringen fra din konto.",
+        "timeout": "Sæt @{{handle}} i timeout i {{timeoutLabel}}? I timeout-perioden kan personen ikke skrive eller kommentere i dette fællesskab."
+      },
+      "confirmText": {
+        "confirm": "Bekræft",
+        "ban": "Ban bruger",
+        "unban": "Fjern ban",
+        "timeout": "Sæt i timeout"
+      },
+      "timeoutLength": "Timeout-længde"
+    },
+    "community": {
+      "imageAlt": "Fællesskabsbillede",
+      "memberCount": "{{count}} medlemmer",
+      "createdBy": "Oprettet af @{{handle}}",
+      "visibility": {
+        "private": "Privat",
+        "public": "Offentlig"
+      }
+    },
+    "actions": {
+      "joining": "Deltager…",
+      "join": "Deltag",
+      "leaving": "Forlader…",
+      "leave": "Forlad",
+      "editCommunity": "Redigér fællesskab",
+      "createPost": "Opret indlæg",
+      "communityLinkCopiedAria": "Fællesskabslink kopieret",
+      "copyCommunityLinkAria": "Kopiér fællesskabslink",
+      "copied": "Kopieret",
+      "copyCommunityLink": "Kopiér fællesskabslink"
+    },
+    "notice": {
+      "signInToPost": "Log ind eller opret en konto for at oprette indlæg og kommentere i dette fællesskab.",
+      "joinToPost": "Deltag i dette fællesskab for at oprette indlæg.",
+      "timedOut": "Du er sat i timeout i dette fællesskab indtil {{until}}. Oprettelse af indlæg og kommentarer er deaktiveret.",
+      "later": "senere"
+    },
+    "feed": {
+      "title": "Fællesskabsfeed",
+      "subtitle": "Indlæg fra medlemmer i /{{slug}}",
+      "searchPlaceholder": "Søg indlæg i dette fællesskab",
+      "loadingAria": "Indlæser fællesskabsindlæg",
+      "empty": {
+        "noSearchMatches": "Ingen indlæg matcher denne søgning.",
+        "noPostsYet": "Ingen indlæg endnu."
+      }
+    },
+    "post": {
+      "authorImageAlt": "Forfatterbillede",
+      "untitled": "Indlæg uden titel",
+      "pollVotes": "{{count}} stemmer",
+      "badges": {
+        "image": "Billede",
+        "poll": "Afstemning"
+      }
+    },
+    "media": {
+      "previousImage": "Forrige billede",
+      "nextImage": "Næste billede",
+      "postImageAlt": "Indlægsbillede",
+      "imageThumbAlt": "Billede {{index}}",
+      "imagePreview": "Billedforhåndsvisning",
+      "closeImagePreview": "Luk billedforhåndsvisning",
+      "fullscreenPostImageAlt": "Fuldskærmsbillede af indlæg"
+    },
+    "postActions": {
+      "upvotePost": "Opstem indlæg",
+      "upvote": "Opstem",
+      "downvotePost": "Nedstem indlæg",
+      "downvote": "Nedstem",
+      "openComments": "Åbn kommentarer",
+      "savePost": "Gem indlæg",
+      "unsavePost": "Fjern gemt indlæg",
+      "save": "Gem",
+      "saved": "Gemt",
+      "postLinkCopiedAria": "Indlægslink kopieret",
+      "copyPostLinkAria": "Kopiér indlægslink",
+      "copied": "Kopieret",
+      "copyLink": "Kopiér link",
+      "editPost": "Redigér indlæg",
+      "deletePost": "Slet indlæg",
+      "deletePostConfirm": "Slet dette indlæg? Denne handling kan ikke fortrydes.",
+      "delete": "Slet"
+    },
+    "members": {
+      "modalAria": "Fællesskabsmedlemmer",
+      "title": "Medlemmer",
+      "closeAria": "Luk medlemsmodal",
+      "tabsAria": "Moderationsvisninger for fællesskab",
+      "tabs": {
+        "members": "Medlemmer",
+        "bannedUsers": "Bannede brugere"
+      },
+      "search": {
+        "membersPlaceholder": "Søg medlemmer efter @handle eller rolle",
+        "bannedPlaceholder": "Søg bannede brugere efter navn eller @handle",
+        "membersAria": "Søg medlemmer",
+        "bannedAria": "Søg bannede brugere"
+      },
+      "hint": {
+        "membersInCommunity": "{{count}} medlemmer i /{{slug}}",
+        "bannedDescription": "Administrér brugere, der er bannet fra din konto, mens du modererer /{{slug}}"
+      },
+      "actions": {
+        "makeModerator": "Gør til moderator",
+        "removeModerator": "Fjern moderator",
+        "timeoutUser": "Sæt i timeout",
+        "banUser": "Ban bruger",
+        "unbanUser": "Fjern ban"
+      },
+      "memberAvatarAlt": "Medlemsavatar",
+      "bannedUserAvatarAlt": "Avatar for bannet bruger",
+      "bannedRole": "Bannet",
+      "empty": {
+        "noMembersMatchSearch": "Ingen medlemmer matchede din søgning.",
+        "noMembersYet": "Ingen medlemmer at vise endnu.",
+        "loadingBannedUsers": "Indlæser bannede brugere...",
+        "noBannedUsersMatchSearch": "Ingen bannede brugere matchede din søgning.",
+        "noBannedUsers": "Ingen bannede brugere."
+      }
+    },
+    "postType": {
+      "text": "Tekst",
+      "media": "Billeder & Video",
+      "link": "Forbindelse",
+      "poll": "Afstemning"
+    },
+    "editPost": {
+      "modalAria": "Redigér fællesskabsindlæg",
+      "title": "Redigér indlæg",
+      "closeAria": "Luk redigeringsmodal for indlæg",
+      "typeAria": "Redigér indlægstype",
+      "fields": {
+        "title": "Titel",
+        "linkUrl": "Link-URL",
+        "addImages": "Tilføj billeder (op til 10)",
+        "question": "Spørgsmål",
+        "option": "Valgmulighed {{index}}"
+      },
+      "placeholders": {
+        "title": "Tilføj en titel",
+        "updatePost": "Opdatér dit indlæg...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "Tilføj valgfri brødtekst...",
+        "askCommunity": "Spørg fællesskabet...",
+        "optionText": "Valgmulighedstekst"
+      },
+      "previewAlt": "Forhåndsvisning af valgt redigeringsbillede",
+      "removeCurrent": "Fjern nuværende",
+      "remove": "Fjern",
+      "addOption": "Tilføj valgmulighed",
+      "saving": "Gemmer…",
+      "saveChanges": "Gem ændringer"
+    },
+    "editCommunity": {
+      "modalAria": "Redigér fællesskab",
+      "title": "Redigér fællesskab",
+      "closeAria": "Luk redigeringsmodal for fællesskab",
+      "fields": {
+        "name": "Navn",
+        "information": "Information",
+        "rules": "Regler",
+        "image": "Billede"
+      },
+      "placeholders": {
+        "communityName": "Fællesskabsnavn",
+        "describeCommunity": "Beskriv dette fællesskab",
+        "oneRulePerLine": "Én regel pr. linje"
+      },
+      "imagePreviewAlt": "Forhåndsvisning af fællesskabsbillede",
+      "saving": "Gemmer…",
+      "save": "Gem"
+    },
+    "createPost": {
+      "modalAria": "Opret fællesskabsindlæg",
+      "title": "Opret indlæg",
+      "closeAria": "Luk opret-indlæg-modal",
+      "typeAria": "Indlægstype",
+      "fields": {
+        "title": "Titel",
+        "linkUrl": "Link-URL",
+        "attachImages": "Vedhæft billeder (op til 10)",
+        "question": "Spørgsmål",
+        "option": "Valgmulighed {{index}}"
+      },
+      "placeholders": {
+        "title": "Tilføj en titel",
+        "shareThoughts": "Del dine tanker...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "Tilføj valgfri brødtekst...",
+        "askCommunity": "Spørg fællesskabet...",
+        "optionText": "Valgmulighedstekst"
+      },
+      "previewAlt": "Forhåndsvisning af valgt indlægsbillede",
+      "removeCurrent": "Fjern nuværende",
+      "imagesAttachedInTab": "{{count}} billede(r) vedhæftet i fanen Billeder & Video.",
+      "linkAttachedInTab": "Link vedhæftet i fanen Link.",
+      "remove": "Fjern",
+      "addOption": "Tilføj valgmulighed",
+      "posting": "Udgiver…",
+      "post": "Udgiv"
+    },
+    "loading": {
+      "communityAria": "Indlæser fællesskab",
+      "feedAria": "Indlæser fællesskabsfeed",
+      "postsAria": "Indlæser fællesskabsindlæg"
+    }
+  },
+  "chatPage": {
+    "title": "Beskeder",
+    "layoutAria": "Beskedlayout",
+    "common": {
+      "you": "Dig",
+      "youLowercase": "dig",
+      "me": "Mig",
+      "gif": "GIF",
+      "cancel": "Annuller",
+      "save": "Gem",
+      "saving": "Gemmer..."
+    },
+    "starterMessages": {
+      "hey": "Hej 👋",
+      "howAreYou": "Hvordan har du det i dag?",
+      "catchUp": "Har du lyst til at snakke sammen senere?"
+    },
+    "search": {
+      "label": "Søg chats",
+      "marquee": "Find chats efter navn, handle eller besked",
+      "startNewChat": "Start en ny chat"
+    },
+    "sidebar": {
+      "chats": "Chats"
+    },
+    "loading": {
+      "conversations": "Indlæser samtaler",
+      "messages": "Indlæser beskeder"
+    },
+    "conversation": {
+      "avatarAlt": "Samtaleavatar"
+    },
+    "empty": {
+      "noChatsFound": "Ingen chats fundet.",
+      "noActiveChats": "Ingen aktive chats endnu.",
+      "firstMessageTitle": "Denne chat venter på sin første besked",
+      "firstMessageDescription": "Bryd stilheden og send et hurtigt hej 👋",
+      "noMessagesFoundTitle": "Ingen beskeder fundet",
+      "noMessagesFoundDescription": "Prøv et andet søgeord i søgningen."
+    },
+    "thread": {
+      "backToChats": "Tilbage til chats",
+      "groupOptions": "Gruppechat-indstillinger",
+      "searchMessages": "Søg i beskeder",
+      "changeChatName": "Skift chatnavn",
+      "leaveChat": "Forlad chat",
+      "deleteChat": "Slet chat",
+      "unmuteChat": "Slå lyd til i chat",
+      "muteChat": "Slå lyd fra i chat",
+      "defaultGroupChatName": "Gruppechat"
+    },
+    "messageSearch": {
+      "backToChat": "Tilbage til chat",
+      "placeholder": "Søg i beskeder",
+      "clear": "Ryd beskedsøgning",
+      "avatarAlt": "Beskedforfatter-avatar",
+      "noResults": "Ingen beskeder fundet for den søgning.",
+      "idleTitle": "Søg i denne chat",
+      "idleDescription": "Find beskeder, mediemærker og @handles i denne samtale."
+    },
+    "messages": {
+      "fetchingOlder": "Henter ældre beskeder…",
+      "noOlder": "Ingen ældre beskeder",
+      "senderAvatarAlt": "Afsenderavatar",
+      "replyMediaPreviewAlt": "Forhåndsvisning af besvaret besked",
+      "sentImageAlt": "Sendt billede",
+      "sentGifAlt": "Sendt GIF",
+      "replyToMessage": "Svar på besked",
+      "options": "Beskedindstillinger",
+      "actions": {
+        "edit": "Redigér",
+        "report": "Anmeld",
+        "copy": "Kopiér"
+      }
+    },
+    "reactions": {
+      "show": "Vis reaktioner",
+      "title": "Reaktioner",
+      "close": "Luk reaktioner",
+      "all": "Alle",
+      "authorAvatarAlt": "Reaktionsforfatter-billede"
+    },
+    "composer": {
+      "replyingTo": "Svarer til {{target}}",
+      "cancelReply": "Annuller svar",
+      "addEmoji": "Tilføj emoji",
+      "messagePlaceholder": "Besked...",
+      "addGif": "Tilføj GIF",
+      "addImage": "Tilføj billede",
+      "searchEmojiPlaceholder": "Søg emoji",
+      "searchGifsPlaceholder": "Søg Giphy GIFs",
+      "search": "Søg",
+      "trendingNow": "Trender nu",
+      "noTrendingGifs": "Ingen trendende GIFs lige nu.",
+      "noGifsFound": "Ingen GIFs fundet.",
+      "sharing": "Deler",
+      "sharedPostPreviewAlt": "Forhåndsvisning af delt indlægsmedie",
+      "removeSharedPost": "Fjern delt indlæg",
+      "send": "Sende"
+    },
+    "sharedReel": {
+      "viewerAria": "Visning af delt reel",
+      "settings": "Reel-indstillinger",
+      "closeViewer": "Luk reel-visning",
+      "unmute": "Slå lyd til for reel",
+      "mute": "Slå lyd fra for reel",
+      "report": "Anmeld reel",
+      "edit": "Redigér reel",
+      "deleting": "Sletter…",
+      "delete": "Slet reel",
+      "authorAvatarAlt": "Reel-forfatteravatar",
+      "like": "Synes godt om reel",
+      "openComments": "Åbn reel-kommentarer",
+      "share": "Del reel",
+      "replyToChatPlaceholder": "Svar i chat...",
+      "sendingShort": null,
+      "commentsAria": "Reel-kommentarer",
+      "comments": "Kommentarer",
+      "closeComments": "Luk kommentarer",
+      "close": "Luk",
+      "commentAuthorAlt": "Kommentarforfatter-billede",
+      "hideReplies": "Skjul svar",
+      "viewReplies": "Vis svar ({{count}})",
+      "unlikeComment": "Fjern like fra kommentar",
+      "likeComment": "Like kommentar",
+      "reply": "Svar",
+      "reportComment": "Anmeld kommentar",
+      "noCommentsYet": "Ingen kommentarer endnu.",
+      "addCommentPlaceholder": "Tilføj en kommentar...",
+      "post": "Udgiv",
+      "editCaptionPlaceholder": "Redigér reel-tekst...",
+      "saving": "Gemmer…",
+      "loadingDetails": "Indlæser reel-detaljer...",
+      "forYou": "Til dig",
+      "replyingToComment": "Svarer på kommentar",
+      "posting": "Udgiver..."
+    },
+    "noConversation": {
+      "title": "Vælg en chat for at starte med at skrive",
+      "subtitle1": "Vælg en samtale fra venstre for at åbne tråden.",
+      "subtitle2": "Kan du ikke se personen endnu? Start en ny chat.",
+      "startNewChat": "Start ny chat"
+    },
+    "replyPreview": {
+      "youRepliedTo": "Du svarede {{target}}",
+      "authorRepliedTo": "@{{authorHandle}} svarede {{target}}",
+      "image": "📷 Billede",
+      "sharedPost": "Delt indlæg",
+      "sharedReel": "Delt reel",
+      "sharedStory": "Delt story",
+      "message": "Besked"
+    },
+    "conversationPreview": {
+      "sharedPostFrom": "Delt indlæg fra @{{handle}}",
+      "sharedStoryFrom": "Delt story fra @{{handle}}",
+      "sharedReelFrom": "Delt reel fra @{{handle}}",
+      "sharedLink": "Delt link"
+    },
+    "unfurl": {
+      "previewUnavailable": "Linkforhåndsvisning er utilgængelig. Åbn delt link.",
+      "openSharedLink": "Åbn delt link"
+    },
+    "status": {
+      "loadConversationsFailed": "Kunne ikke indlæse samtaler.",
+      "startDirectChatFailed": "Kunne ikke starte direkte chat.",
+      "startGroupChatFailed": "Kunne ikke starte gruppechat.",
+      "loadMessagesFailed": "Kunne ikke indlæse beskeder.",
+      "liveUpdatesUnavailable": "Liveopdateringer er midlertidigt utilgængelige.",
+      "messageCopied": "Besked kopieret.",
+      "copyMessageFailed": "Kunne ikke kopiere besked.",
+      "messageContentRequired": "Beskedindhold er påkrævet.",
+      "updateMessageFailed": "Kunne ikke opdatere besked.",
+      "sendMessageFailed": "Kunne ikke sende besked.",
+      "loadGifsFailed": "Kunne ikke indlæse GIFs fra Giphy.",
+      "loadTrendingGifsFailed": "Kunne ikke indlæse trendende GIFs.",
+      "sendGifFailed": "Kunne ikke sende GIF.",
+      "uploadImageFailed": "Kunne ikke uploade billede.",
+      "reelDeleted": "Reelen blev slettet.",
+      "openReelFailed": "Kunne ikke åbne denne reel lige nu.",
+      "sendReplyFailed": "Kunne ikke sende svar.",
+      "updateReelFailed": "Kunne ikke opdatere denne reel lige nu.",
+      "deleteReelFailed": "Kunne ikke slette denne reel lige nu.",
+      "updateReelCommentFailed": "Kunne ikke opdatere reel-kommentar lige nu.",
+      "deleteReelCommentFailed": "Kunne ikke slette reel-kommentar lige nu.",
+      "updateReelCommentLikeFailed": "Kunne ikke opdatere like på reel-kommentar lige nu.",
+      "updateReelLikeFailed": "Kunne ikke opdatere reel-like lige nu.",
+      "addReelCommentFailed": "Kunne ikke tilføje reel-kommentar lige nu.",
+      "loadOlderMessagesFailed": "Kunne ikke indlæse ældre beskeder.",
+      "setReactionFailed": "Kunne ikke sætte reaktion.",
+      "clearReactionFailed": "Kunne ikke fjerne reaktion.",
+      "sendStoryReplyFailed": "Kunne ikke sende dit story-svar lige nu.",
+      "deleteStoryFailed": "Kunne ikke slette denne story lige nu.",
+      "submitReportFailed": "Kunne ikke indsende anmeldelsen lige nu.",
+      "chatNameEmpty": "Chatnavn må ikke være tomt.",
+      "chatNameUpdated": "Chatnavn opdateret.",
+      "updateChatNameFailed": "Kunne ikke opdatere chatnavn.",
+      "leftGroupChat": "Du forlod gruppechatten.",
+      "chatDeleted": "Chat slettet.",
+      "leaveGroupChatFailed": "Kunne ikke forlade gruppechatten.",
+      "deleteChatFailed": "Kunne ikke slette chat.",
+      "chatMuted": "Chat sat på lydløs.",
+      "chatUnmuted": "Lydløs slået fra for chat.",
+      "updateMuteFailed": "Kunne ikke opdatere lydløs-indstilling.",
+      "searchUsersFailed": "Kunne ikke søge brugere lige nu.",
+      "loadSuggestionsFailed": "Kunne ikke indlæse forslag lige nu."
+    },
+    "modals": {
+      "deleteComment": {
+        "title": "Slet kommentar",
+        "message": "Slet denne kommentar? Denne handling kan ikke fortrydes.",
+        "confirm": "Slet"
+      },
+      "leave": {
+        "titleLeave": "Forlad chat",
+        "titleDelete": "Slet chat",
+        "confirmLeave": "Forlad",
+        "confirmDelete": "Slet",
+        "busyLeaving": "Forlader...",
+        "displayNameFallback": "denne chat",
+        "deleteFallback": "Slet denne chat?",
+        "groupMessage": "Forlad {{name}}? Du kan blive tilføjet igen senere af et andet medlem.",
+        "directMessage": "Slet {{name}}? Dette fjerner chatten fra din indbakke."
+      },
+      "rename": {
+        "title": "Skift chatnavn",
+        "label": "Chatnavn",
+        "placeholder": "Indtast chatnavn",
+        "groupMessage": "Giv denne gruppechat et tydeligt navn, så medlemmer nemt kan finde den.",
+        "directMessage": "Sæt et brugerdefineret chatnavn for denne samtale."
+      },
+      "deleteStory": {
+        "title": "Slet story",
+        "message": "Slet denne story? Denne handling kan ikke fortrydes.",
+        "confirm": "Slet"
+      },
+      "deleteReel": {
+        "title": "Slet reel",
+        "message": "Slet denne reel? Denne handling kan ikke fortrydes.",
+        "confirm": "Slet"
+      }
+    }
+  },
+  "sharedCommunityPost": {
+    "loading": {
+      "aria": "Indlæser fællesskabsindlæg"
+    },
+    "notFound": {
+      "title": "Indlæg utilgængeligt",
+      "message": "Dette fællesskabsindlæg blev fjernet, eller linket er ugyldigt."
+    },
+    "errors": {
+      "title": "Noget gik galt",
+      "load": "Kunne ikke indlæse dette delte fællesskabsindlæg.",
+      "votePoll": "Kunne ikke stemme på afstemningen lige nu.",
+      "updateSavedState": "Kunne ikke opdatere gemt-status.",
+      "updatePost": "Kunne ikke opdatere indlægget lige nu.",
+      "deletePost": "Kunne ikke slette indlægget lige nu.",
+      "votePost": "Kunne ikke stemme på indlægget lige nu."
+    },
+    "confirm": {
+      "deletePost": "Slet dette indlæg?",
+      "deleteComment": "Slet denne kommentar?"
+    },
+    "community": {
+      "imageAlt": "Fællesskabsbillede",
+      "fallbackSlug": "/fællesskab"
+    },
+    "post": {
+      "untitled": "Indlæg uden titel"
+    },
+    "media": {
+      "previousImage": "Forrige billede",
+      "nextImage": "Næste billede",
+      "postAlt": "Delt fællesskabsmedie",
+      "thumbAlt": "Billede {{index}}",
+      "imagePreview": "Billedforhåndsvisning",
+      "closeImagePreview": "Luk billedforhåndsvisning",
+      "fullscreenAlt": "Fuldskærmsbillede af indlæg"
+    },
+    "poll": {
+      "votes": "{{count}} stemmer"
+    },
+    "actions": {
+      "upvotePost": "Opstem indlæg",
+      "upvote": "Opstem",
+      "downvotePost": "Nedstem indlæg",
+      "downvote": "Nedstem",
+      "comments": "Kommentarer",
+      "savePost": "Gem indlæg",
+      "unsavePost": "Fjern gemt indlæg",
+      "save": "Gem",
+      "saved": "Gemt",
+      "copyPostLinkAria": "Kopiér indlægslink",
+      "postLinkCopiedAria": "Indlægslink kopieret",
+      "copyLink": "Kopiér link",
+      "copied": "Kopieret",
+      "editPost": "Redigér indlæg",
+      "deletePost": "Slet indlæg"
+    },
+    "comments": {
+      "later": "senere",
+      "timedOut": "Du er sat i timeout i dette fællesskab indtil {{until}}. Oprettelse af indlæg og kommentarer er deaktiveret.",
+      "joinToComment": "Deltag i dette fællesskab for at kommentere.",
+      "signIn": "Log ind",
+      "signInSuffix": "for at deltage i samtalen.",
+      "authorImageAlt": "Kommentatorbillede",
+      "spoilerAria": "Spoilertekst. Klik for at vise.",
+      "editor": {
+        "placeholder": "Deltag i samtalen",
+        "submit": "Kommentér",
+        "submitting": "Udgiver..."
+      },
+      "edit": {
+        "placeholder": "Redigér din kommentar",
+        "save": "Gem",
+        "saving": "Gemmer..."
+      },
+      "reply": {
+        "placeholder": "Svar til u/{{handle}}"
+      },
+      "sort": {
+        "label": "Sortér efter:",
+        "best": "Bedste",
+        "top": "Top",
+        "new": "Nyeste",
+        "controversial": "Kontroversielle",
+        "old": "Ældste",
+        "qna": "Spørgsmål og svar"
+      },
+      "search": {
+        "placeholder": "Søg i kommentarer",
+        "aria": "Søg i kommentarer"
+      },
+      "empty": {
+        "noneYet": "Ingen kommentarer endnu.",
+        "noSearchMatch": "Ingen kommentarer matcher din søgning."
+      },
+      "actions": {
+        "upvote": "Opstem",
+        "downvote": "Nedstem",
+        "reply": "Svar",
+        "shareComment": "Del kommentar",
+        "share": "Del",
+        "commentLinkCopiedAria": "Kommentarlink kopieret",
+        "openCommentActions": "Åbn kommentarhandlinger",
+        "moreActions": "Flere handlinger",
+        "commentActions": "Kommentarhandlinger",
+        "edit": "Redigér",
+        "cancelEdit": "Annullér redigering",
+        "delete": "Slet",
+        "deleting": "Sletter..."
+      },
+      "errors": {
+        "timedOut": "Du er sat i timeout i dette fællesskab indtil {{until}}.",
+        "postComment": "Kunne ikke publicere kommentar lige nu.",
+        "contentRequired": "Kommentarindhold er påkrævet.",
+        "updateComment": "Kunne ikke opdatere kommentar lige nu.",
+        "deleteComment": "Kunne ikke slette kommentar lige nu.",
+        "postReply": "Kunne ikke publicere svar lige nu."
+      }
+    }
+  }
+}

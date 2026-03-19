@@ -1,14 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { BlogDto, BlogPostDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 
 @Component({
     selector: 'app-blog-embed-tools-page',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, TranslateModule],
     templateUrl: './blog-embed-tools-page.component.html',
     styleUrl: './blog-embed-tools-page.component.scss'
 })
@@ -28,6 +29,7 @@ export class BlogEmbedToolsPageComponent {
     private loadVersion = 0;
     private cachedSafeEmbedUrlSource = '';
     private cachedSafeEmbedUrl: SafeResourceUrl | null = null;
+    private readonly translate = inject(TranslateService);
     private readonly onEmbedMessage = (event: MessageEvent): void => {
         const frame = this.embedPreviewFrame?.nativeElement;
         if (!frame || event.source !== frame.contentWindow) {
@@ -123,7 +125,7 @@ export class BlogEmbedToolsPageComponent {
             return '';
         }
 
-        const safeTitle = this.post?.title?.trim() || 'Venli blog embed';
+        const safeTitle = this.post?.title?.trim() || this.t('blogEmbedTools.embed.defaultTitle');
         const escapedTitle = safeTitle.replace(/"/g, '&quot;');
         return `<iframe src="${src}" width="100%" style="display:block;border:0;overflow:hidden;border-radius:12px;height:320px;" loading="lazy" title="${escapedTitle}"></iframe>\n<script>(function(){var iframe=document.currentScript&&document.currentScript.previousElementSibling;if(!iframe||iframe.tagName!=='IFRAME'){return;}function onMessage(event){if(event.source!==iframe.contentWindow){return;}var data=event.data||{};if(data.type!=='venli-blog-embed:resize'){return;}var h=Number(data.height);if(!Number.isFinite(h)||h<=0){return;}iframe.style.height=Math.max(220,Math.ceil(h))+'px';}window.addEventListener('message',onMessage,false);})();</script>`;
     }
@@ -151,7 +153,7 @@ export class BlogEmbedToolsPageComponent {
         const loadVersion = ++this.loadVersion;
 
         if (!this.handle || !this.blogSlug || !this.postSlug) {
-            this.error = 'Blog post was not found.';
+            this.error = this.t('blogEmbedTools.errors.notFound');
             this.loading = false;
             this.cdr.detectChanges();
             return;
@@ -169,14 +171,14 @@ export class BlogEmbedToolsPageComponent {
             }
 
             if (!loadedBlog || !loadedPost) {
-                this.error = 'Blog post was not found or is private.';
+                this.error = this.t('blogEmbedTools.errors.notFoundOrPrivate');
                 this.blog = null;
                 this.post = null;
                 return;
             }
 
             if (loadedBlog.allowEmbeds === false) {
-                this.error = 'Embedding is disabled by the blog owner.';
+                this.error = this.t('blogEmbedTools.errors.embeddingDisabled');
                 this.blog = loadedBlog;
                 this.post = null;
                 return;
@@ -189,7 +191,7 @@ export class BlogEmbedToolsPageComponent {
                 return;
             }
 
-            this.error = 'Could not load embed tools for this post right now.';
+            this.error = this.t('blogEmbedTools.errors.loadNow');
             this.blog = null;
             this.post = null;
         } finally {
@@ -198,5 +200,9 @@ export class BlogEmbedToolsPageComponent {
                 this.cdr.detectChanges();
             }
         }
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 }

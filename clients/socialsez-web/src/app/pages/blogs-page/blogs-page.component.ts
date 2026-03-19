@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, HostListener, NgZone, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BlogDto } from '../../core/api.types';
 import { buildDiscoverySuggestions, DISCOVERY_TOPICS, rankByDiscoveryQuery, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { SessionService } from '../../core/session.service';
@@ -13,16 +14,18 @@ type BlogSort = 'updated' | 'created' | 'title';
 @Component({
     selector: 'app-blogs-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, SkeletonComponent],
+    imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, SkeletonComponent],
     templateUrl: './blogs-page.component.html',
     styleUrl: './blogs-page.component.scss'
 })
 export class BlogsPageComponent {
-    readonly tabs: ReadonlyArray<{ key: BlogsTab; label: string }> = [
-        { key: 'all', label: 'All blogs' },
-        { key: 'following', label: 'Following' },
-        { key: 'mine', label: 'My blogs' }
-    ];
+    get tabs(): ReadonlyArray<{ key: BlogsTab; label: string }> {
+        return [
+            { key: 'all', label: this.t('blogs.tabs.all') },
+            { key: 'following', label: this.t('blogs.tabs.following') },
+            { key: 'mine', label: this.t('blogs.tabs.mine') }
+        ];
+    }
 
     activeTab: BlogsTab = 'all';
     sortBy: BlogSort = 'updated';
@@ -37,6 +40,7 @@ export class BlogsPageComponent {
     suggestions: string[] = [];
     private readonly suggestionSeed = new Set<string>(DISCOVERY_TOPICS.map(topic => topic.canonical));
     private queryDebounceTimerId: number | null = null;
+    private readonly translate = inject(TranslateService);
 
     @ViewChild('infiniteSentinel')
     set infiniteSentinel(value: ElementRef<HTMLDivElement> | undefined) {
@@ -47,11 +51,13 @@ export class BlogsPageComponent {
     private sentinelRef?: ElementRef<HTMLDivElement>;
     private infiniteObserver: IntersectionObserver | null = null;
 
-    readonly sortOptions: ReadonlyArray<{ value: BlogSort; label: string }> = [
-        { value: 'updated', label: 'Recently updated' },
-        { value: 'created', label: 'Newest created' },
-        { value: 'title', label: 'Title A-Z' }
-    ];
+    get sortOptions(): ReadonlyArray<{ value: BlogSort; label: string }> {
+        return [
+            { value: 'updated', label: this.t('blogs.sort.recentlyUpdated') },
+            { value: 'created', label: this.t('blogs.sort.newestCreated') },
+            { value: 'title', label: this.t('blogs.sort.titleAz') }
+        ];
+    }
 
     constructor(
         public readonly session: SessionService,
@@ -172,7 +178,7 @@ export class BlogsPageComponent {
                 loadedBlogs = await this.session.discoverBlogsAsync(backendQuery, 120);
             } else if (!this.session.isAuthenticated()) {
                 loadedBlogs = [];
-                this.error = 'Sign in to view this tab.';
+                this.error = this.t('blogs.errors.signInToViewTab');
             } else if (this.activeTab === 'following') {
                 loadedBlogs = await this.session.loadFollowingBlogsAsync(backendQuery, 120);
             } else {
@@ -184,7 +190,7 @@ export class BlogsPageComponent {
             this.refreshSuggestions();
         } catch {
             this.blogs = [];
-            this.error = 'Could not load blogs right now.';
+            this.error = this.t('blogs.errors.loadNow');
         } finally {
             this.loading = false;
             this.scheduleObserverRefresh();
@@ -204,16 +210,16 @@ export class BlogsPageComponent {
     get tabSubtitle(): string {
         switch (this.activeTab) {
             case 'following':
-                return 'Blogs from creators you follow.';
+                return this.t('blogs.subtitle.following');
             case 'mine':
-                return 'Manage your own blogs and drafts.';
+                return this.t('blogs.subtitle.mine');
             default:
-                return 'Discover and search blogs across Venli.';
+                return this.t('blogs.subtitle.all');
         }
     }
 
     get currentSortLabel(): string {
-        return this.sortOptions.find(option => option.value === this.sortBy)?.label ?? 'Recently updated';
+        return this.sortOptions.find(option => option.value === this.sortBy)?.label ?? this.t('blogs.sort.recentlyUpdated');
     }
 
     get sortedBlogs(): BlogDto[] {
@@ -383,5 +389,9 @@ export class BlogsPageComponent {
 
     private refreshSuggestions(): void {
         this.suggestions = buildDiscoverySuggestions(this.searchText, Array.from(this.suggestionSeed), 8);
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 }

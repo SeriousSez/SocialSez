@@ -1,0 +1,198 @@
+{
+  "app": {
+    "notice": {
+      "update": "Nieuwe versie beschikbaar. Herlaad om te updaten.",
+      "updateReady": "Update gereed",
+      "reload": "Herladen",
+      "reloading": "Bezig met herladen...",
+      "dismiss": "Sluiten",
+      "dismissAria": "Melding sluiten"
+    },
+    "shell": {
+      "skipToContent": "Ga naar inhoud",
+      "brandSubtitle": "Communityplatform",
+      "nav": {
+        "feed": "Feed",
+        "discover": "Ontdekken",
+        "blogs": "Blogs",
+        "communities": "Community's",
+        "chat": "Chat",
+        "saved": "Opgeslagen",
+        "drafts": "Concepten",
+        "notifications": "Meldingen",
+        "profile": "Profiel",
+        "settings": "Instellingen",
+        "auth": "Inloggen"
+      },
+      "activity": {
+        "title": "Activiteit",
+        "empty": "Niets in uitvoering.",
+        "aria": "Upload- en publicatieactiviteit"
+      },
+      "trending": {
+        "title": "Trends",
+        "loading": "Hashtags laden...",
+        "empty": "Nog geen trending hashtags."
+      },
+      "settingsQuickNav": {
+        "title": "Instellingen",
+        "profile": "Profiel",
+        "account": "Account",
+        "privacy": "Privacy",
+        "session": "Sessie",
+        "preferences": "Voorkeuren",
+        "notifications": "Meldingen",
+        "safety": "Veiligheid",
+        "security": "Accountbeveiliging",
+        "data": "Gegevens",
+        "blocked": "Geblokkeerde gebruikers",
+        "logout": "Uitloggen"
+      }
+    },
+    "search": {
+      "label": "Zoeken",
+      "buttonAria": "Zoeken",
+      "scopePrefix": "Bereik",
+      "scopeAuto": "Auto",
+      "scope": {
+        "all": "Alle resultaten",
+        "communities": "Community's",
+        "blogs": "Blogs",
+        "users": "Gebruikers",
+        "posts": "Berichten",
+        "reels": "Reels",
+        "hashtags": "Hashtags"
+      }
+    }
+  },
+  "auth": {
+    "hero": {
+      "title": "Welkom bij Venli",
+      "loginSubtitle": "Log in met je e-mail en wachtwoord.",
+      "registerSubtitle": "Maak je account aan om te posten en anderen te volgen.",
+      "interestsSubtitle": "Kies interesses om Ontdekken vanaf dag één te personaliseren."
+    },
+    "fields": {
+      "email": "E-mail",
+      "password": "Wachtwoord",
+      "confirmPassword": "Bevestig wachtwoord",
+      "handle": "Handle",
+      "displayName": "Weergavenaam",
+      "dateOfBirth": "Geboortedatum",
+      "country": "Land",
+      "bio": "Bio"
+    },
+    "actions": {
+      "signIn": "Inloggen",
+      "createAccount": "Account maken",
+      "continue": "Doorgaan",
+      "finish": "Voltooien",
+      "skipForNow": "Nu overslaan"
+    },
+    "switch": {
+      "newHere": "Nieuw hier?",
+      "alreadyHaveAccount": "Heb je al een account?"
+    }
+  },
+  "settings": {
+    "page": {
+      "title": "Instellingen",
+      "subtitle": "Beheer je account, profiel en app-voorkeuren.",
+      "unsavedChanges": "Je hebt niet-opgeslagen wijzigingen.",
+      "discardAll": "Alle niet-opgeslagen wijzigingen negeren"
+    },
+    "sections": {
+      "profile": "Profiel",
+      "account": "Account",
+      "privacy": "Privacy",
+      "session": "Sessie",
+      "preferences": "Voorkeuren",
+      "notifications": "Meldingen",
+      "safety": "Veiligheid",
+      "security": "Beveiliging",
+      "data": "Gegevensbeheer",
+      "blocked": "Geblokkeerde gebruikers",
+      "logout": "Uitloggen"
+    },
+    "common": {
+      "reload": "Herladen",
+      "discard": "Negeren",
+      "saving": "Opslaan...",
+      "cancel": "Annuleren",
+      "back": "Terug",
+      "add": "Toevoegen"
+    },
+    "preferences": {
+      "compactFeed": "Compacte feed-indeling",
+      "useSystemTheme": "Systeemthema gebruiken",
+      "darkMode": "Donkere modus",
+      "accessibility": "Toegankelijkheid",
+      "reducedMotion": "Verminderde animatie",
+      "largerText": "Grotere tekstmodus",
+      "highContrast": "Hoge contrastmodus",
+      "language": "Taal",
+      "saveAccessibility": "Toegankelijkheid opslaan"
+    },
+    "language": {
+      "system": "Systeemstandaard",
+      "enUS": "English (US)",
+      "enGB": "English (UK)",
+      "da": "Dansk",
+      "es": "Español",
+      "de": "Deutsch",
+      "fr": "Français",
+      "ptBR": "Português (Brasil)",
+      "nl": "Nederlands",
+      "sv": "Svenska",
+      "nb": "Norsk bokmål",
+      "it": "Italiano",
+      "pl": "Polski",
+      "ar": "العربية",
+      "tr": "Türkçe"
+    },
+    "messages": {
+      "profileSaved": "Profielinstellingen opgeslagen.",
+      "profileReloaded": "Profielinstellingen opnieuw geladen.",
+      "preferencesSaved": "Voorkeuren opgeslagen."
+    }
+  },
+  "discover": {
+    "page": {
+      "title": "Ontdekken"
+    },
+    "scope": {
+      "all": "Alles",
+      "communities": "Community's",
+      "communityPosts": "Communityberichten",
+      "blogs": "Blogs",
+      "reels": "Reels",
+      "posts": "Berichten",
+      "hashtags": "Hashtags",
+      "users": "Gebruikers"
+    },
+    "sections": {
+      "forYou": "Voor jou",
+      "users": "Gebruikers",
+      "communities": "Community's",
+      "communityPosts": "Communityberichten",
+      "blogs": "Blogs",
+      "reels": "Reels",
+      "hashtags": "Hashtags",
+      "posts": "Berichten"
+    }
+  },
+  "chatPage": {
+    "title": "Berichten",
+    "search": {
+      "label": "Chats zoeken",
+      "startNewChat": "Nieuwe chat starten"
+    },
+    "sidebar": {
+      "chats": "Chats"
+    },
+    "noConversation": {
+      "title": "Selecteer een chat om te beginnen met berichten",
+      "startNewChat": "Nieuwe chat starten"
+    }
+  }
+}

@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, DestroyRef, HostListener, NgZone, inject 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CommunityDto, CommunityMemberDto, CommunityPollDto, CommunityPostDto, CommunityRuleDto, ProfileDto } from '../../core/api.types';
 import { formatUtcDateTime } from '../../core/date-time.util';
 import { rankByDiscoveryQuery, scoreDiscoveryFields } from '../../core/discovery-search.util';
@@ -33,15 +34,15 @@ interface PendingMemberModerationAction {
 @Component({
     selector: 'app-community-detail-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, ConfirmModalComponent, SkeletonComponent, RichTextEditorComponent],
+    imports: [CommonModule, FormsModule, RouterLink, TranslateModule, ConfirmModalComponent, SkeletonComponent, RichTextEditorComponent],
     templateUrl: './community-detail-page.component.html',
     styleUrl: './community-detail-page.component.scss'
 })
 export class CommunityDetailPageComponent {
     readonly timeoutDurationOptions: Array<{ value: 1 | 7 | 30; label: string }> = [
-        { value: 1, label: '1 day' },
-        { value: 7, label: '7 days' },
-        { value: 30, label: '1 month' }
+        { value: 1, label: 'communityDetail.timeoutOptions.oneDay' },
+        { value: 7, label: 'communityDetail.timeoutOptions.sevenDays' },
+        { value: 30, label: 'communityDetail.timeoutOptions.oneMonth' }
     ];
     selectedTimeoutDurationDays: 1 | 7 | 30 = 7;
 
@@ -122,6 +123,7 @@ export class CommunityDetailPageComponent {
     private readonly destroyRef = inject(DestroyRef);
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly ngZone = inject(NgZone);
+    private readonly translate = inject(TranslateService);
 
     private get draftStorageKey(): string | null {
         return this.communitySlug ? `socialsez.community.draft.${this.communitySlug}` : null;
@@ -307,10 +309,10 @@ export class CommunityDetailPageComponent {
 
         try {
             this.community = await this.session.updateCommunityMemberRoleAsync(this.communityId, memberProfileId, 'Moderator');
-            this.status = 'Member promoted to moderator.';
+            this.status = this.t('communityDetail.status.memberPromoted');
             this.statusTone = 'success';
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('promote member'));
+            this.status = toUserErrorMessage(error, actionError(this.t('communityDetail.errors.action.promoteMember')));
             this.statusTone = 'error';
         } finally {
             this.updatingMemberRoleId = null;
@@ -327,10 +329,10 @@ export class CommunityDetailPageComponent {
 
         try {
             this.community = await this.session.updateCommunityMemberRoleAsync(this.communityId, memberProfileId, 'Member');
-            this.status = 'Moderator role removed.';
+            this.status = this.t('communityDetail.status.moderatorRemoved');
             this.statusTone = 'success';
         } catch (error) {
-            this.status = toUserErrorMessage(error, actionError('remove moderator'));
+            this.status = toUserErrorMessage(error, actionError(this.t('communityDetail.errors.action.removeModerator')));
             this.statusTone = 'error';
         } finally {
             this.updatingMemberRoleId = null;
@@ -395,7 +397,7 @@ export class CommunityDetailPageComponent {
         try {
             if (action === 'ban') {
                 await this.session.blockProfileAsync(profileId);
-                this.status = `@${handle} has been banned.`;
+                this.status = this.t('communityDetail.status.memberBanned', { handle });
 
                 if (!this.bannedProfiles.some(profile => profile.id === profileId)) {
                     this.bannedProfiles = [
@@ -412,26 +414,26 @@ export class CommunityDetailPageComponent {
                 }
             } else if (action === 'unban') {
                 await this.session.unblockProfileAsync(profileId);
-                this.status = `@${handle} has been unbanned.`;
+                this.status = this.t('communityDetail.status.memberUnbanned', { handle });
                 this.bannedProfiles = this.bannedProfiles.filter(profile => profile.id !== profileId);
             } else {
                 if (!this.communityId) {
-                    throw new Error('Community not loaded.');
+                    throw new Error(this.t('communityDetail.errors.communityNotLoaded'));
                 }
 
                 this.community = await this.session.timeoutCommunityMemberAsync(this.communityId, profileId, this.selectedTimeoutDurationDays);
-                const timeoutLabel = this.selectedTimeoutDurationDays === 30 ? '1 month' : `${this.selectedTimeoutDurationDays} day${this.selectedTimeoutDurationDays === 1 ? '' : 's'}`;
-                this.status = `@${handle} has been timed out for ${timeoutLabel}.`;
+                const timeoutLabel = this.timeoutDurationLabel(this.selectedTimeoutDurationDays);
+                this.status = this.t('communityDetail.status.memberTimedOut', { handle, timeoutLabel });
             }
 
             this.statusTone = 'success';
             this.pendingMemberModerationAction = null;
         } catch (error) {
             const activity = action === 'ban'
-                ? 'ban member'
+                ? this.t('communityDetail.errors.action.banMember')
                 : action === 'unban'
-                    ? 'unban member'
-                    : 'timeout member';
+                    ? this.t('communityDetail.errors.action.unbanMember')
+                    : this.t('communityDetail.errors.action.timeoutMember');
             this.status = toUserErrorMessage(error, actionError(activity));
             this.statusTone = 'error';
         } finally {
@@ -441,18 +443,18 @@ export class CommunityDetailPageComponent {
 
     get memberModerationModalTitle(): string {
         if (!this.pendingMemberModerationAction) {
-            return 'Confirm action';
+            return this.t('communityDetail.moderation.modalTitle.confirm');
         }
 
         if (this.pendingMemberModerationAction.action === 'ban') {
-            return 'Ban user';
+            return this.t('communityDetail.moderation.modalTitle.ban');
         }
 
         if (this.pendingMemberModerationAction.action === 'unban') {
-            return 'Unban user';
+            return this.t('communityDetail.moderation.modalTitle.unban');
         }
 
-        return 'Timeout user';
+        return this.t('communityDetail.moderation.modalTitle.timeout');
     }
 
     get memberModerationModalMessage(): string {
@@ -462,31 +464,31 @@ export class CommunityDetailPageComponent {
 
         const handle = this.pendingMemberModerationAction.handle;
         if (this.pendingMemberModerationAction.action === 'ban') {
-            return `Ban @${handle}? This blocks them from your account.`;
+            return this.t('communityDetail.moderation.modalMessage.ban', { handle });
         }
 
         if (this.pendingMemberModerationAction.action === 'unban') {
-            return `Unban @${handle}? This removes the block from your account.`;
+            return this.t('communityDetail.moderation.modalMessage.unban', { handle });
         }
 
-        const timeoutLabel = this.selectedTimeoutDurationDays === 30 ? '1 month' : `${this.selectedTimeoutDurationDays} day${this.selectedTimeoutDurationDays === 1 ? '' : 's'}`;
-        return `Timeout @${handle} for ${timeoutLabel}? During timeout they cannot post or comment in this community.`;
+        const timeoutLabel = this.timeoutDurationLabel(this.selectedTimeoutDurationDays);
+        return this.t('communityDetail.moderation.modalMessage.timeout', { handle, timeoutLabel });
     }
 
     get memberModerationConfirmText(): string {
         if (!this.pendingMemberModerationAction) {
-            return 'Confirm';
+            return this.t('communityDetail.moderation.confirmText.confirm');
         }
 
         if (this.pendingMemberModerationAction.action === 'ban') {
-            return 'Ban user';
+            return this.t('communityDetail.moderation.confirmText.ban');
         }
 
         if (this.pendingMemberModerationAction.action === 'unban') {
-            return 'Unban user';
+            return this.t('communityDetail.moderation.confirmText.unban');
         }
 
-        return 'Timeout user';
+        return this.t('communityDetail.moderation.confirmText.timeout');
     }
 
     async loadAsync(): Promise<void> {
@@ -512,7 +514,7 @@ export class CommunityDetailPageComponent {
                 this.failedPostAuthorImagePostIds.clear();
                 this.lastAppliedPostSearchQuery = '';
                 this.membersModalOpen = false;
-                this.status = 'Community was not found.';
+                this.status = this.t('communityDetail.errors.communityNotFound');
                 this.statusTone = 'neutral';
                 return;
             }
@@ -778,7 +780,7 @@ export class CommunityDetailPageComponent {
 
     async joinCommunityAsync(): Promise<void> {
         if (!this.session.isAuthenticated()) {
-            this.session.message = 'Please sign in or create an account to join this community.';
+            this.session.message = this.t('communityDetail.errors.signInToJoin');
             await this.router.navigate(['/auth']);
             return;
         }
@@ -792,7 +794,7 @@ export class CommunityDetailPageComponent {
 
         try {
             this.community = await this.session.joinCommunityAsync(this.communityId);
-            this.status = 'Joined community.';
+            this.status = this.t('communityDetail.status.joinedCommunity');
             this.statusTone = 'success';
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('join community'));
@@ -813,7 +815,7 @@ export class CommunityDetailPageComponent {
         try {
             await this.session.leaveCommunityAsync(this.communityId);
             this.community = this.community ? { ...this.community, joinedByMe: false, myRole: undefined, memberCount: Math.max(this.community.memberCount - 1, 0) } : null;
-            this.status = 'Left community.';
+            this.status = this.t('communityDetail.status.leftCommunity');
             this.statusTone = 'success';
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('leave community'));
@@ -834,7 +836,7 @@ export class CommunityDetailPageComponent {
         try {
             const copied = await this.copyTextToClipboardAsync(communityUrl);
             if (!copied) {
-                throw new Error('Copy failed');
+                throw new Error(this.t('communityDetail.errors.copyFailed'));
             }
 
             this.ngZone.run(() => {
@@ -851,13 +853,13 @@ export class CommunityDetailPageComponent {
                     });
                 }, 1800);
 
-                this.status = 'Community link copied.';
+                this.status = this.t('communityDetail.status.communityLinkCopied');
                 this.statusTone = 'success';
                 this.cdr.detectChanges();
             });
         } catch {
             this.ngZone.run(() => {
-                this.status = 'Unable to copy community link.';
+                this.status = this.t('communityDetail.errors.copyCommunityLink');
                 this.statusTone = 'error';
                 this.cdr.detectChanges();
             });
@@ -931,7 +933,7 @@ export class CommunityDetailPageComponent {
 
         const name = this.updateCommunityName.trim();
         if (!name) {
-            this.status = 'Community name is required.';
+            this.status = this.t('communityDetail.errors.communityNameRequired');
             this.statusTone = 'neutral';
             return;
         }
@@ -960,7 +962,7 @@ export class CommunityDetailPageComponent {
             this.communitySlug = updated.slug;
             this.updateCommunityImageFile = null;
             this.editCommunityModalOpen = false;
-            this.status = 'Community updated.';
+            this.status = this.t('communityDetail.status.communityUpdated');
             this.statusTone = 'success';
 
             if (!stringEqualsIgnoreCase(previousSlug, updated.slug)) {
@@ -997,13 +999,13 @@ export class CommunityDetailPageComponent {
         const selectedImages = [...this.composerImageFiles];
 
         if (!title) {
-            this.status = 'Title is required.';
+            this.status = this.t('communityDetail.errors.titleRequired');
             this.statusTone = 'neutral';
             return;
         }
 
         if (!content && !mediaContent && !linkUrl && selectedImages.length === 0 && !pollQuestion) {
-            this.status = 'Add text, image, link, or poll before posting.';
+            this.status = this.t('communityDetail.errors.addContentBeforePosting');
             this.statusTone = 'neutral';
             return;
         }
@@ -1042,7 +1044,7 @@ export class CommunityDetailPageComponent {
             this.pollOptions = ['', ''];
             this.createPostModalOpen = false;
             this.clearDraft();
-            this.status = 'Post published.';
+            this.status = this.t('communityDetail.status.postPublished');
             this.statusTone = 'success';
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('create post'));
@@ -1054,7 +1056,7 @@ export class CommunityDetailPageComponent {
 
     openCreatePostModal(): void {
         if (!this.session.isAuthenticated()) {
-            this.session.message = 'Please sign in or create an account to create a community post.';
+            this.session.message = this.t('communityDetail.errors.signInToCreatePost');
             void this.router.navigate(['/auth']);
             return;
         }
@@ -1143,7 +1145,7 @@ export class CommunityDetailPageComponent {
             if (post.isSavedByMe) {
                 await this.session.unsaveCommunityPostAsync(this.communityId, post.id);
                 this.posts = this.posts.map(item => item.id === post.id ? { ...item, isSavedByMe: false } : item);
-                this.status = 'Post removed from saved.';
+                this.status = this.t('communityDetail.status.postRemovedFromSaved');
                 this.statusTone = 'success';
                 return;
             }
@@ -1157,7 +1159,7 @@ export class CommunityDetailPageComponent {
 
             if (saved) {
                 this.posts = this.posts.map(item => item.id === post.id ? { ...item, isSavedByMe: true } : item);
-                this.status = 'Post saved.';
+                this.status = this.t('communityDetail.status.postSaved');
                 this.statusTone = 'success';
             }
         } catch (error) {
@@ -1174,7 +1176,7 @@ export class CommunityDetailPageComponent {
         try {
             const copied = await this.copyTextToClipboardAsync(postUrl);
             if (!copied) {
-                throw new Error('Copy failed');
+                throw new Error(this.t('communityDetail.errors.copyFailed'));
             }
 
             this.ngZone.run(() => {
@@ -1191,13 +1193,13 @@ export class CommunityDetailPageComponent {
                     });
                 }, 1800);
 
-                this.status = 'Post link copied.';
+                this.status = this.t('communityDetail.status.postLinkCopied');
                 this.statusTone = 'success';
                 this.cdr.detectChanges();
             });
         } catch {
             this.ngZone.run(() => {
-                this.status = 'Unable to copy post link.';
+                this.status = this.t('communityDetail.errors.copyPostLink');
                 this.statusTone = 'error';
                 this.cdr.detectChanges();
             });
@@ -1562,7 +1564,7 @@ export class CommunityDetailPageComponent {
         try {
             const poll = await this.session.voteCommunityPollAsync(this.communityId, pollId, optionId);
             this.posts = this.posts.map(post => post.id === postId ? { ...post, poll } : post);
-            this.status = 'Vote submitted.';
+            this.status = this.t('communityDetail.status.voteSubmitted');
             this.statusTone = 'success';
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('vote on poll'));
@@ -1693,7 +1695,7 @@ export class CommunityDetailPageComponent {
         const clearPoll = this.editPostTab !== 'poll';
 
         if (!title) {
-            this.status = 'Title is required.';
+            this.status = this.t('communityDetail.errors.titleRequired');
             this.statusTone = 'neutral';
             return;
         }
@@ -1701,7 +1703,7 @@ export class CommunityDetailPageComponent {
         const hasImages = this.editPostTab === 'media' && this.editPostImageEntries.length > 0;
 
         if (!content && !mediaContent && !linkUrl && !hasImages && !pollQuestion) {
-            this.status = 'Add text, image, link, or poll before saving.';
+            this.status = this.t('communityDetail.errors.addContentBeforeSaving');
             this.statusTone = 'neutral';
             return;
         }
@@ -1731,7 +1733,7 @@ export class CommunityDetailPageComponent {
             this.editPostModalOpen = false;
             this.editingPostId = null;
             this.clearEditPostImageEntries();
-            this.status = 'Post updated.';
+            this.status = this.t('communityDetail.status.postUpdated');
             this.statusTone = 'success';
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('update post'));
@@ -1775,7 +1777,7 @@ export class CommunityDetailPageComponent {
         try {
             await this.session.deleteCommunityPostAsync(this.communityId, postId);
             this.posts = this.posts.filter(item => item.id !== postId);
-            this.status = 'Post deleted.';
+            this.status = this.t('communityDetail.status.postDeleted');
             this.statusTone = 'success';
         } catch (error) {
             this.status = toUserErrorMessage(error, actionError('delete post'));
@@ -1958,13 +1960,29 @@ export class CommunityDetailPageComponent {
         try {
             const parsed = new URL(candidate);
             if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-                return { value: null, error: 'Link URL must start with http:// or https://.' };
+                return { value: null, error: this.t('communityDetail.errors.linkMustStartHttp') };
             }
 
             return { value: parsed.toString() };
         } catch {
-            return { value: null, error: 'Enter a valid link URL.' };
+            return { value: null, error: this.t('communityDetail.errors.linkInvalid') };
         }
+    }
+
+    private timeoutDurationLabel(days: 1 | 7 | 30): string {
+        if (days === 30) {
+            return this.t('communityDetail.timeoutOptions.oneMonth');
+        }
+
+        if (days === 1) {
+            return this.t('communityDetail.timeoutOptions.oneDay');
+        }
+
+        return this.t('communityDetail.timeoutOptions.sevenDays');
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 
     private resolveEditPostTextContent(): string | null {

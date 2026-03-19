@@ -4,8 +4,9 @@
             <header class="profile-hero">
                 <a *ngIf="!isBlockedView; else blockedProfileImage" class="hero-image-link" [class.story-uploading]="isOwnProfile && storyUploadInProgress" [class.story-uploading-pending]="isOwnProfile && storyUploadInProgress && !viewedProfileHasActiveStory"
                     [class.story-uploading-active]="isOwnProfile && storyUploadInProgress && viewedProfileHasActiveStory" [attr.href]="'/users/' + profile.handle" (click)="openProfileOrStory(profile.handle, $event)"
-                    [attr.aria-label]="viewedProfileHasActiveStory ? ('Open @' + profile.handle + ' stories') : ('View @' + profile.handle + ' profile')">
-                    <img class="hero-image" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" [src]="avatarImageUrl" (error)="onHeroImageError()" [alt]="profile.displayName + ' avatar'" />
+                    [attr.aria-label]="viewedProfileHasActiveStory ? ('profile.hero.openStoriesAria' | translate:{ handle: profile.handle }) : ('profile.hero.viewProfileAria' | translate:{ handle: profile.handle })">
+                    <img class="hero-image" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" [src]="avatarImageUrl" (error)="onHeroImageError()"
+                        [alt]="'profile.hero.avatarAlt' | translate:{ name: profile.displayName }" />
                 </a>
                 <ng-template #blockedProfileImage>
                     <div class="hero-image hero-image-blocked" aria-hidden="true">
@@ -20,30 +21,30 @@
                         <ng-container *ngIf="profile.bio.trim(); else emptyBio">
                             <div [innerHTML]="renderBioHtml(profile.bio)"></div>
                         </ng-container>
-                        <ng-template #emptyBio>No bio yet.</ng-template>
+                        <ng-template #emptyBio>{{ 'profile.hero.noBio' | translate }}</ng-template>
                     </div>
                     <ng-template #blockedBio>
-                        <p class="bio">Bio hidden because this profile is blocked.</p>
+                        <p class="bio">{{ 'profile.hero.bioHidden' | translate }}</p>
                     </ng-template>
-                    <p class="joined">Joined {{ profile.createdAtUtc | date:'mediumDate' }}</p>
-                    <div class="trust-signals" *ngIf="!isBlockedView" aria-label="Profile trust signals">
+                    <p class="joined">{{ 'profile.hero.joined' | translate:{ date: (profile.createdAtUtc | date:'mediumDate') } }}</p>
+                    <div class="trust-signals" *ngIf="!isBlockedView" [attr.aria-label]="'profile.hero.trustSignalsAria' | translate">
                         <span class="trust-pill" [class.is-private]="profile.isPrivate">
                             <i class="fa-duotone fa-light" [class.fa-lock]="profile.isPrivate" [class.fa-globe]="!profile.isPrivate" aria-hidden="true"></i>
-                            {{ profile.isPrivate ? 'Private profile' : 'Public profile' }}
+                            {{ profile.isPrivate ? ('profile.hero.privateProfile' | translate) : ('profile.hero.publicProfile' | translate) }}
                         </span>
                         <span class="trust-pill" *ngIf="isEstablishedAccount">
                             <i class="fa-duotone fa-light fa-shield-check" aria-hidden="true"></i>
-                            Established member
+                            {{ 'profile.hero.establishedMember' | translate }}
                         </span>
                         <span class="trust-pill" *ngIf="lastActivityAtUtc as lastActiveAtUtc">
                             <i class="fa-duotone fa-light fa-clock" aria-hidden="true"></i>
-                            Active {{ lastActiveAtUtc | date:'mediumDate' }}
+                            {{ 'profile.hero.activeOn' | translate:{ date: (lastActiveAtUtc | date:'mediumDate') } }}
                         </span>
                     </div>
-                    <div class="hero-stats" *ngIf="!isBlockedView" aria-label="Profile stats">
-                        <span><strong>{{ totalPosts }}</strong> posts</span>
-                        <span><strong>{{ totalFollowers }}</strong> followers</span>
-                        <span><strong>{{ totalFollowing }}</strong> following</span>
+                    <div class="hero-stats" *ngIf="!isBlockedView" [attr.aria-label]="'profile.hero.statsAria' | translate">
+                        <span><strong>{{ totalPosts }}</strong> {{ 'profile.hero.posts' | translate }}</span>
+                        <span><strong>{{ totalFollowers }}</strong> {{ 'profile.hero.followers' | translate }}</span>
+                        <span><strong>{{ totalFollowing }}</strong> {{ 'profile.hero.following' | translate }}</span>
                     </div>
                 </div>
 
@@ -52,11 +53,12 @@
                         <div class="hero-actions-own">
                             <app-create-content-menu [open]="createMenuOpen" (toggle)="toggleCreateMenu($event)" (createPost)="openComposer()" (createReel)="openReelComposer()" (createStory)="openStoryComposer()" (createBlog)="openBlogStudio()"></app-create-content-menu>
 
-                            <button type="button" class="hero-icon-link" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? 'Profile link copied' : 'Copy profile link'" [attr.title]="profileLinkCopied ? 'Copied' : 'Copy profile link'">
+                            <button type="button" class="hero-icon-link" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? ('profile.actions.profileLinkCopied' | translate) : ('profile.actions.copyProfileLink' | translate)"
+                                [attr.title]="profileLinkCopied ? ('profile.actions.copied' | translate) : ('profile.actions.copyProfileLink' | translate)">
                                 <i class="fa-duotone" [class.fa-light]="!profileLinkCopied" [class.fa-solid]="profileLinkCopied" [class.fa-share-nodes]="!profileLinkCopied" [class.fa-check]="profileLinkCopied" aria-hidden="true"></i>
                             </button>
 
-                            <a class="hero-icon-link" routerLink="/settings" aria-label="Settings" (click)="closeCreateMenu()">
+                            <a class="hero-icon-link" routerLink="/settings" [attr.aria-label]="'app.shell.nav.settings' | translate" (click)="closeCreateMenu()">
                                 <i class="fa-duotone fa-light fa-gear" aria-hidden="true"></i>
                             </a>
                         </div>
@@ -64,7 +66,7 @@
                     <ng-template #followActions>
                         <div class="hero-actions-follow">
                             <ng-template #guestFollowActions>
-                                <a class="ghost" routerLink="/auth">Sign in to follow</a>
+                                <a class="ghost" routerLink="/auth">{{ 'profile.actions.signInToFollow' | translate }}</a>
                             </ng-template>
 
                             <ng-container *ngIf="session.isAuthenticated(); else guestFollowActions">
@@ -79,64 +81,68 @@
                                     </ng-template>
                                 </button>
 
-                                <button type="button" class="hero-action-icon" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? 'Profile link copied' : 'Copy profile link'" [attr.title]="profileLinkCopied ? 'Copied' : 'Copy profile link'">
+                                <button type="button" class="hero-action-icon" (click)="copyProfileLinkAsync()" [attr.aria-label]="profileLinkCopied ? ('profile.actions.profileLinkCopied' | translate) : ('profile.actions.copyProfileLink' | translate)"
+                                    [attr.title]="profileLinkCopied ? ('profile.actions.copied' | translate) : ('profile.actions.copyProfileLink' | translate)">
                                     <i class="fa-duotone" [class.fa-light]="!profileLinkCopied" [class.fa-solid]="profileLinkCopied" [class.fa-share-nodes]="!profileLinkCopied" [class.fa-check]="profileLinkCopied" aria-hidden="true"></i>
                                 </button>
 
                                 <div class="profile-safety-menu" [class.open]="profileSafetyMenuOpen">
-                                    <button type="button" class="profile-safety-trigger hero-action-icon" (click)="toggleProfileSafetyMenu($event)" [disabled]="blockingProfile || mutingProfile || reportingProfile" aria-label="Open profile safety options" title="More options">
+                                    <button type="button" class="profile-safety-trigger hero-action-icon" (click)="toggleProfileSafetyMenu($event)" [disabled]="blockingProfile || mutingProfile || reportingProfile" [attr.aria-label]="'profile.safety.openMenu' | translate"
+                                        [attr.title]="'profile.safety.moreOptions' | translate">
                                         <span aria-hidden="true">•••</span>
                                     </button>
 
                                     <div class="profile-safety-dropdown" *ngIf="profileSafetyMenuOpen">
-                                        <button type="button" (click)="closeProfileSafetyMenu(); openNicknameEditor()" [disabled]="!canNicknameProfile || savingNickname || isBlockedView">Nickname</button>
-                                        <button type="button" (click)="onSafetyActionSelected('mute')" [disabled]="mutingProfile || blockingProfile || reportingProfile">{{ mutingProfile ? 'Working...' : (isMuted ? 'Unmute' : 'Mute') }}</button>
-                                        <button type="button" (click)="onSafetyActionSelected('block')" [disabled]="blockingProfile || mutingProfile || reportingProfile">{{ blockingProfile ? 'Working...' : (isBlocked ? 'Unblock' : 'Block') }}</button>
-                                        <button type="button" (click)="onSafetyActionSelected('report')" [disabled]="reportingProfile || blockingProfile || mutingProfile">{{ reportingProfile ? 'Reporting...' : 'Report' }}</button>
+                                        <button type="button" (click)="closeProfileSafetyMenu(); openNicknameEditor()" [disabled]="!canNicknameProfile || savingNickname || isBlockedView">{{ 'profile.safety.nickname' | translate }}</button>
+                                        <button type="button" (click)="onSafetyActionSelected('mute')" [disabled]="mutingProfile || blockingProfile || reportingProfile">{{ mutingProfile ? ('profile.actions.working' | translate) : (isMuted ? ('profile.safety.unmute' | translate) :
+                                            ('profile.safety.mute' | translate)) }}</button>
+                                        <button type="button" (click)="onSafetyActionSelected('block')" [disabled]="blockingProfile || mutingProfile || reportingProfile">{{ blockingProfile ? ('profile.actions.working' | translate) : (isBlocked ? ('profile.safety.unblock' | translate) :
+                                            ('profile.safety.block' | translate)) }}</button>
+                                        <button type="button" (click)="onSafetyActionSelected('report')" [disabled]="reportingProfile || blockingProfile || mutingProfile">{{ reportingProfile ? ('profile.safety.reporting' | translate) : ('profile.safety.report' | translate) }}</button>
                                     </div>
                                 </div>
                             </ng-container>
                         </div>
 
-                        <p class="status" *ngIf="followRequiresApproval && !isFollowing">Private profile</p>
+                        <p class="status" *ngIf="followRequiresApproval && !isFollowing">{{ 'profile.hero.privateProfile' | translate }}</p>
                     </ng-template>
                 </div>
             </header>
 
-            <div class="compose-modal" *ngIf="showNicknameEditor && canNicknameProfile" (click)="cancelNicknameEditor()" role="dialog" aria-modal="true" aria-label="Set nickname">
+            <div class="compose-modal" *ngIf="showNicknameEditor && canNicknameProfile" (click)="cancelNicknameEditor()" role="dialog" aria-modal="true" [attr.aria-label]="'profile.nickname.dialogAria' | translate">
                 <section class="compose-modal-card nickname-modal-card" (click)="$event.stopPropagation()">
                     <header class="compose-modal-head">
-                        <h3>Nickname for you</h3>
-                        <button type="button" class="close" (click)="cancelNicknameEditor()" [disabled]="savingNickname" aria-label="Close nickname editor">✕</button>
+                        <h3>{{ 'profile.nickname.title' | translate }}</h3>
+                        <button type="button" class="close" (click)="cancelNicknameEditor()" [disabled]="savingNickname" [attr.aria-label]="'profile.nickname.close' | translate">✕</button>
                     </header>
 
-                    <label class="nickname-modal-label" for="profileNicknameInput">Nickname</label>
-                    <input id="profileNicknameInput" type="text" [(ngModel)]="nicknameDraft" maxlength="60" placeholder="Enter nickname" [disabled]="savingNickname" />
+                    <label class="nickname-modal-label" for="profileNicknameInput">{{ 'profile.nickname.label' | translate }}</label>
+                    <input id="profileNicknameInput" type="text" [(ngModel)]="nicknameDraft" maxlength="60" [placeholder]="'profile.nickname.placeholder' | translate" [disabled]="savingNickname" />
 
                     <div class="media-actions nickname-modal-actions">
-                        <button type="button" class="ghost" *ngIf="hasNicknameForViewedProfile" (click)="clearNickname()" [disabled]="savingNickname">Clear</button>
-                        <button type="button" class="ghost" (click)="cancelNicknameEditor()" [disabled]="savingNickname">Cancel</button>
-                        <button type="button" (click)="saveNicknameAsync()" [disabled]="savingNickname || !nicknameDraft.trim()">{{ savingNickname ? 'Saving...' : 'Save' }}</button>
+                        <button type="button" class="ghost" *ngIf="hasNicknameForViewedProfile" (click)="clearNickname()" [disabled]="savingNickname">{{ 'profile.common.clear' | translate }}</button>
+                        <button type="button" class="ghost" (click)="cancelNicknameEditor()" [disabled]="savingNickname">{{ 'profile.common.cancel' | translate }}</button>
+                        <button type="button" (click)="saveNicknameAsync()" [disabled]="savingNickname || !nicknameDraft.trim()">{{ savingNickname ? ('profile.common.saving' | translate) : ('profile.common.save' | translate) }}</button>
                     </div>
                 </section>
             </div>
 
             <section class="story-collections" *ngIf="showStoryCollectionsSection">
-                <div class="story-collections-row" aria-label="Story collections">
-                    <button type="button" class="story-collection-item story-collection-create" *ngIf="isOwnProfile" (click)="openStoryCollectionCreateModal()" aria-label="Create story collection">
+                <div class="story-collections-row" [attr.aria-label]="'profile.storyCollections.rowAria' | translate">
+                    <button type="button" class="story-collection-item story-collection-create" *ngIf="isOwnProfile" (click)="openStoryCollectionCreateModal()" [attr.aria-label]="'profile.storyCollections.createAria' | translate">
                         <span class="story-collection-thumb story-collection-add" aria-hidden="true">
                             <i class="fa-duotone fa-light fa-plus"></i>
                         </span>
-                        <span class="story-collection-name">New</span>
+                        <span class="story-collection-name">{{ 'profile.storyCollections.new' | translate }}</span>
                     </button>
 
                     <div class="story-collection-item-wrap" *ngFor="let collection of storyCollections">
-                        <button type="button" class="story-collection-item" (click)="openStoryCollection(collection.id)" [attr.aria-label]="'Open story collection ' + collection.name">
+                        <button type="button" class="story-collection-item" (click)="openStoryCollection(collection.id)" [attr.aria-label]="'profile.storyCollections.openAria' | translate:{ name: collection.name }">
                             <span class="story-collection-thumb">
                                 <ng-container *ngIf="getStoryCollectionCoverUrl(collection) as coverUrl; else storyCollectionFallback">
                                     <video *ngIf="isStoryCollectionVideoCover(coverUrl); else storyCollectionImageCover" [src]="coverUrl" muted playsinline autoplay loop preload="metadata" aria-hidden="true"></video>
                                     <ng-template #storyCollectionImageCover>
-                                        <img [src]="coverUrl" alt="Story collection cover" />
+                                        <img [src]="coverUrl" [alt]="'profile.storyCollections.coverAlt' | translate" />
                                     </ng-template>
                                 </ng-container>
                                 <ng-template #storyCollectionFallback>
@@ -146,62 +152,62 @@
                             <span class="story-collection-name">{{ collection.name }}</span>
                         </button>
 
-                        <button type="button" class="story-collection-edit-indicator" *ngIf="isOwnProfile" (click)="openStoryCollectionManageModal(collection.id, $event)" [attr.aria-label]="'Manage story collection ' + collection.name">
+                        <button type="button" class="story-collection-edit-indicator" *ngIf="isOwnProfile" (click)="openStoryCollectionManageModal(collection.id, $event)" [attr.aria-label]="'profile.storyCollections.manageAria' | translate:{ name: collection.name }">
                             <i class="fa-duotone fa-light fa-pen"></i>
                         </button>
                     </div>
                 </div>
             </section>
 
-            <div class="compose-modal" *ngIf="showStoryCollectionCreateModal" (click)="onStoryCollectionCreateBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create story collection">
+            <div class="compose-modal" *ngIf="showStoryCollectionCreateModal" (click)="onStoryCollectionCreateBackdropClick($event)" role="dialog" aria-modal="true" [attr.aria-label]="'profile.storyCollections.createDialogAria' | translate">
                 <section class="compose-modal-card story-collection-modal-card">
                     <header class="compose-modal-head">
-                        <h3>New Story Collection</h3>
-                        <button type="button" class="close" (click)="closeStoryCollectionCreateModal()" [disabled]="creatingStoryCollection" aria-label="Close story collection modal">✕</button>
+                        <h3>{{ 'profile.storyCollections.newCollectionTitle' | translate }}</h3>
+                        <button type="button" class="close" (click)="closeStoryCollectionCreateModal()" [disabled]="creatingStoryCollection" [attr.aria-label]="'profile.storyCollections.closeCreateDialog' | translate">✕</button>
                     </header>
 
                     <div class="story-collection-modal-body">
-                        <label for="storyCollectionNameInput">Collection name</label>
-                        <input id="storyCollectionNameInput" type="text" [(ngModel)]="newStoryCollectionName" maxlength="80" placeholder="e.g. Summer 2024" aria-label="Story collection name" />
+                        <label for="storyCollectionNameInput">{{ 'profile.storyCollections.collectionName' | translate }}</label>
+                        <input id="storyCollectionNameInput" type="text" [(ngModel)]="newStoryCollectionName" maxlength="80" [placeholder]="'profile.storyCollections.collectionPlaceholder' | translate" [attr.aria-label]="'profile.storyCollections.collectionNameAria' | translate" />
 
                         <div class="story-archive-list" *ngIf="storyArchive.length; else noStoryArchiveInCreateModal">
                             <button type="button" class="story-archive-item" *ngFor="let story of storyArchive" (click)="toggleStoryForNewCollection(story.id)" [class.is-selected]="isStorySelectedForNewCollection(story.id)" [disabled]="creatingStoryCollection">
                                 <span class="story-archive-thumb">
-                                    <img [src]="story.mediaUrl" alt="Story media" />
+                                    <img [src]="story.mediaUrl" [alt]="'profile.storyCollections.storyMediaAlt' | translate" />
                                 </span>
                                 <span class="story-archive-copy">
-                                    <strong>{{ story.caption || 'Story' }}</strong>
+                                    <strong>{{ story.caption || ('profile.storyCollections.storyFallback' | translate) }}</strong>
                                     <small>{{ story.createdAtUtc | date:'mediumDate' }}</small>
                                 </span>
-                                <span class="story-archive-action">{{ isStorySelectedForNewCollection(story.id) ? 'Selected' : 'Select' }}</span>
+                                <span class="story-archive-action">{{ isStorySelectedForNewCollection(story.id) ? ('profile.storyCollections.selected' | translate) : ('profile.storyCollections.select' | translate) }}</span>
                             </button>
                         </div>
 
                         <ng-template #noStoryArchiveInCreateModal>
-                            <p class="story-archive-empty">No stories in your archive yet.</p>
+                            <p class="story-archive-empty">{{ 'profile.storyCollections.noStoriesInArchive' | translate }}</p>
                         </ng-template>
                     </div>
 
                     <div class="media-actions">
-                        <button type="button" class="ghost" (click)="closeStoryCollectionCreateModal()" [disabled]="creatingStoryCollection">Cancel</button>
-                        <button type="button" (click)="createStoryCollection()" [disabled]="!canCreateStoryCollection">{{ creatingStoryCollection ? 'Creating...' : 'Create' }}</button>
+                        <button type="button" class="ghost" (click)="closeStoryCollectionCreateModal()" [disabled]="creatingStoryCollection">{{ 'profile.common.cancel' | translate }}</button>
+                        <button type="button" (click)="createStoryCollection()" [disabled]="!canCreateStoryCollection">{{ creatingStoryCollection ? ('profile.storyCollections.creating' | translate) : ('profile.storyCollections.create' | translate) }}</button>
                     </div>
                 </section>
             </div>
 
-            <div class="compose-modal" *ngIf="showStoryCollectionAddModal" (click)="onStoryCollectionAddBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Manage story collection">
+            <div class="compose-modal" *ngIf="showStoryCollectionAddModal" (click)="onStoryCollectionAddBackdropClick($event)" role="dialog" aria-modal="true" [attr.aria-label]="'profile.storyCollections.manageDialogAria' | translate">
                 <section class="compose-modal-card story-collection-modal-card">
                     <header class="compose-modal-head">
-                        <h3>{{ selectedStoryCollection ? ('Manage ' + selectedStoryCollection.name) : 'Manage Story Collection' }}</h3>
-                        <button type="button" class="close" (click)="closeStoryCollectionAddModal()" [disabled]="addingStoryToCollection" aria-label="Close add stories modal">✕</button>
+                        <h3>{{ selectedStoryCollection ? ('profile.storyCollections.manageNamedTitle' | translate:{ name: selectedStoryCollection.name }) : ('profile.storyCollections.manageTitle' | translate) }}</h3>
+                        <button type="button" class="close" (click)="closeStoryCollectionAddModal()" [disabled]="addingStoryToCollection" [attr.aria-label]="'profile.storyCollections.closeManageDialog' | translate">✕</button>
                     </header>
 
                     <div class="story-collection-modal-body">
                         @if (storyCollections.length) {
                         <div class="story-collection-select-row">
                             <label>
-                                <span>Select collection</span>
-                                <select [(ngModel)]="selectedStoryCollectionId" aria-label="Select story collection">
+                                <span>{{ 'profile.storyCollections.selectCollection' | translate }}</span>
+                                <select [(ngModel)]="selectedStoryCollectionId" [attr.aria-label]="'profile.storyCollections.selectCollectionAria' | translate">
                                     <option *ngFor="let collection of storyCollections" [value]="collection.id">{{ collection.name }}</option>
                                 </select>
                             </label>
@@ -210,34 +216,34 @@
                         <div class="story-archive-list" *ngIf="storyArchive.length; else noStoryArchiveInAddModal">
                             <button type="button" class="story-archive-item" *ngFor="let story of storyArchive" (click)="toggleStoryInSelectedCollection(story.id)" [disabled]="!canAddStoriesToCollection">
                                 <span class="story-archive-thumb">
-                                    <img [src]="story.mediaUrl" alt="Story media" />
+                                    <img [src]="story.mediaUrl" [alt]="'profile.storyCollections.storyMediaAlt' | translate" />
                                 </span>
                                 <span class="story-archive-copy">
-                                    <strong>{{ story.caption || 'Story' }}</strong>
+                                    <strong>{{ story.caption || ('profile.storyCollections.storyFallback' | translate) }}</strong>
                                     <small>{{ story.createdAtUtc | date:'mediumDate' }}</small>
                                 </span>
-                                <span class="story-archive-action">{{ isStoryInSelectedCollection(story.id) ? 'Remove' : 'Add' }}</span>
+                                <span class="story-archive-action">{{ isStoryInSelectedCollection(story.id) ? ('profile.storyCollections.remove' | translate) : ('profile.storyCollections.add' | translate) }}</span>
                             </button>
                         </div>
 
                         <ng-template #noStoryArchiveInAddModal>
-                            <p class="story-archive-empty">No stories in your archive yet.</p>
+                            <p class="story-archive-empty">{{ 'profile.storyCollections.noStoriesInArchive' | translate }}</p>
                         </ng-template>
                         } @else {
-                        <p class="story-archive-empty">Create your first collection first.</p>
+                        <p class="story-archive-empty">{{ 'profile.storyCollections.createFirstCollection' | translate }}</p>
                         }
                     </div>
 
                     <div class="media-actions">
-                        <button type="button" class="ghost" *ngIf="selectedStoryCollection" (click)="requestDeleteSelectedStoryCollection()" [disabled]="addingStoryToCollection || deletingStoryCollection">Delete collection</button>
-                        <button type="button" class="ghost" (click)="closeStoryCollectionAddModal()" [disabled]="addingStoryToCollection">Close</button>
+                        <button type="button" class="ghost" *ngIf="selectedStoryCollection" (click)="requestDeleteSelectedStoryCollection()" [disabled]="addingStoryToCollection || deletingStoryCollection">{{ 'profile.storyCollections.deleteCollection' | translate }}</button>
+                        <button type="button" class="ghost" (click)="closeStoryCollectionAddModal()" [disabled]="addingStoryToCollection">{{ 'profile.storyCollections.close' | translate }}</button>
                     </div>
                 </section>
             </div>
 
-            <p class="status" *ngIf="isPrivateLockedView"><i class="fa-duotone fa-light fa-lock" aria-hidden="true"></i>This profile is private. Follow and wait for approval to see posts.</p>
+            <p class="status" *ngIf="isPrivateLockedView"><i class="fa-duotone fa-light fa-lock" aria-hidden="true"></i>{{ 'profile.privateLocked' | translate }}</p>
 
-            <app-segmented-tabs *ngIf="!isBlockedView" class="profile-tabs" [tabs]="contentTabs" [activeTab]="activeTab" ariaLabel="Profile content tabs" [fullWidthOnMobile]="true" (activeTabChange)="onActiveTabChanged($event)"></app-segmented-tabs>
+            <app-segmented-tabs *ngIf="!isBlockedView" class="profile-tabs" [tabs]="contentTabs" [activeTab]="activeTab" [ariaLabel]="'profile.tabs.aria' | translate" [fullWidthOnMobile]="true" (activeTabChange)="onActiveTabChanged($event)"></app-segmented-tabs>
         </ng-container>
 
         <ng-template #profileOverviewSkeleton>
@@ -261,74 +267,74 @@
             </section>
         </ng-template>
 
-        <div class="compose-modal" *ngIf="showComposer || composerClosing" [class.closing]="composerClosing" (click)="onPostComposerBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create post">
-            <section class="compose-modal-card" aria-label="Create post">
+        <div class="compose-modal" *ngIf="showComposer || composerClosing" [class.closing]="composerClosing" (click)="onPostComposerBackdropClick($event)" role="dialog" aria-modal="true" [attr.aria-label]="'profile.compose.postDialogAria' | translate">
+            <section class="compose-modal-card" [attr.aria-label]="'profile.compose.postDialogAria' | translate">
                 <header class="compose-modal-head">
-                    <h3>New Post</h3>
-                    <button type="button" class="close" (click)="onComposerCanceled()" aria-label="Close post composer">✕</button>
+                    <h3>{{ 'profile.compose.newPost' | translate }}</h3>
+                    <button type="button" class="close" (click)="onComposerCanceled()" [attr.aria-label]="'profile.compose.closePostComposer' | translate">✕</button>
                 </header>
 
                 <app-post-composer [showCancel]="false" (posted)="onComposerPosted()" (canceled)="onComposerCanceled()"></app-post-composer>
             </section>
         </div>
 
-        <div class="compose-modal" *ngIf="showStoryComposer || storyComposerClosing" [class.closing]="storyComposerClosing" (click)="onStoryComposerBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create story">
-            <section class="media-composer compose-modal-card" aria-label="Create story">
+        <div class="compose-modal" *ngIf="showStoryComposer || storyComposerClosing" [class.closing]="storyComposerClosing" (click)="onStoryComposerBackdropClick($event)" role="dialog" aria-modal="true" [attr.aria-label]="'profile.compose.storyDialogAria' | translate">
+            <section class="media-composer compose-modal-card" [attr.aria-label]="'profile.compose.storyDialogAria' | translate">
                 <header class="compose-modal-head">
-                    <h3>New Story</h3>
-                    <button type="button" class="close" (click)="cancelStoryComposer()" [disabled]="postingStory" aria-label="Close story composer">✕</button>
+                    <h3>{{ 'profile.compose.newStory' | translate }}</h3>
+                    <button type="button" class="close" (click)="cancelStoryComposer()" [disabled]="postingStory" [attr.aria-label]="'profile.compose.closeStoryComposer' | translate">✕</button>
                 </header>
 
-                <div class="composer-steps" aria-label="Story creation steps">
-                    <span [class.active]="storyComposerStep === 1">1. Media</span>
-                    <span [class.active]="storyComposerStep === 2">2. Crop, Trim & Publish</span>
+                <div class="composer-steps" [attr.aria-label]="'profile.compose.storyCreationStepsAria' | translate">
+                    <span [class.active]="storyComposerStep === 1">{{ 'profile.compose.storyStepMedia' | translate }}</span>
+                    <span [class.active]="storyComposerStep === 2">{{ 'profile.compose.storyStepCropTrimPublish' | translate }}</span>
                 </div>
 
                 <ng-container *ngIf="storyComposerStep === 1">
                     <input #storyMediaInput type="file" class="visually-hidden" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onStoryMediaSelected($event)" [disabled]="postingStory" />
-                    <section class="upload-picker" aria-label="Story media upload">
+                    <section class="upload-picker" [attr.aria-label]="'profile.compose.storyMediaUploadAria' | translate">
                         <span class="upload-icon" aria-hidden="true">📸</span>
-                        <p class="upload-title">Start by selecting your story media</p>
-                        <p class="upload-subtitle">Images, MP4, WebM, MOV and similar formats are supported.</p>
-                        <button type="button" class="upload-button" (click)="storyMediaInput.click()" [disabled]="postingStory">Select Story Media</button>
+                        <p class="upload-title">{{ 'profile.compose.selectStoryMediaTitle' | translate }}</p>
+                        <p class="upload-subtitle">{{ 'profile.compose.selectStoryMediaSubtitle' | translate }}</p>
+                        <button type="button" class="upload-button" (click)="storyMediaInput.click()" [disabled]="postingStory">{{ 'profile.compose.selectStoryMedia' | translate }}</button>
                     </section>
 
-                    <p class="media-file" *ngIf="storyMediaFile">Selected: {{ storyMediaFile.name }}</p>
-                    <p class="media-file">Stories expire automatically after 24 hours.</p>
+                    <p class="media-file" *ngIf="storyMediaFile">{{ 'profile.compose.selectedFile' | translate:{ file: storyMediaFile.name } }}</p>
+                    <p class="media-file">{{ 'profile.compose.storyExpires' | translate }}</p>
 
                     <label class="sensitive-toggle">
                         <input type="checkbox" [checked]="markStorySensitive" (change)="markStorySensitive = $any($event.target).checked" [disabled]="postingStory" />
-                        <span>Mark this story as sensitive media</span>
+                        <span>{{ 'profile.compose.markStorySensitive' | translate }}</span>
                     </label>
                 </ng-container>
 
                 <ng-container *ngIf="storyComposerStep === 2">
-                    <p class="media-file" *ngIf="storyMediaFile as file">Editing: {{ file.name }}</p>
+                    <p class="media-file" *ngIf="storyMediaFile as file">{{ 'profile.compose.editingFile' | translate:{ file: file.name } }}</p>
 
                     <div class="story-preview-panel" *ngIf="storyMediaPreviewUrl && storyMediaIsVideo">
                         <div #storyFrameViewport class="story-media-frame" [class.dragging]="isStoryFrameDragging">
                             <video #storyPreviewVideo class="story-media-preview" [src]="storyMediaPreviewUrl" muted playsinline preload="metadata" (loadedmetadata)="onStoryPreviewLoadedMetadata()" (timeupdate)="onStoryPreviewTimeUpdate()"></video>
-                            <div class="story-crop-frame" [class.dragging]="isStoryFrameDragging" [ngStyle]="storyCropFrameStyle" (pointerdown)="onStoryFramePointerDown($event, storyFrameViewport)" role="button" aria-label="Drag to set story framing"></div>
+                            <div class="story-crop-frame" [class.dragging]="isStoryFrameDragging" [ngStyle]="storyCropFrameStyle" (pointerdown)="onStoryFramePointerDown($event, storyFrameViewport)" role="button" [attr.aria-label]="'profile.compose.dragStoryFrameAria' | translate"></div>
                         </div>
 
                         <div class="story-frame-controls" *ngIf="storySourceMediaWidth > 0 && storySourceMediaHeight > 0">
-                            <span class="story-frame-controls-hint">Drag the 9:16 frame to set your crop.</span>
-                            <button type="button" class="ghost" (click)="resetStoryFramePosition()" [disabled]="postingStory">Reset framing</button>
+                            <span class="story-frame-controls-hint">{{ 'profile.compose.dragFrameHint' | translate }}</span>
+                            <button type="button" class="ghost" (click)="resetStoryFramePosition()" [disabled]="postingStory">{{ 'profile.compose.resetFraming' | translate }}</button>
                         </div>
 
                         <div class="story-trim-panel" *ngIf="storyPreviewReady && storyMediaDurationSeconds > 1">
-                            <p class="media-file">Original length: {{ storyMediaDurationSeconds }}s · Trimmed: {{ storyTrimmedDurationLabel }}</p>
+                            <p class="media-file">{{ 'profile.compose.trimSummary' | translate:{ original: storyMediaDurationSeconds, trimmed: storyTrimmedDurationLabel } }}</p>
                             <div class="story-trim-track" #storyTrimTrack>
                                 <div class="story-trim-thumbs" *ngIf="storyTrimPreviewOptions.length">
-                                    <img *ngFor="let option of storyTrimPreviewOptions" [src]="option.previewUrl" alt="Story trim thumbnail" />
+                                    <img *ngFor="let option of storyTrimPreviewOptions" [src]="option.previewUrl" [alt]="'profile.compose.trimThumbnailAlt' | translate" />
                                 </div>
 
                                 <div class="story-trim-mask left" [style.width.%]="storyTrimStartPercent"></div>
                                 <div class="story-trim-mask right" [style.left.%]="storyTrimEndPercent"></div>
 
                                 <div class="story-trim-selection" [style.left.%]="storyTrimStartPercent" [style.width.%]="storyTrimEndPercent - storyTrimStartPercent" (pointerdown)="onStoryTrimRangePointerDown($event, storyTrimTrack)">
-                                    <button type="button" class="story-trim-handle start" (pointerdown)="onStoryTrimHandlePointerDown($event, 'start', storyTrimTrack)" aria-label="Trim story start"></button>
-                                    <button type="button" class="story-trim-handle end" (pointerdown)="onStoryTrimHandlePointerDown($event, 'end', storyTrimTrack)" aria-label="Trim story end"></button>
+                                    <button type="button" class="story-trim-handle start" (pointerdown)="onStoryTrimHandlePointerDown($event, 'start', storyTrimTrack)" [attr.aria-label]="'profile.compose.trimStoryStartAria' | translate"></button>
+                                    <button type="button" class="story-trim-handle end" (pointerdown)="onStoryTrimHandlePointerDown($event, 'end', storyTrimTrack)" [attr.aria-label]="'profile.compose.trimStoryEndAria' | translate"></button>
                                 </div>
                             </div>
 
@@ -337,37 +343,38 @@
                                 <span>{{ storyMediaDurationSeconds >= 2 ? (storyMediaDurationSeconds / 2 | number:'1.0-0') : 1 }}s</span>
                                 <span>{{ storyMediaDurationSeconds }}s</span>
                             </div>
-                            <p class="media-file" *ngIf="generatingStoryTrimPreviews">Generating trim preview images...</p>
-                            <p class="media-file">Range: {{ storyTrimStartSeconds }}s to {{ storyTrimEndSeconds }}s</p>
+                            <p class="media-file" *ngIf="generatingStoryTrimPreviews">{{ 'profile.compose.generatingTrimPreviews' | translate }}</p>
+                            <p class="media-file">{{ 'profile.compose.trimRange' | translate:{ start: storyTrimStartSeconds, end: storyTrimEndSeconds } }}</p>
                         </div>
                     </div>
 
                     <div class="story-preview-panel" *ngIf="storyMediaPreviewUrl && !storyMediaIsVideo">
                         <div #storyFrameViewport class="story-media-frame" [class.dragging]="isStoryFrameDragging">
-                            <img class="story-media-preview" [src]="storyMediaPreviewUrl" alt="Story media preview" (load)="onStoryImageLoaded($event)" />
-                            <div class="story-crop-frame" [class.dragging]="isStoryFrameDragging" [ngStyle]="storyCropFrameStyle" (pointerdown)="onStoryFramePointerDown($event, storyFrameViewport)" role="button" aria-label="Drag to set story framing"></div>
+                            <img class="story-media-preview" [src]="storyMediaPreviewUrl" [alt]="'profile.compose.storyMediaPreviewAlt' | translate" (load)="onStoryImageLoaded($event)" />
+                            <div class="story-crop-frame" [class.dragging]="isStoryFrameDragging" [ngStyle]="storyCropFrameStyle" (pointerdown)="onStoryFramePointerDown($event, storyFrameViewport)" role="button" [attr.aria-label]="'profile.compose.dragStoryFrameAria' | translate"></div>
                         </div>
 
                         <div class="story-frame-controls" *ngIf="storySourceMediaWidth > 0 && storySourceMediaHeight > 0">
-                            <span class="story-frame-controls-hint">Drag the 9:16 frame to set your crop.</span>
-                            <button type="button" class="ghost" (click)="resetStoryFramePosition()" [disabled]="postingStory">Reset framing</button>
+                            <span class="story-frame-controls-hint">{{ 'profile.compose.dragFrameHint' | translate }}</span>
+                            <button type="button" class="ghost" (click)="resetStoryFramePosition()" [disabled]="postingStory">{{ 'profile.compose.resetFraming' | translate }}</button>
                         </div>
                     </div>
 
-                    <p class="media-file">Stories expire automatically after 24 hours.</p>
+                    <p class="media-file">{{ 'profile.compose.storyExpires' | translate }}</p>
 
                     <label>
-                        <span class="media-file">Schedule publish (optional)</span>
+                        <span class="media-file">{{ 'profile.compose.schedulePublish' | translate }}</span>
                         <input type="datetime-local" [value]="storyScheduledPublishLocal" (input)="onStoryScheduledPublishChanged($any($event.target).value)" [disabled]="postingStory" />
                     </label>
                 </ng-container>
 
                 <p class="error" *ngIf="storyComposerError">{{ storyComposerError }}</p>
                 <div class="media-actions">
-                    <button type="button" class="ghost" (click)="cancelStoryComposer()" [disabled]="postingStory">Cancel</button>
-                    <button type="button" class="ghost" *ngIf="storyComposerStep === 2" (click)="goToStoryComposerStep(1)" [disabled]="postingStory">Back</button>
-                    <button type="button" class="ghost" *ngIf="storyComposerStep === 2" (click)="publishStory(true)" [disabled]="!storyMediaFile || (storyMediaIsVideo && !storyPreviewReady) || postingStory">Save Draft</button>
-                    <button type="button" *ngIf="storyComposerStep === 2" (click)="publishStory()" [disabled]="!storyMediaFile || (storyMediaIsVideo && !storyPreviewReady) || postingStory">{{ postingStory ? 'Publishing...' : 'Publish Story' }}</button>
+                    <button type="button" class="ghost" (click)="cancelStoryComposer()" [disabled]="postingStory">{{ 'profile.common.cancel' | translate }}</button>
+                    <button type="button" class="ghost" *ngIf="storyComposerStep === 2" (click)="goToStoryComposerStep(1)" [disabled]="postingStory">{{ 'profile.common.back' | translate }}</button>
+                    <button type="button" class="ghost" *ngIf="storyComposerStep === 2" (click)="publishStory(true)" [disabled]="!storyMediaFile || (storyMediaIsVideo && !storyPreviewReady) || postingStory">{{ 'profile.compose.saveDraft' | translate }}</button>
+                    <button type="button" *ngIf="storyComposerStep === 2" (click)="publishStory()" [disabled]="!storyMediaFile || (storyMediaIsVideo && !storyPreviewReady) || postingStory">{{ postingStory ? ('profile.compose.publishing' | translate) : ('profile.compose.publishStory' | translate)
+                        }}</button>
                 </div>
             </section>
         </div>
@@ -385,8 +392,8 @@
         @if (activeTab === 'analytics' && !loading && isOwnProfile) {
         <section class="creator-analytics" aria-label="Creator analytics">
             <header class="creator-analytics-header">
-                <h3>Creator Analytics</h3>
-                <span>Last {{ creatorAnalyticsWindowDays }} days</span>
+                <h3>{{ 'profile.analytics.title' | translate }}</h3>
+                <span>{{ 'profile.analytics.lastDays' | translate:{ days: creatorAnalyticsWindowDays } }}</span>
             </header>
 
             @if (loadingCreatorAnalytics) {
@@ -396,35 +403,35 @@
             } @else {
             <div class="creator-analytics-grid">
                 <article class="creator-analytics-metric">
-                    <span class="label">Views</span>
+                    <span class="label">{{ 'profile.analytics.views' | translate }}</span>
                     <strong>{{ creatorAnalytics?.totalViews ?? 0 | number }}</strong>
                 </article>
                 <article class="creator-analytics-metric">
-                    <span class="label">Watch Time</span>
+                    <span class="label">{{ 'profile.analytics.watchTime' | translate }}</span>
                     <strong>{{ formatWatchTime(creatorAnalytics?.totalWatchSeconds ?? 0) }}</strong>
                 </article>
                 <article class="creator-analytics-metric">
-                    <span class="label">Saves</span>
+                    <span class="label">{{ 'profile.analytics.saves' | translate }}</span>
                     <strong>{{ creatorAnalytics?.totalSaves ?? 0 | number }}</strong>
                 </article>
                 <article class="creator-analytics-metric">
-                    <span class="label">Follower Growth</span>
+                    <span class="label">{{ 'profile.analytics.followerGrowth' | translate }}</span>
                     <strong [class.negative]="(creatorAnalytics?.followerGrowth ?? 0) < 0">{{ formatFollowerGrowth(creatorAnalytics?.followerGrowth ?? 0) }}</strong>
                 </article>
             </div>
 
             @if (creatorAnalyticsTopReels.length) {
             <section class="creator-top-reels" aria-label="Top performing reels">
-                <h4>Top Reels</h4>
+                <h4>{{ 'profile.analytics.topReels' | translate }}</h4>
                 @for (item of creatorAnalyticsTopReels; track item.reelId) {
                 <article class="creator-top-reel-row">
                     <div class="copy">
-                        <strong>{{ item.caption?.trim() || 'Untitled reel' }}</strong>
+                        <strong>{{ item.caption?.trim() || ('profile.analytics.untitledReel' | translate) }}</strong>
                         <span>{{ item.createdAtUtc | date:'mediumDate' }}</span>
                     </div>
                     <div class="stats">
-                        <span>{{ item.views | number }} views</span>
-                        <span>{{ item.saves | number }} saves</span>
+                        <span>{{ item.views | number }} {{ 'profile.analytics.views' | translate }}</span>
+                        <span>{{ item.saves | number }} {{ 'profile.analytics.saves' | translate }}</span>
                     </div>
                 </article>
                 }
@@ -447,7 +454,7 @@
                 <div post-header class="author">
                     <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)">
                         <img class="avatar" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
-                            onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Author image" />
+                            onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'profile.hero.authorImageAlt' | translate" />
                     </a>
                     <ng-template #authorInitial>
                         <div class="avatar" [class.story-active]="viewedProfileHasActiveStory" [class.story-seen]="viewedProfileHasActiveStory && !viewedProfileHasUnseenStory">{{ post.authorHandle[0] }}</div>
@@ -484,8 +491,8 @@
             </div>
             <app-skeleton *ngFor="let _ of [1, 2]" width="100%" height="170px" radius="12px"></app-skeleton>
         </section>
-        <p class="error" *ngIf="!loading">Could not load profile data. Try refreshing.</p>
-        <button class="retry" *ngIf="!loading" (click)="load()">Retry</button>
+        <p class="error" *ngIf="!loading">{{ 'profile.errors.loadData' | translate }}</p>
+        <button class="retry" *ngIf="!loading" (click)="load()">{{ 'profile.common.retry' | translate }}</button>
     </ng-template>
 
     <p class="error" *ngIf="error">{{ error }}</p>
@@ -498,14 +505,14 @@
             <span class="dot dot-b"></span>
             <span class="dot dot-c"></span>
         </div>
-        <h4 *ngIf="isBlockedView">Profile blocked</h4>
+        <h4 *ngIf="isBlockedView">{{ 'profile.empty.blockedTitle' | translate }}</h4>
         <p *ngIf="isBlockedView">{{ blockedViewStatusMessage }}</p>
-        <h4 *ngIf="isPrivateLockedView">Private profile</h4>
-        <p *ngIf="isPrivateLockedView">No posts visible until this private profile approves your follow request.</p>
-        <h4 *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">No posts yet</h4>
-        <p *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">Start sharing from Compose.</p>
-        <h4 *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">No posts yet</h4>
-        <p *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">This profile has not posted anything yet.</p>
+        <h4 *ngIf="isPrivateLockedView">{{ 'profile.hero.privateProfile' | translate }}</h4>
+        <p *ngIf="isPrivateLockedView">{{ 'profile.empty.posts.private' | translate }}</p>
+        <h4 *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">{{ 'profile.empty.posts.title' | translate }}</h4>
+        <p *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">{{ 'profile.empty.posts.own' | translate }}</p>
+        <h4 *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">{{ 'profile.empty.posts.title' | translate }}</h4>
+        <p *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">{{ 'profile.empty.posts.guest' | translate }}</p>
     </section>
 </ng-template>
 
@@ -516,14 +523,14 @@
             <span class="dot dot-b"></span>
             <span class="dot dot-c"></span>
         </div>
-        <h4 *ngIf="isBlockedView">Profile blocked</h4>
-        <p *ngIf="isBlockedView">Reels are hidden while this profile is blocked.</p>
-        <h4 *ngIf="isPrivateLockedView">Private profile</h4>
-        <p *ngIf="isPrivateLockedView">No reels visible until this private profile approves your follow request.</p>
-        <h4 *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">No reels yet</h4>
-        <p *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">Create one from your profile.</p>
-        <h4 *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">No reels yet</h4>
-        <p *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">This profile has not shared any reels yet.</p>
+        <h4 *ngIf="isBlockedView">{{ 'profile.empty.blockedTitle' | translate }}</h4>
+        <p *ngIf="isBlockedView">{{ 'profile.empty.reels.blocked' | translate }}</p>
+        <h4 *ngIf="isPrivateLockedView">{{ 'profile.hero.privateProfile' | translate }}</h4>
+        <p *ngIf="isPrivateLockedView">{{ 'profile.empty.reels.private' | translate }}</p>
+        <h4 *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">{{ 'profile.empty.reels.title' | translate }}</h4>
+        <p *ngIf="isOwnProfile && !isPrivateLockedView && !isBlockedView">{{ 'profile.empty.reels.own' | translate }}</p>
+        <h4 *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">{{ 'profile.empty.reels.title' | translate }}</h4>
+        <p *ngIf="!isOwnProfile && !isPrivateLockedView && !isBlockedView">{{ 'profile.empty.reels.guest' | translate }}</p>
     </section>
 </ng-template>
 
@@ -534,25 +541,28 @@
     (reportRequested)="openStoryReport($event)">
 </app-feed-story-viewer>
 
-<app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
+<app-confirm-modal [open]="!!pendingDeletePostId" [title]="'profile.confirm.deletePostTitle' | translate" [message]="'profile.confirm.deletePostMessage' | translate" [confirmText]="'profile.confirm.delete' | translate" [cancelText]="'profile.common.cancel' | translate" confirmClass="danger"
+    [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
 </app-confirm-modal>
 
-<app-confirm-modal [open]="!!pendingDeleteReelId" title="Delete reel" message="Delete this reel? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingReelId" (cancel)="cancelDeleteReel()" (confirm)="confirmDeleteReel()">
+<app-confirm-modal [open]="!!pendingDeleteReelId" [title]="'profile.confirm.deleteReelTitle' | translate" [message]="'profile.confirm.deleteReelMessage' | translate" [confirmText]="'profile.confirm.delete' | translate" [cancelText]="'profile.common.cancel' | translate" confirmClass="danger"
+    [busy]="!!deletingReelId" (cancel)="cancelDeleteReel()" (confirm)="confirmDeleteReel()">
 </app-confirm-modal>
 
-<app-confirm-modal [open]="!!pendingDeleteReelComment" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingReelCommentId" (cancel)="cancelDeleteReelComment()"
-    (confirm)="confirmDeleteReelComment()">
+<app-confirm-modal [open]="!!pendingDeleteReelComment" [title]="'profile.confirm.deleteCommentTitle' | translate" [message]="'profile.confirm.deleteCommentMessage' | translate" [confirmText]="'profile.confirm.delete' | translate" [cancelText]="'profile.common.cancel' | translate"
+    confirmClass="danger" [busy]="!!deletingReelCommentId" (cancel)="cancelDeleteReelComment()" (confirm)="confirmDeleteReelComment()">
 </app-confirm-modal>
 
-<app-confirm-modal [open]="!!pendingDeleteStoryId" title="Delete story" message="Delete this story? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingStory" (cancel)="cancelDeleteStory()" (confirm)="confirmDeleteStory()">
+<app-confirm-modal [open]="!!pendingDeleteStoryId" [title]="'profile.confirm.deleteStoryTitle' | translate" [message]="'profile.confirm.deleteStoryMessage' | translate" [confirmText]="'profile.confirm.delete' | translate" [cancelText]="'profile.common.cancel' | translate" confirmClass="danger"
+    [busy]="deletingStory" (cancel)="cancelDeleteStory()" (confirm)="confirmDeleteStory()">
 </app-confirm-modal>
 
-<app-confirm-modal [open]="!!pendingDeleteStoryCollectionId" title="Delete collection" [message]="deleteSelectedStoryCollectionMessage" confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingStoryCollection" (cancel)="cancelDeleteStoryCollection()"
-    (confirm)="confirmDeleteStoryCollection()">
+<app-confirm-modal [open]="!!pendingDeleteStoryCollectionId" [title]="'profile.confirm.deleteCollectionTitle' | translate" [message]="deleteSelectedStoryCollectionMessage" [confirmText]="'profile.confirm.delete' | translate" [cancelText]="'profile.common.cancel' | translate" confirmClass="danger"
+    [busy]="deletingStoryCollection" (cancel)="cancelDeleteStoryCollection()" (confirm)="confirmDeleteStoryCollection()">
 </app-confirm-modal>
 
-<app-confirm-modal [open]="showBlockModal" title="Block profile" [message]="'Block @' + (viewedProfile?.handle ?? 'this profile') + '? This removes follow connections.'" confirmText="Block" cancelText="Cancel" confirmClass="danger" [busy]="blockingProfile" (cancel)="closeBlockModal()"
-    (confirm)="confirmBlockProfile()">
+<app-confirm-modal [open]="showBlockModal" [title]="'profile.confirm.blockTitle' | translate" [message]="'profile.confirm.blockMessage' | translate:{ handle: (viewedProfile?.handle ?? ('profile.confirm.thisProfile' | translate)) }" [confirmText]="'profile.confirm.block' | translate"
+    [cancelText]="'profile.common.cancel' | translate" confirmClass="danger" [busy]="blockingProfile" (cancel)="closeBlockModal()" (confirm)="confirmBlockProfile()">
 </app-confirm-modal>
 
 <app-share-post-modal [open]="!!pendingSharePost && pendingShareTarget === 'feed'" [post]="pendingSharePost" [target]="'feed'" [busy]="!!sharingPostId" [initialText]="shareNote" (cancel)="cancelShareModal()" (confirm)="submitShare($event)">

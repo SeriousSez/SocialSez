@@ -1,0 +1,198 @@
+{
+  "app": {
+    "notice": {
+      "update": "Ny versjon tilgjengelig. Last inn på nytt for å oppdatere.",
+      "updateReady": "Oppdatering klar",
+      "reload": "Last inn på nytt",
+      "reloading": "Laster inn på nytt...",
+      "dismiss": "Lukk",
+      "dismissAria": "Lukk varsel"
+    },
+    "shell": {
+      "skipToContent": "Hopp til innhold",
+      "brandSubtitle": "Fellesskapsplattform",
+      "nav": {
+        "feed": "Feed",
+        "discover": "Utforsk",
+        "blogs": "Blogger",
+        "communities": "Fellesskap",
+        "chat": "Chat",
+        "saved": "Lagret",
+        "drafts": "Utkast",
+        "notifications": "Varsler",
+        "profile": "Profil",
+        "settings": "Innstillinger",
+        "auth": "Logg inn"
+      },
+      "activity": {
+        "title": "Aktivitet",
+        "empty": "Ingenting pågår.",
+        "aria": "Opplastings- og publiseringsaktivitet"
+      },
+      "trending": {
+        "title": "Trender",
+        "loading": "Laster inn hashtagger...",
+        "empty": "Ingen trendende hashtagger ennå."
+      },
+      "settingsQuickNav": {
+        "title": "Innstillinger",
+        "profile": "Profil",
+        "account": "Konto",
+        "privacy": "Personvern",
+        "session": "Økt",
+        "preferences": "Preferanser",
+        "notifications": "Varsler",
+        "safety": "Sikkerhet",
+        "security": "Kontosikkerhet",
+        "data": "Data",
+        "blocked": "Blokkerte brukere",
+        "logout": "Logg ut"
+      }
+    },
+    "search": {
+      "label": "Søk",
+      "buttonAria": "Søk",
+      "scopePrefix": "Omfang",
+      "scopeAuto": "Auto",
+      "scope": {
+        "all": "Alle resultater",
+        "communities": "Fellesskap",
+        "blogs": "Blogger",
+        "users": "Brukere",
+        "posts": "Innlegg",
+        "reels": "Reels",
+        "hashtags": "Hashtags"
+      }
+    }
+  },
+  "auth": {
+    "hero": {
+      "title": "Velkommen til Venli",
+      "loginSubtitle": "Logg inn med e-post og passord.",
+      "registerSubtitle": "Opprett kontoen din for å begynne å poste og følge.",
+      "interestsSubtitle": "Velg interesser for å tilpasse Utforsk fra første dag."
+    },
+    "fields": {
+      "email": "E-post",
+      "password": "Passord",
+      "confirmPassword": "Bekreft passord",
+      "handle": "Brukernavn",
+      "displayName": "Visningsnavn",
+      "dateOfBirth": "Fødselsdato",
+      "country": "Land",
+      "bio": "Bio"
+    },
+    "actions": {
+      "signIn": "Logg inn",
+      "createAccount": "Opprett konto",
+      "continue": "Fortsett",
+      "finish": "Fullfør",
+      "skipForNow": "Hopp over nå"
+    },
+    "switch": {
+      "newHere": "Ny her?",
+      "alreadyHaveAccount": "Har du allerede en konto?"
+    }
+  },
+  "settings": {
+    "page": {
+      "title": "Innstillinger",
+      "subtitle": "Administrer kontoen, profilen og appinnstillingene dine.",
+      "unsavedChanges": "Du har ulagrede endringer.",
+      "discardAll": "Forkast alle ulagrede endringer"
+    },
+    "sections": {
+      "profile": "Profil",
+      "account": "Konto",
+      "privacy": "Personvern",
+      "session": "Økt",
+      "preferences": "Preferanser",
+      "notifications": "Varsler",
+      "safety": "Sikkerhet",
+      "security": "Sikkerhet",
+      "data": "Datakontroller",
+      "blocked": "Blokkerte brukere",
+      "logout": "Logg ut"
+    },
+    "common": {
+      "reload": "Last inn på nytt",
+      "discard": "Forkast",
+      "saving": "Lagrer...",
+      "cancel": "Avbryt",
+      "back": "Tilbake",
+      "add": "Legg til"
+    },
+    "preferences": {
+      "compactFeed": "Kompakt feed-oppsett",
+      "useSystemTheme": "Bruk systemtema",
+      "darkMode": "Mørk modus",
+      "accessibility": "Tilgjengelighet",
+      "reducedMotion": "Redusert bevegelse",
+      "largerText": "Større tekstmodus",
+      "highContrast": "Høykontrastmodus",
+      "language": "Språk",
+      "saveAccessibility": "Lagre tilgjengelighet"
+    },
+    "language": {
+      "system": "Systemstandard",
+      "enUS": "English (US)",
+      "enGB": "English (UK)",
+      "da": "Dansk",
+      "es": "Español",
+      "de": "Deutsch",
+      "fr": "Français",
+      "ptBR": "Português (Brasil)",
+      "nl": "Nederlands",
+      "sv": "Svenska",
+      "nb": "Norsk bokmål",
+      "it": "Italiano",
+      "pl": "Polski",
+      "ar": "العربية",
+      "tr": "Türkçe"
+    },
+    "messages": {
+      "profileSaved": "Profilinnstillinger lagret.",
+      "profileReloaded": "Profilinnstillinger lastet inn på nytt.",
+      "preferencesSaved": "Preferanser lagret."
+    }
+  },
+  "discover": {
+    "page": {
+      "title": "Utforsk"
+    },
+    "scope": {
+      "all": "Alt",
+      "communities": "Fellesskap",
+      "communityPosts": "Fellesskapsinnlegg",
+      "blogs": "Blogger",
+      "reels": "Reels",
+      "posts": "Innlegg",
+      "hashtags": "Hashtags",
+      "users": "Brukere"
+    },
+    "sections": {
+      "forYou": "For deg",
+      "users": "Brukere",
+      "communities": "Fellesskap",
+      "communityPosts": "Fellesskapsinnlegg",
+      "blogs": "Blogger",
+      "reels": "Reels",
+      "hashtags": "Hashtags",
+      "posts": "Innlegg"
+    }
+  },
+  "chatPage": {
+    "title": "Meldinger",
+    "search": {
+      "label": "Søk i chatter",
+      "startNewChat": "Start ny chat"
+    },
+    "sidebar": {
+      "chats": "Chatter"
+    },
+    "noConversation": {
+      "title": "Velg en chat for å begynne å sende meldinger",
+      "startNewChat": "Start ny chat"
+    }
+  }
+}

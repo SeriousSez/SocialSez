@@ -1,50 +1,50 @@
 <section class="page blogs-page">
     <header class="blogs-head">
         <div class="blogs-head-copy">
-            <span class="blogs-kicker">Publishing</span>
-            <h2>Blogs</h2>
+            <span class="blogs-kicker">{{ 'blogs.page.kicker' | translate }}</span>
+            <h2>{{ 'blogs.page.title' | translate }}</h2>
             <p>{{ tabSubtitle }}</p>
         </div>
-        <a class="studio-link" routerLink="/blogs/studio" *ngIf="session.isAuthenticated()">Open Blog Studio</a>
+        <a class="studio-link" routerLink="/blogs/studio" *ngIf="session.isAuthenticated()">{{ 'blogs.actions.openStudio' | translate }}</a>
     </header>
 
     <div class="blogs-toolbar">
-        <div class="tabs" role="tablist" aria-label="Blog lists">
+        <div class="tabs" role="tablist" [attr.aria-label]="'blogs.tabs.aria' | translate">
             <button type="button" *ngFor="let tab of tabs" [class.active]="activeTab === tab.key" [attr.aria-selected]="activeTab === tab.key" (click)="selectTabAsync(tab.key)">{{ tab.label }}</button>
         </div>
 
         <div class="search-row">
             <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
-            <input type="text" [(ngModel)]="searchText" placeholder="Search blogs by title, slug, handle..." (input)="onSearchInput()" />
-            <button type="button" class="clear-btn" (click)="clearSearchAsync()" *ngIf="searchText.trim().length">Clear</button>
+            <input type="text" [(ngModel)]="searchText" [placeholder]="'blogs.search.placeholder' | translate" (input)="onSearchInput()" />
+            <button type="button" class="clear-btn" (click)="clearSearchAsync()" *ngIf="searchText.trim().length">{{ 'blogs.actions.clear' | translate }}</button>
         </div>
 
         <div class="suggestions-row" *ngIf="suggestions.length">
-            <span class="suggestions-label">Try:</span>
+            <span class="suggestions-label">{{ 'blogs.search.try' | translate }}</span>
             <button type="button" class="suggestion-pill" *ngFor="let suggestion of suggestions" (click)="applySuggestionAsync(suggestion)">#{{ suggestion }}</button>
         </div>
 
         <div class="controls-row">
-            <label>Sort</label>
+            <label>{{ 'blogs.sort.label' | translate }}</label>
             <div class="sort-dropdown" (click)="$event.stopPropagation()">
                 <button type="button" class="sort-toggle" [attr.aria-expanded]="sortMenuOpen" aria-haspopup="menu" (click)="toggleSortMenu($event)">
                     <span>{{ currentSortLabel }}</span>
                     <i class="fa-duotone fa-light fa-chevron-down" aria-hidden="true"></i>
                 </button>
 
-                <div class="sort-menu" *ngIf="sortMenuOpen" role="menu" aria-label="Sort blogs">
+                <div class="sort-menu" *ngIf="sortMenuOpen" role="menu" [attr.aria-label]="'blogs.sort.menuAria' | translate">
                     <button type="button" role="menuitemradio" *ngFor="let option of sortOptions" [attr.aria-checked]="sortBy === option.value" [class.active]="sortBy === option.value" (click)="selectSort(option.value, $event)">
                         {{ option.label }}
                     </button>
                 </div>
             </div>
             <span class="controls-spacer" aria-hidden="true"></span>
-            <span class="result-count" *ngIf="!loading && !error">{{ visibleBlogs.length }} of {{ sortedBlogs.length }} blogs</span>
+            <span class="result-count" *ngIf="!loading && !error">{{ 'blogs.resultCount' | translate:{ visible: visibleBlogs.length, total: sortedBlogs.length } }}</span>
         </div>
     </div>
 
     <p class="error" *ngIf="error">{{ error }}</p>
-    <section class="blog-grid" *ngIf="loading" aria-label="Loading blogs">
+    <section class="blog-grid" *ngIf="loading" [attr.aria-label]="'blogs.loading.aria' | translate">
         <article class="blog-card" *ngFor="let _ of [1, 2, 3, 4, 5, 6]">
             <header class="blog-card-head">
                 <app-skeleton width="60%" height="18px"></app-skeleton>
@@ -66,8 +66,8 @@
             <header class="blog-card-head">
                 <a class="blog-title" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">{{ blog.title }}</a>
                 <div class="blog-state-row">
-                    <span class="state-pill" [class.private]="!blog.isPublic">{{ blog.isPublic ? 'Public' : 'Private' }}</span>
-                    <span class="state-pill owner" *ngIf="blog.isOwner">Owner</span>
+                    <span class="state-pill" [class.private]="!blog.isPublic">{{ blog.isPublic ? ('blogs.visibility.public' | translate) : ('blogs.visibility.private' | translate) }}</span>
+                    <span class="state-pill owner" *ngIf="blog.isOwner">{{ 'blogs.visibility.owner' | translate }}</span>
                 </div>
             </header>
 
@@ -76,17 +76,17 @@
             <div class="blog-meta">
                 <a [routerLink]="['/blogs', blog.ownerHandle]">@{{ blog.ownerHandle }}</a>
                 <span>·</span>
-                <time [attr.datetime]="blog.updatedAtUtc">Updated {{ blog.updatedAtUtc | date:'mediumDate' }}</time>
+                <time [attr.datetime]="blog.updatedAtUtc">{{ 'blogs.meta.updated' | translate:{ date: (blog.updatedAtUtc | date:'mediumDate') } }}</time>
             </div>
         </article>
     </div>
 
     <div class="infinite-status" *ngIf="!loading && !error && hasMoreBlogs">
-        <span>Scroll for more blogs...</span>
+        <span>{{ 'blogs.infinite.more' | translate }}</span>
         <div #infiniteSentinel class="infinite-sentinel" aria-hidden="true"></div>
     </div>
 
     <ng-template #emptyState>
-        <p class="muted" *ngIf="!loading && !error">No blogs found for this tab yet.</p>
+        <p class="muted" *ngIf="!loading && !error">{{ 'blogs.empty.noBlogsForTab' | translate }}</p>
     </ng-template>
 </section>

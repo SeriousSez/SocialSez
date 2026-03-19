@@ -1,5 +1,5 @@
 <section class="shared-page">
-    <article class="shared-card community-post-loading" *ngIf="loading" aria-label="Loading community post">
+    <article class="shared-card community-post-loading" *ngIf="loading" [attr.aria-label]="'sharedCommunityPost.loading.aria' | translate">
         <div class="loading-head">
             <div class="skeleton-block skeleton-avatar"></div>
             <div class="loading-head-copy">
@@ -33,26 +33,26 @@
     </article>
 
     <article class="shared-card" *ngIf="notFound && !loading">
-        <h3>Post unavailable</h3>
-        <p>This community post was removed or the link is invalid.</p>
+        <h3>{{ 'sharedCommunityPost.notFound.title' | translate }}</h3>
+        <p>{{ 'sharedCommunityPost.notFound.message' | translate }}</p>
     </article>
 
     <article class="shared-card" *ngIf="error && !loading && !notFound">
-        <h3>Something went wrong</h3>
+        <h3>{{ 'sharedCommunityPost.errors.title' | translate }}</h3>
         <p>{{ error }}</p>
     </article>
 
     <section class="shared-layout" *ngIf="!loading && post as item">
         <header class="meta-row">
             <div class="author-meta">
-                <img class="author-avatar" *ngIf="community?.imageUrl; else communityInitial" [src]="community?.imageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Community image" />
+                <img class="author-avatar" *ngIf="community?.imageUrl; else communityInitial" [src]="community?.imageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'sharedCommunityPost.community.imageAlt' | translate" />
                 <ng-template #communityInitial>
                     <div class="author-avatar">{{ ((community?.name || community?.slug || '?')[0] || '?') | uppercase }}</div>
                 </ng-template>
                 <div>
                     <p class="post-context">
                         <a class="community-link" *ngIf="community?.slug as slug" [routerLink]="['/c', slug]">/{{ slug }}</a>
-                        <span *ngIf="!community?.slug">/community</span>
+                        <span *ngIf="!community?.slug">{{ 'sharedCommunityPost.community.fallbackSlug' | translate }}</span>
                         <span> · {{ item.createdAtUtc | date:'short' }}</span>
                     </p>
                     <p class="post-author">{{ item.authorHandle }}</p>
@@ -82,20 +82,20 @@
 
         <ng-container *ngIf="activePostMediaUrl as mediaUrl">
             <div class="post-media-carousel" *ngIf="postMediaUrls.length > 1">
-                <button type="button" class="post-media-nav" (click)="showPreviousPostImage()" [disabled]="!canMovePostImageBack" aria-label="Previous image" title="Previous image">
+                <button type="button" class="post-media-nav" (click)="showPreviousPostImage()" [disabled]="!canMovePostImageBack" [attr.aria-label]="'sharedCommunityPost.media.previousImage' | translate" [attr.title]="'sharedCommunityPost.media.previousImage' | translate">
                     <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
                 </button>
                 <div class="media-frame">
                     <div class="media-stack">
                         <img *ngIf="postImageAnimating && postOutgoingImageUrl as outgoingUrl" class="media media-layer media-outgoing" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="outgoingUrl" loading="eager" decoding="async"
-                            alt="Shared community post media" (click)="onPostMediaCardClick(outgoingUrl)" />
+                            [attr.alt]="'sharedCommunityPost.media.postAlt' | translate" (click)="onPostMediaCardClick(outgoingUrl)" />
                         <ng-container *ngFor="let currentUrl of [mediaUrl]; trackBy: trackByMediaUrl">
                             <img class="media media-layer media-current" [class.media-incoming]="postImageAnimating" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="currentUrl" loading="eager" decoding="async"
-                                alt="Shared community post media" (click)="onPostMediaCardClick(currentUrl)" />
+                                [attr.alt]="'sharedCommunityPost.media.postAlt' | translate" (click)="onPostMediaCardClick(currentUrl)" />
                         </ng-container>
                     </div>
                 </div>
-                <button type="button" class="post-media-nav" (click)="showNextPostImage()" [disabled]="!canMovePostImageForward" aria-label="Next image" title="Next image">
+                <button type="button" class="post-media-nav" (click)="showNextPostImage()" [disabled]="!canMovePostImageForward" [attr.aria-label]="'sharedCommunityPost.media.nextImage' | translate" [attr.title]="'sharedCommunityPost.media.nextImage' | translate">
                     <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
                 </button>
             </div>
@@ -103,10 +103,10 @@
             <div class="media-frame" *ngIf="postMediaUrls.length <= 1">
                 <div class="media-stack">
                     <img *ngIf="postImageAnimating && postOutgoingImageUrl as outgoingUrl" class="media media-layer media-outgoing" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="outgoingUrl" loading="eager" decoding="async"
-                        alt="Shared community post media" (click)="onPostMediaCardClick(outgoingUrl)" />
+                        [attr.alt]="'sharedCommunityPost.media.postAlt' | translate" (click)="onPostMediaCardClick(outgoingUrl)" />
                     <ng-container *ngFor="let currentUrl of [mediaUrl]; trackBy: trackByMediaUrl">
                         <img class="media media-layer media-current" [class.media-incoming]="postImageAnimating" [class.slide-next]="postImageSlideDirection === 'prev'" [class.slide-prev]="postImageSlideDirection === 'next'" [src]="currentUrl" loading="eager" decoding="async"
-                            alt="Shared community post media" (click)="onPostMediaCardClick(currentUrl)" />
+                            [attr.alt]="'sharedCommunityPost.media.postAlt' | translate" (click)="onPostMediaCardClick(currentUrl)" />
                     </ng-container>
                 </div>
             </div>
@@ -123,7 +123,7 @@
 
             <div class="post-media-thumbs" *ngIf="postMediaUrls.length > 1">
                 <button type="button" class="post-media-thumb" *ngFor="let previewUrl of postMediaUrls; index as i; trackBy: trackByMediaUrl" [class.active]="i === postActiveImageIndex" (click)="setActivePostImage(i)">
-                    <img [src]="previewUrl" [alt]="'Image ' + (i + 1)" />
+                    <img [src]="previewUrl" [attr.alt]="'sharedCommunityPost.media.thumbAlt' | translate:{ index: i + 1 }" />
                 </button>
             </div>
         </ng-container>
@@ -136,78 +136,81 @@
                     <span *ngIf="shouldShowPollResults(poll)">{{ option.voteCount }} ({{ getPollOptionPercentage(poll, option.voteCount) }}%)</span>
                 </button>
             </div>
-            <p class="meta" *ngIf="shouldShowPollResults(poll)">{{ poll.totalVotes }} votes</p>
+            <p class="meta" *ngIf="shouldShowPollResults(poll)">{{ 'sharedCommunityPost.poll.votes' | translate:{ count: poll.totalVotes } }}</p>
         </section>
 
         <footer class="post-actions">
-            <button type="button" class="vote-button" [class.active]="isPostUpvoted" (click)="togglePostUpvoteAsync()" [disabled]="votingPost" aria-label="Upvote post" title="Upvote">
+            <button type="button" class="vote-button" [class.active]="isPostUpvoted" (click)="togglePostUpvoteAsync()" [disabled]="votingPost" [attr.aria-label]="'sharedCommunityPost.actions.upvotePost' | translate" [attr.title]="'sharedCommunityPost.actions.upvote' | translate">
                 <i class="fa-duotone fa-light fa-arrow-up" aria-hidden="true"></i>
             </button>
             <span class="vote-score" [class.positive]="postVoteScore > 0" [class.negative]="postVoteScore < 0">{{ postVoteScore }}</span>
-            <button type="button" class="vote-button" [class.active]="isPostDownvoted" (click)="togglePostDownvoteAsync()" [disabled]="votingPost" aria-label="Downvote post" title="Downvote">
+            <button type="button" class="vote-button" [class.active]="isPostDownvoted" (click)="togglePostDownvoteAsync()" [disabled]="votingPost" [attr.aria-label]="'sharedCommunityPost.actions.downvotePost' | translate" [attr.title]="'sharedCommunityPost.actions.downvote' | translate">
                 <i class="fa-duotone fa-light fa-arrow-down" aria-hidden="true"></i>
             </button>
-            <button type="button" class="comment-button" aria-label="Comments" title="Comments">
+            <button type="button" class="comment-button" [attr.aria-label]="'sharedCommunityPost.actions.comments' | translate" [attr.title]="'sharedCommunityPost.actions.comments' | translate">
                 <i class="fa-duotone fa-light fa-comment" aria-hidden="true"></i>
                 <span>{{ item.comments.length }}</span>
             </button>
-            <button type="button" class="icon-button" [class.saved-active]="item.isSavedByMe" (click)="toggleSavePostAsync()" [disabled]="togglingSavePost" [attr.aria-label]="item.isSavedByMe ? 'Unsave post' : 'Save post'" [attr.title]="item.isSavedByMe ? 'Saved' : 'Save'">
+            <button type="button" class="icon-button" [class.saved-active]="item.isSavedByMe" (click)="toggleSavePostAsync()" [disabled]="togglingSavePost"
+                [attr.aria-label]="item.isSavedByMe ? ('sharedCommunityPost.actions.unsavePost' | translate) : ('sharedCommunityPost.actions.savePost' | translate)" [attr.title]="item.isSavedByMe ? ('sharedCommunityPost.actions.saved' | translate) : ('sharedCommunityPost.actions.save' | translate)">
                 <i class="fa-duotone fa-bookmark" [class.fa-light]="!item.isSavedByMe" [class.fa-solid]="item.isSavedByMe" aria-hidden="true"></i>
             </button>
-            <button type="button" class="icon-button" (click)="copyLinkAsync()" [attr.aria-label]="copiedLink ? 'Post link copied' : 'Copy post link'" [attr.title]="copiedLink ? 'Copied' : 'Copy link'">
+            <button type="button" class="icon-button" (click)="copyLinkAsync()" [attr.aria-label]="copiedLink ? ('sharedCommunityPost.actions.postLinkCopiedAria' | translate) : ('sharedCommunityPost.actions.copyPostLinkAria' | translate)"
+                [attr.title]="copiedLink ? ('sharedCommunityPost.actions.copied' | translate) : ('sharedCommunityPost.actions.copyLink' | translate)">
                 <i *ngIf="!copiedLink" class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
                 <i *ngIf="copiedLink" class="fa-duotone fa-solid fa-check" aria-hidden="true"></i>
             </button>
-            <button type="button" class="icon-button" *ngIf="canManagePost" (click)="editPostAsync()" [disabled]="updatingPost" aria-label="Edit post" title="Edit post">
+            <button type="button" class="icon-button" *ngIf="canManagePost" (click)="editPostAsync()" [disabled]="updatingPost" [attr.aria-label]="'sharedCommunityPost.actions.editPost' | translate" [attr.title]="'sharedCommunityPost.actions.editPost' | translate">
                 <i class="fa-duotone fa-pen" aria-hidden="true"></i>
             </button>
-            <button type="button" class="icon-button danger" *ngIf="canManagePost" (click)="deletePostAsync()" [disabled]="deletingPost" aria-label="Delete post" title="Delete post">
+            <button type="button" class="icon-button danger" *ngIf="canManagePost" (click)="deletePostAsync()" [disabled]="deletingPost" [attr.aria-label]="'sharedCommunityPost.actions.deletePost' | translate" [attr.title]="'sharedCommunityPost.actions.deletePost' | translate">
                 <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
             </button>
         </footer>
 
         <section class="comments-card">
-            <app-rich-text-editor *ngIf="canCommentInCommunity" [placeholder]="'Join the conversation'" [submitLabel]="'Comment'" [submittingLabel]="'Posting...'" [submitting]="postingComment" [errorMessage]="commentError" [collapsed]="true" [resetToken]="commentComposerResetToken"
-                (submitted)="submitCommentContentAsync($event)" (cancelled)="onTopCommentEditorCancelled()"></app-rich-text-editor>
+            <app-rich-text-editor *ngIf="canCommentInCommunity" [placeholder]="'sharedCommunityPost.comments.editor.placeholder' | translate" [submitLabel]="'sharedCommunityPost.comments.editor.submit' | translate" [submittingLabel]="'sharedCommunityPost.comments.editor.submitting' | translate"
+                [submitting]="postingComment" [errorMessage]="commentError" [collapsed]="true" [resetToken]="commentComposerResetToken" (submitted)="submitCommentContentAsync($event)" (cancelled)="onTopCommentEditorCancelled()"></app-rich-text-editor>
 
             <p class="meta" *ngIf="session.isAuthenticated() && isTimedOutInCommunity">
-                You are timed out in this community until {{ timedOutUntilText || 'later' }}. Posting and commenting are disabled.
+                {{ 'sharedCommunityPost.comments.timedOut' | translate:{ until: timedOutUntilText || ('sharedCommunityPost.comments.later' | translate) } }}
             </p>
 
             <p class="meta" *ngIf="session.isAuthenticated() && !isTimedOutInCommunity && !community?.joinedByMe">
-                Join this community to comment.
+                {{ 'sharedCommunityPost.comments.joinToComment' | translate }}
             </p>
 
             <p class="meta" *ngIf="!session.isAuthenticated()">
-                <a routerLink="/auth">Sign in</a> to join the conversation.
+                <a routerLink="/auth">{{ 'sharedCommunityPost.comments.signIn' | translate }}</a> {{ 'sharedCommunityPost.comments.signInSuffix' | translate }}
             </p>
 
             <div class="comment-toolbar" *ngIf="item.comments.length">
                 <label class="sort-select-wrap" for="commentSortSelect">
-                    <span>Sort by:</span>
+                    <span>{{ 'sharedCommunityPost.comments.sort.label' | translate }}</span>
                     <select id="commentSortSelect" name="commentSortSelect" [(ngModel)]="commentSort">
-                        <option value="best">Best</option>
-                        <option value="top">Top</option>
-                        <option value="new">New</option>
-                        <option value="controversial">Controversial</option>
-                        <option value="old">Old</option>
-                        <option value="qna">Q&amp;A</option>
+                        <option value="best">{{ 'sharedCommunityPost.comments.sort.best' | translate }}</option>
+                        <option value="top">{{ 'sharedCommunityPost.comments.sort.top' | translate }}</option>
+                        <option value="new">{{ 'sharedCommunityPost.comments.sort.new' | translate }}</option>
+                        <option value="controversial">{{ 'sharedCommunityPost.comments.sort.controversial' | translate }}</option>
+                        <option value="old">{{ 'sharedCommunityPost.comments.sort.old' | translate }}</option>
+                        <option value="qna">{{ 'sharedCommunityPost.comments.sort.qna' | translate }}</option>
                     </select>
                 </label>
                 <div class="comment-search">
                     <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
-                    <input type="text" [(ngModel)]="commentSearchQuery" placeholder="Search comments" aria-label="Search comments" />
+                    <input type="text" [(ngModel)]="commentSearchQuery" [placeholder]="'sharedCommunityPost.comments.search.placeholder' | translate" [attr.aria-label]="'sharedCommunityPost.comments.search.aria' | translate" />
                 </div>
             </div>
 
-            <p class="meta" *ngIf="!item.comments.length">No comments yet.</p>
-            <p class="meta" *ngIf="item.comments.length && !visibleComments.length">No comments match your search.</p>
+            <p class="meta" *ngIf="!item.comments.length">{{ 'sharedCommunityPost.comments.empty.noneYet' | translate }}</p>
+            <p class="meta" *ngIf="item.comments.length && !visibleComments.length">{{ 'sharedCommunityPost.comments.empty.noSearchMatch' | translate }}</p>
 
             <div class="comments-list" *ngIf="threadedComments.length">
                 <article class="comment-item" *ngFor="let threadItem of threadedComments; let isLast = last; let idx = index; trackBy: trackByThreadCommentId" [class.is-reply]="threadItem.level > 0" [class.has-child]="!isLast && threadedComments[idx + 1].level > threadItem.level"
                     [class.menu-open]="openCommentMenuId === threadItem.comment.id" [style.--thread-level]="threadItem.level" [attr.id]="'comment-' + threadItem.comment.id">
                     <div class="comment-thread-rail" [class.last]="isLast">
-                        <img class="comment-avatar" *ngIf="threadItem.comment.authorImageUrl; else commentInitial" [src]="threadItem.comment.authorImageUrl" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
+                        <img class="comment-avatar" *ngIf="threadItem.comment.authorImageUrl; else commentInitial" [src]="threadItem.comment.authorImageUrl" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';"
+                            [attr.alt]="'sharedCommunityPost.comments.authorImageAlt' | translate" />
                         <ng-template #commentInitial>
                             <div class="comment-avatar">{{ (threadItem.comment.authorHandle[0] || '?') | uppercase }}</div>
                         </ng-template>
@@ -217,47 +220,51 @@
                         <p class="comment-meta"><strong>{{ threadItem.comment.authorHandle }}</strong> · {{ threadItem.comment.createdAtUtc | date:'short' }}</p>
                         <p class="comment-content" [innerHTML]="formatCommentContent(threadItem.comment.content)" (click)="onCommentContentClick($event)" (keydown)="onCommentContentKeydown($event)"></p>
                         <div class="comment-footer">
-                            <button type="button" class="comment-action" [class.active]="isCommentUpvoted(threadItem.comment.id)" (click)="toggleCommentUpvote(threadItem.comment.id)" aria-label="Upvote">
+                            <button type="button" class="comment-action" [class.active]="isCommentUpvoted(threadItem.comment.id)" (click)="toggleCommentUpvote(threadItem.comment.id)" [attr.aria-label]="'sharedCommunityPost.comments.actions.upvote' | translate">
                                 <i class="fa-duotone fa-light fa-arrow-up" aria-hidden="true"></i>
                             </button>
                             <span class="comment-score">{{ getCommentVoteScore(threadItem.comment.id) }}</span>
-                            <button type="button" class="comment-action" [class.active]="isCommentDownvoted(threadItem.comment.id)" (click)="toggleCommentDownvote(threadItem.comment.id)" aria-label="Downvote">
+                            <button type="button" class="comment-action" [class.active]="isCommentDownvoted(threadItem.comment.id)" (click)="toggleCommentDownvote(threadItem.comment.id)" [attr.aria-label]="'sharedCommunityPost.comments.actions.downvote' | translate">
                                 <i class="fa-duotone fa-light fa-arrow-down" aria-hidden="true"></i>
                             </button>
-                            <button type="button" class="comment-action" (click)="openReplyComposer(threadItem.comment.id, threadItem.comment.authorHandle)" [disabled]="!canCommentInCommunity" aria-label="Reply" title="Reply">
+                            <button type="button" class="comment-action" (click)="openReplyComposer(threadItem.comment.id, threadItem.comment.authorHandle)" [disabled]="!canCommentInCommunity" [attr.aria-label]="'sharedCommunityPost.comments.actions.reply' | translate"
+                                [attr.title]="'sharedCommunityPost.comments.actions.reply' | translate">
                                 <i class="fa-duotone fa-light fa-reply" aria-hidden="true"></i>
                             </button>
-                            <button type="button" class="comment-action" (click)="copyCommentLinkAsync(threadItem.comment.id)" [attr.aria-label]="copiedCommentId === threadItem.comment.id ? 'Comment link copied' : 'Share comment'"
-                                [attr.title]="copiedCommentId === threadItem.comment.id ? 'Copied' : 'Share'">
+                            <button type="button" class="comment-action" (click)="copyCommentLinkAsync(threadItem.comment.id)"
+                                [attr.aria-label]="copiedCommentId === threadItem.comment.id ? ('sharedCommunityPost.comments.actions.commentLinkCopiedAria' | translate) : ('sharedCommunityPost.comments.actions.shareComment' | translate)"
+                                [attr.title]="copiedCommentId === threadItem.comment.id ? ('sharedCommunityPost.actions.copied' | translate) : ('sharedCommunityPost.comments.actions.share' | translate)">
                                 <i class="fa-duotone fa-light" [class.fa-share-from-square]="copiedCommentId !== threadItem.comment.id" [class.fa-check]="copiedCommentId === threadItem.comment.id" aria-hidden="true"></i>
                             </button>
                             <div class="comment-menu-wrap" *ngIf="canManageComment(threadItem.comment)">
-                                <button type="button" class="comment-action" [class.active]="openCommentMenuId === threadItem.comment.id" [attr.aria-label]="'Open comment actions'" [attr.aria-expanded]="openCommentMenuId === threadItem.comment.id" [attr.title]="'More actions'"
-                                    (click)="toggleCommentMenu(threadItem.comment.id, $event)">
+                                <button type="button" class="comment-action" [class.active]="openCommentMenuId === threadItem.comment.id" [attr.aria-label]="'sharedCommunityPost.comments.actions.openCommentActions' | translate" [attr.aria-expanded]="openCommentMenuId === threadItem.comment.id"
+                                    [attr.title]="'sharedCommunityPost.comments.actions.moreActions' | translate" (click)="toggleCommentMenu(threadItem.comment.id, $event)">
                                     <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
                                 </button>
 
-                                <div class="comment-menu" *ngIf="openCommentMenuId === threadItem.comment.id" role="menu" aria-label="Comment actions">
+                                <div class="comment-menu" *ngIf="openCommentMenuId === threadItem.comment.id" role="menu" [attr.aria-label]="'sharedCommunityPost.comments.actions.commentActions' | translate">
                                     <button type="button" class="comment-menu-item" role="menuitem" (click)="openEditComment(threadItem.comment); closeCommentMenu()" [disabled]="deletingCommentId === threadItem.comment.id">
                                         <i class="fa-duotone fa-light" [class.fa-pen]="activeEditCommentId !== threadItem.comment.id" [class.fa-xmark]="activeEditCommentId === threadItem.comment.id" aria-hidden="true"></i>
-                                        <span>{{ activeEditCommentId === threadItem.comment.id ? 'Cancel edit' : 'Edit' }}</span>
+                                        <span>{{ activeEditCommentId === threadItem.comment.id ? ('sharedCommunityPost.comments.actions.cancelEdit' | translate) : ('sharedCommunityPost.comments.actions.edit' | translate) }}</span>
                                     </button>
                                     <button type="button" class="comment-menu-item danger" role="menuitem" (click)="closeCommentMenu(); deleteCommentAsync(threadItem.comment.id)" [disabled]="deletingCommentId === threadItem.comment.id || savingCommentEdit">
                                         <i class="fa-duotone fa-light" [class.fa-trash]="deletingCommentId !== threadItem.comment.id" [class.fa-spinner-third]="deletingCommentId === threadItem.comment.id" [class.fa-spin]="deletingCommentId === threadItem.comment.id" aria-hidden="true"></i>
-                                        <span>{{ deletingCommentId === threadItem.comment.id ? 'Deleting...' : 'Delete' }}</span>
+                                        <span>{{ deletingCommentId === threadItem.comment.id ? ('sharedCommunityPost.comments.actions.deleting' | translate) : ('sharedCommunityPost.comments.actions.delete' | translate) }}</span>
                                     </button>
                                 </div>
                             </div>
                         </div>
 
                         <div class="comment-reply-editor" *ngIf="activeEditCommentId === threadItem.comment.id">
-                            <app-rich-text-editor [placeholder]="'Edit your comment'" [submitLabel]="'Save'" [submittingLabel]="'Saving...'" [submitting]="savingCommentEdit" [errorMessage]="commentActionError" [collapsed]="false" [initialContent]="editCommentDraft" [initialContentIsHtml]="true"
-                                (submitted)="submitEditCommentContentAsync(threadItem.comment.id, $event)" (cancelled)="cancelEditComment()"></app-rich-text-editor>
+                            <app-rich-text-editor [placeholder]="'sharedCommunityPost.comments.edit.placeholder' | translate" [submitLabel]="'sharedCommunityPost.comments.edit.save' | translate" [submittingLabel]="'sharedCommunityPost.comments.edit.saving' | translate"
+                                [submitting]="savingCommentEdit" [errorMessage]="commentActionError" [collapsed]="false" [initialContent]="editCommentDraft" [initialContentIsHtml]="true" (submitted)="submitEditCommentContentAsync(threadItem.comment.id, $event)"
+                                (cancelled)="cancelEditComment()"></app-rich-text-editor>
                         </div>
 
                         <div class="comment-reply-editor" *ngIf="activeReplyCommentId === threadItem.comment.id && canCommentInCommunity">
-                            <app-rich-text-editor [placeholder]="'Reply to u/' + (activeReplyHandle || threadItem.comment.authorHandle)" [submitLabel]="'Comment'" [submittingLabel]="'Posting...'" [submitting]="postingReply" [errorMessage]="replyError" [collapsed]="false"
-                                [initialContent]="'@' + (activeReplyHandle || threadItem.comment.authorHandle) + ' '" [resetToken]="replyComposerResetToken" (submitted)="submitReplyContentAsync(threadItem.comment.id, $event)" (cancelled)="cancelReplyComposer()"></app-rich-text-editor>
+                            <app-rich-text-editor [placeholder]="'sharedCommunityPost.comments.reply.placeholder' | translate:{ handle: (activeReplyHandle || threadItem.comment.authorHandle) }" [submitLabel]="'sharedCommunityPost.comments.editor.submit' | translate"
+                                [submittingLabel]="'sharedCommunityPost.comments.editor.submitting' | translate" [submitting]="postingReply" [errorMessage]="replyError" [collapsed]="false" [initialContent]="'@' + (activeReplyHandle || threadItem.comment.authorHandle) + ' '"
+                                [resetToken]="replyComposerResetToken" (submitted)="submitReplyContentAsync(threadItem.comment.id, $event)" (cancelled)="cancelReplyComposer()"></app-rich-text-editor>
                         </div>
                     </div>
                 </article>
@@ -267,13 +274,15 @@
     <app-community-post-edit-modal [open]="editPostModalOpen" [post]="post" [busy]="updatingPost" [errorMessage]="error" (cancel)="closeEditPostModal()" (save)="submitPostEditAsync($event)"></app-community-post-edit-modal>
 </section>
 
-<div class="image-lightbox" *ngIf="fullscreenImageUrl as imageUrl" role="dialog" aria-modal="true" aria-label="Image preview" (click)="closeImageFullscreen()">
-    <button type="button" class="image-lightbox-close" aria-label="Close image preview" (click)="$event.stopPropagation(); closeImageFullscreen()">×</button>
-    <button type="button" class="image-lightbox-nav prev" *ngIf="postMediaUrls.length > 1" [disabled]="!canMoveFullscreenImageBack" aria-label="Previous image" title="Previous image" (click)="$event.stopPropagation(); showPreviousFullscreenImage()">
+<div class="image-lightbox" *ngIf="fullscreenImageUrl as imageUrl" role="dialog" aria-modal="true" [attr.aria-label]="'sharedCommunityPost.media.imagePreview' | translate" (click)="closeImageFullscreen()">
+    <button type="button" class="image-lightbox-close" [attr.aria-label]="'sharedCommunityPost.media.closeImagePreview' | translate" (click)="$event.stopPropagation(); closeImageFullscreen()">×</button>
+    <button type="button" class="image-lightbox-nav prev" *ngIf="postMediaUrls.length > 1" [disabled]="!canMoveFullscreenImageBack" [attr.aria-label]="'sharedCommunityPost.media.previousImage' | translate" [attr.title]="'sharedCommunityPost.media.previousImage' | translate"
+        (click)="$event.stopPropagation(); showPreviousFullscreenImage()">
         <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
     </button>
-    <img [src]="imageUrl" alt="Fullscreen post image" (click)="$event.stopPropagation()" />
-    <button type="button" class="image-lightbox-nav next" *ngIf="postMediaUrls.length > 1" [disabled]="!canMoveFullscreenImageForward" aria-label="Next image" title="Next image" (click)="$event.stopPropagation(); showNextFullscreenImage()">
+    <img [src]="imageUrl" [attr.alt]="'sharedCommunityPost.media.fullscreenAlt' | translate" (click)="$event.stopPropagation()" />
+    <button type="button" class="image-lightbox-nav next" *ngIf="postMediaUrls.length > 1" [disabled]="!canMoveFullscreenImageForward" [attr.aria-label]="'sharedCommunityPost.media.nextImage' | translate" [attr.title]="'sharedCommunityPost.media.nextImage' | translate"
+        (click)="$event.stopPropagation(); showNextFullscreenImage()">
         <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
     </button>
 </div>

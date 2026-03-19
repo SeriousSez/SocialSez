@@ -1,0 +1,16 @@
+{
+	"app": {
+		"shell": {
+			"activity": {
+				"title": "Activity",
+				"empty": "Nothing in progress.",
+				"aria": "Upload and publish activity"
+			},
+			"trending": {
+				"title": "Trending",
+				"loading": "Loading hashtags...",
+				"empty": "No trending hashtags yet."
+			}
+		}
+	}
+}

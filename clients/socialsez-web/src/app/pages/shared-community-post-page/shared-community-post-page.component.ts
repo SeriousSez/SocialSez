@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, ElementRef, HostListener, NgZone, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CommunityDto, CommunityPollDto, CommunityPostDto } from '../../core/api.types';
@@ -27,7 +28,7 @@ interface CommentThreadNode {
 @Component({
     selector: 'app-shared-community-post-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, RichTextEditorComponent, CommunityPostEditorModalComponent],
+    imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RichTextEditorComponent, CommunityPostEditorModalComponent],
     templateUrl: './shared-community-post-page.component.html',
     styleUrl: './shared-community-post-page.component.scss'
 })
@@ -96,7 +97,8 @@ export class SharedCommunityPostPageComponent {
         private readonly api: SocialSezApiService,
         public readonly session: SessionService,
         private readonly cdr: ChangeDetectorRef,
-        private readonly ngZone: NgZone
+        private readonly ngZone: NgZone,
+        private readonly translate: TranslateService
     ) {
         this.route.paramMap.subscribe(params => {
             const postId = (params.get('id') ?? '').trim();
@@ -173,7 +175,7 @@ export class SharedCommunityPostPageComponent {
         if (title) {
             return title;
         }
-        return 'Untitled post';
+        return this.t('sharedCommunityPost.post.untitled');
     }
 
     get postBody(): string | null {
@@ -352,7 +354,7 @@ export class SharedCommunityPostPageComponent {
                 poll: updatedPoll
             };
         } catch (error) {
-            this.error = this.extractApiErrorMessage(error, 'Unable to vote on poll right now.');
+            this.error = this.extractApiErrorMessage(error, this.t('sharedCommunityPost.errors.votePoll'));
         } finally {
             this.votingPollId = null;
             this.refreshView();
@@ -384,7 +386,7 @@ export class SharedCommunityPostPageComponent {
                 }
             }
         } catch {
-            this.error = 'Unable to update saved state.';
+            this.error = this.t('sharedCommunityPost.errors.updateSavedState');
         } finally {
             this.togglingSavePost = false;
             this.refreshView();
@@ -435,7 +437,7 @@ export class SharedCommunityPostPageComponent {
             this.post = this.normalizeSharedPost(updated);
             this.editPostModalOpen = false;
         } catch (error) {
-            this.error = this.extractApiErrorMessage(error, 'Unable to update post right now.');
+            this.error = this.extractApiErrorMessage(error, this.t('sharedCommunityPost.errors.updatePost'));
         } finally {
             this.updatingPost = false;
             this.refreshView();
@@ -448,7 +450,7 @@ export class SharedCommunityPostPageComponent {
             return;
         }
 
-        if (!confirm('Delete this post?')) {
+        if (!confirm(this.t('sharedCommunityPost.confirm.deletePost'))) {
             return;
         }
 
@@ -459,7 +461,7 @@ export class SharedCommunityPostPageComponent {
             this.post = null;
             this.notFound = true;
         } catch {
-            this.error = 'Unable to delete post right now.';
+            this.error = this.t('sharedCommunityPost.errors.deletePost');
         } finally {
             this.deletingPost = false;
             this.refreshView();
@@ -478,7 +480,7 @@ export class SharedCommunityPostPageComponent {
             const updated = await this.session.voteCommunityPostAsync(item.communityId, item.id, voteType);
             this.post = updated;
         } catch {
-            this.error = 'Unable to vote on post right now.';
+            this.error = this.t('sharedCommunityPost.errors.votePost');
         } finally {
             this.votingPost = false;
             this.refreshView();
@@ -489,7 +491,9 @@ export class SharedCommunityPostPageComponent {
         const currentPost = this.post;
         if (!currentPost || this.postingComment || this.postingReply || !this.canCommentInCommunity) {
             if (this.isTimedOutInCommunity) {
-                this.commentError = `You are timed out in this community until ${this.timedOutUntilText || 'later'}.`;
+                this.commentError = this.t('sharedCommunityPost.comments.errors.timedOut', {
+                    until: this.timedOutUntilText || this.t('sharedCommunityPost.comments.later')
+                });
             }
             return;
         }
@@ -515,7 +519,7 @@ export class SharedCommunityPostPageComponent {
             this.commentSearchQuery = '';
             this.recentCommentSignatures.set(signature, Date.now());
         } catch {
-            this.commentError = 'Unable to post comment right now.';
+            this.commentError = this.t('sharedCommunityPost.comments.errors.postComment');
         } finally {
             this.pendingCommentSignatures.delete(signature);
             this.postingComment = false;
@@ -676,7 +680,9 @@ export class SharedCommunityPostPageComponent {
     openReplyComposer(commentId: string, authorHandle: string): void {
         if (this.postingReply || !this.canCommentInCommunity) {
             if (this.isTimedOutInCommunity) {
-                this.replyError = `You are timed out in this community until ${this.timedOutUntilText || 'later'}.`;
+                this.replyError = this.t('sharedCommunityPost.comments.errors.timedOut', {
+                    until: this.timedOutUntilText || this.t('sharedCommunityPost.comments.later')
+                });
             }
             return;
         }
@@ -750,7 +756,7 @@ export class SharedCommunityPostPageComponent {
 
         const content = this.editCommentDraft.trim();
         if (!content) {
-            this.commentActionError = 'Comment content is required.';
+            this.commentActionError = this.t('sharedCommunityPost.comments.errors.contentRequired');
             return;
         }
 
@@ -761,7 +767,7 @@ export class SharedCommunityPostPageComponent {
             this.post = updated;
             this.cancelEditComment();
         } catch {
-            this.commentActionError = 'Unable to update comment right now.';
+            this.commentActionError = this.t('sharedCommunityPost.comments.errors.updateComment');
         } finally {
             this.savingCommentEdit = false;
             this.refreshView();
@@ -781,7 +787,7 @@ export class SharedCommunityPostPageComponent {
 
         this.closeCommentMenu();
 
-        const confirmed = confirm('Delete this comment?');
+        const confirmed = confirm(this.t('sharedCommunityPost.confirm.deleteComment'));
         if (!confirmed) {
             return;
         }
@@ -795,7 +801,7 @@ export class SharedCommunityPostPageComponent {
                 this.cancelEditComment();
             }
         } catch {
-            this.commentActionError = 'Unable to delete comment right now.';
+            this.commentActionError = this.t('sharedCommunityPost.comments.errors.deleteComment');
         } finally {
             this.deletingCommentId = null;
             this.refreshView();
@@ -806,7 +812,9 @@ export class SharedCommunityPostPageComponent {
         const currentPost = this.post;
         if (!currentPost || this.postingReply || this.activeReplyCommentId !== commentId || !this.canCommentInCommunity) {
             if (this.isTimedOutInCommunity) {
-                this.replyError = `You are timed out in this community until ${this.timedOutUntilText || 'later'}.`;
+                this.replyError = this.t('sharedCommunityPost.comments.errors.timedOut', {
+                    until: this.timedOutUntilText || this.t('sharedCommunityPost.comments.later')
+                });
             }
             return;
         }
@@ -832,7 +840,7 @@ export class SharedCommunityPostPageComponent {
             this.commentSearchQuery = '';
             this.recentCommentSignatures.set(signature, Date.now());
         } catch {
-            this.replyError = 'Unable to post reply right now.';
+            this.replyError = this.t('sharedCommunityPost.comments.errors.postReply');
         } finally {
             this.pendingCommentSignatures.delete(signature);
             this.postingReply = false;
@@ -1059,12 +1067,12 @@ export class SharedCommunityPostPageComponent {
         const containsHtml = /<\/?[a-z][\s\S]*>/i.test(content);
         if (containsHtml) {
             return content.replace(/\|\|([\s\S]+?)\|\|/g, (_match, spoilerText) =>
-                `<span class="comment-spoiler" role="button" tabindex="0" aria-label="Spoiler text. Click to reveal." aria-pressed="false">${this.escapeHtml(spoilerText)}</span>`);
+                `<span class="comment-spoiler" role="button" tabindex="0" aria-label="${this.escapeHtml(this.t('sharedCommunityPost.comments.spoilerAria'))}" aria-pressed="false">${this.escapeHtml(spoilerText)}</span>`);
         }
 
         const escaped = this.escapeHtml(content);
         const withSpoilers = escaped.replace(/\|\|([\s\S]+?)\|\|/g, (_match, spoilerText) =>
-            `<span class="comment-spoiler" role="button" tabindex="0" aria-label="Spoiler text. Click to reveal." aria-pressed="false">${spoilerText}</span>`);
+            `<span class="comment-spoiler" role="button" tabindex="0" aria-label="${this.escapeHtml(this.t('sharedCommunityPost.comments.spoilerAria'))}" aria-pressed="false">${spoilerText}</span>`);
 
         return withSpoilers.replace(/\n/g, '<br>');
     }
@@ -1355,7 +1363,7 @@ export class SharedCommunityPostPageComponent {
             if (error?.status === 404) {
                 this.notFound = true;
             } else {
-                this.error = 'Could not load this shared community post.';
+                this.error = this.t('sharedCommunityPost.errors.load');
             }
         } finally {
             this.loading = false;
@@ -2030,5 +2038,9 @@ export class SharedCommunityPostPageComponent {
         } finally {
             document.body.removeChild(input);
         }
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 }

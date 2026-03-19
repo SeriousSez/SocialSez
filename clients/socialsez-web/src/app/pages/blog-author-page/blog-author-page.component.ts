@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BlogDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
@@ -8,7 +9,7 @@ import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 @Component({
     selector: 'app-blog-author-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, SkeletonComponent],
+    imports: [CommonModule, RouterLink, TranslatePipe, SkeletonComponent],
     templateUrl: './blog-author-page.component.html',
     styleUrl: './blog-author-page.component.scss'
 })
@@ -17,6 +18,7 @@ export class BlogAuthorPageComponent {
     error = '';
     handle = '';
     blogs: BlogDto[] = [];
+    private readonly translate = inject(TranslateService);
 
     constructor(
         private readonly route: ActivatedRoute,
@@ -35,7 +37,7 @@ export class BlogAuthorPageComponent {
 
     async loadAsync(): Promise<void> {
         if (!this.handle) {
-            this.error = 'Blog author was not found.';
+            this.error = this.t('blogAuthor.errors.notFound');
             this.loading = false;
             return;
         }
@@ -47,7 +49,7 @@ export class BlogAuthorPageComponent {
             await this.session.bootstrapAsync();
             this.blogs = await this.session.loadBlogsByAuthorHandleAsync(this.handle);
         } catch {
-            this.error = 'Could not load blogs for this author.';
+            this.error = this.t('blogAuthor.errors.loadNow');
         } finally {
             this.loading = false;
         }
@@ -55,5 +57,9 @@ export class BlogAuthorPageComponent {
 
     trackBlog(_: number, blog: BlogDto): string {
         return blog.id;
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 }

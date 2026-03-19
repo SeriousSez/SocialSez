@@ -1,0 +1,421 @@
+{
+  "app": {
+    "notice": {
+      "update": "Yeni sürüm mevcut. Güncellemek için yeniden yükleyin.",
+      "updateReady": "Güncelleme hazır",
+      "reload": "Yeniden yükle",
+      "reloading": "Yeniden yükleniyor...",
+      "dismiss": "Kapat",
+      "dismissAria": "Bildirimi kapat"
+    },
+    "shell": {
+      "skipToContent": "İçeriğe geç",
+      "brandSubtitle": "Topluluk Platformu",
+      "nav": {
+        "feed": "Akış",
+        "discover": "Keşfet",
+        "blogs": "Bloglar",
+        "communities": "Topluluklar",
+        "chat": "Sohbet",
+        "saved": "Kaydedilenler",
+        "drafts": "Taslaklar",
+        "notifications": "Bildirimler",
+        "profile": "Profil",
+        "settings": "Ayarlar",
+        "auth": "Giriş"
+      },
+      "activity": {
+        "title": "Etkinlik",
+        "empty": "Devam eden bir işlem yok.",
+        "aria": "Yükleme ve paylaşım etkinliği"
+      },
+      "trending": {
+        "title": "Trendler",
+        "loading": "Hashtag'ler yükleniyor...",
+        "empty": "Henüz trend olan hashtag yok."
+      },
+      "settingsQuickNav": {
+        "title": "Ayarlar",
+        "profile": "Profil",
+        "account": "Hesap",
+        "privacy": "Gizlilik",
+        "session": "Oturum",
+        "preferences": "Tercihler",
+        "notifications": "Bildirimler",
+        "safety": "Güvenlik",
+        "security": "Hesap Güvenliği",
+        "data": "Veri",
+        "blocked": "Engellenen kullanıcılar",
+        "logout": "Çıkış yap"
+      }
+    },
+    "search": {
+      "label": "Ara",
+      "buttonAria": "Ara",
+      "scopePrefix": "Kapsam",
+      "scopeAuto": "Otomatik",
+      "scope": {
+        "all": "Tüm sonuçlar",
+        "communities": "Topluluklar",
+        "blogs": "Bloglar",
+        "users": "Kullanıcılar",
+        "posts": "Gönderiler",
+        "reels": "Reels",
+        "hashtags": "Hashtag'ler"
+      }
+    }
+  },
+  "auth": {
+    "hero": {
+      "title": "Venli'ye hoş geldin",
+      "loginSubtitle": "E-posta ve şifrenle giriş yap.",
+      "registerSubtitle": "Paylaşım yapmak ve takip etmek için hesabını oluştur.",
+      "interestsSubtitle": "Keşfet'i ilk günden kişiselleştirmek için ilgi alanlarını seç."
+    },
+    "mode": {
+      "aria": "Kimlik doğrulama modu"
+    },
+    "fields": {
+      "email": "E-posta",
+      "password": "Şifre",
+      "confirmPassword": "Şifreyi Onayla",
+      "handle": "Kullanıcı adı",
+      "displayName": "Görünen Ad",
+      "dateOfBirth": "Doğum Tarihi",
+      "day": "Gün",
+      "month": "Ay",
+      "year": "Yıl",
+      "country": "Ülke",
+      "bio": "Biyografi"
+    },
+    "placeholders": {
+      "email": "sen@example.com",
+      "password": "••••••••",
+      "handle": "sez",
+      "displayName": "Sez",
+      "country": "Ülke seçin (isteğe bağlı)",
+      "bio": "Geliştirici"
+    },
+    "actions": {
+      "signIn": "Giriş yap",
+      "createAccount": "Hesap oluştur",
+      "staySignedIn": "Oturum açık kalsın",
+      "showPassword": "Şifreyi göster",
+      "hidePassword": "Şifreyi gizle",
+      "showConfirmPassword": "Şifre onayını göster",
+      "hideConfirmPassword": "Şifre onayını gizle",
+      "signingIn": "Giriş yapılıyor...",
+      "creatingAccount": "Hesap oluşturuluyor...",
+      "finishingSetup": "Kurulum tamamlanıyor...",
+      "continue": "Devam",
+      "finish": "Tamamla",
+      "skipForNow": "Şimdilik geç"
+    },
+    "passwordStrength": {
+      "label": "Şifre gücü",
+      "weak": "Zayıf",
+      "medium": "Orta",
+      "strong": "Güçlü"
+    },
+    "preferences": {
+      "acceptTerms": "Şartları ve topluluk kurallarını kabul ediyorum.",
+      "privateByDefault": "Hesabımı varsayılan olarak gizli yap.",
+      "marketingOptIn": "Bana e-postayla ürün güncellemeleri ve ipuçları gönder."
+    },
+    "interests": {
+      "title": "İlgi alanlarını seç",
+      "subtitle": "En fazla 12 hashtag seç. Akışını kişiselleştirmek için bunları senin adına takip edeceğiz.",
+      "unavailable": "Trend ilgi alanları şu anda kullanılamıyor. Şimdilik atlayabilir, daha sonra Keşfet'ten ayarlayabilirsin."
+    },
+    "switch": {
+      "newHere": "Burada yeni misin?",
+      "alreadyHaveAccount": "Hesabın var mı?"
+    },
+    "sections": {
+      "security": "Güvenlik",
+      "profile": "Profil",
+      "preferences": "Tercihler"
+    },
+    "profileUrl": "Profil URL'in",
+    "validation": {
+      "emailRequired": "E-posta zorunludur.",
+      "passwordRequired": "Şifre zorunludur.",
+      "passwordTooShort": "Şifre en az 8 karakter olmalıdır.",
+      "passwordsMismatch": "Şifreler eşleşmiyor.",
+      "handleRequired": "Kullanıcı adı zorunludur.",
+      "displayNameRequired": "Görünen ad zorunludur.",
+      "birthDateInvalid": "Lütfen geçerli ve tam bir doğum tarihi seçin.",
+      "minimumAge": "Kayıt olmak için en az 13 yaşında olmalısın.",
+      "acceptTerms": "Hesap oluşturmak için şartları kabul etmelisin."
+    },
+    "errors": {
+      "registerFailed": "Bu bilgilerle kayıt yapılamadı.",
+      "invalidCredentials": "Geçersiz giriş bilgileri.",
+      "interestsSaveFailed": "Hesabın oluşturuldu ancak ilgi alanları şu anda kaydedilemedi."
+    }
+  },
+  "settings": {
+    "page": {
+      "title": "Ayarlar",
+      "subtitle": "Hesabını, profilini ve uygulama tercihlerini yönet.",
+      "unsavedChanges": "Kaydedilmemiş ayar değişikliklerin var.",
+      "discardAll": "Kaydedilmemiş tüm değişiklikleri sil"
+    },
+    "sections": {
+      "profile": "Profil",
+      "account": "Hesap",
+      "privacy": "Gizlilik",
+      "session": "Oturum",
+      "preferences": "Tercihler",
+      "notifications": "Bildirimler",
+      "safety": "Güvenlik",
+      "security": "Güvenlik",
+      "data": "Veri denetimleri",
+      "blocked": "Engellenen kullanıcılar",
+      "logout": "Çıkış yap"
+    },
+    "common": {
+      "reload": "Yenile",
+      "discard": "Sil",
+      "saving": "Kaydediliyor...",
+      "processing": "İşleniyor...",
+      "working": "Çalışılıyor...",
+      "cancel": "İptal",
+      "back": "Geri",
+      "add": "Ekle",
+      "day": "Gün",
+      "month": "Ay",
+      "year": "Yıl",
+      "lastSaved": "Son kaydedilme: {{date}}",
+      "lastAction": "Son işlem: {{date}}"
+    },
+    "profile": {
+      "displayName": "Görünen Ad",
+      "bio": "Biyografi",
+      "bioPlaceholder": "Kendinden bahset",
+      "changeImage": "Görseli Değiştir",
+      "removeImage": "Görseli Kaldır",
+      "uploadingImage": "Görsel yükleniyor...",
+      "previewAlt": "Profil görseli önizlemesi",
+      "save": "Profili Kaydet"
+    },
+    "account": {
+      "profileId": "Profil Kimliği:",
+      "handle": "Kullanıcı adı",
+      "handleLimitedAvailable": "Kullanıcı adı değişikliği 30 günde bir yapılabilir. Sonraki değişiklik {{date}} tarihinde kullanılabilir.",
+      "handleLimitedNow": "Kullanıcı adı değişikliği 30 günde bir yapılabilir. Şu anda değiştirebilirsin.",
+      "joined": "Katılma:",
+      "dateOfBirth": "Doğum tarihi",
+      "country": "Ülke",
+      "countryPlaceholder": "Ülke seçin (isteğe bağlı)",
+      "marketingOptIn": "E-posta ile ürün güncellemeleri ve ipuçları al",
+      "save": "Hesap Bilgilerini Kaydet"
+    },
+    "privacy": {
+      "privateProfile": "Gizli profil",
+      "privateProfileHelp": "Etkinleştirildiğinde yalnızca onayladığın takipçiler gönderilerini, reels'lerini ve hikayelerini görebilir.",
+      "save": "Gizliliği Kaydet",
+      "saveDiscovery": "Kitle ve Keşfet Ayarlarını Kaydet",
+      "commentsAudience": "İçeriğine kimler yorum yapabilir?",
+      "mentionsAudience": "Senden kimler bahsedebilir veya etiketleyebilir?",
+      "messagesAudience": "Sana kimler mesaj gönderebilir?",
+      "storyRepliesAudience": "Hikayelerine kimler yanıt verebilir?",
+      "showInSearchSuggestions": "Hesabı arama önerilerinde göster",
+      "allowProfileIndexing": "Profilin arama motorları tarafından dizinlenmesine izin ver",
+      "showActivityStatus": "Etkinlik durumu / son görülmeyi göster"
+    },
+    "session": {
+      "description": "Mevcut giriş oturumunuz için bu kontrolleri kullanın.",
+      "refresh": "Oturumu Yenile"
+    },
+    "preferences": {
+      "compactFeed": "Kompakt akış düzeni",
+      "useSystemTheme": "Sistem temasını kullan",
+      "darkMode": "Karanlık mod",
+      "useSystemThemeHelp": "Bu seçenek etkinken karanlık mod, işletim sistemi görünümünü takip eder.",
+      "accessibility": "Erişilebilirlik",
+      "reducedMotion": "Hareketi azalt",
+      "largerText": "Daha büyük yazı modu",
+      "highContrast": "Yüksek kontrast modu",
+      "language": "Dil",
+      "saveAccessibility": "Erişilebilirliği Kaydet"
+    },
+    "audience": {
+      "everyone": "Herkes",
+      "following": "Takip ettiklerin",
+      "nobody": "Hiç kimse"
+    },
+    "notifications": {
+      "likes": "Beğeniler",
+      "comments": "Yorumlar",
+      "follows": "Takipler",
+      "mentions": "Bahsetmeler",
+      "messages": "Doğrudan mesajlar",
+      "marketing": "Pazarlama",
+      "product": "Ürün güncellemeleri",
+      "quietHours": "Sessiz saatler",
+      "quietHoursStart": "Başlangıç",
+      "quietHoursEnd": "Bitiş",
+      "save": "Bildirimleri Kaydet"
+    },
+    "safety": {
+      "sensitiveContentLevel": "Hassas içerik düzeyi",
+      "hideSensitiveMedia": "Hassas medyayı varsayılan olarak gizle",
+      "mutedWords": "Sessize alınan kelimeler",
+      "addWordOrPhrase": "Kelime veya ifade ekle",
+      "noMutedKeywords": "Henüz sessize alınmış anahtar kelime yok.",
+      "mutedUsers": "Sessize alınan kullanıcılar",
+      "addHandlePlaceholder": "Kullanıcı adı ekleyin (örnek: @ad)",
+      "searchingUsers": "Kullanıcılar aranıyor...",
+      "profileAvatarAlt": "Profil avatarı",
+      "noMutedUsers": "Tercihlerde henüz sessize alınmış kullanıcı yok.",
+      "save": "Güvenlik Ayarlarını Kaydet",
+      "sensitiveOptions": {
+        "standard": "Standart",
+        "limited": "Sınırlı",
+        "strict": "Katı"
+      }
+    },
+    "security": {
+      "description": "Giriş yaptığınız oturumlar.",
+      "currentDevice": "Mevcut cihaz",
+      "signedInDevice": "Giriş yapılmış cihaz",
+      "currentSessionLabel": "Mevcut oturum",
+      "sessionLabel": "Oturum {{id}}",
+      "created": "Oluşturuldu {{date}}",
+      "expires": "Sona erme {{date}}",
+      "revoked": "İptal edildi",
+      "revoke": "İptal Et",
+      "revoking": "İptal ediliyor...",
+      "noSessions": "Etkin oturum bulunamadı.",
+      "logoutOtherSessions": "Diğer oturumlardan çıkış yap"
+    },
+    "data": {
+      "description": "Hesap verilerinizi indirin ve hesap yaşam döngüsü isteklerini yönetin.",
+      "downloadMyData": "Verilerimi indir",
+      "deactivateTitle": "Hesabı devre dışı bırak",
+      "deactivatePrompt": "İsteği onaylamak için DEACTIVATE yazın.",
+      "deactivatePlaceholder": "DEACTIVATE yazın",
+      "requestDeactivation": "Devre dışı bırakma isteği gönder",
+      "deleteTitle": "Hesabı sil",
+      "deletePrompt": "İsteği onaylamak için DELETE yazın.",
+      "deletePlaceholder": "DELETE yazın",
+      "requestDelete": "Silme isteği gönder",
+      "immediateWarning": "Her iki işlem de hemen uygulanır ve oturumunuzu kapatır.",
+      "confirmDeactivateTitle": "Hesabı devre dışı bırak",
+      "confirmDeactivateMessage": "Hesabınızı şimdi devre dışı bırakmak istiyor musunuz? Bu işlem hemen çıkış yapar ve etkin oturumları iptal eder.",
+      "confirmDeleteTitle": "Hesabı sil",
+      "confirmDeleteMessage": "Hesabınızı kalıcı olarak silmek istiyor musunuz? Bu işlem geri alınamaz ve hemen çıkış yapar."
+    },
+    "blocked": {
+      "description": "Engellediğiniz kullanıcıları yönetin.",
+      "loading": "Engellenen kullanıcılar yükleniyor...",
+      "viewProfile": "Profili görüntüle",
+      "imageAlt": "Engellenen kullanıcı görseli",
+      "unblock": "Engeli kaldır",
+      "unblocking": "Engel kaldırılıyor...",
+      "empty": "Kimseyi engellemediniz."
+    },
+    "logout": {
+      "description": "Bu cihazdaki mevcut hesabınızdan çıkış yapın.",
+      "action": "Çıkış yap"
+    },
+    "avatarModal": {
+      "dialogAria": "Profil görselini güncelle",
+      "title": "Profil Görselini Güncelle",
+      "close": "Profil görseli penceresini kapat",
+      "stepsAria": "Avatar yükleme adımları",
+      "stepSelect": "1. Seç",
+      "stepCrop": "2. Kırp ve Yükle",
+      "selectImageAria": "Avatar görseli seç",
+      "chooseTitle": "Profilin için bir görsel seç",
+      "chooseSubtitle": "Sonraki adımda kırpıp konumlandırabilirsin.",
+      "selectImage": "Görsel Seç",
+      "selectedFile": "Seçilen: {{file}}",
+      "cropPreviewAlt": "Avatar kırpma önizlemesi",
+      "zoom": "Yakınlaştır",
+      "dragHint": "Görseli daire içinde yeniden konumlandırmak için sürükleyin.",
+      "upload": "Görseli Yükle",
+      "uploading": "Yükleniyor..."
+    },
+    "language": {
+      "system": "Sistem varsayılanı",
+      "enUS": "English (US)",
+      "enGB": "English (UK)",
+      "da": "Dansk",
+      "es": "Español",
+      "de": "Deutsch",
+      "fr": "Français",
+      "ptBR": "Português (Brasil)",
+      "nl": "Nederlands",
+      "sv": "Svenska",
+      "nb": "Norsk bokmål",
+      "it": "Italiano",
+      "pl": "Polski",
+      "ar": "العربية",
+      "tr": "Türkçe"
+    },
+    "messages": {
+      "birthDateInvalid": "Lütfen geçerli ve tam bir doğum tarihi seçin.",
+      "profileSaved": "Profil ayarları kaydedildi.",
+      "profileReloaded": "Profil ayarları yeniden yüklendi.",
+      "privacySaved": "Gizlilik ayarı kaydedildi.",
+      "discoverySaved": "Keşfet ve kitle gizlilik tercihleri kaydedildi.",
+      "notificationsSaved": "Bildirim tercihleri kaydedildi.",
+      "safetySaved": "Güvenlik tercihleri kaydedildi.",
+      "sessionRevoked": "Oturum iptal edildi.",
+      "otherSessionsLoggedOutOne": "Diğer 1 oturumdan çıkış yapıldı.",
+      "otherSessionsLoggedOutMany": "Diğer {{count}} oturumdan çıkış yapıldı.",
+      "noOtherSessions": "İptal edilecek başka etkin oturum yok.",
+      "dataExportDownloaded": "Veri dışa aktarımı indirildi.",
+      "deactivateTypeConfirm": "Hesap devre dışı bırakma isteğini onaylamak için DEACTIVATE yazın.",
+      "deleteTypeConfirm": "Hesap silme isteğini onaylamak için DELETE yazın.",
+      "accountDeactivated": "Hesap devre dışı bırakıldı ve oturumlar iptal edildi.",
+      "accountDeleted": "Hesap silindi.",
+      "profileImageUpdated": "Profil görseli güncellendi.",
+      "imageRemoved": "Görsel kaldırıldı. Uygulamak için profili kaydedin.",
+      "unblockedHandle": "@{{handle}} engeli kaldırıldı.",
+      "accessibilitySaved": "Erişilebilirlik tercihleri kaydedildi.",
+      "preferencesSaved": "Tercihler kaydedildi."
+    }
+  },
+  "discover": {
+    "page": {
+      "title": "Keşfet"
+    },
+    "scope": {
+      "all": "Tümü",
+      "communities": "Topluluklar",
+      "communityPosts": "Topluluk gönderileri",
+      "blogs": "Bloglar",
+      "reels": "Reels",
+      "posts": "Gönderiler",
+      "hashtags": "Hashtag'ler",
+      "users": "Kullanıcılar"
+    },
+    "sections": {
+      "forYou": "Senin için",
+      "users": "Kullanıcılar",
+      "communities": "Topluluklar",
+      "communityPosts": "Topluluk gönderileri",
+      "blogs": "Bloglar",
+      "reels": "Reels",
+      "hashtags": "Hashtag'ler",
+      "posts": "Gönderiler"
+    }
+  },
+  "chatPage": {
+    "title": "Mesajlar",
+    "search": {
+      "label": "Sohbetlerde ara",
+      "startNewChat": "Yeni sohbet başlat"
+    },
+    "sidebar": {
+      "chats": "Sohbetler"
+    },
+    "noConversation": {
+      "title": "Mesajlaşmaya başlamak için bir sohbet seç",
+      "startNewChat": "Yeni sohbet başlat"
+    }
+  }
+}

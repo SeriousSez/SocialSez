@@ -1,24 +1,24 @@
 <section class="page">
     <header class="page-head">
         <div>
-            <h2>Communities</h2>
-            <p>Create or join communities around shared interests.</p>
+            <h2>{{ 'communities.page.title' | translate }}</h2>
+            <p>{{ 'communities.page.subtitle' | translate }}</p>
         </div>
         <div class="actions page-actions">
-            <button type="button" (click)="openCreateModal()">New community</button>
-            <button class="ghost refresh-icon-btn" type="button" (click)="loadAsync()" [disabled]="loading" aria-label="Refresh communities" title="Refresh communities">
+            <button type="button" (click)="openCreateModal()">{{ 'communities.actions.newCommunity' | translate }}</button>
+            <button class="ghost refresh-icon-btn" type="button" (click)="loadAsync()" [disabled]="loading" [attr.aria-label]="'communities.actions.refresh' | translate" [attr.title]="'communities.actions.refresh' | translate">
                 <i class="fa-duotone fa-light fa-arrows-rotate" aria-hidden="true"></i>
             </button>
         </div>
     </header>
 
     <section class="card">
-        <div class="tabs" role="tablist" aria-label="Communities views">
+        <div class="tabs" role="tablist" [attr.aria-label]="'communities.tabs.aria' | translate">
             <button type="button" class="tab-button" role="tab" id="communities-tab-mine" [attr.aria-selected]="activeTab === 'mine'" [attr.aria-controls]="'communities-panel-mine'" [class.active]="activeTab === 'mine'" (click)="activeTab = 'mine'">
-                My communities
+                {{ 'communities.tabs.mine' | translate }}
             </button>
             <button type="button" class="tab-button" role="tab" id="communities-tab-discover" [attr.aria-selected]="activeTab === 'discover'" [attr.aria-controls]="'communities-panel-discover'" [class.active]="activeTab === 'discover'" (click)="activeTab = 'discover'">
-                Discover communities
+                {{ 'communities.tabs.discover' | translate }}
             </button>
         </div>
 
@@ -38,15 +38,15 @@
                 </article>
             </ng-container>
             <ng-template #mineCommunitiesContent>
-                <p class="meta" *ngIf="!isAuthenticated">Sign in or create an account to view communities you joined.</p>
-                <p class="meta" *ngIf="!loading && !myCommunities.length && statusTone !== 'error'">You have not joined any communities yet.</p>
+                <p class="meta" *ngIf="!isAuthenticated">{{ 'communities.mine.signInPrompt' | translate }}</p>
+                <p class="meta" *ngIf="!loading && !myCommunities.length && statusTone !== 'error'">{{ 'communities.mine.empty' | translate }}</p>
 
-                <article class="community-row community-row-clickable" *ngFor="let community of myCommunities; trackBy: trackByCommunityId" role="link" tabindex="0" [attr.aria-label]="'Open ' + community.name" (click)="openCommunityFromCard(community, $event)"
-                    (keydown)="onCommunityCardKeydown($event, community)">
-                    <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
+                <article class="community-row community-row-clickable" *ngFor="let community of myCommunities; trackBy: trackByCommunityId" role="link" tabindex="0" [attr.aria-label]="'communities.community.openAria' | translate:{ name: community.name }"
+                    (click)="openCommunityFromCard(community, $event)" (keydown)="onCommunityCardKeydown($event, community)">
+                    <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" [alt]="'communities.community.imageAlt' | translate" />
                     <div>
                         <strong><a [routerLink]="['/c', community.slug]">{{ community.name }}</a></strong>
-                        <p class="meta">/{{ community.slug }} · {{ community.memberCount }} members · {{ community.isPrivate ? 'Private' : 'Public' }}</p>
+                        <p class="meta">/{{ community.slug }} · {{ community.memberCount }} {{ 'communities.community.members' | translate }} · {{ community.isPrivate ? ('communities.visibility.private' | translate) : ('communities.visibility.public' | translate) }}</p>
                         <p class="meta" *ngIf="community.description">
                             <ng-container *ngFor="let line of splitHashtagText(community.description); let isLast = last">
                                 <ng-container *ngFor="let part of line">
@@ -56,11 +56,12 @@
                                 <br *ngIf="!isLast" />
                             </ng-container>
                         </p>
-                        <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
+                        <a class="meta" [routerLink]="['/users', community.createdByHandle]">{{ 'communities.community.createdBy' | translate:{ handle: community.createdByHandle } }}</a>
                     </div>
                     <div class="actions">
                         <span class="meta" *ngIf="community.myRole">{{ community.myRole }}</span>
-                        <button type="button" class="ghost" *ngIf="canLeaveCommunity(community)" (click)="leaveCommunityAsync(community)" [disabled]="busyCommunityId === community.id">{{ busyCommunityId === community.id ? 'Leaving…' : 'Leave' }}</button>
+                        <button type="button" class="ghost" *ngIf="canLeaveCommunity(community)" (click)="leaveCommunityAsync(community)" [disabled]="busyCommunityId === community.id">{{ busyCommunityId === community.id ? ('communities.actions.leaving' | translate) : ('communities.actions.leave' |
+                            translate) }}</button>
                     </div>
                 </article>
             </ng-template>
@@ -68,13 +69,13 @@
 
         <section class="tab-panel" role="tabpanel" id="communities-panel-discover" aria-labelledby="communities-tab-discover" *ngIf="activeTab === 'discover'">
             <div class="search-row">
-                <input [(ngModel)]="query" placeholder="Search communities" (input)="onDiscoverQueryInput()" (keydown.enter)="searchDiscoverAsync()" />
-                <button type="button" class="ghost" (click)="clearDiscoverQueryAsync()" *ngIf="query.trim().length">Clear</button>
-                <button type="button" class="ghost" (click)="searchDiscoverAsync()" [disabled]="loading">Search</button>
+                <input [(ngModel)]="query" [placeholder]="'communities.search.placeholder' | translate" (input)="onDiscoverQueryInput()" (keydown.enter)="searchDiscoverAsync()" />
+                <button type="button" class="ghost" (click)="clearDiscoverQueryAsync()" *ngIf="query.trim().length">{{ 'communities.actions.clear' | translate }}</button>
+                <button type="button" class="ghost" (click)="searchDiscoverAsync()" [disabled]="loading">{{ 'communities.actions.search' | translate }}</button>
             </div>
 
             <div class="suggestions-row" *ngIf="suggestions.length">
-                <span class="suggestions-label">Try:</span>
+                <span class="suggestions-label">{{ 'communities.search.try' | translate }}</span>
                 <button type="button" class="suggestion-pill" *ngFor="let suggestion of suggestions" (click)="applySuggestionAsync(suggestion)">#{{ suggestion }}</button>
             </div>
 
@@ -93,14 +94,14 @@
                 </article>
             </ng-container>
             <ng-template #discoverCommunitiesContent>
-                <p class="meta" *ngIf="!loading && !discoverCommunities.length && statusTone !== 'error'">No communities found.</p>
+                <p class="meta" *ngIf="!loading && !discoverCommunities.length && statusTone !== 'error'">{{ 'communities.discover.empty' | translate }}</p>
 
-                <article class="community-row community-row-clickable" *ngFor="let community of discoverCommunities; trackBy: trackByCommunityId" role="link" tabindex="0" [attr.aria-label]="'Open ' + community.name" (click)="openCommunityFromCard(community, $event)"
-                    (keydown)="onCommunityCardKeydown($event, community)">
-                    <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
+                <article class="community-row community-row-clickable" *ngFor="let community of discoverCommunities; trackBy: trackByCommunityId" role="link" tabindex="0" [attr.aria-label]="'communities.community.openAria' | translate:{ name: community.name }"
+                    (click)="openCommunityFromCard(community, $event)" (keydown)="onCommunityCardKeydown($event, community)">
+                    <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" [alt]="'communities.community.imageAlt' | translate" />
                     <div>
                         <strong><a [routerLink]="['/c', community.slug]">{{ community.name }}</a></strong>
-                        <p class="meta">/{{ community.slug }} · {{ community.memberCount }} members · {{ community.isPrivate ? 'Private' : 'Public' }}</p>
+                        <p class="meta">/{{ community.slug }} · {{ community.memberCount }} {{ 'communities.community.members' | translate }} · {{ community.isPrivate ? ('communities.visibility.private' | translate) : ('communities.visibility.public' | translate) }}</p>
                         <p class="meta" *ngIf="community.description">
                             <ng-container *ngFor="let line of splitHashtagText(community.description); let isLast = last">
                                 <ng-container *ngFor="let part of line">
@@ -110,13 +111,13 @@
                                 <br *ngIf="!isLast" />
                             </ng-container>
                         </p>
-                        <a class="meta" [routerLink]="['/users', community.createdByHandle]">Created by @{{ community.createdByHandle }}</a>
+                        <a class="meta" [routerLink]="['/users', community.createdByHandle]">{{ 'communities.community.createdBy' | translate:{ handle: community.createdByHandle } }}</a>
                     </div>
                     <div class="actions">
-                        <span class="meta community-status" *ngIf="isCommunityOwner(community)">Owner</span>
-                        <span class="meta community-status" *ngIf="!isCommunityOwner(community) && community.joinedByMe">Joined</span>
+                        <span class="meta community-status" *ngIf="isCommunityOwner(community)">{{ 'communities.community.owner' | translate }}</span>
+                        <span class="meta community-status" *ngIf="!isCommunityOwner(community) && community.joinedByMe">{{ 'communities.community.joined' | translate }}</span>
                         <button type="button" *ngIf="!isCommunityOwner(community)" (click)="joinCommunityAsync(community)" [disabled]="community.joinedByMe || busyCommunityId === community.id">
-                            {{ busyCommunityId === community.id ? 'Joining…' : (community.joinedByMe ? 'Joined' : (isAuthenticated ? 'Join' : 'Sign in to join')) }}
+                            {{ busyCommunityId === community.id ? ('communities.actions.joining' | translate) : (community.joinedByMe ? ('communities.community.joined' | translate) : (isAuthenticated ? ('communities.actions.join' | translate) : ('communities.actions.signInToJoin' | translate))) }}
                         </button>
                     </div>
                 </article>
@@ -125,38 +126,39 @@
     </section>
 </section>
 
-<div class="compose-modal" *ngIf="createModalOpen" role="dialog" aria-modal="true" aria-label="Create community" (click)="closeCreateModal()">
+<div class="compose-modal" *ngIf="createModalOpen" role="dialog" aria-modal="true" [attr.aria-label]="'communities.create.dialogAria' | translate" (click)="closeCreateModal()">
     <section class="compose-modal-card" (click)="$event.stopPropagation()">
         <header class="compose-modal-head">
-            <h3>Create community</h3>
-            <button type="button" class="close" (click)="closeCreateModal()" [disabled]="creating" aria-label="Close create community modal">✕</button>
+            <h3>{{ 'communities.create.title' | translate }}</h3>
+            <button type="button" class="close" (click)="closeCreateModal()" [disabled]="creating" [attr.aria-label]="'communities.create.close' | translate">✕</button>
         </header>
 
         <label>
-            Name
-            <input [(ngModel)]="createName" placeholder="Community name" maxlength="120" />
+            {{ 'communities.create.name' | translate }}
+            <input [(ngModel)]="createName" [placeholder]="'communities.create.namePlaceholder' | translate" maxlength="120" />
         </label>
         <label>
-            Description
-            <app-rich-text-editor [placeholder]="'What is this community about?'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="createDescription" (contentChanged)="createDescription = $event"></app-rich-text-editor>
+            {{ 'communities.create.description' | translate }}
+            <app-rich-text-editor [placeholder]="'communities.create.descriptionPlaceholder' | translate" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="createDescription"
+                (contentChanged)="createDescription = $event"></app-rich-text-editor>
         </label>
         <label>
-            Rules
-            <textarea [(ngModel)]="createRulesText" rows="4" placeholder="One rule per line" maxlength="3000"></textarea>
+            {{ 'communities.create.rules' | translate }}
+            <textarea [(ngModel)]="createRulesText" rows="4" [placeholder]="'communities.create.rulesPlaceholder' | translate" maxlength="3000"></textarea>
         </label>
         <label>
-            Community image
+            {{ 'communities.create.image' | translate }}
             <input type="file" accept="image/*" (change)="onCreateImageSelected($event)" [disabled]="creating" />
         </label>
-        <img class="community-create-preview" *ngIf="createImagePreviewUrl" [src]="createImagePreviewUrl" alt="Community image preview" />
+        <img class="community-create-preview" *ngIf="createImagePreviewUrl" [src]="createImagePreviewUrl" [alt]="'communities.create.imagePreviewAlt' | translate" />
         <label class="toggle">
             <input type="checkbox" [(ngModel)]="createIsPrivate" />
-            Private community
+            {{ 'communities.create.private' | translate }}
         </label>
 
         <div class="actions">
-            <button type="button" class="ghost" (click)="closeCreateModal()" [disabled]="creating">Cancel</button>
-            <button type="button" (click)="createCommunityAsync()" [disabled]="creating || !createName.trim()">{{ creating ? 'Creating…' : 'Create' }}</button>
+            <button type="button" class="ghost" (click)="closeCreateModal()" [disabled]="creating">{{ 'communities.actions.cancel' | translate }}</button>
+            <button type="button" (click)="createCommunityAsync()" [disabled]="creating || !createName.trim()">{{ creating ? ('communities.actions.creating' | translate) : ('communities.actions.create' | translate) }}</button>
         </div>
     </section>
 </div>

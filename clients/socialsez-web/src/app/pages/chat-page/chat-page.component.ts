@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { ChatConversationDto, ChatMessageDto, ChatParticipantDto, PostReactionDetailDto, ProfileDto, ReactionSummaryDto, ReelCommentDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
@@ -87,7 +88,7 @@ type ChatReportTarget =
 @Component({
     selector: 'app-chat-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent, ChatSharedPostPreviewComponent, ChatSharedStoryPreviewComponent, ChatSharedReelPreviewComponent, ChatSharedLinkPreviewComponent, ShareReelMessageModalComponent, FeedStoryViewerComponent, ConfirmModalComponent, TextInputModalComponent, ReportModalComponent],
+    imports: [CommonModule, FormsModule, TranslateModule, ReactionPickerComponent, SkeletonComponent, ChatSearchModalComponent, ChatSharedPostPreviewComponent, ChatSharedStoryPreviewComponent, ChatSharedReelPreviewComponent, ChatSharedLinkPreviewComponent, ShareReelMessageModalComponent, FeedStoryViewerComponent, ConfirmModalComponent, TextInputModalComponent, ReportModalComponent],
     templateUrl: './chat-page.component.html',
     styleUrl: './chat-page.component.scss',
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
@@ -109,17 +110,14 @@ export class ChatPageComponent implements OnDestroy {
     private readonly composerMaxHeightPx = 120;
     private readonly typingIdleTimeoutMs = 1800;
     private readonly remoteTypingExpiryMs = 3200;
-    private readonly preciseDateFormatter = new Intl.DateTimeFormat(resolveAppLocale(), {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
     readonly noReactions: ReadonlyArray<ReactionSummaryDto> = [];
-    readonly suggestedStarterMessages = [
-        'Hey 👋',
-        'How are you doing today?',
-        'Want to catch up later?'
-    ] as const;
+    get suggestedStarterMessages(): readonly string[] {
+        return [
+            this.t('chatPage.starterMessages.hey'),
+            this.t('chatPage.starterMessages.howAreYou'),
+            this.t('chatPage.starterMessages.catchUp')
+        ] as const;
+    }
     readonly reactionOptions = [
         { type: 'Like', emoji: '👍' },
         { type: 'Love', emoji: '❤️' },
@@ -250,7 +248,9 @@ export class ChatPageComponent implements OnDestroy {
     private readonly pendingUnfurlPreviewUrls = new Set<string>();
     private activeStoryGroups: StoryGroupDto[] = [];
 
-    readonly prefers24HourClock = prefers24HourClock();
+    get prefers24HourClock(): boolean {
+        return prefers24HourClock();
+    }
 
     get typingParticipantCount(): number {
         return this.remoteTypingProfileIds.size;
@@ -289,7 +289,8 @@ export class ChatPageComponent implements OnDestroy {
         private readonly chatRealtime: ChatRealtimeService,
         private readonly reelInteractions: ReelInteractionsService,
         private readonly route: ActivatedRoute,
-        private readonly router: Router
+        private readonly router: Router,
+        private readonly translate: TranslateService
     ) {
         this.chatRealtime.messageUpserted$
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -600,7 +601,7 @@ export class ChatPageComponent implements OnDestroy {
             }
 
         } catch {
-            this.status = 'Could not load conversations.';
+            this.status = this.t('chatPage.status.loadConversationsFailed');
             this.conversations = [];
         } finally {
             this.loadingConversations = false;
@@ -712,7 +713,7 @@ export class ChatPageComponent implements OnDestroy {
 
             await this.selectConversation(conversation);
         } catch {
-            this.status = 'Could not start direct chat.';
+            this.status = this.t('chatPage.status.startDirectChatFailed');
         } finally {
             this.startingDirectChat = false;
         }
@@ -737,7 +738,7 @@ export class ChatPageComponent implements OnDestroy {
 
             await this.selectConversation(conversation);
         } catch {
-            this.status = 'Could not start group chat.';
+            this.status = this.t('chatPage.status.startGroupChatFailed');
         } finally {
             this.startingDirectChat = false;
         }
@@ -750,7 +751,7 @@ export class ChatPageComponent implements OnDestroy {
 
         const joined = names.slice(0, 3).join(', ');
         if (!joined) {
-            return 'Group chat';
+            return this.t('chatPage.thread.defaultGroupChatName');
         }
 
         return names.length > 3 ? `${joined} +${names.length - 3}` : joined;
@@ -849,7 +850,7 @@ export class ChatPageComponent implements OnDestroy {
             this.ngZone.run(() => {
                 this.messages = [];
                 this.hasOlderMessages = false;
-                this.status = 'Could not load messages.';
+                this.status = this.t('chatPage.status.loadMessagesFailed');
             });
         } finally {
             this.ngZone.run(() => {
@@ -867,7 +868,7 @@ export class ChatPageComponent implements OnDestroy {
 
             this.ngZone.run(() => {
                 if (!this.status) {
-                    this.status = 'Live updates are temporarily unavailable.';
+                    this.status = this.t('chatPage.status.liveUpdatesUnavailable');
                 }
             });
         });
@@ -1030,7 +1031,7 @@ export class ChatPageComponent implements OnDestroy {
     messageSearchPreviewParts(message: ChatMessageDto): MessageSearchPreviewPart[] {
         const preview = this.conversationPreview(message.content).trim();
         if (!preview) {
-            return [{ text: 'Message', matched: false }];
+            return [{ text: this.t('chatPage.replyPreview.message'), matched: false }];
         }
 
         const query = this.messageSearchQuery.trim();
@@ -1068,7 +1069,7 @@ export class ChatPageComponent implements OnDestroy {
             return '';
         }
 
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat(resolveAppLocale(), {
             day: 'numeric',
             month: 'long',
             year: 'numeric'
@@ -1080,12 +1081,15 @@ export class ChatPageComponent implements OnDestroy {
         const repliedToHandle = (reply.authorHandle ?? '').trim();
         const repliedToIsMe = !!currentHandle && repliedToHandle.toLowerCase() === currentHandle;
 
-        const repliedTarget = repliedToIsMe ? 'you' : `@${repliedToHandle}`;
+        const repliedTarget = repliedToIsMe ? this.t('chatPage.common.youLowercase') : `@${repliedToHandle}`;
         if (message.authorProfileId === this.currentProfileId) {
-            return `You replied to ${repliedTarget}`;
+            return this.t('chatPage.replyPreview.youRepliedTo', { target: repliedTarget });
         }
 
-        return `@${message.authorHandle} replied to ${repliedTarget}`;
+        return this.t('chatPage.replyPreview.authorRepliedTo', {
+            authorHandle: message.authorHandle,
+            target: repliedTarget
+        });
     }
 
     replyPreviewText(reply: ChatReplyPreview): string {
@@ -1096,17 +1100,17 @@ export class ChatPageComponent implements OnDestroy {
 
         switch (reply.sourceType) {
             case 'image':
-                return '📷 Image';
+                return this.t('chatPage.replyPreview.image');
             case 'gif':
-                return 'GIF';
+                return this.t('chatPage.common.gif');
             case 'post':
-                return 'Shared post';
+                return this.t('chatPage.replyPreview.sharedPost');
             case 'reel':
-                return 'Shared reel';
+                return this.t('chatPage.replyPreview.sharedReel');
             case 'story':
-                return 'Shared story';
+                return this.t('chatPage.replyPreview.sharedStory');
             default:
-                return 'Message';
+                return this.t('chatPage.replyPreview.message');
         }
     }
 
@@ -1278,9 +1282,9 @@ export class ChatPageComponent implements OnDestroy {
 
         try {
             await navigator.clipboard.writeText(content);
-            this.status = 'Message copied.';
+            this.status = this.t('chatPage.status.messageCopied');
         } catch {
-            this.status = 'Could not copy message.';
+            this.status = this.t('chatPage.status.copyMessageFailed');
         }
     }
 
@@ -1347,7 +1351,7 @@ export class ChatPageComponent implements OnDestroy {
 
         const content = this.editingMessageDraft.trim();
         if (!content) {
-            this.status = 'Message content is required.';
+            this.status = this.t('chatPage.status.messageContentRequired');
             return;
         }
 
@@ -1365,7 +1369,7 @@ export class ChatPageComponent implements OnDestroy {
             this.applyConversationPreview(updated);
             this.cancelEditingMessage(true);
         } catch {
-            this.status = 'Could not update message.';
+            this.status = this.t('chatPage.status.updateMessageFailed');
         } finally {
             this.updatingMessageId = null;
         }
@@ -1396,7 +1400,7 @@ export class ChatPageComponent implements OnDestroy {
             this.emojiPickerOpen = false;
             this.resetComposerHeight();
         } catch {
-            this.status = 'Could not send message.';
+            this.status = this.t('chatPage.status.sendMessageFailed');
         } finally {
             this.sendingMessage = false;
         }
@@ -1504,7 +1508,7 @@ export class ChatPageComponent implements OnDestroy {
             });
         } catch {
             this.ngZone.run(() => {
-                this.status = 'Could not load GIFs from Giphy.';
+                this.status = this.t('chatPage.status.loadGifsFailed');
                 this.gifResults = [];
             });
         } finally {
@@ -1547,7 +1551,7 @@ export class ChatPageComponent implements OnDestroy {
             });
         } catch {
             this.ngZone.run(() => {
-                this.status = 'Could not load trending GIFs.';
+                this.status = this.t('chatPage.status.loadTrendingGifsFailed');
                 this.gifResults = [];
             });
         } finally {
@@ -1572,7 +1576,7 @@ export class ChatPageComponent implements OnDestroy {
 
                 return {
                     id: item.id ?? originalUrl,
-                    title: item.title ?? 'GIF',
+                    title: item.title ?? this.t('chatPage.common.gif'),
                     previewUrl,
                     originalUrl
                 };
@@ -1598,7 +1602,7 @@ export class ChatPageComponent implements OnDestroy {
             this.upsertMessage(created);
             this.applyConversationPreview(created);
         } catch {
-            this.status = 'Could not send GIF.';
+            this.status = this.t('chatPage.status.sendGifFailed');
         } finally {
             this.sendingMessage = false;
         }
@@ -1624,7 +1628,7 @@ export class ChatPageComponent implements OnDestroy {
                 await this.sendMessage();
             }
         } catch {
-            this.status = 'Could not upload image.';
+            this.status = this.t('chatPage.status.uploadImageFailed');
         } finally {
             this.uploadingImage = false;
             if (target) {
@@ -1677,37 +1681,41 @@ export class ChatPageComponent implements OnDestroy {
         const text = parsed.text.trim();
 
         if (text && parsed.imageUrl) {
-            return `${text} · 📷 Image`;
+            return `${text} · ${this.t('chatPage.replyPreview.image')}`;
         }
 
         if (text && parsed.gifUrl) {
-            return `${text} · GIF`;
+            return `${text} · ${this.t('chatPage.common.gif')}`;
         }
 
         if (parsed.gifUrl) {
-            return 'GIF';
+            return this.t('chatPage.common.gif');
         }
 
         if (parsed.imageUrl) {
-            return '📷 Image';
+            return this.t('chatPage.replyPreview.image');
         }
 
         if (parsed.sharedPost) {
-            return `Shared post from @${parsed.sharedPost.authorHandle}`;
+            return this.t('chatPage.conversationPreview.sharedPostFrom', { handle: parsed.sharedPost.authorHandle });
         }
 
         if (parsed.sharedStory) {
             const authorHandle = parsed.sharedStory.authorHandle?.trim() ?? '';
-            return authorHandle ? `Shared story from @${authorHandle}` : 'Shared story';
+            return authorHandle
+                ? this.t('chatPage.conversationPreview.sharedStoryFrom', { handle: authorHandle })
+                : this.t('chatPage.replyPreview.sharedStory');
         }
 
         if (parsed.sharedReel) {
             const authorHandle = parsed.sharedReel.authorHandle?.trim() ?? '';
-            return authorHandle ? `Shared reel from @${authorHandle}` : 'Shared reel';
+            return authorHandle
+                ? this.t('chatPage.conversationPreview.sharedReelFrom', { handle: authorHandle })
+                : this.t('chatPage.replyPreview.sharedReel');
         }
 
         if (parsed.unfurlUrl) {
-            return 'Shared link';
+            return this.t('chatPage.conversationPreview.sharedLink');
         }
 
         return text;
@@ -1729,7 +1737,7 @@ export class ChatPageComponent implements OnDestroy {
                 this.scrollToBottomOnNextRender();
             }
         } catch {
-            this.status = 'Could not set reaction.';
+            this.status = this.t('chatPage.status.setReactionFailed');
         } finally {
             this.reactingMessageId = null;
         }
@@ -1751,7 +1759,7 @@ export class ChatPageComponent implements OnDestroy {
                 this.scrollToBottomOnNextRender();
             }
         } catch {
-            this.status = 'Could not clear reaction.';
+            this.status = this.t('chatPage.status.clearReactionFailed');
         } finally {
             this.reactingMessageId = null;
         }
@@ -1778,7 +1786,7 @@ export class ChatPageComponent implements OnDestroy {
     participantNames(conversation: ChatConversationDto): string {
         const currentProfileId = this.currentProfileId;
         const others = conversation.participants.filter(x => x.profileId !== currentProfileId);
-        return others.map(x => x.displayName).join(', ') || 'Me';
+        return others.map(x => x.displayName).join(', ') || this.t('chatPage.common.me');
     }
 
     conversationTitle(conversation: ChatConversationDto): string {
@@ -1847,24 +1855,24 @@ export class ChatPageComponent implements OnDestroy {
     leaveGroupConversationDisplayName(): string {
         return this.pendingLeaveGroupConversation
             ? this.chatHeaderName(this.pendingLeaveGroupConversation)
-            : 'this chat';
+            : this.t('chatPage.modals.leave.displayNameFallback');
     }
 
     leaveGroupConversationConfirmMessage(): string {
         const name = this.leaveGroupConversationDisplayName();
         if (!this.pendingLeaveGroupConversation) {
-            return 'Delete this chat?';
+            return this.t('chatPage.modals.leave.deleteFallback');
         }
 
         return this.pendingLeaveGroupConversation.isGroup
-            ? `Leave ${name}? You can be re-added later by another member.`
-            : `Delete ${name}? This removes the chat from your inbox.`;
+            ? this.t('chatPage.modals.leave.groupMessage', { name })
+            : this.t('chatPage.modals.leave.directMessage', { name });
     }
 
     renameChatModalMessage(): string {
         return this.pendingRenameGroupConversation?.isGroup
-            ? 'Give this group chat a clear name so members can find it quickly.'
-            : 'Set a custom chat name for this conversation.';
+            ? this.t('chatPage.modals.rename.groupMessage')
+            : this.t('chatPage.modals.rename.directMessage');
     }
 
     cancelRenameGroupChat(): void {
@@ -1889,7 +1897,7 @@ export class ChatPageComponent implements OnDestroy {
 
         const trimmedName = nextName.trim();
         if (!trimmedName) {
-            this.session.message = 'Chat name cannot be empty.';
+            this.session.message = this.t('chatPage.status.chatNameEmpty');
             return;
         }
 
@@ -1897,9 +1905,9 @@ export class ChatPageComponent implements OnDestroy {
         try {
             const updatedConversation = await this.session.renameGroupConversationAsync(conversation.id, trimmedName);
             this.upsertConversation(updatedConversation);
-            this.session.message = 'Chat name updated.';
+            this.session.message = this.t('chatPage.status.chatNameUpdated');
         } catch {
-            this.session.message = 'Could not update chat name.';
+            this.session.message = this.t('chatPage.status.updateChatNameFailed');
         } finally {
             this.renamingGroupChat = false;
             this.resetRenameGroupChatModalState();
@@ -1940,9 +1948,13 @@ export class ChatPageComponent implements OnDestroy {
             }
 
             this.pendingLeaveGroupConversation = null;
-            this.session.message = conversation.isGroup ? 'You left the group chat.' : 'Chat deleted.';
+            this.session.message = conversation.isGroup
+                ? this.t('chatPage.status.leftGroupChat')
+                : this.t('chatPage.status.chatDeleted');
         } catch {
-            this.session.message = conversation.isGroup ? 'Could not leave group chat.' : 'Could not delete chat.';
+            this.session.message = conversation.isGroup
+                ? this.t('chatPage.status.leaveGroupChatFailed')
+                : this.t('chatPage.status.deleteChatFailed');
         } finally {
             this.leavingGroupChat = false;
         }
@@ -1955,9 +1967,11 @@ export class ChatPageComponent implements OnDestroy {
         try {
             const updatedConversation = await this.session.setConversationMuteAsync(conversation.id, nextMutedState);
             this.upsertConversation(updatedConversation);
-            this.session.message = nextMutedState ? 'Chat muted.' : 'Chat unmuted.';
+            this.session.message = nextMutedState
+                ? this.t('chatPage.status.chatMuted')
+                : this.t('chatPage.status.chatUnmuted');
         } catch {
-            this.session.message = 'Could not update mute setting.';
+            this.session.message = this.t('chatPage.status.updateMuteFailed');
         }
     }
 
@@ -2096,7 +2110,7 @@ export class ChatPageComponent implements OnDestroy {
         event.stopPropagation();
 
         if (this.isSharedReelUnavailable(sharedReel)) {
-            this.status = 'Reel was deleted.';
+            this.status = this.t('chatPage.status.reelDeleted');
             return;
         }
 
@@ -2114,7 +2128,7 @@ export class ChatPageComponent implements OnDestroy {
                 const foundById = await this.session.loadPublicReelByIdAsync(reelId);
                 if (!foundById) {
                     this.markSharedReelUnavailable(normalizedSharedReel);
-                    this.status = 'Reel was deleted.';
+                    this.status = this.t('chatPage.status.reelDeleted');
                     return;
                 }
 
@@ -2131,7 +2145,7 @@ export class ChatPageComponent implements OnDestroy {
                     createdAtUtc: foundById.createdAtUtc || normalizedSharedReel.createdAtUtc
                 };
             } catch {
-                this.status = 'Could not open this reel right now.';
+                this.status = this.t('chatPage.status.openReelFailed');
                 return;
             } finally {
                 this.loadingSharedReelDetails = false;
@@ -2238,7 +2252,7 @@ export class ChatPageComponent implements OnDestroy {
             this.upsertMessage(created);
             this.applyConversationPreview(created);
         } catch {
-            this.sharedStoryViewerError = 'Could not send your story reply right now.';
+            this.sharedStoryViewerError = this.t('chatPage.status.sendStoryReplyFailed');
         } finally {
             this.sendingSharedStoryReply = false;
         }
@@ -2304,7 +2318,7 @@ export class ChatPageComponent implements OnDestroy {
             this.activeSharedStoryIndex = nextIndex;
             this.pendingShareStoryFromViewer = null;
         } catch {
-            this.sharedStoryViewerError = 'Could not delete this story right now.';
+            this.sharedStoryViewerError = this.t('chatPage.status.deleteStoryFailed');
         } finally {
             this.pendingDeleteSharedStoryId = null;
             this.deletingSharedStory = false;
@@ -2411,7 +2425,7 @@ export class ChatPageComponent implements OnDestroy {
             this.showContentReportModal = false;
             this.pendingContentReportTarget = null;
         } catch {
-            const message = 'Could not submit report right now.';
+            const message = this.t('chatPage.status.submitReportFailed');
             if (target.kind === 'story') {
                 this.sharedStoryViewerError = message;
             } else {
@@ -2530,7 +2544,7 @@ export class ChatPageComponent implements OnDestroy {
             this.applyConversationPreview(created);
             this.sharedReelChatReplyDraft = '';
         } catch {
-            this.status = 'Could not send reply.';
+            this.status = this.t('chatPage.status.sendReplyFailed');
         } finally {
             this.sendingMessage = false;
         }
@@ -2610,7 +2624,7 @@ export class ChatPageComponent implements OnDestroy {
             this.editingSharedReelCaption = false;
             this.sharedReelCaptionDraft = '';
         } catch {
-            this.status = 'Could not update this reel right now.';
+            this.status = this.t('chatPage.status.updateReelFailed');
         } finally {
             this.updatingSharedReel = false;
         }
@@ -2662,7 +2676,7 @@ export class ChatPageComponent implements OnDestroy {
             await this.session.deleteReelAsync(reel.id);
             this.closeSharedReelViewer();
         } catch {
-            this.status = 'Could not delete this reel right now.';
+            this.status = this.t('chatPage.status.deleteReelFailed');
         } finally {
             this.pendingDeleteSharedReelId = null;
             this.deletingSharedReel = false;
@@ -2935,7 +2949,7 @@ export class ChatPageComponent implements OnDestroy {
             this.applyActiveSharedReelUpdate(updated);
             this.cancelActiveSharedReelCommentEdit();
         } catch {
-            this.status = 'Could not update reel comment right now.';
+            this.status = this.t('chatPage.status.updateReelCommentFailed');
         } finally {
             this.commentingSharedReel = false;
         }
@@ -3006,7 +3020,7 @@ export class ChatPageComponent implements OnDestroy {
             const updated = await this.session.deleteReelCommentAsync(reel.id, commentId);
             this.applyActiveSharedReelUpdate(updated);
         } catch {
-            this.status = 'Could not delete reel comment right now.';
+            this.status = this.t('chatPage.status.deleteReelCommentFailed');
         } finally {
             this.pendingDeleteSharedReelCommentId = null;
             this.commentingSharedReel = false;
@@ -3027,7 +3041,7 @@ export class ChatPageComponent implements OnDestroy {
             const updated = await this.session.toggleReelCommentLikeAsync(reel.id, comment.id);
             this.applyActiveSharedReelUpdate(updated);
         } catch {
-            this.status = 'Could not update reel comment like right now.';
+            this.status = this.t('chatPage.status.updateReelCommentLikeFailed');
         } finally {
             this.reactingSharedReelCommentId = null;
         }
@@ -3056,7 +3070,7 @@ export class ChatPageComponent implements OnDestroy {
                 };
             }
         } catch {
-            this.status = 'Could not update reel like right now.';
+            this.status = this.t('chatPage.status.updateReelLikeFailed');
         } finally {
             this.reactingSharedReel = false;
         }
@@ -3076,7 +3090,7 @@ export class ChatPageComponent implements OnDestroy {
             this.viewerCommentDraft = '';
             this.replyingToSharedReelCommentId = null;
         } catch {
-            this.status = 'Could not add reel comment right now.';
+            this.status = this.t('chatPage.status.addReelCommentFailed');
         } finally {
             this.commentingSharedReel = false;
         }
@@ -3145,7 +3159,11 @@ export class ChatPageComponent implements OnDestroy {
             return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
         }
 
-        return this.preciseDateFormatter.format(createdAt);
+        return new Intl.DateTimeFormat(resolveAppLocale(), {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        }).format(createdAt);
     }
 
     formatTime(dateValueUtc: string): string {
@@ -3244,7 +3262,9 @@ export class ChatPageComponent implements OnDestroy {
     }
 
     messageAuthorLabel(message: ChatMessageDto): string {
-        return this.currentProfileId === message.authorProfileId ? 'You' : `@${message.authorHandle}`;
+        return this.currentProfileId === message.authorProfileId
+            ? this.t('chatPage.common.you')
+            : `@${message.authorHandle}`;
     }
 
     messageAvatarUrl(message: ChatMessageDto): string | undefined {
@@ -3891,13 +3911,13 @@ export class ChatPageComponent implements OnDestroy {
             unfurlUrl,
             targetUrl: fallbackTarget,
             title: this.buildUnfurlTitleFromTarget(fallbackTarget),
-            description: 'Link preview unavailable. Open shared link.'
+            description: this.t('chatPage.unfurl.previewUnavailable')
         };
 
         try {
             let preview: ChatUnfurlPreview = {
                 ...fallbackPreview,
-                description: 'Open shared link'
+                description: this.t('chatPage.unfurl.openSharedLink')
             };
 
             const response = await fetch(unfurlUrl);
@@ -4011,7 +4031,7 @@ export class ChatPageComponent implements OnDestroy {
             });
         } catch {
             if (this.selectedConversationId === conversationId && !this.status) {
-                this.status = 'Could not load older messages.';
+                this.status = this.t('chatPage.status.loadOlderMessagesFailed');
             }
         } finally {
             if (this.selectedConversationId === conversationId) {
@@ -4194,7 +4214,7 @@ export class ChatPageComponent implements OnDestroy {
                 foundById = await this.session.loadPublicReelByIdAsync(reelId);
                 if (!foundById && this.isSameActiveSharedReelPreview(preview)) {
                     this.markSharedReelUnavailable(preview);
-                    this.status = 'Reel was deleted.';
+                    this.status = this.t('chatPage.status.reelDeleted');
                     this.closeSharedReelViewer();
                     return;
                 }
@@ -5195,9 +5215,9 @@ export class ChatPageComponent implements OnDestroy {
             return segment
                 .replace(/[-_]+/g, ' ')
                 .trim()
-                .replace(/\b\w/g, value => value.toUpperCase()) || 'Shared link';
+                .replace(/\b\w/g, value => value.toUpperCase()) || this.t('chatPage.conversationPreview.sharedLink');
         } catch {
-            return 'Shared link';
+            return this.t('chatPage.conversationPreview.sharedLink');
         }
     }
 
@@ -5297,7 +5317,7 @@ export class ChatPageComponent implements OnDestroy {
             }
 
             this.filteredProfiles = [];
-            this.searchUsersError = 'Could not search users right now.';
+            this.searchUsersError = this.t('chatPage.status.searchUsersFailed');
         } finally {
             if (this.modalSearchUsersQuery.trim() === currentQuery) {
                 this.searchingProfiles = false;
@@ -5328,7 +5348,7 @@ export class ChatPageComponent implements OnDestroy {
 
             this.suggestedFollowingProfiles = [];
             this.suggestedRelevantProfiles = [];
-            this.searchUsersError = 'Could not load suggestions right now.';
+            this.searchUsersError = this.t('chatPage.status.loadSuggestionsFailed');
         } finally {
             if (this.chatSearchModalOpen && !this.modalSearchUsersQuery.trim()) {
                 this.loadingProfileSuggestions = false;
@@ -5364,5 +5384,9 @@ export class ChatPageComponent implements OnDestroy {
             { value: profile.handle, weight: 1.2 },
             { value: profile.bio, weight: 1.0 }
         ]);
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 }

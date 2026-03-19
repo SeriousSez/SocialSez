@@ -1,6 +1,6 @@
 <section class="page blog-shell" [ngStyle]="themeStyles">
     <p class="error" *ngIf="!loading && error">{{ error }}</p>
-    <div class="blog" *ngIf="loading" aria-label="Loading blog">
+    <div class="blog" *ngIf="loading" [attr.aria-label]="'blogHome.loading.aria' | translate">
         <header class="blog-head">
             <app-skeleton width="40%" height="30px"></app-skeleton>
             <app-skeleton width="92%" height="14px"></app-skeleton>
@@ -35,8 +35,8 @@
                 </ng-container>
             </p>
             <div class="head-links">
-                <a [routerLink]="['/blogs', currentBlog.ownerHandle]">More by @{{ currentBlog.ownerHandle }}</a>
-                <a [routerLink]="['/blogs', 'studio']" *ngIf="currentBlog.isOwner">Edit in Studio</a>
+                <a [routerLink]="['/blogs', currentBlog.ownerHandle]">{{ 'blogHome.header.moreBy' | translate:{ handle: currentBlog.ownerHandle } }}</a>
+                <a [routerLink]="['/blogs', 'studio']" *ngIf="currentBlog.isOwner">{{ 'blogHome.header.editInStudio' | translate }}</a>
             </div>
         </header>
 
@@ -57,8 +57,8 @@
                 </p>
                 <div class="meta">
                     <span>{{ (post.publishedAtUtc ?? post.updatedAtUtc) | date:'mediumDate' }}</span>
-                    <span *ngIf="!post.isPublished" class="draft">Draft</span>
-                    <button type="button" class="save-post" *ngIf="canToggleSave" [disabled]="savingPostId === post.id" (click)="toggleSavedPostAsync(post, $event)">{{ post.isSavedByMe ? 'Unsave' : 'Save' }}</button>
+                    <span *ngIf="!post.isPublished" class="draft">{{ 'blogHome.post.draft' | translate }}</span>
+                    <button type="button" class="save-post" *ngIf="canToggleSave" [disabled]="savingPostId === post.id" (click)="toggleSavedPostAsync(post, $event)">{{ post.isSavedByMe ? ('blogHome.actions.unsave' | translate) : ('blogHome.actions.save' | translate) }}</button>
                 </div>
                 <div class="tags" *ngIf="post.tags.length">
                     <a *ngFor="let tag of post.tags" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: tag, type: 'all' }">#{{ tag }}</a>
@@ -66,6 +66,6 @@
             </article>
         </section>
 
-        <p class="muted" *ngIf="!posts.length">No posts yet.</p>
+        <p class="muted" *ngIf="!posts.length">{{ 'blogHome.empty.noPosts' | translate }}</p>
     </div>
 </section>

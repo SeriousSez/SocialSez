@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BlogDto, BlogPostDto } from '../../core/api.types';
 import { renderMarkdownToHtml } from '../../core/markdown.util';
 import { SessionService } from '../../core/session.service';
@@ -8,7 +9,7 @@ import { SessionService } from '../../core/session.service';
 @Component({
     selector: 'app-blog-embed-page',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, TranslatePipe],
     templateUrl: './blog-embed-page.component.html',
     styleUrl: './blog-embed-page.component.scss'
 })
@@ -26,6 +27,7 @@ export class BlogEmbedPageComponent {
     private loadVersion = 0;
     private resizeObserver: ResizeObserver | null = null;
     private readonly onWindowResize = (): void => this.notifyHostHeight();
+    private readonly translate = inject(TranslateService);
 
     constructor(
         private readonly route: ActivatedRoute,
@@ -87,7 +89,7 @@ export class BlogEmbedPageComponent {
         const loadVersion = ++this.loadVersion;
 
         if (!this.handle || !this.blogSlug || !this.postSlug) {
-            this.error = 'Embed could not be loaded.';
+            this.error = this.t('blogEmbed.errors.couldNotLoad');
             this.loading = false;
             this.cdr.detectChanges();
             return;
@@ -105,14 +107,14 @@ export class BlogEmbedPageComponent {
             }
 
             if (!loadedBlog || !loadedPost) {
-                this.error = 'This blog post is unavailable.';
+                this.error = this.t('blogEmbed.errors.postUnavailable');
                 this.blog = null;
                 this.post = null;
                 return;
             }
 
             if (loadedBlog.allowEmbeds === false) {
-                this.error = 'Embedding is disabled by the blog owner.';
+                this.error = this.t('blogEmbed.errors.embeddingDisabled');
                 this.blog = null;
                 this.post = null;
                 return;
@@ -126,7 +128,7 @@ export class BlogEmbedPageComponent {
                 return;
             }
 
-            this.error = 'Could not load this embed right now.';
+            this.error = this.t('blogEmbed.errors.loadNow');
             this.blog = null;
             this.post = null;
             this.notifyHostHeightSoon();
@@ -191,5 +193,9 @@ export class BlogEmbedPageComponent {
         }
 
         return document.querySelector('.embed-root');
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 }

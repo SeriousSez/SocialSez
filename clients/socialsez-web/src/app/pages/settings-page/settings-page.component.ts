@@ -2,7 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
+import { AppLanguageService } from '../../core/app-language.service';
+import { resolveDocumentLanguage } from '../../core/app-language.util';
 import { AuthSessionDto, ProfileDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
@@ -47,7 +50,6 @@ interface AccessibilityPrefs {
     largerText: boolean;
     highContrast: boolean;
     language: string;
-    region: string;
 }
 
 interface DeviceSessionEntry {
@@ -72,7 +74,6 @@ type SettingsDropdownKey =
     | 'messagesAudience'
     | 'storyRepliesAudience'
     | 'language'
-    | 'region'
     | 'sensitiveContentLevel';
 
 interface SettingsSelectOption {
@@ -97,7 +98,7 @@ const settingsSectionByFragment: Record<string, SettingsSectionKey> = {
 @Component({
     selector: 'app-settings-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, ConfirmModalComponent, RichTextEditorComponent],
+    imports: [CommonModule, FormsModule, TranslatePipe, ConfirmModalComponent, RichTextEditorComponent],
     templateUrl: './settings-page.component.html',
     styleUrl: './settings-page.component.scss'
 })
@@ -169,19 +170,6 @@ export class SettingsPageComponent implements OnDestroy {
         { value: 'standard', label: 'Standard' },
         { value: 'limited', label: 'Limited' },
         { value: 'strict', label: 'Strict' }
-    ];
-
-    readonly languageOptions: ReadonlyArray<{ value: string; label: string }> = [
-        { value: 'system', label: 'System default' },
-        { value: 'en-US', label: 'English (US)' },
-        { value: 'en-GB', label: 'English (UK)' }
-    ];
-
-    readonly regionOptions: ReadonlyArray<{ value: string; label: string }> = [
-        { value: 'system', label: 'System default' },
-        { value: 'US', label: 'United States' },
-        { value: 'GB', label: 'United Kingdom' },
-        { value: 'CA', label: 'Canada' }
     ];
 
     readonly monthOptions = Array.from({ length: 12 }, (_, index) => `${index + 1}`.padStart(2, '0'));
@@ -258,8 +246,7 @@ export class SettingsPageComponent implements OnDestroy {
         reducedMotion: false,
         largerText: false,
         highContrast: false,
-        language: 'system',
-        region: 'system'
+        language: 'system'
     };
 
     discoveryPrivacyPrefs: DiscoveryPrivacyPrefs = {
@@ -296,8 +283,7 @@ export class SettingsPageComponent implements OnDestroy {
         reducedMotion: false,
         largerText: false,
         highContrast: false,
-        language: 'system',
-        region: 'system'
+        language: 'system'
     };
 
     sectionSavedAt: Partial<Record<'privacy' | 'notifications' | 'safety' | 'accessibility' | 'security' | 'data', string>> = {};
@@ -326,7 +312,12 @@ export class SettingsPageComponent implements OnDestroy {
     private avatarCropDragOriginOffsetY = 0;
     private fragmentSubscription?: Subscription;
 
-    constructor(public readonly session: SessionService, private readonly route: ActivatedRoute) {
+    constructor(
+        public readonly session: SessionService,
+        private readonly route: ActivatedRoute,
+        private readonly appLanguage: AppLanguageService,
+        private readonly translate: TranslateService
+    ) {
         if (session.profile) {
             this.displayName = session.profile.displayName;
             this.handle = session.profile.handle;
@@ -376,6 +367,30 @@ export class SettingsPageComponent implements OnDestroy {
         }
     }
 
+    get languageOptions(): ReadonlyArray<{ value: string; label: string }> {
+        const options = [
+            { value: 'en-US', label: this.translate.instant('settings.language.enUS') },
+            { value: 'en-GB', label: this.translate.instant('settings.language.enGB') },
+            { value: 'da', label: this.translate.instant('settings.language.da') },
+            { value: 'es', label: this.translate.instant('settings.language.es') },
+            { value: 'de', label: this.translate.instant('settings.language.de') },
+            { value: 'fr', label: this.translate.instant('settings.language.fr') },
+            { value: 'pt-BR', label: this.translate.instant('settings.language.ptBR') },
+            { value: 'nl', label: this.translate.instant('settings.language.nl') },
+            { value: 'sv', label: this.translate.instant('settings.language.sv') },
+            { value: 'nb', label: this.translate.instant('settings.language.nb') },
+            { value: 'it', label: this.translate.instant('settings.language.it') },
+            { value: 'pl', label: this.translate.instant('settings.language.pl') },
+            { value: 'ar', label: this.translate.instant('settings.language.ar') },
+            { value: 'tr', label: this.translate.instant('settings.language.tr') }
+        ].sort((left, right) => left.label.localeCompare(right.label, undefined, { sensitivity: 'base' }));
+
+        return [
+            { value: 'system', label: this.translate.instant('settings.language.system') },
+            ...options
+        ];
+    }
+
     private scrollSectionIntoView(section: SettingsSectionKey): void {
         window.setTimeout(() => {
             const sectionElement = document.getElementById(`settings-section-${section}`);
@@ -409,7 +424,7 @@ export class SettingsPageComponent implements OnDestroy {
         try {
             await this.session.unblockProfileAsync(profile.id);
             this.blockedProfiles = this.blockedProfiles.filter(item => item.id !== profile.id);
-            this.session.message = `Unblocked @${profile.handle}.`;
+            this.session.message = this.t('settings.messages.unblockedHandle', { handle: profile.handle });
         } catch (error) {
             this.session.message = toUserErrorMessage(error, actionError(`unblock @${profile.handle}`));
         } finally {
@@ -421,7 +436,7 @@ export class SettingsPageComponent implements OnDestroy {
         try {
             this.handle = this.normalizeHandle(this.handle);
             if (this.hasAnyBirthPart && !this.composedDateOfBirth) {
-                this.session.message = 'Please select a complete valid birth date.';
+                this.session.message = this.t('settings.messages.birthDateInvalid');
                 return;
             }
 
@@ -434,7 +449,7 @@ export class SettingsPageComponent implements OnDestroy {
                 countryCode: this.countryCode || undefined,
                 marketingOptIn: this.marketingOptIn
             });
-            this.session.message = 'Profile settings saved.';
+            this.session.message = this.t('settings.messages.profileSaved');
         } catch (error) {
             this.session.message = toUserErrorMessage(error, actionError('save profile settings'));
         }
@@ -454,7 +469,7 @@ export class SettingsPageComponent implements OnDestroy {
                 this.isPrivate = this.session.profile.isPrivate;
                 this.initialPrivacy = this.session.profile.isPrivate;
             }
-            this.session.message = 'Profile settings reloaded.';
+            this.session.message = this.t('settings.messages.profileReloaded');
         } catch (error) {
             this.session.message = toUserErrorMessage(error, actionError('reload profile settings'));
         }
@@ -556,9 +571,6 @@ export class SettingsPageComponent implements OnDestroy {
             case 'language':
                 this.accessibilityPrefs.language = value;
                 break;
-            case 'region':
-                this.accessibilityPrefs.region = value;
-                break;
             case 'sensitiveContentLevel':
                 this.safetyPrefs.sensitiveContentLevel = value as SensitiveContentLevel;
                 break;
@@ -583,24 +595,43 @@ export class SettingsPageComponent implements OnDestroy {
     getSettingsDropdownOptions(key: SettingsDropdownKey): ReadonlyArray<SettingsSelectOption> {
         switch (key) {
             case 'birthDay':
-                return this.daySelectOptions;
+                return [
+                    { value: '', label: this.t('settings.common.day') },
+                    ...this.dayOptions.map(day => ({ value: day, label: day }))
+                ];
             case 'birthMonth':
-                return this.monthSelectOptions;
+                return [
+                    { value: '', label: this.t('settings.common.month') },
+                    ...this.monthOptions.map(month => ({ value: month, label: month }))
+                ];
             case 'birthYear':
-                return this.yearSelectOptions;
+                return [
+                    { value: '', label: this.t('settings.common.year') },
+                    ...this.yearOptions.map(year => ({ value: `${year}`, label: `${year}` }))
+                ];
             case 'country':
-                return this.countrySelectOptions;
+                return [
+                    { value: '', label: this.t('settings.account.countryPlaceholder') },
+                    ...this.countryOptions.map(country => ({
+                        value: country.value,
+                        label: this.getRegionDisplayLabel(country.value, country.label)
+                    }))
+                ];
             case 'commentsAudience':
             case 'mentionsAudience':
             case 'messagesAudience':
             case 'storyRepliesAudience':
-                return this.audienceOptions;
+                return this.audienceOptions.map(option => ({
+                    value: option.value,
+                    label: this.t(`settings.audience.${option.value}`)
+                }));
             case 'language':
                 return this.languageOptions;
-            case 'region':
-                return this.regionOptions;
             case 'sensitiveContentLevel':
-                return this.sensitiveContentOptions;
+                return this.sensitiveContentOptions.map(option => ({
+                    value: option.value,
+                    label: this.t(`settings.safety.sensitiveOptions.${option.value}`)
+                }));
             default:
                 return [];
         }
@@ -626,8 +657,6 @@ export class SettingsPageComponent implements OnDestroy {
                 return this.discoveryPrivacyPrefs.storyRepliesAudience;
             case 'language':
                 return this.accessibilityPrefs.language;
-            case 'region':
-                return this.accessibilityPrefs.region;
             case 'sensitiveContentLevel':
                 return this.safetyPrefs.sensitiveContentLevel;
             default:
@@ -682,7 +711,7 @@ export class SettingsPageComponent implements OnDestroy {
         try {
             await this.session.updateProfilePrivacyAsync(this.isPrivate);
             this.initialPrivacy = this.isPrivate;
-            this.session.message = 'Privacy setting saved.';
+            this.session.message = this.t('settings.messages.privacySaved');
         } catch (error) {
             this.session.message = toUserErrorMessage(error, actionError('save privacy setting'));
         } finally {
@@ -708,7 +737,7 @@ export class SettingsPageComponent implements OnDestroy {
             localStorage.setItem(this.discoveryPrivacyStorageKey, JSON.stringify(this.discoveryPrivacyPrefs));
             this.initialDiscoveryPrivacyPrefs = { ...this.discoveryPrivacyPrefs };
             this.markSectionSaved('privacy');
-            this.session.message = 'Discovery and audience privacy preferences saved.';
+            this.session.message = this.t('settings.messages.discoverySaved');
         } finally {
             this.privacyPrefsSaving = false;
         }
@@ -728,7 +757,7 @@ export class SettingsPageComponent implements OnDestroy {
             localStorage.setItem(this.notificationStorageKey, JSON.stringify(this.notificationPrefs));
             this.initialNotificationPrefs = { ...this.notificationPrefs };
             this.markSectionSaved('notifications');
-            this.session.message = 'Notification preferences saved.';
+            this.session.message = this.t('settings.messages.notificationsSaved');
         } finally {
             this.notificationsSaving = false;
         }
@@ -817,7 +846,7 @@ export class SettingsPageComponent implements OnDestroy {
                 mutedHandles: [...this.safetyPrefs.mutedHandles]
             };
             this.markSectionSaved('safety');
-            this.session.message = 'Safety preferences saved.';
+            this.session.message = this.t('settings.messages.safetySaved');
         } finally {
             this.safetySaving = false;
         }
@@ -844,9 +873,10 @@ export class SettingsPageComponent implements OnDestroy {
             localStorage.setItem(this.prefsStorageKey, JSON.stringify(this.prefs));
             this.applyThemePreference();
             this.applyAccessibilityPreferences();
+            void this.appLanguage.applyPreferenceAsync(this.accessibilityPrefs.language);
             this.initialAccessibilityPrefs = { ...this.accessibilityPrefs };
             this.markSectionSaved('accessibility');
-            this.session.message = 'Accessibility preferences saved.';
+            this.session.message = this.translate.instant('settings.messages.accessibilitySaved');
         } finally {
             this.accessibilitySaving = false;
         }
@@ -868,7 +898,7 @@ export class SettingsPageComponent implements OnDestroy {
             await this.session.revokeAuthSessionByIdAsync(sessionId);
             await this.loadDeviceSessionsAsync(true);
             this.markSectionSaved('security');
-            this.session.message = 'Session revoked.';
+            this.session.message = this.t('settings.messages.sessionRevoked');
         } catch (error) {
             this.session.message = toUserErrorMessage(error, actionError('revoke session'));
         } finally {
@@ -888,8 +918,13 @@ export class SettingsPageComponent implements OnDestroy {
             await this.loadDeviceSessionsAsync(true);
             this.markSectionSaved('security');
             this.session.message = revokedCount > 0
-                ? `Logged out ${revokedCount} other session${revokedCount === 1 ? '' : 's'}.`
-                : 'No other active sessions to revoke.';
+                ? this.t(
+                    revokedCount === 1
+                        ? 'settings.messages.otherSessionsLoggedOutOne'
+                        : 'settings.messages.otherSessionsLoggedOutMany',
+                    { count: revokedCount }
+                )
+                : this.t('settings.messages.noOtherSessions');
         } catch (error) {
             this.session.message = toUserErrorMessage(error, actionError('log out other sessions'));
         } finally {
@@ -929,7 +964,7 @@ export class SettingsPageComponent implements OnDestroy {
             URL.revokeObjectURL(url);
 
             this.markSectionSaved('data');
-            this.session.message = 'Data export downloaded.';
+            this.session.message = this.t('settings.messages.dataExportDownloaded');
         } finally {
             this.dataActionWorking = false;
         }
@@ -941,7 +976,7 @@ export class SettingsPageComponent implements OnDestroy {
         }
 
         if (this.deactivateConfirmValue.trim().toUpperCase() !== 'DEACTIVATE') {
-            this.session.message = 'Type DEACTIVATE to confirm account deactivation request.';
+            this.session.message = this.t('settings.messages.deactivateTypeConfirm');
             return;
         }
 
@@ -954,7 +989,7 @@ export class SettingsPageComponent implements OnDestroy {
         }
 
         if (this.deleteConfirmValue.trim().toUpperCase() !== 'DELETE') {
-            this.session.message = 'Type DELETE to confirm account deletion request.';
+            this.session.message = this.t('settings.messages.deleteTypeConfirm');
             return;
         }
 
@@ -980,7 +1015,7 @@ export class SettingsPageComponent implements OnDestroy {
             if (action === 'deactivate') {
                 await this.session.deactivateMyAccountAsync();
                 this.markSectionSaved('data');
-                this.session.message = 'Account deactivated and sessions revoked.';
+                this.session.message = this.t('settings.messages.accountDeactivated');
                 this.deactivateConfirmValue = '';
                 await this.session.logoutAsync();
                 return;
@@ -988,7 +1023,7 @@ export class SettingsPageComponent implements OnDestroy {
 
             await this.session.deleteMyAccountAsync();
             this.markSectionSaved('data');
-            this.session.message = 'Account deleted.';
+            this.session.message = this.t('settings.messages.accountDeleted');
             this.deleteConfirmValue = '';
             await this.session.logoutAsync();
         } catch (error) {
@@ -1001,17 +1036,21 @@ export class SettingsPageComponent implements OnDestroy {
     }
 
     get accountActionModalTitle(): string {
-        return this.pendingAccountAction === 'deactivate' ? 'Deactivate account' : 'Delete account';
+        return this.pendingAccountAction === 'deactivate'
+            ? this.t('settings.data.confirmDeactivateTitle')
+            : this.t('settings.data.confirmDeleteTitle');
     }
 
     get accountActionModalMessage(): string {
         return this.pendingAccountAction === 'deactivate'
-            ? 'Deactivate your account now? This signs you out immediately and revokes your active sessions.'
-            : 'Delete your account permanently? This cannot be undone and signs you out immediately.';
+            ? this.t('settings.data.confirmDeactivateMessage')
+            : this.t('settings.data.confirmDeleteMessage');
     }
 
     get accountActionModalConfirmText(): string {
-        return this.pendingAccountAction === 'deactivate' ? 'Deactivate' : 'Delete';
+        return this.pendingAccountAction === 'deactivate'
+            ? this.t('settings.data.requestDeactivation')
+            : this.t('settings.data.requestDelete');
     }
 
     onHandleInput(value: string): void {
@@ -1195,7 +1234,7 @@ export class SettingsPageComponent implements OnDestroy {
                 marketingOptIn: this.marketingOptIn
             });
 
-            this.session.message = 'Profile image updated.';
+            this.session.message = this.t('settings.messages.profileImageUpdated');
             this.closeAvatarModal(true);
         } catch (error) {
             this.session.message = toUserErrorMessage(error, actionError('upload image'));
@@ -1206,7 +1245,7 @@ export class SettingsPageComponent implements OnDestroy {
 
     removeProfileImage(): void {
         this.imageUrl = '';
-        this.session.message = 'Image removed. Save profile to apply it.';
+        this.session.message = this.t('settings.messages.imageRemoved');
     }
 
     savePrefs(): void {
@@ -1214,11 +1253,11 @@ export class SettingsPageComponent implements OnDestroy {
         this.prefs.largerText = this.accessibilityPrefs.largerText;
         this.prefs.highContrast = this.accessibilityPrefs.highContrast;
         this.prefs.language = this.accessibilityPrefs.language;
-        this.prefs.region = this.accessibilityPrefs.region;
         localStorage.setItem(this.prefsStorageKey, JSON.stringify(this.prefs));
         this.applyThemePreference();
         this.applyAccessibilityPreferences();
-        this.session.message = 'Preferences saved.';
+        void this.appLanguage.applyPreferenceAsync(this.accessibilityPrefs.language);
+        this.session.message = this.translate.instant('settings.messages.preferencesSaved');
     }
 
     private loadPrefs(): void {
@@ -1240,7 +1279,6 @@ export class SettingsPageComponent implements OnDestroy {
                 largerText: parsed.largerText ?? this.prefs.largerText,
                 highContrast: parsed.highContrast ?? this.prefs.highContrast,
                 language: parsed.language ?? this.prefs.language,
-                region: parsed.region ?? this.prefs.region,
             };
         } catch {
             this.prefs = {
@@ -1250,8 +1288,7 @@ export class SettingsPageComponent implements OnDestroy {
                 reducedMotion: false,
                 largerText: false,
                 highContrast: false,
-                language: 'system',
-                region: 'system'
+                language: 'system'
             };
         }
 
@@ -1273,7 +1310,7 @@ export class SettingsPageComponent implements OnDestroy {
         root.classList.toggle('prefers-reduced-motion', !!this.accessibilityPrefs.reducedMotion);
         root.classList.toggle('larger-text', !!this.accessibilityPrefs.largerText);
         root.classList.toggle('high-contrast', !!this.accessibilityPrefs.highContrast);
-        root.setAttribute('lang', this.accessibilityPrefs.language === 'system' ? 'en' : this.accessibilityPrefs.language);
+        root.setAttribute('lang', resolveDocumentLanguage(this.accessibilityPrefs.language));
     }
 
     private syncAccessibilityFromPrefs(): void {
@@ -1281,8 +1318,7 @@ export class SettingsPageComponent implements OnDestroy {
             reducedMotion: !!this.prefs.reducedMotion,
             largerText: !!this.prefs.largerText,
             highContrast: !!this.prefs.highContrast,
-            language: this.prefs.language ?? 'system',
-            region: this.prefs.region ?? 'system'
+            language: this.prefs.language ?? 'system'
         };
 
         this.initialAccessibilityPrefs = { ...this.accessibilityPrefs };
@@ -1293,7 +1329,6 @@ export class SettingsPageComponent implements OnDestroy {
         this.prefs.largerText = this.accessibilityPrefs.largerText;
         this.prefs.highContrast = this.accessibilityPrefs.highContrast;
         this.prefs.language = this.accessibilityPrefs.language;
-        this.prefs.region = this.accessibilityPrefs.region;
     }
 
     private prefersSystemDarkMode(): boolean {
@@ -1458,13 +1493,28 @@ export class SettingsPageComponent implements OnDestroy {
     private mapDeviceSession(session: AuthSessionDto): DeviceSessionEntry {
         return {
             id: session.id,
-            label: session.isCurrent ? 'Current session' : `Session ${session.id.slice(0, 8)}`,
+            label: session.isCurrent
+                ? this.t('settings.security.currentSessionLabel')
+                : this.t('settings.security.sessionLabel', { id: session.id.slice(0, 8) }),
             createdAtUtc: session.createdAtUtc,
             expiresAtUtc: session.expiresAtUtc,
             lastActiveUtc: session.createdAtUtc,
             current: session.isCurrent,
             revoked: session.isRevoked
         };
+    }
+
+    private t(key: string, params?: Record<string, string | number>): string {
+        return this.translate.instant(key, params);
+    }
+
+    private getRegionDisplayLabel(regionCode: string, fallbackLabel: string): string {
+        try {
+            const displayNames = new Intl.DisplayNames([this.translate.currentLang || 'en'], { type: 'region' });
+            return displayNames.of(regionCode) ?? fallbackLabel;
+        } catch {
+            return fallbackLabel;
+        }
     }
 
     private loadSectionSavedAt(): void {

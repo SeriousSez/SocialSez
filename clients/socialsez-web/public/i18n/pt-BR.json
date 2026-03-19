@@ -1,0 +1,198 @@
+{
+  "app": {
+    "notice": {
+      "update": "Nova versão disponível. Recarregue para atualizar.",
+      "updateReady": "Atualização pronta",
+      "reload": "Recarregar",
+      "reloading": "Recarregando...",
+      "dismiss": "Dispensar",
+      "dismissAria": "Dispensar notificação"
+    },
+    "shell": {
+      "skipToContent": "Pular para o conteúdo",
+      "brandSubtitle": "Plataforma comunitária",
+      "nav": {
+        "feed": "Feed",
+        "discover": "Descobrir",
+        "blogs": "Blogs",
+        "communities": "Comunidades",
+        "chat": "Chat",
+        "saved": "Salvos",
+        "drafts": "Rascunhos",
+        "notifications": "Notificações",
+        "profile": "Perfil",
+        "settings": "Configurações",
+        "auth": "Entrar"
+      },
+      "activity": {
+        "title": "Atividade",
+        "empty": "Nada em andamento.",
+        "aria": "Atividade de upload e publicação"
+      },
+      "trending": {
+        "title": "Tendências",
+        "loading": "Carregando hashtags...",
+        "empty": "Ainda não há hashtags em alta."
+      },
+      "settingsQuickNav": {
+        "title": "Configurações",
+        "profile": "Perfil",
+        "account": "Conta",
+        "privacy": "Privacidade",
+        "session": "Sessão",
+        "preferences": "Preferências",
+        "notifications": "Notificações",
+        "safety": "Segurança",
+        "security": "Segurança da conta",
+        "data": "Dados",
+        "blocked": "Usuários bloqueados",
+        "logout": "Sair"
+      }
+    },
+    "search": {
+      "label": "Pesquisar",
+      "buttonAria": "Pesquisar",
+      "scopePrefix": "Escopo",
+      "scopeAuto": "Automático",
+      "scope": {
+        "all": "Todos os resultados",
+        "communities": "Comunidades",
+        "blogs": "Blogs",
+        "users": "Usuários",
+        "posts": "Posts",
+        "reels": "Reels",
+        "hashtags": "Hashtags"
+      }
+    }
+  },
+  "auth": {
+    "hero": {
+      "title": "Bem-vindo ao Venli",
+      "loginSubtitle": "Entre com seu e-mail e senha.",
+      "registerSubtitle": "Crie sua conta para começar a postar e seguir pessoas.",
+      "interestsSubtitle": "Escolha interesses para personalizar o Descobrir desde o primeiro dia."
+    },
+    "fields": {
+      "email": "E-mail",
+      "password": "Senha",
+      "confirmPassword": "Confirmar senha",
+      "handle": "Nome de usuário",
+      "displayName": "Nome de exibição",
+      "dateOfBirth": "Data de nascimento",
+      "country": "País",
+      "bio": "Bio"
+    },
+    "actions": {
+      "signIn": "Entrar",
+      "createAccount": "Criar conta",
+      "continue": "Continuar",
+      "finish": "Concluir",
+      "skipForNow": "Pular por enquanto"
+    },
+    "switch": {
+      "newHere": "Novo por aqui?",
+      "alreadyHaveAccount": "Já tem uma conta?"
+    }
+  },
+  "settings": {
+    "page": {
+      "title": "Configurações",
+      "subtitle": "Gerencie sua conta, seu perfil e as preferências do app.",
+      "unsavedChanges": "Você tem alterações de configuração não salvas.",
+      "discardAll": "Descartar todas as alterações não salvas"
+    },
+    "sections": {
+      "profile": "Perfil",
+      "account": "Conta",
+      "privacy": "Privacidade",
+      "session": "Sessão",
+      "preferences": "Preferências",
+      "notifications": "Notificações",
+      "safety": "Segurança",
+      "security": "Segurança",
+      "data": "Controles de dados",
+      "blocked": "Usuários bloqueados",
+      "logout": "Sair"
+    },
+    "common": {
+      "reload": "Recarregar",
+      "discard": "Descartar",
+      "saving": "Salvando...",
+      "cancel": "Cancelar",
+      "back": "Voltar",
+      "add": "Adicionar"
+    },
+    "preferences": {
+      "compactFeed": "Layout compacto do feed",
+      "useSystemTheme": "Usar tema do sistema",
+      "darkMode": "Modo escuro",
+      "accessibility": "Acessibilidade",
+      "reducedMotion": "Reduzir animações",
+      "largerText": "Modo de texto maior",
+      "highContrast": "Modo de alto contraste",
+      "language": "Idioma",
+      "saveAccessibility": "Salvar acessibilidade"
+    },
+    "language": {
+      "system": "Padrão do sistema",
+      "enUS": "English (US)",
+      "enGB": "English (UK)",
+      "da": "Dansk",
+      "es": "Español",
+      "de": "Deutsch",
+      "fr": "Français",
+      "ptBR": "Português (Brasil)",
+      "nl": "Nederlands",
+      "sv": "Svenska",
+      "nb": "Norsk bokmål",
+      "it": "Italiano",
+      "pl": "Polski",
+      "ar": "العربية",
+      "tr": "Türkçe"
+    },
+    "messages": {
+      "profileSaved": "Configurações de perfil salvas.",
+      "profileReloaded": "Configurações de perfil recarregadas.",
+      "preferencesSaved": "Preferências salvas."
+    }
+  },
+  "discover": {
+    "page": {
+      "title": "Descobrir"
+    },
+    "scope": {
+      "all": "Tudo",
+      "communities": "Comunidades",
+      "communityPosts": "Posts de comunidade",
+      "blogs": "Blogs",
+      "reels": "Reels",
+      "posts": "Posts",
+      "hashtags": "Hashtags",
+      "users": "Usuários"
+    },
+    "sections": {
+      "forYou": "Para você",
+      "users": "Usuários",
+      "communities": "Comunidades",
+      "communityPosts": "Posts de comunidade",
+      "blogs": "Blogs",
+      "reels": "Reels",
+      "hashtags": "Hashtags",
+      "posts": "Posts"
+    }
+  },
+  "chatPage": {
+    "title": "Mensagens",
+    "search": {
+      "label": "Pesquisar chats",
+      "startNewChat": "Iniciar novo chat"
+    },
+    "sidebar": {
+      "chats": "Chats"
+    },
+    "noConversation": {
+      "title": "Selecione um chat para começar a conversar",
+      "startNewChat": "Iniciar novo chat"
+    }
+  }
+}

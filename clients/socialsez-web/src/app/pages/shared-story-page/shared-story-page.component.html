@@ -1,22 +1,22 @@
 <section class="shared-page">
     <article class="shared-card" *ngIf="loading">
-        <p>Loading story...</p>
+        <p>{{ 'sharedStory.loading.story' | translate }}</p>
     </article>
 
     <article class="shared-card" *ngIf="notFound && !loading">
-        <h3>Story unavailable</h3>
-        <p>This story is expired, removed, or the link is invalid.</p>
+        <h3>{{ 'sharedStory.notFound.title' | translate }}</h3>
+        <p>{{ 'sharedStory.notFound.message' | translate }}</p>
     </article>
 
     <article class="shared-card" *ngIf="error && !loading && !notFound">
-        <h3>Something went wrong</h3>
-        <p>{{ error }}</p>
+        <h3>{{ 'sharedStory.errors.title' | translate }}</h3>
+        <p>{{ error | translate }}</p>
     </article>
 
     <article *ngIf="story as item">
         <header class="meta-row">
             <div class="author-meta">
-                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
+                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'sharedStory.author.imageAlt' | translate" />
                 <ng-template #authorInitial>
                     <div class="author-avatar">{{ (item.authorHandle[0] || '?') | uppercase }}</div>
                 </ng-template>
@@ -25,9 +25,10 @@
                     <p>{{ item.createdAtUtc | date:'medium' }}</p>
                 </div>
             </div>
-            <button type="button" class="comments-toggle" (click)="copyLinkAsync()" [attr.aria-label]="copiedLink ? 'Story link copied' : 'Copy story link'" [attr.title]="copiedLink ? 'Copied' : 'Copy link'">
+            <button type="button" class="comments-toggle" (click)="copyLinkAsync()" [attr.aria-label]="copiedLink ? ('sharedStory.actions.linkCopiedAria' | translate) : ('sharedStory.actions.copyStoryLinkAria' | translate)"
+                [attr.title]="copiedLink ? ('sharedStory.actions.copied' | translate) : ('sharedStory.actions.copyLink' | translate)">
                 <i class="fa-duotone" [class.fa-light]="!copiedLink" [class.fa-solid]="copiedLink" [class.fa-link]="!copiedLink" [class.fa-check]="copiedLink" aria-hidden="true"></i>
-                <span class="action-label">{{ copiedLink ? 'Copied' : 'Copy link' }}</span>
+                <span class="action-label">{{ copiedLink ? ('sharedStory.actions.copied' | translate) : ('sharedStory.actions.copyLink' | translate) }}</span>
             </button>
         </header>
 
@@ -48,7 +49,7 @@
                 <video class="media" [src]="item.mediaUrl" controls autoplay muted loop playsinline preload="auto"></video>
             </ng-container>
             <ng-template #imageStory>
-                <img class="media" [src]="item.mediaUrl" loading="eager" decoding="async" alt="Shared story media" />
+                <img class="media" [src]="item.mediaUrl" loading="eager" decoding="async" [attr.alt]="'sharedStory.media.alt' | translate" />
             </ng-template>
         </div>
     </article>

@@ -1,0 +1,32 @@
+{
+  "app": {
+    "shell": {
+      "activity": {
+        "title": "Activity",
+        "empty": "Nothing in progress.",
+        "aria": "Upload and publish activity"
+      },
+      "trending": {
+        "title": "Trending",
+        "loading": "Loading hashtags...",
+        "empty": "No trending hashtags yet."
+      }
+    }
+  },
+  "auth": {
+    "hero": {
+      "interestsSubtitle": "Pick interests to personalise Discover from day one."
+    },
+    "interests": {
+      "subtitle": "Select up to 12 hashtags. We'll follow them for you to tailor your feed."
+    }
+  },
+  "settings": {
+    "page": {
+      "subtitle": "Manage your account, profile and app preferences."
+    },
+    "logout": {
+      "action": "Log out"
+    }
+  }
+}

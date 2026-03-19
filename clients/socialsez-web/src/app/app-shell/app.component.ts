@@ -5,8 +5,10 @@ import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SwUpdate, VersionEvent } from '@angular/service-worker';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { filter, firstValueFrom } from 'rxjs';
 import { CommunityDto, CommunityRuleDto, HashtagSearchResultDto, ReelDto, StoryDto, StoryGroupDto, ProfileDto } from '../core/api.types';
+import { AppLanguageService } from '../core/app-language.service';
 import { SharedReelCommentPreview } from '../core/shared-reel.utils';
 import { OpenReelInModalRequest, PendingSaveToCollectionRequest, SessionNoticeEntry, SessionService } from '../core/session.service';
 import { NotificationsRealtimeService } from '../core/notifications-realtime.service';
@@ -52,7 +54,7 @@ interface RoutePreviewMeta {
 
 @Component({
     selector: 'app-root',
-    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, MessagesDockComponent, FeedStoryViewerComponent, CommunityInfoRailComponent, SavedCollectionsRailComponent, SaveToCollectionModalComponent],
+    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, MessagesDockComponent, FeedStoryViewerComponent, CommunityInfoRailComponent, SavedCollectionsRailComponent, SaveToCollectionModalComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
@@ -68,16 +70,6 @@ export class AppComponent implements OnInit, OnDestroy {
     mobileFooterMenuOpen = false;
     searchScopePickerOpen = false;
     manualSearchScope: SearchDiscoverType | null = null;
-    readonly searchScopeOptions: ReadonlyArray<SearchScopeOption> = [
-        { value: 'all', label: 'All results' },
-        { value: 'communities', label: 'Communities' },
-        { value: 'community-posts', label: 'Community posts' },
-        { value: 'blogs', label: 'Blogs' },
-        { value: 'users', label: 'Users' },
-        { value: 'posts', label: 'Posts' },
-        { value: 'reels', label: 'Reels' },
-        { value: 'hashtags', label: 'Hashtags' }
-    ];
     rightRailCommunity: CommunityDto | null = null;
     profileChipHasStory = false;
     profileChipHasUnseenStory = false;
@@ -109,7 +101,6 @@ export class AppComponent implements OnInit, OnDestroy {
     private readonly topNoticeAnimationDurationMs = 400;
     private readonly updateMessagePattern = /(new\s+version|version\s+available|update\s+available)/i;
     private readonly errorMessagePattern = /(error|failed|could not|unable to|invalid|denied|forbidden|unauthorized|not found|expired)/i;
-    private readonly updateNoticeMessage = 'New version available. Reload to update.';
     private readonly defaultMetaTitle = 'Venli';
     private readonly defaultMetaDescription = 'Build, post, discover and follow in one flow.';
     private readonly defaultMetaImagePath = '/assets/images/v-blue-close.png';
@@ -121,7 +112,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly cdr = inject(ChangeDetectorRef);
+    private readonly appLanguage = inject(AppLanguageService);
     private readonly notificationsRealtime = inject(NotificationsRealtimeService);
+    private readonly translate = inject(TranslateService);
 
     constructor(
         public readonly session: SessionService,
@@ -152,7 +145,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     get topNoticeVersion(): string {
         if (this.appUpdateAvailable) {
-            return this.appUpdateVersionLabel || 'Update ready';
+            return this.appUpdateVersionLabel || this.translate.instant('app.notice.updateReady');
         }
 
         return 'v1.1.3';
@@ -176,10 +169,25 @@ export class AppComponent implements OnInit, OnDestroy {
 
     get topNoticeActionLabel(): string {
         if (this.appUpdateAvailable) {
-            return this.reloadingForUpdate ? 'Reloading...' : 'Reload';
+            return this.reloadingForUpdate
+                ? this.translate.instant('app.notice.reloading')
+                : this.translate.instant('app.notice.reload');
         }
 
-        return 'Dismiss';
+        return this.translate.instant('app.notice.dismiss');
+    }
+
+    get searchScopeOptions(): ReadonlyArray<SearchScopeOption> {
+        return [
+            { value: 'all', label: this.translate.instant('app.search.scope.all') },
+            { value: 'communities', label: this.translate.instant('app.search.scope.communities') },
+            { value: 'community-posts', label: this.translate.instant('app.search.scope.communityPosts') },
+            { value: 'blogs', label: this.translate.instant('app.search.scope.blogs') },
+            { value: 'users', label: this.translate.instant('app.search.scope.users') },
+            { value: 'posts', label: this.translate.instant('app.search.scope.posts') },
+            { value: 'reels', label: this.translate.instant('app.search.scope.reels') },
+            { value: 'hashtags', label: this.translate.instant('app.search.scope.hashtags') }
+        ];
     }
 
     get progressItems(): readonly ProgressItem[] {
@@ -246,45 +254,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     get searchContextLabel(): string {
-        const url = this.router.url.toLowerCase();
-
-        if (/^\/(communities|c\/|cp\/)/.test(url)) {
-            return 'Communities';
-        }
-
-        if (/^\/blogs(\/|$)/.test(url)) {
-            return 'Blogs';
-        }
-
-        if (/^\/users\//.test(url) || /^\/profile(\/|$)/.test(url)) {
-            return 'Profiles';
-        }
-
-        if (/^\/hashtags\//.test(url)) {
-            return 'Hashtags';
-        }
-
-        if (/^\/chat(\/|$)/.test(url)) {
-            return 'Chat';
-        }
-
-        if (/^\/notifications(\/|$)/.test(url)) {
-            return 'Notifications';
-        }
-
-        if (/^\/discover(\/|$)/.test(url)) {
-            return 'Discover';
-        }
-
-        if (/^\/settings(\/|$)/.test(url)) {
-            return 'Settings';
-        }
-
-        if (/^\/compose(\/|$)/.test(url)) {
-            return 'Compose';
-        }
-
-        return 'Global';
+        return this.translate.instant(`app.search.context.${this.searchContextKey}`);
     }
 
     get searchPlaceholder(): string {
@@ -292,29 +262,29 @@ export class AppComponent implements OnInit, OnDestroy {
             return this.getPlaceholderForScope(this.manualSearchScope);
         }
 
-        switch (this.searchContextLabel) {
-            case 'Communities':
-                return 'Search communities, community posts, users, hashtags';
-            case 'Blogs':
-                return 'Search blogs, communities, posts, hashtags';
-            case 'Profiles':
-                return 'Search profiles, posts, reels, hashtags';
-            case 'Hashtags':
-                return 'Search hashtags, posts, reels';
-            case 'Chat':
-                return 'Search users, posts, reels, hashtags';
-            case 'Notifications':
-                return 'Search users, posts, reels, hashtags';
-            case 'Discover':
-                return 'Search users, communities, community posts, blogs, reels, posts, hashtags';
+        switch (this.searchContextKey) {
+            case 'communities':
+                return this.translate.instant('app.search.placeholder.communities');
+            case 'blogs':
+                return this.translate.instant('app.search.placeholder.blogs');
+            case 'profiles':
+                return this.translate.instant('app.search.placeholder.profiles');
+            case 'hashtags':
+                return this.translate.instant('app.search.placeholder.hashtags');
+            case 'chat':
+                return this.translate.instant('app.search.placeholder.chat');
+            case 'notifications':
+                return this.translate.instant('app.search.placeholder.notifications');
+            case 'discover':
+                return this.translate.instant('app.search.placeholder.discover');
             default:
-                return 'Search users, communities, community posts, blogs, reels, posts, hashtags';
+                return this.translate.instant('app.search.placeholder.global');
         }
     }
 
     get searchChipLabel(): string {
         return this.isSearchScopeOverridden
-            ? `Scope: ${this.getScopeLabel(this.activeSearchScope)}`
+            ? `${this.translate.instant('app.search.scopePrefix')}: ${this.getScopeLabel(this.activeSearchScope)}`
             : this.searchContextLabel;
     }
 
@@ -326,15 +296,61 @@ export class AppComponent implements OnInit, OnDestroy {
         return this.getScopeLabel(this.routeSearchDiscoverType);
     }
 
+    private get updateNoticeMessage(): string {
+        return this.translate.instant('app.notice.update');
+    }
+
+    private get searchContextKey(): 'communities' | 'blogs' | 'profiles' | 'hashtags' | 'chat' | 'notifications' | 'discover' | 'settings' | 'compose' | 'global' {
+        const url = this.router.url.toLowerCase();
+
+        if (/^\/(communities|c\/|cp\/)/.test(url)) {
+            return 'communities';
+        }
+
+        if (/^\/blogs(\/|$)/.test(url)) {
+            return 'blogs';
+        }
+
+        if (/^\/users\//.test(url) || /^\/profile(\/|$)/.test(url)) {
+            return 'profiles';
+        }
+
+        if (/^\/hashtags\//.test(url)) {
+            return 'hashtags';
+        }
+
+        if (/^\/chat(\/|$)/.test(url)) {
+            return 'chat';
+        }
+
+        if (/^\/notifications(\/|$)/.test(url)) {
+            return 'notifications';
+        }
+
+        if (/^\/discover(\/|$)/.test(url)) {
+            return 'discover';
+        }
+
+        if (/^\/settings(\/|$)/.test(url)) {
+            return 'settings';
+        }
+
+        if (/^\/compose(\/|$)/.test(url)) {
+            return 'compose';
+        }
+
+        return 'global';
+    }
+
     private get routeSearchDiscoverType(): SearchDiscoverType {
-        switch (this.searchContextLabel) {
-            case 'Communities':
+        switch (this.searchContextKey) {
+            case 'communities':
                 return 'communities';
-            case 'Blogs':
+            case 'blogs':
                 return 'blogs';
-            case 'Profiles':
+            case 'profiles':
                 return 'users';
-            case 'Hashtags':
+            case 'hashtags':
                 return 'hashtags';
             default:
                 return 'all';
@@ -420,6 +436,12 @@ export class AppComponent implements OnInit, OnDestroy {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(() => {
                 this.onTopNoticeMessageChanged();
+            });
+
+        this.appLanguage.languageChanges$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                this.cdr.detectChanges();
             });
 
         this.session.openReelInModal$
@@ -513,6 +535,7 @@ export class AppComponent implements OnInit, OnDestroy {
         }
 
         this.applyThemePreference();
+        void this.appLanguage.applyStoredPreferenceAsync();
     }
 
     @HostListener('document:click', ['$event'])
@@ -880,8 +903,7 @@ export class AppComponent implements OnInit, OnDestroy {
                 reducedMotion: false,
                 largerText: false,
                 highContrast: false,
-                language: 'system',
-                region: 'system'
+                language: 'system'
             }));
             this.applyPresentationPreferences({
                 reducedMotion: false,
@@ -915,8 +937,7 @@ export class AppComponent implements OnInit, OnDestroy {
                 reducedMotion: false,
                 largerText: false,
                 highContrast: false,
-                language: 'system',
-                region: 'system'
+                language: 'system'
             }));
             this.applyPresentationPreferences({
                 reducedMotion: false,
@@ -932,7 +953,7 @@ export class AppComponent implements OnInit, OnDestroy {
         root.classList.toggle('prefers-reduced-motion', !!prefs.reducedMotion);
         root.classList.toggle('larger-text', !!prefs.largerText);
         root.classList.toggle('high-contrast', !!prefs.highContrast);
-        root.setAttribute('lang', prefs.language && prefs.language !== 'system' ? prefs.language : 'en');
+        this.appLanguage.applyDocumentLanguage(prefs.language ?? 'system');
     }
 
     private prefersSystemDarkMode(): boolean {
@@ -979,28 +1000,44 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     private getScopeLabel(scope: SearchDiscoverType): string {
-        const option = this.searchScopeOptions.find(item => item.value === scope);
-        return option?.label ?? 'All results';
+        switch (scope) {
+            case 'communities':
+                return this.translate.instant('app.search.scope.communities');
+            case 'community-posts':
+                return this.translate.instant('app.search.scope.communityPosts');
+            case 'blogs':
+                return this.translate.instant('app.search.scope.blogs');
+            case 'users':
+                return this.translate.instant('app.search.scope.users');
+            case 'posts':
+                return this.translate.instant('app.search.scope.posts');
+            case 'reels':
+                return this.translate.instant('app.search.scope.reels');
+            case 'hashtags':
+                return this.translate.instant('app.search.scope.hashtags');
+            default:
+                return this.translate.instant('app.search.scope.all');
+        }
     }
 
     private getPlaceholderForScope(scope: SearchDiscoverType): string {
         switch (scope) {
             case 'communities':
-                return 'Search communities by name, slug, or description';
+                return this.translate.instant('app.search.placeholderByScope.communities');
             case 'community-posts':
-                return 'Search community posts by title, content, author';
+                return this.translate.instant('app.search.placeholderByScope.communityPosts');
             case 'blogs':
-                return 'Search blogs by title, handle, or slug';
+                return this.translate.instant('app.search.placeholderByScope.blogs');
             case 'users':
-                return 'Search users and profiles';
+                return this.translate.instant('app.search.placeholderByScope.users');
             case 'posts':
-                return 'Search posts and authors';
+                return this.translate.instant('app.search.placeholderByScope.posts');
             case 'reels':
-                return 'Search reels by caption, comments, or author';
+                return this.translate.instant('app.search.placeholderByScope.reels');
             case 'hashtags':
-                return 'Search hashtags';
+                return this.translate.instant('app.search.placeholderByScope.hashtags');
             default:
-                return 'Search users, communities, community posts, blogs, reels, posts, hashtags';
+                return this.translate.instant('app.search.placeholder.global');
         }
     }
 

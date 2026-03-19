@@ -1,29 +1,29 @@
 <section class="page chat-page">
     <header class="page-head">
-        <h2>Messages</h2>
+        <h2>{{ 'chatPage.title' | translate }}</h2>
     </header>
 
-    <main class="chat-layout" [class.mobile-thread-active]="!!selectedConversationId" aria-label="Messages layout">
+    <main class="chat-layout" [class.mobile-thread-active]="!!selectedConversationId" [attr.aria-label]="'chatPage.layoutAria' | translate">
         <aside class="chat-sidebar">
             <section class="chat-tools">
                 <div class="chat-search-row">
                     <label class="field">
-                        <span>Search chats</span>
+                        <span>{{ 'chatPage.search.label' | translate }}</span>
                         <div class="chat-search-input-wrap">
                             <input [(ngModel)]="searchUsersQuery" (ngModelChange)="onSearchUsersInput($event)" placeholder=" " />
-                            <span class="chat-search-marquee" aria-hidden="true"><span class="chat-search-marquee-track">Find chats by name, handle, or message</span></span>
+                            <span class="chat-search-marquee" aria-hidden="true"><span class="chat-search-marquee-track">{{ 'chatPage.search.marquee' | translate }}</span></span>
                         </div>
                     </label>
 
-                    <button type="button" class="chat-new-chat-icon" (click)="openChatSearchModal()" aria-label="Start a new chat" title="Start a new chat">
+                    <button type="button" class="chat-new-chat-icon" (click)="openChatSearchModal()" [attr.aria-label]="'chatPage.search.startNewChat' | translate" [attr.title]="'chatPage.search.startNewChat' | translate">
                         <i class="fa-duotone fa-pen" aria-hidden="true"></i>
                     </button>
                 </div>
             </section>
 
             <section class="conversation-list-wrap">
-                <h3>Chats</h3>
-                <div class="chat-conversation-skeleton" *ngIf="loadingConversations" aria-label="Loading conversations">
+                <h3>{{ 'chatPage.sidebar.chats' | translate }}</h3>
+                <div class="chat-conversation-skeleton" *ngIf="loadingConversations" [attr.aria-label]="'chatPage.loading.conversations' | translate">
                     <div class="chat-conversation-skeleton-row" *ngFor="let _ of [1, 2, 3, 4]">
                         <app-skeleton width="42px" height="42px" radius="999px"></app-skeleton>
                         <div class="chat-conversation-skeleton-copy">
@@ -40,12 +40,12 @@
                                 <span class="avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="!conversationAvatarUrl(conversation)">{{
                                     conversationAvatarText(conversation) }}</span>
                                 <img class="avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar"
-                                    onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
+                                    onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'chatPage.conversation.avatarAlt' | translate" />
                             </ng-container>
 
                             <ng-template #conversationAvatarStatic>
                                 <span class="avatar" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
-                                <img class="avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
+                                <img class="avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'chatPage.conversation.avatarAlt' | translate" />
                             </ng-template>
 
                             <div class="conversation-content">
@@ -58,7 +58,7 @@
                         </div>
                     </button>
 
-                    <p class="chat-empty-hint" *ngIf="!filteredConversations.length">{{ searchUsersQuery.trim() ? 'No chats found.' : 'No active chats yet.' }}</p>
+                    <p class="chat-empty-hint" *ngIf="!filteredConversations.length">{{ searchUsersQuery.trim() ? ('chatPage.empty.noChatsFound' | translate) : ('chatPage.empty.noActiveChats' | translate) }}</p>
 
                 </div>
             </section>
@@ -67,17 +67,17 @@
         <section class="message-panel" *ngIf="selectedConversation as conversation; else noConversation">
             <header class="message-panel-head">
                 <div class="thread-head-main">
-                    <button type="button" class="thread-back" (click)="clearSelectedConversation()" aria-label="Back to chats">
+                    <button type="button" class="thread-back" (click)="clearSelectedConversation()" [attr.aria-label]="'chatPage.thread.backToChats' | translate">
                         <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
                     </button>
 
                     <button type="button" class="thread-person thread-person-link thread-person-button" *ngIf="chatHeaderProfileHandle(conversation) as profileHandle; else threadPersonStatic" (click)="openAvatarProfileOrStory(profileHandle, $event)"
-                        [attr.aria-label]="hasActiveStoryForHandle(profileHandle) ? ('Open @' + profileHandle + ' stories') : ('View @' + profileHandle + ' profile')">
+                        [attr.aria-label]="hasActiveStoryForHandle(profileHandle) ? ('profile.hero.openStoriesAria' | translate:{ handle: profileHandle }) : ('profile.hero.viewProfileAria' | translate:{ handle: profileHandle })">
                         <span class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="!conversationAvatarUrl(conversation)">{{
                             conversationAvatarText(conversation)
                             }}</span>
                         <img class="thread-avatar" [class.story-active]="hasActiveStoryForHandle(profileHandle)" [class.story-seen]="hasActiveStoryForHandle(profileHandle) && !hasUnseenStoryForHandle(profileHandle)" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar"
-                            onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
+                            onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'chatPage.conversation.avatarAlt' | translate" />
 
                         <div class="thread-identity">
                             <h3>{{ chatHeaderName(conversation) }}</h3>
@@ -88,7 +88,7 @@
                     <ng-template #threadPersonStatic>
                         <div class="thread-person">
                             <span class="thread-avatar" *ngIf="!conversationAvatarUrl(conversation)">{{ conversationAvatarText(conversation) }}</span>
-                            <img class="thread-avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Conversation avatar" />
+                            <img class="thread-avatar" *ngIf="conversationAvatarUrl(conversation) as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'chatPage.conversation.avatarAlt' | translate" />
 
                             <div class="thread-identity">
                                 <h3>{{ chatHeaderName(conversation) }}</h3>
@@ -100,29 +100,29 @@
                 </div>
 
                 <div class="thread-group-menu">
-                    <button type="button" class="thread-group-menu-toggle" [attr.aria-expanded]="groupChatMenuOpen" aria-haspopup="menu" aria-label="Group chat options" (click)="toggleGroupChatMenu($event)">
+                    <button type="button" class="thread-group-menu-toggle" [attr.aria-expanded]="groupChatMenuOpen" aria-haspopup="menu" [attr.aria-label]="'chatPage.thread.groupOptions' | translate" (click)="toggleGroupChatMenu($event)">
                         <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
                     </button>
 
-                    <div class="thread-group-menu-list" *ngIf="groupChatMenuOpen" role="menu" aria-label="Group chat options">
-                        <button type="button" role="menuitem" (click)="openMessageSearchView($event)">Search messages</button>
-                        <button type="button" role="menuitem" (click)="renameGroupChat(conversation, $event)">Change chat name</button>
-                        <button type="button" role="menuitem" (click)="leaveGroupChat(conversation, $event)">{{ conversation.isGroup ? 'Leave chat' : 'Delete chat' }}</button>
-                        <button type="button" role="menuitem" (click)="toggleGroupChatMute(conversation, $event)">{{ isGroupChatMuted(conversation) ? 'Unmute chat' : 'Mute chat' }}</button>
+                    <div class="thread-group-menu-list" *ngIf="groupChatMenuOpen" role="menu" [attr.aria-label]="'chatPage.thread.groupOptions' | translate">
+                        <button type="button" role="menuitem" (click)="openMessageSearchView($event)">{{ 'chatPage.thread.searchMessages' | translate }}</button>
+                        <button type="button" role="menuitem" (click)="renameGroupChat(conversation, $event)">{{ 'chatPage.thread.changeChatName' | translate }}</button>
+                        <button type="button" role="menuitem" (click)="leaveGroupChat(conversation, $event)">{{ conversation.isGroup ? ('chatPage.thread.leaveChat' | translate) : ('chatPage.thread.deleteChat' | translate) }}</button>
+                        <button type="button" role="menuitem" (click)="toggleGroupChatMute(conversation, $event)">{{ isGroupChatMuted(conversation) ? ('chatPage.thread.unmuteChat' | translate) : ('chatPage.thread.muteChat' | translate) }}</button>
                     </div>
                 </div>
             </header>
 
             <section class="message-search-view" *ngIf="messageSearchViewOpen">
                 <header class="message-search-header">
-                    <button type="button" class="message-search-back" (click)="closeMessageSearchView($event)" aria-label="Back to chat">
+                    <button type="button" class="message-search-back" (click)="closeMessageSearchView($event)" [attr.aria-label]="'chatPage.messageSearch.backToChat' | translate">
                         <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
                     </button>
 
                     <div class="message-search-input-wrap">
                         <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
-                        <input [(ngModel)]="messageSearchQuery" placeholder="Search messages" aria-label="Search messages" />
-                        <button type="button" class="message-search-clear" *ngIf="messageSearchQuery.trim()" (click)="messageSearchQuery = ''" aria-label="Clear message search">
+                        <input [(ngModel)]="messageSearchQuery" [attr.placeholder]="'chatPage.messageSearch.placeholder' | translate" [attr.aria-label]="'chatPage.messageSearch.placeholder' | translate" />
+                        <button type="button" class="message-search-clear" *ngIf="messageSearchQuery.trim()" (click)="messageSearchQuery = ''" [attr.aria-label]="'chatPage.messageSearch.clear' | translate">
                             <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -130,13 +130,13 @@
 
                 <div class="message-search-results" *ngIf="messageSearchQuery.trim(); else messageSearchIdleState">
                     <button type="button" class="message-search-result" *ngFor="let message of messageSearchResults; trackBy: trackByMessageId" (click)="onMessageSearchResultClick(message, $event)">
-                        <img class="message-search-avatar" *ngIf="messageAvatarUrl(message) as avatar; else messageSearchAvatarFallback" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Message author avatar" />
+                        <img class="message-search-avatar" *ngIf="messageAvatarUrl(message) as avatar; else messageSearchAvatarFallback" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'chatPage.messageSearch.avatarAlt' | translate" />
                         <ng-template #messageSearchAvatarFallback>
                             <span class="message-search-avatar fallback">{{ messageAvatarText(message) }}</span>
                         </ng-template>
 
                         <span class="message-search-copy">
-                            <strong class="message-search-author">{{ isOwnMessage(message) ? 'You' : '@' + message.authorHandle }}</strong>
+                            <strong class="message-search-author">{{ isOwnMessage(message) ? ('chatPage.common.you' | translate) : '@' + message.authorHandle }}</strong>
                             <span class="message-search-snippet">
                                 <ng-container *ngFor="let part of messageSearchPreviewParts(message)">
                                     <strong *ngIf="part.matched; else messageSearchPlainPart">{{ part.text }}</strong>
@@ -147,20 +147,20 @@
                         </span>
                     </button>
 
-                    <p class="message-search-empty" *ngIf="!messageSearchResults.length">No messages found for that search.</p>
+                    <p class="message-search-empty" *ngIf="!messageSearchResults.length">{{ 'chatPage.messageSearch.noResults' | translate }}</p>
                 </div>
 
                 <ng-template #messageSearchIdleState>
                     <div class="message-search-empty idle">
                         <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
-                        <h4>Search this chat</h4>
-                        <p>Find messages, media labels, and @handles inside this conversation.</p>
+                        <h4>{{ 'chatPage.messageSearch.idleTitle' | translate }}</h4>
+                        <p>{{ 'chatPage.messageSearch.idleDescription' | translate }}</p>
                     </div>
                 </ng-template>
             </section>
 
             <ng-container *ngIf="!messageSearchViewOpen">
-                <section class="chat-thread-skeleton" *ngIf="loadingMessages" aria-label="Loading messages">
+                <section class="chat-thread-skeleton" *ngIf="loadingMessages" [attr.aria-label]="'chatPage.loading.messages' | translate">
                     <div class="chat-thread-skeleton-row" [class.own]="i % 2 === 1" *ngFor="let _ of [1, 2, 3, 4, 5, 6, 7, 8]; let i = index">
                         <app-skeleton width="28px" height="28px" radius="999px"></app-skeleton>
                         <div class="chat-thread-skeleton-bubble" [class.hero]="i === 2 || i === 7">
@@ -178,8 +178,8 @@
                         <span class="dot dot-c"></span>
                     </div>
 
-                    <h4 *ngIf="!messageSearchQuery.trim()">This chat is waiting for its first message</h4>
-                    <p *ngIf="!messageSearchQuery.trim()">Break the silence and send a quick hello 👋</p>
+                    <h4 *ngIf="!messageSearchQuery.trim()">{{ 'chatPage.empty.firstMessageTitle' | translate }}</h4>
+                    <p *ngIf="!messageSearchQuery.trim()">{{ 'chatPage.empty.firstMessageDescription' | translate }}</p>
 
                     <div class="suggested-messages" *ngIf="!messageSearchQuery.trim()">
                         <button type="button" *ngFor="let suggestion of suggestedStarterMessages" (click)="sendSuggestedMessage(suggestion)" [disabled]="sendingMessage">
@@ -187,13 +187,13 @@
                         </button>
                     </div>
 
-                    <h4 *ngIf="messageSearchQuery.trim()">No messages found</h4>
-                    <p *ngIf="messageSearchQuery.trim()">Try another keyword in search.</p>
+                    <h4 *ngIf="messageSearchQuery.trim()">{{ 'chatPage.empty.noMessagesFoundTitle' | translate }}</h4>
+                    <p *ngIf="messageSearchQuery.trim()">{{ 'chatPage.empty.noMessagesFoundDescription' | translate }}</p>
                 </section>
 
                 <div #messageList class="message-list" *ngIf="!loadingMessages && (visibleMessages.length || typingParticipantCount > 0)" (scroll)="onMessageListScroll()">
-                    <div class="message-list-top-loader" *ngIf="loadingOlderMessages">Fetching older messages…</div>
-                    <div class="message-list-top-end" *ngIf="!loadingOlderMessages && showNoOlderMessagesMarker">No older messages</div>
+                    <div class="message-list-top-loader" *ngIf="loadingOlderMessages">{{ 'chatPage.messages.fetchingOlder' | translate }}</div>
+                    <div class="message-list-top-end" *ngIf="!loadingOlderMessages && showNoOlderMessagesMarker">{{ 'chatPage.messages.noOlder' | translate }}</div>
                     <ng-container *ngFor="let message of visibleMessages; trackBy: trackByMessageId; let i = index">
                         <div class="message-time-break" *ngIf="shouldShowMessageTimeBreak(i)">{{ formatMessageBreak(message.createdAtUtc) }}</div>
 
@@ -202,11 +202,11 @@
                             <div class="message-row">
                                 <ng-container *ngIf="!isOwnMessage(message)">
                                     <button type="button" class="message-avatar-trigger" (click)="openAvatarProfileOrStory(message.authorHandle, $event)"
-                                        [attr.aria-label]="hasActiveStoryForHandle(message.authorHandle) ? ('Open @' + message.authorHandle + ' stories') : ('View @' + message.authorHandle + ' profile')">
+                                        [attr.aria-label]="hasActiveStoryForHandle(message.authorHandle) ? ('profile.hero.openStoriesAria' | translate:{ handle: message.authorHandle }) : ('profile.hero.viewProfileAria' | translate:{ handle: message.authorHandle })">
                                         <span class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(message.authorHandle) && !hasUnseenStoryForHandle(message.authorHandle)" *ngIf="!messageAvatarUrl(message)">{{
                                             messageAvatarText(message) }}</span>
                                         <img class="message-avatar" [class.story-active]="hasActiveStoryForHandle(message.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(message.authorHandle) && !hasUnseenStoryForHandle(message.authorHandle)" *ngIf="messageAvatarUrl(message) as avatar"
-                                            [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Message sender avatar" />
+                                            [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'chatPage.messages.senderAvatarAlt' | translate" />
                                     </button>
                                 </ng-container>
 
@@ -215,7 +215,7 @@
                                         <p class="message-reply-label">{{ replyPreviewLabel(message, reply) }}</p>
 
                                         <button type="button" class="message-reply-media-card" *ngIf="isReplySharedMedia(reply); else textReplySnippet" (click)="onReplyPreviewClick(message, reply, $event)">
-                                            <img class="message-reply-media-thumb" *ngIf="replyPreviewThumbnail(reply) as thumbnail" [src]="thumbnail" alt="Replied message preview" />
+                                            <img class="message-reply-media-thumb" *ngIf="replyPreviewThumbnail(reply) as thumbnail" [src]="thumbnail" [attr.alt]="'chatPage.messages.replyMediaPreviewAlt' | translate" />
                                         </button>
 
                                         <ng-template #textReplySnippet>
@@ -238,13 +238,13 @@
                                                     (openRequested)="openSharedReel(sharedReel, message, $event)"></app-chat-shared-reel-preview>
                                                 <app-chat-shared-link-preview *ngIf="parsed.unfurlUrl as unfurlUrl" [unfurlUrl]="unfurlUrl" [preview]="getUnfurlPreview(unfurlUrl)" [loading]="isUnfurlPreviewLoading(unfurlUrl)"
                                                     (openRequested)="openUnfurledLink(unfurlUrl, $event)"></app-chat-shared-link-preview>
-                                                <img class="chat-message-media" *ngIf="parsed.imageUrl" [src]="parsed.imageUrl" alt="Sent image" />
-                                                <img class="chat-message-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" alt="Sent GIF" />
+                                                <img class="chat-message-media" *ngIf="parsed.imageUrl" [src]="parsed.imageUrl" [attr.alt]="'chatPage.messages.sentImageAlt' | translate" />
+                                                <img class="chat-message-media" *ngIf="parsed.gifUrl" [src]="parsed.gifUrl" [attr.alt]="'chatPage.messages.sentGifAlt' | translate" />
                                             </div>
 
                                             <div class="reaction-summary corner" *ngIf="messageDisplayReactions(message) as visibleReactions">
                                                 <span class="reaction-badge" *ngIf="visibleReactions.length" [class.has-multiple]="reactionTotalCountFromReactions(visibleReactions) > 1" [class.clickable]="reactionTotalCountFromReactions(visibleReactions) > 1"
-                                                    [attr.role]="reactionTotalCountFromReactions(visibleReactions) > 1 ? 'button' : null" [attr.tabindex]="reactionTotalCountFromReactions(visibleReactions) > 1 ? 0 : null" aria-label="Show reactions"
+                                                    [attr.role]="reactionTotalCountFromReactions(visibleReactions) > 1 ? 'button' : null" [attr.tabindex]="reactionTotalCountFromReactions(visibleReactions) > 1 ? 0 : null" [attr.aria-label]="'chatPage.reactions.show' | translate"
                                                     (mousedown)="onMessageReactionSummaryMouseDown(message, $event)" (click)="onMessageReactionSummaryClick(message, $event)" (keydown)="onMessageReactionSummaryKeydown(message, $event)">
                                                     <span class="reaction-emoji" *ngFor="let reaction of visibleReactions" [ngClass]="reactionBadgeClass(reaction.type)">
                                                         <i [class]="reactionIconClass(reaction.type)" aria-hidden="true"></i>
@@ -259,26 +259,27 @@
                                                 (primaryClick)="onMessagePrimaryReaction(message)" (reactionSelected)="onMessageReactionSelected(message, $event)">
                                             </app-reaction-picker>
 
-                                            <button type="button" class="message-reply-toggle" *ngIf="!isEditingMessage(message)" (click)="beginReplyToMessage(message, $event)" aria-label="Reply to message">
+                                            <button type="button" class="message-reply-toggle" *ngIf="!isEditingMessage(message)" (click)="beginReplyToMessage(message, $event)" [attr.aria-label]="'chatPage.messages.replyToMessage' | translate">
                                                 <i class="fa-duotone fa-light fa-reply" aria-hidden="true"></i>
                                             </button>
 
-                                            <button type="button" class="message-actions-toggle" *ngIf="canShowMessageActions(message) && !isEditingMessage(message)" (click)="toggleMessageActions(message, $event)" [attr.aria-expanded]="isMessageActionsOpen(message)" aria-label="Message options">
+                                            <button type="button" class="message-actions-toggle" *ngIf="canShowMessageActions(message) && !isEditingMessage(message)" (click)="toggleMessageActions(message, $event)" [attr.aria-expanded]="isMessageActionsOpen(message)"
+                                                [attr.aria-label]="'chatPage.messages.options' | translate">
                                                 <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
                                             </button>
 
                                             <div class="message-actions-menu" [class.open-below]="isMessageActionsOpenBelow(message)" *ngIf="isMessageActionsOpen(message)" (click)="$event.stopPropagation()" [style.left.px]="messageActionsMenuLeftPx" [style.top.px]="messageActionsMenuTopPx">
                                                 <div class="message-actions-time">{{ formatTime(message.createdAtUtc) }}</div>
                                                 <button type="button" *ngIf="canEditMessage(message)" (click)="beginMessageEditFromMenu(message, $event)" [disabled]="updatingMessageId === message.id">
-                                                    <span>Edit</span>
+                                                    <span>{{ 'chatPage.messages.actions.edit' | translate }}</span>
                                                     <i class="fa-duotone fa-light fa-pencil" aria-hidden="true"></i>
                                                 </button>
                                                 <button type="button" *ngIf="canReportMessage(message)" (click)="openMessageReport(message, $event)">
-                                                    <span>Report</span>
+                                                    <span>{{ 'chatPage.messages.actions.report' | translate }}</span>
                                                     <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
                                                 </button>
                                                 <button type="button" (click)="copyMessageText(message, $event)">
-                                                    <span>Copy</span>
+                                                    <span>{{ 'chatPage.messages.actions.copy' | translate }}</span>
                                                     <i class="fa-duotone fa-light fa-copy" aria-hidden="true"></i>
                                                 </button>
                                             </div>
@@ -305,10 +306,10 @@
                     </div>
 
                     <div class="reactions-modal-backdrop" *ngIf="messageReactionsModalOpen || messageReactionsModalClosing" [class.closing]="messageReactionsModalClosing" (click)="closeMessageReactionsModal()">
-                        <section class="reactions-modal" [class.closing]="messageReactionsModalClosing" role="dialog" aria-modal="true" aria-label="Reactions" (click)="$event.stopPropagation()">
+                        <section class="reactions-modal" [class.closing]="messageReactionsModalClosing" role="dialog" aria-modal="true" [attr.aria-label]="'chatPage.reactions.title' | translate" (click)="$event.stopPropagation()">
                             <header class="reactions-modal-header">
-                                <h3>Reactions</h3>
-                                <button type="button" class="reactions-modal-close" (click)="closeMessageReactionsModal()" aria-label="Close reactions">
+                                <h3>{{ 'chatPage.reactions.title' | translate }}</h3>
+                                <button type="button" class="reactions-modal-close" (click)="closeMessageReactionsModal()" [attr.aria-label]="'chatPage.reactions.close' | translate">
                                     <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
                                 </button>
                             </header>
@@ -317,7 +318,7 @@
                                 <button type="button" class="reaction-tab" *ngFor="let filter of messageReactionModalFilters" [class.active]="selectedMessageReactionFilter === filter.key" (mousedown)="onMessageReactionTabMouseDown(filter.key, $event)"
                                     (click)="onMessageReactionTabClick(filter.key, $event)">
                                     <ng-container *ngIf="filter.key === 'all'; else messageReactionFilterIcon">
-                                        <span class="reaction-tab-label">All</span>
+                                        <span class="reaction-tab-label">{{ 'chatPage.reactions.all' | translate }}</span>
                                     </ng-container>
                                     <ng-template #messageReactionFilterIcon>
                                         <span class="reaction-emoji reaction-tab-reaction" [ngClass]="reactionBadgeClass(filter.type)">
@@ -330,7 +331,7 @@
 
                             <div class="reactions-modal-list" *ngIf="visibleMessageReactionDetails.length; else messageReactionsModalEmpty">
                                 <article class="reaction-person" *ngFor="let item of visibleMessageReactionDetails">
-                                    <img class="reaction-person-avatar" *ngIf="item.imageUrl; else messageReactionPersonInitial" [src]="item.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reaction author image" />
+                                    <img class="reaction-person-avatar" *ngIf="item.imageUrl; else messageReactionPersonInitial" [src]="item.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'chatPage.reactions.authorAvatarAlt' | translate" />
                                     <ng-template #messageReactionPersonInitial>
                                         <div class="reaction-person-avatar fallback">{{ (item.displayName || item.handle || '?').charAt(0).toUpperCase() }}</div>
                                     </ng-template>
@@ -359,24 +360,24 @@
                 <div class="chat-composer-main">
                     <div class="chat-replying-tag" *ngIf="replyingToPreview as reply">
                         <div class="chat-replying-copy">
-                            <strong>Replying to {{ composerReplyLabel(reply) }}</strong>
+                            <strong>{{ 'chatPage.composer.replyingTo' | translate:{ target: composerReplyLabel(reply) } }}</strong>
                             <span>{{ replyPreviewText(reply) }}</span>
                         </div>
-                        <button type="button" aria-label="Cancel reply" (click)="cancelReplyToMessage()">×</button>
+                        <button type="button" [attr.aria-label]="'chatPage.composer.cancelReply' | translate" (click)="cancelReplyToMessage()">×</button>
                     </div>
 
                     <div class="chat-composer-input-shell" [class.composer-icons-hidden]="newMessage.trim().length > 0">
-                        <button #emojiToggleBtn type="button" class="chat-composer-icon chat-composer-emoji-btn" aria-label="Add emoji" title="Add emoji" (click)="toggleEmojiPicker()">
+                        <button #emojiToggleBtn type="button" class="chat-composer-icon chat-composer-emoji-btn" [attr.aria-label]="'chatPage.composer.addEmoji' | translate" [attr.title]="'chatPage.composer.addEmoji' | translate" (click)="toggleEmojiPicker()">
                             <i class="fa-duotone fa-light fa-face-smile" aria-hidden="true"></i>
                         </button>
 
-                        <textarea #composerInput [(ngModel)]="newMessage" placeholder="Message..." rows="1" (input)="onComposerInputChange()" (keydown)="onComposerKeydown($event)"></textarea>
+                        <textarea #composerInput [(ngModel)]="newMessage" [attr.placeholder]="'chatPage.composer.messagePlaceholder' | translate" rows="1" (input)="onComposerInputChange()" (keydown)="onComposerKeydown($event)"></textarea>
 
-                        <button #gifToggleBtn type="button" class="chat-composer-icon chat-composer-media-btn" aria-label="Add GIF" title="Add GIF" (click)="toggleGifInput()">
+                        <button #gifToggleBtn type="button" class="chat-composer-icon chat-composer-media-btn" [attr.aria-label]="'chatPage.composer.addGif' | translate" [attr.title]="'chatPage.composer.addGif' | translate" (click)="toggleGifInput()">
                             <i class="fa-duotone fa-light fa-gif" aria-hidden="true"></i>
                         </button>
 
-                        <button type="button" class="chat-composer-icon chat-composer-media-btn" aria-label="Add image" title="Add image" (click)="openImagePicker()" [disabled]="uploadingImage">
+                        <button type="button" class="chat-composer-icon chat-composer-media-btn" [attr.aria-label]="'chatPage.composer.addImage' | translate" [attr.title]="'chatPage.composer.addImage' | translate" (click)="openImagePicker()" [disabled]="uploadingImage">
                             <i class="fa-duotone fa-light fa-image" aria-hidden="true"></i>
                         </button>
 
@@ -384,31 +385,31 @@
                     </div>
 
                     <div #emojiPickerWrap class="chat-emoji-picker-wrap" *ngIf="emojiPickerOpen">
-                        <emoji-picker class="chat-emoji-picker" (emoji-click)="onEmojiPicked($event)" search-placeholder="Search emoji"></emoji-picker>
+                        <emoji-picker class="chat-emoji-picker" (emoji-click)="onEmojiPicked($event)" [attr.search-placeholder]="'chatPage.composer.searchEmojiPlaceholder' | translate"></emoji-picker>
                     </div>
 
                     <div #gifOverlayWrap class="chat-gif-input-row" *ngIf="gifInputOpen">
                         <div class="chat-gif-search-row">
-                            <input [(ngModel)]="gifSearchQuery" placeholder="Search Giphy GIFs" (keydown.enter)="searchGifs()" />
-                            <button type="button" class="ghost" (click)="searchGifs()" [disabled]="searchingGifs || !gifSearchQuery.trim()">Search</button>
+                            <input [(ngModel)]="gifSearchQuery" [attr.placeholder]="'chatPage.composer.searchGifsPlaceholder' | translate" (keydown.enter)="searchGifs()" />
+                            <button type="button" class="ghost" (click)="searchGifs()" [disabled]="searchingGifs || !gifSearchQuery.trim()">{{ 'chatPage.composer.search' | translate }}</button>
                         </div>
 
-                        <p class="chat-gif-hint" *ngIf="!searchingGifs && !gifSearchQuery.trim()">Trending now</p>
+                        <p class="chat-gif-hint" *ngIf="!searchingGifs && !gifSearchQuery.trim()">{{ 'chatPage.composer.trendingNow' | translate }}</p>
 
                         <div class="chat-gif-results" *ngIf="gifResults.length">
                             <button type="button" class="chat-gif-result" *ngFor="let gif of gifResults" (click)="selectGif(gif)" [disabled]="sendingMessage">
-                                <img [src]="gif.previewUrl" [alt]="gif.title || 'GIF'" loading="lazy" />
+                                <img [src]="gif.previewUrl" [alt]="gif.title || ('chatPage.common.gif' | translate)" loading="lazy" />
                             </button>
                         </div>
 
-                        <p class="chat-gif-hint" *ngIf="!searchingGifs && !gifSearchQuery.trim() && !gifResults.length">No trending GIFs right now.</p>
-                        <p class="chat-gif-hint" *ngIf="!searchingGifs && gifSearchQuery.trim() && !gifResults.length">No GIFs found.</p>
+                        <p class="chat-gif-hint" *ngIf="!searchingGifs && !gifSearchQuery.trim() && !gifResults.length">{{ 'chatPage.composer.noTrendingGifs' | translate }}</p>
+                        <p class="chat-gif-hint" *ngIf="!searchingGifs && gifSearchQuery.trim() && !gifResults.length">{{ 'chatPage.composer.noGifsFound' | translate }}</p>
                     </div>
 
                     <div class="chat-composer-media-preview" *ngIf="hasComposerMedia()">
                         <div class="chat-media-preview-item shared" *ngIf="composerSharedPost() as shared">
                             <div class="shared-post-head">
-                                <span>Sharing</span>
+                                <span>{{ 'chatPage.composer.sharing' | translate }}</span>
                                 <strong>@{{ shared.authorHandle }}</strong>
                             </div>
                             <div class="shared-post-content" *ngIf="shared.content">
@@ -423,13 +424,13 @@
                                     <br *ngIf="!isLastLine" />
                                 </ng-container>
                             </div>
-                            <img class="shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" alt="Shared post media preview" />
-                            <button type="button" (click)="clearComposerSharedPost()" aria-label="Remove shared post">×</button>
+                            <img class="shared-post-image" *ngIf="shared.imageUrl" [src]="shared.imageUrl" [attr.alt]="'chatPage.composer.sharedPostPreviewAlt' | translate" />
+                            <button type="button" (click)="clearComposerSharedPost()" [attr.aria-label]="'chatPage.composer.removeSharedPost' | translate">×</button>
                         </div>
                     </div>
                 </div>
 
-                <button type="button" (click)="sendMessage()" [disabled]="sendingMessage || uploadingImage || (!newMessage.trim() && !hasComposerMedia())">Send</button>
+                <button type="button" (click)="sendMessage()" [disabled]="sendingMessage || uploadingImage || (!newMessage.trim() && !hasComposerMedia())">{{ 'chatPage.composer.send' | translate }}</button>
             </footer>
         </section>
 
@@ -442,10 +443,10 @@
                         <span class="dot dot-c"></span>
                     </div>
 
-                    <h4>Pick a chat to start messaging</h4>
-                    <p>Choose any conversation from the left to open your thread.</p>
-                    <p>Don’t see the person yet? Start a new chat.</p>
-                    <button type="button" class="ghost" (click)="openChatSearchModal()">Start new chat</button>
+                    <h4>{{ 'chatPage.noConversation.title' | translate }}</h4>
+                    <p>{{ 'chatPage.noConversation.subtitle1' | translate }}</p>
+                    <p>{{ 'chatPage.noConversation.subtitle2' | translate }}</p>
+                    <button type="button" class="ghost" (click)="openChatSearchModal()">{{ 'chatPage.noConversation.startNewChat' | translate }}</button>
                 </section>
             </section>
         </ng-template>
@@ -456,20 +457,20 @@
         [relevantSuggestions]="suggestedRelevantProfiles" [busy]="startingDirectChat" (close)="closeChatSearchModal()" (queryChange)="onModalSearchUsersInput($event)" (startChat)="startChatWithProfiles($event)">
     </app-chat-search-modal>
 
-    <div class="shared-reel-viewer" *ngIf="activeSharedReel as reel" (click)="onSharedReelViewerBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Shared reel viewer">
+    <div class="shared-reel-viewer" *ngIf="activeSharedReel as reel" (click)="onSharedReelViewerBackdropClick($event)" role="dialog" aria-modal="true" [attr.aria-label]="'chatPage.sharedReel.viewerAria' | translate">
         <section class="shared-reel-viewer-card">
-            <button type="button" class="shared-reel-viewer-close" (click)="toggleSharedReelSettingsMenu($event)" aria-label="Reel settings">
+            <button type="button" class="shared-reel-viewer-close" (click)="toggleSharedReelSettingsMenu($event)" [attr.aria-label]="'chatPage.sharedReel.settings' | translate">
                 <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
             </button>
-            <button type="button" class="shared-reel-viewer-mobile-close" (click)="closeSharedReelViewerFromButton($event)" aria-label="Close reel viewer">
+            <button type="button" class="shared-reel-viewer-mobile-close" (click)="closeSharedReelViewerFromButton($event)" [attr.aria-label]="'chatPage.sharedReel.closeViewer' | translate">
                 <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
             </button>
             <div class="shared-reel-viewer-menu" *ngIf="sharedReelSettingsMenuOpen">
-                <button type="button" (click)="toggleActiveSharedReelSound()">{{ activeSharedReelMuted ? 'Unmute reel' : 'Mute reel' }}</button>
-                <button type="button" *ngIf="canReportActiveSharedReel" (click)="requestReportActiveSharedReel()">Report reel</button>
-                <button type="button" *ngIf="canManageActiveSharedReel" (click)="startActiveSharedReelCaptionEdit()" [disabled]="updatingSharedReel || deletingSharedReel">Edit reel</button>
+                <button type="button" (click)="toggleActiveSharedReelSound()">{{ activeSharedReelMuted ? ('chatPage.sharedReel.unmute' | translate) : ('chatPage.sharedReel.mute' | translate) }}</button>
+                <button type="button" *ngIf="canReportActiveSharedReel" (click)="requestReportActiveSharedReel()">{{ 'chatPage.sharedReel.report' | translate }}</button>
+                <button type="button" *ngIf="canManageActiveSharedReel" (click)="startActiveSharedReelCaptionEdit()" [disabled]="updatingSharedReel || deletingSharedReel">{{ 'chatPage.sharedReel.edit' | translate }}</button>
                 <button type="button" class="danger" *ngIf="canManageActiveSharedReel" (click)="requestDeleteActiveSharedReel()" [disabled]="updatingSharedReel || deletingSharedReel">
-                    {{ deletingSharedReel ? 'Deleting…' : 'Delete reel' }}
+                    {{ deletingSharedReel ? ('chatPage.sharedReel.deleting' | translate) : ('chatPage.sharedReel.delete' | translate) }}
                 </button>
             </div>
             <div class="shared-reel-viewer-media">
@@ -479,7 +480,7 @@
 
                     <div class="shared-reel-mobile-overlay">
                         <header class="shared-reel-mobile-head">
-                            <img class="shared-reel-mobile-avatar" *ngIf="reel.authorImageUrl" [src]="reel.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reel author avatar" />
+                            <img class="shared-reel-mobile-avatar" *ngIf="reel.authorImageUrl" [src]="reel.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'chatPage.sharedReel.authorAvatarAlt' | translate" />
                             <span class="shared-reel-mobile-avatar-fallback" *ngIf="!reel.authorImageUrl">{{ (reel.authorHandle || 'R')[0].toUpperCase() }}</span>
                             <div class="shared-reel-mobile-author">
                                 <strong *ngIf="activeSharedReelAuthorHandle as handle">
@@ -502,37 +503,38 @@
                             </section>
 
                             <div class="shared-reel-mobile-actions">
-                                <button type="button" class="shared-reel-mobile-action" [class.active]="activeSharedReelLikedByMe" (click)="toggleActiveSharedReelLike()" [disabled]="reactingSharedReel || !activeSharedReelResolved?.id" aria-label="Like reel">
+                                <button type="button" class="shared-reel-mobile-action" [class.active]="activeSharedReelLikedByMe" (click)="toggleActiveSharedReelLike()" [disabled]="reactingSharedReel || !activeSharedReelResolved?.id" [attr.aria-label]="'chatPage.sharedReel.like' | translate">
                                     <i class="fa-duotone fa-heart" [class.fa-solid]="activeSharedReelLikedByMe" [class.fa-light]="!activeSharedReelLikedByMe" aria-hidden="true"></i>
                                     <span>{{ activeSharedReelLikeCount }}</span>
                                 </button>
-                                <button type="button" class="shared-reel-mobile-action" (click)="openMobileSharedReelComments($event)" aria-label="Open reel comments">
+                                <button type="button" class="shared-reel-mobile-action" (click)="openMobileSharedReelComments($event)" [attr.aria-label]="'chatPage.sharedReel.openComments' | translate">
                                     <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
                                     <span>{{ activeSharedReelComments.length }}</span>
                                 </button>
-                                <button type="button" class="shared-reel-mobile-action" (click)="openActiveSharedReelShareModal()" [disabled]="!activeSharedReelResolved || !!sharingSharedReelId" aria-label="Share reel">
+                                <button type="button" class="shared-reel-mobile-action" (click)="openActiveSharedReelShareModal()" [disabled]="!activeSharedReelResolved || !!sharingSharedReelId" [attr.aria-label]="'chatPage.sharedReel.share' | translate">
                                     <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
 
                         <div class="shared-reel-mobile-reply">
-                            <input type="text" [(ngModel)]="sharedReelChatReplyDraft" placeholder="Reply to chat..." [disabled]="sendingMessage || !selectedConversationId" (keydown.enter)="submitSharedReelChatReply()" />
-                            <button type="button" (click)="submitSharedReelChatReply()" [disabled]="!canSubmitSharedReelChatReply">{{ sendingMessage ? '...' : 'Send' }}</button>
+                            <input type="text" [(ngModel)]="sharedReelChatReplyDraft" [attr.placeholder]="'chatPage.sharedReel.replyToChatPlaceholder' | translate" [disabled]="sendingMessage || !selectedConversationId" (keydown.enter)="submitSharedReelChatReply()" />
+                            <button type="button" (click)="submitSharedReelChatReply()" [disabled]="!canSubmitSharedReelChatReply">{{ sendingMessage ? ('chatPage.sharedReel.sendingShort' | translate) : ('chatPage.composer.send' | translate) }}</button>
                         </div>
                     </div>
 
                     <div class="shared-reel-mobile-comments-backdrop" *ngIf="mobileSharedReelCommentsOpen" (click)="closeMobileSharedReelComments($event)">
-                        <section class="shared-reel-mobile-comments-sheet" role="dialog" aria-modal="true" aria-label="Reel comments" (click)="$event.stopPropagation()">
+                        <section class="shared-reel-mobile-comments-sheet" role="dialog" aria-modal="true" [attr.aria-label]="'chatPage.sharedReel.commentsAria' | translate" (click)="$event.stopPropagation()">
                             <header class="shared-reel-mobile-comments-head">
-                                <h4>Comments</h4>
-                                <button type="button" class="ghost" (click)="closeMobileSharedReelComments($event)" aria-label="Close comments">Close</button>
+                                <h4>{{ 'chatPage.sharedReel.comments' | translate }}</h4>
+                                <button type="button" class="ghost" (click)="closeMobileSharedReelComments($event)" [attr.aria-label]="'chatPage.sharedReel.closeComments' | translate">{{ 'chatPage.sharedReel.close' | translate }}</button>
                             </header>
 
                             <section class="shared-reel-mobile-comments-list" *ngIf="activeSharedReelComments.length; else mobileSharedReelCommentsEmpty">
                                 <article class="viewer-comment" *ngFor="let item of orderedActiveSharedReelComments" [class.reply-comment]="item.depth > 0">
                                     <ng-container *ngIf="item.comment as comment">
-                                        <img class="viewer-comment-avatar" *ngIf="comment.authorImageUrl; else mobileViewerCommentInitial" [src]="comment.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
+                                        <img class="viewer-comment-avatar" *ngIf="comment.authorImageUrl; else mobileViewerCommentInitial" [src]="comment.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';"
+                                            [attr.alt]="'chatPage.sharedReel.commentAuthorAlt' | translate" />
                                         <ng-template #mobileViewerCommentInitial>
                                             <div class="viewer-comment-avatar">{{ comment.authorHandle[0] }}</div>
                                         </ng-template>
@@ -541,18 +543,18 @@
                                             <p class="viewer-comment-line"><strong>@{{ comment.authorHandle }}</strong> {{ comment.content }}</p>
                                             <p class="viewer-comment-meta">{{ comment.createdAtUtc | date:'short' }}</p>
                                             <button type="button" class="viewer-comment-thread-toggle" *ngIf="item.depth === 0 && getActiveSharedReelReplyCount(comment.id) > 0" (click)="toggleActiveSharedReelReplyThread(comment.id, $event)">
-                                                {{ isActiveSharedReelReplyThreadExpanded(comment.id) ? 'Hide replies' : 'View replies (' + getActiveSharedReelReplyCount(comment.id) + ')' }}
+                                                {{ isActiveSharedReelReplyThreadExpanded(comment.id) ? ('chatPage.sharedReel.hideReplies' | translate) : ('chatPage.sharedReel.viewReplies' | translate:{ count: getActiveSharedReelReplyCount(comment.id) }) }}
                                             </button>
                                         </div>
 
                                         <div class="viewer-comment-actions">
                                             <button type="button" class="viewer-comment-like" [class.active]="comment.likedByMe" [disabled]="reactingSharedReelCommentId === comment.id" (click)="toggleActiveSharedReelCommentLike(comment, $event)"
-                                                [attr.aria-label]="comment.likedByMe ? 'Unlike comment' : 'Like comment'">
+                                                [attr.aria-label]="comment.likedByMe ? ('chatPage.sharedReel.unlikeComment' | translate) : ('chatPage.sharedReel.likeComment' | translate)">
                                                 <i class="fa-duotone fa-heart" [class.fa-solid]="comment.likedByMe" [class.fa-light]="!comment.likedByMe" aria-hidden="true"></i>
                                             </button>
                                             <span class="viewer-comment-like-count" *ngIf="(comment.likeCount ?? 0) > 0">{{ comment.likeCount }}</span>
-                                            <button type="button" class="viewer-comment-reply" (click)="replyToActiveSharedReelComment(comment, $event)">Reply</button>
-                                            <button type="button" class="viewer-comment-action" *ngIf="canReportActiveSharedReelComment(comment)" (click)="requestReportActiveSharedReelComment(comment, $event)" aria-label="Report comment">
+                                            <button type="button" class="viewer-comment-reply" (click)="replyToActiveSharedReelComment(comment, $event)">{{ 'chatPage.sharedReel.reply' | translate }}</button>
+                                            <button type="button" class="viewer-comment-action" *ngIf="canReportActiveSharedReelComment(comment)" (click)="requestReportActiveSharedReelComment(comment, $event)" [attr.aria-label]="'chatPage.sharedReel.reportComment' | translate">
                                                 <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
                                             </button>
                                         </div>
@@ -561,12 +563,12 @@
                             </section>
 
                             <ng-template #mobileSharedReelCommentsEmpty>
-                                <p class="shared-reel-mobile-comments-empty">No comments yet.</p>
+                                <p class="shared-reel-mobile-comments-empty">{{ 'chatPage.sharedReel.noCommentsYet' | translate }}</p>
                             </ng-template>
 
                             <div class="shared-reel-mobile-comments-form">
-                                <input type="text" [(ngModel)]="viewerCommentDraft" placeholder="Add a comment..." [disabled]="commentingSharedReel || !activeSharedReelResolved?.id" (keydown.enter)="submitActiveSharedReelComment()" />
-                                <button type="button" (click)="submitActiveSharedReelComment()" [disabled]="!canSubmitActiveSharedReelComment">{{ commentingSharedReel ? '...' : 'Post' }}</button>
+                                <input type="text" [(ngModel)]="viewerCommentDraft" [attr.placeholder]="'chatPage.sharedReel.addCommentPlaceholder' | translate" [disabled]="commentingSharedReel || !activeSharedReelResolved?.id" (keydown.enter)="submitActiveSharedReelComment()" />
+                                <button type="button" (click)="submitActiveSharedReelComment()" [disabled]="!canSubmitActiveSharedReelComment">{{ commentingSharedReel ? ('chatPage.sharedReel.sendingShort' | translate) : ('chatPage.sharedReel.post' | translate) }}</button>
                             </div>
                         </section>
                     </div>
@@ -575,7 +577,7 @@
             <aside class="shared-reel-viewer-meta">
                 <div class="shared-reel-viewer-meta-scroll">
                     <header>
-                        <img class="shared-reel-viewer-avatar" *ngIf="reel.authorImageUrl" [src]="reel.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reel author avatar" />
+                        <img class="shared-reel-viewer-avatar" *ngIf="reel.authorImageUrl" [src]="reel.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'chatPage.sharedReel.authorAvatarAlt' | translate" />
                         <span class="shared-reel-viewer-avatar-fallback" *ngIf="!reel.authorImageUrl">{{ (reel.authorHandle || 'R')[0].toUpperCase() }}</span>
                         <div class="shared-reel-viewer-author">
                             <strong *ngIf="activeSharedReelAuthorHandle as handle">
@@ -597,10 +599,10 @@
                     </section>
 
                     <section class="shared-reel-viewer-caption-edit" *ngIf="editingSharedReelCaption">
-                        <textarea rows="4" [(ngModel)]="sharedReelCaptionDraft" placeholder="Edit reel caption..." [disabled]="updatingSharedReel || deletingSharedReel"></textarea>
+                        <textarea rows="4" [(ngModel)]="sharedReelCaptionDraft" [attr.placeholder]="'chatPage.sharedReel.editCaptionPlaceholder' | translate" [disabled]="updatingSharedReel || deletingSharedReel"></textarea>
                         <div class="shared-reel-viewer-caption-edit-actions">
-                            <button type="button" class="ghost" (click)="cancelActiveSharedReelCaptionEdit()" [disabled]="updatingSharedReel || deletingSharedReel">Cancel</button>
-                            <button type="button" (click)="saveActiveSharedReelCaptionEdit()" [disabled]="updatingSharedReel || deletingSharedReel">{{ updatingSharedReel ? 'Saving…' : 'Save' }}</button>
+                            <button type="button" class="ghost" (click)="cancelActiveSharedReelCaptionEdit()" [disabled]="updatingSharedReel || deletingSharedReel">{{ 'chatPage.common.cancel' | translate }}</button>
+                            <button type="button" (click)="saveActiveSharedReelCaptionEdit()" [disabled]="updatingSharedReel || deletingSharedReel">{{ updatingSharedReel ? ('chatPage.sharedReel.saving' | translate) : ('chatPage.common.save' | translate) }}</button>
                         </div>
                     </section>
 
@@ -611,16 +613,17 @@
                         </ng-container>
                     </p>
 
-                    <p class="viewer-loading" *ngIf="loadingSharedReelDetails">Loading reel details...</p>
+                    <p class="viewer-loading" *ngIf="loadingSharedReelDetails">{{ 'chatPage.sharedReel.loadingDetails' | translate }}</p>
 
                     <section class="shared-reel-viewer-comments-wrap">
                         <div class="shared-reel-viewer-comments-head" *ngIf="activeSharedReelComments.length">
-                            <span>For you</span>
+                            <span>{{ 'chatPage.sharedReel.forYou' | translate }}</span>
                         </div>
                         <section class="shared-reel-viewer-comments" *ngIf="activeSharedReelComments.length">
                             <article class="viewer-comment" *ngFor="let item of orderedActiveSharedReelComments" [class.reply-comment]="item.depth > 0">
                                 <ng-container *ngIf="item.comment as comment">
-                                    <img class="viewer-comment-avatar" *ngIf="comment.authorImageUrl; else viewerCommentInitial" [src]="comment.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
+                                    <img class="viewer-comment-avatar" *ngIf="comment.authorImageUrl; else viewerCommentInitial" [src]="comment.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';"
+                                        [attr.alt]="'chatPage.sharedReel.commentAuthorAlt' | translate" />
                                     <ng-template #viewerCommentInitial>
                                         <div class="viewer-comment-avatar">{{ comment.authorHandle[0] }}</div>
                                     </ng-template>
@@ -630,27 +633,27 @@
                                         <div class="viewer-comment-edit" *ngIf="editingSharedReelCommentId === comment.id">
                                             <input type="text" [value]="editingSharedReelCommentDraft" (input)="editingSharedReelCommentDraft = $any($event.target).value" (click)="$event.stopPropagation()" (keydown.enter)="saveActiveSharedReelCommentEdit(comment, $event)" />
                                             <div class="viewer-comment-edit-actions">
-                                                <button type="button" (click)="saveActiveSharedReelCommentEdit(comment, $event)">Save</button>
-                                                <button type="button" class="ghost" (click)="cancelActiveSharedReelCommentEdit($event)">Cancel</button>
+                                                <button type="button" (click)="saveActiveSharedReelCommentEdit(comment, $event)">{{ 'chatPage.common.save' | translate }}</button>
+                                                <button type="button" class="ghost" (click)="cancelActiveSharedReelCommentEdit($event)">{{ 'chatPage.common.cancel' | translate }}</button>
                                             </div>
                                         </div>
                                         <p class="viewer-comment-meta">{{ comment.createdAtUtc | date:'short' }}</p>
                                         <button type="button" class="viewer-comment-thread-toggle" *ngIf="item.depth === 0 && getActiveSharedReelReplyCount(comment.id) > 0" (mousedown)="toggleActiveSharedReelReplyThread(comment.id, $event)">
-                                            {{ isActiveSharedReelReplyThreadExpanded(comment.id) ? 'Hide replies' : 'View replies (' + getActiveSharedReelReplyCount(comment.id) + ')' }}
+                                            {{ isActiveSharedReelReplyThreadExpanded(comment.id) ? ('chatPage.sharedReel.hideReplies' | translate) : ('chatPage.sharedReel.viewReplies' | translate:{ count: getActiveSharedReelReplyCount(comment.id) }) }}
                                         </button>
                                     </div>
 
                                     <div class="viewer-comment-actions" *ngIf="editingSharedReelCommentId !== comment.id">
                                         <button type="button" class="viewer-comment-like" [class.active]="comment.likedByMe" [disabled]="reactingSharedReelCommentId === comment.id" (mousedown)="toggleActiveSharedReelCommentLike(comment, $event)"
-                                            [attr.aria-label]="comment.likedByMe ? 'Unlike comment' : 'Like comment'">
+                                            [attr.aria-label]="comment.likedByMe ? ('chatPage.sharedReel.unlikeComment' | translate) : ('chatPage.sharedReel.likeComment' | translate)">
                                             <i class="fa-duotone fa-heart" [class.fa-solid]="comment.likedByMe" [class.fa-light]="!comment.likedByMe" aria-hidden="true"></i>
                                         </button>
                                         <span class="viewer-comment-like-count" *ngIf="(comment.likeCount ?? 0) > 0">{{ comment.likeCount }}</span>
-                                        <button type="button" class="viewer-comment-reply" (mousedown)="replyToActiveSharedReelComment(comment, $event)">Reply</button>
-                                        <button type="button" class="viewer-comment-action" *ngIf="canReportActiveSharedReelComment(comment)" (mousedown)="requestReportActiveSharedReelComment(comment, $event)" aria-label="Report comment">
+                                        <button type="button" class="viewer-comment-reply" (mousedown)="replyToActiveSharedReelComment(comment, $event)">{{ 'chatPage.sharedReel.reply' | translate }}</button>
+                                        <button type="button" class="viewer-comment-action" *ngIf="canReportActiveSharedReelComment(comment)" (mousedown)="requestReportActiveSharedReelComment(comment, $event)" [attr.aria-label]="'chatPage.sharedReel.reportComment' | translate">
                                             <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
                                         </button>
-                                        <button type="button" class="viewer-comment-action danger" *ngIf="canDeleteActiveSharedReelComment(comment)" (mousedown)="requestDeleteActiveSharedReelComment(comment, $event)" aria-label="Delete comment">
+                                        <button type="button" class="viewer-comment-action danger" *ngIf="canDeleteActiveSharedReelComment(comment)" (mousedown)="requestDeleteActiveSharedReelComment(comment, $event)" [attr.aria-label]="'chatPage.modals.deleteComment.title' | translate">
                                             <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
                                         </button>
                                     </div>
@@ -661,7 +664,7 @@
                 </div>
 
                 <div class="shared-reel-viewer-actions">
-                    <button type="button" class="viewer-action" [class.active]="activeSharedReelLikedByMe" (click)="toggleActiveSharedReelLike()" [disabled]="reactingSharedReel || !activeSharedReelResolved?.id" aria-label="Like reel">
+                    <button type="button" class="viewer-action" [class.active]="activeSharedReelLikedByMe" (click)="toggleActiveSharedReelLike()" [disabled]="reactingSharedReel || !activeSharedReelResolved?.id" [attr.aria-label]="'chatPage.sharedReel.like' | translate">
                         <i class="fa-duotone fa-heart" [class.fa-solid]="activeSharedReelLikedByMe" [class.fa-light]="!activeSharedReelLikedByMe" aria-hidden="true"></i>
                         <span>{{ activeSharedReelLikeCount }}</span>
                     </button>
@@ -669,19 +672,19 @@
                         <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
                         <span>{{ activeSharedReelComments.length }}</span>
                     </span>
-                    <button type="button" class="viewer-action" (click)="openActiveSharedReelShareModal()" [disabled]="!activeSharedReelResolved || !!sharingSharedReelId" aria-label="Share reel">
+                    <button type="button" class="viewer-action" (click)="openActiveSharedReelShareModal()" [disabled]="!activeSharedReelResolved || !!sharingSharedReelId" [attr.aria-label]="'chatPage.sharedReel.share' | translate">
                         <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
                     </button>
                 </div>
 
                 <div class="shared-reel-viewer-comment-form">
                     <p class="viewer-replying-tag" *ngIf="replyingToSharedReelCommentId as replyCommentId">
-                        Replying to comment
-                        <button type="button" class="ghost" (click)="cancelActiveSharedReelReply()">Cancel</button>
+                        {{ 'chatPage.sharedReel.replyingToComment' | translate }}
+                        <button type="button" class="ghost" (click)="cancelActiveSharedReelReply()">{{ 'chatPage.common.cancel' | translate }}</button>
                     </p>
-                    <input type="text" [(ngModel)]="viewerCommentDraft" placeholder="Add a comment..." [disabled]="commentingSharedReel || !activeSharedReelResolved?.id" />
+                    <input type="text" [(ngModel)]="viewerCommentDraft" [attr.placeholder]="'chatPage.sharedReel.addCommentPlaceholder' | translate" [disabled]="commentingSharedReel || !activeSharedReelResolved?.id" />
                     <button type="button" (click)="submitActiveSharedReelComment()" [disabled]="!canSubmitActiveSharedReelComment">
-                        {{ commentingSharedReel ? 'Posting...' : 'Post' }}
+                        {{ commentingSharedReel ? ('chatPage.sharedReel.posting' | translate) : ('chatPage.sharedReel.post' | translate) }}
                     </button>
                 </div>
             </aside>
@@ -689,16 +692,18 @@
     </div>
 
     <ng-container>
-        <app-confirm-modal [open]="!!pendingDeleteSharedReelCommentId" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingSharedReelCommentId"
-            (cancel)="cancelDeleteActiveSharedReelComment()" (confirm)="confirmDeleteActiveSharedReelComment()">
+        <app-confirm-modal [open]="!!pendingDeleteSharedReelCommentId" [title]="'chatPage.modals.deleteComment.title' | translate" [message]="'chatPage.modals.deleteComment.message' | translate" [confirmText]="'chatPage.modals.deleteComment.confirm' | translate"
+            [cancelText]="'chatPage.common.cancel' | translate" confirmClass="danger" [busy]="!!deletingSharedReelCommentId" (cancel)="cancelDeleteActiveSharedReelComment()" (confirm)="confirmDeleteActiveSharedReelComment()">
         </app-confirm-modal>
 
-        <app-confirm-modal [open]="!!pendingLeaveGroupConversation" [title]="pendingLeaveGroupConversation?.isGroup ? 'Leave chat' : 'Delete chat'" [message]="leaveGroupConversationConfirmMessage()" [confirmText]="pendingLeaveGroupConversation?.isGroup ? 'Leave' : 'Delete'" cancelText="Cancel"
-            confirmClass="danger" [busy]="leavingGroupChat" busyText="Leaving..." (cancel)="cancelLeaveGroupChat()" (confirm)="confirmLeaveGroupChat()">
+        <app-confirm-modal [open]="!!pendingLeaveGroupConversation" [title]="pendingLeaveGroupConversation?.isGroup ? ('chatPage.modals.leave.titleLeave' | translate) : ('chatPage.modals.leave.titleDelete' | translate)" [message]="leaveGroupConversationConfirmMessage()"
+            [confirmText]="pendingLeaveGroupConversation?.isGroup ? ('chatPage.modals.leave.confirmLeave' | translate) : ('chatPage.modals.leave.confirmDelete' | translate)" [cancelText]="'chatPage.common.cancel' | translate" confirmClass="danger" [busy]="leavingGroupChat"
+            [busyText]="'chatPage.modals.leave.busyLeaving' | translate" (cancel)="cancelLeaveGroupChat()" (confirm)="confirmLeaveGroupChat()">
         </app-confirm-modal>
 
-        <app-text-input-modal [open]="renameGroupChatModalOpen" title="Change chat name" [message]="renameChatModalMessage()" label="Chat name" placeholder="Enter chat name" [value]="renameGroupChatDraft" (valueChange)="renameGroupChatDraft = $event" confirmText="Save" cancelText="Cancel"
-            [busy]="renamingGroupChat" busyText="Saving..." [maxLength]="120" (cancel)="cancelRenameGroupChat()" (confirm)="submitRenameGroupChat($event)">
+        <app-text-input-modal [open]="renameGroupChatModalOpen" [title]="'chatPage.modals.rename.title' | translate" [message]="renameChatModalMessage()" [label]="'chatPage.modals.rename.label' | translate" [placeholder]="'chatPage.modals.rename.placeholder' | translate"
+            [value]="renameGroupChatDraft" (valueChange)="renameGroupChatDraft = $event" [confirmText]="'chatPage.common.save' | translate" [cancelText]="'chatPage.common.cancel' | translate" [busy]="renamingGroupChat" [busyText]="'chatPage.common.saving' | translate" [maxLength]="120"
+            (cancel)="cancelRenameGroupChat()" (confirm)="submitRenameGroupChat($event)">
         </app-text-input-modal>
 
         <app-feed-story-viewer [activeStory]="activeSharedStory" [activeStoryGroup]="activeSharedStoryGroup" [activeStoryIndex]="activeSharedStoryIndex" [storyCount]="activeSharedStoryGroup?.stories?.length ?? 0" [hasPreviousStory]="hasPreviousSharedStory" [hasNextStory]="hasNextSharedStory"
@@ -707,12 +712,12 @@
             (shareRequested)="openSharedStoryShareModal($event)" (deleteRequested)="requestDeleteActiveSharedStory($event)" (reportRequested)="requestReportActiveSharedStory($event)">
         </app-feed-story-viewer>
 
-        <app-confirm-modal [open]="!!pendingDeleteSharedStoryId" title="Delete story" message="Delete this story? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingSharedStory" (cancel)="cancelDeleteActiveSharedStory()"
-            (confirm)="confirmDeleteActiveSharedStory()">
+        <app-confirm-modal [open]="!!pendingDeleteSharedStoryId" [title]="'chatPage.modals.deleteStory.title' | translate" [message]="'chatPage.modals.deleteStory.message' | translate" [confirmText]="'chatPage.modals.deleteStory.confirm' | translate"
+            [cancelText]="'chatPage.common.cancel' | translate" confirmClass="danger" [busy]="deletingSharedStory" (cancel)="cancelDeleteActiveSharedStory()" (confirm)="confirmDeleteActiveSharedStory()">
         </app-confirm-modal>
 
-        <app-confirm-modal [open]="!!pendingDeleteSharedReelId" title="Delete reel" message="Delete this reel? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="deletingSharedReel" (cancel)="cancelDeleteActiveSharedReel()"
-            (confirm)="confirmDeleteActiveSharedReel()">
+        <app-confirm-modal [open]="!!pendingDeleteSharedReelId" [title]="'chatPage.modals.deleteReel.title' | translate" [message]="'chatPage.modals.deleteReel.message' | translate" [confirmText]="'chatPage.modals.deleteReel.confirm' | translate" [cancelText]="'chatPage.common.cancel' | translate"
+            confirmClass="danger" [busy]="deletingSharedReel" (cancel)="cancelDeleteActiveSharedReel()" (confirm)="confirmDeleteActiveSharedReel()">
         </app-confirm-modal>
 
         <app-share-reel-message-modal [open]="!!pendingShareReelFromViewer" [reel]="pendingShareReelFromViewer" [busy]="!!sharingSharedReelId" (cancel)="cancelActiveSharedReelShareModal()" (confirm)="submitActiveSharedReelShareAsMessage($event)"></app-share-reel-message-modal>

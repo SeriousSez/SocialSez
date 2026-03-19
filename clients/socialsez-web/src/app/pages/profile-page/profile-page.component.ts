@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
 import { CreatorAnalyticsSummaryDto, CreatorReelAnalyticsItemDto, PostDto, ProfileActivitySummaryDto, ProfileDto, ReelDto, StoryCollectionDto, StoryDto, StoryGroupDto } from '../../core/api.types';
@@ -29,6 +30,7 @@ import { SegmentedTabItem, SegmentedTabsComponent } from '../../shared/segmented
 import { CreateContentMenuComponent } from '../../shared/create-content-menu/create-content-menu.component';
 import { buildSharedPostReferenceCounts } from '../../core/shared-post.utils';
 import { UploadProgressService } from '../../core/upload-progress.service';
+import { resolveAppLocale } from '../../core/date-time.util';
 
 interface StoryTrimPreviewOption {
     previewUrl: string;
@@ -49,7 +51,7 @@ type ProfileContentReportTarget =
 @Component({
     selector: 'app-profile-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent, ReportModalComponent, SegmentedTabsComponent, CreateContentMenuComponent],
+    imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ConfirmModalComponent, PostCardComponent, PostComposerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, SkeletonComponent, FeedReelsListComponent, FeedStoryViewerComponent, ReelComposerModalComponent, ReportModalComponent, SegmentedTabsComponent, CreateContentMenuComponent],
     templateUrl: './profile-page.component.html',
     styleUrl: './profile-page.component.scss'
 })
@@ -63,15 +65,6 @@ export class ProfilePageComponent implements OnDestroy {
     @ViewChild('storyPreviewVideo') private readonly storyPreviewVideoRef?: ElementRef<HTMLVideoElement>;
 
     activeTab: 'posts' | 'reels' | 'analytics' = 'posts';
-    private readonly ownContentTabs: readonly SegmentedTabItem[] = [
-        { id: 'posts', label: 'Posts' },
-        { id: 'reels', label: 'Reels' },
-        { id: 'analytics', label: 'Analytics' }
-    ];
-    private readonly guestContentTabs: readonly SegmentedTabItem[] = [
-        { id: 'posts', label: 'Posts' },
-        { id: 'reels', label: 'Reels' }
-    ];
     posts: PostDto[] = [];
     reels: ReelDto[] = [];
     loading = true;
@@ -223,7 +216,8 @@ export class ProfilePageComponent implements OnDestroy {
         private readonly storyPresence: StoryPresenceService,
         private readonly route: ActivatedRoute,
         private readonly router: Router,
-        private readonly uploadProgress: UploadProgressService
+        private readonly uploadProgress: UploadProgressService,
+        private readonly translate: TranslateService
     ) {
         this.session.appChanges$
             .pipe(
@@ -279,42 +273,42 @@ export class ProfilePageComponent implements OnDestroy {
 
     get followButtonLabel(): string {
         if (this.followState === 'loading') {
-            return 'Working...';
+            return this.t('profile.actions.working');
         }
 
         if (this.isBlockedView) {
-            return 'Blocked';
+            return this.t('profile.actions.blocked');
         }
 
         if (this.followState === 'success') {
             if (this.isRequested) {
-                return 'Request Sent';
+                return this.t('profile.actions.requestSent');
             }
 
-            return this.isFollowing ? 'Following' : 'Unfollowed';
+            return this.isFollowing ? this.t('profile.actions.following') : this.t('profile.actions.unfollowed');
         }
 
         if (this.followState === 'failure') {
-            return 'Try again';
+            return this.t('profile.actions.tryAgain');
         }
 
         if (this.isRequested) {
-            return 'Cancel Request';
+            return this.t('profile.actions.cancelRequest');
         }
 
-        return this.isFollowing ? 'Unfollow' : 'Follow';
+        return this.isFollowing ? this.t('profile.actions.unfollow') : this.t('profile.actions.follow');
     }
 
     get messageButtonLabel(): string {
         if (this.messagingProfile) {
-            return 'Working...';
+            return this.t('profile.actions.working');
         }
 
         if (!this.viewedProfile) {
-            return 'Message';
+            return this.t('profile.actions.message');
         }
 
-        return !this.isFollowing ? 'Request Message' : 'Message';
+        return !this.isFollowing ? this.t('profile.actions.requestMessage') : this.t('profile.actions.message');
     }
 
     get canNicknameProfile(): boolean {
@@ -573,10 +567,10 @@ export class ProfilePageComponent implements OnDestroy {
 
     get blockedViewStatusMessage(): string {
         if (this.isBlockedByTarget) {
-            return 'This profile blocked you. Posts, reels, stories, and bio are hidden.';
+            return this.t('profile.blocked.byTarget');
         }
 
-        return 'You blocked this profile. Posts, reels, stories, and bio are hidden.';
+        return this.t('profile.blocked.byYou');
     }
 
     get totalPosts(): number {
@@ -592,7 +586,18 @@ export class ProfilePageComponent implements OnDestroy {
     }
 
     get contentTabs(): readonly SegmentedTabItem[] {
-        return this.isOwnProfile ? this.ownContentTabs : this.guestContentTabs;
+        if (this.isOwnProfile) {
+            return [
+                { id: 'posts', label: this.t('profile.tabs.posts') },
+                { id: 'reels', label: this.t('profile.tabs.reels') },
+                { id: 'analytics', label: this.t('profile.tabs.analytics') }
+            ];
+        }
+
+        return [
+            { id: 'posts', label: this.t('profile.tabs.posts') },
+            { id: 'reels', label: this.t('profile.tabs.reels') }
+        ];
     }
 
     get creatorAnalyticsWindowDays(): number {
@@ -613,7 +618,7 @@ export class ProfilePageComponent implements OnDestroy {
         }
 
         const sign = value > 0 ? '+' : '';
-        return `${sign}${value.toLocaleString()}`;
+        return `${sign}${value.toLocaleString(resolveAppLocale())}`;
     }
 
     formatWatchTime(totalSeconds: number): string {
@@ -817,7 +822,7 @@ export class ProfilePageComponent implements OnDestroy {
             });
         } catch {
             this.ngZone.run(() => {
-                this.error = 'Could not copy profile link right now.';
+                this.error = this.t('profile.errors.copyLink');
             });
         }
     }
@@ -2739,18 +2744,22 @@ export class ProfilePageComponent implements OnDestroy {
 
             const conversation = await this.session.createDirectConversationAsync(this.viewedProfile.id);
             if (!this.isFollowing && !hadExistingDirectConversation) {
-                this.session.message = 'Message request sent.';
+                this.session.message = this.t('profile.messages.messageRequestSent');
             }
 
             await this.router.navigate(['/chat'], { queryParams: { conversation: conversation.id } });
         } catch {
             this.error = !this.isFollowing
-                ? 'Could not send message request right now.'
-                : 'Could not open chat right now.';
+                ? this.t('profile.errors.sendMessageRequest')
+                : this.t('profile.errors.openChat');
         } finally {
             this.messagingProfile = false;
             this.cdr.detectChanges();
         }
+    }
+
+    private t(key: string, params?: Record<string, string | number>): string {
+        return this.translate.instant(key, params);
     }
 
     async toggleBlockProfile(): Promise<void> {

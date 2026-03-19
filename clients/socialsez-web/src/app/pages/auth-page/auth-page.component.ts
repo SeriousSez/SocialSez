@@ -1,7 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { AppLanguageService } from '../../core/app-language.service';
+import { StoredLanguagePreference, readStoredLanguagePreference } from '../../core/app-language.util';
 import { SessionService } from '../../core/session.service';
 import { HashtagSearchResultDto } from '../../core/api.types';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
@@ -9,11 +12,14 @@ import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text
 @Component({
     selector: 'app-auth-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RichTextEditorComponent],
+    imports: [CommonModule, FormsModule, TranslatePipe, RichTextEditorComponent],
     templateUrl: './auth-page.component.html',
     styleUrl: './auth-page.component.scss'
 })
 export class AuthPageComponent {
+    private readonly appLanguage = inject(AppLanguageService);
+    private readonly prefsStorageKey = 'socialsez-web-prefs';
+
     mode: 'login' | 'register' = 'login';
     registerStep: 'account' | 'interests' = 'account';
     isSubmitting = false;
@@ -33,6 +39,7 @@ export class AuthPageComponent {
     birthDay = '';
     birthYear = '';
     countryCode = '';
+    registrationLanguagePreference = readStoredLanguagePreference();
     marketingOptIn = false;
     isPrivateByDefault = false;
     acceptedTerms = false;
@@ -112,13 +119,43 @@ export class AuthPageComponent {
         { code: 'VN', name: 'Vietnam' }
     ];
 
+    get languageOptions(): ReadonlyArray<{ value: string; label: string }> {
+        const options = [
+            { value: 'en-US', label: this.translate.instant('settings.language.enUS') },
+            { value: 'en-GB', label: this.translate.instant('settings.language.enGB') },
+            { value: 'da', label: this.translate.instant('settings.language.da') },
+            { value: 'es', label: this.translate.instant('settings.language.es') },
+            { value: 'de', label: this.translate.instant('settings.language.de') },
+            { value: 'fr', label: this.translate.instant('settings.language.fr') },
+            { value: 'pt-BR', label: this.translate.instant('settings.language.ptBR') },
+            { value: 'nl', label: this.translate.instant('settings.language.nl') },
+            { value: 'sv', label: this.translate.instant('settings.language.sv') },
+            { value: 'nb', label: this.translate.instant('settings.language.nb') },
+            { value: 'it', label: this.translate.instant('settings.language.it') },
+            { value: 'pl', label: this.translate.instant('settings.language.pl') },
+            { value: 'ar', label: this.translate.instant('settings.language.ar') },
+            { value: 'tr', label: this.translate.instant('settings.language.tr') }
+        ].sort((left, right) => left.label.localeCompare(right.label, undefined, { sensitivity: 'base' }));
+
+        return [
+            { value: 'system', label: this.translate.instant('settings.language.system') },
+            ...options
+        ];
+    }
+
     constructor(
         public readonly session: SessionService,
-        private readonly router: Router
+        private readonly router: Router,
+        private readonly translate: TranslateService
     ) { }
 
     onHandleInput(value: string): void {
         this.handle = this.normalizeHandle(value);
+    }
+
+    onRegistrationLanguagePreferenceChange(preference: StoredLanguagePreference): void {
+        this.registrationLanguagePreference = preference;
+        void this.applyRegistrationLanguagePreferenceAsync();
     }
 
     setMode(nextMode: 'login' | 'register'): void {
@@ -164,9 +201,11 @@ export class AuthPageComponent {
                 isPrivateByDefault: this.isPrivateByDefault
             }, false);
 
+            await this.applyRegistrationLanguagePreferenceAsync();
+
             this.registerStep = 'interests';
         } catch (error) {
-            this.errorMessage = this.extractApiMessage(error, 'Could not register with these details.');
+            this.errorMessage = this.extractApiMessage(error, this.translate.instant('auth.errors.registerFailed'));
         }
     }
 
@@ -178,7 +217,7 @@ export class AuthPageComponent {
                 password: this.password
             }, this.staySignedIn);
         } catch {
-            this.errorMessage = 'Invalid credentials.';
+            this.errorMessage = this.translate.instant('auth.errors.invalidCredentials');
         }
     }
 
@@ -256,41 +295,52 @@ export class AuthPageComponent {
         return 'Strong';
     }
 
+    get passwordStrengthTranslationKey(): string {
+        switch (this.passwordStrengthLabel) {
+            case 'Weak':
+                return 'auth.passwordStrength.weak';
+            case 'Medium':
+                return 'auth.passwordStrength.medium';
+            default:
+                return 'auth.passwordStrength.strong';
+        }
+    }
+
     get registrationValidationMessage(): string {
         if (!this.email.trim()) {
-            return 'Email is required.';
+            return this.translate.instant('auth.validation.emailRequired');
         }
 
         if (!this.password) {
-            return 'Password is required.';
+            return this.translate.instant('auth.validation.passwordRequired');
         }
 
         if (this.password.length < 8) {
-            return 'Password must be at least 8 characters.';
+            return this.translate.instant('auth.validation.passwordTooShort');
         }
 
         if (this.password !== this.confirmPassword) {
-            return 'Passwords do not match.';
+            return this.translate.instant('auth.validation.passwordsMismatch');
         }
 
         if (!this.normalizedHandlePreview) {
-            return 'Handle is required.';
+            return this.translate.instant('auth.validation.handleRequired');
         }
 
         if (!this.displayName.trim()) {
-            return 'Display name is required.';
+            return this.translate.instant('auth.validation.displayNameRequired');
         }
 
         if (this.hasAnyBirthPart && !this.composedDateOfBirth) {
-            return 'Please select a complete valid birth date.';
+            return this.translate.instant('auth.validation.birthDateInvalid');
         }
 
         if (this.composedDateOfBirth && this.calculateAgeFromDate(this.composedDateOfBirth) < 13) {
-            return 'You must be at least 13 years old to register.';
+            return this.translate.instant('auth.validation.minimumAge');
         }
 
         if (!this.acceptedTerms) {
-            return 'You need to accept the terms to create an account.';
+            return this.translate.instant('auth.validation.acceptTerms');
         }
 
         return '';
@@ -362,7 +412,7 @@ export class AuthPageComponent {
             const failedCount = results.filter(result => result.status === 'rejected').length;
 
             if (failedCount > 0 && failedCount === tags.length) {
-                this.errorMessage = 'We created your account, but could not save interests right now.';
+                this.errorMessage = this.translate.instant('auth.errors.interestsSaveFailed');
             }
         }
 
@@ -409,5 +459,22 @@ export class AuthPageComponent {
         }
 
         return fallback;
+    }
+
+    private async applyRegistrationLanguagePreferenceAsync(): Promise<void> {
+        const preference = (this.registrationLanguagePreference ?? 'system').trim() || 'system';
+
+        try {
+            const stored = localStorage.getItem(this.prefsStorageKey);
+            const parsed = stored ? JSON.parse(stored) as Record<string, unknown> : {};
+            localStorage.setItem(this.prefsStorageKey, JSON.stringify({
+                ...parsed,
+                language: preference
+            }));
+        } catch {
+            localStorage.setItem(this.prefsStorageKey, JSON.stringify({ language: preference }));
+        }
+
+        await this.appLanguage.applyPreferenceAsync(preference);
     }
 }

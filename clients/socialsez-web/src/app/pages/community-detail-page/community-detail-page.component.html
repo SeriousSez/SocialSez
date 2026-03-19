@@ -1,9 +1,10 @@
 <section class="page" *ngIf="community as activeCommunity; else communityState">
     <header class="community-head card">
-        <img class="community-cover" *ngIf="activeCommunity.imageUrl" [src]="activeCommunity.imageUrl" alt="Community image" />
+        <img class="community-cover" *ngIf="activeCommunity.imageUrl" [src]="activeCommunity.imageUrl" [attr.alt]="'communityDetail.community.imageAlt' | translate" />
         <div>
             <h2>{{ activeCommunity.name }}</h2>
-            <p class="meta">/{{ activeCommunity.slug }} · <button type="button" class="community-members-trigger" (click)="openMembersModal()">{{ activeCommunity.memberCount }} members</button> · {{ activeCommunity.isPrivate ? 'Private' : 'Public' }}</p>
+            <p class="meta">/{{ activeCommunity.slug }} · <button type="button" class="community-members-trigger" (click)="openMembersModal()">{{ 'communityDetail.community.memberCount' | translate:{ count: activeCommunity.memberCount } }}</button> · {{ activeCommunity.isPrivate ?
+                ('communityDetail.community.visibility.private' | translate) : ('communityDetail.community.visibility.public' | translate) }}</p>
             <p class="meta community-description" *ngIf="activeCommunity.description">
                 <ng-container *ngFor="let line of splitHashtagText(activeCommunity.description); let isLast = last">
                     <ng-container *ngFor="let part of line">
@@ -13,18 +14,19 @@
                     <br *ngIf="!isLast" />
                 </ng-container>
             </p>
-            <a class="meta" [routerLink]="['/users', activeCommunity.createdByHandle]">Created by @{{ activeCommunity.createdByHandle }}</a>
+            <a class="meta" [routerLink]="['/users', activeCommunity.createdByHandle]">{{ 'communityDetail.community.createdBy' | translate:{ handle: activeCommunity.createdByHandle } }}</a>
         </div>
         <div class="community-head-actions">
-            <button type="button" *ngIf="!activeCommunity.joinedByMe && !activeCommunity.isPrivate" (click)="joinCommunityAsync()" [disabled]="joining">{{ joining ? 'Joining…' : 'Join' }}</button>
-            <button type="button" *ngIf="canLeave" (click)="leaveCommunityAsync()" [disabled]="leaving">{{ leaving ? 'Leaving…' : 'Leave' }}</button>
-            <button type="button" class="ghost community-action-icon" *ngIf="canEditCommunity" (click)="openEditCommunityModal()" aria-label="Edit community" title="Edit community">
+            <button type="button" *ngIf="!activeCommunity.joinedByMe && !activeCommunity.isPrivate" (click)="joinCommunityAsync()" [disabled]="joining">{{ joining ? ('communityDetail.actions.joining' | translate) : ('communityDetail.actions.join' | translate) }}</button>
+            <button type="button" *ngIf="canLeave" (click)="leaveCommunityAsync()" [disabled]="leaving">{{ leaving ? ('communityDetail.actions.leaving' | translate) : ('communityDetail.actions.leave' | translate) }}</button>
+            <button type="button" class="ghost community-action-icon" *ngIf="canEditCommunity" (click)="openEditCommunityModal()" [attr.aria-label]="'communityDetail.actions.editCommunity' | translate" [attr.title]="'communityDetail.actions.editCommunity' | translate">
                 <i class="fa-duotone fa-pen" aria-hidden="true"></i>
             </button>
-            <button type="button" class="ghost community-action-icon" *ngIf="canPost" (click)="openCreatePostModal()" aria-label="Create post" title="Create post">
+            <button type="button" class="ghost community-action-icon" *ngIf="canPost" (click)="openCreatePostModal()" [attr.aria-label]="'communityDetail.actions.createPost' | translate" [attr.title]="'communityDetail.actions.createPost' | translate">
                 <i class="fa-duotone fa-plus" aria-hidden="true"></i>
             </button>
-            <button type="button" class="ghost community-action-icon" (click)="shareCommunityAsync()" [attr.aria-label]="copiedCommunityLink ? 'Community link copied' : 'Copy community link'" [attr.title]="copiedCommunityLink ? 'Copied' : 'Copy community link'">
+            <button type="button" class="ghost community-action-icon" (click)="shareCommunityAsync()" [attr.aria-label]="copiedCommunityLink ? ('communityDetail.actions.communityLinkCopiedAria' | translate) : ('communityDetail.actions.copyCommunityLinkAria' | translate)"
+                [attr.title]="copiedCommunityLink ? ('communityDetail.actions.copied' | translate) : ('communityDetail.actions.copyCommunityLink' | translate)">
                 <i *ngIf="!copiedCommunityLink" class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
                 <i *ngIf="copiedCommunityLink" class="fa-duotone fa-solid fa-check" aria-hidden="true"></i>
             </button>
@@ -32,21 +34,21 @@
     </header>
 
     <section class="card" *ngIf="!canPost">
-        <p class="meta" *ngIf="!session.isAuthenticated()">Sign in or create an account to create posts and comment in this community.</p>
-        <p class="meta" *ngIf="session.isAuthenticated() && !isTimedOutInCommunity">Join this community to create posts.</p>
-        <p class="meta" *ngIf="isTimedOutInCommunity">You are timed out in this community until {{ timedOutUntilText || 'later' }}. Posting and commenting are disabled.</p>
+        <p class="meta" *ngIf="!session.isAuthenticated()">{{ 'communityDetail.notice.signInToPost' | translate }}</p>
+        <p class="meta" *ngIf="session.isAuthenticated() && !isTimedOutInCommunity">{{ 'communityDetail.notice.joinToPost' | translate }}</p>
+        <p class="meta" *ngIf="isTimedOutInCommunity">{{ 'communityDetail.notice.timedOut' | translate:{ until: timedOutUntilText || ('communityDetail.notice.later' | translate) } }}</p>
     </section>
 
     <section class="card feed-head">
-        <h3>Community Feed</h3>
-        <p class="meta">Posts from members in /{{ activeCommunity.slug }}</p>
+        <h3>{{ 'communityDetail.feed.title' | translate }}</h3>
+        <p class="meta">{{ 'communityDetail.feed.subtitle' | translate:{ slug: activeCommunity.slug } }}</p>
         <form class="feed-search" (ngSubmit)="searchPostsAsync()">
-            <input type="search" name="postSearchQuery" [(ngModel)]="postSearchQuery" (input)="onPostSearchInput()" placeholder="Search posts in this community" />
+            <input type="search" name="postSearchQuery" [(ngModel)]="postSearchQuery" (input)="onPostSearchInput()" [placeholder]="'communityDetail.feed.searchPlaceholder' | translate" />
         </form>
     </section>
 
     <section class="post-list">
-        <section class="community-post-skeleton" *ngIf="loading" aria-label="Loading community posts">
+        <section class="community-post-skeleton" *ngIf="loading" [attr.aria-label]="'communityDetail.feed.loadingAria' | translate">
             <article class="community-post-skeleton-card" *ngFor="let _ of [1, 2, 3]">
                 <div class="community-post-skeleton-head">
                     <app-skeleton width="30px" height="30px" radius="999px"></app-skeleton>
@@ -60,12 +62,12 @@
                 <app-skeleton width="100%" height="160px" radius="12px"></app-skeleton>
             </article>
         </section>
-        <p class="meta" *ngIf="!loading && !posts.length">{{ postSearchQuery ? 'No posts match this search.' : 'No posts yet.' }}</p>
+        <p class="meta" *ngIf="!loading && !posts.length">{{ postSearchQuery ? ('communityDetail.feed.empty.noSearchMatches' | translate) : ('communityDetail.feed.empty.noPostsYet' | translate) }}</p>
 
         <article class="post-item card" *ngFor="let post of posts; trackBy: trackByPostId" [attr.id]="'post-' + post.id" role="button" tabindex="0" (click)="openPostAsync(post.id)" (keydown)="onPostCardKeydown($event, post.id)">
             <header class="post-head">
                 <div class="post-author">
-                    <img class="post-author-image" *ngIf="isPostAuthorImageVisible(post)" [src]="post.authorImageUrl" (error)="markPostAuthorImageFailed(post.id)" alt="Author image" />
+                    <img class="post-author-image" *ngIf="isPostAuthorImageVisible(post)" [src]="post.authorImageUrl" (error)="markPostAuthorImageFailed(post.id)" [attr.alt]="'communityDetail.post.authorImageAlt' | translate" />
                     <span class="post-author-fallback" *ngIf="!isPostAuthorImageVisible(post)">{{ post.authorHandle.charAt(0) | uppercase }}</span>
                     <div>
                         <strong>u/{{ post.authorHandle }}</strong>
@@ -73,13 +75,13 @@
                     </div>
                 </div>
                 <div class="post-badges">
-                    <span class="post-badge" *ngIf="getPostMediaUrls(post).length">Image</span>
-                    <span class="post-badge" *ngIf="post.poll">Poll</span>
+                    <span class="post-badge" *ngIf="getPostMediaUrls(post).length">{{ 'communityDetail.post.badges.image' | translate }}</span>
+                    <span class="post-badge" *ngIf="post.poll">{{ 'communityDetail.post.badges.poll' | translate }}</span>
                 </div>
             </header>
 
             <h4 class="post-title">
-                <ng-container *ngFor="let line of splitHashtagText(post.title || 'Untitled post'); let isLast = last">
+                <ng-container *ngFor="let line of splitHashtagText(post.title || ('communityDetail.post.untitled' | translate)); let isLast = last">
                     <ng-container *ngFor="let part of line">
                         <a *ngIf="part.hashtag; else postTitleText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }" (click)="$event.stopPropagation()">{{ part.text }}</a>
                         <ng-template #postTitleText>{{ part.text }}</ng-template>
@@ -100,20 +102,20 @@
 
             <ng-container *ngIf="getActivePostImageUrl(post) as activeImageUrl">
                 <div class="post-image-carousel" *ngIf="getPostMediaUrls(post).length > 1">
-                    <button type="button" class="post-image-nav" (click)="showPreviousPostImage(post, $event)" [disabled]="!canMovePostImageBack(post)" aria-label="Previous image" title="Previous image">
+                    <button type="button" class="post-image-nav" (click)="showPreviousPostImage(post, $event)" [disabled]="!canMovePostImageBack(post)" [attr.aria-label]="'communityDetail.media.previousImage' | translate" [attr.title]="'communityDetail.media.previousImage' | translate">
                         <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
                     </button>
                     <div class="post-image-frame">
                         <div class="post-image-stack">
                             <img *ngIf="isPostImageAnimating(post) && getPostOutgoingImageUrl(post) as outgoingUrl" class="post-image post-image-layer post-image-outgoing" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'"
-                                [src]="outgoingUrl" alt="Post image" (click)="onPostImageCardClick(post, outgoingUrl, $event)" />
+                                [src]="outgoingUrl" [alt]="'communityDetail.media.postImageAlt' | translate" (click)="onPostImageCardClick(post, outgoingUrl, $event)" />
                             <ng-container *ngFor="let currentUrl of [activeImageUrl]; trackBy: trackByMediaUrl">
                                 <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl"
-                                    alt="Post image" (click)="onPostImageCardClick(post, currentUrl, $event)" />
+                                    [alt]="'communityDetail.media.postImageAlt' | translate" (click)="onPostImageCardClick(post, currentUrl, $event)" />
                             </ng-container>
                         </div>
                     </div>
-                    <button type="button" class="post-image-nav" (click)="showNextPostImage(post, $event)" [disabled]="!canMovePostImageForward(post)" aria-label="Next image" title="Next image">
+                    <button type="button" class="post-image-nav" (click)="showNextPostImage(post, $event)" [disabled]="!canMovePostImageForward(post)" [attr.aria-label]="'communityDetail.media.nextImage' | translate" [attr.title]="'communityDetail.media.nextImage' | translate">
                         <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -121,10 +123,10 @@
                 <div class="post-image-frame" *ngIf="getPostMediaUrls(post).length <= 1">
                     <div class="post-image-stack">
                         <img *ngIf="isPostImageAnimating(post) && getPostOutgoingImageUrl(post) as outgoingUrl" class="post-image post-image-layer post-image-outgoing" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'"
-                            [src]="outgoingUrl" alt="Post image" (click)="onPostImageCardClick(post, outgoingUrl, $event)" />
+                            [src]="outgoingUrl" [alt]="'communityDetail.media.postImageAlt' | translate" (click)="onPostImageCardClick(post, outgoingUrl, $event)" />
                         <ng-container *ngFor="let currentUrl of [activeImageUrl]; trackBy: trackByMediaUrl">
-                            <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl" alt="Post image"
-                                (click)="onPostImageCardClick(post, currentUrl, $event)" />
+                            <img class="post-image post-image-layer post-image-current" [class.post-image-incoming]="isPostImageAnimating(post)" [class.slide-next]="getPostImageDirection(post) === 'prev'" [class.slide-prev]="getPostImageDirection(post) === 'next'" [src]="currentUrl"
+                                [alt]="'communityDetail.media.postImageAlt' | translate" (click)="onPostImageCardClick(post, currentUrl, $event)" />
                         </ng-container>
                     </div>
                 </div>
@@ -141,7 +143,7 @@
 
                 <div class="post-image-thumbs" *ngIf="getPostMediaUrls(post).length > 1">
                     <button type="button" class="post-image-thumb" *ngFor="let previewUrl of getPostMediaUrls(post); index as i; trackBy: trackByMediaUrl" [class.active]="i === getPostActiveImageIndex(post)" (click)="setActivePostImage(post, i, $event)">
-                        <img [src]="previewUrl" [alt]="'Image ' + (i + 1)" />
+                        <img [src]="previewUrl" [alt]="'communityDetail.media.imageThumbAlt' | translate:{ index: i + 1 }" />
                     </button>
                 </div>
             </ng-container>
@@ -154,33 +156,39 @@
                         <span *ngIf="shouldShowPollResults(poll)">{{ option.voteCount }} ({{ getPollOptionPercentage(poll, option.voteCount) }}%)</span>
                     </button>
                 </div>
-                <p class="meta" *ngIf="shouldShowPollResults(poll)">{{ poll.totalVotes }} votes</p>
+                <p class="meta" *ngIf="shouldShowPollResults(poll)">{{ 'communityDetail.post.pollVotes' | translate:{ count: poll.totalVotes } }}</p>
             </section>
 
             <footer class="post-actions">
-                <button type="button" class="vote-button" [class.active]="isUpvoted(post.id)" (click)="toggleUpvote(post.id, $event)" [disabled]="votingPostId === post.id" aria-label="Upvote post" title="Upvote">
+                <button type="button" class="vote-button" [class.active]="isUpvoted(post.id)" (click)="toggleUpvote(post.id, $event)" [disabled]="votingPostId === post.id" [attr.aria-label]="'communityDetail.postActions.upvotePost' | translate"
+                    [attr.title]="'communityDetail.postActions.upvote' | translate">
                     <i class="fa-duotone fa-light fa-arrow-up" aria-hidden="true"></i>
                 </button>
                 <span class="vote-score" [class.positive]="getVoteScore(post.id) > 0" [class.negative]="getVoteScore(post.id) < 0">{{ getVoteScore(post.id) }}</span>
-                <button type="button" class="vote-button" [class.active]="isDownvoted(post.id)" (click)="toggleDownvote(post.id, $event)" [disabled]="votingPostId === post.id" aria-label="Downvote post" title="Downvote">
+                <button type="button" class="vote-button" [class.active]="isDownvoted(post.id)" (click)="toggleDownvote(post.id, $event)" [disabled]="votingPostId === post.id" [attr.aria-label]="'communityDetail.postActions.downvotePost' | translate"
+                    [attr.title]="'communityDetail.postActions.downvote' | translate">
                     <i class="fa-duotone fa-light fa-arrow-down" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="comment-button" (click)="openPostFromCommentAction(post.id, $event)" aria-label="Open comments" title="Open comments">
+                <button type="button" class="comment-button" (click)="openPostFromCommentAction(post.id, $event)" [attr.aria-label]="'communityDetail.postActions.openComments' | translate" [attr.title]="'communityDetail.postActions.openComments' | translate">
                     <i class="fa-duotone fa-light fa-comment" aria-hidden="true"></i>
                     <span>{{ post.comments.length }}</span>
                 </button>
-                <button type="button" class="icon-button" [class.saved-active]="post.isSavedByMe" (click)="$event.stopPropagation(); toggleSavePostAsync(post)" [disabled]="togglingSavePostId === post.id" [attr.aria-label]="post.isSavedByMe ? 'Unsave post' : 'Save post'"
-                    [attr.title]="post.isSavedByMe ? 'Saved' : 'Save'">
+                <button type="button" class="icon-button" [class.saved-active]="post.isSavedByMe" (click)="$event.stopPropagation(); toggleSavePostAsync(post)" [disabled]="togglingSavePostId === post.id"
+                    [attr.aria-label]="post.isSavedByMe ? ('communityDetail.postActions.unsavePost' | translate) : ('communityDetail.postActions.savePost' | translate)"
+                    [attr.title]="post.isSavedByMe ? ('communityDetail.postActions.saved' | translate) : ('communityDetail.postActions.save' | translate)">
                     <i class="fa-duotone fa-bookmark" [class.fa-light]="!post.isSavedByMe" [class.fa-solid]="post.isSavedByMe" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="icon-button" (click)="$event.stopPropagation(); sharePostAsync(post)" [attr.aria-label]="copiedPostLinkId === post.id ? 'Post link copied' : 'Copy post link'" [attr.title]="copiedPostLinkId === post.id ? 'Copied' : 'Copy link'">
+                <button type="button" class="icon-button" (click)="$event.stopPropagation(); sharePostAsync(post)" [attr.aria-label]="copiedPostLinkId === post.id ? ('communityDetail.postActions.postLinkCopiedAria' | translate) : ('communityDetail.postActions.copyPostLinkAria' | translate)"
+                    [attr.title]="copiedPostLinkId === post.id ? ('communityDetail.postActions.copied' | translate) : ('communityDetail.postActions.copyLink' | translate)">
                     <i *ngIf="copiedPostLinkId !== post.id" class="fa-duotone fa-light fa-link" aria-hidden="true"></i>
                     <i *ngIf="copiedPostLinkId === post.id" class="fa-duotone fa-solid fa-check" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="icon-button" *ngIf="canEditPost(post)" (click)="$event.stopPropagation(); openEditPostModal(post)" [disabled]="updatingPost && editingPostId === post.id" aria-label="Edit post" title="Edit post">
+                <button type="button" class="icon-button" *ngIf="canEditPost(post)" (click)="$event.stopPropagation(); openEditPostModal(post)" [disabled]="updatingPost && editingPostId === post.id" [attr.aria-label]="'communityDetail.postActions.editPost' | translate"
+                    [attr.title]="'communityDetail.postActions.editPost' | translate">
                     <i class="fa-duotone fa-pen" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="icon-button danger" *ngIf="canDeletePost(post)" (click)="$event.stopPropagation(); requestDeletePost(post)" [disabled]="deletingPostId === post.id" aria-label="Delete post" title="Delete post">
+                <button type="button" class="icon-button danger" *ngIf="canDeletePost(post)" (click)="$event.stopPropagation(); requestDeletePost(post)" [disabled]="deletingPostId === post.id" [attr.aria-label]="'communityDetail.postActions.deletePost' | translate"
+                    [attr.title]="'communityDetail.postActions.deletePost' | translate">
                     <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
                 </button>
             </footer>
@@ -188,50 +196,54 @@
     </section>
 </section>
 
-<app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
+<app-confirm-modal [open]="!!pendingDeletePostId" [title]="'communityDetail.postActions.deletePost' | translate" [message]="'communityDetail.postActions.deletePostConfirm' | translate" [confirmText]="'communityDetail.postActions.delete' | translate"
+    [cancelText]="'communityDetail.common.cancel' | translate" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
 </app-confirm-modal>
 
-<div class="image-lightbox" *ngIf="fullscreenImageUrl as imageUrl" role="dialog" aria-modal="true" aria-label="Image preview" (click)="closeImageFullscreen()">
-    <button type="button" class="image-lightbox-close" aria-label="Close image preview" (click)="$event.stopPropagation(); closeImageFullscreen()">×</button>
-    <button type="button" class="image-lightbox-nav prev" *ngIf="fullscreenImageUrls.length > 1" [disabled]="!canMoveFullscreenImageBack" aria-label="Previous image" title="Previous image" (click)="showPreviousFullscreenImage($event)">
+<div class="image-lightbox" *ngIf="fullscreenImageUrl as imageUrl" role="dialog" aria-modal="true" [attr.aria-label]="'communityDetail.media.imagePreview' | translate" (click)="closeImageFullscreen()">
+    <button type="button" class="image-lightbox-close" [attr.aria-label]="'communityDetail.media.closeImagePreview' | translate" (click)="$event.stopPropagation(); closeImageFullscreen()">×</button>
+    <button type="button" class="image-lightbox-nav prev" *ngIf="fullscreenImageUrls.length > 1" [disabled]="!canMoveFullscreenImageBack" [attr.aria-label]="'communityDetail.media.previousImage' | translate" [attr.title]="'communityDetail.media.previousImage' | translate"
+        (click)="showPreviousFullscreenImage($event)">
         <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
     </button>
-    <img [src]="imageUrl" alt="Fullscreen post image" (click)="$event.stopPropagation()" />
-    <button type="button" class="image-lightbox-nav next" *ngIf="fullscreenImageUrls.length > 1" [disabled]="!canMoveFullscreenImageForward" aria-label="Next image" title="Next image" (click)="showNextFullscreenImage($event)">
+    <img [src]="imageUrl" [alt]="'communityDetail.media.fullscreenPostImageAlt' | translate" (click)="$event.stopPropagation()" />
+    <button type="button" class="image-lightbox-nav next" *ngIf="fullscreenImageUrls.length > 1" [disabled]="!canMoveFullscreenImageForward" [attr.aria-label]="'communityDetail.media.nextImage' | translate" [attr.title]="'communityDetail.media.nextImage' | translate"
+        (click)="showNextFullscreenImage($event)">
         <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
     </button>
 </div>
 
-<div class="compose-modal" *ngIf="membersModalOpen && community as activeCommunity" role="dialog" aria-modal="true" aria-label="Community members" (click)="closeMembersModal()">
+<div class="compose-modal" *ngIf="membersModalOpen && community as activeCommunity" role="dialog" aria-modal="true" [attr.aria-label]="'communityDetail.members.modalAria' | translate" (click)="closeMembersModal()">
     <section class="compose-modal-card members-modal-card" (click)="$event.stopPropagation()">
         <header class="compose-modal-head">
-            <h3>Members</h3>
-            <button type="button" class="close" (click)="closeMembersModal()" aria-label="Close members modal">✕</button>
+            <h3>{{ 'communityDetail.members.title' | translate }}</h3>
+            <button type="button" class="close" (click)="closeMembersModal()" [attr.aria-label]="'communityDetail.members.closeAria' | translate">✕</button>
         </header>
 
-        <div class="members-modal-tabs" role="tablist" aria-label="Community moderation views" *ngIf="canManageModerators">
+        <div class="members-modal-tabs" role="tablist" [attr.aria-label]="'communityDetail.members.tabsAria' | translate" *ngIf="canManageModerators">
             <button type="button" class="members-modal-tab" role="tab" [attr.aria-selected]="membersModalTab === 'members'" [class.active]="membersModalTab === 'members'" (click)="setMembersModalTab('members')">
-                Members
+                {{ 'communityDetail.members.tabs.members' | translate }}
             </button>
             <button type="button" class="members-modal-tab" role="tab" [attr.aria-selected]="membersModalTab === 'banned'" [class.active]="membersModalTab === 'banned'" (click)="setMembersModalTab('banned')">
-                Banned users
+                {{ 'communityDetail.members.tabs.bannedUsers' | translate }}
             </button>
         </div>
 
         <div class="members-modal-body">
             <div class="members-search-row">
-                <input [(ngModel)]="membersSearchQuery" [placeholder]="membersModalTab === 'banned' ? 'Search banned users by name or @handle' : 'Search members by @handle or role'" [attr.aria-label]="membersModalTab === 'banned' ? 'Search banned users' : 'Search members'" />
+                <input [(ngModel)]="membersSearchQuery" [placeholder]="membersModalTab === 'banned' ? ('communityDetail.members.search.bannedPlaceholder' | translate) : ('communityDetail.members.search.membersPlaceholder' | translate)"
+                    [attr.aria-label]="membersModalTab === 'banned' ? ('communityDetail.members.search.bannedAria' | translate) : ('communityDetail.members.search.membersAria' | translate)" />
             </div>
 
-            <p class="members-modal-hint" *ngIf="membersModalTab === 'members'">{{ activeCommunity.memberCount }} members in /{{ activeCommunity.slug }}</p>
-            <p class="members-modal-hint" *ngIf="membersModalTab === 'banned'">Manage users banned from your account while moderating /{{ activeCommunity.slug }}</p>
+            <p class="members-modal-hint" *ngIf="membersModalTab === 'members'">{{ 'communityDetail.members.hint.membersInCommunity' | translate:{ count: activeCommunity.memberCount, slug: activeCommunity.slug } }}</p>
+            <p class="members-modal-hint" *ngIf="membersModalTab === 'banned'">{{ 'communityDetail.members.hint.bannedDescription' | translate:{ slug: activeCommunity.slug } }}</p>
 
             <div class="community-members-groups" *ngIf="membersModalTab === 'members' && filteredMembers.length; else noMembersState">
                 <div class="community-members-group community-members-group-elevated" *ngIf="elevatedMembers.length">
                     <article class="community-member-row" *ngFor="let member of elevatedMembers; trackBy: trackByMemberProfileId">
                         <a class="community-member-link" [routerLink]="['/users', member.handle]" (click)="closeMembersModal()">
                             <span class="community-member-avatar" *ngIf="!member.imageUrl">{{ memberAvatarText(member) }}</span>
-                            <img class="community-member-avatar" *ngIf="member.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Member avatar" />
+                            <img class="community-member-avatar" *ngIf="member.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'communityDetail.members.memberAvatarAlt' | translate" />
                             <span class="community-member-meta">
                                 <strong>{{ member.handle }}</strong>
                                 <small>@{{ member.handle }}</small>
@@ -241,18 +253,20 @@
                         <div class="community-member-controls">
                             <span class="community-member-role" [class.role-moderator]="member.role === 'Moderator'">{{ member.role }}</span>
                             <div class="community-member-actions" *ngIf="canManageModerators">
-                                <button type="button" class="icon-button" *ngIf="canPromoteToModerator(member)" (click)="promoteMemberToModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Make moderator"
-                                    title="Make moderator">
+                                <button type="button" class="icon-button" *ngIf="canPromoteToModerator(member)" (click)="promoteMemberToModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId"
+                                    [attr.aria-label]="'communityDetail.members.actions.makeModerator' | translate" [attr.title]="'communityDetail.members.actions.makeModerator' | translate">
                                     <i class="fa-duotone fa-light fa-user-shield" aria-hidden="true"></i>
                                 </button>
-                                <button type="button" class="icon-button" *ngIf="canDemoteModerator(member)" (click)="demoteModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Remove moderator"
-                                    title="Remove moderator">
+                                <button type="button" class="icon-button" *ngIf="canDemoteModerator(member)" (click)="demoteModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId"
+                                    [attr.aria-label]="'communityDetail.members.actions.removeModerator' | translate" [attr.title]="'communityDetail.members.actions.removeModerator' | translate">
                                     <i class="fa-duotone fa-light fa-user-minus" aria-hidden="true"></i>
                                 </button>
-                                <button type="button" class="icon-button" *ngIf="canTimeoutMember(member)" (click)="requestTimeoutMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Timeout user" title="Timeout user">
+                                <button type="button" class="icon-button" *ngIf="canTimeoutMember(member)" (click)="requestTimeoutMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId"
+                                    [attr.aria-label]="'communityDetail.members.actions.timeoutUser' | translate" [attr.title]="'communityDetail.members.actions.timeoutUser' | translate">
                                     <i class="fa-duotone fa-light fa-clock" aria-hidden="true"></i>
                                 </button>
-                                <button type="button" class="icon-button danger" *ngIf="canBanMember(member)" (click)="requestBanMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Ban user" title="Ban user">
+                                <button type="button" class="icon-button danger" *ngIf="canBanMember(member)" (click)="requestBanMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId"
+                                    [attr.aria-label]="'communityDetail.members.actions.banUser' | translate" [attr.title]="'communityDetail.members.actions.banUser' | translate">
                                     <i class="fa-duotone fa-light fa-ban" aria-hidden="true"></i>
                                 </button>
                             </div>
@@ -264,7 +278,7 @@
                     <article class="community-member-row" *ngFor="let member of regularMembers; trackBy: trackByMemberProfileId">
                         <a class="community-member-link" [routerLink]="['/users', member.handle]" (click)="closeMembersModal()">
                             <span class="community-member-avatar" *ngIf="!member.imageUrl">{{ memberAvatarText(member) }}</span>
-                            <img class="community-member-avatar" *ngIf="member.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Member avatar" />
+                            <img class="community-member-avatar" *ngIf="member.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'communityDetail.members.memberAvatarAlt' | translate" />
                             <span class="community-member-meta">
                                 <strong>{{ member.handle }}</strong>
                                 <small>@{{ member.handle }}</small>
@@ -274,18 +288,20 @@
                         <div class="community-member-controls">
                             <span class="community-member-role" [class.role-moderator]="member.role === 'Moderator'">{{ member.role }}</span>
                             <div class="community-member-actions" *ngIf="canManageModerators">
-                                <button type="button" class="icon-button" *ngIf="canPromoteToModerator(member)" (click)="promoteMemberToModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Make moderator"
-                                    title="Make moderator">
+                                <button type="button" class="icon-button" *ngIf="canPromoteToModerator(member)" (click)="promoteMemberToModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId"
+                                    [attr.aria-label]="'communityDetail.members.actions.makeModerator' | translate" [attr.title]="'communityDetail.members.actions.makeModerator' | translate">
                                     <i class="fa-duotone fa-light fa-user-shield" aria-hidden="true"></i>
                                 </button>
-                                <button type="button" class="icon-button" *ngIf="canDemoteModerator(member)" (click)="demoteModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Remove moderator"
-                                    title="Remove moderator">
+                                <button type="button" class="icon-button" *ngIf="canDemoteModerator(member)" (click)="demoteModeratorAsync(member.profileId)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId"
+                                    [attr.aria-label]="'communityDetail.members.actions.removeModerator' | translate" [attr.title]="'communityDetail.members.actions.removeModerator' | translate">
                                     <i class="fa-duotone fa-light fa-user-minus" aria-hidden="true"></i>
                                 </button>
-                                <button type="button" class="icon-button" *ngIf="canTimeoutMember(member)" (click)="requestTimeoutMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Timeout user" title="Timeout user">
+                                <button type="button" class="icon-button" *ngIf="canTimeoutMember(member)" (click)="requestTimeoutMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId"
+                                    [attr.aria-label]="'communityDetail.members.actions.timeoutUser' | translate" [attr.title]="'communityDetail.members.actions.timeoutUser' | translate">
                                     <i class="fa-duotone fa-light fa-clock" aria-hidden="true"></i>
                                 </button>
-                                <button type="button" class="icon-button danger" *ngIf="canBanMember(member)" (click)="requestBanMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId" aria-label="Ban user" title="Ban user">
+                                <button type="button" class="icon-button danger" *ngIf="canBanMember(member)" (click)="requestBanMember(member)" [disabled]="updatingMemberRoleId === member.profileId || moderatingMemberId === member.profileId"
+                                    [attr.aria-label]="'communityDetail.members.actions.banUser' | translate" [attr.title]="'communityDetail.members.actions.banUser' | translate">
                                     <i class="fa-duotone fa-light fa-ban" aria-hidden="true"></i>
                                 </button>
                             </div>
@@ -298,7 +314,7 @@
                 <article class="community-member-row" *ngFor="let profile of filteredBannedProfiles; trackBy: trackByProfileId">
                     <a class="community-member-link" [routerLink]="['/users', profile.handle]" (click)="closeMembersModal()">
                         <span class="community-member-avatar" *ngIf="!profile.imageUrl">{{ profileAvatarText(profile) }}</span>
-                        <img class="community-member-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Banned user avatar" />
+                        <img class="community-member-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'communityDetail.members.bannedUserAvatarAlt' | translate" />
                         <span class="community-member-meta">
                             <strong>{{ profile.displayName }}</strong>
                             <small>@{{ profile.handle }}</small>
@@ -306,9 +322,10 @@
                     </a>
 
                     <div class="community-member-controls">
-                        <span class="community-member-role role-banned">Banned</span>
+                        <span class="community-member-role role-banned">{{ 'communityDetail.members.bannedRole' | translate }}</span>
                         <div class="community-member-actions" *ngIf="canManageModerators">
-                            <button type="button" class="icon-button" (click)="requestUnbanProfile(profile)" [disabled]="moderatingMemberId === profile.id" aria-label="Unban user" title="Unban user">
+                            <button type="button" class="icon-button" (click)="requestUnbanProfile(profile)" [disabled]="moderatingMemberId === profile.id" [attr.aria-label]="'communityDetail.members.actions.unbanUser' | translate"
+                                [attr.title]="'communityDetail.members.actions.unbanUser' | translate">
                                 <i class="fa-duotone fa-light fa-user-check" aria-hidden="true"></i>
                             </button>
                         </div>
@@ -317,213 +334,214 @@
             </div>
 
             <ng-template #noMembersState>
-                <p class="members-modal-hint" *ngIf="membersModalTab === 'members' && activeCommunity.members.length && membersSearchQuery.trim()">No members matched your search.</p>
-                <p class="members-modal-hint" *ngIf="membersModalTab === 'members' && !activeCommunity.members.length">No members to show yet.</p>
-                <p class="members-modal-hint" *ngIf="membersModalTab === 'banned' && loadingBannedProfiles">Loading banned users...</p>
-                <p class="members-modal-hint" *ngIf="membersModalTab === 'banned' && !loadingBannedProfiles && filteredBannedProfiles.length === 0 && membersSearchQuery.trim()">No banned users matched your search.</p>
-                <p class="members-modal-hint" *ngIf="membersModalTab === 'banned' && !loadingBannedProfiles && bannedProfiles.length === 0 && !membersSearchQuery.trim()">No banned users.</p>
+                <p class="members-modal-hint" *ngIf="membersModalTab === 'members' && activeCommunity.members.length && membersSearchQuery.trim()">{{ 'communityDetail.members.empty.noMembersMatchSearch' | translate }}</p>
+                <p class="members-modal-hint" *ngIf="membersModalTab === 'members' && !activeCommunity.members.length">{{ 'communityDetail.members.empty.noMembersYet' | translate }}</p>
+                <p class="members-modal-hint" *ngIf="membersModalTab === 'banned' && loadingBannedProfiles">{{ 'communityDetail.members.empty.loadingBannedUsers' | translate }}</p>
+                <p class="members-modal-hint" *ngIf="membersModalTab === 'banned' && !loadingBannedProfiles && filteredBannedProfiles.length === 0 && membersSearchQuery.trim()">{{ 'communityDetail.members.empty.noBannedUsersMatchSearch' | translate }}</p>
+                <p class="members-modal-hint" *ngIf="membersModalTab === 'banned' && !loadingBannedProfiles && bannedProfiles.length === 0 && !membersSearchQuery.trim()">{{ 'communityDetail.members.empty.noBannedUsers' | translate }}</p>
             </ng-template>
         </div>
     </section>
 </div>
 
-<app-confirm-modal [open]="!!pendingMemberModerationAction" [title]="memberModerationModalTitle" [message]="memberModerationModalMessage" [confirmText]="memberModerationConfirmText" cancelText="Cancel" [confirmClass]="pendingMemberModerationAction?.action === 'ban' ? 'danger' : ''"
-    [busy]="!!moderatingMemberId" [busyText]="'Working…'" (cancel)="cancelMemberModerationAction()" (confirm)="confirmMemberModerationActionAsync()">
+<app-confirm-modal [open]="!!pendingMemberModerationAction" [title]="memberModerationModalTitle" [message]="memberModerationModalMessage" [confirmText]="memberModerationConfirmText" [confirmClass]="pendingMemberModerationAction?.action === 'ban' ? 'danger' : ''"
+    [cancelText]="'communityDetail.common.cancel' | translate" [busy]="!!moderatingMemberId" [busyText]="'communityDetail.common.working' | translate" (cancel)="cancelMemberModerationAction()" (confirm)="confirmMemberModerationActionAsync()">
     <div class="member-timeout-options" *ngIf="pendingMemberModerationAction?.action === 'timeout'">
-        <p class="member-timeout-options-label">Timeout length</p>
+        <p class="member-timeout-options-label">{{ 'communityDetail.moderation.timeoutLength' | translate }}</p>
         <div class="member-timeout-options-row">
             <button type="button" class="ghost member-timeout-option" *ngFor="let option of timeoutDurationOptions" [class.active]="selectedTimeoutDurationDays === option.value" [disabled]="!!moderatingMemberId" (click)="selectedTimeoutDurationDays = option.value">
-                {{ option.label }}
+                {{ option.label | translate }}
             </button>
         </div>
     </div>
 </app-confirm-modal>
 
-<div class="compose-modal" *ngIf="editPostModalOpen" role="dialog" aria-modal="true" aria-label="Edit community post" (click)="closeEditPostModal()">
+<div class="compose-modal" *ngIf="editPostModalOpen" role="dialog" aria-modal="true" [attr.aria-label]="'communityDetail.editPost.modalAria' | translate" (click)="closeEditPostModal()">
     <section class="compose-modal-card" (click)="$event.stopPropagation()">
         <header class="compose-modal-head">
-            <h3>Edit post</h3>
-            <button type="button" class="close" (click)="closeEditPostModal()" [disabled]="updatingPost" aria-label="Close edit post modal">✕</button>
+            <h3>{{ 'communityDetail.editPost.title' | translate }}</h3>
+            <button type="button" class="close" (click)="closeEditPostModal()" [disabled]="updatingPost" [attr.aria-label]="'communityDetail.editPost.closeAria' | translate">✕</button>
         </header>
 
         <label>
-            Title
-            <input type="text" [(ngModel)]="editPostTitle" maxlength="220" placeholder="Add a title" [disabled]="updatingPost" />
+            {{ 'communityDetail.editPost.fields.title' | translate }}
+            <input type="text" [(ngModel)]="editPostTitle" maxlength="220" [placeholder]="'communityDetail.editPost.placeholders.title' | translate" [disabled]="updatingPost" />
         </label>
 
-        <nav class="composer-tabs" aria-label="Edit post type">
-            <button type="button" [class.active]="isEditPostTab('text')" (click)="setEditPostTab('text')">Text</button>
-            <button type="button" [class.active]="isEditPostTab('media')" (click)="setEditPostTab('media')">Images &amp; Video</button>
-            <button type="button" [class.active]="isEditPostTab('link')" (click)="setEditPostTab('link')">Link</button>
-            <button type="button" [class.active]="isEditPostTab('poll')" (click)="setEditPostTab('poll')">Poll</button>
+        <nav class="composer-tabs" [attr.aria-label]="'communityDetail.editPost.typeAria' | translate">
+            <button type="button" [class.active]="isEditPostTab('text')" (click)="setEditPostTab('text')">{{ 'communityDetail.postType.text' | translate }}</button>
+            <button type="button" [class.active]="isEditPostTab('media')" (click)="setEditPostTab('media')">{{ 'communityDetail.postType.media' | translate }}</button>
+            <button type="button" [class.active]="isEditPostTab('link')" (click)="setEditPostTab('link')">{{ 'communityDetail.postType.link' | translate }}</button>
+            <button type="button" [class.active]="isEditPostTab('poll')" (click)="setEditPostTab('poll')">{{ 'communityDetail.postType.poll' | translate }}</button>
         </nav>
 
-        <app-rich-text-editor *ngIf="isEditPostTab('text') || isEditPostTab('poll')" [placeholder]="'Update your post...'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="editPostContent" [initialContentIsHtml]="true"
-            (contentChanged)="editPostContent = $event"></app-rich-text-editor>
+        <app-rich-text-editor *ngIf="isEditPostTab('text') || isEditPostTab('poll')" [placeholder]="'communityDetail.editPost.placeholders.updatePost' | translate" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="editPostContent"
+            [initialContentIsHtml]="true" (contentChanged)="editPostContent = $event"></app-rich-text-editor>
 
         <section class="composer-media" *ngIf="isEditPostTab('media') || isEditPostTab('link')">
             <label *ngIf="isEditPostTab('link')">
-                Link URL
-                <input type="url" [(ngModel)]="editPostLinkUrl" maxlength="2048" placeholder="https://example.com" [disabled]="updatingPost" />
+                {{ 'communityDetail.editPost.fields.linkUrl' | translate }}
+                <input type="url" [(ngModel)]="editPostLinkUrl" maxlength="2048" [placeholder]="'communityDetail.editPost.placeholders.linkUrl' | translate" [disabled]="updatingPost" />
             </label>
 
             <label *ngIf="isEditPostTab('media')">
-                Add images (up to 10)
+                {{ 'communityDetail.editPost.fields.addImages' | translate }}
                 <input type="file" accept="image/*" multiple (change)="onEditPostImagesSelected($event)" [disabled]="updatingPost || editPostImageEntries.length >= 10" />
             </label>
 
             <div class="composer-carousel" *ngIf="isEditPostTab('media') && activeEditPostImagePreviewUrl as activePreview">
-                <button type="button" class="carousel-nav" (click)="showPreviousEditPostImage()" [disabled]="!canMoveEditPostImageBack" aria-label="Previous image">‹</button>
-                <img class="composer-preview" [src]="activePreview" alt="Selected edit image preview" />
-                <button type="button" class="carousel-nav" (click)="showNextEditPostImage()" [disabled]="!canMoveEditPostImageForward" aria-label="Next image">›</button>
+                <button type="button" class="carousel-nav" (click)="showPreviousEditPostImage()" [disabled]="!canMoveEditPostImageBack" [attr.aria-label]="'communityDetail.media.previousImage' | translate">‹</button>
+                <img class="composer-preview" [src]="activePreview" [alt]="'communityDetail.editPost.previewAlt' | translate" />
+                <button type="button" class="carousel-nav" (click)="showNextEditPostImage()" [disabled]="!canMoveEditPostImageForward" [attr.aria-label]="'communityDetail.media.nextImage' | translate">›</button>
             </div>
 
             <div class="composer-thumbs" *ngIf="isEditPostTab('media') && editPostImageEntries.length">
                 <button type="button" class="composer-thumb" *ngFor="let entry of editPostImageEntries; index as i" [class.active]="i === editPostActiveImageIndex" (click)="setActiveEditPostImage(i)">
-                    <img [src]="entry.url" [alt]="'Image ' + (i + 1)" />
+                    <img [src]="entry.url" [alt]="'communityDetail.media.imageThumbAlt' | translate:{ index: i + 1 }" />
                 </button>
-                <button type="button" class="ghost" (click)="removeEditPostImage(editPostActiveImageIndex)" [disabled]="updatingPost">Remove current</button>
+                <button type="button" class="ghost" (click)="removeEditPostImage(editPostActiveImageIndex)" [disabled]="updatingPost">{{ 'communityDetail.editPost.removeCurrent' | translate }}</button>
             </div>
 
-            <app-rich-text-editor [placeholder]="'Add optional body text...'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="editPostMediaContent" [initialContentIsHtml]="true"
+            <app-rich-text-editor [placeholder]="'communityDetail.editPost.placeholders.optionalBody' | translate" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="editPostMediaContent" [initialContentIsHtml]="true"
                 (contentChanged)="editPostMediaContent = $event"></app-rich-text-editor>
         </section>
 
         <div class="poll-editor" *ngIf="isEditPostTab('poll')">
             <label>
-                Question
-                <input [(ngModel)]="editPollQuestion" placeholder="Ask the community..." maxlength="280" [disabled]="updatingPost" />
+                {{ 'communityDetail.editPost.fields.question' | translate }}
+                <input [(ngModel)]="editPollQuestion" [placeholder]="'communityDetail.editPost.placeholders.askCommunity' | translate" maxlength="280" [disabled]="updatingPost" />
             </label>
             <label *ngFor="let option of editPollOptions; index as i; trackBy: trackByIndex">
-                Option {{ i + 1 }}
+                {{ 'communityDetail.editPost.fields.option' | translate:{ index: i + 1 } }}
                 <div class="poll-option-row">
-                    <input [(ngModel)]="editPollOptions[i]" maxlength="160" placeholder="Option text" [disabled]="updatingPost" />
-                    <button type="button" class="ghost" (click)="removeEditPollOption(i)" [disabled]="updatingPost || editPollOptions.length <= 2">Remove</button>
+                    <input [(ngModel)]="editPollOptions[i]" maxlength="160" [placeholder]="'communityDetail.editPost.placeholders.optionText' | translate" [disabled]="updatingPost" />
+                    <button type="button" class="ghost" (click)="removeEditPollOption(i)" [disabled]="updatingPost || editPollOptions.length <= 2">{{ 'communityDetail.editPost.remove' | translate }}</button>
                 </div>
             </label>
-            <button type="button" class="ghost" (click)="addEditPollOption()" [disabled]="updatingPost || editPollOptions.length >= 6">Add option</button>
+            <button type="button" class="ghost" (click)="addEditPollOption()" [disabled]="updatingPost || editPollOptions.length >= 6">{{ 'communityDetail.editPost.addOption' | translate }}</button>
         </div>
 
         <div class="actions">
-            <button type="button" class="ghost" (click)="closeEditPostModal()" [disabled]="updatingPost">Cancel</button>
-            <button type="button" (click)="submitPostUpdateAsync()" [disabled]="updatingPost">{{ updatingPost ? 'Saving…' : 'Save changes' }}</button>
+            <button type="button" class="ghost" (click)="closeEditPostModal()" [disabled]="updatingPost">{{ 'communityDetail.common.cancel' | translate }}</button>
+            <button type="button" (click)="submitPostUpdateAsync()" [disabled]="updatingPost">{{ updatingPost ? ('communityDetail.editPost.saving' | translate) : ('communityDetail.editPost.saveChanges' | translate) }}</button>
         </div>
     </section>
 </div>
 
-<div class="compose-modal" *ngIf="editCommunityModalOpen" role="dialog" aria-modal="true" aria-label="Edit community" (click)="closeEditCommunityModal()">
+<div class="compose-modal" *ngIf="editCommunityModalOpen" role="dialog" aria-modal="true" [attr.aria-label]="'communityDetail.editCommunity.modalAria' | translate" (click)="closeEditCommunityModal()">
     <section class="compose-modal-card" (click)="$event.stopPropagation()">
         <header class="compose-modal-head">
-            <h3>Edit community</h3>
-            <button type="button" class="close" (click)="closeEditCommunityModal()" [disabled]="updatingCommunity" aria-label="Close edit community modal">✕</button>
+            <h3>{{ 'communityDetail.editCommunity.title' | translate }}</h3>
+            <button type="button" class="close" (click)="closeEditCommunityModal()" [disabled]="updatingCommunity" [attr.aria-label]="'communityDetail.editCommunity.closeAria' | translate">✕</button>
         </header>
 
         <label>
-            Name
-            <input type="text" [(ngModel)]="updateCommunityName" maxlength="80" placeholder="Community name" [disabled]="updatingCommunity" />
+            {{ 'communityDetail.editCommunity.fields.name' | translate }}
+            <input type="text" [(ngModel)]="updateCommunityName" maxlength="80" [placeholder]="'communityDetail.editCommunity.placeholders.communityName' | translate" [disabled]="updatingCommunity" />
         </label>
 
         <label>
-            Information
-            <app-rich-text-editor class="edit-community-information" [placeholder]="'Describe this community'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="140" [initialContent]="updateCommunityInformation" [initialContentIsHtml]="true"
-                (contentChanged)="updateCommunityInformation = $event"></app-rich-text-editor>
+            {{ 'communityDetail.editCommunity.fields.information' | translate }}
+            <app-rich-text-editor class="edit-community-information" [placeholder]="'communityDetail.editCommunity.placeholders.describeCommunity' | translate" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="140" [initialContent]="updateCommunityInformation"
+                [initialContentIsHtml]="true" (contentChanged)="updateCommunityInformation = $event"></app-rich-text-editor>
         </label>
 
         <label>
-            Rules
-            <textarea class="edit-community-rules" [(ngModel)]="updateCommunityRulesText" rows="5" maxlength="3000" placeholder="One rule per line" [disabled]="updatingCommunity"></textarea>
+            {{ 'communityDetail.editCommunity.fields.rules' | translate }}
+            <textarea class="edit-community-rules" [(ngModel)]="updateCommunityRulesText" rows="5" maxlength="3000" [placeholder]="'communityDetail.editCommunity.placeholders.oneRulePerLine' | translate" [disabled]="updatingCommunity"></textarea>
         </label>
 
         <label>
-            Image
+            {{ 'communityDetail.editCommunity.fields.image' | translate }}
             <input type="file" accept="image/*" (change)="onUpdateCommunityImageSelected($event)" [disabled]="updatingCommunity" />
         </label>
-        <img class="composer-preview" *ngIf="updateCommunityImagePreviewUrl" [src]="updateCommunityImagePreviewUrl" alt="Community image preview" />
+        <img class="composer-preview" *ngIf="updateCommunityImagePreviewUrl" [src]="updateCommunityImagePreviewUrl" [alt]="'communityDetail.editCommunity.imagePreviewAlt' | translate" />
 
         <div class="actions">
-            <button type="button" class="ghost" (click)="closeEditCommunityModal()" [disabled]="updatingCommunity">Cancel</button>
-            <button type="button" (click)="submitCommunityUpdateAsync()" [disabled]="updatingCommunity">{{ updatingCommunity ? 'Saving…' : 'Save' }}</button>
+            <button type="button" class="ghost" (click)="closeEditCommunityModal()" [disabled]="updatingCommunity">{{ 'communityDetail.common.cancel' | translate }}</button>
+            <button type="button" (click)="submitCommunityUpdateAsync()" [disabled]="updatingCommunity">{{ updatingCommunity ? ('communityDetail.editCommunity.saving' | translate) : ('communityDetail.editCommunity.save' | translate) }}</button>
         </div>
     </section>
 </div>
 
-<div class="compose-modal" *ngIf="createPostModalOpen" role="dialog" aria-modal="true" aria-label="Create community post" (click)="closeCreatePostModal()">
+<div class="compose-modal" *ngIf="createPostModalOpen" role="dialog" aria-modal="true" [attr.aria-label]="'communityDetail.createPost.modalAria' | translate" (click)="closeCreatePostModal()">
     <section class="compose-modal-card" (click)="$event.stopPropagation()">
         <header class="compose-modal-head">
-            <h3>Create post</h3>
-            <button type="button" class="close" (click)="closeCreatePostModal()" [disabled]="posting" aria-label="Close create post modal">✕</button>
+            <h3>{{ 'communityDetail.createPost.title' | translate }}</h3>
+            <button type="button" class="close" (click)="closeCreatePostModal()" [disabled]="posting" [attr.aria-label]="'communityDetail.createPost.closeAria' | translate">✕</button>
         </header>
 
         <label>
-            Title
-            <input type="text" [(ngModel)]="composerTitle" (ngModelChange)="onComposerChanged()" maxlength="220" placeholder="Add a title" [disabled]="posting" />
+            {{ 'communityDetail.createPost.fields.title' | translate }}
+            <input type="text" [(ngModel)]="composerTitle" (ngModelChange)="onComposerChanged()" maxlength="220" [placeholder]="'communityDetail.createPost.placeholders.title' | translate" [disabled]="posting" />
         </label>
 
-        <nav class="composer-tabs" aria-label="Post type">
-            <button type="button" [class.active]="isComposerTab('text')" (click)="setComposerTab('text')">Text</button>
-            <button type="button" [class.active]="isComposerTab('media')" (click)="setComposerTab('media')">Images &amp; Video</button>
-            <button type="button" [class.active]="isComposerTab('link')" (click)="setComposerTab('link')">Link</button>
-            <button type="button" [class.active]="isComposerTab('poll')" (click)="setComposerTab('poll')">Poll</button>
+        <nav class="composer-tabs" [attr.aria-label]="'communityDetail.createPost.typeAria' | translate">
+            <button type="button" [class.active]="isComposerTab('text')" (click)="setComposerTab('text')">{{ 'communityDetail.postType.text' | translate }}</button>
+            <button type="button" [class.active]="isComposerTab('media')" (click)="setComposerTab('media')">{{ 'communityDetail.postType.media' | translate }}</button>
+            <button type="button" [class.active]="isComposerTab('link')" (click)="setComposerTab('link')">{{ 'communityDetail.postType.link' | translate }}</button>
+            <button type="button" [class.active]="isComposerTab('poll')" (click)="setComposerTab('poll')">{{ 'communityDetail.postType.poll' | translate }}</button>
         </nav>
 
-        <app-rich-text-editor *ngIf="isComposerTab('text')" [placeholder]="'Share your thoughts...'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="composerContent"
+        <app-rich-text-editor *ngIf="isComposerTab('text')" [placeholder]="'communityDetail.createPost.placeholders.shareThoughts' | translate" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="composerContent"
             (contentChanged)="composerContent = $event; onComposerChanged()"></app-rich-text-editor>
 
         <section class="composer-media" *ngIf="isComposerTab('media') || isComposerTab('link')">
             <label *ngIf="isComposerTab('link')">
-                Link URL
-                <input type="url" [(ngModel)]="composerLinkUrl" (ngModelChange)="onComposerChanged()" maxlength="2048" placeholder="https://example.com" [disabled]="posting" />
+                {{ 'communityDetail.createPost.fields.linkUrl' | translate }}
+                <input type="url" [(ngModel)]="composerLinkUrl" (ngModelChange)="onComposerChanged()" maxlength="2048" [placeholder]="'communityDetail.createPost.placeholders.linkUrl' | translate" [disabled]="posting" />
             </label>
 
             <label *ngIf="isComposerTab('media')">
-                Attach images (up to 10)
+                {{ 'communityDetail.createPost.fields.attachImages' | translate }}
                 <input type="file" accept="image/*" multiple (change)="onComposerImagesSelected($event)" [disabled]="posting || composerImageFiles.length >= 10" />
             </label>
 
             <div class="composer-carousel" *ngIf="isComposerTab('media') && activeComposerImagePreviewUrl as activePreview">
-                <button type="button" class="carousel-nav" (click)="showPreviousComposerImage()" [disabled]="!canMoveComposerImageBack" aria-label="Previous image">‹</button>
-                <img class="composer-preview" [src]="activePreview" alt="Selected post image preview" />
-                <button type="button" class="carousel-nav" (click)="showNextComposerImage()" [disabled]="!canMoveComposerImageForward" aria-label="Next image">›</button>
+                <button type="button" class="carousel-nav" (click)="showPreviousComposerImage()" [disabled]="!canMoveComposerImageBack" [attr.aria-label]="'communityDetail.media.previousImage' | translate">‹</button>
+                <img class="composer-preview" [src]="activePreview" [alt]="'communityDetail.createPost.previewAlt' | translate" />
+                <button type="button" class="carousel-nav" (click)="showNextComposerImage()" [disabled]="!canMoveComposerImageForward" [attr.aria-label]="'communityDetail.media.nextImage' | translate">›</button>
             </div>
 
             <div class="composer-thumbs" *ngIf="isComposerTab('media') && composerImagePreviewUrls.length">
                 <button type="button" class="composer-thumb" *ngFor="let preview of composerImagePreviewUrls; index as i" [class.active]="i === composerActiveImageIndex" (click)="setActiveComposerImage(i)">
-                    <img [src]="preview" [alt]="'Image ' + (i + 1)" />
+                    <img [src]="preview" [alt]="'communityDetail.media.imageThumbAlt' | translate:{ index: i + 1 }" />
                 </button>
-                <button type="button" class="ghost" (click)="removeComposerImage(composerActiveImageIndex)" [disabled]="posting">Remove current</button>
+                <button type="button" class="ghost" (click)="removeComposerImage(composerActiveImageIndex)" [disabled]="posting">{{ 'communityDetail.createPost.removeCurrent' | translate }}</button>
             </div>
 
-            <app-rich-text-editor [placeholder]="'Add optional body text...'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="composerMediaContent" (contentChanged)="composerMediaContent = $event; onComposerChanged()"></app-rich-text-editor>
+            <app-rich-text-editor [placeholder]="'communityDetail.createPost.placeholders.optionalBody' | translate" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="composerMediaContent"
+                (contentChanged)="composerMediaContent = $event; onComposerChanged()"></app-rich-text-editor>
         </section>
 
-        <p class="meta" *ngIf="!isComposerTab('media') && composerImagePreviewUrls.length">{{ composerImagePreviewUrls.length }} image(s) attached in Images &amp; Video tab.</p>
-        <p class="meta" *ngIf="!isComposerTab('link') && composerLinkUrl.trim()">Link attached in Link tab.</p>
+        <p class="meta" *ngIf="!isComposerTab('media') && composerImagePreviewUrls.length">{{ 'communityDetail.createPost.imagesAttachedInTab' | translate:{ count: composerImagePreviewUrls.length } }}</p>
+        <p class="meta" *ngIf="!isComposerTab('link') && composerLinkUrl.trim()">{{ 'communityDetail.createPost.linkAttachedInTab' | translate }}</p>
 
         <div class="poll-editor" *ngIf="isComposerTab('poll')">
             <label>
-                Question
-                <input [(ngModel)]="pollQuestion" (ngModelChange)="onComposerChanged()" placeholder="Ask the community..." maxlength="280" />
+                {{ 'communityDetail.createPost.fields.question' | translate }}
+                <input [(ngModel)]="pollQuestion" (ngModelChange)="onComposerChanged()" [placeholder]="'communityDetail.createPost.placeholders.askCommunity' | translate" maxlength="280" />
             </label>
             <label *ngFor="let option of pollOptions; index as i; trackBy: trackByIndex">
-                Option {{ i + 1 }}
+                {{ 'communityDetail.createPost.fields.option' | translate:{ index: i + 1 } }}
                 <div class="poll-option-row">
-                    <input [(ngModel)]="pollOptions[i]" (ngModelChange)="onComposerChanged()" maxlength="160" placeholder="Option text" />
-                    <button type="button" class="ghost" (click)="removePollOption(i)" [disabled]="pollOptions.length <= 2">Remove</button>
+                    <input [(ngModel)]="pollOptions[i]" (ngModelChange)="onComposerChanged()" maxlength="160" [placeholder]="'communityDetail.createPost.placeholders.optionText' | translate" />
+                    <button type="button" class="ghost" (click)="removePollOption(i)" [disabled]="pollOptions.length <= 2">{{ 'communityDetail.createPost.remove' | translate }}</button>
                 </div>
             </label>
-            <button type="button" class="ghost" (click)="addPollOption()" [disabled]="pollOptions.length >= 6">Add option</button>
+            <button type="button" class="ghost" (click)="addPollOption()" [disabled]="pollOptions.length >= 6">{{ 'communityDetail.createPost.addOption' | translate }}</button>
         </div>
 
         <div class="actions">
-            <button type="button" class="ghost" (click)="closeCreatePostModal()" [disabled]="posting">Cancel</button>
-            <button type="button" (click)="submitPostAsync()" [disabled]="posting">{{ posting ? 'Posting…' : 'Post' }}</button>
+            <button type="button" class="ghost" (click)="closeCreatePostModal()" [disabled]="posting">{{ 'communityDetail.common.cancel' | translate }}</button>
+            <button type="button" (click)="submitPostAsync()" [disabled]="posting">{{ posting ? ('communityDetail.createPost.posting' | translate) : ('communityDetail.createPost.post' | translate) }}</button>
         </div>
     </section>
 </div>
 
 <ng-template #communityState>
     <section class="page" *ngIf="loading; else missingCommunity">
-        <section class="card community-head-skeleton" aria-label="Loading community">
+        <section class="card community-head-skeleton" [attr.aria-label]="'communityDetail.loading.communityAria' | translate">
             <app-skeleton width="72px" height="72px" radius="12px"></app-skeleton>
             <div class="community-head-skeleton-copy">
                 <app-skeleton width="260px" height="18px"></app-skeleton>
@@ -538,7 +556,7 @@
             </div>
         </section>
 
-        <section class="card feed-head" aria-label="Loading community feed">
+        <section class="card feed-head" [attr.aria-label]="'communityDetail.loading.feedAria' | translate">
             <app-skeleton width="170px" height="18px"></app-skeleton>
             <app-skeleton width="240px" height="12px"></app-skeleton>
             <div class="feed-search">
@@ -548,7 +566,7 @@
             </div>
         </section>
 
-        <section class="community-post-skeleton" aria-label="Loading community posts">
+        <section class="community-post-skeleton" [attr.aria-label]="'communityDetail.loading.postsAria' | translate">
             <article class="community-post-skeleton-card" *ngFor="let _ of [1, 2, 3]">
                 <div class="community-post-skeleton-head">
                     <app-skeleton width="30px" height="30px" radius="999px"></app-skeleton>
