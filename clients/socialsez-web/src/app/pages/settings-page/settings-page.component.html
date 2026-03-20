@@ -459,14 +459,14 @@
                     <p class="meta">{{ 'settings.data.deactivatePrompt' | translate }}</p>
                     <div class="inline-confirm-row">
                         <input [(ngModel)]="deactivateConfirmValue" [placeholder]="'settings.data.deactivatePlaceholder' | translate" />
-                        <button type="button" class="ghost" (click)="requestDeactivation()" [disabled]="dataActionWorking || deactivateConfirmValue.trim().toUpperCase() !== 'DEACTIVATE'">{{ 'settings.data.requestDeactivation' | translate }}</button>
+                        <button type="button" class="ghost" (click)="requestDeactivation()" [disabled]="dataActionWorking || deactivateConfirmValue.trim().toUpperCase() !== deactivateKeyword">{{ 'settings.data.requestDeactivation' | translate }}</button>
                     </div>
 
                     <h4>{{ 'settings.data.deleteTitle' | translate }}</h4>
                     <p class="meta">{{ 'settings.data.deletePrompt' | translate }}</p>
                     <div class="inline-confirm-row">
                         <input [(ngModel)]="deleteConfirmValue" [placeholder]="'settings.data.deletePlaceholder' | translate" />
-                        <button type="button" class="danger" (click)="requestDeleteAccount()" [disabled]="dataActionWorking || deleteConfirmValue.trim().toUpperCase() !== 'DELETE'">{{ 'settings.data.requestDelete' | translate }}</button>
+                        <button type="button" class="danger" (click)="requestDeleteAccount()" [disabled]="dataActionWorking || deleteConfirmValue.trim().toUpperCase() !== deleteKeyword">{{ 'settings.data.requestDelete' | translate }}</button>
                     </div>
                     <p class="meta">{{ 'settings.data.immediateWarning' | translate }}</p>
                 </div>

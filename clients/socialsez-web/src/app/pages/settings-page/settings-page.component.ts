@@ -154,6 +154,15 @@ export class SettingsPageComponent implements OnDestroy {
     mutedHandleSuggestionsLoading = false;
     deactivateConfirmValue = '';
     deleteConfirmValue = '';
+
+    get deactivateKeyword(): string {
+        return this.t('settings.data.deactivateKeyword').toUpperCase();
+    }
+
+    get deleteKeyword(): string {
+        return this.t('settings.data.deleteKeyword').toUpperCase();
+    }
+
     pendingAccountAction: AccountActionKind | null = null;
     revokeSessionId: string | null = null;
     deviceSessions: DeviceSessionEntry[] = [];
@@ -975,7 +984,7 @@ export class SettingsPageComponent implements OnDestroy {
             return;
         }
 
-        if (this.deactivateConfirmValue.trim().toUpperCase() !== 'DEACTIVATE') {
+        if (this.deactivateConfirmValue.trim().toUpperCase() !== this.deactivateKeyword) {
             this.session.message = this.t('settings.messages.deactivateTypeConfirm');
             return;
         }
@@ -988,7 +997,7 @@ export class SettingsPageComponent implements OnDestroy {
             return;
         }
 
-        if (this.deleteConfirmValue.trim().toUpperCase() !== 'DELETE') {
+        if (this.deleteConfirmValue.trim().toUpperCase() !== this.deleteKeyword) {
             this.session.message = this.t('settings.messages.deleteTypeConfirm');
             return;
         }
