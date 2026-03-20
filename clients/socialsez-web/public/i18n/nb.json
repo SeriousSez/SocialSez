@@ -12,11 +12,11 @@
       "skipToContent": "Hopp til innhold",
       "brandSubtitle": "Fellesskapsplattform",
       "nav": {
-        "feed": "Feed",
+        "feed": "Hovedstrøm",
         "discover": "Utforsk",
         "blogs": "Blogger",
         "communities": "Fellesskap",
-        "chat": "Chat",
+        "chat": "Meldinger",
         "saved": "Lagret",
         "drafts": "Utkast",
         "notifications": "Varsler",
@@ -45,7 +45,7 @@
         "notifications": "Varsler",
         "safety": "Sikkerhet",
         "security": "Kontosikkerhet",
-        "data": "Data",
+        "data": "Datakontroller",
         "blocked": "Blokkerte brukere",
         "logout": "Logg ut"
       },
@@ -63,19 +63,19 @@
       "buttonAria": "Søk",
       "scopeMenuAria": "Alternativer for søkeomfang",
       "scopePrefix": "Omfang",
-      "scopeAuto": "Auto",
+      "scopeAuto": "Automatisk",
       "removeOverride": "Fjern overstyring",
       "context": {
         "communities": "Fellesskap",
         "blogs": "Blogger",
         "profiles": "Profiler",
         "hashtags": "Hashtagger",
-        "chat": "Chat",
+        "chat": "Samtaler",
         "notifications": "Varsler",
         "discover": "Utforsk",
         "settings": "Innstillinger",
         "compose": "Skriv",
-        "global": "Global"
+        "global": "Globalt"
       },
       "scope": {
         "all": "Alle resultater",
@@ -84,8 +84,8 @@
         "blogs": "Blogger",
         "users": "Brukere",
         "posts": "Innlegg",
-        "reels": "Reels",
-        "hashtags": "Hashtags"
+        "reels": "Kortvideoer",
+        "hashtags": "Hashtagger"
       },
       "placeholder": {
         "communities": "Søk fellesskap, fellesskapsinnlegg, brukere, hashtagger",
@@ -129,7 +129,7 @@
       "month": "Måned",
       "year": "År",
       "country": "Land",
-      "bio": "Bio"
+      "bio": "Biografi"
     },
     "placeholders": {
       "email": "deg@eksempel.no",
@@ -192,199 +192,199 @@
       "acceptTerms": "Du må godta vilkårene for å opprette en konto."
     },
     "errors": {
-      "registerFailed": "Kunbe ikke registrere med disse opplysningene.",
+      "registerFailed": "Kunne ikke registrere med disse opplysningene.",
       "invalidCredentials": "Ugyldige legitimasjonsopplysninger.",
       "interestsSaveFailed": "Vi opprettet kontoen din, men kunne ikke lagre interessene akkurat nå."
     }
   },
   "profile": {
     "hero": {
-      "noBio": "No bio yet.",
-      "bioHidden": "Bio hidden because this profile is blocked.",
-      "joined": "Joined {{date}}",
-      "openStoriesAria": "Open @{{handle}} stories",
-      "viewProfileAria": "View @{{handle}} profile",
-      "avatarAlt": "{{name}} avatar",
-      "authorImageAlt": "Author image",
-      "trustSignalsAria": "Profile trust signals",
-      "privateProfile": "Private profile",
-      "publicProfile": "Public profile",
-      "establishedMember": "Established member",
-      "activeOn": "Active {{date}}",
-      "statsAria": "Profile stats",
-      "posts": "posts",
-      "followers": "followers",
-      "following": "following"
+      "noBio": "Ingen biografi ennå.",
+      "bioHidden": "Biografi skjult fordi denne profilen er blokkert.",
+      "joined": "Ble med {{date}}",
+      "openStoriesAria": "Åpne stories for @{{handle}}",
+      "viewProfileAria": "Vis profil for @{{handle}}",
+      "avatarAlt": "Avatar for {{name}}",
+      "authorImageAlt": "Forfatterbilde",
+      "trustSignalsAria": "Tillitssignaler for profil",
+      "privateProfile": "Privat profil",
+      "publicProfile": "Offentlig profil",
+      "establishedMember": "Etablert medlem",
+      "activeOn": "Aktiv {{date}}",
+      "statsAria": "Profilstatistikk",
+      "posts": "innlegg",
+      "followers": "følgere",
+      "following": "følger"
     },
     "tabs": {
-      "posts": "Posts",
-      "reels": "Reels",
-      "analytics": "Analytics",
-      "aria": "Profile content tabs"
+      "posts": "Innlegg",
+      "reels": "Kortvideoer",
+      "analytics": "Analyse",
+      "aria": "Faner for profilinnhold"
     },
     "actions": {
-      "working": "Working...",
-      "blocked": "Blocked",
-      "requestSent": "Request Sent",
-      "following": "Following",
-      "unfollowed": "Unfollowed",
-      "tryAgain": "Try again",
-      "cancelRequest": "Cancel Request",
-      "unfollow": "Unfollow",
-      "follow": "Follow",
-      "message": "Message",
-      "requestMessage": "Request Message",
-      "profileLinkCopied": "Profile link copied",
-      "copyProfileLink": "Copy profile link",
-      "copied": "Copied",
-      "signInToFollow": "Sign in to follow"
+      "working": "Jobber...",
+      "blocked": "Blokkert",
+      "requestSent": "Forespørsel sendt",
+      "following": "Følger",
+      "unfollowed": "Sluttet å følge",
+      "tryAgain": "Prøv igjen",
+      "cancelRequest": "Avbryt forespørsel",
+      "unfollow": "Slutt å følge",
+      "follow": "Følg",
+      "message": "Melding",
+      "requestMessage": "Be om melding",
+      "profileLinkCopied": "Profil-lenke kopiert",
+      "copyProfileLink": "Kopier profil-lenke",
+      "copied": "Kopiert",
+      "signInToFollow": "Logg inn for å følge"
     },
     "safety": {
-      "openMenu": "Open profile safety options",
-      "moreOptions": "More options",
-      "nickname": "Nickname",
-      "mute": "Mute",
-      "unmute": "Unmute",
-      "block": "Block",
-      "unblock": "Unblock",
-      "report": "Report",
-      "reporting": "Reporting..."
+      "openMenu": "Åpne sikkerhetsalternativer for profil",
+      "moreOptions": "Flere alternativer",
+      "nickname": "Kallenavn",
+      "mute": "Demp",
+      "unmute": "Opphev demping",
+      "block": "Blokker",
+      "unblock": "Opphev blokkering",
+      "report": "Rapporter",
+      "reporting": "Rapporterer..."
     },
     "nickname": {
-      "dialogAria": "Set nickname",
-      "title": "Nickname for you",
-      "close": "Close nickname editor",
-      "label": "Nickname",
-      "placeholder": "Enter nickname"
+      "dialogAria": "Angi kallenavn",
+      "title": "Kallenavn for deg",
+      "close": "Lukk redigering av kallenavn",
+      "label": "Kallenavn",
+      "placeholder": "Skriv inn kallenavn"
     },
     "blocked": {
-      "byTarget": "This profile blocked you. Posts, reels, stories, and bio are hidden.",
-      "byYou": "You blocked this profile. Posts, reels, stories, and bio are hidden."
+      "byTarget": "Denne profilen har blokkert deg. Innlegg, reels, stories og biografi er skjult.",
+      "byYou": "Du har blokkert denne profilen. Innlegg, reels, stories og biografi er skjult."
     },
-    "privateLocked": "This profile is private. Follow and wait for approval to see posts.",
+    "privateLocked": "Denne profilen er privat. Følg og vent på godkjenning for å se innlegg.",
     "empty": {
-      "blockedTitle": "Profile blocked",
+      "blockedTitle": "Profil blokkert",
       "posts": {
-        "title": "No posts yet",
-        "own": "Start sharing from Compose.",
-        "guest": "This profile has not posted anything yet.",
-        "private": "No posts visible until this private profile approves your follow request."
+        "title": "Ingen innlegg ennå",
+        "own": "Begynn å dele fra Skriv.",
+        "guest": "Denne profilen har ikke publisert noe ennå.",
+        "private": "Ingen innlegg vises før denne private profilen godkjenner følgeforespørselen din."
       },
       "reels": {
-        "title": "No reels yet",
-        "own": "Create one from your profile.",
-        "guest": "This profile has not shared any reels yet.",
-        "blocked": "Reels are hidden while this profile is blocked.",
-        "private": "No reels visible until this private profile approves your follow request."
+        "title": "Ingen reels ennå",
+        "own": "Opprett en fra profilen din.",
+        "guest": "Denne profilen har ikke delt noen reels ennå.",
+        "blocked": "Reels er skjult mens denne profilen er blokkert.",
+        "private": "Ingen reels vises før denne private profilen godkjenner følgeforespørselen din."
       }
     },
     "confirm": {
-      "delete": "Delete",
-      "deletePostTitle": "Delete post",
-      "deletePostMessage": "Delete this post? This action cannot be undone.",
-      "deleteReelTitle": "Delete reel",
-      "deleteReelMessage": "Delete this reel? This action cannot be undone.",
-      "deleteCommentTitle": "Delete comment",
-      "deleteCommentMessage": "Delete this comment? This action cannot be undone.",
-      "deleteStoryTitle": "Delete story",
-      "deleteStoryMessage": "Delete this story? This action cannot be undone.",
-      "deleteCollectionTitle": "Delete collection",
-      "blockTitle": "Block profile",
-      "blockMessage": "Block @{{handle}}? This removes follow connections.",
-      "block": "Block",
-      "thisProfile": "this profile"
+      "delete": "Slett",
+      "deletePostTitle": "Slett innlegg",
+      "deletePostMessage": "Slette dette innlegget? Denne handlingen kan ikke angres.",
+      "deleteReelTitle": "Slett reel",
+      "deleteReelMessage": "Slette denne reelen? Denne handlingen kan ikke angres.",
+      "deleteCommentTitle": "Slett kommentar",
+      "deleteCommentMessage": "Slette denne kommentaren? Denne handlingen kan ikke angres.",
+      "deleteStoryTitle": "Slett story",
+      "deleteStoryMessage": "Slette denne storyen? Denne handlingen kan ikke angres.",
+      "deleteCollectionTitle": "Slett samling",
+      "blockTitle": "Blokker profil",
+      "blockMessage": "Blokkere @{{handle}}? Dette fjerner følgeforbindelser.",
+      "block": "Blokker",
+      "thisProfile": "denne profilen"
     },
     "common": {
-      "save": "Save",
-      "saving": "Saving...",
-      "cancel": "Cancel",
-      "clear": "Clear",
-      "back": "Back",
-      "retry": "Retry"
+      "save": "Lagre",
+      "saving": "Lagrer...",
+      "cancel": "Avbryt",
+      "clear": "Tøm",
+      "back": "Tilbake",
+      "retry": "Prøv igjen"
     },
     "storyCollections": {
-      "rowAria": "Story collections",
-      "createAria": "Create story collection",
-      "new": "New",
-      "openAria": "Open story collection {{name}}",
-      "coverAlt": "Story collection cover",
-      "manageAria": "Manage story collection {{name}}",
-      "createDialogAria": "Create story collection",
-      "newCollectionTitle": "New Story Collection",
-      "closeCreateDialog": "Close story collection modal",
-      "collectionName": "Collection name",
-      "collectionPlaceholder": "e.g. Summer 2024",
-      "collectionNameAria": "Story collection name",
-      "storyMediaAlt": "Story media",
-      "storyFallback": "Story",
-      "selected": "Selected",
-      "select": "Select",
-      "noStoriesInArchive": "No stories in your archive yet.",
-      "creating": "Creating...",
-      "create": "Create",
-      "manageDialogAria": "Manage story collection",
-      "manageNamedTitle": "Manage {{name}}",
-      "manageTitle": "Manage Story Collection",
-      "closeManageDialog": "Close add stories modal",
-      "selectCollection": "Select collection",
-      "selectCollectionAria": "Select story collection",
-      "remove": "Remove",
-      "add": "Add",
-      "createFirstCollection": "Create your first collection first.",
-      "deleteCollection": "Delete collection",
-      "close": "Close"
+      "rowAria": "Storysamlinger",
+      "createAria": "Opprett storysamling",
+      "new": "Ny",
+      "openAria": "Åpne storysamling {{name}}",
+      "coverAlt": "Forsidebilde for storysamling",
+      "manageAria": "Administrer storysamling {{name}}",
+      "createDialogAria": "Opprett storysamling",
+      "newCollectionTitle": "Ny storysamling",
+      "closeCreateDialog": "Lukk modal for storysamling",
+      "collectionName": "Navn på samling",
+      "collectionPlaceholder": "f.eks. Sommeren 2024",
+      "collectionNameAria": "Navn på storysamling",
+      "storyMediaAlt": "Storymedia",
+      "storyFallback": "Historie",
+      "selected": "Valgt",
+      "select": "Velg",
+      "noStoriesInArchive": "Ingen stories i arkivet ditt ennå.",
+      "creating": "Oppretter...",
+      "create": "Opprett",
+      "manageDialogAria": "Administrer storysamling",
+      "manageNamedTitle": "Administrer {{name}}",
+      "manageTitle": "Administrer storysamling",
+      "closeManageDialog": "Lukk modal for å legge til stories",
+      "selectCollection": "Velg samling",
+      "selectCollectionAria": "Velg storysamling",
+      "remove": "Fjern",
+      "add": "Legg til",
+      "createFirstCollection": "Opprett den første samlingen din først.",
+      "deleteCollection": "Slett samling",
+      "close": "Lukk"
     },
     "compose": {
-      "postDialogAria": "Create post",
-      "newPost": "New Post",
-      "closePostComposer": "Close post composer",
-      "storyDialogAria": "Create story",
-      "newStory": "New Story",
-      "closeStoryComposer": "Close story composer",
-      "storyCreationStepsAria": "Story creation steps",
-      "storyStepMedia": "1. Media",
-      "storyStepCropTrimPublish": "2. Crop, Trim & Publish",
-      "storyMediaUploadAria": "Story media upload",
-      "selectStoryMediaTitle": "Start by selecting your story media",
-      "selectStoryMediaSubtitle": "Images, MP4, WebM, MOV and similar formats are supported.",
-      "selectStoryMedia": "Select Story Media",
-      "selectedFile": "Selected: {{file}}",
-      "storyExpires": "Stories expire automatically after 24 hours.",
-      "markStorySensitive": "Mark this story as sensitive media",
-      "editingFile": "Editing: {{file}}",
-      "dragStoryFrameAria": "Drag to set story framing",
-      "dragFrameHint": "Drag the 9:16 frame to set your crop.",
-      "resetFraming": "Reset framing",
-      "trimSummary": "Original length: {{original}}s · Trimmed: {{trimmed}}",
-      "trimThumbnailAlt": "Story trim thumbnail",
-      "trimStoryStartAria": "Trim story start",
-      "trimStoryEndAria": "Trim story end",
-      "generatingTrimPreviews": "Generating trim preview images...",
-      "trimRange": "Range: {{start}}s to {{end}}s",
-      "storyMediaPreviewAlt": "Story media preview",
-      "schedulePublish": "Schedule publish (optional)",
-      "saveDraft": "Save Draft",
-      "publishing": "Publishing...",
-      "publishStory": "Publish Story"
+      "postDialogAria": "Opprett innlegg",
+      "newPost": "Nytt innlegg",
+      "closePostComposer": "Lukk innleggskomponist",
+      "storyDialogAria": "Opprett story",
+      "newStory": "Ny story",
+      "closeStoryComposer": "Lukk storykomponist",
+      "storyCreationStepsAria": "Trinn for oppretting av story",
+      "storyStepMedia": "1. Medier",
+      "storyStepCropTrimPublish": "2. Beskjær, trim og publiser",
+      "storyMediaUploadAria": "Opplasting av storymedia",
+      "selectStoryMediaTitle": "Start med å velge storymedia",
+      "selectStoryMediaSubtitle": "Bilder, MP4, WebM, MOV og lignende formater støttes.",
+      "selectStoryMedia": "Velg storymedia",
+      "selectedFile": "Valgt: {{file}}",
+      "storyExpires": "Stories utløper automatisk etter 24 timer.",
+      "markStorySensitive": "Merk denne storyen som sensitivt media",
+      "editingFile": "Redigerer: {{file}}",
+      "dragStoryFrameAria": "Dra for å angi innramming for story",
+      "dragFrameHint": "Dra 9:16-rammen for å angi beskjæringen.",
+      "resetFraming": "Tilbakestill innramming",
+      "trimSummary": "Opprinnelig lengde: {{original}}s · Trimmet: {{trimmed}}",
+      "trimThumbnailAlt": "Miniatyrbilde for trimming av story",
+      "trimStoryStartAria": "Trim start på story",
+      "trimStoryEndAria": "Trim slutt på story",
+      "generatingTrimPreviews": "Genererer forhåndsvisningsbilder for trimming...",
+      "trimRange": "Område: {{start}}s til {{end}}s",
+      "storyMediaPreviewAlt": "Forhåndsvisning av storymedia",
+      "schedulePublish": "Planlegg publisering (valgfritt)",
+      "saveDraft": "Lagre utkast",
+      "publishing": "Publiserer...",
+      "publishStory": "Publiser story"
     },
     "analytics": {
-      "title": "Creator Analytics",
-      "lastDays": "Last {{days}} days",
-      "views": "views",
-      "watchTime": "Watch Time",
-      "saves": "saves",
-      "followerGrowth": "Follower Growth",
-      "topReels": "Top Reels",
-      "untitledReel": "Untitled reel"
+      "title": "Skaperanalyse",
+      "lastDays": "Siste {{days}} dager",
+      "views": "visninger",
+      "watchTime": "Seertid",
+      "saves": "lagringer",
+      "followerGrowth": "Følgervækst",
+      "topReels": "Topp reels",
+      "untitledReel": "Reel uten tittel"
     },
     "messages": {
-      "messageRequestSent": "Message request sent."
+      "messageRequestSent": "Meldingsforespørsel sendt."
     },
     "errors": {
-      "loadData": "Could not load profile data. Try refreshing.",
-      "copyLink": "Could not copy profile link right now.",
-      "sendMessageRequest": "Could not send message request right now.",
-      "openChat": "Could not open chat right now."
+      "loadData": "Kunne ikke laste profildata. Prøv å oppdatere.",
+      "copyLink": "Kunne ikke kopiere profil-lenken akkurat nå.",
+      "sendMessageRequest": "Kunne ikke sende meldingsforespørsel akkurat nå.",
+      "openChat": "Kunne ikke åpne chat akkurat nå."
     }
   },
   "settings": {
@@ -424,7 +424,7 @@
     },
     "profile": {
       "displayName": "Visningsnavn",
-      "bio": "Bio",
+      "bio": "Biografi",
       "bioPlaceholder": "Fortell folk om deg selv",
       "changeImage": "Bytt bilde",
       "removeImage": "Fjern bilde",
@@ -487,7 +487,7 @@
       "marketing": "Markedsføring",
       "product": "Produktoppdateringer",
       "quietHours": "Stille timer",
-      "quietHoursStart": "Start",
+      "quietHoursStart": "Fra",
       "quietHoursEnd": "Slutt",
       "save": "Lagre varsler"
     },
@@ -504,7 +504,7 @@
       "noMutedUsers": "Ingen dempede brukere i preferansene ennå.",
       "save": "Lagre sikkerhet",
       "sensitiveOptions": {
-        "standard": "Standard",
+        "standard": "Vanlig",
         "limited": "Begrenset",
         "strict": "Streng"
       }
@@ -566,7 +566,7 @@
       "selectImage": "Velg bilde",
       "selectedFile": "Valgt: {{file}}",
       "cropPreviewAlt": "Forhåndsvisning av beskåret profilbilde",
-      "zoom": "Zoom",
+      "zoom": "Forstørr",
       "dragHint": "Dra bildet for å plassere det i sirkelen.",
       "upload": "Last opp bilde",
       "uploading": "Laster opp..."
@@ -625,9 +625,9 @@
       "communities": "Fellesskap",
       "communityPosts": "Fellesskapsinnlegg",
       "blogs": "Blogger",
-      "reels": "Reels",
+      "reels": "Kortvideoer",
       "posts": "Innlegg",
-      "hashtags": "Hashtags",
+      "hashtags": "Hashtagger",
       "users": "Brukere"
     },
     "sections": {
@@ -639,8 +639,8 @@
       "communities": "Fellesskap",
       "communityPosts": "Fellesskapsinnlegg",
       "blogs": "Blogger",
-      "reels": "Reels",
-      "hashtags": "Hashtags",
+      "reels": "Kortvideoer",
+      "hashtags": "Hashtagger",
       "posts": "Innlegg"
     },
     "actions": {
@@ -1089,7 +1089,7 @@
       "sharing": "Deler",
       "sharedPostPreviewAlt": "Forhåndsvisning av delt innleggsmedia",
       "removeSharedPost": "Fjern delt innlegg",
-      "send": "Send"
+      "send": "Send melding"
     },
     "sharedReel": {
       "viewerAria": "Visning av delt reel",
@@ -1313,7 +1313,7 @@
       },
       "sort": {
         "label": "Sorter etter:",
-        "best": "Best",
+        "best": "Beste",
         "top": "Topp",
         "new": "Ny",
         "controversial": "Kontroversiell",
@@ -1355,267 +1355,267 @@
   },
   "blogs": {
     "page": {
-      "kicker": "Publishing",
-      "title": "Blogs"
+      "kicker": "Publisering",
+      "title": "Blogger"
     },
     "tabs": {
-      "aria": "Blog lists",
-      "all": "All blogs",
-      "following": "Following",
-      "mine": "My blogs"
+      "aria": "Blogglister",
+      "all": "Alle blogger",
+      "following": "Følger",
+      "mine": "Mine blogger"
     },
     "subtitle": {
-      "all": "Discover and search blogs across Venli.",
-      "following": "Blogs from creators you follow.",
-      "mine": "Manage your own blogs and drafts."
+      "all": "Utforsk og søk i blogger over hele Venli.",
+      "following": "Blogger fra skapere du følger.",
+      "mine": "Administrer dine egne blogger og utkast."
     },
     "search": {
-      "placeholder": "Search blogs by title, slug, handle...",
-      "try": "Try:"
+      "placeholder": "Søk blogger etter tittel, slug, brukernavn...",
+      "try": "Prøv:"
     },
     "sort": {
-      "label": "Sort",
-      "menuAria": "Sort blogs",
-      "recentlyUpdated": "Recently updated",
-      "newestCreated": "Newest created",
-      "titleAz": "Title A-Z"
+      "label": "Sorter",
+      "menuAria": "Sorter blogger",
+      "recentlyUpdated": "Nylig oppdatert",
+      "newestCreated": "Nyest opprettet",
+      "titleAz": "Tittel A-Å"
     },
     "actions": {
-      "openStudio": "Open Blog Studio",
-      "clear": "Clear"
+      "openStudio": "Åpne bloggstudio",
+      "clear": "Tøm"
     },
     "visibility": {
-      "public": "Public",
-      "private": "Private",
-      "owner": "Owner"
+      "public": "Offentlig",
+      "private": "Privat",
+      "owner": "Eier"
     },
     "meta": {
-      "updated": "Updated {{date}}"
+      "updated": "Oppdatert {{date}}"
     },
-    "resultCount": "{{visible}} of {{total}} blogs",
+    "resultCount": "{{visible}} av {{total}} blogger",
     "loading": {
-      "aria": "Loading blogs"
+      "aria": "Laster blogger"
     },
     "infinite": {
-      "more": "Scroll for more blogs..."
+      "more": "Rull for flere blogger..."
     },
     "empty": {
-      "noBlogsForTab": "No blogs found for this tab yet."
+      "noBlogsForTab": "Ingen blogger funnet for denne fanen ennå."
     },
     "errors": {
-      "signInToViewTab": "Sign in to view this tab.",
-      "loadNow": "Could not load blogs right now."
+      "signInToViewTab": "Logg inn for å se denne fanen.",
+      "loadNow": "Kunne ikke laste blogger akkurat nå."
     }
   },
   "communities": {
     "page": {
-      "title": "Communities",
-      "subtitle": "Create or join communities around shared interests."
+      "title": "Fellesskap",
+      "subtitle": "Opprett eller bli med i fellesskap rundt felles interesser."
     },
     "tabs": {
-      "aria": "Communities views",
-      "mine": "My communities",
-      "discover": "Discover communities"
+      "aria": "Visninger for fellesskap",
+      "mine": "Mine fellesskap",
+      "discover": "Utforsk fellesskap"
     },
     "actions": {
-      "newCommunity": "New community",
-      "refresh": "Refresh communities",
-      "search": "Search",
-      "clear": "Clear",
-      "join": "Join",
-      "joining": "Joining…",
-      "leave": "Leave",
-      "leaving": "Leaving…",
-      "signInToJoin": "Sign in to join",
-      "cancel": "Cancel",
-      "create": "Create",
-      "creating": "Creating…"
+      "newCommunity": "Nytt fellesskap",
+      "refresh": "Oppdater fellesskap",
+      "search": "Søk",
+      "clear": "Tøm",
+      "join": "Bli med",
+      "joining": "Blir med…",
+      "leave": "Forlat",
+      "leaving": "Forlater…",
+      "signInToJoin": "Logg inn for å bli med",
+      "cancel": "Avbryt",
+      "create": "Opprett",
+      "creating": "Oppretter…"
     },
     "search": {
-      "placeholder": "Search communities",
-      "try": "Try:"
+      "placeholder": "Søk i fellesskap",
+      "try": "Prøv:"
     },
     "mine": {
-      "signInPrompt": "Sign in or create an account to view communities you joined.",
-      "empty": "You have not joined any communities yet."
+      "signInPrompt": "Logg inn eller opprett en konto for å se fellesskapene du har blitt med i.",
+      "empty": "Du har ikke blitt med i noen fellesskap ennå."
     },
     "discover": {
-      "empty": "No communities found."
+      "empty": "Ingen fellesskap funnet."
     },
     "community": {
-      "members": "members",
-      "createdBy": "Created by @{{handle}}",
-      "imageAlt": "Community image",
-      "openAria": "Open {{name}}",
-      "owner": "Owner",
-      "joined": "Joined"
+      "members": "medlemmer",
+      "createdBy": "Opprettet av @{{handle}}",
+      "imageAlt": "Bilde av fellesskap",
+      "openAria": "Åpne {{name}}",
+      "owner": "Eier",
+      "joined": "Ble med"
     },
     "authAction": {
-      "create": "create a community",
-      "join": "join communities",
-      "leave": "leave communities"
+      "create": "opprette et fellesskap",
+      "join": "bli med i fellesskap",
+      "leave": "forlate fellesskap"
     },
     "visibility": {
-      "private": "Private",
-      "public": "Public"
+      "private": "Privat",
+      "public": "Offentlig"
     },
     "create": {
-      "dialogAria": "Create community",
-      "title": "Create community",
-      "close": "Close create community modal",
-      "name": "Name",
-      "namePlaceholder": "Community name",
-      "description": "Description",
-      "descriptionPlaceholder": "What is this community about?",
-      "rules": "Rules",
-      "rulesPlaceholder": "One rule per line",
-      "image": "Community image",
-      "imagePreviewAlt": "Community image preview",
-      "private": "Private community"
+      "dialogAria": "Opprett fellesskap",
+      "title": "Opprett fellesskap",
+      "close": "Lukk modal for å opprette fellesskap",
+      "name": "Navn",
+      "namePlaceholder": "Navn på fellesskap",
+      "description": "Beskrivelse",
+      "descriptionPlaceholder": "Hva handler dette fellesskapet om?",
+      "rules": "Regler",
+      "rulesPlaceholder": "Én regel per linje",
+      "image": "Bilde av fellesskap",
+      "imagePreviewAlt": "Forhåndsvisning av fellesskapsbilde",
+      "private": "Privat fellesskap"
     },
     "status": {
-      "created": "Community created.",
-      "joined": "Joined community.",
-      "left": "Left community."
+      "created": "Fellesskap opprettet.",
+      "joined": "Ble med i fellesskapet.",
+      "left": "Forlot fellesskapet."
     },
     "errors": {
-      "load": "Could not load communities right now.",
-      "search": "Could not search communities right now.",
-      "create": "Could not create community right now.",
-      "join": "Could not join community right now.",
-      "leave": "Could not leave community right now.",
-      "signInForAction": "Please sign in or create an account to {{action}}."
+      "load": "Kunne ikke laste fellesskap akkurat nå.",
+      "search": "Kunne ikke søke i fellesskap akkurat nå.",
+      "create": "Kunne ikke opprette fellesskap akkurat nå.",
+      "join": "Kunne ikke bli med i fellesskap akkurat nå.",
+      "leave": "Kunne ikke forlate fellesskap akkurat nå.",
+      "signInForAction": "Logg inn eller opprett en konto for å {{action}}."
     }
   },
   "blogHome": {
     "loading": {
-      "aria": "Loading blog"
+      "aria": "Laster blogg"
     },
     "header": {
-      "moreBy": "More by @{{handle}}",
-      "editInStudio": "Edit in Studio"
+      "moreBy": "Mer av @{{handle}}",
+      "editInStudio": "Rediger i studio"
     },
     "post": {
-      "draft": "Draft"
+      "draft": "Utkast"
     },
     "actions": {
-      "save": "Save",
-      "unsave": "Unsave"
+      "save": "Lagre",
+      "unsave": "Fjern lagring"
     },
     "empty": {
-      "noPosts": "No posts yet."
+      "noPosts": "Ingen innlegg ennå."
     },
     "errors": {
-      "notFound": "Blog was not found.",
-      "notFoundOrPrivate": "Blog was not found or is private.",
-      "loadNow": "Could not load this blog right now.",
-      "updateSavedStatus": "Could not update saved status right now."
+      "notFound": "Bloggen ble ikke funnet.",
+      "notFoundOrPrivate": "Bloggen ble ikke funnet eller er privat.",
+      "loadNow": "Kunne ikke laste denne bloggen akkurat nå.",
+      "updateSavedStatus": "Kunne ikke oppdatere lagret-status akkurat nå."
     }
   },
   "blogPost": {
     "loading": {
-      "aria": "Loading blog post"
+      "aria": "Laster blogginnlegg"
     },
     "actions": {
-      "backToBlog": "Back to Blog",
-      "like": "Like",
-      "comment": "Comment",
-      "save": "Save",
-      "unsave": "Unsave",
-      "share": "Share",
-      "linkCopied": "Link copied",
-      "embed": "Embed"
+      "backToBlog": "Tilbake til blogg",
+      "like": "Lik",
+      "comment": "Kommenter",
+      "save": "Lagre",
+      "unsave": "Fjern lagring",
+      "share": "Del",
+      "linkCopied": "Lenke kopiert",
+      "embed": "Bygg inn"
     },
     "meta": {
-      "byDate": "By @{{handle}} · {{date}}"
+      "byDate": "Av @{{handle}} · {{date}}"
     },
     "hints": {
-      "likesSoon": "Blog likes will be enabled soon",
-      "commentsSoon": "Blog comments will be enabled soon"
+      "likesSoon": "Bloggliker blir tilgjengelig snart",
+      "commentsSoon": "Bloggkommentarer blir tilgjengelig snart"
     },
     "errors": {
-      "notFound": "Blog post was not found.",
-      "notFoundOrPrivate": "Blog post was not found or is private.",
-      "loadNow": "Could not load this blog post right now.",
-      "updateSavedStatus": "Could not update saved status right now."
+      "notFound": "Blogginnlegget ble ikke funnet.",
+      "notFoundOrPrivate": "Blogginnlegget ble ikke funnet eller er privat.",
+      "loadNow": "Kunne ikke laste dette blogginnlegget akkurat nå.",
+      "updateSavedStatus": "Kunne ikke oppdatere lagret-status akkurat nå."
     }
   },
   "blogEmbed": {
-    "loading": "Loading embed...",
+    "loading": "Laster innbygging...",
     "kicker": "Venli Blog",
     "meta": {
-      "byAuthor": "By @{{handle}}"
+      "byAuthor": "Av @{{handle}}"
     },
     "footer": {
-      "readFullPost": "Read full post on Venli"
+      "readFullPost": "Les hele innlegget på Venli"
     },
     "aria": {
-      "loading": "Loading blog embed",
-      "openFullPost": "Open full blog post"
+      "loading": "Laster blogginnbygging",
+      "openFullPost": "Åpne hele blogginnlegget"
     },
     "errors": {
-      "couldNotLoad": "Embed could not be loaded.",
-      "postUnavailable": "This blog post is unavailable.",
-      "embeddingDisabled": "Embedding is disabled by the blog owner.",
-      "loadNow": "Could not load this embed right now."
+      "couldNotLoad": "Innbyggingen kunne ikke lastes.",
+      "postUnavailable": "Dette blogginnlegget er utilgjengelig.",
+      "embeddingDisabled": "Innbygging er deaktivert av bloggeieren.",
+      "loadNow": "Kunne ikke laste denne innbyggingen akkurat nå."
     }
   },
   "blogEmbedTools": {
     "loading": {
-      "aria": "Loading embed tools",
-      "message": "Loading embed tools..."
+      "aria": "Laster innbyggingsverktøy",
+      "message": "Laster innbyggingsverktøy..."
     },
     "header": {
-      "kicker": "Embed Tools",
-      "subtitle": "Preview the embed and copy the iframe snippet for any website."
+      "kicker": "Innbyggingsverktøy",
+      "subtitle": "Forhåndsvis innbyggingen og kopier iframe-koden for et hvilket som helst nettsted."
     },
     "preview": {
-      "title": "Preview",
-      "iframeTitle": "Blog embed preview"
+      "title": "Forhåndsvisning",
+      "iframeTitle": "Forhåndsvisning av blogginnbygging"
     },
     "code": {
-      "title": "Embed Code",
-      "aria": "Blog embed iframe code"
+      "title": "Innbyggingskode",
+      "aria": "Iframe-kode for blogginnbygging"
     },
     "actions": {
-      "copyCode": "Copy code",
-      "copied": "Copied",
-      "openRaw": "Open raw embed page",
-      "backToPost": "Back to post"
+      "copyCode": "Kopier kode",
+      "copied": "Kopiert",
+      "openRaw": "Åpne rå innbyggingsside",
+      "backToPost": "Tilbake til innlegg"
     },
     "embed": {
-      "defaultTitle": "Venli blog embed"
+      "defaultTitle": "Venli blogginnbygging"
     },
     "errors": {
-      "notFound": "Blog post was not found.",
-      "notFoundOrPrivate": "Blog post was not found or is private.",
-      "embeddingDisabled": "Embedding is disabled by the blog owner.",
-      "loadNow": "Could not load embed tools for this post right now."
+      "notFound": "Blogginnlegget ble ikke funnet.",
+      "notFoundOrPrivate": "Blogginnlegget ble ikke funnet eller er privat.",
+      "embeddingDisabled": "Innbygging er deaktivert av bloggeieren.",
+      "loadNow": "Kunne ikke laste innbyggingsverktøy for dette innlegget akkurat nå."
     }
   },
   "sharedStory": {
     "loading": {
-      "story": "Loading story..."
+      "story": "Laster story..."
     },
     "notFound": {
-      "title": "Story unavailable",
-      "message": "This story is expired, removed, or the link is invalid."
+      "title": "Story utilgjengelig",
+      "message": "Denne storyen er utløpt, fjernet eller lenken er ugyldig."
     },
     "errors": {
-      "title": "Something went wrong",
-      "load": "Could not load this shared story."
+      "title": "Noe gikk galt",
+      "load": "Kunne ikke laste denne delte storyen."
     },
     "author": {
-      "imageAlt": "Creator image"
+      "imageAlt": "Bilde av skaper"
     },
     "actions": {
-      "linkCopiedAria": "Story link copied",
-      "copyStoryLinkAria": "Copy story link",
-      "copied": "Copied",
-      "copyLink": "Copy link"
+      "linkCopiedAria": "Story-lenke kopiert",
+      "copyStoryLinkAria": "Kopier story-lenke",
+      "copied": "Kopiert",
+      "copyLink": "Kopier lenke"
     },
     "media": {
-      "alt": "Shared story media"
+      "alt": "Media i delt story"
     }
   }
 }

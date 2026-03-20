@@ -16,7 +16,7 @@
         "discover": "Ontdekken",
         "blogs": "Blogs",
         "communities": "Community's",
-        "chat": "Kletsen",
+        "chat": "Chat",
         "saved": "Opgeslagen",
         "drafts": "Concepten",
         "notifications": "Meldingen",
@@ -30,12 +30,13 @@
         "aria": "Upload- en publicatieactiviteit"
       },
       "trending": {
-        "title": "Trends",
+        "title": "Trending",
         "loading": "Hashtags laden...",
         "empty": "Nog geen trending hashtags."
       },
       "settingsQuickNav": {
         "title": "Instellingen",
+        "aria": "Instellingssecties",
         "profile": "Profiel",
         "account": "Account",
         "privacy": "Privacy",
@@ -44,10 +45,9 @@
         "notifications": "Meldingen",
         "safety": "Veiligheid",
         "security": "Accountbeveiliging",
-        "data": "Gegevens",
+        "data": "Gegevensbeheer",
         "blocked": "Geblokkeerde gebruikers",
-        "logout": "Uitloggen",
-        "aria": "Instellingen secties"
+        "logout": "Uitloggen"
       },
       "mobileNav": {
         "aria": "Primaire mobiele navigatie",
@@ -55,7 +55,7 @@
         "more": "Meer",
         "moreAria": "Meer navigatie",
         "groups": "Groepen",
-        "alerts": "Waarschuwingen"
+        "alerts": "Meldingen"
       }
     },
     "search": {
@@ -65,7 +65,7 @@
       "scopeAuto": "Auto",
       "scope": {
         "all": "Alle resultaten",
-        "communities": "Community's",
+        "communities": "Gemeenschappen",
         "blogs": "Blogs",
         "users": "Gebruikers",
         "posts": "Berichten",
@@ -119,7 +119,7 @@
       "email": "E-mail",
       "password": "Wachtwoord",
       "confirmPassword": "Bevestig wachtwoord",
-      "handle": "Handvat",
+      "handle": "Gebruikersnaam",
       "displayName": "Weergavenaam",
       "dateOfBirth": "Geboortedatum",
       "country": "Land",
@@ -153,15 +153,15 @@
     "placeholders": {
       "email": "you@example.com",
       "password": "••••••••",
-      "handle": "zegt",
+      "handle": "sez",
       "displayName": "Zegt",
       "country": "Selecteer land (optioneel)",
-      "bio": "Bouwvakker"
+      "bio": "Maker"
     },
     "passwordStrength": {
       "label": "Wachtwoordsterkte",
       "weak": "Zwak",
-      "medium": "Medium",
+      "medium": "Gemiddeld",
       "strong": "Sterk"
     },
     "preferences": {
@@ -185,7 +185,7 @@
       "passwordRequired": "Wachtwoord is verplicht.",
       "passwordTooShort": "Wachtwoord moet minstens 8 tekens bevatten.",
       "passwordsMismatch": "Wachtwoorden komen niet overeen.",
-      "handleRequired": "Handvat is verplicht.",
+      "handleRequired": "Gebruikersnaam is verplicht.",
       "displayNameRequired": "Weergavenaam is vereist.",
       "birthDateInvalid": "Selecteer alstublieft een volledige geldige geboortedatum.",
       "minimumAge": "Je moet minstens 13 jaar oud zijn om je te registreren.",
@@ -296,7 +296,7 @@
     },
     "account": {
       "profileId": "Profiel-id:",
-      "handle": "Handvat",
+      "handle": "Gebruikersnaam",
       "handleLimitedAvailable": "Aanpassingen van de gebruikersnaam zijn beperkt tot eenmaal per 30 dagen. Volgende wijziging beschikbaar op {{date}}.",
       "handleLimitedNow": "De gebruikersnaam kan maximaal eens in de 30 dagen worden veranderd. Je kunt het nu wijzigen.",
       "joined": "Toegetreden:",
@@ -337,8 +337,8 @@
       "marketing": "Marketing",
       "product": "Productupdates",
       "quietHours": "Rusttijden",
-      "quietHoursStart": "Start",
-      "quietHoursEnd": "Einde",
+      "quietHoursStart": "Van",
+      "quietHoursEnd": "Tot",
       "save": "Meldingen opslaan"
     },
     "safety": {
@@ -867,16 +867,16 @@
       "deleteStoryTitle": "Verhaal verwijderen",
       "deleteStoryMessage": "Deze verhaal verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
       "deleteCollectionTitle": "Verwijder collectie",
-      "blockTitle": "Blokprofiel",
-      "blockMessage": "Blokkeren @{{handle}}? Dit verwijdert volglijnen.",
-      "block": "Blok",
+      "blockTitle": "Profiel blokkeren",
+      "blockMessage": "@{{handle}} blokkeren? Hiermee worden volgerrelaties verwijderd.",
+      "block": "Blokkeren",
       "thisProfile": "dit profiel"
     },
     "common": {
       "save": "Opslaan",
       "saving": "Bezig met opslaan...",
       "cancel": "Annuleren",
-      "clear": "Duidelijk",
+      "clear": "Wissen",
       "back": "Terug",
       "retry": "Opnieuw proberen"
     },
@@ -993,8 +993,8 @@
       "titleAz": "Titel A-Z"
     },
     "actions": {
-      "openStudio": "Open Blog Studio",
-      "clear": "Duidelijk"
+      "openStudio": "Blogstudio openen",
+      "clear": "Wissen"
     },
     "visibility": {
       "public": "Openbaar",
@@ -1033,7 +1033,7 @@
       "newCommunity": "Nieuwe gemeenschap",
       "refresh": "Gemeenschappen vernieuwen",
       "search": "Zoeken",
-      "clear": "Duidelijk",
+      "clear": "Wissen",
       "join": "Deelnemen",
       "joining": "Wordt lid…",
       "leave": "Vertrekken",
@@ -1424,7 +1424,7 @@
       "typeAria": "Berichttype bewerken",
       "fields": {
         "title": "Titel",
-        "linkUrl": "Link URL",
+        "linkUrl": "Link-URL",
         "addImages": "Voeg afbeeldingen toe (maximaal 10)",
         "question": "Vraag",
         "option": "Optie {{index}}"
@@ -1470,7 +1470,7 @@
       "typeAria": "Berichttype",
       "fields": {
         "title": "Titel",
-        "linkUrl": "Link URL",
+        "linkUrl": "Link-URL",
         "attachImages": "Afbeeldingen bijvoegen (maximaal 10)",
         "question": "Vraag",
         "option": "Optie {{index}}"

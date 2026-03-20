@@ -45,7 +45,7 @@
         "notifications": "Notiser",
         "safety": "Säkerhet",
         "security": "Kontosäkerhet",
-        "data": "Data",
+          "data": "Datakontroller",
         "blocked": "Blockerade användare",
         "logout": "Logga ut"
       },
@@ -63,7 +63,7 @@
       "buttonAria": "Sök",
       "scopeMenuAria": "Alternativ för sökområde",
       "scopePrefix": "Omfattning",
-      "scopeAuto": "Auto",
+      "scopeAuto": "Automatiskt",
       "removeOverride": "Ta bort åsidosättning",
       "context": {
         "communities": "Gemenskaper",
@@ -119,14 +119,14 @@
       "email": "E-post",
       "password": "Lösenord",
       "confirmPassword": "Bekräfta lösenord",
-      "handle": "Handle",
+      "handle": "Användarnamn",
       "displayName": "Visningsnamn",
       "dateOfBirth": "Födelsedatum",
       "day": "Dag",
       "month": "Månad",
       "year": "År",
       "country": "Land",
-      "bio": "Bio"
+      "bio": "Biografi"
     },
     "placeholders": {
       "email": "du@example.com",
@@ -234,7 +234,7 @@
     },
     "profile": {
       "displayName": "Visningsnamn",
-      "bio": "Bio",
+      "bio": "Biografi",
       "bioPlaceholder": "Berätta om dig själv",
       "changeImage": "Byt bild",
       "removeImage": "Ta bort bild",
@@ -244,7 +244,7 @@
     },
     "account": {
       "profileId": "Profil-ID:",
-      "handle": "Handle",
+      "handle": "Användarnamn",
       "handleLimitedAvailable": "Ändringar av handle är begränsade till en gång var 30:e dag. Nästa ändring är möjlig den {{date}}.",
       "handleLimitedNow": "Ändringar av handle är begränsade till en gång var 30:e dag. Du kan ändra det nu.",
       "joined": "Gick med:",
@@ -337,8 +337,8 @@
       "marketing": "Marknadsföring",
       "product": "Produktuppdateringar",
       "quietHours": "Tysta timmar",
-      "quietHoursStart": "Start",
-      "quietHoursEnd": "Slut",
+      "quietHoursStart": "Från",
+      "quietHoursEnd": "Till",
       "save": "Spara notiser"
     },
     "safety": {
@@ -1282,7 +1282,7 @@
       "collectionPlaceholder": "t.ex. Sommaren 2024",
       "collectionNameAria": "Namn på storysamling",
       "storyMediaAlt": "Storymedia",
-      "storyFallback": "Story",
+      "storyFallback": "Berättelse",
       "selected": "Vald",
       "select": "Välj",
       "noStoriesInArchive": "Inga stories i ditt arkiv ännu.",

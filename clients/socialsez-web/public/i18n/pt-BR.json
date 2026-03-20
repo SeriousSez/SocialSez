@@ -44,7 +44,7 @@
         "notifications": "Notificações",
         "safety": "Segurança",
         "security": "Segurança da conta",
-        "data": "Dados",
+          "data": "Controles de dados",
         "blocked": "Usuários bloqueados",
         "logout": "Sair",
         "aria": "Seções de configurações"
@@ -123,7 +123,7 @@
       "displayName": "Nome de exibição",
       "dateOfBirth": "Data de nascimento",
       "country": "País",
-      "bio": "Bio",
+      "bio": "Biografia",
       "day": "Dia",
       "month": "Mês",
       "year": "Ano"
@@ -286,7 +286,7 @@
     },
     "profile": {
       "displayName": "Nome de Exibição",
-      "bio": "Bio",
+      "bio": "Biografia",
       "bioPlaceholder": "Fale sobre você",
       "changeImage": "Alterar imagem",
       "removeImage": "Remover imagem",
@@ -553,7 +553,7 @@
     "common": {
       "you": "Você",
       "youLowercase": "você",
-      "me": "Me",
+      "me": "Eu",
       "gif": "GIF",
       "cancel": "Cancelar",
       "save": "Salvar",
@@ -782,7 +782,7 @@
       "joined": "Entrou em {{date}}",
       "openStoriesAria": "Abrir histórias de @{{handle}}",
       "viewProfileAria": "Ver perfil de @{{handle}}",
-      "avatarAlt": "{{name}} avatar",
+      "avatarAlt": "Avatar de {{name}}",
       "authorImageAlt": "Imagem do autor",
       "trustSignalsAria": "Sinais de confiança do perfil",
       "privateProfile": "Perfil privado",
@@ -792,7 +792,7 @@
       "statsAria": "Estatísticas do perfil",
       "posts": "postagens",
       "followers": "seguidores",
-      "following": "seguinte"
+      "following": "seguindo"
     },
     "tabs": {
       "posts": "Publicações",
@@ -1424,7 +1424,7 @@
       "typeAria": "Editar tipo de postagem",
       "fields": {
         "title": "Título",
-        "linkUrl": "Link URL",
+        "linkUrl": "URL do link",
         "addImages": "Adicione imagens (até 10)",
         "question": "Pergunta",
         "option": "Opção {{index}}"
@@ -1470,7 +1470,7 @@
       "typeAria": "Tipo de postagem",
       "fields": {
         "title": "Título",
-        "linkUrl": "Link URL",
+        "linkUrl": "URL do link",
         "attachImages": "Anexar imagens (até 10)",
         "question": "Pergunta",
         "option": "Opção {{index}}"

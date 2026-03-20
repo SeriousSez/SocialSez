@@ -153,10 +153,10 @@
     "placeholders": {
       "email": "vous@exemple.com",
       "password": null,
-      "handle": "dites",
+      "handle": "sez",
       "displayName": "Séz",
       "country": "Sélectionnez le pays (facultatif)",
-      "bio": "Constructeur"
+      "bio": "Créateur"
     },
     "passwordStrength": {
       "label": "Force du mot de passe",
@@ -185,7 +185,7 @@
       "passwordRequired": "Un mot de passe est requis.",
       "passwordTooShort": "Le mot de passe doit comporter au moins 8 caractères.",
       "passwordsMismatch": "Les mots de passe ne correspondent pas.",
-      "handleRequired": "Une poignée est requise.",
+      "handleRequired": "Un pseudo est requis.",
       "displayNameRequired": "Le nom d’affichage est requis.",
       "birthDateInvalid": "Veuillez sélectionner une date de naissance complète et valide.",
       "minimumAge": "Vous devez avoir au moins 13 ans pour vous inscrire.",
@@ -296,9 +296,9 @@
     },
     "account": {
       "profileId": "Identifiant du profil :",
-      "handle": "Poignée",
-      "handleLimitedAvailable": "Les modifications de gestion sont limitées à une fois tous les 30 jours. Prochain changement disponible le {{date}}.",
-      "handleLimitedNow": "Les modifications de gestion sont limitées à une fois tous les 30 jours. Vous pouvez le changer maintenant.",
+      "handle": "Pseudo",
+      "handleLimitedAvailable": "Les changements de pseudo sont limités à une fois tous les 30 jours. Prochaine modification disponible le {{date}}.",
+      "handleLimitedNow": "Les changements de pseudo sont limités à une fois tous les 30 jours. Vous pouvez le modifier maintenant.",
       "joined": "Rejoint :",
       "dateOfBirth": "Date de naissance",
       "country": "Pays",
@@ -867,17 +867,17 @@
       "deleteStoryTitle": "Supprimer l'histoire",
       "deleteStoryMessage": "Supprimer cette histoire ? Cette action ne peut pas être annulée.",
       "deleteCollectionTitle": "Supprimer la collection",
-      "blockTitle": "Profil de bloc",
+      "blockTitle": "Bloquer le profil",
       "blockMessage": "Bloquer @{{handle}} ? Cela supprime les connexions de suivi.",
-      "block": "Bloc",
+      "block": "Bloquer",
       "thisProfile": "ce profil"
     },
     "common": {
       "save": "Sauvegarder",
-      "saving": "Économie...",
+      "saving": "Enregistrement...",
       "cancel": "Annuler",
-      "clear": "Clair",
-      "back": "Dos",
+      "clear": "Effacer",
+      "back": "Retour",
       "retry": "Réessayer"
     },
     "storyCollections": {
@@ -994,7 +994,7 @@
     },
     "actions": {
       "openStudio": "Ouvrir le studio de blogs",
-      "clear": "Clair"
+      "clear": "Effacer"
     },
     "visibility": {
       "public": "Publique",
@@ -1033,7 +1033,7 @@
       "newCommunity": "Nouvelle communauté",
       "refresh": "Actualiser les communautés",
       "search": "Recherche",
-      "clear": "Clair",
+      "clear": "Effacer",
       "join": "Rejoindre",
       "joining": "Adhésion…",
       "leave": "Partir",

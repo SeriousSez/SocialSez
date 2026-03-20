@@ -22,7 +22,7 @@
         "notifications": "Notificaciones",
         "profile": "Perfil",
         "settings": "Ajustes",
-        "auth": "autenticación"
+        "auth": "Iniciar sesión"
       },
       "activity": {
         "title": "Actividad",
@@ -63,14 +63,14 @@
       "buttonAria": "Buscar",
       "scopeMenuAria": "Opciones de ámbito de búsqueda",
       "scopePrefix": "Ámbito",
-      "scopeAuto": "Coche",
+      "scopeAuto": "Automático",
       "removeOverride": "Quitar anulación",
       "context": {
         "communities": "Comunidades",
         "blogs": "Blogs",
         "profiles": "Perfiles",
         "hashtags": "Hashtags",
-        "chat": "Charlar",
+        "chat": "Chats",
         "notifications": "Notificaciones",
         "discover": "Explorar",
         "settings": "Ajustes",
@@ -84,7 +84,7 @@
         "blogs": "Blogs",
         "users": "Usuarios",
         "posts": "Publicaciones",
-        "reels": "Bobinas",
+        "reels": "Reels",
         "hashtags": "Hashtags"
       },
       "placeholder": {
@@ -218,7 +218,7 @@
     },
     "tabs": {
       "posts": "Publicaciones",
-      "reels": "Bobinas",
+      "reels": "Reels",
       "analytics": "Analítica",
       "aria": "Pestañas de contenido del perfil"
     },
@@ -625,7 +625,7 @@
       "communities": "Comunidades",
       "communityPosts": "Publicaciones de comunidad",
       "blogs": "Blogs",
-      "reels": "Bobinas",
+      "reels": "Reels",
       "posts": "Publicaciones",
       "hashtags": "Hashtags",
       "users": "Usuarios"
@@ -639,7 +639,7 @@
       "communities": "Comunidades",
       "communityPosts": "Publicaciones de comunidad",
       "blogs": "Blogs",
-      "reels": "Bobinas",
+      "reels": "Reels",
       "hashtags": "Hashtags",
       "posts": "Publicaciones"
     },

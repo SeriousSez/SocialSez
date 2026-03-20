@@ -22,7 +22,7 @@
         "notifications": "Benachrichtigungen",
         "profile": "Profil",
         "settings": "Einstellungen",
-        "auth": "Auth"
+        "auth": "Anmelden"
       },
       "activity": {
         "title": "Aktivität",
@@ -122,7 +122,7 @@
       "email": "E-Mail-Adresse",
       "password": "Passwort",
       "confirmPassword": "Passwort bestätigen",
-      "handle": "Handhaben",
+      "handle": "Benutzername",
       "displayName": "Anzeigename",
       "dateOfBirth": "Geburtsdatum",
       "day": "Tag",
@@ -434,7 +434,7 @@
     },
     "account": {
       "profileId": "Profil-ID:",
-      "handle": "Handhaben",
+      "handle": "Benutzername",
       "handleLimitedAvailable": "Handle-Änderungen sind auf einmal alle 30 Tage begrenzt. Nächste Änderung verfügbar am {{date}}.",
       "handleLimitedNow": "Handle-Änderungen sind auf einmal alle 30 Tage begrenzt. Du kannst es jetzt ändern.",
       "joined": "Mitglied seit:",
