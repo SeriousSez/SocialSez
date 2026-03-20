@@ -36,6 +36,7 @@
       },
       "settingsQuickNav": {
         "title": "Ayarlar",
+        "aria": "Ayar bölümleri",
         "profile": "Profil",
         "account": "Hesap",
         "privacy": "Gizlilik",
@@ -47,21 +48,63 @@
         "data": "Veri",
         "blocked": "Engellenen kullanıcılar",
         "logout": "Çıkış yap"
+      },
+      "mobileNav": {
+        "aria": "Birincil mobil gezinme",
+        "openMore": "more navigation aç",
+        "more": "Daha fazla",
+        "moreAria": "Daha fazla gezinme",
+        "groups": "Gruplar",
+        "alerts": "Uyarılar"
       }
     },
     "search": {
       "label": "Ara",
       "buttonAria": "Ara",
+      "scopeMenuAria": "Arama kapsamı seçenekleri",
       "scopePrefix": "Kapsam",
       "scopeAuto": "Otomatik",
+      "removeOverride": "Geçersiz kılmayı kaldır",
+      "context": {
+        "communities": "Topluluklar",
+        "blogs": "Bloglar",
+        "profiles": "Profiller",
+        "hashtags": "Hashtag'ler",
+        "chat": "Sohbet",
+        "notifications": "Bildirimler",
+        "discover": "Keşfet",
+        "settings": "Ayarlar",
+        "compose": "Oluştur",
+        "global": "Genel"
+      },
       "scope": {
         "all": "Tüm sonuçlar",
         "communities": "Topluluklar",
+        "communityPosts": "Topluluk gönderileri",
         "blogs": "Bloglar",
         "users": "Kullanıcılar",
         "posts": "Gönderiler",
-        "reels": "Reels",
+        "reels": "Kısa videolar",
         "hashtags": "Hashtag'ler"
+      },
+      "placeholder": {
+        "communities": "Toplulukları, topluluk gönderilerini, kullanıcıları ve hashtag’leri ara",
+        "blogs": "Blogları, toplulukları, gönderileri ve hashtag’leri ara",
+        "profiles": "Profilleri, gönderileri, kısa videoları ve hashtag’leri ara",
+        "hashtags": "Hashtag’leri, gönderileri ve kısa videoları ara",
+        "chat": "Kullanıcıları, gönderileri, kısa videoları ve hashtag’leri ara",
+        "notifications": "Kullanıcıları, gönderileri, kısa videoları ve hashtag’leri ara",
+        "discover": "Kullanıcıları, toplulukları, topluluk gönderilerini, blogları, kısa videoları, gönderileri ve hashtag’leri ara",
+        "global": "Kullanıcıları, toplulukları, topluluk gönderilerini, blogları, kısa videoları, gönderileri ve hashtag’leri ara"
+      },
+      "placeholderByScope": {
+        "communities": "Toplulukları ada, kısa ada veya açıklamaya göre ara",
+        "communityPosts": "Topluluk gönderilerini başlık, içerik ve yazara göre ara",
+        "blogs": "Blogları başlık, kullanıcı adı veya kısa ada göre ara",
+        "users": "Kullanıcıları ve profilleri ara",
+        "posts": "Gönderileri ve yazarları ara",
+        "reels": "Kısa videoları açıklama, yorum veya yazara göre ara",
+        "hashtags": "Hashtag’leri ara"
       }
     }
   },
@@ -154,6 +197,196 @@
       "interestsSaveFailed": "Hesabın oluşturuldu ancak ilgi alanları şu anda kaydedilemedi."
     }
   },
+  "profile": {
+    "hero": {
+      "noBio": "Henüz bio yok.",
+      "bioHidden": "Bu profil engellendiği için biyografi gizlendi.",
+      "joined": "{{date}} tarihinde katıldı",
+      "openStoriesAria": "@{{handle}} stories aç",
+      "viewProfileAria": "@{{handle}} profile görüntüle",
+      "avatarAlt": "{{name}} avatarı",
+      "authorImageAlt": "Yazar görseli",
+      "trustSignalsAria": "Profil güven sinyalleri",
+      "privateProfile": "Gizli profil",
+      "publicProfile": "Herkese açık profil",
+      "establishedMember": "Yerleşik üye",
+      "activeOn": "{{date}} tarihinde aktifti",
+      "statsAria": "Profil istatistikleri",
+      "posts": "gönderi",
+      "followers": "takipçi",
+      "following": "takip edilen"
+    },
+    "tabs": {
+      "posts": "Gönderiler",
+      "reels": "Kısa videolar",
+      "analytics": "Analitik",
+      "aria": "Profil içerik sekmeleri"
+    },
+    "actions": {
+      "working": "Çalışılıyor...",
+      "blocked": "Engellendi",
+      "requestSent": "İstek Gönderildi",
+      "following": "Takip edilenler",
+      "unfollowed": "Takip bırakıldı",
+      "tryAgain": "Tekrar dene",
+      "cancelRequest": "İsteği iptal et",
+      "unfollow": "Takibi Bırak",
+      "follow": "Takip Et",
+      "message": "Mesaj",
+      "requestMessage": "Request Mesaj",
+      "profileLinkCopied": "Profil bağlantısı kopyalandı",
+      "copyProfileLink": "Profil bağlantısını kopyala",
+      "copied": "Kopyalandı",
+      "signInToFollow": "Takip etmek için giriş yap"
+    },
+    "safety": {
+      "openMenu": "profile safety options aç",
+      "moreOptions": "Daha fazla options",
+      "nickname": "Takma ad",
+      "mute": "Sessize al",
+      "unmute": "Sessizi aç",
+      "block": "Engelle",
+      "unblock": "Engeli kaldır",
+      "report": "Bildir",
+      "reporting": "Bildiriliyor..."
+    },
+    "nickname": {
+      "dialogAria": "Takma ad ayarla",
+      "title": "Senin için takma ad",
+      "close": "nickname editor kapat",
+      "label": "Takma ad",
+      "placeholder": "Takma ad gir"
+    },
+    "blocked": {
+      "byTarget": "Bu profil sizi engelledi. Gönderiler, kısa videolar, hikâyeler ve biyografi gizlendi.",
+      "byYou": "Bu profili engellediniz. Gönderiler, kısa videolar, hikâyeler ve biyografi gizlendi."
+    },
+    "privateLocked": "Bu profil gizli. Gönderileri görmek için takip edin ve onay bekleyin.",
+    "empty": {
+      "blockedTitle": "Profil engellendi",
+      "posts": {
+        "title": "Henüz gönderi yok",
+        "own": "Oluştur bölümünden paylaşmaya başla.",
+        "guest": "Bu profil henüz hiçbir şey paylaşmadı.",
+        "private": "Bu gizli profil takip isteğinizi onaylayana kadar gönderiler görünmez."
+      },
+      "reels": {
+        "title": "Henüz kısa video yok",
+        "own": "Bir tane profilinden oluştur.",
+        "guest": "Bu profil henüz kısa video paylaşmadı.",
+        "blocked": "Bu profil engelliyken kısa videolar gizlenir.",
+        "private": "Bu gizli profil takip isteğinizi onaylayana kadar kısa videolar görünmez."
+      }
+    },
+    "confirm": {
+      "delete": "Sil",
+      "deletePostTitle": "Gönderiyi sil",
+      "deletePostMessage": "Bu gönderi silinsin mi? Bu işlem geri alınamaz.",
+      "deleteReelTitle": "Reel'i sil",
+      "deleteReelMessage": "Bu reel silinsin mi? Bu işlem geri alınamaz.",
+      "deleteCommentTitle": "Yorumu sil",
+      "deleteCommentMessage": "Bu yorum silinsin mi? This action cannot be undone.",
+      "deleteStoryTitle": "Hikâyeyi sil",
+      "deleteStoryMessage": "Bu hikâye silinsin mi? Bu işlem geri alınamaz.",
+      "deleteCollectionTitle": "Koleksiyonu sil",
+      "blockTitle": "Profili engelle",
+      "blockMessage": "@{{handle}} engellensin mi? Bu işlem takip bağlantılarını kaldırır.",
+      "block": "Engelle",
+      "thisProfile": "bu profil"
+    },
+    "common": {
+      "save": "Kaydet",
+      "saving": "Kaydediliyor...",
+      "cancel": "İptal",
+      "clear": "Temizle",
+      "back": "Geri",
+      "retry": "Tekrar dene"
+    },
+    "storyCollections": {
+      "rowAria": "Hikâye koleksiyonları",
+      "createAria": "Hikâye koleksiyonu oluştur",
+      "new": "Yeni",
+      "openAria": "story collection {{name}} aç",
+      "coverAlt": "Hikâye koleksiyonu kapağı",
+      "manageAria": "{{name}} hikâye koleksiyonunu yönet",
+      "createDialogAria": "Hikâye koleksiyonu oluştur",
+      "newCollectionTitle": "New Hikâye Collection",
+      "closeCreateDialog": "story collection modal kapat",
+      "collectionName": "Koleksiyon adı",
+      "collectionPlaceholder": "ör. Yaz 2024",
+      "collectionNameAria": "Hikâye koleksiyonu adı",
+      "storyMediaAlt": "Hikâye medyası",
+      "storyFallback": "Hikâye",
+      "selected": "Seçili",
+      "select": "Seç",
+      "noStoriesInArchive": "Henüz stories in your archive yok.",
+      "creating": "Oluşturuluyor...",
+      "create": "Oluştur",
+      "manageDialogAria": "Hikâye koleksiyonunu yönet",
+      "manageNamedTitle": "{{name}} öğesini yönet",
+      "manageTitle": "Manage Hikâye Collection",
+      "closeManageDialog": "add stories modal kapat",
+      "selectCollection": "Seç collection",
+      "selectCollectionAria": "Seç story collection",
+      "remove": "Kaldır",
+      "add": "Ekle",
+      "createFirstCollection": "Önce ilk koleksiyonunu oluştur.",
+      "deleteCollection": "Koleksiyonu sil",
+      "close": "Kapat"
+    },
+    "compose": {
+      "postDialogAria": "Gönderi oluştur",
+      "newPost": "Yeni Gönderi",
+      "closePostComposer": "post composer kapat",
+      "storyDialogAria": "Hikâye oluştur",
+      "newStory": "New Hikâye",
+      "closeStoryComposer": "story composer kapat",
+      "storyCreationStepsAria": "Hikâye creation steps",
+      "storyStepMedia": "1. Medya",
+      "storyStepCropTrimPublish": "2. Kırp, Kes ve Yayınla",
+      "storyMediaUploadAria": "Hikâye medyası upload",
+      "selectStoryMediaTitle": "Hikâye medyanızı seçerek başlayın",
+      "selectStoryMediaSubtitle": "Görseller, MP4, WebM, MOV ve benzeri biçimler desteklenir.",
+      "selectStoryMedia": "Seç Hikâye Media",
+      "selectedFile": "Seçilen: {{file}}",
+      "storyExpires": "Hikâyeler 24 saat sonra otomatik olarak kaybolur.",
+      "markStorySensitive": "Bu hikâyeyi hassas medya olarak işaretle",
+      "editingFile": "Düzenleniyor: {{file}}",
+      "dragStoryFrameAria": "Hikâye çerçevesini ayarlamak için sürükleyin",
+      "dragFrameHint": "Kırpma alanını ayarlamak için 9:16 çerçeveyi sürükleyin.",
+      "resetFraming": "Çerçeveyi sıfırla",
+      "trimSummary": "Orijinal süre: {{original}} sn · Kırpılmış: {{trimmed}}",
+      "trimThumbnailAlt": "Hikâye trim thumbnail",
+      "trimStoryStartAria": "Hikâye başlangıcını kırp",
+      "trimStoryEndAria": "Hikâye sonunu kırp",
+      "generatingTrimPreviews": "Kırpma önizleme görselleri oluşturuluyor...",
+      "trimRange": "Aralık: {{start}} sn - {{end}} sn",
+      "storyMediaPreviewAlt": "Hikâye medyası preview",
+      "schedulePublish": "Yayın zamanla (isteğe bağlı)",
+      "saveDraft": "Taslağı kaydet",
+      "publishing": "Yayınlama...",
+      "publishStory": "Publish Hikâye"
+    },
+    "analytics": {
+      "title": "Üretici Analitiği",
+      "lastDays": "Son {{days}} gün",
+      "views": "görüntüleme",
+      "watchTime": "İzlenme Süresi",
+      "saves": "kaydetme",
+      "followerGrowth": "Takipçi Artışı",
+      "topReels": "En İyi Kısa Videolar",
+      "untitledReel": "Başlıksız kısa video"
+    },
+    "messages": {
+      "messageRequestSent": "Mesaj isteği gönderildi."
+    },
+    "errors": {
+      "loadData": "Profil verileri yüklenemedi. Yenilemeyi deneyin.",
+      "copyLink": "Şu anda profil bağlantısını kopyalama yapılamadı.",
+      "sendMessageRequest": "Şu anda mesaj isteği gönderme yapılamadı.",
+      "openChat": "Şu anda sohbeti açma yapılamadı."
+    }
+  },
   "settings": {
     "page": {
       "title": "Ayarlar",
@@ -213,7 +446,7 @@
     },
     "privacy": {
       "privateProfile": "Gizli profil",
-      "privateProfileHelp": "Etkinleştirildiğinde yalnızca onayladığın takipçiler gönderilerini, reels'lerini ve hikayelerini görebilir.",
+      "privateProfileHelp": "Etkinleştirildiğinde yalnızca onayladığın takipçiler gönderilerini, kısa videolarını ve hikayelerini görebilir.",
       "save": "Gizliliği Kaydet",
       "saveDiscovery": "Kitle ve Keşfet Ayarlarını Kaydet",
       "commentsAudience": "İçeriğine kimler yorum yapabilir?",
@@ -383,39 +616,1006 @@
     "page": {
       "title": "Keşfet"
     },
+    "search": {
+      "label": "Ara",
+      "placeholder": "Kullanıcıları, toplulukları, topluluk gönderilerini, blogları, kısa videoları, gönderileri ve hashtag’leri ara"
+    },
     "scope": {
       "all": "Tümü",
       "communities": "Topluluklar",
       "communityPosts": "Topluluk gönderileri",
       "blogs": "Bloglar",
-      "reels": "Reels",
+      "reels": "Kısa videolar",
       "posts": "Gönderiler",
       "hashtags": "Hashtag'ler",
       "users": "Kullanıcılar"
     },
     "sections": {
+      "followingHashtags": "Takip edilen hashtag'ler",
+      "fromFollowedHashtags": "Takip edilen hashtag'lerden",
+      "peopleYouMayKnow": "Tanıyor olabileceğin kişiler",
       "forYou": "Senin için",
       "users": "Kullanıcılar",
       "communities": "Topluluklar",
       "communityPosts": "Topluluk gönderileri",
       "blogs": "Bloglar",
-      "reels": "Reels",
+      "reels": "Kısa videolar",
       "hashtags": "Hashtag'ler",
       "posts": "Gönderiler"
+    },
+    "actions": {
+      "follow": "Takip Et",
+      "unfollow": "Takibi Bırak",
+      "followUser": "Kullanıcıyı takip et",
+      "signInToFollow": "Takip etmek için giriş yap"
+    },
+    "profile": {
+      "openStoriesAria": "@{{handle}} hikâyelerini aç",
+      "viewProfileAria": "@{{handle}} profilini görüntüle",
+      "imageAlt": "Profil görseli",
+      "authorImageAlt": "Yazar görseli",
+      "noBio": "Henüz biyografi yok."
+    },
+    "reels": {
+      "recommendedAlt": "Önerilen reel"
+    },
+    "empty": {
+      "noRecommendedReelsTitle": "Henüz önerilen kısa video yok",
+      "noRecommendedReelsMessage": "Keşfet önerilerini geliştirmek için kısa videolar, yorumlar ve hashtag'lerle daha fazla etkileşime geç."
+    },
+    "loading": {
+      "searchingAria": "Aranıyor",
+      "recommendationsAria": "Öneriler yükleniyor"
+    },
+    "community": {
+      "imageAlt": "Topluluk görseli",
+      "noDescription": "Henüz açıklama yok.",
+      "member": "üye",
+      "members": "üyeler"
+    },
+    "communityPost": {
+      "viewPost": "topluluk gönderisini görüntüle",
+      "openForDetails": "ayrıntıları görmek için bu gönderiyi aç",
+      "postedBy": "@{{handle}} tarafından paylaşıldı · {{date}}"
+    },
+    "blog": {
+      "noDescription": "Henüz açıklama yok.",
+      "byUpdated": "@{{handle}} · Güncellendi {{date}}"
+    },
+    "confirm": {
+      "delete": "Sil",
+      "cancel": "İptal",
+      "deletePostTitle": "Gönderiyi sil",
+      "deletePostMessage": "Bu gönderi silinsin mi? Bu işlem geri alınamaz.",
+      "deleteCommentTitle": "Yorumu sil",
+      "deleteCommentMessage": "Bu yorum silinsin mi? Bu işlem geri alınamaz."
+    },
+    "status": {
+      "postShared": "Gönderi paylaşıldı.",
+      "postSentAsMessage": "Gönderi mesaj olarak gönderildi.",
+      "followRequestSent": "@{{handle}} için takip isteği gönderildi.",
+      "followedUser": "@{{handle}} takip edildi.",
+      "unfollowedHashtag": "#{{tag}} takibi bırakıldı.",
+      "followingHashtag": "#{{tag}} takip ediliyor.",
+      "noResults": "Sonuç bulunamadı."
+    },
+    "errors": {
+      "updatePost": "Şu anda gönderi güncelleme yapılamadı.",
+      "deletePost": "Şu anda gönderi silme yapılamadı.",
+      "sharePostNow": "Şu anda bu gönderiyi paylaşma yapılamadı.",
+      "sendPostToChatNow": "Şu anda bu gönderiyi sohbete gönderme yapılamadı.",
+      "followUser": "Şu anda bu kullanıcıyı takip etme yapılamadı.",
+      "updateLikeNow": "Şu anda beğeniyi güncelleme yapılamadı.",
+      "setReactionNow": "Şu anda tepki ayarlama yapılamadı.",
+      "clearReactionNow": "Şu anda tepkiyi temizleme yapılamadı.",
+      "addCommentNow": "Şu anda yorum ekleme yapılamadı.",
+      "updateCommentNow": "Şu anda yorumu güncelleme yapılamadı.",
+      "deleteCommentNow": "Şu anda yorumu silme yapılamadı.",
+      "reactToCommentNow": "Şu anda yoruma tepki verme yapılamadı.",
+      "clearCommentReactionNow": "Şu anda yorum tepkisini temizleme yapılamadı.",
+      "updateReelLike": "Şu anda reel beğenisini güncelleme yapılamadı.",
+      "addReelComment": "Şu anda reel yorumu ekleme yapılamadı.",
+      "updateReelComment": "Şu anda reel yorumunu güncelleme yapılamadı.",
+      "deleteReelComment": "Şu anda reel yorumunu silme yapılamadı.",
+      "updateReelCommentLike": "Şu anda reel yorum beğenisini güncelleme yapılamadı.",
+      "allSearchesFailed": "Tüm aramalar başarısız oldu.",
+      "completeSearch": "Şu anda aramayı tamamlama yapılamadı.",
+      "loadRecommendedReels": "Şu anda önerilen kısa videolar yüklenemedi."
+    }
+  },
+  "blogs": {
+    "page": {
+      "kicker": "Yayınlama",
+      "title": "Bloglar"
+    },
+    "tabs": {
+      "aria": "Blog listeleri",
+      "all": "Tüm bloglar",
+      "following": "Takip edilenler",
+      "mine": "Bloglarım"
+    },
+    "subtitle": {
+      "all": "Venli genelinde blogları keşfet ve ara.",
+      "following": "Takip ettiğiniz üreticilerin blogları.",
+      "mine": "Kendi bloglarınızı ve taslaklarınızı yönetin."
+    },
+    "search": {
+      "placeholder": "Blogları başlık, kısa ad veya kullanıcı adına göre ara...",
+      "try": "Şunu deneyin:"
+    },
+    "sort": {
+      "label": "Sırala",
+      "menuAria": "Blogları sırala",
+      "recentlyUpdated": "Yakın zamanda güncellendi",
+      "newestCreated": "En yeni oluşturulan",
+      "titleAz": "Başlık A-Z"
+    },
+    "actions": {
+      "openStudio": "Blog Studio aç",
+      "clear": "Temizle"
+    },
+    "visibility": {
+      "public": "Herkese açık",
+      "private": "Gizli",
+      "owner": "Sahip"
+    },
+    "meta": {
+      "updated": "Güncellendi {{date}}"
+    },
+    "resultCount": "{{total}} blogdan {{visible}} tanesi",
+    "loading": {
+      "aria": "Bloglar yükleniyor"
+    },
+    "infinite": {
+      "more": "Daha fazla blog için kaydırın..."
+    },
+    "empty": {
+      "noBlogsForTab": "Henüz blogs found for this tab yok."
+    },
+    "errors": {
+      "signInToViewTab": "Bu sekmeyi görmek için giriş yap.",
+      "loadNow": "Şu anda blogları yükleme yapılamadı."
+    }
+  },
+  "communities": {
+    "page": {
+      "title": "Topluluklar",
+      "subtitle": "Ortak ilgi alanları etrafında topluluklar oluşturun veya bunlara katılın."
+    },
+    "tabs": {
+      "aria": "Topluluk görünümleri",
+      "mine": "Topluluklarım",
+      "discover": "Toplulukları keşfet"
+    },
+    "actions": {
+      "newCommunity": "Yeni topluluk",
+      "refresh": "Toplulukları yenile",
+      "search": "Ara",
+      "clear": "Temizle",
+      "join": "Katıl",
+      "joining": "Katılınıyor…",
+      "leave": "Ayrıl",
+      "leaving": "Ayrılınıyor…",
+      "signInToJoin": "Katılmak için giriş yap",
+      "cancel": "İptal",
+      "create": "Oluştur",
+      "creating": "Oluşturuluyor…"
+    },
+    "search": {
+      "placeholder": "Topluluklarda ara",
+      "try": "Şunu deneyin:"
+    },
+    "mine": {
+      "signInPrompt": "Katıldığınız toplulukları görmek için giriş yapın veya hesap oluşturun.",
+      "empty": "Henüz hiçbir topluluğa katılmadınız."
+    },
+    "discover": {
+      "empty": "communities bulunamadı."
+    },
+    "community": {
+      "members": "üyeler",
+      "createdBy": "@{{handle}} tarafından oluşturuldu",
+      "imageAlt": "Topluluk görseli",
+      "openAria": "{{name}} aç",
+      "owner": "Sahip",
+      "joined": "Katıldı"
+    },
+    "authAction": {
+      "create": "bir topluluk oluşturma",
+      "join": "topluluklara katılma",
+      "leave": "topluluklardan ayrılma"
+    },
+    "visibility": {
+      "private": "Gizli",
+      "public": "Herkese açık"
+    },
+    "create": {
+      "dialogAria": "Topluluk oluştur",
+      "title": "Topluluk oluştur",
+      "close": "create community modal kapat",
+      "name": "Ad",
+      "namePlaceholder": "Topluluk adı",
+      "description": "Açıklama",
+      "descriptionPlaceholder": "Bu topluluk ne hakkında?",
+      "rules": "Kurallar",
+      "rulesPlaceholder": "Her satıra bir kural",
+      "image": "Topluluk görseli",
+      "imagePreviewAlt": "Topluluk görseli önizlemesi",
+      "private": "Gizli topluluk"
+    },
+    "status": {
+      "created": "Topluluk oluşturuldu.",
+      "joined": "Topluluğa katıldı.",
+      "left": "Topluluktan ayrıldı."
+    },
+    "errors": {
+      "load": "Şu anda toplulukları yükleme yapılamadı.",
+      "search": "Şu anda toplulukları arama yapılamadı.",
+      "create": "Şu anda topluluk oluşturma yapılamadı.",
+      "join": "Şu anda topluluğa katılma yapılamadı.",
+      "leave": "Şu anda topluluktan ayrılma yapılamadı.",
+      "signInForAction": "Lütfen {{action}} için giriş yapın veya hesap oluşturun."
+    }
+  },
+  "blogHome": {
+    "loading": {
+      "aria": "Blog yükleniyor"
+    },
+    "header": {
+      "moreBy": "Daha fazla by @{{handle}}",
+      "editInStudio": "Stüdyoda Düzenle"
+    },
+    "post": {
+      "draft": "Taslak"
+    },
+    "actions": {
+      "save": "Kaydet",
+      "unsave": "Kaydı kaldır"
+    },
+    "empty": {
+      "noPosts": "Henüz gönderi yok."
+    },
+    "errors": {
+      "notFound": "Blog bulunamadı.",
+      "notFoundOrPrivate": "Blog bulunamadı veya gizli.",
+      "loadNow": "Şu anda bu blogu yükleme yapılamadı.",
+      "updateSavedStatus": "Şu anda kayıt durumunu güncelleme yapılamadı."
+    }
+  },
+  "blogPost": {
+    "loading": {
+      "aria": "Blog gönderisi yükleniyor"
+    },
+    "actions": {
+      "backToBlog": "Bloga dön",
+      "like": "Beğen",
+      "comment": "Yorum",
+      "save": "Kaydet",
+      "unsave": "Kaydı kaldır",
+      "share": "Paylaş",
+      "linkCopied": "Bağlantı kopyalandı",
+      "embed": "Göm"
+    },
+    "meta": {
+      "byDate": "@{{handle}} · {{date}}"
+    },
+    "hints": {
+      "likesSoon": "Blog beğenileri yakında etkinleştirilecek",
+      "commentsSoon": "Blog yorumları yakında etkinleştirilecek"
+    },
+    "errors": {
+      "notFound": "Blog gönderisi bulunamadı.",
+      "notFoundOrPrivate": "Blog gönderisi bulunamadı veya gizli.",
+      "loadNow": "Şu anda bu blog gönderisini yükleme yapılamadı.",
+      "updateSavedStatus": "Şu anda kayıt durumunu güncelleme yapılamadı."
+    }
+  },
+  "blogEmbed": {
+    "loading": "Göm yükleniyor...",
+    "kicker": "Venli Blog",
+    "meta": {
+      "byAuthor": "@{{handle}} tarafından"
+    },
+    "footer": {
+      "readFullPost": "Tam gönderiyi Venli'de oku"
+    },
+    "aria": {
+      "loading": "Blog gömüsü yükleniyor",
+      "openFullPost": "full blog post aç"
+    },
+    "errors": {
+      "couldNotLoad": "Gömülü içerik yüklenemedi.",
+      "postUnavailable": "Bu blog gönderisi kullanılamıyor.",
+      "embeddingDisabled": "Gömme özelliği blog sahibi tarafından devre dışı bırakıldı.",
+      "loadNow": "Şu anda bu gömülü içeriği yükleme yapılamadı."
+    }
+  },
+  "blogEmbedTools": {
+    "loading": {
+      "aria": "Gömme araçları yükleniyor",
+      "message": "Embed tools yükleniyor..."
+    },
+    "header": {
+      "kicker": "Gömme Araçları",
+      "subtitle": "Gömülü içeriği önizleyin ve herhangi bir web sitesi için iframe kodunu kopyalayın."
+    },
+    "preview": {
+      "title": "Önizleme",
+      "iframeTitle": "Blog gömüsü önizlemesi"
+    },
+    "code": {
+      "title": "Gömme Kodu",
+      "aria": "Blog gömüsü iframe kodu"
+    },
+    "actions": {
+      "copyCode": "Kodu kopyala",
+      "copied": "Kopyalandı",
+      "openRaw": "raw embed page aç",
+      "backToPost": "Gönderiye dön"
+    },
+    "embed": {
+      "defaultTitle": "Venli blog gömüsü"
+    },
+    "errors": {
+      "notFound": "Blog gönderisi bulunamadı.",
+      "notFoundOrPrivate": "Blog gönderisi bulunamadı veya gizli.",
+      "embeddingDisabled": "Gömme özelliği blog sahibi tarafından devre dışı bırakıldı.",
+      "loadNow": "Şu anda load embed tools for this post yapılamadı."
+    }
+  },
+  "sharedStory": {
+    "loading": {
+      "story": "Hikâye yükleniyor..."
+    },
+    "notFound": {
+      "title": "Hikâye unavailable",
+      "message": "Bu hikâye süresi dolmuş, kaldırılmış veya bağlantı geçersiz."
+    },
+    "errors": {
+      "title": "Bir şeyler ters gitti",
+      "load": "Bu paylaşılan hikâye yüklenemedi."
+    },
+    "author": {
+      "imageAlt": "Üretici görseli"
+    },
+    "actions": {
+      "linkCopiedAria": "Hikâye link copied",
+      "copyStoryLinkAria": "Hikâye bağlantısını kopyala",
+      "copied": "Kopyalandı",
+      "copyLink": "Bağlantıyı kopyala"
+    },
+    "media": {
+      "alt": "Paylaşılan hikâye medyası"
+    }
+  },
+  "communityDetail": {
+    "timeoutOptions": {
+      "oneDay": "1 gün",
+      "sevenDays": "7 gün",
+      "oneMonth": "1 ay"
+    },
+    "common": {
+      "cancel": "İptal",
+      "working": "Çalışıyor…"
+    },
+    "status": {
+      "memberPromoted": "Üye moderatör yapıldı.",
+      "moderatorRemoved": "Moderatör rolü kaldırıldı.",
+      "memberBanned": "@{{handle}} yasaklandı.",
+      "memberUnbanned": "@{{handle}} yasağı kaldırıldı.",
+      "memberTimedOut": "@{{handle}} {{timeoutLabel}} süreyle kısıtlandı.",
+      "joinedCommunity": "Topluluğa katıldı.",
+      "leftCommunity": "Topluluktan ayrıldı.",
+      "communityLinkCopied": "Topluluk bağlantısı kopyalandı.",
+      "communityUpdated": "Topluluk güncellendi.",
+      "postPublished": "Gönderi yayımlandı.",
+      "postRemovedFromSaved": "Gönderi kaydedilenlerden kaldırıldı.",
+      "postSaved": "Gönderi kaydedildi.",
+      "postLinkCopied": "Gönderi bağlantısı kopyalandı.",
+      "voteSubmitted": "Oy gönderildi.",
+      "postUpdated": "Gönderi güncellendi.",
+      "postDeleted": "Gönderi silindi."
+    },
+    "errors": {
+      "communityNotLoaded": "Topluluk yüklenmedi.",
+      "communityNotFound": "Topluluk bulunamadı.",
+      "signInToJoin": "Lütfen join this community için giriş yapın veya hesap oluşturun.",
+      "copyFailed": "Kopyalama başarısız oldu",
+      "copyCommunityLink": "Topluluk bağlantısı kopyalanamadı.",
+      "communityNameRequired": "Topluluk adı zorunludur.",
+      "titleRequired": "Başlık is required.",
+      "addContentBeforePosting": "Paylaşmadan önce metin, görsel, bağlantı veya anket ekleyin.",
+      "signInToCreatePost": "Lütfen bir topluluk oluşturma post için giriş yapın veya hesap oluşturun.",
+      "copyPostLink": "Gönderi bağlantısı kopyalanamadı.",
+      "addContentBeforeSaving": "Kaydetmeden önce metin, görsel, bağlantı veya anket ekleyin.",
+      "linkMustStartHttp": "Bağlantı URL'si http:// veya https:// ile başlamalıdır.",
+      "linkInvalid": "Geçerli bir bağlantı URL'si girin.",
+      "action": {
+        "promoteMember": "üyeyi terfi ettirme",
+        "removeModerator": "moderatörlüğü kaldırma",
+        "banMember": "üyeyi yasaklama",
+        "unbanMember": "unüyeyi yasaklama",
+        "timeoutMember": "üyeye süreli kısıtlama uygulama"
+      }
+    },
+    "moderation": {
+      "modalTitle": {
+        "confirm": "İşlemi onayla",
+        "ban": "Kullanıcıyı yasakla",
+        "unban": "Kullanıcı yasağını kaldır",
+        "timeout": "Kullanıcıya süreli kısıtlama uygula"
+      },
+      "modalMessage": {
+        "ban": "@{{handle}} yasaklansın mı? Bu işlem onları hesabınızda engeller.",
+        "unban": "@{{handle}} yasağı kaldırılsın mı? Bu işlem hesabınızdaki engeli kaldırır.",
+        "timeout": "@{{handle}} kullanıcısına {{timeoutLabel}} süreyle kısıtlama uygulansın mı? Bu süre boyunca bu toplulukta gönderi paylaşamaz veya yorum yapamaz."
+      },
+      "confirmText": {
+        "confirm": "Onayla",
+        "ban": "Kullanıcıyı yasakla",
+        "unban": "Kullanıcı yasağını kaldır",
+        "timeout": "Kullanıcıya süreli kısıtlama uygula"
+      },
+      "timeoutLength": "Kısıtlama süresi"
+    },
+    "community": {
+      "imageAlt": "Topluluk görseli",
+      "memberCount": "{{count}} üye",
+      "createdBy": "@{{handle}} tarafından oluşturuldu",
+      "visibility": {
+        "private": "Gizli",
+        "public": "Herkese açık"
+      }
+    },
+    "actions": {
+      "joining": "Katılınıyor…",
+      "join": "Katıl",
+      "leaving": "Ayrılınıyor…",
+      "leave": "Ayrıl",
+      "editCommunity": "Topluluğu düzenle",
+      "createPost": "Gönderi oluştur",
+      "communityLinkCopiedAria": "Topluluk bağlantısı kopyalandı",
+      "copyCommunityLinkAria": "Topluluk bağlantısını kopyala",
+      "copied": "Kopyalandı",
+      "copyCommunityLink": "Topluluk bağlantısını kopyala"
+    },
+    "notice": {
+      "signInToPost": "Bu toplulukta gönderi oluşturmak ve yorum yapmak için giriş yapın veya hesap oluşturun.",
+      "joinToPost": "Gönderi oluşturmak için bu topluluğa katıl.",
+      "timedOut": "{{until}} tarihine kadar bu toplulukta kısıtlandınız. Gönderi ve yorum paylaşımı devre dışı.",
+      "later": "daha sonra"
+    },
+    "feed": {
+      "title": "Topluluk Akışı",
+      "subtitle": "/{{slug}} içindeki üyelerin gönderileri",
+      "searchPlaceholder": "Bu toplulukta gönderileri ara",
+      "loadingAria": "Topluluk gönderisi yükleniyors",
+      "empty": {
+        "noSearchMatches": "Bu aramayla eşleşen gönderi yok.",
+        "noPostsYet": "Henüz gönderi yok."
+      }
+    },
+    "post": {
+      "authorImageAlt": "Yazar görseli",
+      "untitled": "Başlıksız gönderi",
+      "pollVotes": "{{count}} oy",
+      "badges": {
+        "image": "Görsel",
+        "poll": "Anket"
+      }
+    },
+    "media": {
+      "previousImage": "Önceki görsel",
+      "nextImage": "Sonraki görsel",
+      "postImageAlt": "Gönderi görseli",
+      "imageThumbAlt": "Görsel {{index}}",
+      "imagePreview": "Görsel preview",
+      "closeImagePreview": "image preview kapat",
+      "fullscreenPostImageAlt": "Tam ekran gönderi görseli"
+    },
+    "postActions": {
+      "upvotePost": "Gönderiye artı oy ver",
+      "upvote": "Artı oy ver",
+      "downvotePost": "Gönderiye eksi oy ver",
+      "downvote": "Eksi oy ver",
+      "openComments": "comments aç",
+      "savePost": "Gönderiyi kaydet",
+      "unsavePost": "Gönderi kaydını kaldır",
+      "save": "Kaydet",
+      "saved": "Kaydedilenler",
+      "postLinkCopiedAria": "Gönderi bağlantısı kopyalandı",
+      "copyPostLinkAria": "Gönderi bağlantısını kopyala",
+      "copied": "Kopyalandı",
+      "copyLink": "Bağlantıyı kopyala",
+      "editPost": "Gönderiyi düzenle",
+      "deletePost": "Gönderiyi sil",
+      "deletePostConfirm": "Bu gönderi silinsin mi? Bu işlem geri alınamaz.",
+      "delete": "Sil"
+    },
+    "members": {
+      "modalAria": "Topluluk üyeleri",
+      "title": "Üyeler",
+      "closeAria": "members modal kapat",
+      "tabsAria": "Topluluk moderasyon görünümleri",
+      "tabs": {
+        "members": "Üyeler",
+        "bannedUsers": "Yasaklanan kullanıcılar"
+      },
+      "search": {
+        "membersPlaceholder": "Üyeleri @kullanıcıadı veya role göre ara",
+        "bannedPlaceholder": "Yasaklı kullanıcıları ad veya @kullanıcıadına göre ara",
+        "membersAria": "Üyeleri ara",
+        "bannedAria": "Yasaklı kullanıcıları ara"
+      },
+      "hint": {
+        "membersInCommunity": "/{{slug}} içinde {{count}} üye",
+        "bannedDescription": "/{{slug}} moderasyonu sırasında hesabınızdan yasaklanan kullanıcıları yönetin"
+      },
+      "actions": {
+        "makeModerator": "Moderatör yap",
+        "removeModerator": "Moderatörlüğü kaldır",
+        "timeoutUser": "Kullanıcıya süreli kısıtlama uygula",
+        "banUser": "Kullanıcıyı yasakla",
+        "unbanUser": "Kullanıcı yasağını kaldır"
+      },
+      "memberAvatarAlt": "Üye avatarı",
+      "bannedUserAvatarAlt": "Yasaklı kullanıcı avatarı",
+      "bannedRole": "Yasaklandı",
+      "empty": {
+        "noMembersMatchSearch": "Aramanızla eşleşen üye yok.",
+        "noMembersYet": "Henüz members to show yok.",
+        "loadingBannedUsers": "Yasaklanan kullanıcılar yükleniyor...",
+        "noBannedUsersMatchSearch": "Aramanızla eşleşen yasaklı kullanıcı yok.",
+        "noBannedUsers": "Yasaklı kullanıcı yok."
+      }
+    },
+    "postType": {
+      "text": "Metin",
+      "media": "Görseller ve Video",
+      "link": "Bağlantı",
+      "poll": "Anket"
+    },
+    "editPost": {
+      "modalAria": "Topluluğu düzenle post",
+      "title": "Gönderiyi düzenle",
+      "closeAria": "edit post modal kapat",
+      "typeAria": "Gönderi türünü düzenle",
+      "fields": {
+        "title": "Başlık",
+        "linkUrl": "Bağlantı URL’si",
+        "addImages": "Görseller ekle (en fazla 10)",
+        "question": "Soru",
+        "option": "Seçenek {{index}}"
+      },
+      "placeholders": {
+        "title": "Bir başlık ekle",
+        "updatePost": "Gönderinizi güncelleyin...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "Seçenek ekleal body text...",
+        "askCommunity": "Topluluğa sor...",
+        "optionText": "Seçenek metni"
+      },
+      "previewAlt": "Seçili edit image preview",
+      "removeCurrent": "Geçerli olanı kaldır",
+      "remove": "Kaldır",
+      "addOption": "Seçenek ekle",
+      "saving": "Kaydediliyor…",
+      "saveChanges": "Değişiklikleri kaydet"
+    },
+    "editCommunity": {
+      "modalAria": "Topluluğu düzenle",
+      "title": "Topluluğu düzenle",
+      "closeAria": "edit community modal kapat",
+      "fields": {
+        "name": "Ad",
+        "information": "Bilgi",
+        "rules": "Kurallar",
+        "image": "Görsel"
+      },
+      "placeholders": {
+        "communityName": "Topluluk adı",
+        "describeCommunity": "Bu topluluğu açıklayın",
+        "oneRulePerLine": "Her satıra bir kural"
+      },
+      "imagePreviewAlt": "Topluluk görseli önizlemesi",
+      "saving": "Kaydediliyor…",
+      "save": "Kaydet"
+    },
+    "createPost": {
+      "modalAria": "Topluluk gönderisi oluştur",
+      "title": "Gönderi oluştur",
+      "closeAria": "create post modal kapat",
+      "typeAria": "Gönderi türü",
+      "fields": {
+        "title": "Başlık",
+        "linkUrl": "Bağlantı URL’si",
+        "attachImages": "Görseller ekle (en fazla 10)",
+        "question": "Soru",
+        "option": "Seçenek {{index}}"
+      },
+      "placeholders": {
+        "title": "Bir başlık ekle",
+        "shareThoughts": "Düşüncelerini paylaş...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "Seçenek ekleal body text...",
+        "askCommunity": "Topluluğa sor...",
+        "optionText": "Seçenek metni"
+      },
+      "previewAlt": "Seçili post image preview",
+      "removeCurrent": "Geçerli olanı kaldır",
+      "imagesAttachedInTab": "{{count}} image(s) attached in Görseller ve Video tab.",
+      "linkAttachedInTab": "Bağlantı, Bağlantı sekmesine eklendi.",
+      "remove": "Kaldır",
+      "addOption": "Seçenek ekle",
+      "posting": "Paylaşılıyor…",
+      "post": "Gönderi"
+    },
+    "loading": {
+      "communityAria": "Topluluk yükleniyor",
+      "feedAria": "Topluluk akışı yükleniyor",
+      "postsAria": "Topluluk gönderisi yükleniyors"
     }
   },
   "chatPage": {
     "title": "Mesajlar",
+    "layoutAria": "Mesajs layout",
+    "common": {
+      "you": "Sen",
+      "youLowercase": "sen",
+      "me": "Ben",
+      "gif": "GIF",
+      "cancel": "İptal",
+      "save": "Kaydet",
+      "saving": "Kaydediliyor..."
+    },
+    "starterMessages": {
+      "hey": "Selam 👋",
+      "howAreYou": "Bugün nasılsın?",
+      "catchUp": "Daha sonra konuşalım mı?"
+    },
     "search": {
       "label": "Sohbetlerde ara",
+      "marquee": "Sohbetleri ad, kullanıcı adı veya mesaja göre bul",
       "startNewChat": "Yeni sohbet başlat"
     },
     "sidebar": {
       "chats": "Sohbetler"
     },
+    "loading": {
+      "conversations": "Konuşmalar yükleniyor",
+      "messages": "Mesajlar yükleniyor"
+    },
+    "conversation": {
+      "avatarAlt": "Konuşma avatarı"
+    },
+    "empty": {
+      "noChatsFound": "chats bulunamadı.",
+      "noActiveChats": "Henüz active chats yok.",
+      "firstMessageTitle": "Bu sohbet ilk mesajını bekliyor",
+      "firstMessageDescription": "Sessizliği boz ve kısa bir selam gönder 👋",
+      "noMessagesFoundTitle": "Mesaj bulunamadı",
+      "noMessagesFoundDescription": "Aramada başka bir anahtar kelime dene."
+    },
+    "thread": {
+      "backToChats": "Sohbetlere dön",
+      "groupOptions": "Grup sohbeti seçenekleri",
+      "searchMessages": "Mesajlarda ara",
+      "changeChatName": "Sohbet adını değiştir",
+      "leaveChat": "Sohbetten ayrıl",
+      "deleteChat": "Sohbeti sil",
+      "unmuteChat": "Sohbetin sesini aç",
+      "muteChat": "Sohbeti sessize al",
+      "defaultGroupChatName": "Grup sohbeti"
+    },
+    "messageSearch": {
+      "backToChat": "Sohbete dön",
+      "placeholder": "Mesajlarda ara",
+      "clear": "Mesaj aramasını temizle",
+      "avatarAlt": "Mesaj author avatar",
+      "noResults": "Mesaj bulunamadı for that search.",
+      "idleTitle": "Bu sohbette ara",
+      "idleDescription": "Bu konuşmada mesajları, medya etiketlerini ve @kullanıcıadlarını bul."
+    },
+    "messages": {
+      "fetchingOlder": "Eski mesajlar getiriliyor…",
+      "noOlder": "Daha eski mesaj yok",
+      "senderAvatarAlt": "Mesaj sender avatar",
+      "replyMediaPreviewAlt": "Yanıtlanan mesaj önizlemesi",
+      "sentImageAlt": "Gönderilen görsel",
+      "sentGifAlt": "Gönderilen GIF",
+      "replyToMessage": "Mesajı yanıtla",
+      "options": "Mesaj seçenekleri",
+      "actions": {
+        "edit": "Düzenle",
+        "report": "Bildir",
+        "copy": "Kopyala"
+      }
+    },
+    "reactions": {
+      "show": "Tepkileri göster",
+      "title": "Tepkiler",
+      "close": "reactions kapat",
+      "all": "Tümü",
+      "authorAvatarAlt": "Tepki yazarı görseli"
+    },
+    "composer": {
+      "replyingTo": "{{target}} yanıtlanıyor",
+      "cancelReply": "Yanıtı iptal et",
+      "addEmoji": "Emoji ekle",
+      "messagePlaceholder": "Mesaj...",
+      "addGif": "GIF ekle",
+      "addImage": "Görsel ekle",
+      "searchEmojiPlaceholder": "Emoji ara",
+      "searchGifsPlaceholder": "Giphy GIF'lerinde ara",
+      "search": "Ara",
+      "trendingNow": "Şu anda trend olanlar",
+      "noTrendingGifs": "Şu anda trend GIF yok.",
+      "noGifsFound": "GIFs bulunamadı.",
+      "sharing": "Paylaşılıyor",
+      "sharedPostPreviewAlt": "Paylaşılan gönderi medya önizlemesi",
+      "removeSharedPost": "Paylaşılan gönderiyi kaldır",
+      "send": "Gönder"
+    },
+    "sharedReel": {
+      "viewerAria": "Paylaşılan reel görüntüleyicisi",
+      "settings": "Reel ayarları",
+      "closeViewer": "reel viewer kapat",
+      "unmute": "Reel sesini aç",
+      "mute": "Reel'i sessize al",
+      "report": "Reel'i bildir",
+      "edit": "Reel'i düzenle",
+      "deleting": "Siliniyor…",
+      "delete": "Reel'i sil",
+      "authorAvatarAlt": "Reel yazarı avatarı",
+      "like": "Reel'i beğen",
+      "openComments": "reel comments aç",
+      "share": "Reel'i paylaş",
+      "replyToChatPlaceholder": "Sohbete yanıt ver...",
+      "sendingShort": "...",
+      "commentsAria": "Reel yorumları",
+      "comments": "Yorumlar",
+      "closeComments": "comments kapat",
+      "close": "Kapat",
+      "commentAuthorAlt": "Yorum yazarı görseli",
+      "hideReplies": "Yanıtları gizle",
+      "viewReplies": "replies ({{count}}) görüntüle",
+      "unlikeComment": "Yorum beğenisini kaldır",
+      "likeComment": "Yorumu beğen",
+      "reply": "Yanıtla",
+      "reportComment": "Yorumu bildir",
+      "noCommentsYet": "Henüz comments yok.",
+      "addCommentPlaceholder": "Bir yorum ekle...",
+      "post": "Gönderi",
+      "editCaptionPlaceholder": "Reel'i düzenle caption...",
+      "saving": "Kaydediliyor…",
+      "loadingDetails": "Reel details yükleniyor...",
+      "forYou": "Senin için",
+      "replyingToComment": "Yanıtlaing to comment",
+      "posting": "Paylaşılıyor..."
+    },
     "noConversation": {
       "title": "Mesajlaşmaya başlamak için bir sohbet seç",
+      "subtitle1": "Mesaj dizinizi açmak için soldan bir konuşma seçin.",
+      "subtitle2": "Kişiyi henüz görmüyor musunuz? Yeni bir sohbet başlatın.",
       "startNewChat": "Yeni sohbet başlat"
+    },
+    "replyPreview": {
+      "youRepliedTo": "{{target}} öğesine yanıt verdin",
+      "authorRepliedTo": "@{{authorHandle}}, {{target}} öğesine yanıt verdi",
+      "image": "📷 Görsel",
+      "sharedPost": "Paylaşılan gönderi",
+      "sharedReel": "Paylaşılan reel",
+      "sharedStory": "Paylaşılan hikâye",
+      "message": "Mesaj"
+    },
+    "conversationPreview": {
+      "sharedPostFrom": "@{{handle}} kullanıcısından paylaşılan gönderi",
+      "sharedStoryFrom": "@{{handle}} kullanıcısından paylaşılan hikâye",
+      "sharedReelFrom": "@{{handle}} kullanıcısından paylaşılan reel",
+      "sharedLink": "Paylaşılan bağlantı"
+    },
+    "unfurl": {
+      "previewUnavailable": "Bağlantı önizlemesi kullanılamıyor. Paylaşılan bağlantıyı açın.",
+      "openSharedLink": "shared link aç"
+    },
+    "status": {
+      "loadConversationsFailed": "Konuşmalar yüklenemedi.",
+      "startDirectChatFailed": "Doğrudan sohbet başlatılamadı.",
+      "startGroupChatFailed": "Grup sohbeti başlatılamadı.",
+      "loadMessagesFailed": "Mesajlar yüklenemedi.",
+      "liveUpdatesUnavailable": "Canlı güncellemeler geçici olarak kullanılamıyor.",
+      "messageCopied": "Mesaj copied.",
+      "copyMessageFailed": "Mesaj kopyalanamadı.",
+      "messageContentRequired": "Mesaj content is required.",
+      "updateMessageFailed": "Mesaj güncellenemedi.",
+      "sendMessageFailed": "Mesaj gönderilemedi.",
+      "loadGifsFailed": "Giphy’den GIF’ler yüklenemedi.",
+      "loadTrendingGifsFailed": "Trend GIF’ler yüklenemedi.",
+      "sendGifFailed": "GIF gönderilemedi.",
+      "uploadImageFailed": "Görsel yüklenemedi.",
+      "reelDeleted": "Reel silindi.",
+      "openReelFailed": "Şu anda bu reel'i açma yapılamadı.",
+      "sendReplyFailed": "Yanıt gönderilemedi.",
+      "updateReelFailed": "Şu anda bu reel'i güncelleme yapılamadı.",
+      "deleteReelFailed": "Şu anda bu reel'i silme yapılamadı.",
+      "updateReelCommentFailed": "Şu anda reel yorumunu güncelleme yapılamadı.",
+      "deleteReelCommentFailed": "Şu anda reel yorumunu silme yapılamadı.",
+      "updateReelCommentLikeFailed": "Şu anda reel yorum beğenisini güncelleme yapılamadı.",
+      "updateReelLikeFailed": "Şu anda reel beğenisini güncelleme yapılamadı.",
+      "addReelCommentFailed": "Şu anda reel yorumu ekleme yapılamadı.",
+      "loadOlderMessagesFailed": "Eski mesajlar yüklenemedi.",
+      "setReactionFailed": "Tepki ayarlanamadı.",
+      "clearReactionFailed": "Tepki temizlenemedi.",
+      "sendStoryReplyFailed": "Şu anda hikâye yanıtını gönderme yapılamadı.",
+      "deleteStoryFailed": "Şu anda bu hikâyeyi silme yapılamadı.",
+      "submitReportFailed": "Şu anda bildirim gönderme yapılamadı.",
+      "chatNameEmpty": "Sohbet adı boş olamaz.",
+      "chatNameUpdated": "Sohbet adı güncellendi.",
+      "updateChatNameFailed": "Sohbet adı güncellenemedi.",
+      "leftGroupChat": "Grup sohbetinden ayrıldınız.",
+      "chatDeleted": "Sohbet silindi.",
+      "leaveGroupChatFailed": "Grup sohbetinden ayrılamadı.",
+      "deleteChatFailed": "Sohbet silinemedi.",
+      "chatMuted": "Sohbet sessize alındı.",
+      "chatUnmuted": "Sohbetin sesi açıldı.",
+      "updateMuteFailed": "Sessize alma ayarı güncellenemedi.",
+      "searchUsersFailed": "Şu anda kullanıcıları arama yapılamadı.",
+      "loadSuggestionsFailed": "Şu anda önerileri yükleme yapılamadı."
+    },
+    "modals": {
+      "deleteComment": {
+        "title": "Yorumu sil",
+        "message": "Bu yorum silinsin mi? This action cannot be undone.",
+        "confirm": "Sil"
+      },
+      "leave": {
+        "titleLeave": "Sohbetten ayrıl",
+        "titleDelete": "Sohbeti sil",
+        "confirmLeave": "Ayrıl",
+        "confirmDelete": "Sil",
+        "busyLeaving": "Ayrılınıyor...",
+        "displayNameFallback": "bu sohbet",
+        "deleteFallback": "Bu sohbet silinsin mi?",
+        "groupMessage": "{{name}} adlı sohbetten ayrılsın mı? Daha sonra başka bir üye tarafından tekrar eklenebilirsiniz.",
+        "directMessage": "{{name}} silinsin mi? Bu işlem sohbeti gelen kutunuzdan kaldırır."
+      },
+      "rename": {
+        "title": "Sohbet adını değiştir",
+        "label": "Sohbet adı",
+        "placeholder": "Sohbet adı gir",
+        "groupMessage": "Üyelerin kolayca bulabilmesi için bu grup sohbetine net bir ad verin.",
+        "directMessage": "Bu konuşma için özel bir sohbet adı belirleyin."
+      },
+      "deleteStory": {
+        "title": "Hikâyeyi sil",
+        "message": "Bu hikâye silinsin mi? Bu işlem geri alınamaz.",
+        "confirm": "Sil"
+      },
+      "deleteReel": {
+        "title": "Reel'i sil",
+        "message": "Bu reel silinsin mi? Bu işlem geri alınamaz.",
+        "confirm": "Sil"
+      }
+    }
+  },
+  "sharedCommunityPost": {
+    "loading": {
+      "aria": "Topluluk gönderisi yükleniyor"
+    },
+    "notFound": {
+      "title": "Gönderi kullanılamıyor",
+      "message": "Bu topluluk gönderisi kaldırılmış veya bağlantı geçersiz."
+    },
+    "errors": {
+      "title": "Bir şeyler ters gitti",
+      "load": "Bu paylaşılan topluluk gönderisi yüklenemedi.",
+      "votePoll": "Şu anda ankette oy verme yapılamadı.",
+      "updateSavedState": "Kayıt durumu güncellenemedi.",
+      "updatePost": "Şu anda gönderi güncelleme yapılamadı.",
+      "deletePost": "Şu anda gönderi silme yapılamadı.",
+      "votePost": "Şu anda gönderiye oy verme yapılamadı."
+    },
+    "confirm": {
+      "deletePost": "Bu gönderi silinsin mi?",
+      "deleteComment": "Bu yorum silinsin mi?"
+    },
+    "community": {
+      "imageAlt": "Topluluk görseli",
+      "fallbackSlug": "/topluluk"
+    },
+    "post": {
+      "untitled": "Başlıksız gönderi"
+    },
+    "media": {
+      "previousImage": "Önceki görsel",
+      "nextImage": "Sonraki görsel",
+      "postAlt": "Paylaşılan topluluk gönderisi medyası",
+      "thumbAlt": "Görsel {{index}}",
+      "imagePreview": "Görsel preview",
+      "closeImagePreview": "image preview kapat",
+      "fullscreenAlt": "Tam ekran gönderi görseli"
+    },
+    "poll": {
+      "votes": "{{count}} oy"
+    },
+    "actions": {
+      "upvotePost": "Gönderiye artı oy ver",
+      "upvote": "Artı oy ver",
+      "downvotePost": "Gönderiye eksi oy ver",
+      "downvote": "Eksi oy ver",
+      "comments": "Yorumlar",
+      "savePost": "Gönderiyi kaydet",
+      "unsavePost": "Gönderi kaydını kaldır",
+      "save": "Kaydet",
+      "saved": "Kaydedilenler",
+      "copyPostLinkAria": "Gönderi bağlantısını kopyala",
+      "postLinkCopiedAria": "Gönderi bağlantısı kopyalandı",
+      "copyLink": "Bağlantıyı kopyala",
+      "copied": "Kopyalandı",
+      "editPost": "Gönderiyi düzenle",
+      "deletePost": "Gönderiyi sil"
+    },
+    "comments": {
+      "later": "daha sonra",
+      "timedOut": "{{until}} tarihine kadar bu toplulukta kısıtlandınız. Gönderi ve yorum paylaşımı devre dışı.",
+      "joinToComment": "Yorum yapmak için bu topluluğa katıl.",
+      "signIn": "Giriş yap",
+      "signInSuffix": "sohbete katılmak için.",
+      "authorImageAlt": "Yorum yazarı görseli",
+      "spoilerAria": "Spoiler metni. Görmek için tıklayın.",
+      "editor": {
+        "placeholder": "Sohbete katıl",
+        "submit": "Yorum",
+        "submitting": "Paylaşılıyor..."
+      },
+      "edit": {
+        "placeholder": "Yorumunu düzenle",
+        "save": "Kaydet",
+        "saving": "Kaydediliyor..."
+      },
+      "reply": {
+        "placeholder": "u/{{handle}} kullanıcısına yanıt ver"
+      },
+      "sort": {
+        "label": "Şuna göre sırala:",
+        "best": "En iyi",
+        "top": "En üst",
+        "new": "Yeni",
+        "controversial": "Tartışmalı",
+        "old": "Eski",
+        "qna": "Soru-Cevap"
+      },
+      "search": {
+        "placeholder": "Yorumlarda ara",
+        "aria": "Yorumlarda ara"
+      },
+      "empty": {
+        "noneYet": "Henüz comments yok.",
+        "noSearchMatch": "Aramanızla eşleşen comments yok."
+      },
+      "actions": {
+        "upvote": "Artı oy ver",
+        "downvote": "Eksi oy ver",
+        "reply": "Yanıtla",
+        "shareComment": "Yorumu paylaş",
+        "share": "Paylaş",
+        "commentLinkCopiedAria": "Yorum link copied",
+        "openCommentActions": "comment actions aç",
+        "moreActions": "Daha fazla actions",
+        "commentActions": "Yorum actions",
+        "edit": "Düzenle",
+        "cancelEdit": "Düzenlemeyi iptal et",
+        "delete": "Sil",
+        "deleting": "Siliniyor..."
+      },
+      "errors": {
+        "timedOut": "{{until}} tarihine kadar bu toplulukta kısıtlandınız.",
+        "postComment": "Şu anda yorum gönderme yapılamadı.",
+        "contentRequired": "Yorum content is required.",
+        "updateComment": "Şu anda yorumu güncelleme yapılamadı.",
+        "deleteComment": "Şu anda yorumu silme yapılamadı.",
+        "postReply": "Şu anda yanıt gönderme yapılamadı."
+      }
     }
   }
 }

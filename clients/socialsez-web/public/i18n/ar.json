@@ -36,6 +36,7 @@
       },
       "settingsQuickNav": {
         "title": "الإعدادات",
+        "aria": "أقسام الإعدادات",
         "profile": "الملف الشخصي",
         "account": "الحساب",
         "privacy": "الخصوصية",
@@ -47,21 +48,63 @@
         "data": "البيانات",
         "blocked": "المستخدمون المحظورون",
         "logout": "تسجيل الخروج"
+      },
+      "mobileNav": {
+        "aria": "التنقل الرئيسي على الجوال",
+        "openMore": "فتح مزيد من خيارات التنقل",
+        "more": "المزيد",
+        "moreAria": "مزيد من التنقل",
+        "groups": "المجموعات",
+        "alerts": "التنبيهات"
       }
     },
     "search": {
       "label": "بحث",
       "buttonAria": "بحث",
+      "scopeMenuAria": "خيارات نطاق البحث",
       "scopePrefix": "النطاق",
       "scopeAuto": "تلقائي",
+      "removeOverride": "إزالة التخصيص",
+      "context": {
+        "communities": "المجتمعات",
+        "blogs": "المدونات",
+        "profiles": "الملفات الشخصية",
+        "hashtags": "الوسوم",
+        "chat": "الدردشة",
+        "notifications": "الإشعارات",
+        "discover": "اكتشف",
+        "settings": "الإعدادات",
+        "compose": "إنشاء",
+        "global": "عام"
+      },
       "scope": {
         "all": "كل النتائج",
         "communities": "المجتمعات",
+        "communityPosts": "منشورات المجتمع",
         "blogs": "المدونات",
         "users": "المستخدمون",
         "posts": "المنشورات",
         "reels": "ريلز",
         "hashtags": "الوسوم"
+      },
+      "placeholder": {
+        "communities": "ابحث عن المجتمعات ومنشورات المجتمع والمستخدمين والوسوم",
+        "blogs": "ابحث عن المدونات والمجتمعات والمنشورات والوسوم",
+        "profiles": "ابحث عن الملفات الشخصية والمنشورات والريلز والوسوم",
+        "hashtags": "ابحث عن الوسوم والمنشورات والريلز",
+        "chat": "ابحث عن المستخدمين والمنشورات والريلز والوسوم",
+        "notifications": "ابحث عن المستخدمين والمنشورات والريلز والوسوم",
+        "discover": "ابحث عن المستخدمين والمجتمعات ومنشورات المجتمع والمدونات والريلز والمنشورات والوسوم",
+        "global": "ابحث عن المستخدمين والمجتمعات ومنشورات المجتمع والمدونات والريلز والمنشورات والوسوم"
+      },
+      "placeholderByScope": {
+        "communities": "ابحث عن المجتمعات بالاسم أو المعرف أو الوصف",
+        "communityPosts": "ابحث في منشورات المجتمع حسب العنوان أو المحتوى أو الكاتب",
+        "blogs": "ابحث عن المدونات حسب العنوان أو المعرف أو الرابط المختصر",
+        "users": "ابحث عن المستخدمين والملفات الشخصية",
+        "posts": "ابحث عن المنشورات والكتّاب",
+        "reels": "ابحث عن الريلز حسب الوصف أو التعليقات أو الكاتب",
+        "hashtags": "ابحث عن الوسوم"
       }
     }
   },
@@ -72,6 +115,9 @@
       "registerSubtitle": "أنشئ حسابك لبدء النشر ومتابعة الآخرين.",
       "interestsSubtitle": "اختر اهتماماتك لتخصيص صفحة الاكتشاف منذ اليوم الأول."
     },
+    "mode": {
+      "aria": "وضع المصادقة"
+    },
     "fields": {
       "email": "البريد الإلكتروني",
       "password": "كلمة المرور",
@@ -79,19 +125,266 @@
       "handle": "المعرّف",
       "displayName": "الاسم الظاهر",
       "dateOfBirth": "تاريخ الميلاد",
+      "day": "اليوم",
+      "month": "الشهر",
+      "year": "السنة",
       "country": "البلد",
       "bio": "نبذة"
+    },
+    "placeholders": {
+      "email": "you@example.com",
+      "password": "••••••••",
+      "handle": "sez",
+      "displayName": "Sez",
+      "country": "اختر البلد (اختياري)",
+      "bio": "منشئ"
     },
     "actions": {
       "signIn": "تسجيل الدخول",
       "createAccount": "إنشاء حساب",
+      "staySignedIn": "البقاء قيد تسجيل الدخول",
+      "showPassword": "إظهار كلمة المرور",
+      "hidePassword": "إخفاء كلمة المرور",
+      "showConfirmPassword": "إظهار تأكيد كلمة المرور",
+      "hideConfirmPassword": "إخفاء تأكيد كلمة المرور",
+      "signingIn": "جارٍ تسجيل الدخول...",
+      "creatingAccount": "جارٍ إنشاء الحساب...",
+      "finishingSetup": "جارٍ إنهاء الإعداد...",
       "continue": "متابعة",
       "finish": "إنهاء",
       "skipForNow": "تخطي الآن"
     },
+    "passwordStrength": {
+      "label": "قوة كلمة المرور",
+      "weak": "ضعيفة",
+      "medium": "متوسطة",
+      "strong": "قوية"
+    },
+    "preferences": {
+      "acceptTerms": "أوافق على الشروط وإرشادات المجتمع.",
+      "privateByDefault": "اجعل حسابي خاصًا بشكل افتراضي.",
+      "marketingOptIn": "أرسل لي تحديثات المنتج والنصائح عبر البريد الإلكتروني."
+    },
+    "interests": {
+      "title": "اختر اهتماماتك",
+      "subtitle": "اختر حتى 12 وسمًا. سنتابعها نيابةً عنك لتحسين خلاصتك.",
+      "unavailable": "الاهتمامات الرائجة غير متاحة الآن. يمكنك التخطي وضبطها لاحقًا في صفحة الاكتشاف."
+    },
     "switch": {
       "newHere": "جديد هنا؟",
       "alreadyHaveAccount": "هل لديك حساب بالفعل؟"
+    },
+    "sections": {
+      "security": "الأمان",
+      "profile": "الملف الشخصي",
+      "preferences": "التفضيلات"
+    },
+    "profileUrl": "رابط ملفك الشخصي",
+    "validation": {
+      "emailRequired": "البريد الإلكتروني مطلوب.",
+      "passwordRequired": "كلمة المرور مطلوبة.",
+      "passwordTooShort": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
+      "passwordsMismatch": "كلمتا المرور غير متطابقتين.",
+      "handleRequired": "المعرّف مطلوب.",
+      "displayNameRequired": "الاسم الظاهر مطلوب.",
+      "birthDateInvalid": "يرجى اختيار تاريخ ميلاد صحيح ومكتمل.",
+      "minimumAge": "يجب أن يكون عمرك 13 عامًا على الأقل للتسجيل.",
+      "acceptTerms": "تحتاج إلى قبول الشروط لإنشاء حساب."
+    },
+    "errors": {
+      "registerFailed": "تعذر التسجيل بهذه البيانات.",
+      "invalidCredentials": "بيانات اعتماد غير صالحة.",
+      "interestsSaveFailed": "تم إنشاء حسابك، لكن تعذر حفظ الاهتمامات الآن."
+    }
+  },
+  "profile": {
+    "hero": {
+      "noBio": "لا توجد نبذة بعد.",
+      "bioHidden": "النبذة مخفية لأن هذا الملف الشخصي محظور.",
+      "joined": "انضم {{date}}",
+      "openStoriesAria": "افتح قصص @{{handle}}",
+      "viewProfileAria": "اعرض ملف @{{handle}}",
+      "avatarAlt": "الصورة الرمزية لـ {{name}}",
+      "authorImageAlt": "صورة الكاتب",
+      "trustSignalsAria": "مؤشرات الثقة للملف الشخصي",
+      "privateProfile": "ملف شخصي خاص",
+      "publicProfile": "ملف شخصي عام",
+      "establishedMember": "عضو قديم",
+      "activeOn": "نشط {{date}}",
+      "statsAria": "إحصاءات الملف الشخصي",
+      "posts": "منشورات",
+      "followers": "متابعون",
+      "following": "يتابع"
+    },
+    "tabs": {
+      "posts": "المنشورات",
+      "reels": "ريلز",
+      "analytics": "التحليلات",
+      "aria": "علامات تبويب محتوى الملف الشخصي"
+    },
+    "actions": {
+      "working": "جارٍ التنفيذ...",
+      "blocked": "محظور",
+      "requestSent": "تم إرسال الطلب",
+      "following": "تتابع",
+      "unfollowed": "تم إلغاء المتابعة",
+      "tryAgain": "حاول مرة أخرى",
+      "cancelRequest": "إلغاء الطلب",
+      "unfollow": "إلغاء المتابعة",
+      "follow": "متابعة",
+      "message": "رسالة",
+      "requestMessage": "طلب رسالة",
+      "profileLinkCopied": "تم نسخ رابط الملف الشخصي",
+      "copyProfileLink": "نسخ رابط الملف الشخصي",
+      "copied": "تم النسخ",
+      "signInToFollow": "سجّل الدخول للمتابعة"
+    },
+    "safety": {
+      "openMenu": "افتح خيارات أمان الملف الشخصي",
+      "moreOptions": "مزيد من الخيارات",
+      "nickname": "الاسم المستعار",
+      "mute": "كتم",
+      "unmute": "إلغاء الكتم",
+      "block": "حظر",
+      "unblock": "إلغاء الحظر",
+      "report": "إبلاغ",
+      "reporting": "جارٍ الإبلاغ..."
+    },
+    "nickname": {
+      "dialogAria": "تعيين اسم مستعار",
+      "title": "اسم مستعار لك",
+      "close": "إغلاق محرر الاسم المستعار",
+      "label": "الاسم المستعار",
+      "placeholder": "أدخل اسمًا مستعارًا"
+    },
+    "blocked": {
+      "byTarget": "هذا الملف الشخصي قام بحظرك. المنشورات والريلز والقصص والنبذة مخفية.",
+      "byYou": "لقد حظرت هذا الملف الشخصي. المنشورات والريلز والقصص والنبذة مخفية."
+    },
+    "privateLocked": "هذا الملف الشخصي خاص. تابع وانتظر الموافقة لرؤية المنشورات.",
+    "empty": {
+      "blockedTitle": "الملف الشخصي محظور",
+      "posts": {
+        "title": "لا توجد منشورات بعد",
+        "own": "ابدأ بالمشاركة من نافذة الإنشاء.",
+        "guest": "هذا الملف الشخصي لم ينشر أي شيء بعد.",
+        "private": "لن تظهر أي منشورات حتى يوافق هذا الملف الشخصي الخاص على طلب متابعتك."
+      },
+      "reels": {
+        "title": "لا توجد ريلز بعد",
+        "own": "أنشئ واحدًا من ملفك الشخصي.",
+        "guest": "هذا الملف الشخصي لم يشارك أي ريلز بعد.",
+        "blocked": "الريلز مخفية بينما هذا الملف الشخصي محظور.",
+        "private": "لن تظهر أي ريلز حتى يوافق هذا الملف الشخصي الخاص على طلب متابعتك."
+      }
+    },
+    "confirm": {
+      "delete": "حذف",
+      "deletePostTitle": "حذف المنشور",
+      "deletePostMessage": "هل تريد حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.",
+      "deleteReelTitle": "حذف الريلز",
+      "deleteReelMessage": "هل تريد حذف هذا الريلز؟ لا يمكن التراجع عن هذا الإجراء.",
+      "deleteCommentTitle": "حذف التعليق",
+      "deleteCommentMessage": "هل تريد حذف هذا التعليق؟ لا يمكن التراجع عن هذا الإجراء.",
+      "deleteStoryTitle": "حذف القصة",
+      "deleteStoryMessage": "هل تريد حذف هذه القصة؟ لا يمكن التراجع عن هذا الإجراء.",
+      "deleteCollectionTitle": "حذف المجموعة",
+      "blockTitle": "حظر الملف الشخصي",
+      "blockMessage": "هل تريد حظر @{{handle}}؟ سيؤدي ذلك إلى إزالة علاقات المتابعة.",
+      "block": "حظر",
+      "thisProfile": "هذا الملف الشخصي"
+    },
+    "common": {
+      "save": "حفظ",
+      "saving": "جارٍ الحفظ...",
+      "cancel": "إلغاء",
+      "clear": "مسح",
+      "back": "رجوع",
+      "retry": "إعادة المحاولة"
+    },
+    "storyCollections": {
+      "rowAria": "مجموعات القصص",
+      "createAria": "إنشاء مجموعة قصص",
+      "new": "جديد",
+      "openAria": "افتح مجموعة القصص {{name}}",
+      "coverAlt": "غلاف مجموعة القصص",
+      "manageAria": "إدارة مجموعة القصص {{name}}",
+      "createDialogAria": "إنشاء مجموعة قصص",
+      "newCollectionTitle": "مجموعة قصص جديدة",
+      "closeCreateDialog": "إغلاق نافذة مجموعة القصص",
+      "collectionName": "اسم المجموعة",
+      "collectionPlaceholder": "مثال: صيف 2024",
+      "collectionNameAria": "اسم مجموعة القصص",
+      "storyMediaAlt": "وسائط القصة",
+      "storyFallback": "قصة",
+      "selected": "محدد",
+      "select": "اختر",
+      "noStoriesInArchive": "لا توجد قصص في أرشيفك بعد.",
+      "creating": "جارٍ الإنشاء...",
+      "create": "إنشاء",
+      "manageDialogAria": "إدارة مجموعة القصص",
+      "manageNamedTitle": "إدارة {{name}}",
+      "manageTitle": "إدارة مجموعة القصص",
+      "closeManageDialog": "إغلاق نافذة إضافة القصص",
+      "selectCollection": "اختر مجموعة",
+      "selectCollectionAria": "اختر مجموعة قصص",
+      "remove": "إزالة",
+      "add": "إضافة",
+      "createFirstCollection": "أنشئ مجموعتك الأولى أولًا.",
+      "deleteCollection": "حذف المجموعة",
+      "close": "إغلاق"
+    },
+    "compose": {
+      "postDialogAria": "إنشاء منشور",
+      "newPost": "منشور جديد",
+      "closePostComposer": "إغلاق محرر المنشور",
+      "storyDialogAria": "إنشاء قصة",
+      "newStory": "قصة جديدة",
+      "closeStoryComposer": "إغلاق محرر القصة",
+      "storyCreationStepsAria": "خطوات إنشاء القصة",
+      "storyStepMedia": "1. الوسائط",
+      "storyStepCropTrimPublish": "2. قص، تشذيب ونشر",
+      "storyMediaUploadAria": "رفع وسائط القصة",
+      "selectStoryMediaTitle": "ابدأ باختيار وسائط قصتك",
+      "selectStoryMediaSubtitle": "يتم دعم الصور وMP4 وWebM وMOV وصيغ مشابهة.",
+      "selectStoryMedia": "اختر وسائط القصة",
+      "selectedFile": "المحدد: {{file}}",
+      "storyExpires": "تنتهي القصص تلقائيًا بعد 24 ساعة.",
+      "markStorySensitive": "ضع علامة على هذه القصة كمحتوى حساس",
+      "editingFile": "جارٍ تعديل: {{file}}",
+      "dragStoryFrameAria": "اسحب لتعيين إطار القصة",
+      "dragFrameHint": "اسحب إطار 9:16 لتعيين القص.",
+      "resetFraming": "إعادة تعيين الإطار",
+      "trimSummary": "المدة الأصلية: {{original}}ث · بعد القص: {{trimmed}}",
+      "trimThumbnailAlt": "مصغّر تشذيب القصة",
+      "trimStoryStartAria": "قص بداية القصة",
+      "trimStoryEndAria": "قص نهاية القصة",
+      "generatingTrimPreviews": "جارٍ إنشاء معاينات القص...",
+      "trimRange": "النطاق: من {{start}}ث إلى {{end}}ث",
+      "storyMediaPreviewAlt": "معاينة وسائط القصة",
+      "schedulePublish": "جدولة النشر (اختياري)",
+      "saveDraft": "حفظ المسودة",
+      "publishing": "جارٍ النشر...",
+      "publishStory": "نشر القصة"
+    },
+    "analytics": {
+      "title": "تحليلات صانع المحتوى",
+      "lastDays": "آخر {{days}} يومًا",
+      "views": "مشاهدات",
+      "watchTime": "وقت المشاهدة",
+      "saves": "عمليات الحفظ",
+      "followerGrowth": "نمو المتابعين",
+      "topReels": "أفضل الريلز",
+      "untitledReel": "ريلز بدون عنوان"
+    },
+    "messages": {
+      "messageRequestSent": "تم إرسال طلب الرسالة."
+    },
+    "errors": {
+      "loadData": "تعذر تحميل بيانات الملف الشخصي. حاول التحديث.",
+      "copyLink": "تعذر نسخ رابط الملف الشخصي الآن.",
+      "sendMessageRequest": "تعذر إرسال طلب الرسالة الآن.",
+      "openChat": "تعذر فتح الدردشة الآن."
     }
   },
   "settings": {
@@ -118,20 +411,165 @@
       "reload": "إعادة تحميل",
       "discard": "تجاهل",
       "saving": "جارٍ الحفظ...",
+      "processing": "جارٍ المعالجة...",
+      "working": "جارٍ التنفيذ...",
       "cancel": "إلغاء",
       "back": "رجوع",
-      "add": "إضافة"
+      "add": "إضافة",
+      "day": "اليوم",
+      "month": "الشهر",
+      "year": "السنة",
+      "lastSaved": "آخر حفظ: {{date}}",
+      "lastAction": "آخر إجراء: {{date}}"
+    },
+    "profile": {
+      "displayName": "الاسم الظاهر",
+      "bio": "النبذة",
+      "bioPlaceholder": "أخبر الناس عن نفسك",
+      "changeImage": "تغيير الصورة",
+      "removeImage": "إزالة الصورة",
+      "uploadingImage": "جارٍ رفع الصورة...",
+      "previewAlt": "معاينة صورة الملف الشخصي",
+      "save": "حفظ الملف الشخصي"
+    },
+    "account": {
+      "profileId": "معرّف الملف الشخصي:",
+      "handle": "المعرّف",
+      "handleLimitedAvailable": "تغييرات المعرّف محدودة بمرة واحدة كل 30 يومًا. التغيير التالي متاح في {{date}}.",
+      "handleLimitedNow": "تغييرات المعرّف محدودة بمرة واحدة كل 30 يومًا. يمكنك تغييره الآن.",
+      "joined": "تاريخ الانضمام:",
+      "dateOfBirth": "تاريخ الميلاد",
+      "country": "البلد",
+      "countryPlaceholder": "اختر البلد (اختياري)",
+      "marketingOptIn": "تلقي تحديثات المنتج والنصائح عبر البريد الإلكتروني",
+      "save": "حفظ تفاصيل الحساب"
+    },
+    "privacy": {
+      "privateProfile": "ملف شخصي خاص",
+      "privateProfileHelp": "عند التفعيل، يمكن فقط للمتابعين الموافق عليهم رؤية منشوراتك وريلزك وقصصك.",
+      "save": "حفظ الخصوصية",
+      "saveDiscovery": "حفظ الجمهور والاكتشاف",
+      "commentsAudience": "من يمكنه التعليق على محتواك؟",
+      "mentionsAudience": "من يمكنه ذكرك أو الإشارة إليك؟",
+      "messagesAudience": "من يمكنه مراسلتك؟",
+      "storyRepliesAudience": "من يمكنه الرد على قصصك؟",
+      "showInSearchSuggestions": "إظهار الحساب في اقتراحات البحث",
+      "allowProfileIndexing": "السماح بفهرسة الملف الشخصي بواسطة محركات البحث",
+      "showActivityStatus": "إظهار حالة النشاط / آخر ظهور"
+    },
+    "session": {
+      "description": "استخدم هذه الخيارات لجلسة تسجيل الدخول الحالية.",
+      "refresh": "تحديث الجلسة"
     },
     "preferences": {
       "compactFeed": "تخطيط خلاصة مضغوط",
       "useSystemTheme": "استخدام سمة النظام",
       "darkMode": "الوضع الداكن",
+      "useSystemThemeHelp": "يتبع الوضع الداكن مظهر نظام التشغيل عندما يكون هذا الخيار مفعّلًا.",
       "accessibility": "إمكانية الوصول",
       "reducedMotion": "تقليل الحركة",
       "largerText": "وضع النص الأكبر",
       "highContrast": "وضع التباين العالي",
       "language": "اللغة",
       "saveAccessibility": "حفظ إمكانية الوصول"
+    },
+    "audience": {
+      "everyone": "الجميع",
+      "following": "الأشخاص الذين تتابعهم",
+      "nobody": "لا أحد"
+    },
+    "notifications": {
+      "likes": "الإعجابات",
+      "comments": "التعليقات",
+      "follows": "المتابعات",
+      "mentions": "الإشارات",
+      "messages": "الرسائل المباشرة",
+      "marketing": "تسويق",
+      "product": "تحديثات المنتج",
+      "quietHours": "ساعات الهدوء",
+      "quietHoursStart": "البداية",
+      "quietHoursEnd": "النهاية",
+      "save": "حفظ الإشعارات"
+    },
+    "safety": {
+      "sensitiveContentLevel": "مستوى المحتوى الحساس",
+      "hideSensitiveMedia": "إخفاء الوسائط الحساسة افتراضيًا",
+      "mutedWords": "الكلمات المكتومة",
+      "addWordOrPhrase": "إضافة كلمة أو عبارة",
+      "noMutedKeywords": "لا توجد كلمات مفتاحية مكتومة بعد.",
+      "mutedUsers": "المستخدمون المكتومون",
+      "addHandlePlaceholder": "أضف معرّفًا (مثال: @name)",
+      "searchingUsers": "جارٍ البحث عن مستخدمين...",
+      "profileAvatarAlt": "الصورة الرمزية للملف الشخصي",
+      "noMutedUsers": "لا يوجد مستخدمون مكتومون في التفضيلات حتى الآن.",
+      "save": "حفظ الأمان",
+      "sensitiveOptions": {
+        "standard": "قياسي",
+        "limited": "محدود",
+        "strict": "صارم"
+      }
+    },
+    "security": {
+      "description": "أماكن تسجيل الدخول الخاصة بك.",
+      "currentDevice": "الجهاز الحالي",
+      "signedInDevice": "الجهاز المسجّل دخوله",
+      "currentSessionLabel": "الجلسة الحالية",
+      "sessionLabel": "الجلسة {{id}}",
+      "created": "تم الإنشاء {{date}}",
+      "expires": "تنتهي {{date}}",
+      "revoked": "تم الإلغاء",
+      "revoke": "إلغاء",
+      "revoking": "جارٍ الإلغاء...",
+      "noSessions": "لم يتم العثور على جلسات نشطة.",
+      "logoutOtherSessions": "تسجيل الخروج من الجلسات الأخرى"
+    },
+    "data": {
+      "description": "نزّل بيانات حسابك وأدِر طلبات دورة حياة الحساب.",
+      "downloadMyData": "تنزيل بياناتي",
+      "deactivateTitle": "تعطيل الحساب",
+      "deactivatePrompt": "اكتب DEACTIVATE لتأكيد الطلب.",
+      "deactivatePlaceholder": "اكتب DEACTIVATE",
+      "requestDeactivation": "طلب التعطيل",
+      "deleteTitle": "حذف الحساب",
+      "deletePrompt": "اكتب DELETE لتأكيد الطلب.",
+      "deletePlaceholder": "اكتب DELETE",
+      "requestDelete": "طلب الحذف",
+      "immediateWarning": "يتم تطبيق كلا الإجراءين فورًا وسيتم تسجيل خروجك.",
+      "confirmDeactivateTitle": "تعطيل الحساب",
+      "confirmDeactivateMessage": "تعطيل حسابك الآن؟ سيؤدي ذلك إلى تسجيل خروجك فورًا وإلغاء جلساتك النشطة.",
+      "confirmDeleteTitle": "حذف الحساب",
+      "confirmDeleteMessage": "حذف حسابك نهائيًا؟ لا يمكن التراجع عن هذا الإجراء وسيتم تسجيل خروجك فورًا."
+    },
+    "blocked": {
+      "description": "إدارة المستخدمين الذين قمت بحظرهم.",
+      "loading": "جارٍ تحميل المستخدمين المحظورين...",
+      "viewProfile": "عرض الملف الشخصي",
+      "imageAlt": "صورة المستخدم المحظور",
+      "unblock": "إلغاء الحظر",
+      "unblocking": "جارٍ إلغاء الحظر...",
+      "empty": "لم تقم بحظر أي شخص."
+    },
+    "logout": {
+      "description": "تسجيل الخروج من حسابك الحالي على هذا الجهاز.",
+      "action": "تسجيل الخروج"
+    },
+    "avatarModal": {
+      "dialogAria": "تحديث صورة الملف الشخصي",
+      "title": "تحديث صورة الملف الشخصي",
+      "close": "إغلاق نافذة الصورة الرمزية",
+      "stepsAria": "خطوات رفع الصورة الرمزية",
+      "stepSelect": "1. اختيار",
+      "stepCrop": "2. قص ورفع",
+      "selectImageAria": "اختيار صورة رمزية",
+      "chooseTitle": "اختر صورة لملفك الشخصي",
+      "chooseSubtitle": "تتيح لك الخطوة التالية قصها وتحديد موضعها.",
+      "selectImage": "اختر صورة",
+      "selectedFile": "المحدد: {{file}}",
+      "cropPreviewAlt": "معاينة قص الصورة الرمزية",
+      "zoom": "تكبير",
+      "dragHint": "اسحب الصورة لإعادة تموضعها داخل الدائرة.",
+      "upload": "رفع الصورة",
+      "uploading": "جارٍ الرفع..."
     },
     "language": {
       "system": "إعداد النظام",
@@ -151,14 +589,36 @@
       "tr": "Türkçe"
     },
     "messages": {
+      "birthDateInvalid": "يرجى اختيار تاريخ ميلاد صحيح ومكتمل.",
       "profileSaved": "تم حفظ إعدادات الملف الشخصي.",
       "profileReloaded": "تمت إعادة تحميل إعدادات الملف الشخصي.",
+      "privacySaved": "تم حفظ إعداد الخصوصية.",
+      "discoverySaved": "تم حفظ تفضيلات خصوصية الاكتشاف والجمهور.",
+      "notificationsSaved": "تم حفظ تفضيلات الإشعارات.",
+      "safetySaved": "تم حفظ تفضيلات الأمان.",
+      "sessionRevoked": "تم إلغاء الجلسة.",
+      "otherSessionsLoggedOutOne": "تم تسجيل الخروج من جلسة أخرى واحدة.",
+      "otherSessionsLoggedOutMany": "تم تسجيل الخروج من {{count}} جلسات أخرى.",
+      "noOtherSessions": "لا توجد جلسات نشطة أخرى لإلغائها.",
+      "dataExportDownloaded": "تم تنزيل تصدير البيانات.",
+      "deactivateTypeConfirm": "اكتب DEACTIVATE لتأكيد طلب تعطيل الحساب.",
+      "deleteTypeConfirm": "اكتب DELETE لتأكيد طلب حذف الحساب.",
+      "accountDeactivated": "تم تعطيل الحساب وإلغاء الجلسات.",
+      "accountDeleted": "تم حذف الحساب.",
+      "profileImageUpdated": "تم تحديث صورة الملف الشخصي.",
+      "imageRemoved": "تمت إزالة الصورة. احفظ الملف الشخصي لتطبيق التغيير.",
+      "unblockedHandle": "تم إلغاء حظر @{{handle}}.",
+      "accessibilitySaved": "تم حفظ تفضيلات إمكانية الوصول.",
       "preferencesSaved": "تم حفظ التفضيلات."
     }
   },
   "discover": {
     "page": {
       "title": "اكتشف"
+    },
+    "search": {
+      "label": "بحث",
+      "placeholder": "ابحث عن المستخدمين والمجتمعات ومنشورات المجتمع والمدونات والريلز والمنشورات والوسوم"
     },
     "scope": {
       "all": "الكل",
@@ -171,6 +631,9 @@
       "users": "المستخدمون"
     },
     "sections": {
+      "followingHashtags": "الوسوم التي تتابعها",
+      "fromFollowedHashtags": "من الوسوم المتابَعة",
+      "peopleYouMayKnow": "أشخاص قد تعرفهم",
       "forYou": "مخصص لك",
       "users": "المستخدمون",
       "communities": "المجتمعات",
@@ -179,20 +642,980 @@
       "reels": "ريلز",
       "hashtags": "الوسوم",
       "posts": "المنشورات"
+    },
+    "actions": {
+      "follow": "متابعة",
+      "unfollow": "إلغاء المتابعة",
+      "followUser": "متابعة المستخدم",
+      "signInToFollow": "سجّل الدخول للمتابعة"
+    },
+    "profile": {
+      "openStoriesAria": "افتح قصص @{{handle}}",
+      "viewProfileAria": "عرض ملف @{{handle}}",
+      "imageAlt": "صورة الملف الشخصي",
+      "authorImageAlt": "صورة الكاتب",
+      "noBio": "لا توجد نبذة بعد."
+    },
+    "reels": {
+      "recommendedAlt": "ريلز موصى به"
+    },
+    "empty": {
+      "noRecommendedReelsTitle": "لا توجد ريلز موصى بها بعد",
+      "noRecommendedReelsMessage": "تفاعل أكثر مع الريلز والتعليقات والوسوم لتحسين توصيات صفحة الاكتشاف."
+    },
+    "loading": {
+      "searchingAria": "جارٍ البحث",
+      "recommendationsAria": "جارٍ تحميل التوصيات"
+    },
+    "community": {
+      "imageAlt": "صورة المجتمع",
+      "noDescription": "لا يوجد وصف بعد.",
+      "member": "عضو",
+      "members": "أعضاء"
+    },
+    "communityPost": {
+      "viewPost": "عرض منشور المجتمع",
+      "openForDetails": "افتح هذا المنشور لعرض التفاصيل.",
+      "postedBy": "نُشر بواسطة @{{handle}} · {{date}}"
+    },
+    "blog": {
+      "noDescription": "لا يوجد وصف بعد.",
+      "byUpdated": "بواسطة @{{handle}} · تم التحديث {{date}}"
+    },
+    "confirm": {
+      "delete": "حذف",
+      "cancel": "إلغاء",
+      "deletePostTitle": "حذف المنشور",
+      "deletePostMessage": "هل تريد حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.",
+      "deleteCommentTitle": "حذف التعليق",
+      "deleteCommentMessage": "هل تريد حذف هذا التعليق؟ لا يمكن التراجع عن هذا الإجراء."
+    },
+    "status": {
+      "postShared": "تمت مشاركة المنشور.",
+      "postSentAsMessage": "تم إرسال المنشور كرسالة.",
+      "followRequestSent": "تم إرسال طلب متابعة إلى @{{handle}}.",
+      "followedUser": "تمت متابعة @{{handle}}.",
+      "unfollowedHashtag": "تم إلغاء متابعة #{{tag}}.",
+      "followingHashtag": "تتابع الآن #{{tag}}.",
+      "noResults": "لم يتم العثور على نتائج."
+    },
+    "errors": {
+      "updatePost": "تعذر تحديث المنشور الآن.",
+      "deletePost": "تعذر حذف المنشور الآن.",
+      "sharePostNow": "تعذرت مشاركة هذا المنشور الآن.",
+      "sendPostToChatNow": "تعذر إرسال هذا المنشور إلى الدردشة الآن.",
+      "followUser": "تعذرت متابعة هذا المستخدم الآن.",
+      "updateLikeNow": "تعذر تحديث الإعجاب الآن.",
+      "setReactionNow": "تعذر تعيين التفاعل الآن.",
+      "clearReactionNow": "تعذر إزالة التفاعل الآن.",
+      "addCommentNow": "تعذرت إضافة تعليق الآن.",
+      "updateCommentNow": "تعذر تحديث التعليق الآن.",
+      "deleteCommentNow": "تعذر حذف التعليق الآن.",
+      "reactToCommentNow": "تعذر التفاعل مع التعليق الآن.",
+      "clearCommentReactionNow": "تعذر إزالة تفاعل التعليق الآن.",
+      "updateReelLike": "تعذر تحديث إعجاب الريلز الآن.",
+      "addReelComment": "تعذرت إضافة تعليق على الريلز الآن.",
+      "updateReelComment": "تعذر تحديث تعليق الريلز الآن.",
+      "deleteReelComment": "تعذر حذف تعليق الريلز الآن.",
+      "updateReelCommentLike": "تعذر تحديث إعجاب تعليق الريلز الآن.",
+      "allSearchesFailed": "فشلت كل عمليات البحث.",
+      "completeSearch": "تعذر إكمال البحث الآن.",
+      "loadRecommendedReels": "تعذر تحميل الريلز الموصى بها الآن."
+    }
+  },
+  "blogs": {
+    "page": {
+      "kicker": "النشر",
+      "title": "المدونات"
+    },
+    "tabs": {
+      "aria": "قوائم المدونات",
+      "all": "كل المدونات",
+      "following": "المتابَعة",
+      "mine": "مدوناتي"
+    },
+    "subtitle": {
+      "all": "اكتشف وابحث في المدونات عبر Venli.",
+      "following": "مدونات صناع المحتوى الذين تتابعهم.",
+      "mine": "أدر مدوناتك ومسوداتك الخاصة."
+    },
+    "search": {
+      "placeholder": "ابحث في المدونات حسب العنوان أو الـ slug أو الـ handle...",
+      "try": "جرّب:"
+    },
+    "sort": {
+      "label": "فرز",
+      "menuAria": "فرز المدونات",
+      "recentlyUpdated": "الأحدث تحديثًا",
+      "newestCreated": "الأحدث إنشاءً",
+      "titleAz": "العنوان A-Z"
+    },
+    "actions": {
+      "openStudio": "افتح Blog Studio",
+      "clear": "مسح"
+    },
+    "visibility": {
+      "public": "عام",
+      "private": "خاص",
+      "owner": "المالك"
+    },
+    "meta": {
+      "updated": "تم التحديث {{date}}"
+    },
+    "resultCount": "{{visible}} من أصل {{total}} مدونة",
+    "loading": {
+      "aria": "جارٍ تحميل المدونات"
+    },
+    "infinite": {
+      "more": "مرّر لمزيد من المدونات..."
+    },
+    "empty": {
+      "noBlogsForTab": "لم يتم العثور على مدونات لهذه العلامة بعد."
+    },
+    "errors": {
+      "signInToViewTab": "سجّل الدخول لعرض هذه العلامة.",
+      "loadNow": "تعذر تحميل المدونات الآن."
+    }
+  },
+  "communities": {
+    "page": {
+      "title": "المجتمعات",
+      "subtitle": "أنشئ أو انضم إلى مجتمعات حول اهتمامات مشتركة."
+    },
+    "tabs": {
+      "aria": "طرق عرض المجتمعات",
+      "mine": "مجتمعاتي",
+      "discover": "اكتشف المجتمعات"
+    },
+    "actions": {
+      "newCommunity": "مجتمع جديد",
+      "refresh": "تحديث المجتمعات",
+      "search": "بحث",
+      "clear": "مسح",
+      "join": "انضم",
+      "joining": "جارٍ الانضمام…",
+      "leave": "غادر",
+      "leaving": "جارٍ المغادرة…",
+      "signInToJoin": "سجّل الدخول للانضمام",
+      "cancel": "إلغاء",
+      "create": "إنشاء",
+      "creating": "جارٍ الإنشاء…"
+    },
+    "search": {
+      "placeholder": "ابحث عن المجتمعات",
+      "try": "جرّب:"
+    },
+    "mine": {
+      "signInPrompt": "سجّل الدخول أو أنشئ حسابًا لعرض المجتمعات التي انضممت إليها.",
+      "empty": "لم تنضم إلى أي مجتمع بعد."
+    },
+    "discover": {
+      "empty": "لم يتم العثور على مجتمعات."
+    },
+    "community": {
+      "members": "أعضاء",
+      "createdBy": "أنشأه @{{handle}}",
+      "imageAlt": "صورة المجتمع",
+      "openAria": "افتح {{name}}",
+      "owner": "المالك",
+      "joined": "منضم"
+    },
+    "authAction": {
+      "create": "إنشاء مجتمع",
+      "join": "الانضمام إلى المجتمعات",
+      "leave": "مغادرة المجتمعات"
+    },
+    "visibility": {
+      "private": "خاص",
+      "public": "عام"
+    },
+    "create": {
+      "dialogAria": "إنشاء مجتمع",
+      "title": "إنشاء مجتمع",
+      "close": "إغلاق نافذة إنشاء المجتمع",
+      "name": "الاسم",
+      "namePlaceholder": "اسم المجتمع",
+      "description": "الوصف",
+      "descriptionPlaceholder": "عمَّ يتحدث هذا المجتمع؟",
+      "rules": "القواعد",
+      "rulesPlaceholder": "قاعدة واحدة في كل سطر",
+      "image": "صورة المجتمع",
+      "imagePreviewAlt": "معاينة صورة المجتمع",
+      "private": "مجتمع خاص"
+    },
+    "status": {
+      "created": "تم إنشاء المجتمع.",
+      "joined": "تم الانضمام إلى المجتمع.",
+      "left": "تمت مغادرة المجتمع."
+    },
+    "errors": {
+      "load": "تعذر تحميل المجتمعات الآن.",
+      "search": "تعذر البحث في المجتمعات الآن.",
+      "create": "تعذر إنشاء المجتمع الآن.",
+      "join": "تعذر الانضمام إلى المجتمع الآن.",
+      "leave": "تعذر مغادرة المجتمع الآن.",
+      "signInForAction": "يرجى تسجيل الدخول أو إنشاء حساب من أجل {{action}}."
+    }
+  },
+  "blogHome": {
+    "loading": {
+      "aria": "جارٍ تحميل المدونة"
+    },
+    "header": {
+      "moreBy": "المزيد من @{{handle}}",
+      "editInStudio": "عدّل في Studio"
+    },
+    "post": {
+      "draft": "مسودة"
+    },
+    "actions": {
+      "save": "حفظ",
+      "unsave": "إزالة من المحفوظات"
+    },
+    "empty": {
+      "noPosts": "لا توجد منشورات بعد."
+    },
+    "errors": {
+      "notFound": "لم يتم العثور على المدونة.",
+      "notFoundOrPrivate": "لم يتم العثور على المدونة أو أنها خاصة.",
+      "loadNow": "تعذر تحميل هذه المدونة الآن.",
+      "updateSavedStatus": "تعذر تحديث حالة الحفظ الآن."
+    }
+  },
+  "blogPost": {
+    "loading": {
+      "aria": "جارٍ تحميل منشور المدونة"
+    },
+    "actions": {
+      "backToBlog": "العودة إلى المدونة",
+      "like": "إعجاب",
+      "comment": "تعليق",
+      "save": "حفظ",
+      "unsave": "إزالة من المحفوظات",
+      "share": "مشاركة",
+      "linkCopied": "تم نسخ الرابط",
+      "embed": "تضمين"
+    },
+    "meta": {
+      "byDate": "بواسطة @{{handle}} · {{date}}"
+    },
+    "hints": {
+      "likesSoon": "سيتم تفعيل إعجابات المدونة قريبًا",
+      "commentsSoon": "سيتم تفعيل تعليقات المدونة قريبًا"
+    },
+    "errors": {
+      "notFound": "لم يتم العثور على منشور المدونة.",
+      "notFoundOrPrivate": "لم يتم العثور على منشور المدونة أو أنه خاص.",
+      "loadNow": "تعذر تحميل منشور المدونة هذا الآن.",
+      "updateSavedStatus": "تعذر تحديث حالة الحفظ الآن."
+    }
+  },
+  "blogEmbed": {
+    "loading": "جارٍ تحميل التضمين...",
+    "kicker": "مدونة Venli",
+    "meta": {
+      "byAuthor": "بواسطة @{{handle}}"
+    },
+    "footer": {
+      "readFullPost": "اقرأ المنشور الكامل على Venli"
+    },
+    "aria": {
+      "loading": "جارٍ تحميل تضمين المدونة",
+      "openFullPost": "افتح منشور المدونة الكامل"
+    },
+    "errors": {
+      "couldNotLoad": "تعذر تحميل التضمين.",
+      "postUnavailable": "منشور المدونة هذا غير متاح.",
+      "embeddingDisabled": "تم تعطيل التضمين من قبل مالك المدونة.",
+      "loadNow": "تعذر تحميل هذا التضمين الآن."
+    }
+  },
+  "blogEmbedTools": {
+    "loading": {
+      "aria": "جارٍ تحميل أدوات التضمين",
+      "message": "جارٍ تحميل أدوات التضمين..."
+    },
+    "header": {
+      "kicker": "أدوات التضمين",
+      "subtitle": "عاين التضمين وانسخ مقتطف iframe لأي موقع ويب."
+    },
+    "preview": {
+      "title": "معاينة",
+      "iframeTitle": "معاينة تضمين المدونة"
+    },
+    "code": {
+      "title": "كود التضمين",
+      "aria": "كود iframe لتضمين المدونة"
+    },
+    "actions": {
+      "copyCode": "نسخ الكود",
+      "copied": "تم النسخ",
+      "openRaw": "افتح صفحة التضمين الخام",
+      "backToPost": "العودة إلى المنشور"
+    },
+    "embed": {
+      "defaultTitle": "تضمين مدونة Venli"
+    },
+    "errors": {
+      "notFound": "لم يتم العثور على منشور المدونة.",
+      "notFoundOrPrivate": "لم يتم العثور على منشور المدونة أو أنه خاص.",
+      "embeddingDisabled": "تم تعطيل التضمين من قبل مالك المدونة.",
+      "loadNow": "تعذر تحميل أدوات التضمين لهذا المنشور الآن."
+    }
+  },
+  "sharedStory": {
+    "loading": {
+      "story": "جارٍ تحميل القصة..."
+    },
+    "notFound": {
+      "title": "القصة غير متاحة",
+      "message": "هذه القصة منتهية الصلاحية أو تمت إزالتها أو أن الرابط غير صالح."
+    },
+    "errors": {
+      "title": "حدث خطأ ما",
+      "load": "تعذر تحميل هذه القصة المشتركة."
+    },
+    "author": {
+      "imageAlt": "صورة المنشئ"
+    },
+    "actions": {
+      "linkCopiedAria": "تم نسخ رابط القصة",
+      "copyStoryLinkAria": "نسخ رابط القصة",
+      "copied": "تم النسخ",
+      "copyLink": "نسخ الرابط"
+    },
+    "media": {
+      "alt": "وسائط القصة المشتركة"
+    }
+  },
+  "communityDetail": {
+    "timeoutOptions": {
+      "oneDay": "يوم واحد",
+      "sevenDays": "7 أيام",
+      "oneMonth": "شهر واحد"
+    },
+    "common": {
+      "cancel": "إلغاء",
+      "working": "جارٍ العمل…"
+    },
+    "status": {
+      "memberPromoted": "تمت ترقية العضو إلى مشرف.",
+      "moderatorRemoved": "تمت إزالة دور المشرف.",
+      "memberBanned": "تم حظر @{{handle}}.",
+      "memberUnbanned": "تم رفع الحظر عن @{{handle}}.",
+      "memberTimedOut": "تم كتم @{{handle}} لمدة {{timeoutLabel}}.",
+      "joinedCommunity": "تم الانضمام إلى المجتمع.",
+      "leftCommunity": "تمت مغادرة المجتمع.",
+      "communityLinkCopied": "تم نسخ رابط المجتمع.",
+      "communityUpdated": "تم تحديث المجتمع.",
+      "postPublished": "تم نشر المنشور.",
+      "postRemovedFromSaved": "تمت إزالة المنشور من المحفوظات.",
+      "postSaved": "تم حفظ المنشور.",
+      "postLinkCopied": "تم نسخ رابط المنشور.",
+      "voteSubmitted": "تم إرسال التصويت.",
+      "postUpdated": "تم تحديث المنشور.",
+      "postDeleted": "تم حذف المنشور."
+    },
+    "errors": {
+      "communityNotLoaded": "لم يتم تحميل المجتمع.",
+      "communityNotFound": "لم يتم العثور على المجتمع.",
+      "signInToJoin": "يرجى تسجيل الدخول أو إنشاء حساب للانضمام إلى هذا المجتمع.",
+      "copyFailed": "فشل النسخ",
+      "copyCommunityLink": "تعذر نسخ رابط المجتمع.",
+      "communityNameRequired": "اسم المجتمع مطلوب.",
+      "titleRequired": "العنوان مطلوب.",
+      "addContentBeforePosting": "أضف نصًا أو صورة أو رابطًا أو استطلاعًا قبل النشر.",
+      "signInToCreatePost": "يرجى تسجيل الدخول أو إنشاء حساب لإنشاء منشور مجتمع.",
+      "copyPostLink": "تعذر نسخ رابط المنشور.",
+      "addContentBeforeSaving": "أضف نصًا أو صورة أو رابطًا أو استطلاعًا قبل الحفظ.",
+      "linkMustStartHttp": "يجب أن يبدأ رابط URL بـ http:// أو https://.",
+      "linkInvalid": "أدخل رابط URL صالحًا.",
+      "action": {
+        "promoteMember": "ترقية عضو",
+        "removeModerator": "إزالة مشرف",
+        "banMember": "حظر عضو",
+        "unbanMember": "رفع الحظر عن عضو",
+        "timeoutMember": "كتم عضو"
+      }
+    },
+    "moderation": {
+      "modalTitle": {
+        "confirm": "تأكيد الإجراء",
+        "ban": "حظر المستخدم",
+        "unban": "رفع الحظر عن المستخدم",
+        "timeout": "كتم المستخدم"
+      },
+      "modalMessage": {
+        "ban": "هل تريد حظر @{{handle}}؟ سيؤدي ذلك إلى حظره من حسابك.",
+        "unban": "هل تريد رفع الحظر عن @{{handle}}؟ سيؤدي ذلك إلى إزالة الحظر من حسابك.",
+        "timeout": "هل تريد كتم @{{handle}} لمدة {{timeoutLabel}}؟ أثناء فترة الكتم لن يتمكن من النشر أو التعليق في هذا المجتمع."
+      },
+      "confirmText": {
+        "confirm": "تأكيد",
+        "ban": "حظر المستخدم",
+        "unban": "رفع الحظر عن المستخدم",
+        "timeout": "كتم المستخدم"
+      },
+      "timeoutLength": "مدة الكتم"
+    },
+    "community": {
+      "imageAlt": "صورة المجتمع",
+      "memberCount": "{{count}} أعضاء",
+      "createdBy": "أنشأه @{{handle}}",
+      "visibility": {
+        "private": "خاص",
+        "public": "عام"
+      }
+    },
+    "actions": {
+      "joining": "جارٍ الانضمام…",
+      "join": "انضم",
+      "leaving": "جارٍ المغادرة…",
+      "leave": "غادر",
+      "editCommunity": "تعديل المجتمع",
+      "createPost": "إنشاء منشور",
+      "communityLinkCopiedAria": "تم نسخ رابط المجتمع",
+      "copyCommunityLinkAria": "نسخ رابط المجتمع",
+      "copied": "تم النسخ",
+      "copyCommunityLink": "نسخ رابط المجتمع"
+    },
+    "notice": {
+      "signInToPost": "سجّل الدخول أو أنشئ حسابًا لإنشاء منشورات والتعليق في هذا المجتمع.",
+      "joinToPost": "انضم إلى هذا المجتمع لإنشاء منشورات.",
+      "timedOut": "أنت مكتوم في هذا المجتمع حتى {{until}}. النشر والتعليق معطّلان.",
+      "later": "لاحقًا"
+    },
+    "feed": {
+      "title": "خلاصة المجتمع",
+      "subtitle": "منشورات الأعضاء في /{{slug}}",
+      "searchPlaceholder": "ابحث عن المنشورات في هذا المجتمع",
+      "loadingAria": "جارٍ تحميل منشورات المجتمع",
+      "empty": {
+        "noSearchMatches": "لا توجد منشورات تطابق هذا البحث.",
+        "noPostsYet": "لا توجد منشورات بعد."
+      }
+    },
+    "post": {
+      "authorImageAlt": "صورة الكاتب",
+      "untitled": "منشور بدون عنوان",
+      "pollVotes": "{{count}} أصوات",
+      "badges": {
+        "image": "صورة",
+        "poll": "استطلاع"
+      }
+    },
+    "media": {
+      "previousImage": "الصورة السابقة",
+      "nextImage": "الصورة التالية",
+      "postImageAlt": "صورة المنشور",
+      "imageThumbAlt": "الصورة {{index}}",
+      "imagePreview": "معاينة الصورة",
+      "closeImagePreview": "إغلاق معاينة الصورة",
+      "fullscreenPostImageAlt": "صورة المنشور بملء الشاشة"
+    },
+    "postActions": {
+      "upvotePost": "التصويت الإيجابي للمنشور",
+      "upvote": "تصويت إيجابي",
+      "downvotePost": "التصويت السلبي للمنشور",
+      "downvote": "تصويت سلبي",
+      "openComments": "فتح التعليقات",
+      "savePost": "حفظ المنشور",
+      "unsavePost": "إزالة المنشور من المحفوظات",
+      "save": "حفظ",
+      "saved": "محفوظ",
+      "postLinkCopiedAria": "تم نسخ رابط المنشور",
+      "copyPostLinkAria": "نسخ رابط المنشور",
+      "copied": "تم النسخ",
+      "copyLink": "نسخ الرابط",
+      "editPost": "تعديل المنشور",
+      "deletePost": "حذف المنشور",
+      "deletePostConfirm": "هل تريد حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.",
+      "delete": "حذف"
+    },
+    "members": {
+      "modalAria": "أعضاء المجتمع",
+      "title": "الأعضاء",
+      "closeAria": "إغلاق نافذة الأعضاء",
+      "tabsAria": "طرق عرض إدارة المجتمع",
+      "tabs": {
+        "members": "الأعضاء",
+        "bannedUsers": "المستخدمون المحظورون"
+      },
+      "search": {
+        "membersPlaceholder": "ابحث عن الأعضاء بواسطة @handle أو الدور",
+        "bannedPlaceholder": "ابحث عن المستخدمين المحظورين بالاسم أو @handle",
+        "membersAria": "ابحث عن الأعضاء",
+        "bannedAria": "ابحث عن المستخدمين المحظورين"
+      },
+      "hint": {
+        "membersInCommunity": "{{count}} أعضاء في /{{slug}}",
+        "bannedDescription": "أدر المستخدمين المحظورين من حسابك أثناء إدارة /{{slug}}"
+      },
+      "actions": {
+        "makeModerator": "اجعل مشرفًا",
+        "removeModerator": "إزالة المشرف",
+        "timeoutUser": "كتم المستخدم",
+        "banUser": "حظر المستخدم",
+        "unbanUser": "رفع الحظر عن المستخدم"
+      },
+      "memberAvatarAlt": "الصورة الرمزية للعضو",
+      "bannedUserAvatarAlt": "الصورة الرمزية للمستخدم المحظور",
+      "bannedRole": "محظور",
+      "empty": {
+        "noMembersMatchSearch": "لا يوجد أعضاء يطابقون بحثك.",
+        "noMembersYet": "لا يوجد أعضاء لعرضهم بعد.",
+        "loadingBannedUsers": "جارٍ تحميل المستخدمين المحظورين...",
+        "noBannedUsersMatchSearch": "لا يوجد مستخدمون محظورون يطابقون بحثك.",
+        "noBannedUsers": "لا يوجد مستخدمون محظورون."
+      }
+    },
+    "postType": {
+      "text": "نص",
+      "media": "صور وفيديو",
+      "link": "رابط",
+      "poll": "استطلاع"
+    },
+    "editPost": {
+      "modalAria": "تعديل منشور المجتمع",
+      "title": "تعديل المنشور",
+      "closeAria": "إغلاق نافذة تعديل المنشور",
+      "typeAria": "تعديل نوع المنشور",
+      "fields": {
+        "title": "العنوان",
+        "linkUrl": "رابط URL",
+        "addImages": "أضف صورًا (حتى 10)",
+        "question": "السؤال",
+        "option": "الخيار {{index}}"
+      },
+      "placeholders": {
+        "title": "أضف عنوانًا",
+        "updatePost": "حدّث منشورك...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "أضف نصًا اختياريًا...",
+        "askCommunity": "اسأل المجتمع...",
+        "optionText": "نص الخيار"
+      },
+      "previewAlt": "معاينة الصورة المحددة للتعديل",
+      "removeCurrent": "إزالة الحالي",
+      "remove": "إزالة",
+      "addOption": "إضافة خيار",
+      "saving": "جارٍ الحفظ…",
+      "saveChanges": "حفظ التغييرات"
+    },
+    "editCommunity": {
+      "modalAria": "تعديل المجتمع",
+      "title": "تعديل المجتمع",
+      "closeAria": "إغلاق نافذة تعديل المجتمع",
+      "fields": {
+        "name": "الاسم",
+        "information": "المعلومات",
+        "rules": "القواعد",
+        "image": "الصورة"
+      },
+      "placeholders": {
+        "communityName": "اسم المجتمع",
+        "describeCommunity": "صف هذا المجتمع",
+        "oneRulePerLine": "قاعدة واحدة في كل سطر"
+      },
+      "imagePreviewAlt": "معاينة صورة المجتمع",
+      "saving": "جارٍ الحفظ…",
+      "save": "حفظ"
+    },
+    "createPost": {
+      "modalAria": "إنشاء منشور مجتمع",
+      "title": "إنشاء منشور",
+      "closeAria": "إغلاق نافذة إنشاء المنشور",
+      "typeAria": "نوع المنشور",
+      "fields": {
+        "title": "العنوان",
+        "linkUrl": "رابط URL",
+        "attachImages": "أرفق صورًا (حتى 10)",
+        "question": "السؤال",
+        "option": "الخيار {{index}}"
+      },
+      "placeholders": {
+        "title": "أضف عنوانًا",
+        "shareThoughts": "شارك أفكارك...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "أضف نصًا اختياريًا...",
+        "askCommunity": "اسأل المجتمع...",
+        "optionText": "نص الخيار"
+      },
+      "previewAlt": "معاينة صورة المنشور المحددة",
+      "removeCurrent": "إزالة الحالي",
+      "imagesAttachedInTab": "تم إرفاق {{count}} صورة في تبويب الصور والفيديو.",
+      "linkAttachedInTab": "تم إرفاق رابط في تبويب الرابط.",
+      "remove": "إزالة",
+      "addOption": "إضافة خيار",
+      "posting": "جارٍ النشر…",
+      "post": "نشر"
+    },
+    "loading": {
+      "communityAria": "جارٍ تحميل المجتمع",
+      "feedAria": "جارٍ تحميل خلاصة المجتمع",
+      "postsAria": "جارٍ تحميل منشورات المجتمع"
     }
   },
   "chatPage": {
     "title": "الرسائل",
+    "layoutAria": "تخطيط الرسائل",
+    "common": {
+      "you": "أنت",
+      "youLowercase": "أنت",
+      "me": "أنا",
+      "gif": "GIF",
+      "cancel": "إلغاء",
+      "save": "حفظ",
+      "saving": "جارٍ الحفظ..."
+    },
+    "starterMessages": {
+      "hey": "مرحبًا 👋",
+      "howAreYou": "كيف حالك اليوم؟",
+      "catchUp": "هل تريد أن نتحدث لاحقًا؟"
+    },
     "search": {
       "label": "البحث في المحادثات",
+      "marquee": "اعثر على المحادثات بالاسم أو المعرّف أو الرسالة",
       "startNewChat": "بدء محادثة جديدة"
     },
     "sidebar": {
       "chats": "المحادثات"
     },
+    "loading": {
+      "conversations": "جارٍ تحميل المحادثات",
+      "messages": "جارٍ تحميل الرسائل"
+    },
+    "conversation": {
+      "avatarAlt": "الصورة الرمزية للمحادثة"
+    },
+    "empty": {
+      "noChatsFound": "لم يتم العثور على أي محادثات.",
+      "noActiveChats": "لا توجد محادثات نشطة بعد.",
+      "firstMessageTitle": "هذه المحادثة تنتظر رسالتها الأولى",
+      "firstMessageDescription": "اكسر الصمت وأرسل تحية سريعة 👋",
+      "noMessagesFoundTitle": "لم يتم العثور على رسائل",
+      "noMessagesFoundDescription": "جرّب كلمة مفتاحية أخرى في البحث."
+    },
+    "thread": {
+      "backToChats": "العودة إلى المحادثات",
+      "groupOptions": "خيارات محادثة المجموعة",
+      "searchMessages": "البحث في الرسائل",
+      "changeChatName": "تغيير اسم المحادثة",
+      "leaveChat": "مغادرة المحادثة",
+      "deleteChat": "حذف المحادثة",
+      "unmuteChat": "إلغاء كتم المحادثة",
+      "muteChat": "كتم المحادثة",
+      "defaultGroupChatName": "محادثة جماعية"
+    },
+    "messageSearch": {
+      "backToChat": "العودة إلى المحادثة",
+      "placeholder": "البحث في الرسائل",
+      "clear": "مسح بحث الرسائل",
+      "avatarAlt": "الصورة الرمزية لكاتب الرسالة",
+      "noResults": "لم يتم العثور على رسائل لهذا البحث.",
+      "idleTitle": "ابحث في هذه المحادثة",
+      "idleDescription": "اعثر على الرسائل وتسميات الوسائط و@handles داخل هذه المحادثة."
+    },
+    "messages": {
+      "fetchingOlder": "جارٍ جلب الرسائل الأقدم…",
+      "noOlder": "لا توجد رسائل أقدم",
+      "senderAvatarAlt": "الصورة الرمزية لمرسل الرسالة",
+      "replyMediaPreviewAlt": "معاينة الرسالة المُرَدّ عليها",
+      "sentImageAlt": "صورة مرسلة",
+      "sentGifAlt": "GIF مرسلة",
+      "replyToMessage": "الرد على الرسالة",
+      "options": "خيارات الرسالة",
+      "actions": {
+        "edit": "تعديل",
+        "report": "إبلاغ",
+        "copy": "نسخ"
+      }
+    },
+    "reactions": {
+      "show": "إظهار التفاعلات",
+      "title": "التفاعلات",
+      "close": "إغلاق التفاعلات",
+      "all": "الكل",
+      "authorAvatarAlt": "صورة صاحب التفاعل"
+    },
+    "composer": {
+      "replyingTo": "الرد على {{target}}",
+      "cancelReply": "إلغاء الرد",
+      "addEmoji": "إضافة إيموجي",
+      "messagePlaceholder": "رسالة...",
+      "addGif": "إضافة GIF",
+      "addImage": "إضافة صورة",
+      "searchEmojiPlaceholder": "البحث عن إيموجي",
+      "searchGifsPlaceholder": "البحث في GIFs Giphy",
+      "search": "بحث",
+      "trendingNow": "الرائج الآن",
+      "noTrendingGifs": "لا توجد GIFs رائجة الآن.",
+      "noGifsFound": "لم يتم العثور على GIFs.",
+      "sharing": "جارٍ المشاركة",
+      "sharedPostPreviewAlt": "معاينة وسائط المنشور المشترك",
+      "removeSharedPost": "إزالة المنشور المشترك",
+      "send": "إرسال"
+    },
+    "sharedReel": {
+      "viewerAria": "عارض الريلز المشترك",
+      "settings": "إعدادات الريلز",
+      "closeViewer": "إغلاق عارض الريلز",
+      "unmute": "إلغاء كتم الريلز",
+      "mute": "كتم الريلز",
+      "report": "الإبلاغ عن الريلز",
+      "edit": "تعديل الريلز",
+      "deleting": "جارٍ الحذف…",
+      "delete": "حذف الريلز",
+      "authorAvatarAlt": "الصورة الرمزية لكاتب الريلز",
+      "like": "الإعجاب بالريلز",
+      "openComments": "فتح تعليقات الريلز",
+      "share": "مشاركة الريلز",
+      "replyToChatPlaceholder": "الرد في المحادثة...",
+      "sendingShort": "...",
+      "commentsAria": "تعليقات الريلز",
+      "comments": "التعليقات",
+      "closeComments": "إغلاق التعليقات",
+      "close": "إغلاق",
+      "commentAuthorAlt": "صورة كاتب التعليق",
+      "hideReplies": "إخفاء الردود",
+      "viewReplies": "عرض الردود ({{count}})",
+      "unlikeComment": "إزالة الإعجاب من التعليق",
+      "likeComment": "الإعجاب بالتعليق",
+      "reply": "رد",
+      "reportComment": "الإبلاغ عن التعليق",
+      "noCommentsYet": "لا توجد تعليقات بعد.",
+      "addCommentPlaceholder": "أضف تعليقًا...",
+      "post": "نشر",
+      "editCaptionPlaceholder": "تعديل وصف الريلز...",
+      "saving": "جارٍ الحفظ…",
+      "loadingDetails": "جارٍ تحميل تفاصيل الريلز...",
+      "forYou": "من أجلك",
+      "replyingToComment": "الرد على التعليق",
+      "posting": "جارٍ النشر..."
+    },
     "noConversation": {
       "title": "اختر محادثة لبدء المراسلة",
+      "subtitle1": "اختر أي محادثة من اليسار لفتح سلسلة الرسائل.",
+      "subtitle2": "ألا ترى الشخص بعد؟ ابدأ محادثة جديدة.",
       "startNewChat": "بدء محادثة جديدة"
+    },
+    "replyPreview": {
+      "youRepliedTo": "لقد رددت على {{target}}",
+      "authorRepliedTo": "@{{authorHandle}} رد على {{target}}",
+      "image": "📷 صورة",
+      "sharedPost": "منشور مشترك",
+      "sharedReel": "ريلز مشترك",
+      "sharedStory": "قصة مشتركة",
+      "message": "رسالة"
+    },
+    "conversationPreview": {
+      "sharedPostFrom": "منشور مشترك من @{{handle}}",
+      "sharedStoryFrom": "قصة مشتركة من @{{handle}}",
+      "sharedReelFrom": "ريلز مشترك من @{{handle}}",
+      "sharedLink": "رابط مشترك"
+    },
+    "unfurl": {
+      "previewUnavailable": "معاينة الرابط غير متاحة. افتح الرابط المشترك.",
+      "openSharedLink": "فتح الرابط المشترك"
+    },
+    "status": {
+      "loadConversationsFailed": "تعذر تحميل المحادثات.",
+      "startDirectChatFailed": "تعذر بدء محادثة مباشرة.",
+      "startGroupChatFailed": "تعذر بدء محادثة جماعية.",
+      "loadMessagesFailed": "تعذر تحميل الرسائل.",
+      "liveUpdatesUnavailable": "التحديثات المباشرة غير متاحة مؤقتًا.",
+      "messageCopied": "تم نسخ الرسالة.",
+      "copyMessageFailed": "تعذر نسخ الرسالة.",
+      "messageContentRequired": "محتوى الرسالة مطلوب.",
+      "updateMessageFailed": "تعذر تحديث الرسالة.",
+      "sendMessageFailed": "تعذر إرسال الرسالة.",
+      "loadGifsFailed": "تعذر تحميل GIFs من Giphy.",
+      "loadTrendingGifsFailed": "تعذر تحميل GIFs الرائجة.",
+      "sendGifFailed": "تعذر إرسال GIF.",
+      "uploadImageFailed": "تعذر رفع الصورة.",
+      "reelDeleted": "تم حذف الريلز.",
+      "openReelFailed": "تعذر فتح هذا الريلز الآن.",
+      "sendReplyFailed": "تعذر إرسال الرد.",
+      "updateReelFailed": "تعذر تحديث هذا الريلز الآن.",
+      "deleteReelFailed": "تعذر حذف هذا الريلز الآن.",
+      "updateReelCommentFailed": "تعذر تحديث تعليق الريلز الآن.",
+      "deleteReelCommentFailed": "تعذر حذف تعليق الريلز الآن.",
+      "updateReelCommentLikeFailed": "تعذر تحديث إعجاب تعليق الريلز الآن.",
+      "updateReelLikeFailed": "تعذر تحديث إعجاب الريلز الآن.",
+      "addReelCommentFailed": "تعذر إضافة تعليق على الريلز الآن.",
+      "loadOlderMessagesFailed": "تعذر تحميل الرسائل الأقدم.",
+      "setReactionFailed": "تعذر تعيين التفاعل.",
+      "clearReactionFailed": "تعذر إزالة التفاعل.",
+      "sendStoryReplyFailed": "تعذر إرسال رد القصة الآن.",
+      "deleteStoryFailed": "تعذر حذف هذه القصة الآن.",
+      "submitReportFailed": "تعذر إرسال البلاغ الآن.",
+      "chatNameEmpty": "لا يمكن أن يكون اسم المحادثة فارغًا.",
+      "chatNameUpdated": "تم تحديث اسم المحادثة.",
+      "updateChatNameFailed": "تعذر تحديث اسم المحادثة.",
+      "leftGroupChat": "لقد غادرت المحادثة الجماعية.",
+      "chatDeleted": "تم حذف المحادثة.",
+      "leaveGroupChatFailed": "تعذر مغادرة المحادثة الجماعية.",
+      "deleteChatFailed": "تعذر حذف المحادثة.",
+      "chatMuted": "تم كتم المحادثة.",
+      "chatUnmuted": "تم إلغاء كتم المحادثة.",
+      "updateMuteFailed": "تعذر تحديث إعداد الكتم.",
+      "searchUsersFailed": "تعذر البحث عن المستخدمين الآن.",
+      "loadSuggestionsFailed": "تعذر تحميل الاقتراحات الآن."
+    },
+    "modals": {
+      "deleteComment": {
+        "title": "حذف التعليق",
+        "message": "هل تريد حذف هذا التعليق؟ لا يمكن التراجع عن هذا الإجراء.",
+        "confirm": "حذف"
+      },
+      "leave": {
+        "titleLeave": "مغادرة المحادثة",
+        "titleDelete": "حذف المحادثة",
+        "confirmLeave": "مغادرة",
+        "confirmDelete": "حذف",
+        "busyLeaving": "جارٍ المغادرة...",
+        "displayNameFallback": "هذه المحادثة",
+        "deleteFallback": "هل تريد حذف هذه المحادثة؟",
+        "groupMessage": "مغادرة {{name}}؟ يمكن لعضو آخر إضافتك مرة أخرى لاحقًا.",
+        "directMessage": "حذف {{name}}؟ سيؤدي ذلك إلى إزالة المحادثة من صندوق الوارد لديك."
+      },
+      "rename": {
+        "title": "تغيير اسم المحادثة",
+        "label": "اسم المحادثة",
+        "placeholder": "أدخل اسم المحادثة",
+        "groupMessage": "امنح هذه المحادثة الجماعية اسمًا واضحًا حتى يتمكن الأعضاء من العثور عليها بسرعة.",
+        "directMessage": "عيّن اسمًا مخصصًا لهذه المحادثة."
+      },
+      "deleteStory": {
+        "title": "حذف القصة",
+        "message": "هل تريد حذف هذه القصة؟ لا يمكن التراجع عن هذا الإجراء.",
+        "confirm": "حذف"
+      },
+      "deleteReel": {
+        "title": "حذف الريلز",
+        "message": "هل تريد حذف هذا الريلز؟ لا يمكن التراجع عن هذا الإجراء.",
+        "confirm": "حذف"
+      }
+    }
+  },
+  "sharedCommunityPost": {
+    "loading": {
+      "aria": "جارٍ تحميل منشور المجتمع"
+    },
+    "notFound": {
+      "title": "المنشور غير متاح",
+      "message": "تمت إزالة منشور المجتمع هذا أو أن الرابط غير صالح."
+    },
+    "errors": {
+      "title": "حدث خطأ ما",
+      "load": "تعذر تحميل منشور المجتمع المشترك هذا.",
+      "votePoll": "يتعذر التصويت على الاستطلاع الآن.",
+      "updateSavedState": "تعذر تحديث حالة الحفظ.",
+      "updatePost": "تعذر تحديث المنشور الآن.",
+      "deletePost": "تعذر حذف المنشور الآن.",
+      "votePost": "تعذر التصويت على المنشور الآن."
+    },
+    "confirm": {
+      "deletePost": "هل تريد حذف هذا المنشور؟",
+      "deleteComment": "هل تريد حذف هذا التعليق؟"
+    },
+    "community": {
+      "imageAlt": "صورة المجتمع",
+      "fallbackSlug": "/community"
+    },
+    "post": {
+      "untitled": "منشور بدون عنوان"
+    },
+    "media": {
+      "previousImage": "الصورة السابقة",
+      "nextImage": "الصورة التالية",
+      "postAlt": "وسائط منشور المجتمع المشترك",
+      "thumbAlt": "الصورة {{index}}",
+      "imagePreview": "معاينة الصورة",
+      "closeImagePreview": "إغلاق معاينة الصورة",
+      "fullscreenAlt": "صورة المنشور بملء الشاشة"
+    },
+    "poll": {
+      "votes": "{{count}} أصوات"
+    },
+    "actions": {
+      "upvotePost": "التصويت الإيجابي للمنشور",
+      "upvote": "تصويت إيجابي",
+      "downvotePost": "التصويت السلبي للمنشور",
+      "downvote": "تصويت سلبي",
+      "comments": "التعليقات",
+      "savePost": "حفظ المنشور",
+      "unsavePost": "إزالة المنشور من المحفوظات",
+      "save": "حفظ",
+      "saved": "محفوظ",
+      "copyPostLinkAria": "نسخ رابط المنشور",
+      "postLinkCopiedAria": "تم نسخ رابط المنشور",
+      "copyLink": "نسخ الرابط",
+      "copied": "تم النسخ",
+      "editPost": "تعديل المنشور",
+      "deletePost": "حذف المنشور"
+    },
+    "comments": {
+      "later": "لاحقًا",
+      "timedOut": "أنت مكتوم في هذا المجتمع حتى {{until}}. النشر والتعليق معطّلان.",
+      "joinToComment": "انضم إلى هذا المجتمع للتعليق.",
+      "signIn": "سجّل الدخول",
+      "signInSuffix": "للانضمام إلى المحادثة.",
+      "authorImageAlt": "صورة كاتب التعليق",
+      "spoilerAria": "نص سبويلر. انقر للكشف عنه.",
+      "editor": {
+        "placeholder": "انضم إلى المحادثة",
+        "submit": "تعليق",
+        "submitting": "جارٍ النشر..."
+      },
+      "edit": {
+        "placeholder": "عدّل تعليقك",
+        "save": "حفظ",
+        "saving": "جارٍ الحفظ..."
+      },
+      "reply": {
+        "placeholder": "الرد على u/{{handle}}"
+      },
+      "sort": {
+        "label": "فرز حسب:",
+        "best": "الأفضل",
+        "top": "الأعلى",
+        "new": "الأحدث",
+        "controversial": "المثيرة للجدل",
+        "old": "الأقدم",
+        "qna": "أسئلة وأجوبة"
+      },
+      "search": {
+        "placeholder": "ابحث في التعليقات",
+        "aria": "ابحث في التعليقات"
+      },
+      "empty": {
+        "noneYet": "لا توجد تعليقات بعد.",
+        "noSearchMatch": "لا توجد تعليقات تطابق بحثك."
+      },
+      "actions": {
+        "upvote": "تصويت إيجابي",
+        "downvote": "تصويت سلبي",
+        "reply": "رد",
+        "shareComment": "مشاركة التعليق",
+        "share": "مشاركة",
+        "commentLinkCopiedAria": "تم نسخ رابط التعليق",
+        "openCommentActions": "فتح إجراءات التعليق",
+        "moreActions": "مزيد من الإجراءات",
+        "commentActions": "إجراءات التعليق",
+        "edit": "تعديل",
+        "cancelEdit": "إلغاء التعديل",
+        "delete": "حذف",
+        "deleting": "جارٍ الحذف..."
+      },
+      "errors": {
+        "timedOut": "أنت مكتوم في هذا المجتمع حتى {{until}}.",
+        "postComment": "تعذر نشر التعليق الآن.",
+        "contentRequired": "محتوى التعليق مطلوب.",
+        "updateComment": "تعذر تحديث التعليق الآن.",
+        "deleteComment": "تعذر حذف التعليق الآن.",
+        "postReply": "تعذر نشر الرد الآن."
+      }
     }
   }
 }

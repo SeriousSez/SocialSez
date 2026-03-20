@@ -232,6 +232,45 @@
       "lastSaved": "Senast sparad: {{date}}",
       "lastAction": "Senaste åtgärd: {{date}}"
     },
+    "profile": {
+      "displayName": "Visningsnamn",
+      "bio": "Bio",
+      "bioPlaceholder": "Berätta om dig själv",
+      "changeImage": "Byt bild",
+      "removeImage": "Ta bort bild",
+      "uploadingImage": "Laddar upp bild...",
+      "previewAlt": "Förhandsvisning av profilbild",
+      "save": "Spara profil"
+    },
+    "account": {
+      "profileId": "Profil-ID:",
+      "handle": "Handle",
+      "handleLimitedAvailable": "Ändringar av handle är begränsade till en gång var 30:e dag. Nästa ändring är möjlig den {{date}}.",
+      "handleLimitedNow": "Ändringar av handle är begränsade till en gång var 30:e dag. Du kan ändra det nu.",
+      "joined": "Gick med:",
+      "dateOfBirth": "Födelsedatum",
+      "country": "Land",
+      "countryPlaceholder": "Välj land (valfritt)",
+      "marketingOptIn": "Få produktuppdateringar och tips via e-post",
+      "save": "Spara kontouppgifter"
+    },
+    "privacy": {
+      "privateProfile": "Privat profil",
+      "privateProfileHelp": "När detta är aktiverat kan endast godkända följare se dina inlägg, reels och stories.",
+      "save": "Spara integritet",
+      "saveDiscovery": "Spara publik och upptäckt",
+      "commentsAudience": "Vem kan kommentera ditt innehåll?",
+      "mentionsAudience": "Vem kan nämna eller tagga dig?",
+      "messagesAudience": "Vem kan skicka meddelanden till dig?",
+      "storyRepliesAudience": "Vem kan svara på dina stories?",
+      "showInSearchSuggestions": "Visa konto i sökförslag",
+      "allowProfileIndexing": "Tillåt profilindexering av sökmotorer",
+      "showActivityStatus": "Visa aktivitetsstatus / senast sedd"
+    },
+    "session": {
+      "description": "Använd dessa kontroller för din nuvarande inloggningssession.",
+      "refresh": "Uppdatera session"
+    },
     "preferences": {
       "compactFeed": "Kompakt flödeslayout",
       "useSystemTheme": "Använd systemtema",
@@ -387,6 +426,10 @@
     "page": {
       "title": "Upptäck"
     },
+    "search": {
+      "label": "Sök",
+      "placeholder": "Sök användare, gemenskaper, communityinlägg, bloggar, reels, inlägg, hashtags"
+    },
     "scope": {
       "all": "Allt",
       "communities": "Gemenskaper",
@@ -405,21 +448,1174 @@
       "blogs": "Bloggar",
       "reels": "Reels",
       "hashtags": "Hashtags",
-      "posts": "Inlägg"
+      "posts": "Inlägg",
+      "followingHashtags": "Följda hashtags",
+      "fromFollowedHashtags": "Från följda hashtags",
+      "peopleYouMayKnow": "Personer du kanske känner"
+    },
+    "actions": {
+      "follow": "Följ",
+      "unfollow": "Sluta följ",
+      "followUser": "Följ användare",
+      "signInToFollow": "Logga in för att följa"
+    },
+    "profile": {
+      "openStoriesAria": "Öppna @{{handle}} stories",
+      "viewProfileAria": "Visa @{{handle}} profil",
+      "imageAlt": "Profilbild",
+      "authorImageAlt": "Författarbild",
+      "noBio": "Ingen bio än."
+    },
+    "reels": {
+      "recommendedAlt": "Rekommenderad reel"
+    },
+    "empty": {
+      "noRecommendedReelsTitle": "Inga rekommenderade reels än",
+      "noRecommendedReelsMessage": "Interagera mer med reels, kommentarer och hashtags för att förbättra dina Upptäck-rekommendationer."
+    },
+    "loading": {
+      "searchingAria": "Söker",
+      "recommendationsAria": "Laddar rekommendationer"
+    },
+    "community": {
+      "imageAlt": "Communitybild",
+      "noDescription": "Ingen beskrivning ännu.",
+      "member": "medlem",
+      "members": "medlemmar"
+    },
+    "communityPost": {
+      "viewPost": "Visa communityinlägg",
+      "openForDetails": "Öppna det här inlägget för att se detaljer.",
+      "postedBy": "Publicerat av @{{handle}} · {{date}}"
+    },
+    "blog": {
+      "noDescription": "Ingen beskrivning ännu.",
+      "byUpdated": "Av @{{handle}} · Uppdaterad {{date}}"
+    },
+    "confirm": {
+      "delete": "Ta bort",
+      "cancel": "Avbryt",
+      "deletePostTitle": "Ta bort inlägg",
+      "deletePostMessage": "Ta bort detta inlägg? Åtgärden kan inte ångras.",
+      "deleteCommentTitle": "Ta bort kommentar",
+      "deleteCommentMessage": "Ta bort den här kommentaren? Åtgärden kan inte ångras."
+    },
+    "status": {
+      "postShared": "Inlägg delat.",
+      "postSentAsMessage": "Inlägg skickat som meddelande.",
+      "followRequestSent": "Följförfrågan skickad till @{{handle}}.",
+      "followedUser": "Följer @{{handle}}.",
+      "unfollowedHashtag": "Slutade följa #{{tag}}.",
+      "followingHashtag": "Följer #{{tag}}.",
+      "noResults": "Inga resultat hittades."
+    },
+    "errors": {
+      "updatePost": "Kunde inte uppdatera inlägg just nu.",
+      "deletePost": "Kunde inte ta bort inlägg just nu.",
+      "sharePostNow": "Kunde inte dela detta inlägg just nu.",
+      "sendPostToChatNow": "Kunde inte skicka detta inlägg till chatten just nu.",
+      "followUser": "Kunde inte följa denna användare just nu.",
+      "updateLikeNow": "Kunde inte uppdatera gilla just nu.",
+      "setReactionNow": "Kunde inte sätta reaktion just nu.",
+      "clearReactionNow": "Kunde inte rensa reaktion just nu.",
+      "addCommentNow": "Kunde inte lägga till kommentar just nu.",
+      "updateCommentNow": "Kunde inte uppdatera kommentar just nu.",
+      "deleteCommentNow": "Kunde inte ta bort kommentar just nu.",
+      "reactToCommentNow": "Kunde inte reagera på kommentar just nu.",
+      "clearCommentReactionNow": "Kunde inte rensa kommentarsreaktion just nu.",
+      "updateReelLike": "Kunde inte uppdatera reel-gilla just nu.",
+      "addReelComment": "Kunde inte lägga till reel-kommentar just nu.",
+      "updateReelComment": "Kunde inte uppdatera reel-kommentar just nu.",
+      "deleteReelComment": "Kunde inte ta bort reel-kommentar just nu.",
+      "updateReelCommentLike": "Kunde inte uppdatera gilla för reel-kommentar just nu.",
+      "allSearchesFailed": "Alla sökningar misslyckades.",
+      "completeSearch": "Kunde inte slutföra sökningen just nu.",
+      "loadRecommendedReels": "Kunde inte ladda rekommenderade reels just nu."
+    }
+  },
+  "communityDetail": {
+    "timeoutOptions": {
+      "oneDay": "1 dag",
+      "sevenDays": "7 dagar",
+      "oneMonth": "1 månad"
+    },
+    "common": {
+      "cancel": "Avbryt",
+      "working": "Arbetar…"
+    },
+    "status": {
+      "memberPromoted": "Medlem befordrad till moderator.",
+      "moderatorRemoved": "Moderatorrollen togs bort.",
+      "memberBanned": "@{{handle}} har blivit avstängd.",
+      "memberUnbanned": "@{{handle}} har blivit avstängd av.",
+      "memberTimedOut": "@{{handle}} har tidsbegränsats i {{timeoutLabel}}.",
+      "joinedCommunity": "Gick med i communityn.",
+      "leftCommunity": "Lämnade communityn.",
+      "communityLinkCopied": "Communitylänk kopierad.",
+      "communityUpdated": "Community uppdaterad.",
+      "postPublished": "Inlägg publicerat.",
+      "postRemovedFromSaved": "Inlägg borttaget från sparade.",
+      "postSaved": "Inlägg sparat.",
+      "postLinkCopied": "Inläggslänk kopierad.",
+      "voteSubmitted": "Röst skickad.",
+      "postUpdated": "Inlägg uppdaterat.",
+      "postDeleted": "Inlägg borttaget."
+    },
+    "errors": {
+      "communityNotLoaded": "Communityn kunde inte laddas.",
+      "communityNotFound": "Communityn hittades inte.",
+      "signInToJoin": "Logga in eller skapa ett konto för att gå med i denna community.",
+      "copyFailed": "Kopiering misslyckades",
+      "copyCommunityLink": "Kunde inte kopiera communitylänk.",
+      "communityNameRequired": "Communitynamn krävs.",
+      "titleRequired": "Titel krävs.",
+      "addContentBeforePosting": "Lägg till text, bild, länk eller omröstning innan du publicerar.",
+      "signInToCreatePost": "Logga in eller skapa ett konto för att skapa ett communityinlägg.",
+      "copyPostLink": "Kunde inte kopiera inläggslänk.",
+      "addContentBeforeSaving": "Lägg till text, bild, länk eller omröstning innan du sparar.",
+      "linkMustStartHttp": "Länk-URL måste börja med http:// eller https://.",
+      "linkInvalid": "Ange en giltig länk-URL.",
+      "action": {
+        "promoteMember": "befordra medlem",
+        "removeModerator": "ta bort moderator",
+        "banMember": "stäng av medlem",
+        "unbanMember": "häv avstängning",
+        "timeoutMember": "tidsbegränsa medlem"
+      }
+    },
+    "moderation": {
+      "modalTitle": {
+        "confirm": "Bekräfta åtgärd",
+        "ban": "Stäng av användare",
+        "unban": "Häv avstängning",
+        "timeout": "Tidsbegränsa användare"
+      },
+      "modalMessage": {
+        "ban": "Stäng av @{{handle}}? Detta blockerar personen från ditt konto.",
+        "unban": "Häv avstängning för @{{handle}}? Detta tar bort blockeringen från ditt konto.",
+        "timeout": "Tidsbegränsa @{{handle}} i {{timeoutLabel}}? Under tiden kan personen inte posta eller kommentera i denna community."
+      },
+      "confirmText": {
+        "confirm": "Bekräfta",
+        "ban": "Stäng av användare",
+        "unban": "Häv avstängning",
+        "timeout": "Tidsbegränsa användare"
+      },
+      "timeoutLength": "Längd på tidsbegränsning"
+    },
+    "community": {
+      "imageAlt": "Communitybild",
+      "memberCount": "{{count}} medlemmar",
+      "createdBy": "Skapad av @{{handle}}",
+      "visibility": {
+        "private": "Privat",
+        "public": "Offentlig"
+      }
+    },
+    "actions": {
+      "joining": "Går med…",
+      "join": "Gå med",
+      "leaving": "Lämnar…",
+      "leave": "Lämna",
+      "editCommunity": "Redigera community",
+      "createPost": "Skapa inlägg",
+      "communityLinkCopiedAria": "Communitylänk kopierad",
+      "copyCommunityLinkAria": "Kopiera communitylänk",
+      "copied": "Kopierad",
+      "copyCommunityLink": "Kopiera communitylänk"
+    },
+    "notice": {
+      "signInToPost": "Logga in eller skapa konto för att skapa inlägg och kommentera i denna community.",
+      "joinToPost": "Gå med i denna community för att skapa inlägg.",
+      "timedOut": "Du är tidsbegränsad i denna community till {{until}}. Publicering och kommentarer är inaktiverade.",
+      "later": "senare"
+    },
+    "feed": {
+      "title": "Communityflöde",
+      "subtitle": "Inlägg från medlemmar i /{{slug}}",
+      "searchPlaceholder": "Sök inlägg i denna community",
+      "loadingAria": "Laddar communityinlägg",
+      "empty": {
+        "noSearchMatches": "Inga inlägg matchar sökningen.",
+        "noPostsYet": "Inga inlägg ännu."
+      }
+    },
+    "post": {
+      "authorImageAlt": "Författarbild",
+      "untitled": "Namnlöst inlägg",
+      "pollVotes": "{{count}} röster",
+      "badges": {
+        "image": "Bild",
+        "poll": "Omröstning"
+      }
+    },
+    "media": {
+      "previousImage": "Föregående bild",
+      "nextImage": "Nästa bild",
+      "postImageAlt": "Inläggsbild",
+      "imageThumbAlt": "Bild {{index}}",
+      "imagePreview": "Förhandsvisning av bild",
+      "closeImagePreview": "Stäng förhandsvisning av bild",
+      "fullscreenPostImageAlt": "Inläggsbild i helskärm"
+    },
+    "postActions": {
+      "upvotePost": "Rösta upp inlägg",
+      "upvote": "Rösta upp",
+      "downvotePost": "Rösta ner inlägg",
+      "downvote": "Rösta ner",
+      "openComments": "Öppna kommentarer",
+      "savePost": "Spara inlägg",
+      "unsavePost": "Ta bort från sparade",
+      "save": "Spara",
+      "saved": "Sparat",
+      "postLinkCopiedAria": "Inläggslänk kopierad",
+      "copyPostLinkAria": "Kopiera inläggslänk",
+      "copied": "Kopierad",
+      "copyLink": "Kopiera länk",
+      "editPost": "Redigera inlägg",
+      "deletePost": "Ta bort inlägg",
+      "deletePostConfirm": "Ta bort detta inlägg? Åtgärden kan inte ångras.",
+      "delete": "Ta bort"
+    },
+    "members": {
+      "modalAria": "Communitymedlemmar",
+      "title": "Medlemmar",
+      "closeAria": "Stäng medlemsmodal",
+      "tabsAria": "Vy för communitymoderering",
+      "tabs": {
+        "members": "Medlemmar",
+        "bannedUsers": "Avstängda användare"
+      },
+      "search": {
+        "membersPlaceholder": "Sök medlemmar via @handle eller roll",
+        "bannedPlaceholder": "Sök avstängda användare via namn eller @handle",
+        "membersAria": "Sök medlemmar",
+        "bannedAria": "Sök avstängda användare"
+      },
+      "hint": {
+        "membersInCommunity": "{{count}} medlemmar i /{{slug}}",
+        "bannedDescription": "Hantera användare som är avstängda från ditt konto medan du modererar /{{slug}}"
+      },
+      "actions": {
+        "makeModerator": "Gör till moderator",
+        "removeModerator": "Ta bort moderator",
+        "timeoutUser": "Tidsbegränsa användare",
+        "banUser": "Stäng av användare",
+        "unbanUser": "Häv avstängning"
+      },
+      "memberAvatarAlt": "Medlemsavatar",
+      "bannedUserAvatarAlt": "Avatar för avstängd användare",
+      "bannedRole": "Avstängd",
+      "empty": {
+        "noMembersMatchSearch": "Inga medlemmar matchade sökningen.",
+        "noMembersYet": "Inga medlemmar att visa ännu.",
+        "loadingBannedUsers": "Laddar avstängda användare...",
+        "noBannedUsersMatchSearch": "Inga avstängda användare matchade sökningen.",
+        "noBannedUsers": "Inga avstängda användare."
+      }
+    },
+    "postType": {
+      "text": "Text",
+      "media": "Bilder & Video",
+      "link": "Länk",
+      "poll": "Omröstning"
+    },
+    "editPost": {
+      "modalAria": "Redigera communityinlägg",
+      "title": "Redigera inlägg",
+      "closeAria": "Stäng modal för redigering av inlägg",
+      "typeAria": "Redigera inläggstyp",
+      "fields": {
+        "title": "Titel",
+        "linkUrl": "Länk-URL",
+        "addImages": "Lägg till bilder (upp till 10)",
+        "question": "Fråga",
+        "option": "Alternativ {{index}}"
+      },
+      "placeholders": {
+        "title": "Lägg till en titel",
+        "updatePost": "Uppdatera ditt inlägg...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "Lägg till valfri brödtext...",
+        "askCommunity": "Fråga communityn...",
+        "optionText": "Alternativtext"
+      },
+      "previewAlt": "Förhandsvisning av vald redigeringsbild",
+      "removeCurrent": "Ta bort aktuell",
+      "remove": "Ta bort",
+      "addOption": "Lägg till alternativ",
+      "saving": "Sparar…",
+      "saveChanges": "Spara ändringar"
+    },
+    "editCommunity": {
+      "modalAria": "Redigera community",
+      "title": "Redigera community",
+      "closeAria": "Stäng modal för redigering av community",
+      "fields": {
+        "name": "Namn",
+        "information": "Information",
+        "rules": "Regler",
+        "image": "Bild"
+      },
+      "placeholders": {
+        "communityName": "Communitynamn",
+        "describeCommunity": "Beskriv denna community",
+        "oneRulePerLine": "En regel per rad"
+      },
+      "imagePreviewAlt": "Förhandsvisning av communitybild",
+      "saving": "Sparar…",
+      "save": "Spara"
+    },
+    "createPost": {
+      "modalAria": "Skapa communityinlägg",
+      "title": "Skapa inlägg",
+      "closeAria": "Stäng modal för att skapa inlägg",
+      "typeAria": "Inläggstyp",
+      "fields": {
+        "title": "Titel",
+        "linkUrl": "Länk-URL",
+        "attachImages": "Bifoga bilder (upp till 10)",
+        "question": "Fråga",
+        "option": "Alternativ {{index}}"
+      },
+      "placeholders": {
+        "title": "Lägg till en titel",
+        "shareThoughts": "Dela dina tankar...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "Lägg till valfri brödtext...",
+        "askCommunity": "Fråga communityn...",
+        "optionText": "Alternativtext"
+      },
+      "previewAlt": "Förhandsvisning av vald inläggsbild",
+      "removeCurrent": "Ta bort aktuell",
+      "imagesAttachedInTab": "{{count}} bild(er) bifogade i fliken Bilder & Video.",
+      "linkAttachedInTab": "Länk bifogad i fliken Länk.",
+      "remove": "Ta bort",
+      "addOption": "Lägg till alternativ",
+      "posting": "Publicerar…",
+      "post": "Publicera"
+    },
+    "loading": {
+      "communityAria": "Laddar community",
+      "feedAria": "Laddar communityflöde",
+      "postsAria": "Laddar communityinlägg"
     }
   },
   "chatPage": {
     "title": "Meddelanden",
+    "layoutAria": "Meddelandelayout",
+    "common": {
+      "you": "Du",
+      "youLowercase": "du",
+      "me": "Jag",
+      "gif": "GIF",
+      "cancel": "Avbryt",
+      "save": "Spara",
+      "saving": "Sparar..."
+    },
+    "starterMessages": {
+      "hey": "Hej 👋",
+      "howAreYou": "Hur mår du idag?",
+      "catchUp": "Vill du höras senare?"
+    },
     "search": {
       "label": "Sök chattar",
-      "startNewChat": "Starta ny chatt"
+      "marquee": "Hitta chattar via namn, handle eller meddelande",
+      "startNewChat": "Starta en ny chatt"
     },
     "sidebar": {
       "chats": "Chattar"
     },
+    "loading": {
+      "conversations": "Laddar konversationer",
+      "messages": "Laddar meddelanden"
+    },
+    "conversation": {
+      "avatarAlt": "Konversationsavatar"
+    },
+    "empty": {
+      "noChatsFound": "Inga chattar hittades.",
+      "noActiveChats": "Inga aktiva chattar ännu.",
+      "firstMessageTitle": "Den här chatten väntar på sitt första meddelande",
+      "firstMessageDescription": "Bryt tystnaden och skicka ett snabbt hej 👋",
+      "noMessagesFoundTitle": "Inga meddelanden hittades",
+      "noMessagesFoundDescription": "Prova ett annat sökord."
+    },
+    "thread": {
+      "backToChats": "Tillbaka till chattar",
+      "groupOptions": "Alternativ för gruppchatt",
+      "searchMessages": "Sök meddelanden",
+      "changeChatName": "Ändra chattnamn",
+      "leaveChat": "Lämna chatt",
+      "deleteChat": "Ta bort chatt",
+      "unmuteChat": "Aktivera ljud",
+      "muteChat": "Stäng av ljud",
+      "defaultGroupChatName": "Gruppchatt"
+    },
+    "messageSearch": {
+      "backToChat": "Tillbaka till chatten",
+      "placeholder": "Sök meddelanden",
+      "clear": "Rensa meddelandesökning",
+      "avatarAlt": "Avatar för meddelandeförfattare",
+      "noResults": "Inga meddelanden hittades för den sökningen.",
+      "idleTitle": "Sök i denna chatt",
+      "idleDescription": "Hitta meddelanden, mediaetiketter och @handles i denna konversation."
+    },
+    "messages": {
+      "fetchingOlder": "Hämtar äldre meddelanden…",
+      "noOlder": "Inga äldre meddelanden",
+      "senderAvatarAlt": "Avatar för meddelandeavsändare",
+      "replyMediaPreviewAlt": "Förhandsvisning av besvarat meddelande",
+      "sentImageAlt": "Skickad bild",
+      "sentGifAlt": "Skickad GIF",
+      "replyToMessage": "Svara på meddelande",
+      "options": "Meddelandealternativ",
+      "actions": {
+        "edit": "Redigera",
+        "report": "Rapportera",
+        "copy": "Kopiera"
+      }
+    },
+    "reactions": {
+      "show": "Visa reaktioner",
+      "title": "Reaktioner",
+      "close": "Stäng reaktioner",
+      "all": "Alla",
+      "authorAvatarAlt": "Bild för reaktionsförfattare"
+    },
+    "composer": {
+      "replyingTo": "Svarar till {{target}}",
+      "cancelReply": "Avbryt svar",
+      "addEmoji": "Lägg till emoji",
+      "messagePlaceholder": "Meddelande...",
+      "addGif": "Lägg till GIF",
+      "addImage": "Lägg till bild",
+      "searchEmojiPlaceholder": "Sök emoji",
+      "searchGifsPlaceholder": "Sök Giphy-GIF:ar",
+      "search": "Sök",
+      "trendingNow": "Trendar nu",
+      "noTrendingGifs": "Inga trendande GIF:ar just nu.",
+      "noGifsFound": "Inga GIF:ar hittades.",
+      "sharing": "Delar",
+      "sharedPostPreviewAlt": "Förhandsvisning av delad inläggsmedia",
+      "removeSharedPost": "Ta bort delat inlägg",
+      "send": "Skicka"
+    },
+    "sharedReel": {
+      "viewerAria": "Visare för delad reel",
+      "settings": "Reelinställningar",
+      "closeViewer": "Stäng reelvisare",
+      "unmute": "Aktivera ljud på reel",
+      "mute": "Stäng av ljud på reel",
+      "report": "Rapportera reel",
+      "edit": "Redigera reel",
+      "deleting": "Tar bort…",
+      "delete": "Ta bort reel",
+      "authorAvatarAlt": "Reelförfattarens avatar",
+      "like": "Gilla reel",
+      "openComments": "Öppna reelkommentarer",
+      "share": "Dela reel",
+      "replyToChatPlaceholder": "Svara i chatten...",
+      "sendingShort": "...",
+      "commentsAria": "Reelkommentarer",
+      "comments": "Kommentarer",
+      "closeComments": "Stäng kommentarer",
+      "close": "Stäng",
+      "commentAuthorAlt": "Bild på kommentarsförfattare",
+      "hideReplies": "Dölj svar",
+      "viewReplies": "Visa svar ({{count}})",
+      "unlikeComment": "Ta bort gilla-markering på kommentar",
+      "likeComment": "Gilla kommentar",
+      "reply": "Svara",
+      "reportComment": "Rapportera kommentar",
+      "noCommentsYet": "Inga kommentarer ännu.",
+      "addCommentPlaceholder": "Lägg till en kommentar...",
+      "post": "Publicera",
+      "editCaptionPlaceholder": "Redigera reeltext...",
+      "saving": "Sparar…",
+      "loadingDetails": "Laddar reeldetaljer...",
+      "forYou": "För dig",
+      "replyingToComment": "Svarar på kommentar",
+      "posting": "Publicerar..."
+    },
     "noConversation": {
       "title": "Välj en chatt för att börja skicka meddelanden",
+      "subtitle1": "Välj valfri konversation till vänster för att öppna tråden.",
+      "subtitle2": "Ser du inte personen än? Starta en ny chatt.",
       "startNewChat": "Starta ny chatt"
+    },
+    "replyPreview": {
+      "youRepliedTo": "Du svarade till {{target}}",
+      "authorRepliedTo": "@{{authorHandle}} svarade till {{target}}",
+      "image": "📷 Bild",
+      "sharedPost": "Delat inlägg",
+      "sharedReel": "Delad reel",
+      "sharedStory": "Delad story",
+      "message": "Meddelande"
+    },
+    "conversationPreview": {
+      "sharedPostFrom": "Delat inlägg från @{{handle}}",
+      "sharedStoryFrom": "Delad story från @{{handle}}",
+      "sharedReelFrom": "Delad reel från @{{handle}}",
+      "sharedLink": "Delad länk"
+    },
+    "unfurl": {
+      "previewUnavailable": "Länkförhandsvisning är inte tillgänglig. Öppna delad länk.",
+      "openSharedLink": "Öppna delad länk"
+    },
+    "status": {
+      "loadConversationsFailed": "Kunde inte ladda konversationer.",
+      "startDirectChatFailed": "Kunde inte starta direktchatt.",
+      "startGroupChatFailed": "Kunde inte starta gruppchatt.",
+      "loadMessagesFailed": "Kunde inte ladda meddelanden.",
+      "liveUpdatesUnavailable": "Liveuppdateringar är tillfälligt otillgängliga.",
+      "messageCopied": "Meddelande kopierat.",
+      "copyMessageFailed": "Kunde inte kopiera meddelande.",
+      "messageContentRequired": "Meddelandeinnehåll krävs.",
+      "updateMessageFailed": "Kunde inte uppdatera meddelande.",
+      "sendMessageFailed": "Kunde inte skicka meddelande.",
+      "loadGifsFailed": "Kunde inte ladda GIF:ar från Giphy.",
+      "loadTrendingGifsFailed": "Kunde inte ladda trendande GIF:ar.",
+      "sendGifFailed": "Kunde inte skicka GIF.",
+      "uploadImageFailed": "Kunde inte ladda upp bild.",
+      "reelDeleted": "Reelen togs bort.",
+      "openReelFailed": "Kunde inte öppna denna reel just nu.",
+      "sendReplyFailed": "Kunde inte skicka svar.",
+      "updateReelFailed": "Kunde inte uppdatera denna reel just nu.",
+      "deleteReelFailed": "Kunde inte ta bort denna reel just nu.",
+      "updateReelCommentFailed": "Kunde inte uppdatera reelkommentar just nu.",
+      "deleteReelCommentFailed": "Kunde inte ta bort reelkommentar just nu.",
+      "updateReelCommentLikeFailed": "Kunde inte uppdatera gilla-markering för reelkommentar just nu.",
+      "updateReelLikeFailed": "Kunde inte uppdatera reel-gilla just nu.",
+      "addReelCommentFailed": "Kunde inte lägga till reelkommentar just nu.",
+      "loadOlderMessagesFailed": "Kunde inte ladda äldre meddelanden.",
+      "setReactionFailed": "Kunde inte sätta reaktion.",
+      "clearReactionFailed": "Kunde inte rensa reaktion.",
+      "sendStoryReplyFailed": "Kunde inte skicka ditt storiesvar just nu.",
+      "deleteStoryFailed": "Kunde inte ta bort denna story just nu.",
+      "submitReportFailed": "Kunde inte skicka rapport just nu.",
+      "chatNameEmpty": "Chattnamn kan inte vara tomt.",
+      "chatNameUpdated": "Chattnamn uppdaterat.",
+      "updateChatNameFailed": "Kunde inte uppdatera chattnamn.",
+      "leftGroupChat": "Du lämnade gruppchatten.",
+      "chatDeleted": "Chatt borttagen.",
+      "leaveGroupChatFailed": "Kunde inte lämna gruppchatt.",
+      "deleteChatFailed": "Kunde inte ta bort chatt.",
+      "chatMuted": "Chatt tystad.",
+      "chatUnmuted": "Chatt av-tystad.",
+      "updateMuteFailed": "Kunde inte uppdatera tystnadsinställning.",
+      "searchUsersFailed": "Kunde inte söka användare just nu.",
+      "loadSuggestionsFailed": "Kunde inte ladda förslag just nu."
+    },
+    "modals": {
+      "deleteComment": {
+        "title": "Ta bort kommentar",
+        "message": "Ta bort denna kommentar? Åtgärden kan inte ångras.",
+        "confirm": "Ta bort"
+      },
+      "leave": {
+        "titleLeave": "Lämna chatt",
+        "titleDelete": "Ta bort chatt",
+        "confirmLeave": "Lämna",
+        "confirmDelete": "Ta bort",
+        "busyLeaving": "Lämnar...",
+        "displayNameFallback": "den här chatten",
+        "deleteFallback": "Ta bort den här chatten?",
+        "groupMessage": "Lämna {{name}}? Du kan läggas till igen senare av en annan medlem.",
+        "directMessage": "Ta bort {{name}}? Detta tar bort chatten från din inkorg."
+      },
+      "rename": {
+        "title": "Ändra chattnamn",
+        "label": "Chattnamn",
+        "placeholder": "Ange chattnamn",
+        "groupMessage": "Ge den här gruppchatten ett tydligt namn så medlemmar kan hitta den snabbt.",
+        "directMessage": "Ange ett anpassat chattnamn för denna konversation."
+      },
+      "deleteStory": {
+        "title": "Ta bort story",
+        "message": "Ta bort denna story? Åtgärden kan inte ångras.",
+        "confirm": "Ta bort"
+      },
+      "deleteReel": {
+        "title": "Ta bort reel",
+        "message": "Ta bort denna reel? Åtgärden kan inte ångras.",
+        "confirm": "Ta bort"
+      }
+    }
+  },
+  "sharedCommunityPost": {
+    "loading": {
+      "aria": "Laddar communityinlägg"
+    },
+    "notFound": {
+      "title": "Inlägget är inte tillgängligt",
+      "message": "Detta communityinlägg togs bort eller så är länken ogiltig."
+    },
+    "errors": {
+      "title": "Något gick fel",
+      "load": "Kunde inte ladda detta delade communityinlägg.",
+      "votePoll": "Det går inte att rösta i omröstningen just nu.",
+      "updateSavedState": "Det går inte att uppdatera sparat-läget.",
+      "updatePost": "Det går inte att uppdatera inlägget just nu.",
+      "deletePost": "Det går inte att ta bort inlägget just nu.",
+      "votePost": "Det går inte att rösta på inlägget just nu."
+    },
+    "confirm": {
+      "deletePost": "Ta bort detta inlägg?",
+      "deleteComment": "Ta bort denna kommentar?"
+    },
+    "community": {
+      "imageAlt": "Communitybild",
+      "fallbackSlug": "/community"
+    },
+    "post": {
+      "untitled": "Namnlöst inlägg"
+    },
+    "media": {
+      "previousImage": "Föregående bild",
+      "nextImage": "Nästa bild",
+      "postAlt": "Media för delat communityinlägg",
+      "thumbAlt": "Bild {{index}}",
+      "imagePreview": "Förhandsvisning av bild",
+      "closeImagePreview": "Stäng förhandsvisning av bild",
+      "fullscreenAlt": "Inläggsbild i helskärm"
+    },
+    "poll": {
+      "votes": "{{count}} röster"
+    },
+    "actions": {
+      "upvotePost": "Rösta upp inlägg",
+      "upvote": "Rösta upp",
+      "downvotePost": "Rösta ner inlägg",
+      "downvote": "Rösta ner",
+      "comments": "Kommentarer",
+      "savePost": "Spara inlägg",
+      "unsavePost": "Ta bort från sparade",
+      "save": "Spara",
+      "saved": "Sparat",
+      "copyPostLinkAria": "Kopiera inläggslänk",
+      "postLinkCopiedAria": "Inläggslänk kopierad",
+      "copyLink": "Kopiera länk",
+      "copied": "Kopierad",
+      "editPost": "Redigera inlägg",
+      "deletePost": "Ta bort inlägg"
+    },
+    "comments": {
+      "later": "senare",
+      "timedOut": "Du är tidsbegränsad i denna community till {{until}}. Publicering och kommentarer är inaktiverade.",
+      "joinToComment": "Gå med i denna community för att kommentera.",
+      "signIn": "Logga in",
+      "signInSuffix": "för att delta i konversationen.",
+      "authorImageAlt": "Bild på kommentarsförfattare",
+      "spoilerAria": "Spoilertext. Klicka för att visa.",
+      "editor": {
+        "placeholder": "Delta i konversationen",
+        "submit": "Kommentera",
+        "submitting": "Publicerar..."
+      },
+      "edit": {
+        "placeholder": "Redigera din kommentar",
+        "save": "Spara",
+        "saving": "Sparar..."
+      },
+      "reply": {
+        "placeholder": "Svara till u/{{handle}}"
+      },
+      "sort": {
+        "label": "Sortera efter:",
+        "best": "Bäst",
+        "top": "Topp",
+        "new": "Nya",
+        "controversial": "Kontroversiella",
+        "old": "Äldsta",
+        "qna": "Frågor & svar"
+      },
+      "search": {
+        "placeholder": "Sök kommentarer",
+        "aria": "Sök kommentarer"
+      },
+      "empty": {
+        "noneYet": "Inga kommentarer ännu.",
+        "noSearchMatch": "Inga kommentarer matchar din sökning."
+      },
+      "actions": {
+        "upvote": "Rösta upp",
+        "downvote": "Rösta ner",
+        "reply": "Svara",
+        "shareComment": "Dela kommentar",
+        "share": "Dela",
+        "commentLinkCopiedAria": "Kommentarslänk kopierad",
+        "openCommentActions": "Öppna kommentarsåtgärder",
+        "moreActions": "Fler åtgärder",
+        "commentActions": "Kommentarsåtgärder",
+        "edit": "Redigera",
+        "cancelEdit": "Avbryt redigering",
+        "delete": "Ta bort",
+        "deleting": "Tar bort..."
+      },
+      "errors": {
+        "timedOut": "Du är tidsbegränsad i denna community till {{until}}.",
+        "postComment": "Det går inte att publicera kommentar just nu.",
+        "contentRequired": "Kommentarinnehåll krävs.",
+        "updateComment": "Det går inte att uppdatera kommentar just nu.",
+        "deleteComment": "Det går inte att ta bort kommentar just nu.",
+        "postReply": "Det går inte att publicera svar just nu."
+      }
+    }
+  },
+  "profile": {
+    "hero": {
+      "noBio": "Ingen bio än.",
+      "bioHidden": "Bio är dold eftersom den här profilen är blockerad.",
+      "joined": "Gick med {{date}}",
+      "openStoriesAria": "Öppna @{{handle}} stories",
+      "viewProfileAria": "Visa @{{handle}} profil",
+      "avatarAlt": "{{name}} avatar",
+      "authorImageAlt": "Författarbild",
+      "trustSignalsAria": "Profilens förtroendesignaler",
+      "privateProfile": "Privat profil",
+      "publicProfile": "Offentlig profil",
+      "establishedMember": "Etablerad medlem",
+      "activeOn": "Aktiv {{date}}",
+      "statsAria": "Profilstatistik",
+      "posts": "inlägg",
+      "followers": "följare",
+      "following": "följer"
+    },
+    "tabs": {
+      "posts": "Inlägg",
+      "reels": "Reels",
+      "analytics": "Analys",
+      "aria": "Flikar för profilinnehåll"
+    },
+    "actions": {
+      "working": "Arbetar...",
+      "blocked": "Blockerad",
+      "requestSent": "Begäran skickad",
+      "following": "Följer",
+      "unfollowed": "Avföljd",
+      "tryAgain": "Försök igen",
+      "cancelRequest": "Avbryt begäran",
+      "unfollow": "Sluta följa",
+      "follow": "Följ",
+      "message": "Meddelande",
+      "requestMessage": "Begär meddelande",
+      "profileLinkCopied": "Profillänk kopierad",
+      "copyProfileLink": "Kopiera profillänk",
+      "copied": "Kopierad",
+      "signInToFollow": "Logga in för att följa"
+    },
+    "safety": {
+      "openMenu": "Öppna profilsäkerhetsalternativ",
+      "moreOptions": "Fler alternativ",
+      "nickname": "Smeknamn",
+      "mute": "Tysta",
+      "unmute": "Ta bort tyst",
+      "block": "Blockera",
+      "unblock": "Avblockera",
+      "report": "Rapportera",
+      "reporting": "Rapporterar..."
+    },
+    "nickname": {
+      "dialogAria": "Ange smeknamn",
+      "title": "Smeknamn för dig",
+      "close": "Stäng smeknamnsredigerare",
+      "label": "Smeknamn",
+      "placeholder": "Ange smeknamn"
+    },
+    "blocked": {
+      "byTarget": "Den här profilen blockerade dig. Inlägg, reels, stories och bio är dolda.",
+      "byYou": "Du blockerade den här profilen. Inlägg, reels, stories och bio är dolda."
+    },
+    "privateLocked": "Den här profilen är privat. Följ och vänta på godkännande för att se inlägg.",
+    "empty": {
+      "blockedTitle": "Profil blockerad",
+      "posts": {
+        "title": "Inga inlägg ännu",
+        "own": "Börja dela från Skriv.",
+        "guest": "Den här profilen har inte publicerat något ännu.",
+        "private": "Inga inlägg synliga förrän denna privata profil godkänner din följförfrågan."
+      },
+      "reels": {
+        "title": "Inga reels ännu",
+        "own": "Skapa en från din profil.",
+        "guest": "Den här profilen har inte delat några reels ännu.",
+        "blocked": "Reels är dolda medan den här profilen är blockerad.",
+        "private": "Inga reels synliga förrän denna privata profil godkänner din följförfrågan."
+      }
+    },
+    "confirm": {
+      "delete": "Ta bort",
+      "deletePostTitle": "Ta bort inlägg",
+      "deletePostMessage": "Ta bort detta inlägg? Åtgärden kan inte ångras.",
+      "deleteReelTitle": "Ta bort reel",
+      "deleteReelMessage": "Ta bort denna reel? Åtgärden kan inte ångras.",
+      "deleteCommentTitle": "Ta bort kommentar",
+      "deleteCommentMessage": "Ta bort denna kommentar? Åtgärden kan inte ångras.",
+      "deleteStoryTitle": "Ta bort story",
+      "deleteStoryMessage": "Ta bort denna story? Åtgärden kan inte ångras.",
+      "deleteCollectionTitle": "Ta bort samling",
+      "blockTitle": "Blockera profil",
+      "blockMessage": "Blockera @{{handle}}? Detta tar bort följaranslutningar.",
+      "block": "Blockera",
+      "thisProfile": "denna profil"
+    },
+    "common": {
+      "save": "Spara",
+      "saving": "Sparar...",
+      "cancel": "Avbryt",
+      "clear": "Rensa",
+      "back": "Tillbaka",
+      "retry": "Försök igen"
+    },
+    "storyCollections": {
+      "rowAria": "Storysamlingar",
+      "createAria": "Skapa storysamling",
+      "new": "Ny",
+      "openAria": "Öppna storysamling {{name}}",
+      "coverAlt": "Omslagsbild för storysamling",
+      "manageAria": "Hantera storysamling {{name}}",
+      "createDialogAria": "Skapa storysamling",
+      "newCollectionTitle": "Ny Storysamling",
+      "closeCreateDialog": "Stäng modal för storysamling",
+      "collectionName": "Samlingsnamn",
+      "collectionPlaceholder": "t.ex. Sommaren 2024",
+      "collectionNameAria": "Namn på storysamling",
+      "storyMediaAlt": "Storymedia",
+      "storyFallback": "Story",
+      "selected": "Vald",
+      "select": "Välj",
+      "noStoriesInArchive": "Inga stories i ditt arkiv ännu.",
+      "creating": "Skapar...",
+      "create": "Skapa",
+      "manageDialogAria": "Hantera storysamling",
+      "manageNamedTitle": "Hantera {{name}}",
+      "manageTitle": "Hantera Storysamling",
+      "closeManageDialog": "Stäng modal för att lägga till stories",
+      "selectCollection": "Välj samling",
+      "selectCollectionAria": "Välj storysamling",
+      "remove": "Ta bort",
+      "add": "Lägg till",
+      "createFirstCollection": "Skapa först din första samling.",
+      "deleteCollection": "Ta bort samling",
+      "close": "Stäng"
+    },
+    "compose": {
+      "postDialogAria": "Skapa inlägg",
+      "newPost": "Nytt inlägg",
+      "closePostComposer": "Stäng inläggskompositör",
+      "storyDialogAria": "Skapa story",
+      "newStory": "Ny Story",
+      "closeStoryComposer": "Stäng storykompositör",
+      "storyCreationStepsAria": "Steg för att skapa story",
+      "storyStepMedia": "1. Media",
+      "storyStepCropTrimPublish": "2. Beskär, trimma & publicera",
+      "storyMediaUploadAria": "Uppladdning av storymedia",
+      "selectStoryMediaTitle": "Börja med att välja ditt storymedia",
+      "selectStoryMediaSubtitle": "Bilder, MP4, WebM, MOV och liknande format stöds.",
+      "selectStoryMedia": "Välj storymedia",
+      "selectedFile": "Vald: {{file}}",
+      "storyExpires": "Stories upphör automatiskt efter 24 timmar.",
+      "markStorySensitive": "Markera denna story som känsligt media",
+      "editingFile": "Redigerar: {{file}}",
+      "dragStoryFrameAria": "Dra för att ställa in storyinramning",
+      "dragFrameHint": "Dra 9:16-ramen för att ställa in beskärning.",
+      "resetFraming": "Återställ inramning",
+      "trimSummary": "Original längd: {{original}}s · Trimmad: {{trimmed}}",
+      "trimThumbnailAlt": "Trimningsminiatyr för story",
+      "trimStoryStartAria": "Trimma start på story",
+      "trimStoryEndAria": "Trimma slut på story",
+      "generatingTrimPreviews": "Genererar förhandsvisningar för trimning...",
+      "trimRange": "Intervall: {{start}}s till {{end}}s",
+      "storyMediaPreviewAlt": "Förhandsvisning av storymedia",
+      "schedulePublish": "Schemalägg publicering (valfritt)",
+      "saveDraft": "Spara utkast",
+      "publishing": "Publicerar...",
+      "publishStory": "Publicera Story"
+    },
+    "analytics": {
+      "title": "Skaparanalys",
+      "lastDays": "Senaste {{days}} dagarna",
+      "views": "visningar",
+      "watchTime": "Tittartid",
+      "saves": "sparade",
+      "followerGrowth": "Följartillväxt",
+      "topReels": "Topp-Reels",
+      "untitledReel": "Reel utan titel"
+    },
+    "messages": {
+      "messageRequestSent": "Meddelandeförfrågan skickad."
+    },
+    "errors": {
+      "loadData": "Kunde inte ladda profildata. Försök uppdatera.",
+      "copyLink": "Kunde inte kopiera profillänk just nu.",
+      "sendMessageRequest": "Kunde inte skicka meddelandeförfrågan just nu.",
+      "openChat": "Kunde inte öppna chatten just nu."
+    }
+  },
+  "blogs": {
+    "page": {
+      "kicker": "Publicering",
+      "title": "Bloggar"
+    },
+    "tabs": {
+      "aria": "Blogglistor",
+      "all": "Alla bloggar",
+      "following": "Följer",
+      "mine": "Mina bloggar"
+    },
+    "subtitle": {
+      "all": "Upptäck och sök bloggar i hela Venli.",
+      "following": "Bloggar från skapare du följer.",
+      "mine": "Hantera dina egna bloggar och utkast."
+    },
+    "search": {
+      "placeholder": "Sök bloggar efter titel, slug, handle...",
+      "try": "Prova:"
+    },
+    "sort": {
+      "label": "Sortera",
+      "menuAria": "Sortera bloggar",
+      "recentlyUpdated": "Nyligen uppdaterade",
+      "newestCreated": "Nyligen skapade",
+      "titleAz": "Titel A-Ö"
+    },
+    "actions": {
+      "openStudio": "Öppna Bloggstudio",
+      "clear": "Rensa"
+    },
+    "visibility": {
+      "public": "Offentlig",
+      "private": "Privat",
+      "owner": "Ägare"
+    },
+    "meta": {
+      "updated": "Uppdaterad {{date}}"
+    },
+    "resultCount": "{{visible}} av {{total}} bloggar",
+    "loading": {
+      "aria": "Läser in bloggar"
+    },
+    "infinite": {
+      "more": "Skrolla för fler bloggar..."
+    },
+    "empty": {
+      "noBlogsForTab": "Inga bloggar hittades för denna flik ännu."
+    },
+    "errors": {
+      "signInToViewTab": "Logga in för att visa denna flik.",
+      "loadNow": "Kunde inte ladda bloggar just nu."
+    }
+  },
+  "communities": {
+    "page": {
+      "title": "Gemenskaper",
+      "subtitle": "Skapa eller gå med i gemenskaper kring delade intressen."
+    },
+    "tabs": {
+      "aria": "Vy för gemenskaper",
+      "mine": "Mina gemenskaper",
+      "discover": "Upptäck gemenskaper"
+    },
+    "actions": {
+      "newCommunity": "Ny gemenskap",
+      "refresh": "Uppdatera gemenskaper",
+      "search": "Sök",
+      "clear": "Rensa",
+      "join": "Gå med",
+      "joining": "Går med…",
+      "leave": "Lämna",
+      "leaving": "Lämnar…",
+      "signInToJoin": "Logga in för att gå med",
+      "cancel": "Avbryt",
+      "create": "Skapa",
+      "creating": "Skapar…"
+    },
+    "search": {
+      "placeholder": "Sök gemenskaper",
+      "try": "Prova:"
+    },
+    "mine": {
+      "signInPrompt": "Logga in eller skapa ett konto för att visa gemenskaper du gått med i.",
+      "empty": "Du har inte gått med i några gemenskaper ännu."
+    },
+    "discover": {
+      "empty": "Inga gemenskaper hittades."
+    },
+    "community": {
+      "members": "medlemmar",
+      "createdBy": "Skapad av @{{handle}}",
+      "imageAlt": "Communitybild",
+      "openAria": "Öppna {{name}}",
+      "owner": "Ägare",
+      "joined": "Gick med"
+    },
+    "authAction": {
+      "create": "skapa en gemenskap",
+      "join": "gå med i gemenskaper",
+      "leave": "lämna gemenskaper"
+    },
+    "visibility": {
+      "private": "Privat",
+      "public": "Offentlig"
+    },
+    "create": {
+      "dialogAria": "Skapa gemenskap",
+      "title": "Skapa gemenskap",
+      "close": "Stäng modal för att skapa gemenskap",
+      "name": "Namn",
+      "namePlaceholder": "Namn på gemenskap",
+      "description": "Beskrivning",
+      "descriptionPlaceholder": "Vad handlar denna gemenskap om?",
+      "rules": "Regler",
+      "rulesPlaceholder": "En regel per rad",
+      "image": "Gemenskapsbild",
+      "imagePreviewAlt": "Förhandsvisning av gemenskapsbild",
+      "private": "Privat gemenskap"
+    },
+    "status": {
+      "created": "Gemenskap skapad.",
+      "joined": "Gick med i gemenskap.",
+      "left": "Lämnade gemenskap."
+    },
+    "errors": {
+      "load": "Kunde inte ladda gemenskaper just nu.",
+      "search": "Kunde inte söka gemenskaper just nu.",
+      "create": "Kunde inte skapa gemenskap just nu.",
+      "join": "Kunde inte gå med i gemenskap just nu.",
+      "leave": "Kunde inte lämna gemenskap just nu.",
+      "signInForAction": "Logga in eller skapa ett konto för att {{action}}."
+    }
+  },
+  "blogHome": {
+    "loading": {
+      "aria": "Läser in blogg"
+    },
+    "header": {
+      "moreBy": "Mer från @{{handle}}",
+      "editInStudio": "Redigera i Studio"
+    },
+    "post": {
+      "draft": "Utkast"
+    },
+    "actions": {
+      "save": "Spara",
+      "unsave": "Ta bort sparad"
+    },
+    "empty": {
+      "noPosts": "Inga inlägg ännu."
+    },
+    "errors": {
+      "notFound": "Bloggen hittades inte.",
+      "notFoundOrPrivate": "Bloggen hittades inte eller är privat.",
+      "loadNow": "Kunde inte ladda den här bloggen just nu.",
+      "updateSavedStatus": "Kunde inte uppdatera sparstatus just nu."
+    }
+  },
+  "blogPost": {
+    "loading": {
+      "aria": "Läser in blogginlägg"
+    },
+    "actions": {
+      "backToBlog": "Tillbaka till blogg",
+      "like": "Gilla",
+      "comment": "Kommentera",
+      "save": "Spara",
+      "unsave": "Ta bort sparad",
+      "share": "Dela",
+      "linkCopied": "Länk kopierad",
+      "embed": "Bädda in"
+    },
+    "meta": {
+      "byDate": "Av @{{handle}} · {{date}}"
+    },
+    "hints": {
+      "likesSoon": "Gilla-markeringar för bloggar aktiveras snart",
+      "commentsSoon": "Bloggkommentarer aktiveras snart"
+    },
+    "errors": {
+      "notFound": "Blogginlägget hittades inte.",
+      "notFoundOrPrivate": "Blogginlägget hittades inte eller är privat.",
+      "loadNow": "Kunde inte ladda detta blogginlägg just nu.",
+      "updateSavedStatus": "Kunde inte uppdatera sparstatus just nu."
+    }
+  },
+  "blogEmbed": {
+    "loading": "Läser in inbäddning...",
+    "kicker": "Venli-blogg",
+    "meta": {
+      "byAuthor": "Av @{{handle}}"
+    },
+    "footer": {
+      "readFullPost": "Läs hela inlägget på Venli"
+    },
+    "aria": {
+      "loading": "Läser in inbäddad blogg",
+      "openFullPost": "Öppna hela blogginlägget"
+    },
+    "errors": {
+      "couldNotLoad": "Kunde inte ladda inbäddning.",
+      "postUnavailable": "Detta blogginlägg är inte tillgängligt.",
+      "embeddingDisabled": "Inbäddning är inaktiverad av bloggägaren.",
+      "loadNow": "Kunde inte ladda denna inbäddning just nu."
+    }
+  },
+  "blogEmbedTools": {
+    "loading": {
+      "aria": "Läser in inbäddningsverktyg",
+      "message": "Läser in inbäddningsverktyg..."
+    },
+    "header": {
+      "kicker": "Inbäddningsverktyg",
+      "subtitle": "Förhandsgranska inbäddningen och kopiera iframe-koden för valfri webbplats."
+    },
+    "preview": {
+      "title": "Förhandsvisning",
+      "iframeTitle": "Förhandsvisning av blogginbäddning"
+    },
+    "code": {
+      "title": "Inbäddningskod",
+      "aria": "iframe-kod för blogginbäddning"
+    },
+    "actions": {
+      "copyCode": "Kopiera kod",
+      "copied": "Kopierad",
+      "openRaw": "Öppna rå inbäddad sida",
+      "backToPost": "Tillbaka till inlägget"
+    },
+    "embed": {
+      "defaultTitle": "Venli blogginbäddning"
+    },
+    "errors": {
+      "notFound": "Blogginlägget hittades inte.",
+      "notFoundOrPrivate": "Blogginlägget hittades inte eller är privat.",
+      "embeddingDisabled": "Inbäddning är inaktiverad av bloggägaren.",
+      "loadNow": "Kunde inte ladda inbäddningsverktyg för detta inlägg just nu."
+    }
+  },
+  "sharedStory": {
+    "loading": {
+      "story": "Läser in story..."
+    },
+    "notFound": {
+      "title": "Story inte tillgänglig",
+      "message": "Den här storyn har gått ut, tagits bort eller länken är ogiltig."
+    },
+    "errors": {
+      "title": "Något gick fel",
+      "load": "Kunde inte ladda denna delade story."
+    },
+    "author": {
+      "imageAlt": "Skaparbild"
+    },
+    "actions": {
+      "linkCopiedAria": "Storylänk kopierad",
+      "copyStoryLinkAria": "Kopiera storylänk",
+      "copied": "Kopierad",
+      "copyLink": "Kopiera länk"
+    },
+    "media": {
+      "alt": "Delat storymedia"
     }
   }
 }

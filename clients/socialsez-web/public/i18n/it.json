@@ -12,11 +12,11 @@
       "skipToContent": "Vai al contenuto",
       "brandSubtitle": "Piattaforma community",
       "nav": {
-        "feed": "Feed",
+        "feed": "Bacheca",
         "discover": "Scopri",
         "blogs": "Blog",
         "communities": "Community",
-        "chat": "Chat",
+        "chat": "Messaggi",
         "saved": "Salvati",
         "drafts": "Bozze",
         "notifications": "Notifiche",
@@ -36,9 +36,10 @@
       },
       "settingsQuickNav": {
         "title": "Impostazioni",
+        "aria": "Sezioni delle impostazioni",
         "profile": "Profilo",
-        "account": "Account",
-        "privacy": "Privacy",
+        "account": "Conto",
+        "privacy": "Riservatezza",
         "session": "Sessione",
         "preferences": "Preferenze",
         "notifications": "Notifiche",
@@ -47,21 +48,63 @@
         "data": "Dati",
         "blocked": "Utenti bloccati",
         "logout": "Esci"
+      },
+      "mobileNav": {
+        "aria": "Navigazione mobile principale",
+        "openMore": "Apri altre opzioni di navigazione",
+        "more": "Altro",
+        "moreAria": "Altra navigazione",
+        "groups": "Gruppi",
+        "alerts": "Avvisi"
       }
     },
     "search": {
       "label": "Cerca",
       "buttonAria": "Cerca",
+      "scopeMenuAria": "Opzioni ambito di ricerca",
       "scopePrefix": "Ambito",
-      "scopeAuto": "Auto",
+      "scopeAuto": "Automatico",
+      "removeOverride": "Rimuovi override",
+      "context": {
+        "communities": "Community",
+        "blogs": "Blog",
+        "profiles": "Profili",
+        "hashtags": "Hashtag",
+        "chat": "Messaggi",
+        "notifications": "Notifiche",
+        "discover": "Scopri",
+        "settings": "Impostazioni",
+        "compose": "Componi",
+        "global": "Globale"
+      },
       "scope": {
         "all": "Tutti i risultati",
         "communities": "Community",
+        "communityPosts": "Post della community",
         "blogs": "Blog",
         "users": "Utenti",
         "posts": "Post",
         "reels": "Reel",
         "hashtags": "Hashtag"
+      },
+      "placeholder": {
+        "communities": "Cerca community, post della community, utenti e hashtag",
+        "blogs": "Cerca blog, community, post e hashtag",
+        "profiles": "Cerca profili, post, reel e hashtag",
+        "hashtags": "Cerca hashtag, post e reel",
+        "chat": "Cerca utenti, post, reel e hashtag",
+        "notifications": "Cerca utenti, post, reel e hashtag",
+        "discover": "Cerca utenti, community, post della community, blog, reel, post e hashtag",
+        "global": "Cerca utenti, community, post della community, blog, reel, post e hashtag"
+      },
+      "placeholderByScope": {
+        "communities": "Cerca community per nome, slug o descrizione",
+        "communityPosts": "Cerca post della community per titolo, contenuto o autore",
+        "blogs": "Cerca blog per titolo, handle o slug",
+        "users": "Cerca utenti e profili",
+        "posts": "Cerca post e autori",
+        "reels": "Cerca reel per didascalia, commenti o autore",
+        "hashtags": "Cerca hashtag"
       }
     }
   },
@@ -72,26 +115,276 @@
       "registerSubtitle": "Crea il tuo account per pubblicare e seguire altre persone.",
       "interestsSubtitle": "Scegli interessi per personalizzare Scopri fin dal primo giorno."
     },
+    "mode": {
+      "aria": "Modalità di autenticazione"
+    },
     "fields": {
       "email": "E-mail",
-      "password": "Password",
+      "password": "Password di accesso",
       "confirmPassword": "Conferma password",
-      "handle": "Handle",
+      "handle": "Nome utente",
       "displayName": "Nome visualizzato",
       "dateOfBirth": "Data di nascita",
+      "day": "Giorno",
+      "month": "Mese",
+      "year": "Anno",
       "country": "Paese",
-      "bio": "Bio"
+      "bio": "Biografia"
+    },
+    "placeholders": {
+      "email": "you@example.com",
+      "password": "••••••••",
+      "handle": "sez",
+      "displayName": "Sez",
+      "country": "Seleziona paese (opzionale)",
+      "bio": "Creator"
     },
     "actions": {
       "signIn": "Accedi",
       "createAccount": "Crea account",
+      "staySignedIn": "Resta connesso",
+      "showPassword": "Mostra password",
+      "hidePassword": "Nascondi password",
+      "showConfirmPassword": "Mostra conferma password",
+      "hideConfirmPassword": "Nascondi conferma password",
+      "signingIn": "Accesso in corso...",
+      "creatingAccount": "Creazione account...",
+      "finishingSetup": "Completamento configurazione...",
       "continue": "Continua",
       "finish": "Termina",
       "skipForNow": "Salta per ora"
     },
+    "passwordStrength": {
+      "label": "Sicurezza password",
+      "weak": "Debole",
+      "medium": "Media",
+      "strong": "Forte"
+    },
+    "preferences": {
+      "acceptTerms": "Accetto i termini e le linee guida della community.",
+      "privateByDefault": "Rendi il mio account privato per impostazione predefinita.",
+      "marketingOptIn": "Inviami aggiornamenti sul prodotto e suggerimenti via email."
+    },
+    "interests": {
+      "title": "Scegli i tuoi interessi",
+      "subtitle": "Seleziona fino a 12 hashtag. Li seguiremo per te per personalizzare il feed.",
+      "unavailable": "Gli interessi di tendenza non sono disponibili al momento. Puoi saltare e configurarli più tardi in Scopri."
+    },
     "switch": {
       "newHere": "Sei nuovo qui?",
       "alreadyHaveAccount": "Hai già un account?"
+    },
+    "sections": {
+      "security": "Sicurezza",
+      "profile": "Profilo",
+      "preferences": "Preferenze"
+    },
+    "profileUrl": "URL del tuo profilo",
+    "validation": {
+      "emailRequired": "L'email è obbligatoria.",
+      "passwordRequired": "La password è obbligatoria.",
+      "passwordTooShort": "La password deve contenere almeno 8 caratteri.",
+      "passwordsMismatch": "Le password non corrispondono.",
+      "handleRequired": "L'handle è obbligatorio.",
+      "displayNameRequired": "Il nome visualizzato è obbligatorio.",
+      "birthDateInvalid": "Seleziona una data di nascita valida e completa.",
+      "minimumAge": "Devi avere almeno 13 anni per registrarti.",
+      "acceptTerms": "Devi accettare i termini per creare un account."
+    },
+    "errors": {
+      "registerFailed": "Impossibile registrarsi con questi dati.",
+      "invalidCredentials": "Credenziali non valide.",
+      "interestsSaveFailed": "Abbiamo creato il tuo account, ma non siamo riusciti a salvare gli interessi in questo momento."
+    }
+  },
+  "profile": {
+    "hero": {
+      "noBio": "Nessuna bio al momento.",
+      "bioHidden": "Bio nascosta perché questo profilo è bloccato.",
+      "joined": "Iscritto {{date}}",
+      "openStoriesAria": "Apri le storie di @{{handle}}",
+      "viewProfileAria": "Visualizza il profilo di @{{handle}}",
+      "avatarAlt": "Avatar di {{name}}",
+      "authorImageAlt": "Immagine autore",
+      "trustSignalsAria": "Indicatori di affidabilità del profilo",
+      "privateProfile": "Profilo privato",
+      "publicProfile": "Profilo pubblico",
+      "establishedMember": "Membro storico",
+      "activeOn": "Attivo {{date}}",
+      "statsAria": "Statistiche del profilo",
+      "posts": "post",
+      "followers": "follower",
+      "following": "seguiti"
+    },
+    "tabs": {
+      "posts": "Post",
+      "reels": "Reel",
+      "analytics": "Analisi",
+      "aria": "Schede contenuti del profilo"
+    },
+    "actions": {
+      "working": "Operazione in corso...",
+      "blocked": "Bloccato",
+      "requestSent": "Richiesta inviata",
+      "following": "Segui già",
+      "unfollowed": "Hai smesso di seguire",
+      "tryAgain": "Riprova",
+      "cancelRequest": "Annulla richiesta",
+      "unfollow": "Smetti di seguire",
+      "follow": "Segui",
+      "message": "Messaggio",
+      "requestMessage": "Richiedi messaggio",
+      "profileLinkCopied": "Link del profilo copiato",
+      "copyProfileLink": "Copia link del profilo",
+      "copied": "Copiato",
+      "signInToFollow": "Accedi per seguire"
+    },
+    "safety": {
+      "openMenu": "Apri opzioni di sicurezza del profilo",
+      "moreOptions": "Altre opzioni",
+      "nickname": "Soprannome",
+      "mute": "Silenzia",
+      "unmute": "Riattiva audio",
+      "block": "Blocca",
+      "unblock": "Sblocca",
+      "report": "Segnala",
+      "reporting": "Segnalazione in corso..."
+    },
+    "nickname": {
+      "dialogAria": "Imposta soprannome",
+      "title": "Soprannome per te",
+      "close": "Chiudi editor del soprannome",
+      "label": "Soprannome",
+      "placeholder": "Inserisci soprannome"
+    },
+    "blocked": {
+      "byTarget": "Questo profilo ti ha bloccato. Post, reel, storie e bio sono nascosti.",
+      "byYou": "Hai bloccato questo profilo. Post, reel, storie e bio sono nascosti."
+    },
+    "privateLocked": "Questo profilo è privato. Segui e attendi l'approvazione per vedere i post.",
+    "empty": {
+      "blockedTitle": "Profilo bloccato",
+      "posts": {
+        "title": "Nessun post ancora",
+        "own": "Inizia a condividere da Crea.",
+        "guest": "Questo profilo non ha ancora pubblicato nulla.",
+        "private": "Nessun post visibile finché questo profilo privato non approva la tua richiesta di follow."
+      },
+      "reels": {
+        "title": "Nessun reel ancora",
+        "own": "Creane uno dal tuo profilo.",
+        "guest": "Questo profilo non ha ancora condiviso reel.",
+        "blocked": "I reel sono nascosti mentre questo profilo è bloccato.",
+        "private": "Nessun reel visibile finché questo profilo privato non approva la tua richiesta di follow."
+      }
+    },
+    "confirm": {
+      "delete": "Elimina",
+      "deletePostTitle": "Elimina post",
+      "deletePostMessage": "Eliminare questo post? Questa azione non può essere annullata.",
+      "deleteReelTitle": "Elimina reel",
+      "deleteReelMessage": "Eliminare questo reel? Questa azione non può essere annullata.",
+      "deleteCommentTitle": "Elimina commento",
+      "deleteCommentMessage": "Eliminare questo commento? Questa azione non può essere annullata.",
+      "deleteStoryTitle": "Elimina storia",
+      "deleteStoryMessage": "Eliminare questa storia? Questa azione non può essere annullata.",
+      "deleteCollectionTitle": "Elimina raccolta",
+      "blockTitle": "Blocca profilo",
+      "blockMessage": "Bloccare @{{handle}}? Questo rimuove le connessioni di follow.",
+      "block": "Blocca",
+      "thisProfile": "questo profilo"
+    },
+    "common": {
+      "save": "Salva",
+      "saving": "Salvataggio...",
+      "cancel": "Annulla",
+      "clear": "Cancella",
+      "back": "Indietro",
+      "retry": "Riprova"
+    },
+    "storyCollections": {
+      "rowAria": "Raccolte di storie",
+      "createAria": "Crea raccolta di storie",
+      "new": "Nuova",
+      "openAria": "Apri raccolta di storie {{name}}",
+      "coverAlt": "Copertina raccolta di storie",
+      "manageAria": "Gestisci raccolta di storie {{name}}",
+      "createDialogAria": "Crea raccolta di storie",
+      "newCollectionTitle": "Nuova raccolta di storie",
+      "closeCreateDialog": "Chiudi modale raccolta di storie",
+      "collectionName": "Nome raccolta",
+      "collectionPlaceholder": "es. Estate 2024",
+      "collectionNameAria": "Nome raccolta di storie",
+      "storyMediaAlt": "Media della storia",
+      "storyFallback": "Storia",
+      "selected": "Selezionata",
+      "select": "Seleziona",
+      "noStoriesInArchive": "Nessuna storia ancora nel tuo archivio.",
+      "creating": "Creazione...",
+      "create": "Crea",
+      "manageDialogAria": "Gestisci raccolta di storie",
+      "manageNamedTitle": "Gestisci {{name}}",
+      "manageTitle": "Gestisci raccolta di storie",
+      "closeManageDialog": "Chiudi modale aggiungi storie",
+      "selectCollection": "Seleziona raccolta",
+      "selectCollectionAria": "Seleziona raccolta di storie",
+      "remove": "Rimuovi",
+      "add": "Aggiungi",
+      "createFirstCollection": "Crea prima la tua prima raccolta.",
+      "deleteCollection": "Elimina raccolta",
+      "close": "Chiudi"
+    },
+    "compose": {
+      "postDialogAria": "Crea post",
+      "newPost": "Nuovo post",
+      "closePostComposer": "Chiudi compositore post",
+      "storyDialogAria": "Crea storia",
+      "newStory": "Nuova storia",
+      "closeStoryComposer": "Chiudi compositore storia",
+      "storyCreationStepsAria": "Passaggi creazione storia",
+      "storyStepMedia": "1. Contenuto",
+      "storyStepCropTrimPublish": "2. Ritaglia, taglia e pubblica",
+      "storyMediaUploadAria": "Caricamento media della storia",
+      "selectStoryMediaTitle": "Inizia selezionando il media della tua storia",
+      "selectStoryMediaSubtitle": "Sono supportati immagini, MP4, WebM, MOV e formati simili.",
+      "selectStoryMedia": "Seleziona media della storia",
+      "selectedFile": "Selezionato: {{file}}",
+      "storyExpires": "Le storie scadono automaticamente dopo 24 ore.",
+      "markStorySensitive": "Contrassegna questa storia come media sensibile",
+      "editingFile": "Modifica: {{file}}",
+      "dragStoryFrameAria": "Trascina per impostare l'inquadratura della storia",
+      "dragFrameHint": "Trascina il riquadro 9:16 per impostare il ritaglio.",
+      "resetFraming": "Reimposta inquadratura",
+      "trimSummary": "Durata originale: {{original}}s · Ritagliata: {{trimmed}}",
+      "trimThumbnailAlt": "Miniatura taglio storia",
+      "trimStoryStartAria": "Taglia inizio storia",
+      "trimStoryEndAria": "Taglia fine storia",
+      "generatingTrimPreviews": "Generazione anteprime di ritaglio in corso...",
+      "trimRange": "Intervallo: da {{start}}s a {{end}}s",
+      "storyMediaPreviewAlt": "Anteprima media della storia",
+      "schedulePublish": "Programma pubblicazione (opzionale)",
+      "saveDraft": "Salva bozza",
+      "publishing": "Pubblicazione...",
+      "publishStory": "Pubblica storia"
+    },
+    "analytics": {
+      "title": "Analisi creator",
+      "lastDays": "Ultimi {{days}} giorni",
+      "views": "visualizzazioni",
+      "watchTime": "Tempo di visione",
+      "saves": "salvataggi",
+      "followerGrowth": "Crescita follower",
+      "topReels": "Top reel",
+      "untitledReel": "Reel senza titolo"
+    },
+    "messages": {
+      "messageRequestSent": "Richiesta di messaggio inviata."
+    },
+    "errors": {
+      "loadData": "Impossibile caricare i dati del profilo. Prova ad aggiornare.",
+      "copyLink": "Impossibile copiare il link del profilo in questo momento.",
+      "sendMessageRequest": "Impossibile inviare la richiesta di messaggio in questo momento.",
+      "openChat": "Impossibile aprire la chat in questo momento."
     }
   },
   "settings": {
@@ -103,8 +396,8 @@
     },
     "sections": {
       "profile": "Profilo",
-      "account": "Account",
-      "privacy": "Privacy",
+      "account": "Conto",
+      "privacy": "Riservatezza",
       "session": "Sessione",
       "preferences": "Preferenze",
       "notifications": "Notifiche",
@@ -118,20 +411,165 @@
       "reload": "Ricarica",
       "discard": "Annulla",
       "saving": "Salvataggio...",
+      "processing": "Elaborazione in corso...",
+      "working": "Operazione in corso...",
       "cancel": "Annulla",
       "back": "Indietro",
-      "add": "Aggiungi"
+      "add": "Aggiungi",
+      "day": "Giorno",
+      "month": "Mese",
+      "year": "Anno",
+      "lastSaved": "Ultimo salvataggio: {{date}}",
+      "lastAction": "Ultima azione: {{date}}"
+    },
+    "profile": {
+      "displayName": "Nome visualizzato",
+      "bio": "Biografia",
+      "bioPlaceholder": "Racconta qualcosa di te",
+      "changeImage": "Cambia immagine",
+      "removeImage": "Rimuovi immagine",
+      "uploadingImage": "Caricamento immagine...",
+      "previewAlt": "Anteprima immagine profilo",
+      "save": "Salva profilo"
+    },
+    "account": {
+      "profileId": "ID profilo:",
+      "handle": "Nome utente",
+      "handleLimitedAvailable": "Le modifiche all'handle sono limitate a una volta ogni 30 giorni. Prossima modifica disponibile il {{date}}.",
+      "handleLimitedNow": "Le modifiche all'handle sono limitate a una volta ogni 30 giorni. Ora puoi modificarlo.",
+      "joined": "Iscritto:",
+      "dateOfBirth": "Data di nascita",
+      "country": "Paese",
+      "countryPlaceholder": "Seleziona paese (opzionale)",
+      "marketingOptIn": "Ricevi aggiornamenti di prodotto e consigli via email",
+      "save": "Salva dettagli account"
+    },
+    "privacy": {
+      "privateProfile": "Profilo privato",
+      "privateProfileHelp": "Quando attivo, solo i follower approvati possono vedere i tuoi post, reel e storie.",
+      "save": "Salva privacy",
+      "saveDiscovery": "Salva pubblico e scoperta",
+      "commentsAudience": "Chi può commentare i tuoi contenuti?",
+      "mentionsAudience": "Chi può menzionarti o taggarti?",
+      "messagesAudience": "Chi può inviarti messaggi?",
+      "storyRepliesAudience": "Chi può rispondere alle tue storie?",
+      "showInSearchSuggestions": "Mostra account nei suggerimenti di ricerca",
+      "allowProfileIndexing": "Consenti indicizzazione del profilo da parte dei motori di ricerca",
+      "showActivityStatus": "Mostra stato attività / ultimo accesso"
+    },
+    "session": {
+      "description": "Usa questi controlli per la sessione di accesso corrente.",
+      "refresh": "Aggiorna sessione"
     },
     "preferences": {
       "compactFeed": "Layout feed compatto",
       "useSystemTheme": "Usa tema di sistema",
       "darkMode": "Modalità scura",
+      "useSystemThemeHelp": "La modalità scura segue l'aspetto del tuo sistema operativo quando questa opzione è attiva.",
       "accessibility": "Accessibilità",
       "reducedMotion": "Riduci animazioni",
       "largerText": "Testo più grande",
       "highContrast": "Contrasto elevato",
       "language": "Lingua",
       "saveAccessibility": "Salva accessibilità"
+    },
+    "audience": {
+      "everyone": "Tutti",
+      "following": "Persone che segui",
+      "nobody": "Nessuno"
+    },
+    "notifications": {
+      "likes": "Mi piace",
+      "comments": "Commenti",
+      "follows": "Follower",
+      "mentions": "Menzioni",
+      "messages": "Messaggi diretti",
+      "marketing": "Promozioni",
+      "product": "Aggiornamenti prodotto",
+      "quietHours": "Ore di silenzio",
+      "quietHoursStart": "Inizio",
+      "quietHoursEnd": "Fine",
+      "save": "Salva notifiche"
+    },
+    "safety": {
+      "sensitiveContentLevel": "Livello contenuti sensibili",
+      "hideSensitiveMedia": "Nascondi media sensibili per impostazione predefinita",
+      "mutedWords": "Parole silenziate",
+      "addWordOrPhrase": "Aggiungi parola o frase",
+      "noMutedKeywords": "Nessuna parola chiave silenziata.",
+      "mutedUsers": "Utenti silenziati",
+      "addHandlePlaceholder": "Aggiungi handle (esempio: @nome)",
+      "searchingUsers": "Ricerca utenti...",
+      "profileAvatarAlt": "Avatar profilo",
+      "noMutedUsers": "Nessun utente silenziato nelle preferenze.",
+      "save": "Salva sicurezza",
+      "sensitiveOptions": {
+        "standard": "Normale",
+        "limited": "Limitato",
+        "strict": "Rigido"
+      }
+    },
+    "security": {
+      "description": "Dove hai effettuato l'accesso.",
+      "currentDevice": "Dispositivo corrente",
+      "signedInDevice": "Dispositivo connesso",
+      "currentSessionLabel": "Sessione corrente",
+      "sessionLabel": "Sessione {{id}}",
+      "created": "Creata il {{date}}",
+      "expires": "Scade il {{date}}",
+      "revoked": "Revocata",
+      "revoke": "Revoca",
+      "revoking": "Revoca in corso...",
+      "noSessions": "Nessuna sessione attiva trovata.",
+      "logoutOtherSessions": "Disconnetti altre sessioni"
+    },
+    "data": {
+      "description": "Scarica i dati del tuo account e gestisci le richieste sul ciclo di vita dell'account.",
+      "downloadMyData": "Scarica i miei dati",
+      "deactivateTitle": "Disattiva account",
+      "deactivatePrompt": "Digita DEACTIVATE per confermare la richiesta.",
+      "deactivatePlaceholder": "Digita DEACTIVATE",
+      "requestDeactivation": "Richiedi disattivazione",
+      "deleteTitle": "Elimina account",
+      "deletePrompt": "Digita DELETE per confermare la richiesta.",
+      "deletePlaceholder": "Digita DELETE",
+      "requestDelete": "Richiedi eliminazione",
+      "immediateWarning": "Entrambe le azioni vengono applicate immediatamente e ti disconnettono.",
+      "confirmDeactivateTitle": "Disattiva account",
+      "confirmDeactivateMessage": "Disattivare ora il tuo account? Verrai disconnesso subito e le sessioni attive saranno revocate.",
+      "confirmDeleteTitle": "Elimina account",
+      "confirmDeleteMessage": "Eliminare definitivamente il tuo account? Questa azione è irreversibile e ti disconnette immediatamente."
+    },
+    "blocked": {
+      "description": "Gestisci gli utenti che hai bloccato.",
+      "loading": "Caricamento utenti bloccati...",
+      "viewProfile": "Visualizza profilo",
+      "imageAlt": "Immagine utente bloccato",
+      "unblock": "Sblocca",
+      "unblocking": "Sblocco in corso...",
+      "empty": "Non hai bloccato nessuno."
+    },
+    "logout": {
+      "description": "Esci dall'account corrente su questo dispositivo.",
+      "action": "Esci"
+    },
+    "avatarModal": {
+      "dialogAria": "Aggiorna immagine profilo",
+      "title": "Aggiorna immagine profilo",
+      "close": "Chiudi modale avatar",
+      "stepsAria": "Passaggi caricamento avatar",
+      "stepSelect": "1. Seleziona",
+      "stepCrop": "2. Ritaglia e carica",
+      "selectImageAria": "Seleziona immagine avatar",
+      "chooseTitle": "Scegli un'immagine per il tuo profilo",
+      "chooseSubtitle": "Nel passaggio successivo puoi ritagliarla e posizionarla.",
+      "selectImage": "Seleziona immagine",
+      "selectedFile": "Selezionato: {{file}}",
+      "cropPreviewAlt": "Anteprima ritaglio avatar",
+      "zoom": "Ingrandisci",
+      "dragHint": "Trascina l'immagine per riposizionarla nel cerchio.",
+      "upload": "Carica immagine",
+      "uploading": "Caricamento..."
     },
     "language": {
       "system": "Predefinito di sistema",
@@ -151,14 +589,36 @@
       "tr": "Türkçe"
     },
     "messages": {
+      "birthDateInvalid": "Seleziona una data di nascita valida e completa.",
       "profileSaved": "Impostazioni profilo salvate.",
       "profileReloaded": "Impostazioni profilo ricaricate.",
+      "privacySaved": "Impostazione privacy salvata.",
+      "discoverySaved": "Preferenze privacy per pubblico e scoperta salvate.",
+      "notificationsSaved": "Preferenze notifiche salvate.",
+      "safetySaved": "Preferenze sicurezza salvate.",
+      "sessionRevoked": "Sessione revocata.",
+      "otherSessionsLoggedOutOne": "Disconnessa 1 altra sessione.",
+      "otherSessionsLoggedOutMany": "Disconnesse {{count}} altre sessioni.",
+      "noOtherSessions": "Nessun'altra sessione attiva da revocare.",
+      "dataExportDownloaded": "Esportazione dati scaricata.",
+      "deactivateTypeConfirm": "Digita DEACTIVATE per confermare la richiesta di disattivazione account.",
+      "deleteTypeConfirm": "Digita DELETE per confermare la richiesta di eliminazione account.",
+      "accountDeactivated": "Account disattivato e sessioni revocate.",
+      "accountDeleted": "Account eliminato.",
+      "profileImageUpdated": "Immagine profilo aggiornata.",
+      "imageRemoved": "Immagine rimossa. Salva il profilo per applicare la modifica.",
+      "unblockedHandle": "Sbloccato @{{handle}}.",
+      "accessibilitySaved": "Preferenze di accessibilità salvate.",
       "preferencesSaved": "Preferenze salvate."
     }
   },
   "discover": {
     "page": {
       "title": "Scopri"
+    },
+    "search": {
+      "label": "Cerca",
+      "placeholder": "Cerca utenti, community, post della community, blog, reel, post e hashtag"
     },
     "scope": {
       "all": "Tutto",
@@ -171,6 +631,9 @@
       "users": "Utenti"
     },
     "sections": {
+      "followingHashtags": "Hashtag seguiti",
+      "fromFollowedHashtags": "Dagli hashtag seguiti",
+      "peopleYouMayKnow": "Persone che potresti conoscere",
       "forYou": "Per te",
       "users": "Utenti",
       "communities": "Community",
@@ -179,20 +642,980 @@
       "reels": "Reel",
       "hashtags": "Hashtag",
       "posts": "Post"
+    },
+    "actions": {
+      "follow": "Segui",
+      "unfollow": "Smetti di seguire",
+      "followUser": "Segui utente",
+      "signInToFollow": "Accedi per seguire"
+    },
+    "profile": {
+      "openStoriesAria": "Apri le storie di @{{handle}}",
+      "viewProfileAria": "Visualizza il profilo di @{{handle}}",
+      "imageAlt": "Immagine profilo",
+      "authorImageAlt": "Immagine autore",
+      "noBio": "Nessuna bio al momento."
+    },
+    "reels": {
+      "recommendedAlt": "Reel consigliato"
+    },
+    "empty": {
+      "noRecommendedReelsTitle": "Nessun reel consigliato per ora",
+      "noRecommendedReelsMessage": "Interagisci di più con reel, commenti e hashtag per migliorare i suggerimenti in Scopri."
+    },
+    "loading": {
+      "searchingAria": "Ricerca in corso",
+      "recommendationsAria": "Caricamento consigli"
+    },
+    "community": {
+      "imageAlt": "Immagine community",
+      "noDescription": "Nessuna descrizione al momento.",
+      "member": "membro",
+      "members": "membri"
+    },
+    "communityPost": {
+      "viewPost": "Visualizza post della community",
+      "openForDetails": "Apri questo post per vedere i dettagli.",
+      "postedBy": "Pubblicato da @{{handle}} · {{date}}"
+    },
+    "blog": {
+      "noDescription": "Nessuna descrizione al momento.",
+      "byUpdated": "Di @{{handle}} · Aggiornato {{date}}"
+    },
+    "confirm": {
+      "delete": "Elimina",
+      "cancel": "Annulla",
+      "deletePostTitle": "Elimina post",
+      "deletePostMessage": "Eliminare questo post? Questa azione non può essere annullata.",
+      "deleteCommentTitle": "Elimina commento",
+      "deleteCommentMessage": "Eliminare questo commento? Questa azione non può essere annullata."
+    },
+    "status": {
+      "postShared": "Post condiviso.",
+      "postSentAsMessage": "Post inviato come messaggio.",
+      "followRequestSent": "Richiesta di follow inviata a @{{handle}}.",
+      "followedUser": "Ora segui @{{handle}}.",
+      "unfollowedHashtag": "Non segui piu #{{tag}}.",
+      "followingHashtag": "Segui #{{tag}}.",
+      "noResults": "Nessun risultato trovato."
+    },
+    "errors": {
+      "updatePost": "Impossibile aggiornare il post in questo momento.",
+      "deletePost": "Impossibile eliminare il post in questo momento.",
+      "sharePostNow": "Impossibile condividere questo post in questo momento.",
+      "sendPostToChatNow": "Impossibile inviare questo post in chat in questo momento.",
+      "followUser": "Impossibile seguire questo utente in questo momento.",
+      "updateLikeNow": "Impossibile aggiornare il mi piace in questo momento.",
+      "setReactionNow": "Impossibile impostare la reazione in questo momento.",
+      "clearReactionNow": "Impossibile rimuovere la reazione in questo momento.",
+      "addCommentNow": "Impossibile aggiungere un commento in questo momento.",
+      "updateCommentNow": "Impossibile aggiornare il commento in questo momento.",
+      "deleteCommentNow": "Impossibile eliminare il commento in questo momento.",
+      "reactToCommentNow": "Impossibile reagire al commento in questo momento.",
+      "clearCommentReactionNow": "Impossibile rimuovere la reazione al commento in questo momento.",
+      "updateReelLike": "Impossibile aggiornare il mi piace al reel in questo momento.",
+      "addReelComment": "Impossibile aggiungere un commento al reel in questo momento.",
+      "updateReelComment": "Impossibile aggiornare il commento del reel in questo momento.",
+      "deleteReelComment": "Impossibile eliminare il commento del reel in questo momento.",
+      "updateReelCommentLike": "Impossibile aggiornare il mi piace al commento del reel in questo momento.",
+      "allSearchesFailed": "Tutte le ricerche non sono riuscite.",
+      "completeSearch": "Impossibile completare la ricerca in questo momento.",
+      "loadRecommendedReels": "Impossibile caricare i reel consigliati in questo momento."
+    }
+  },
+  "blogs": {
+    "page": {
+      "kicker": "Pubblicazione",
+      "title": "Blog"
+    },
+    "tabs": {
+      "aria": "Elenchi dei blog",
+      "all": "Tutti i blog",
+      "following": "Seguiti",
+      "mine": "I miei blog"
+    },
+    "subtitle": {
+      "all": "Scopri e cerca blog in tutto Venli.",
+      "following": "Blog dei creator che segui.",
+      "mine": "Gestisci i tuoi blog e le tue bozze."
+    },
+    "search": {
+      "placeholder": "Cerca blog per titolo, slug, handle...",
+      "try": "Prova:"
+    },
+    "sort": {
+      "label": "Ordina",
+      "menuAria": "Ordina blog",
+      "recentlyUpdated": "Aggiornati di recente",
+      "newestCreated": "Creati più di recente",
+      "titleAz": "Titolo A-Z"
+    },
+    "actions": {
+      "openStudio": "Apri Blog Studio",
+      "clear": "Cancella"
+    },
+    "visibility": {
+      "public": "Pubblico",
+      "private": "Privato",
+      "owner": "Proprietario"
+    },
+    "meta": {
+      "updated": "Aggiornato {{date}}"
+    },
+    "resultCount": "{{visible}} di {{total}} blog",
+    "loading": {
+      "aria": "Caricamento blog"
+    },
+    "infinite": {
+      "more": "Scorri per altri blog..."
+    },
+    "empty": {
+      "noBlogsForTab": "Nessun blog trovato ancora per questa scheda."
+    },
+    "errors": {
+      "signInToViewTab": "Accedi per vedere questa scheda.",
+      "loadNow": "Impossibile caricare i blog in questo momento."
+    }
+  },
+  "communities": {
+    "page": {
+      "title": "Community",
+      "subtitle": "Crea o unisciti a community basate su interessi condivisi."
+    },
+    "tabs": {
+      "aria": "Viste delle community",
+      "mine": "Le mie community",
+      "discover": "Scopri community"
+    },
+    "actions": {
+      "newCommunity": "Nuova community",
+      "refresh": "Aggiorna community",
+      "search": "Cerca",
+      "clear": "Cancella",
+      "join": "Unisciti",
+      "joining": "Accesso alla community…",
+      "leave": "Lascia",
+      "leaving": "Uscita dalla community…",
+      "signInToJoin": "Accedi per unirti",
+      "cancel": "Annulla",
+      "create": "Crea",
+      "creating": "Creazione…"
+    },
+    "search": {
+      "placeholder": "Cerca community",
+      "try": "Prova:"
+    },
+    "mine": {
+      "signInPrompt": "Accedi o crea un account per vedere le community a cui ti sei unito.",
+      "empty": "Non ti sei ancora unito a nessuna community."
+    },
+    "discover": {
+      "empty": "Nessuna community trovata."
+    },
+    "community": {
+      "members": "membri",
+      "createdBy": "Creata da @{{handle}}",
+      "imageAlt": "Immagine della community",
+      "openAria": "Apri {{name}}",
+      "owner": "Proprietario",
+      "joined": "Iscritto"
+    },
+    "authAction": {
+      "create": "creare una community",
+      "join": "unirti alle community",
+      "leave": "lasciare le community"
+    },
+    "visibility": {
+      "private": "Privata",
+      "public": "Pubblica"
+    },
+    "create": {
+      "dialogAria": "Crea community",
+      "title": "Crea community",
+      "close": "Chiudi modale crea community",
+      "name": "Nome",
+      "namePlaceholder": "Nome della community",
+      "description": "Descrizione",
+      "descriptionPlaceholder": "Di cosa parla questa community?",
+      "rules": "Regole",
+      "rulesPlaceholder": "Una regola per riga",
+      "image": "Immagine della community",
+      "imagePreviewAlt": "Anteprima immagine della community",
+      "private": "Community privata"
+    },
+    "status": {
+      "created": "Community creata.",
+      "joined": "Ti sei unito alla community.",
+      "left": "Hai lasciato la community."
+    },
+    "errors": {
+      "load": "Impossibile caricare le community in questo momento.",
+      "search": "Impossibile cercare community in questo momento.",
+      "create": "Impossibile creare la community in questo momento.",
+      "join": "Impossibile unirsi alla community in questo momento.",
+      "leave": "Impossibile lasciare la community in questo momento.",
+      "signInForAction": "Accedi o crea un account per {{action}}."
+    }
+  },
+  "blogHome": {
+    "loading": {
+      "aria": "Caricamento blog"
+    },
+    "header": {
+      "moreBy": "Altro da @{{handle}}",
+      "editInStudio": "Modifica in Studio"
+    },
+    "post": {
+      "draft": "Bozza"
+    },
+    "actions": {
+      "save": "Salva",
+      "unsave": "Rimuovi dai salvati"
+    },
+    "empty": {
+      "noPosts": "Nessun post ancora."
+    },
+    "errors": {
+      "notFound": "Blog non trovato.",
+      "notFoundOrPrivate": "Blog non trovato o privato.",
+      "loadNow": "Impossibile caricare questo blog in questo momento.",
+      "updateSavedStatus": "Impossibile aggiornare lo stato di salvataggio in questo momento."
+    }
+  },
+  "blogPost": {
+    "loading": {
+      "aria": "Caricamento post del blog"
+    },
+    "actions": {
+      "backToBlog": "Torna al blog",
+      "like": "Mi piace",
+      "comment": "Commenta",
+      "save": "Salva",
+      "unsave": "Rimuovi dai salvati",
+      "share": "Condividi",
+      "linkCopied": "Link copiato",
+      "embed": "Incorpora"
+    },
+    "meta": {
+      "byDate": "Di @{{handle}} · {{date}}"
+    },
+    "hints": {
+      "likesSoon": "I mi piace del blog saranno disponibili presto",
+      "commentsSoon": "I commenti del blog saranno disponibili presto"
+    },
+    "errors": {
+      "notFound": "Post del blog non trovato.",
+      "notFoundOrPrivate": "Post del blog non trovato o privato.",
+      "loadNow": "Impossibile caricare questo post del blog in questo momento.",
+      "updateSavedStatus": "Impossibile aggiornare lo stato di salvataggio in questo momento."
+    }
+  },
+  "blogEmbed": {
+    "loading": "Caricamento embed...",
+    "kicker": "Blog Venli",
+    "meta": {
+      "byAuthor": "Di @{{handle}}"
+    },
+    "footer": {
+      "readFullPost": "Leggi il post completo su Venli"
+    },
+    "aria": {
+      "loading": "Caricamento embed del blog",
+      "openFullPost": "Apri il post completo del blog"
+    },
+    "errors": {
+      "couldNotLoad": "Impossibile caricare l'embed.",
+      "postUnavailable": "Questo post del blog non è disponibile.",
+      "embeddingDisabled": "L'incorporamento è disabilitato dal proprietario del blog.",
+      "loadNow": "Impossibile caricare questo embed in questo momento."
+    }
+  },
+  "blogEmbedTools": {
+    "loading": {
+      "aria": "Caricamento strumenti embed",
+      "message": "Caricamento strumenti embed..."
+    },
+    "header": {
+      "kicker": "Strumenti Embed",
+      "subtitle": "Anteprima dell'embed e copia dello snippet iframe per qualsiasi sito web."
+    },
+    "preview": {
+      "title": "Anteprima",
+      "iframeTitle": "Anteprima embed del blog"
+    },
+    "code": {
+      "title": "Codice Embed",
+      "aria": "Codice iframe embed del blog"
+    },
+    "actions": {
+      "copyCode": "Copia codice",
+      "copied": "Copiato",
+      "openRaw": "Apri pagina embed grezza",
+      "backToPost": "Torna al post"
+    },
+    "embed": {
+      "defaultTitle": "Embed blog Venli"
+    },
+    "errors": {
+      "notFound": "Post del blog non trovato.",
+      "notFoundOrPrivate": "Post del blog non trovato o privato.",
+      "embeddingDisabled": "L'incorporamento è disabilitato dal proprietario del blog.",
+      "loadNow": "Impossibile caricare gli strumenti embed per questo post in questo momento."
+    }
+  },
+  "sharedStory": {
+    "loading": {
+      "story": "Caricamento storia..."
+    },
+    "notFound": {
+      "title": "Storia non disponibile",
+      "message": "Questa storia è scaduta, è stata rimossa oppure il link non è valido."
+    },
+    "errors": {
+      "title": "Qualcosa è andato storto",
+      "load": "Impossibile caricare questa storia condivisa."
+    },
+    "author": {
+      "imageAlt": "Immagine creator"
+    },
+    "actions": {
+      "linkCopiedAria": "Link della storia copiato",
+      "copyStoryLinkAria": "Copia link della storia",
+      "copied": "Copiato",
+      "copyLink": "Copia link"
+    },
+    "media": {
+      "alt": "Media della storia condivisa"
+    }
+  },
+  "communityDetail": {
+    "timeoutOptions": {
+      "oneDay": "1 giorno",
+      "sevenDays": "7 giorni",
+      "oneMonth": "1 mese"
+    },
+    "common": {
+      "cancel": "Annulla",
+      "working": "Operazione in corso…"
+    },
+    "status": {
+      "memberPromoted": "Membro promosso a moderatore.",
+      "moderatorRemoved": "Ruolo di moderatore rimosso.",
+      "memberBanned": "@{{handle}} è stato bannato.",
+      "memberUnbanned": "@{{handle}} non è più bannato.",
+      "memberTimedOut": "@{{handle}} è stato sospeso per {{timeoutLabel}}.",
+      "joinedCommunity": "Ti sei unito alla community.",
+      "leftCommunity": "Hai lasciato la community.",
+      "communityLinkCopied": "Link della community copiato.",
+      "communityUpdated": "Community aggiornata.",
+      "postPublished": "Post pubblicato.",
+      "postRemovedFromSaved": "Post rimosso dai salvati.",
+      "postSaved": "Post salvato.",
+      "postLinkCopied": "Link del post copiato.",
+      "voteSubmitted": "Voto inviato.",
+      "postUpdated": "Post aggiornato.",
+      "postDeleted": "Post eliminato."
+    },
+    "errors": {
+      "communityNotLoaded": "Community non caricata.",
+      "communityNotFound": "Community non trovata.",
+      "signInToJoin": "Accedi o crea un account per unirti a questa community.",
+      "copyFailed": "Copia non riuscita",
+      "copyCommunityLink": "Impossibile copiare il link della community.",
+      "communityNameRequired": "Il nome della community è obbligatorio.",
+      "titleRequired": "Il titolo è obbligatorio.",
+      "addContentBeforePosting": "Aggiungi testo, immagine, link o sondaggio prima di pubblicare.",
+      "signInToCreatePost": "Accedi o crea un account per creare un post della community.",
+      "copyPostLink": "Impossibile copiare il link del post.",
+      "addContentBeforeSaving": "Aggiungi testo, immagine, link o sondaggio prima di salvare.",
+      "linkMustStartHttp": "L'URL del link deve iniziare con http:// o https://.",
+      "linkInvalid": "Inserisci un URL valido.",
+      "action": {
+        "promoteMember": "promuovere membro",
+        "removeModerator": "rimuovere moderatore",
+        "banMember": "bannare membro",
+        "unbanMember": "rimuovere ban membro",
+        "timeoutMember": "sospendere membro"
+      }
+    },
+    "moderation": {
+      "modalTitle": {
+        "confirm": "Conferma azione",
+        "ban": "Banna utente",
+        "unban": "Rimuovi ban utente",
+        "timeout": "Sospendi utente"
+      },
+      "modalMessage": {
+        "ban": "Bannare @{{handle}}? Questo lo bloccherà dal tuo account.",
+        "unban": "Rimuovere il ban a @{{handle}}? Questo rimuoverà il blocco dal tuo account.",
+        "timeout": "Sospendere @{{handle}} per {{timeoutLabel}}? Durante la sospensione non potrà pubblicare o commentare in questa community."
+      },
+      "confirmText": {
+        "confirm": "Conferma",
+        "ban": "Banna utente",
+        "unban": "Rimuovi ban utente",
+        "timeout": "Sospendi utente"
+      },
+      "timeoutLength": "Durata sospensione"
+    },
+    "community": {
+      "imageAlt": "Immagine della community",
+      "memberCount": "{{count}} membri",
+      "createdBy": "Creata da @{{handle}}",
+      "visibility": {
+        "private": "Privata",
+        "public": "Pubblica"
+      }
+    },
+    "actions": {
+      "joining": "Accesso alla community…",
+      "join": "Unisciti",
+      "leaving": "Uscita dalla community…",
+      "leave": "Lascia",
+      "editCommunity": "Modifica community",
+      "createPost": "Crea post",
+      "communityLinkCopiedAria": "Link della community copiato",
+      "copyCommunityLinkAria": "Copia link della community",
+      "copied": "Copiato",
+      "copyCommunityLink": "Copia link della community"
+    },
+    "notice": {
+      "signInToPost": "Accedi o crea un account per creare post e commentare in questa community.",
+      "joinToPost": "Unisciti a questa community per creare post.",
+      "timedOut": "Sei sospeso in questa community fino a {{until}}. Pubblicazione e commenti sono disabilitati.",
+      "later": "più tardi"
+    },
+    "feed": {
+      "title": "Feed della community",
+      "subtitle": "Post dei membri in /{{slug}}",
+      "searchPlaceholder": "Cerca post in questa community",
+      "loadingAria": "Caricamento dei post della community",
+      "empty": {
+        "noSearchMatches": "Nessun post corrisponde a questa ricerca.",
+        "noPostsYet": "Nessun post ancora."
+      }
+    },
+    "post": {
+      "authorImageAlt": "Immagine autore",
+      "untitled": "Post senza titolo",
+      "pollVotes": "{{count}} voti",
+      "badges": {
+        "image": "Immagine",
+        "poll": "Sondaggio"
+      }
+    },
+    "media": {
+      "previousImage": "Immagine precedente",
+      "nextImage": "Immagine successiva",
+      "postImageAlt": "Immagine del post",
+      "imageThumbAlt": "Immagine {{index}}",
+      "imagePreview": "Anteprima immagine",
+      "closeImagePreview": "Chiudi anteprima immagine",
+      "fullscreenPostImageAlt": "Immagine del post a schermo intero"
+    },
+    "postActions": {
+      "upvotePost": "Vota positivamente il post",
+      "upvote": "Vota su",
+      "downvotePost": "Vota negativamente il post",
+      "downvote": "Vota giù",
+      "openComments": "Apri commenti",
+      "savePost": "Salva post",
+      "unsavePost": "Rimuovi post dai salvati",
+      "save": "Salva",
+      "saved": "Salvato",
+      "postLinkCopiedAria": "Link del post copiato",
+      "copyPostLinkAria": "Copia link del post",
+      "copied": "Copiato",
+      "copyLink": "Copia link",
+      "editPost": "Modifica post",
+      "deletePost": "Elimina post",
+      "deletePostConfirm": "Eliminare questo post? Questa azione non può essere annullata.",
+      "delete": "Elimina"
+    },
+    "members": {
+      "modalAria": "Membri della community",
+      "title": "Membri",
+      "closeAria": "Chiudi modale membri",
+      "tabsAria": "Viste di moderazione della community",
+      "tabs": {
+        "members": "Membri",
+        "bannedUsers": "Utenti bannati"
+      },
+      "search": {
+        "membersPlaceholder": "Cerca membri per @handle o ruolo",
+        "bannedPlaceholder": "Cerca utenti bannati per nome o @handle",
+        "membersAria": "Cerca membri",
+        "bannedAria": "Cerca utenti bannati"
+      },
+      "hint": {
+        "membersInCommunity": "{{count}} membri in /{{slug}}",
+        "bannedDescription": "Gestisci gli utenti bannati dal tuo account durante la moderazione di /{{slug}}"
+      },
+      "actions": {
+        "makeModerator": "Rendi moderatore",
+        "removeModerator": "Rimuovi moderatore",
+        "timeoutUser": "Sospendi utente",
+        "banUser": "Banna utente",
+        "unbanUser": "Rimuovi ban utente"
+      },
+      "memberAvatarAlt": "Avatar membro",
+      "bannedUserAvatarAlt": "Avatar utente bannato",
+      "bannedRole": "Bannato",
+      "empty": {
+        "noMembersMatchSearch": "Nessun membro corrisponde alla ricerca.",
+        "noMembersYet": "Nessun membro da mostrare ancora.",
+        "loadingBannedUsers": "Caricamento utenti bannati...",
+        "noBannedUsersMatchSearch": "Nessun utente bannato corrisponde alla ricerca.",
+        "noBannedUsers": "Nessun utente bannato."
+      }
+    },
+    "postType": {
+      "text": "Testo",
+      "media": "Immagini e video",
+      "link": "Collegamento",
+      "poll": "Sondaggio"
+    },
+    "editPost": {
+      "modalAria": "Modifica post della community",
+      "title": "Modifica post",
+      "closeAria": "Chiudi modale modifica post",
+      "typeAria": "Modifica tipo di post",
+      "fields": {
+        "title": "Titolo",
+        "linkUrl": "URL del link",
+        "addImages": "Aggiungi immagini (fino a 10)",
+        "question": "Domanda",
+        "option": "Opzione {{index}}"
+      },
+      "placeholders": {
+        "title": "Aggiungi un titolo",
+        "updatePost": "Aggiorna il tuo post...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "Aggiungi testo opzionale...",
+        "askCommunity": "Fai una domanda alla community...",
+        "optionText": "Testo opzione"
+      },
+      "previewAlt": "Anteprima immagine selezionata per la modifica",
+      "removeCurrent": "Rimuovi corrente",
+      "remove": "Rimuovi",
+      "addOption": "Aggiungi opzione",
+      "saving": "Salvataggio…",
+      "saveChanges": "Salva modifiche"
+    },
+    "editCommunity": {
+      "modalAria": "Modifica community",
+      "title": "Modifica community",
+      "closeAria": "Chiudi modale modifica community",
+      "fields": {
+        "name": "Nome",
+        "information": "Informazioni",
+        "rules": "Regole",
+        "image": "Immagine"
+      },
+      "placeholders": {
+        "communityName": "Nome della community",
+        "describeCommunity": "Descrivi questa community",
+        "oneRulePerLine": "Una regola per riga"
+      },
+      "imagePreviewAlt": "Anteprima immagine della community",
+      "saving": "Salvataggio…",
+      "save": "Salva"
+    },
+    "createPost": {
+      "modalAria": "Crea post della community",
+      "title": "Crea post",
+      "closeAria": "Chiudi modale crea post",
+      "typeAria": "Tipo di post",
+      "fields": {
+        "title": "Titolo",
+        "linkUrl": "URL del link",
+        "attachImages": "Allega immagini (fino a 10)",
+        "question": "Domanda",
+        "option": "Opzione {{index}}"
+      },
+      "placeholders": {
+        "title": "Aggiungi un titolo",
+        "shareThoughts": "Condividi i tuoi pensieri...",
+        "linkUrl": "https://example.com",
+        "optionalBody": "Aggiungi testo opzionale...",
+        "askCommunity": "Fai una domanda alla community...",
+        "optionText": "Testo opzione"
+      },
+      "previewAlt": "Anteprima immagine del post selezionata",
+      "removeCurrent": "Rimuovi corrente",
+      "imagesAttachedInTab": "{{count}} immagine/i allegate nella scheda Immagini e video.",
+      "linkAttachedInTab": "Link allegato nella scheda Link.",
+      "remove": "Rimuovi",
+      "addOption": "Aggiungi opzione",
+      "posting": "Pubblicazione…",
+      "post": "Pubblica"
+    },
+    "loading": {
+      "communityAria": "Caricamento community",
+      "feedAria": "Caricamento feed della community",
+      "postsAria": "Caricamento post della community"
     }
   },
   "chatPage": {
     "title": "Messaggi",
+    "layoutAria": "Layout dei messaggi",
+    "common": {
+      "you": "Tu",
+      "youLowercase": "tu",
+      "me": "Io",
+      "gif": "GIF",
+      "cancel": "Annulla",
+      "save": "Salva",
+      "saving": "Salvataggio..."
+    },
+    "starterMessages": {
+      "hey": "Ciao 👋",
+      "howAreYou": "Come va oggi?",
+      "catchUp": "Ti va di sentirci più tardi?"
+    },
     "search": {
       "label": "Cerca chat",
+      "marquee": "Trova chat per nome, handle o messaggio",
       "startNewChat": "Avvia una nuova chat"
     },
     "sidebar": {
       "chats": "Chat"
     },
+    "loading": {
+      "conversations": "Caricamento conversazioni",
+      "messages": "Caricamento messaggi"
+    },
+    "conversation": {
+      "avatarAlt": "Avatar conversazione"
+    },
+    "empty": {
+      "noChatsFound": "Nessuna chat trovata.",
+      "noActiveChats": "Nessuna chat attiva al momento.",
+      "firstMessageTitle": "Questa chat aspetta il suo primo messaggio",
+      "firstMessageDescription": "Rompi il silenzio e invia un rapido ciao 👋",
+      "noMessagesFoundTitle": "Nessun messaggio trovato",
+      "noMessagesFoundDescription": "Prova un'altra parola chiave nella ricerca."
+    },
+    "thread": {
+      "backToChats": "Torna alle chat",
+      "groupOptions": "Opzioni chat di gruppo",
+      "searchMessages": "Cerca messaggi",
+      "changeChatName": "Cambia nome chat",
+      "leaveChat": "Esci dalla chat",
+      "deleteChat": "Elimina chat",
+      "unmuteChat": "Riattiva audio chat",
+      "muteChat": "Silenzia chat",
+      "defaultGroupChatName": "Chat di gruppo"
+    },
+    "messageSearch": {
+      "backToChat": "Torna alla chat",
+      "placeholder": "Cerca messaggi",
+      "clear": "Cancella ricerca messaggi",
+      "avatarAlt": "Avatar autore del messaggio",
+      "noResults": "Nessun messaggio trovato per questa ricerca.",
+      "idleTitle": "Cerca in questa chat",
+      "idleDescription": "Trova messaggi, etichette multimediali e @handle in questa conversazione."
+    },
+    "messages": {
+      "fetchingOlder": "Recupero dei messaggi precedenti…",
+      "noOlder": "Nessun messaggio precedente",
+      "senderAvatarAlt": "Avatar mittente del messaggio",
+      "replyMediaPreviewAlt": "Anteprima del messaggio a cui si risponde",
+      "sentImageAlt": "Immagine inviata",
+      "sentGifAlt": "GIF inviata",
+      "replyToMessage": "Rispondi al messaggio",
+      "options": "Opzioni messaggio",
+      "actions": {
+        "edit": "Modifica",
+        "report": "Segnala",
+        "copy": "Copia"
+      }
+    },
+    "reactions": {
+      "show": "Mostra reazioni",
+      "title": "Reazioni",
+      "close": "Chiudi reazioni",
+      "all": "Tutte",
+      "authorAvatarAlt": "Immagine autore della reazione"
+    },
+    "composer": {
+      "replyingTo": "Rispondi a {{target}}",
+      "cancelReply": "Annulla risposta",
+      "addEmoji": "Aggiungi emoji",
+      "messagePlaceholder": "Messaggio...",
+      "addGif": "Aggiungi GIF",
+      "addImage": "Aggiungi immagine",
+      "searchEmojiPlaceholder": "Cerca emoji",
+      "searchGifsPlaceholder": "Cerca GIF Giphy",
+      "search": "Cerca",
+      "trendingNow": "Di tendenza ora",
+      "noTrendingGifs": "Nessuna GIF di tendenza al momento.",
+      "noGifsFound": "Nessuna GIF trovata.",
+      "sharing": "Condivisione",
+      "sharedPostPreviewAlt": "Anteprima del media del post condiviso",
+      "removeSharedPost": "Rimuovi post condiviso",
+      "send": "Invia"
+    },
+    "sharedReel": {
+      "viewerAria": "Visualizzatore reel condiviso",
+      "settings": "Impostazioni reel",
+      "closeViewer": "Chiudi visualizzatore reel",
+      "unmute": "Attiva audio reel",
+      "mute": "Disattiva audio reel",
+      "report": "Segnala reel",
+      "edit": "Modifica reel",
+      "deleting": "Eliminazione…",
+      "delete": "Elimina reel",
+      "authorAvatarAlt": "Avatar autore del reel",
+      "like": "Metti mi piace al reel",
+      "openComments": "Apri commenti del reel",
+      "share": "Condividi reel",
+      "replyToChatPlaceholder": "Rispondi in chat...",
+      "sendingShort": "...",
+      "commentsAria": "Commenti del reel",
+      "comments": "Commenti",
+      "closeComments": "Chiudi commenti",
+      "close": "Chiudi",
+      "commentAuthorAlt": "Immagine autore del commento",
+      "hideReplies": "Nascondi risposte",
+      "viewReplies": "Visualizza risposte ({{count}})",
+      "unlikeComment": "Rimuovi mi piace al commento",
+      "likeComment": "Metti mi piace al commento",
+      "reply": "Rispondi",
+      "reportComment": "Segnala commento",
+      "noCommentsYet": "Nessun commento al momento.",
+      "addCommentPlaceholder": "Aggiungi un commento...",
+      "post": "Pubblica",
+      "editCaptionPlaceholder": "Modifica didascalia del reel...",
+      "saving": "Salvataggio…",
+      "loadingDetails": "Caricamento dettagli del reel...",
+      "forYou": "Per te",
+      "replyingToComment": "Risposta al commento",
+      "posting": "Pubblicazione..."
+    },
     "noConversation": {
-      "title": "Seleziona una chat per iniziare a messaggiare",
-      "startNewChat": "Avvia una nuova chat"
+      "title": "Scegli una chat per iniziare a scrivere",
+      "subtitle1": "Scegli una conversazione a sinistra per aprire il thread.",
+      "subtitle2": "Non vedi ancora la persona? Avvia una nuova chat.",
+      "startNewChat": "Avvia nuova chat"
+    },
+    "replyPreview": {
+      "youRepliedTo": "Hai risposto a {{target}}",
+      "authorRepliedTo": "@{{authorHandle}} ha risposto a {{target}}",
+      "image": "📷 Immagine",
+      "sharedPost": "Post condiviso",
+      "sharedReel": "Reel condiviso",
+      "sharedStory": "Storia condivisa",
+      "message": "Messaggio"
+    },
+    "conversationPreview": {
+      "sharedPostFrom": "Post condiviso da @{{handle}}",
+      "sharedStoryFrom": "Storia condivisa da @{{handle}}",
+      "sharedReelFrom": "Reel condiviso da @{{handle}}",
+      "sharedLink": "Link condiviso"
+    },
+    "unfurl": {
+      "previewUnavailable": "Anteprima del link non disponibile. Apri il link condiviso.",
+      "openSharedLink": "Apri link condiviso"
+    },
+    "status": {
+      "loadConversationsFailed": "Impossibile caricare le conversazioni.",
+      "startDirectChatFailed": "Impossibile avviare una chat diretta.",
+      "startGroupChatFailed": "Impossibile avviare una chat di gruppo.",
+      "loadMessagesFailed": "Impossibile caricare i messaggi.",
+      "liveUpdatesUnavailable": "Gli aggiornamenti in tempo reale sono temporaneamente non disponibili.",
+      "messageCopied": "Messaggio copiato.",
+      "copyMessageFailed": "Impossibile copiare il messaggio.",
+      "messageContentRequired": "Il contenuto del messaggio è obbligatorio.",
+      "updateMessageFailed": "Impossibile aggiornare il messaggio.",
+      "sendMessageFailed": "Impossibile inviare il messaggio.",
+      "loadGifsFailed": "Impossibile caricare GIF da Giphy.",
+      "loadTrendingGifsFailed": "Impossibile caricare le GIF di tendenza.",
+      "sendGifFailed": "Impossibile inviare la GIF.",
+      "uploadImageFailed": "Impossibile caricare l'immagine.",
+      "reelDeleted": "Il reel è stato eliminato.",
+      "openReelFailed": "Impossibile aprire questo reel in questo momento.",
+      "sendReplyFailed": "Impossibile inviare la risposta.",
+      "updateReelFailed": "Impossibile aggiornare questo reel in questo momento.",
+      "deleteReelFailed": "Impossibile eliminare questo reel in questo momento.",
+      "updateReelCommentFailed": "Impossibile aggiornare il commento del reel in questo momento.",
+      "deleteReelCommentFailed": "Impossibile eliminare il commento del reel in questo momento.",
+      "updateReelCommentLikeFailed": "Impossibile aggiornare il mi piace al commento del reel in questo momento.",
+      "updateReelLikeFailed": "Impossibile aggiornare il mi piace al reel in questo momento.",
+      "addReelCommentFailed": "Impossibile aggiungere un commento al reel in questo momento.",
+      "loadOlderMessagesFailed": "Impossibile caricare i messaggi precedenti.",
+      "setReactionFailed": "Impossibile impostare la reazione.",
+      "clearReactionFailed": "Impossibile rimuovere la reazione.",
+      "sendStoryReplyFailed": "Impossibile inviare la risposta alla storia in questo momento.",
+      "deleteStoryFailed": "Impossibile eliminare questa storia in questo momento.",
+      "submitReportFailed": "Impossibile inviare la segnalazione in questo momento.",
+      "chatNameEmpty": "Il nome della chat non può essere vuoto.",
+      "chatNameUpdated": "Nome chat aggiornato.",
+      "updateChatNameFailed": "Impossibile aggiornare il nome della chat.",
+      "leftGroupChat": "Hai lasciato la chat di gruppo.",
+      "chatDeleted": "Chat eliminata.",
+      "leaveGroupChatFailed": "Impossibile lasciare la chat di gruppo.",
+      "deleteChatFailed": "Impossibile eliminare la chat.",
+      "chatMuted": "Chat silenziata.",
+      "chatUnmuted": "Audio della chat riattivato.",
+      "updateMuteFailed": "Impossibile aggiornare l'impostazione audio.",
+      "searchUsersFailed": "Impossibile cercare utenti in questo momento.",
+      "loadSuggestionsFailed": "Impossibile caricare i suggerimenti in questo momento."
+    },
+    "modals": {
+      "deleteComment": {
+        "title": "Elimina commento",
+        "message": "Eliminare questo commento? Questa azione non può essere annullata.",
+        "confirm": "Elimina"
+      },
+      "leave": {
+        "titleLeave": "Esci dalla chat",
+        "titleDelete": "Elimina chat",
+        "confirmLeave": "Esci",
+        "confirmDelete": "Elimina",
+        "busyLeaving": "Uscita in corso...",
+        "displayNameFallback": "questa chat",
+        "deleteFallback": "Eliminare questa chat?",
+        "groupMessage": "Lasciare {{name}}? Potrai essere riaggiunto più tardi da un altro membro.",
+        "directMessage": "Eliminare {{name}}? Questo rimuove la chat dalla tua casella."
+      },
+      "rename": {
+        "title": "Cambia nome chat",
+        "label": "Nome chat",
+        "placeholder": "Inserisci nome chat",
+        "groupMessage": "Dai a questa chat di gruppo un nome chiaro così i membri possono trovarla rapidamente.",
+        "directMessage": "Imposta un nome personalizzato per questa conversazione."
+      },
+      "deleteStory": {
+        "title": "Elimina storia",
+        "message": "Eliminare questa storia? Questa azione non può essere annullata.",
+        "confirm": "Elimina"
+      },
+      "deleteReel": {
+        "title": "Elimina reel",
+        "message": "Eliminare questo reel? Questa azione non può essere annullata.",
+        "confirm": "Elimina"
+      }
+    }
+  },
+  "sharedCommunityPost": {
+    "loading": {
+      "aria": "Caricamento post della community"
+    },
+    "notFound": {
+      "title": "Post non disponibile",
+      "message": "Questo post della community è stato rimosso oppure il link non è valido."
+    },
+    "errors": {
+      "title": "Qualcosa è andato storto",
+      "load": "Impossibile caricare questo post condiviso della community.",
+      "votePoll": "Impossibile votare il sondaggio in questo momento.",
+      "updateSavedState": "Impossibile aggiornare lo stato di salvataggio.",
+      "updatePost": "Impossibile aggiornare il post in questo momento.",
+      "deletePost": "Impossibile eliminare il post in questo momento.",
+      "votePost": "Impossibile votare il post in questo momento."
+    },
+    "confirm": {
+      "deletePost": "Eliminare questo post?",
+      "deleteComment": "Eliminare questo commento?"
+    },
+    "community": {
+      "imageAlt": "Immagine della community",
+      "fallbackSlug": "/community"
+    },
+    "post": {
+      "untitled": "Post senza titolo"
+    },
+    "media": {
+      "previousImage": "Immagine precedente",
+      "nextImage": "Immagine successiva",
+      "postAlt": "Media del post condiviso della community",
+      "thumbAlt": "Immagine {{index}}",
+      "imagePreview": "Anteprima immagine",
+      "closeImagePreview": "Chiudi anteprima immagine",
+      "fullscreenAlt": "Immagine del post a schermo intero"
+    },
+    "poll": {
+      "votes": "{{count}} voti"
+    },
+    "actions": {
+      "upvotePost": "Vota positivamente il post",
+      "upvote": "Vota su",
+      "downvotePost": "Vota negativamente il post",
+      "downvote": "Vota giù",
+      "comments": "Commenti",
+      "savePost": "Salva post",
+      "unsavePost": "Rimuovi post dai salvati",
+      "save": "Salva",
+      "saved": "Salvato",
+      "copyPostLinkAria": "Copia link del post",
+      "postLinkCopiedAria": "Link del post copiato",
+      "copyLink": "Copia link",
+      "copied": "Copiato",
+      "editPost": "Modifica post",
+      "deletePost": "Elimina post"
+    },
+    "comments": {
+      "later": "più tardi",
+      "timedOut": "Sei sospeso in questa community fino a {{until}}. Pubblicazione e commenti sono disabilitati.",
+      "joinToComment": "Unisciti a questa community per commentare.",
+      "signIn": "Accedi",
+      "signInSuffix": "per partecipare alla conversazione.",
+      "authorImageAlt": "Immagine autore del commento",
+      "spoilerAria": "Testo spoiler. Fai clic per rivelarlo.",
+      "editor": {
+        "placeholder": "Partecipa alla conversazione",
+        "submit": "Commenta",
+        "submitting": "Pubblicazione..."
+      },
+      "edit": {
+        "placeholder": "Modifica il tuo commento",
+        "save": "Salva",
+        "saving": "Salvataggio..."
+      },
+      "reply": {
+        "placeholder": "Rispondi a u/{{handle}}"
+      },
+      "sort": {
+        "label": "Ordina per:",
+        "best": "Migliori",
+        "top": "Più votati",
+        "new": "Nuovi",
+        "controversial": "Controversi",
+        "old": "Meno recenti",
+        "qna": "Domande e risposte"
+      },
+      "search": {
+        "placeholder": "Cerca commenti",
+        "aria": "Cerca commenti"
+      },
+      "empty": {
+        "noneYet": "Nessun commento ancora.",
+        "noSearchMatch": "Nessun commento corrisponde alla ricerca."
+      },
+      "actions": {
+        "upvote": "Vota su",
+        "downvote": "Vota giù",
+        "reply": "Rispondi",
+        "shareComment": "Condividi commento",
+        "share": "Condividi",
+        "commentLinkCopiedAria": "Link del commento copiato",
+        "openCommentActions": "Apri azioni commento",
+        "moreActions": "Altre azioni",
+        "commentActions": "Azioni commento",
+        "edit": "Modifica",
+        "cancelEdit": "Annulla modifica",
+        "delete": "Elimina",
+        "deleting": "Eliminazione..."
+      },
+      "errors": {
+        "timedOut": "Sei sospeso in questa community fino a {{until}}.",
+        "postComment": "Impossibile pubblicare il commento in questo momento.",
+        "contentRequired": "Il contenuto del commento è obbligatorio.",
+        "updateComment": "Impossibile aggiornare il commento in questo momento.",
+        "deleteComment": "Impossibile eliminare il commento in questo momento.",
+        "postReply": "Impossibile pubblicare la risposta in questo momento."
+      }
     }
   }
 }
