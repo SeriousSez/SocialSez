@@ -782,7 +782,7 @@
       "joined": "Lid sinds {{date}}",
       "openStoriesAria": "Open @{{handle}} verhalen",
       "viewProfileAria": "Bekijk @{{handle}} profiel",
-      "avatarAlt": "{{name}} avatar",
+      "avatarAlt": "Avatar van {{name}}",
       "authorImageAlt": "Auteur afbeelding",
       "trustSignalsAria": "Profielvertrouwenssignalen",
       "privateProfile": "Privéprofiel",

@@ -1170,7 +1170,7 @@
       "joined": "Gick med {{date}}",
       "openStoriesAria": "Öppna @{{handle}} stories",
       "viewProfileAria": "Visa @{{handle}} profil",
-      "avatarAlt": "{{name}} avatar",
+      "avatarAlt": "Avatar för {{name}}",
       "authorImageAlt": "Författarbild",
       "trustSignalsAria": "Profilens förtroendesignaler",
       "privateProfile": "Privat profil",

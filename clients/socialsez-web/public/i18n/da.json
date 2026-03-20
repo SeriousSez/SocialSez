@@ -204,7 +204,7 @@
       "joined": "Tilmeldt {{date}}",
       "openStoriesAria": "Åbn @{{handle}} stories",
       "viewProfileAria": "Vis @{{handle}} profil",
-      "avatarAlt": "{{name}} avatar",
+      "avatarAlt": "Avatar for {{name}}",
       "authorImageAlt": "Forfatterbillede",
       "trustSignalsAria": "Profilens tillidssignaler",
       "privateProfile": "Privat profil",
