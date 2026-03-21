@@ -310,7 +310,9 @@ export class SessionService {
 
     async loadFeedAsync(mode: FeedMode = 'for-you', customFeedId?: string): Promise<PostDto[]> {
         const feed = await firstValueFrom(this.api.getFeed(25, mode, customFeedId));
-        return feed.map(post => this.normalizePost(post));
+        return feed
+            .filter(post => this.isVisiblePost(post))
+            .map(post => this.normalizePost(post));
     }
 
     async loadStoryFeedAsync(takeAuthors = 25, mode: FeedMode = 'for-you', customFeedId?: string): Promise<StoryGroupDto[]> {
@@ -331,7 +333,9 @@ export class SessionService {
 
     async loadReelFeedAsync(take = 20, mode: FeedMode = 'for-you', customFeedId?: string): Promise<ReelDto[]> {
         const reels = await firstValueFrom(this.api.getReelFeed(take, mode, customFeedId));
-        return reels.map(reel => this.normalizeReel(reel));
+        return reels
+            .filter(reel => this.isVisibleReel(reel))
+            .map(reel => this.normalizeReel(reel));
     }
 
     async loadCustomFeedsAsync(): Promise<CustomFeedDto[]> {
@@ -378,12 +382,16 @@ export class SessionService {
 
     async loadReelsByAuthorHandleAsync(handle: string, take = 25): Promise<ReelDto[]> {
         const reels = await firstValueFrom(this.api.getReelsByAuthorHandle(handle, take));
-        return reels.map(reel => this.normalizeReel(reel));
+        return reels
+            .filter(reel => this.isVisibleReel(reel))
+            .map(reel => this.normalizeReel(reel));
     }
 
     async loadPublicReelsByAuthorHandleAsync(handle: string, take = 25): Promise<ReelDto[]> {
         const reels = await firstValueFrom(this.api.getPublicReelsByAuthorHandle(handle, take));
-        return reels.map(reel => this.normalizeReel(reel));
+        return reels
+            .filter(reel => this.isVisibleReel(reel))
+            .map(reel => this.normalizeReel(reel));
     }
 
     async loadPublicReelByIdAsync(reelId: string): Promise<ReelDto | null> {
@@ -503,29 +511,35 @@ export class SessionService {
 
     async loadPostsByHashtagAsync(hashtag: string): Promise<PostDto[]> {
         const posts = await firstValueFrom(this.api.getPostsByHashtag(hashtag));
-        return posts.map(post => this.normalizePost(post));
+        return posts
+            .filter(post => this.isVisiblePost(post))
+            .map(post => this.normalizePost(post));
     }
 
     async loadHashtagContentAsync(hashtag: string): Promise<HashtagContentDto> {
         const content = await firstValueFrom(this.api.getHashtagContent(hashtag));
         return {
-            posts: (content.posts ?? []).map(post => this.normalizePost(post)),
-            reels: (content.reels ?? []).map(reel => this.normalizeHashtagReel(reel)),
+            posts: (content.posts ?? []).filter(post => this.isVisiblePost(post)).map(post => this.normalizePost(post)),
+            reels: (content.reels ?? []).filter(reel => !this.isDeletedHandle(reel.authorHandle)).map(reel => this.normalizeHashtagReel(reel)),
             communities: (content.communities ?? []).map(community => this.normalizeHashtagCommunity(community)),
-            communityPosts: (content.communityPosts ?? []).map(post => this.normalizeHashtagCommunityPost(post)),
-            blogs: (content.blogs ?? []).map(blog => this.normalizeHashtagBlog(blog)),
-            blogPosts: (content.blogPosts ?? []).map(post => this.normalizeHashtagBlogPost(post))
+            communityPosts: (content.communityPosts ?? []).filter(post => !this.isDeletedHandle(post.authorHandle)).map(post => this.normalizeHashtagCommunityPost(post)),
+            blogs: (content.blogs ?? []).filter(blog => !this.isDeletedHandle(blog.ownerHandle)).map(blog => this.normalizeHashtagBlog(blog)),
+            blogPosts: (content.blogPosts ?? []).filter(post => !this.isDeletedHandle(post.authorHandle)).map(post => this.normalizeHashtagBlogPost(post))
         };
     }
 
     async loadPostsByAuthorHandleAsync(handle: string): Promise<PostDto[]> {
         const posts = await firstValueFrom(this.api.getPostsByAuthorHandle(handle));
-        return posts.map(post => this.normalizePost(post));
+        return posts
+            .filter(post => this.isVisiblePost(post))
+            .map(post => this.normalizePost(post));
     }
 
     async loadPublicPostsByAuthorHandleAsync(handle: string): Promise<PostDto[]> {
         const posts = await firstValueFrom(this.api.getPublicPostsByAuthorHandle(handle));
-        return posts.map(post => this.normalizePost(post));
+        return posts
+            .filter(post => this.isVisiblePost(post))
+            .map(post => this.normalizePost(post));
     }
 
     async loadPublicPostByIdAsync(postId: string): Promise<PostDto | null> {
@@ -544,7 +558,9 @@ export class SessionService {
 
     async searchPostsAsync(query: string): Promise<PostDto[]> {
         const posts = await firstValueFrom(this.api.searchPosts(query));
-        return posts.map(post => this.normalizePost(post));
+        return posts
+            .filter(post => this.isVisiblePost(post))
+            .map(post => this.normalizePost(post));
     }
 
     async searchHashtagsAsync(query: string): Promise<HashtagSearchResultDto[]> {
@@ -590,6 +606,9 @@ export class SessionService {
         const mergedById = new Map<string, ProfileDto>();
         for (const group of profileGroups) {
             for (const profile of group) {
+                if (this.isDeletedHandle(profile.handle)) {
+                    continue;
+                }
                 const normalizedProfile = this.normalizeProfile(profile);
                 mergedById.set(normalizedProfile.id, normalizedProfile);
             }
@@ -629,12 +648,16 @@ export class SessionService {
 
     async loadMyPostDraftsAsync(take = 50): Promise<PostDto[]> {
         const posts = await firstValueFrom(this.api.getMyPostDrafts(take));
-        return posts.map(post => this.normalizePost(post));
+        return posts
+            .filter(post => this.isVisiblePost(post))
+            .map(post => this.normalizePost(post));
     }
 
     async loadMyReelDraftsAsync(take = 50): Promise<ReelDto[]> {
         const reels = await firstValueFrom(this.api.getMyReelDrafts(take));
-        return reels.map(reel => this.normalizeReel(reel));
+        return reels
+            .filter(reel => this.isVisibleReel(reel))
+            .map(reel => this.normalizeReel(reel));
     }
 
     async loadMyStoryDraftsAsync(take = 50): Promise<StoryDto[]> {
@@ -847,14 +870,16 @@ export class SessionService {
 
     async loadFollowingAsync(take = 100): Promise<ProfileDto[]> {
         const profiles = await firstValueFrom(this.api.getFollowing(take));
-        return profiles.map(profile => this.normalizeProfile(profile));
+        return profiles
+            .filter(profile => !this.isDeletedHandle(profile.handle))
+            .map(profile => this.normalizeProfile(profile));
     }
 
     async loadFollowSuggestionsAsync(takePerGroup = 10): Promise<FollowSuggestionsDto> {
         const suggestions = await firstValueFrom(this.api.getFollowSuggestions(takePerGroup));
         return {
-            following: suggestions.following.map(profile => this.normalizeProfile(profile)),
-            relevant: suggestions.relevant.map(profile => this.normalizeProfile(profile))
+            following: suggestions.following.filter(profile => !this.isDeletedHandle(profile.handle)).map(profile => this.normalizeProfile(profile)),
+            relevant: suggestions.relevant.filter(profile => !this.isDeletedHandle(profile.handle)).map(profile => this.normalizeProfile(profile))
         };
     }
 
@@ -913,12 +938,16 @@ export class SessionService {
 
     async loadMyCommunitiesAsync(take = 50): Promise<CommunityDto[]> {
         const communities = await firstValueFrom(this.api.getMyCommunities(take));
-        return communities.map(community => this.normalizeCommunity(community));
+        return communities
+            .filter(community => this.isVisibleCommunity(community))
+            .map(community => this.normalizeCommunity(community));
     }
 
     async discoverCommunitiesAsync(query?: string, take = 50): Promise<CommunityDto[]> {
         const communities = await firstValueFrom(this.api.discoverCommunities(query, take));
-        return communities.map(community => this.normalizeCommunity(community));
+        return communities
+            .filter(community => this.isVisibleCommunity(community))
+            .map(community => this.normalizeCommunity(community));
     }
 
     async joinCommunityAsync(communityId: string): Promise<CommunityDto> {
@@ -967,22 +996,30 @@ export class SessionService {
 
     async loadMyBlogsAsync(): Promise<BlogDto[]> {
         const blogs = await firstValueFrom(this.api.getMyBlogs());
-        return blogs.map(blog => this.normalizeBlog(blog));
+        return blogs
+            .filter(blog => this.isVisibleBlog(blog))
+            .map(blog => this.normalizeBlog(blog));
     }
 
     async discoverBlogsAsync(query?: string, take = 60): Promise<BlogDto[]> {
         const blogs = await firstValueFrom(this.api.discoverBlogs(query, take));
-        return blogs.map(blog => this.normalizeBlog(blog));
+        return blogs
+            .filter(blog => this.isVisibleBlog(blog))
+            .map(blog => this.normalizeBlog(blog));
     }
 
     async loadFollowingBlogsAsync(query?: string, take = 60): Promise<BlogDto[]> {
         const blogs = await firstValueFrom(this.api.getFollowingBlogs(query, take));
-        return blogs.map(blog => this.normalizeBlog(blog));
+        return blogs
+            .filter(blog => this.isVisibleBlog(blog))
+            .map(blog => this.normalizeBlog(blog));
     }
 
     async loadBlogsByAuthorHandleAsync(handle: string): Promise<BlogDto[]> {
         const blogs = await firstValueFrom(this.api.getBlogsByAuthorHandle(handle));
-        return blogs.map(blog => this.normalizeBlog(blog));
+        return blogs
+            .filter(blog => this.isVisibleBlog(blog))
+            .map(blog => this.normalizeBlog(blog));
     }
 
     async loadBlogByAuthorAndSlugAsync(handle: string, blogSlug: string): Promise<BlogDto | null> {
@@ -1021,7 +1058,9 @@ export class SessionService {
 
     async loadBlogPostsAsync(handle: string, blogSlug: string): Promise<BlogPostDto[]> {
         const posts = await firstValueFrom(this.api.getBlogPosts(handle, blogSlug));
-        return posts.map(post => this.normalizeBlogPost(post));
+        return posts
+            .filter(post => this.isVisibleBlogPost(post))
+            .map(post => this.normalizeBlogPost(post));
     }
 
     async loadBlogPostAsync(handle: string, blogSlug: string, postSlug: string): Promise<BlogPostDto | null> {
@@ -1036,7 +1075,9 @@ export class SessionService {
     async loadSavedBlogPostsAsync(take = 50, skip = 0): Promise<BlogPostDto[]> {
         try {
             const posts = await firstValueFrom(this.api.getSavedBlogPosts(take, skip));
-            return posts.map(post => this.normalizeBlogPost(post));
+            return posts
+                .filter(post => this.isVisibleBlogPost(post))
+                .map(post => this.normalizeBlogPost(post));
         } catch {
             const discoveredBlogs = await this.discoverBlogsAsync(undefined, 80);
             const blogCandidates = discoveredBlogs.slice(0, 40);
@@ -1129,13 +1170,17 @@ export class SessionService {
 
     async loadCommunityPostsAsync(communityId: string, query?: string, take = 50): Promise<CommunityPostDto[]> {
         const posts = await firstValueFrom(this.api.getCommunityPosts(communityId, query, take));
-        return posts.map(post => this.normalizeCommunityPost(post));
+        return posts
+            .filter(post => this.isVisibleCommunityPost(post))
+            .map(post => this.normalizeCommunityPost(post));
     }
 
     async loadSavedCommunityPostsAsync(take = 50, skip = 0): Promise<CommunityPostDto[]> {
         try {
             const posts = await firstValueFrom(this.api.getSavedCommunityPosts(take, skip));
-            return posts.map(post => this.normalizeCommunityPost(post));
+            return posts
+                .filter(post => this.isVisibleCommunityPost(post))
+                .map(post => this.normalizeCommunityPost(post));
         } catch {
             const candidates = await this.searchCommunityPostsAsync('', 200);
             return candidates
@@ -1146,7 +1191,9 @@ export class SessionService {
 
     async searchCommunityPostsAsync(query: string, take = 50): Promise<CommunityPostDto[]> {
         const posts = await firstValueFrom(this.api.searchCommunityPosts(query, take));
-        return posts.map(post => this.normalizeCommunityPost(post));
+        return posts
+            .filter(post => this.isVisibleCommunityPost(post))
+            .map(post => this.normalizeCommunityPost(post));
     }
 
     async saveCommunityPostAsync(communityId: string, postId: string): Promise<CommunityPostDto> {
@@ -1446,14 +1493,18 @@ export class SessionService {
             imageUrls: normalizedImageUrls.length > 0
                 ? normalizedImageUrls
                 : (normalizedPrimaryImage ? [normalizedPrimaryImage] : []),
-            reactionDetails: (post.reactionDetails ?? []).map(reaction => ({
-                ...reaction,
-                displayName: this.applyNicknameToDisplayName(reaction.handle, reaction.displayName)
-            })),
-            comments: (post.comments ?? []).map(comment => ({
-                ...comment,
-                authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
-            }))
+            reactionDetails: (post.reactionDetails ?? [])
+                .filter(reaction => !this.isDeletedHandle(reaction.handle))
+                .map(reaction => ({
+                    ...reaction,
+                    displayName: this.applyNicknameToDisplayName(reaction.handle, reaction.displayName)
+                })),
+            comments: (post.comments ?? [])
+                .filter(comment => !this.isDeletedHandle(comment.authorHandle))
+                .map(comment => ({
+                    ...comment,
+                    authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
+                }))
         };
     }
 
@@ -1482,10 +1533,12 @@ export class SessionService {
             authorImageUrl: this.normalizeMediaUrl(reel.authorImageUrl),
             videoUrl: this.normalizeMediaUrl(reel.videoUrl) ?? reel.videoUrl,
             thumbnailUrl: this.normalizeMediaUrl(reel.thumbnailUrl),
-            comments: (reel.comments ?? []).map(comment => ({
-                ...comment,
-                authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
-            }))
+            comments: (reel.comments ?? [])
+                .filter(comment => !this.isDeletedHandle(comment.authorHandle))
+                .map(comment => ({
+                    ...comment,
+                    authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
+                }))
         };
     }
 
@@ -1527,10 +1580,12 @@ export class SessionService {
                 })
                 .filter(rule => !!rule.text),
             imageUrl: this.normalizeMediaUrl(community.imageUrl),
-            members: (community.members ?? []).map(member => ({
-                ...member,
-                imageUrl: this.normalizeMediaUrl(member.imageUrl)
-            }))
+            members: (community.members ?? [])
+                .filter(member => !this.isDeletedHandle(member.handle))
+                .map(member => ({
+                    ...member,
+                    imageUrl: this.normalizeMediaUrl(member.imageUrl)
+                }))
         };
     }
 
@@ -1543,11 +1598,42 @@ export class SessionService {
                 .map(url => this.normalizeMediaUrl(url))
                 .filter((url): url is string => !!url),
             poll: post.poll ? this.normalizeCommunityPoll(post.poll) : undefined,
-            comments: (post.comments ?? []).map(comment => ({
-                ...comment,
-                authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
-            }))
+            comments: (post.comments ?? [])
+                .filter(comment => !this.isDeletedHandle(comment.authorHandle))
+                .map(comment => ({
+                    ...comment,
+                    authorImageUrl: this.normalizeMediaUrl(comment.authorImageUrl)
+                }))
         };
+    }
+
+    private isDeletedHandle(handle: string | null | undefined): boolean {
+        const normalized = (handle ?? '').trim().toLowerCase();
+        return normalized === 'deleted-user' || normalized.startsWith('deleted-');
+    }
+
+    private isVisiblePost(post: PostDto): boolean {
+        return !this.isDeletedHandle(post.authorHandle);
+    }
+
+    private isVisibleReel(reel: ReelDto): boolean {
+        return !this.isDeletedHandle(reel.authorHandle);
+    }
+
+    private isVisibleCommunity(community: CommunityDto): boolean {
+        return !this.isDeletedHandle(community.createdByHandle);
+    }
+
+    private isVisibleCommunityPost(post: CommunityPostDto): boolean {
+        return !this.isDeletedHandle(post.authorHandle);
+    }
+
+    private isVisibleBlog(blog: BlogDto): boolean {
+        return !this.isDeletedHandle(blog.ownerHandle);
+    }
+
+    private isVisibleBlogPost(post: BlogPostDto): boolean {
+        return !this.isDeletedHandle(post.authorHandle);
     }
 
     private normalizeBlog(blog: BlogDto): BlogDto {

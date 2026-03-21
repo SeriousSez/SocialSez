@@ -97,6 +97,7 @@
             <button type="button" class="reel-read-more" *ngIf="shouldShowReelReadMore(reel)" (click)="toggleReelCaption(reel.id)">
                 {{ isReelCaptionExpanded(reel.id) ? 'Read less' : 'Read more' }}
             </button>
+            <app-translate-content [text]="reelCaption"></app-translate-content>
         </ng-container>
 
         <p class="reel-collaborators" *ngIf="getReelCollaborators(reel).length">🤝 {{ getReelCollaborators(reel).join(' ') }}</p>

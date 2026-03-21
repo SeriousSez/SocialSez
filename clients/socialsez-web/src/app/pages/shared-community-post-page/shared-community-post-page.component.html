@@ -79,6 +79,7 @@
                 <br *ngIf="!isLast" />
             </ng-container>
         </p>
+        <app-translate-content [text]="postTitle + '\n\n' + (postBody || '')"></app-translate-content>
 
         <ng-container *ngIf="activePostMediaUrl as mediaUrl">
             <div class="post-media-carousel" *ngIf="postMediaUrls.length > 1">

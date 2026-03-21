@@ -6,12 +6,13 @@ import { BlogDto, BlogPostDto } from '../../core/api.types';
 import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util';
 import { renderMarkdownToHtml } from '../../core/markdown.util';
 import { SessionService } from '../../core/session.service';
+import { TranslateContentComponent } from '../../shared/translate-content/translate-content.component';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
 @Component({
     selector: 'app-blog-post-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, NgStyle, TranslatePipe],
+    imports: [CommonModule, RouterLink, NgStyle, TranslatePipe, TranslateContentComponent],
     templateUrl: './blog-post-page.component.html',
     styleUrl: './blog-post-page.component.scss'
 })

@@ -2013,5 +2013,13 @@
       "pointOfInterest": "Interessepunkt",
       "cityCountry": "By / land"
     }
+  },
+  "translate": {
+    "button": "Oversæt",
+    "translating": "Oversætter...",
+    "translatedBadge": "Oversat",
+    "showOriginal": "Vis original",
+    "failed": "Kunne ikke oversætte.",
+    "retry": "Prøv igen"
   }
 }

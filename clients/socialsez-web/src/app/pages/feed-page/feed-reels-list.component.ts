@@ -6,6 +6,7 @@ import { ReelCommentDto, ReelDto } from '../../core/api.types';
 import { formatRelativeFeedDateTime } from '../../core/date-time.util';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 import { CommentsSheetComponent } from '../../shared/comments-sheet/comments-sheet.component';
+import { TranslateContentComponent } from '../../shared/translate-content/translate-content.component';
 
 export interface ReelCommentCreateEvent {
     reel: ReelDto;
@@ -39,7 +40,7 @@ export interface ReelPlaybackProgressEvent {
 @Component({
     selector: 'app-feed-reels-list',
     standalone: true,
-    imports: [CommonModule, RouterLink, TranslatePipe, CommentsSheetComponent],
+    imports: [CommonModule, RouterLink, TranslatePipe, CommentsSheetComponent, TranslateContentComponent],
     templateUrl: './feed-reels-list.component.html',
     styleUrl: './feed-reels-list.component.scss'
 })

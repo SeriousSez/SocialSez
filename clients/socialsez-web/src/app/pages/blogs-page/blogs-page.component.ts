@@ -7,6 +7,7 @@ import { BlogDto } from '../../core/api.types';
 import { buildDiscoverySuggestions, DISCOVERY_TOPICS, rankByDiscoveryQuery, scoreDiscoveryFields } from '../../core/discovery-search.util';
 import { SessionService } from '../../core/session.service';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
+import { TranslateContentComponent } from '../../shared/translate-content/translate-content.component';
 
 type BlogsTab = 'all' | 'following' | 'mine';
 type BlogSort = 'updated' | 'created' | 'title';
@@ -14,7 +15,7 @@ type BlogSort = 'updated' | 'created' | 'title';
 @Component({
     selector: 'app-blogs-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, SkeletonComponent],
+    imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, SkeletonComponent, TranslateContentComponent],
     templateUrl: './blogs-page.component.html',
     styleUrl: './blogs-page.component.scss'
 })

@@ -886,6 +886,13 @@ export class SocialSezApiService {
         return this.withAutoRefresh(() => this.http.post<CommunityPollDto>(`${this.baseUrl}/communities/${encodeURIComponent(communityId)}/polls/${encodeURIComponent(pollId)}/vote`, { optionId }, { headers: this.authHeaders() }));
     }
 
+    translateContent(text: string, targetLanguage: string): Observable<{ translatedText: string }> {
+        return this.http.post<{ translatedText: string }>(
+            `${this.baseUrl}/translate`,
+            { text, targetLanguage }
+        ).pipe(timeout(30000));
+    }
+
     isAuthenticated(): boolean {
         return !!this.token;
     }

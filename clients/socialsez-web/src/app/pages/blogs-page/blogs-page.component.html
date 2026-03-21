@@ -72,6 +72,7 @@
             </header>
 
             <p class="blog-description" *ngIf="blog.description">{{ blog.description }}</p>
+            <app-translate-content [text]="(blog.title || '') + '\n\n' + (blog.description || '')"></app-translate-content>
 
             <div class="blog-meta">
                 <a [routerLink]="['/blogs', blog.ownerHandle]">@{{ blog.ownerHandle }}</a>

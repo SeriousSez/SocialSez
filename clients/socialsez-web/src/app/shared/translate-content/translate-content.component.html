@@ -1,0 +1,35 @@
+@if (hasContent) {
+<div class="translate-strip">
+    @if (translated === null && !translating && !failed) {
+    <button type="button" class="translate-btn" (click)="translate()">
+        <i class="fa-duotone fa-thin fa-language" aria-hidden="true"></i>
+        {{ 'translate.button' | translate }}
+    </button>
+    }
+    @if (translating) {
+    <span class="translate-loading" aria-live="polite">
+        <i class="fa-duotone fa-thin fa-spinner fa-spin" aria-hidden="true"></i>
+        {{ 'translate.translating' | translate }}
+    </span>
+    }
+    @if (translated !== null) {
+    <div class="translate-result">
+        <p class="translated-text">{{ translated }}</p>
+        <div class="translate-meta">
+            <i class="fa-duotone fa-thin fa-language" aria-hidden="true"></i>
+            <span>{{ 'translate.translatedBadge' | translate }}</span>
+            <span class="translate-sep">·</span>
+            <button type="button" class="translate-show-original" (click)="showOriginal()">
+                {{ 'translate.showOriginal' | translate }}
+            </button>
+        </div>
+    </div>
+    }
+    @if (failed) {
+    <span class="translate-error">
+        {{ 'translate.failed' | translate }}
+        <button type="button" class="translate-btn" (click)="translate()">{{ 'translate.retry' | translate }}</button>
+    </span>
+    }
+</div>
+}

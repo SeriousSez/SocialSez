@@ -2028,5 +2028,13 @@
       "pointOfInterest": "Point of interest",
       "cityCountry": "City / country"
     }
+  },
+  "translate": {
+    "button": "Translate",
+    "translating": "Translating...",
+    "translatedBadge": "Translated",
+    "showOriginal": "Show original",
+    "failed": "Translation unavailable.",
+    "retry": "Retry"
   }
 }

@@ -14,6 +14,7 @@
                     <br *ngIf="!isLast" />
                 </ng-container>
             </p>
+            <app-translate-content [text]="(activeCommunity.name || '') + '\n\n' + (activeCommunity.description || '')"></app-translate-content>
             <a class="meta" [routerLink]="['/users', activeCommunity.createdByHandle]">{{ 'communityDetail.community.createdBy' | translate:{ handle: activeCommunity.createdByHandle } }}</a>
         </div>
         <div class="community-head-actions">
@@ -99,6 +100,7 @@
                     <br *ngIf="!isLast" />
                 </ng-container>
             </p>
+            <app-translate-content [text]="getPostTranslationText(post)" (click)="$event.stopPropagation()"></app-translate-content>
 
             <ng-container *ngIf="getActivePostImageUrl(post) as activeImageUrl">
                 <div class="post-image-carousel" *ngIf="getPostMediaUrls(post).length > 1">

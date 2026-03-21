@@ -12,6 +12,7 @@ import { ConfirmModalComponent } from '../confirm-modal/confirm-modal.component'
 import { LazyImageComponent } from '../lazy-image/lazy-image.component';
 import { ReactionPickerComponent } from '../reaction-picker/reaction-picker.component';
 import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.component';
+import { TranslateContentComponent } from '../translate-content/translate-content.component';
 
 export interface CommentUpdatePayload {
     commentId: string;
@@ -50,7 +51,7 @@ interface ReactionDetailEntry {
 @Component({
     selector: 'app-post-card',
     standalone: true,
-    imports: [CommonModule, FormsModule, TranslateModule, ReactionPickerComponent, ConfirmModalComponent, CommentsSheetComponent, LazyImageComponent, RichTextEditorComponent],
+    imports: [CommonModule, FormsModule, TranslateModule, ReactionPickerComponent, ConfirmModalComponent, CommentsSheetComponent, LazyImageComponent, RichTextEditorComponent, TranslateContentComponent],
     templateUrl: './post-card.component.html',
     styleUrl: './post-card.component.scss'
 })

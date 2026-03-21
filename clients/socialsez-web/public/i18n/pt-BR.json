@@ -44,7 +44,7 @@
         "notifications": "Notificações",
         "safety": "Segurança",
         "security": "Segurança da conta",
-          "data": "Controles de dados",
+        "data": "Controles de dados",
         "blocked": "Usuários bloqueados",
         "logout": "Sair",
         "aria": "Seções de configurações"
@@ -2013,5 +2013,13 @@
       "pointOfInterest": "Ponto de interesse",
       "cityCountry": "Cidade / país"
     }
+  },
+  "translate": {
+    "button": "Traduzir",
+    "translating": "Traduzindo...",
+    "translatedBadge": "Traduzido",
+    "showOriginal": "Mostrar original",
+    "failed": "Não foi possível traduzir.",
+    "retry": "Tentar novamente"
   }
 }

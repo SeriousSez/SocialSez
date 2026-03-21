@@ -7,11 +7,12 @@ import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util'
 import { SessionService } from '../../core/session.service';
 import { LazyImageComponent } from '../../shared/lazy-image/lazy-image.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
+import { TranslateContentComponent } from '../../shared/translate-content/translate-content.component';
 
 @Component({
     selector: 'app-blog-home-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, NgStyle, TranslatePipe, LazyImageComponent, SkeletonComponent],
+    imports: [CommonModule, RouterLink, NgStyle, TranslatePipe, LazyImageComponent, SkeletonComponent, TranslateContentComponent],
     templateUrl: './blog-home-page.component.html',
     styleUrl: './blog-home-page.component.scss'
 })

@@ -45,6 +45,7 @@
                 <br *ngIf="!isLast" />
             </ng-container>
         </p>
+        <app-translate-content [text]="item.caption || ''"></app-translate-content>
 
         <video class="media" [poster]="item.thumbnailUrl || null" [src]="item.videoUrl" controls autoplay muted loop playsinline preload="metadata"></video>
     </article>

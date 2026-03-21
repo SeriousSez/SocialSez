@@ -2013,5 +2013,13 @@
       "pointOfInterest": "Sehenswürdigkeit",
       "cityCountry": "Stadt / Land"
     }
+  },
+  "translate": {
+    "button": "Übersetzen",
+    "translating": "Wird übersetzt...",
+    "translatedBadge": "Übersetzt",
+    "showOriginal": "Original anzeigen",
+    "failed": "Übersetzung fehlgeschlagen.",
+    "retry": "Erneut versuchen"
   }
 }

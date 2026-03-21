@@ -2013,5 +2013,13 @@
       "pointOfInterest": "Bezienswaardigheid",
       "cityCountry": "Stad / land"
     }
+  },
+  "translate": {
+    "button": "Vertalen",
+    "translating": "Vertalen...",
+    "translatedBadge": "Vertaald",
+    "showOriginal": "Origineel tonen",
+    "failed": "Vertalen mislukt.",
+    "retry": "Opnieuw proberen"
   }
 }

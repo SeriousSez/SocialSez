@@ -9,11 +9,12 @@ import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util'
 import { SessionService } from '../../core/session.service';
 import { toUserErrorMessage } from '../../core/user-error.utils';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
+import { TranslateContentComponent } from '../../shared/translate-content/translate-content.component';
 
 @Component({
     selector: 'app-communities-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, RichTextEditorComponent],
+    imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, RichTextEditorComponent, TranslateContentComponent],
     templateUrl: './communities-page.component.html',
     styleUrl: './communities-page.component.scss'
 })

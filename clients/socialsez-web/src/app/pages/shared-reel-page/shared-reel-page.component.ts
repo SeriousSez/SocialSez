@@ -5,6 +5,7 @@ import { NgZone } from '@angular/core';
 import { ReelDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
+import { TranslateContentComponent } from '../../shared/translate-content/translate-content.component';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
 interface SharedContentPart {
@@ -15,7 +16,7 @@ interface SharedContentPart {
 @Component({
     selector: 'app-shared-reel-page',
     standalone: true,
-    imports: [CommonModule, SkeletonComponent],
+    imports: [CommonModule, SkeletonComponent, TranslateContentComponent],
     templateUrl: './shared-reel-page.component.html',
     styleUrl: './shared-reel-page.component.scss'
 })

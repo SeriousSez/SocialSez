@@ -12,6 +12,7 @@ import { HashtagTextPart, splitHashtagText } from '../../core/hashtag-text.util'
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 import { CommunityPostEditorModalComponent, CommunityPostEditorSavePayload } from '../../shared/community-post-editor-modal/community-post-editor-modal.component';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
+import { TranslateContentComponent } from '../../shared/translate-content/translate-content.component';
 import { SocialSezApiService } from '../../core/socialsez-api.service';
 import { SessionService } from '../../core/session.service';
 
@@ -28,7 +29,7 @@ interface CommentThreadNode {
 @Component({
     selector: 'app-shared-community-post-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RichTextEditorComponent, CommunityPostEditorModalComponent],
+    imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RichTextEditorComponent, CommunityPostEditorModalComponent, TranslateContentComponent],
     templateUrl: './shared-community-post-page.component.html',
     styleUrl: './shared-community-post-page.component.scss'
 })

@@ -34,6 +34,7 @@
                     <br *ngIf="!isLast" />
                 </ng-container>
             </p>
+            <app-translate-content [text]="(currentBlog.title || '') + '\n\n' + (currentBlog.description || '')"></app-translate-content>
             <div class="head-links">
                 <a [routerLink]="['/blogs', currentBlog.ownerHandle]">{{ 'blogHome.header.moreBy' | translate:{ handle: currentBlog.ownerHandle } }}</a>
                 <a [routerLink]="['/blogs', 'studio']" *ngIf="currentBlog.isOwner">{{ 'blogHome.header.editInStudio' | translate }}</a>
@@ -55,6 +56,7 @@
                         <br *ngIf="!isLast" />
                     </ng-container>
                 </p>
+                <app-translate-content [text]="(post.title || '') + '\n\n' + (post.excerpt || '')"></app-translate-content>
                 <div class="meta">
                     <span>{{ (post.publishedAtUtc ?? post.updatedAtUtc) | date:'mediumDate' }}</span>
                     <span *ngIf="!post.isPublished" class="draft">{{ 'blogHome.post.draft' | translate }}</span>

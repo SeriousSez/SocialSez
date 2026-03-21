@@ -13,6 +13,7 @@ import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 import { actionError, toUserErrorMessage } from '../../core/user-error.utils';
 import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
+import { TranslateContentComponent } from '../../shared/translate-content/translate-content.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 type CommunityComposerTab = 'text' | 'media' | 'link' | 'poll';
@@ -34,7 +35,7 @@ interface PendingMemberModerationAction {
 @Component({
     selector: 'app-community-detail-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, TranslateModule, ConfirmModalComponent, SkeletonComponent, RichTextEditorComponent],
+    imports: [CommonModule, FormsModule, RouterLink, TranslateModule, ConfirmModalComponent, SkeletonComponent, RichTextEditorComponent, TranslateContentComponent],
     templateUrl: './community-detail-page.component.html',
     styleUrl: './community-detail-page.component.scss'
 })
@@ -1281,6 +1282,14 @@ export class CommunityDetailPageComponent {
     getPostTextBody(post: CommunityPostDto): string | null {
         const textBody = post.content?.trim();
         return textBody || null;
+    }
+
+    getPostTranslationText(post: CommunityPostDto): string {
+        const parts: string[] = [];
+        if (post.title?.trim()) parts.push(post.title.trim());
+        const body = this.getPostTextBody(post);
+        if (body) parts.push(body);
+        return parts.join('\n\n');
     }
 
     getPostMediaCaption(post: CommunityPostDto): string | null {

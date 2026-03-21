@@ -2013,5 +2013,13 @@
       "pointOfInterest": "İlgi noktası",
       "cityCountry": "Şehir / ülke"
     }
+  },
+  "translate": {
+    "button": "Çevir",
+    "translating": "Çevriliyor...",
+    "translatedBadge": "Çevrildi",
+    "showOriginal": "Orijinali göster",
+    "failed": "Çeviri yapılamadı.",
+    "retry": "Tekrar dene"
   }
 }

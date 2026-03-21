@@ -2013,5 +2013,13 @@
       "pointOfInterest": "Punto de interés",
       "cityCountry": "Ciudad / país"
     }
+  },
+  "translate": {
+    "button": "Traducir",
+    "translating": "Traduciendo...",
+    "translatedBadge": "Traducido",
+    "showOriginal": "Mostrar original",
+    "failed": "No se pudo traducir.",
+    "retry": "Reintentar"
   }
 }

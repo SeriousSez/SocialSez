@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IBlogService, BlogService>();
         services.AddScoped<ISavedCollectionService, SavedCollectionService>();
         services.AddScoped<ICustomFeedService, CustomFeedService>();
+        services.AddScoped<ITranslationService, TranslationService>();
         return services;
     }
 }

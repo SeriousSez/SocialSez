@@ -45,7 +45,7 @@
         "notifications": "Notiser",
         "safety": "Säkerhet",
         "security": "Kontosäkerhet",
-          "data": "Datakontroller",
+        "data": "Datakontroller",
         "blocked": "Blockerade användare",
         "logout": "Logga ut"
       },
@@ -2013,5 +2013,13 @@
       "pointOfInterest": "Intressant plats",
       "cityCountry": "Stad / land"
     }
+  },
+  "translate": {
+    "button": "Översätt",
+    "translating": "Översätter...",
+    "translatedBadge": "Översatt",
+    "showOriginal": "Visa original",
+    "failed": "Kunde inte översätta.",
+    "retry": "Försök igen"
   }
 }
