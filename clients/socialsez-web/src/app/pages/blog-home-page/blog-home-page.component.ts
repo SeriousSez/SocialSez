@@ -23,7 +23,10 @@ export class BlogHomePageComponent implements OnDestroy {
     blogSlug = '';
     blog: BlogDto | null = null;
     posts: BlogPostDto[] = [];
+    translatedBlogTitle: string | null = null;
+    translatedBlogDescription: string | null = null;
     savingPostId: string | null = null;
+    private readonly translatedPostSummaries = new Map<string, { title: string; excerpt: string | null }>();
     private loadVersion = 0;
     private customCssStyleEl: HTMLStyleElement | null = null;
     private appliedCustomCss = '';
@@ -157,6 +160,39 @@ export class BlogHomePageComponent implements OnDestroy {
 
     trackPost(_: number, post: BlogPostDto): string {
         return post.id;
+    }
+
+    onBlogTranslationChanged(text: string | null): void {
+        if (!text) {
+            this.translatedBlogTitle = null;
+            this.translatedBlogDescription = null;
+            return;
+        }
+
+        const separator = text.indexOf('\n\n');
+        this.translatedBlogTitle = separator === -1 ? text : text.slice(0, separator);
+        this.translatedBlogDescription = separator === -1 ? null : (text.slice(separator + 2) || null);
+    }
+
+    onPostTranslationChanged(postId: string, text: string | null): void {
+        if (!text) {
+            this.translatedPostSummaries.delete(postId);
+            return;
+        }
+
+        const separator = text.indexOf('\n\n');
+        const title = separator === -1 ? text : text.slice(0, separator);
+        const excerpt = separator === -1 ? null : (text.slice(separator + 2) || null);
+        this.translatedPostSummaries.set(postId, { title, excerpt });
+    }
+
+    getActivePostTitle(post: BlogPostDto): string {
+        return this.translatedPostSummaries.get(post.id)?.title ?? post.title;
+    }
+
+    getActivePostExcerpt(post: BlogPostDto): string | null {
+        const translated = this.translatedPostSummaries.get(post.id);
+        return translated !== undefined ? translated.excerpt : (post.excerpt || null);
     }
 
     async openPostAsync(post: BlogPostDto, event?: Event): Promise<void> {

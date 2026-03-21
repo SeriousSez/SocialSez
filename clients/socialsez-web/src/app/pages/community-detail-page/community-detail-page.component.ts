@@ -125,6 +125,9 @@ export class CommunityDetailPageComponent {
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly ngZone = inject(NgZone);
     private readonly translate = inject(TranslateService);
+    translatedCommunityName: string | null = null;
+    translatedCommunityDescription: string | null = null;
+    private readonly translatedPostTexts = new Map<string, { title: string; body: string | null }>();
 
     private get draftStorageKey(): string | null {
         return this.communitySlug ? `socialsez.community.draft.${this.communitySlug}` : null;
@@ -1290,6 +1293,39 @@ export class CommunityDetailPageComponent {
         const body = this.getPostTextBody(post);
         if (body) parts.push(body);
         return parts.join('\n\n');
+    }
+
+    onCommunityHeaderTranslationChanged(text: string | null): void {
+        if (!text) {
+            this.translatedCommunityName = null;
+            this.translatedCommunityDescription = null;
+        } else {
+            const sep = text.indexOf('\n\n');
+            this.translatedCommunityName = sep === -1 ? text : text.slice(0, sep);
+            this.translatedCommunityDescription = sep === -1 ? null : (text.slice(sep + 2) || null);
+        }
+        this.cdr.detectChanges();
+    }
+
+    onPostTranslationChanged(postId: string, text: string | null): void {
+        if (!text) {
+            this.translatedPostTexts.delete(postId);
+        } else {
+            const sep = text.indexOf('\n\n');
+            const title = sep === -1 ? text : text.slice(0, sep);
+            const body = sep === -1 ? null : (text.slice(sep + 2) || null);
+            this.translatedPostTexts.set(postId, { title, body });
+        }
+        this.cdr.detectChanges();
+    }
+
+    getActivePostTitle(post: CommunityPostDto): string {
+        return this.translatedPostTexts.get(post.id)?.title ?? (post.title?.trim() || this.translate.instant('communityDetail.post.untitled'));
+    }
+
+    getActivePostBody(post: CommunityPostDto): string | null {
+        const translated = this.translatedPostTexts.get(post.id);
+        return translated !== undefined ? translated.body : this.getPostTextBody(post);
     }
 
     getPostMediaCaption(post: CommunityPostDto): string | null {

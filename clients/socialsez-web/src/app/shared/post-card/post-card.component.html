@@ -56,7 +56,7 @@
             </div>
             <app-lazy-image *ngIf="shared.imageUrl" imgClass="shared-post-image" [src]="shared.imageUrl" alt="Shared post media" skeletonHeight="210px" skeletonRadius="10px"></app-lazy-image>
         </article>
-        <app-translate-content [text]="content"></app-translate-content>
+        <app-translate-content [text]="content" [inlineMode]="true" (translationChanged)="onTranslationChanged($event)"></app-translate-content>
 
         <ng-container *ngIf="postMediaUrls() as mediaUrls">
             <ng-container *ngIf="shouldHideSensitiveMedia(); else visiblePostMediaBlock">

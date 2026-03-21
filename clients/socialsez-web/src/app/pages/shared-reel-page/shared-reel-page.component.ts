@@ -27,6 +27,7 @@ export class SharedReelPageComponent {
     copiedLink = false;
     reel: ReelDto | null = null;
     lastClickedHashtag = '';
+    inlineTranslatedCaption: string | null = null;
     private copiedLinkTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     constructor(private readonly route: ActivatedRoute, private readonly session: SessionService, private readonly ngZone: NgZone) {
@@ -72,6 +73,10 @@ export class SharedReelPageComponent {
         window.setTimeout(() => {
             window.location.assign(`/hashtags/${encodeURIComponent(tag)}`);
         }, 0);
+    }
+
+    onCaptionTranslationChanged(text: string | null): void {
+        this.inlineTranslatedCaption = text;
     }
 
     private parseLineParts(line: string): SharedContentPart[] {

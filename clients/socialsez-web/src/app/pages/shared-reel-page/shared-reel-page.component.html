@@ -35,7 +35,7 @@
         </header>
 
         <p class="content" *ngIf="item.caption as caption">
-            <ng-container *ngFor="let line of contentLines(caption); let isLast = last">
+            <ng-container *ngFor="let line of contentLines(inlineTranslatedCaption ?? caption); let isLast = last">
                 <span class="content-line">
                     <ng-container *ngFor="let part of line">
                         <a *ngIf="part.hashtag; else reelPlainText" class="hashtag" [href]="'/hashtags/' + part.hashtag" (pointerup)="goToHashtag(part.hashtag, $event)" (click)="goToHashtag(part.hashtag, $event)">{{ part.text }}</a>
@@ -45,7 +45,7 @@
                 <br *ngIf="!isLast" />
             </ng-container>
         </p>
-        <app-translate-content [text]="item.caption || ''"></app-translate-content>
+        <app-translate-content [text]="item.caption || ''" [inlineMode]="true" (translationChanged)="onCaptionTranslationChanged($event)"></app-translate-content>
 
         <video class="media" [poster]="item.thumbnailUrl || null" [src]="item.videoUrl" controls autoplay muted loop playsinline preload="metadata"></video>
     </article>

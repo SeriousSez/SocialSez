@@ -43,6 +43,7 @@ export class CommunitiesPageComponent implements OnDestroy {
     busyCommunityId: string | null = null;
     status = '';
     statusTone: 'neutral' | 'success' | 'error' = 'neutral';
+    private readonly translatedCommunities = new Map<string, { name: string; description: string | null }>();
 
     get isAuthenticated(): boolean {
         return this.session.isAuthenticated();
@@ -267,6 +268,26 @@ export class CommunitiesPageComponent implements OnDestroy {
 
     trackByCommunityId(_index: number, community: CommunityDto): string {
         return community.id;
+    }
+
+    getActiveCommunityName(community: CommunityDto): string {
+        return this.translatedCommunities.get(community.id)?.name ?? community.name ?? '';
+    }
+
+    getActiveCommunityDescription(community: CommunityDto): string | null {
+        const t = this.translatedCommunities.get(community.id);
+        return t !== undefined ? t.description : (community.description || null);
+    }
+
+    onCommunityTranslationChanged(communityId: string, text: string | null): void {
+        if (!text) {
+            this.translatedCommunities.delete(communityId);
+        } else {
+            const sep = text.indexOf('\n\n');
+            const name = sep === -1 ? text : text.slice(0, sep);
+            const description = sep === -1 ? null : (text.slice(sep + 2) || null);
+            this.translatedCommunities.set(communityId, { name, description });
+        }
     }
 
     openCommunityFromCard(community: CommunityDto, event: Event): void {

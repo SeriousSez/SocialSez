@@ -64,15 +64,15 @@
         <article class="blog-card" *ngFor="let blog of visibleBlogs; trackBy: trackBlog" [ngStyle]="blogCardStyles(blog)" role="link" tabindex="0" (click)="openBlogAsync(blog, $event)" (keydown.enter)="openBlogAsync(blog, $event)"
             (keydown.space)="$event.preventDefault(); openBlogAsync(blog, $event)">
             <header class="blog-card-head">
-                <a class="blog-title" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">{{ blog.title }}</a>
+                <a class="blog-title" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">{{ getActiveBlogTitle(blog) }}</a>
                 <div class="blog-state-row">
                     <span class="state-pill" [class.private]="!blog.isPublic">{{ blog.isPublic ? ('blogs.visibility.public' | translate) : ('blogs.visibility.private' | translate) }}</span>
                     <span class="state-pill owner" *ngIf="blog.isOwner">{{ 'blogs.visibility.owner' | translate }}</span>
                 </div>
             </header>
 
-            <p class="blog-description" *ngIf="blog.description">{{ blog.description }}</p>
-            <app-translate-content [text]="(blog.title || '') + '\n\n' + (blog.description || '')"></app-translate-content>
+            <p class="blog-description" *ngIf="getActiveBlogDescription(blog) as desc">{{ desc }}</p>
+            <app-translate-content [text]="(blog.title || '') + '\n\n' + (blog.description || '')" [inlineMode]="true" (translationChanged)="onBlogTranslationChanged(blog.id, $event)"></app-translate-content>
 
             <div class="blog-meta">
                 <a [routerLink]="['/blogs', blog.ownerHandle]">@{{ blog.ownerHandle }}</a>

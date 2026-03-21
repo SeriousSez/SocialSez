@@ -13,6 +13,7 @@
     </span>
     }
     @if (translated !== null) {
+    @if (!inlineMode) {
     <div class="translate-result">
         <p class="translated-text">{{ translated }}</p>
         <div class="translate-meta">
@@ -24,6 +25,16 @@
             </button>
         </div>
     </div>
+    } @else {
+    <div class="translate-meta">
+        <i class="fa-duotone fa-thin fa-language" aria-hidden="true"></i>
+        <span>{{ 'translate.translatedBadge' | translate }}</span>
+        <span class="translate-sep">·</span>
+        <button type="button" class="translate-show-original" (click)="showOriginal()">
+            {{ 'translate.showOriginal' | translate }}
+        </button>
+    </div>
+    }
     }
     @if (failed) {
     <span class="translate-error">

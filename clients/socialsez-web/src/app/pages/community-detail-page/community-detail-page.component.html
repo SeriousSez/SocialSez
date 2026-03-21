@@ -2,11 +2,11 @@
     <header class="community-head card">
         <img class="community-cover" *ngIf="activeCommunity.imageUrl" [src]="activeCommunity.imageUrl" [attr.alt]="'communityDetail.community.imageAlt' | translate" />
         <div>
-            <h2>{{ activeCommunity.name }}</h2>
+            <h2>{{ translatedCommunityName ?? activeCommunity.name }}</h2>
             <p class="meta">/{{ activeCommunity.slug }} · <button type="button" class="community-members-trigger" (click)="openMembersModal()">{{ 'communityDetail.community.memberCount' | translate:{ count: activeCommunity.memberCount } }}</button> · {{ activeCommunity.isPrivate ?
                 ('communityDetail.community.visibility.private' | translate) : ('communityDetail.community.visibility.public' | translate) }}</p>
-            <p class="meta community-description" *ngIf="activeCommunity.description">
-                <ng-container *ngFor="let line of splitHashtagText(activeCommunity.description); let isLast = last">
+            <p class="meta community-description" *ngIf="translatedCommunityDescription ?? activeCommunity.description">
+                <ng-container *ngFor="let line of splitHashtagText(translatedCommunityDescription ?? activeCommunity.description); let isLast = last">
                     <ng-container *ngFor="let part of line">
                         <a *ngIf="part.hashtag; else communityDescriptionText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
                         <ng-template #communityDescriptionText>{{ part.text }}</ng-template>
@@ -14,7 +14,7 @@
                     <br *ngIf="!isLast" />
                 </ng-container>
             </p>
-            <app-translate-content [text]="(activeCommunity.name || '') + '\n\n' + (activeCommunity.description || '')"></app-translate-content>
+            <app-translate-content [text]="(activeCommunity.name || '') + '\n\n' + (activeCommunity.description || '')" [inlineMode]="true" (translationChanged)="onCommunityHeaderTranslationChanged($event)"></app-translate-content>
             <a class="meta" [routerLink]="['/users', activeCommunity.createdByHandle]">{{ 'communityDetail.community.createdBy' | translate:{ handle: activeCommunity.createdByHandle } }}</a>
         </div>
         <div class="community-head-actions">
@@ -82,7 +82,7 @@
             </header>
 
             <h4 class="post-title">
-                <ng-container *ngFor="let line of splitHashtagText(post.title || ('communityDetail.post.untitled' | translate)); let isLast = last">
+                <ng-container *ngFor="let line of splitHashtagText(getActivePostTitle(post)); let isLast = last">
                     <ng-container *ngFor="let part of line">
                         <a *ngIf="part.hashtag; else postTitleText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }" (click)="$event.stopPropagation()">{{ part.text }}</a>
                         <ng-template #postTitleText>{{ part.text }}</ng-template>
@@ -91,7 +91,7 @@
                 </ng-container>
             </h4>
             <a class="post-link" *ngIf="getPostPrimaryLink(post) as link" [href]="link" target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()">{{ link }}</a>
-            <p class="post-body" *ngIf="getPostTextBody(post) as body">
+            <p class="post-body" *ngIf="getActivePostBody(post) as body">
                 <ng-container *ngFor="let line of splitHashtagText(body); let isLast = last">
                     <ng-container *ngFor="let part of line">
                         <a *ngIf="part.hashtag; else postBodyText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }" (click)="$event.stopPropagation()">{{ part.text }}</a>
@@ -100,7 +100,7 @@
                     <br *ngIf="!isLast" />
                 </ng-container>
             </p>
-            <app-translate-content [text]="getPostTranslationText(post)" (click)="$event.stopPropagation()"></app-translate-content>
+            <app-translate-content [text]="getPostTranslationText(post)" [inlineMode]="true" (translationChanged)="onPostTranslationChanged(post.id, $event)" (click)="$event.stopPropagation()"></app-translate-content>
 
             <ng-container *ngIf="getActivePostImageUrl(post) as activeImageUrl">
                 <div class="post-image-carousel" *ngIf="getPostMediaUrls(post).length > 1">

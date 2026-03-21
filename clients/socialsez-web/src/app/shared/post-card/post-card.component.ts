@@ -67,14 +67,9 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         this._content = value ?? '';
         const parsed = extractSharedPostFromContent(this._content);
         this.sharedPost = parsed.sharedPost;
-        this.fullContentText = parsed.text;
-        this.contentIsHtml = /<[a-zA-Z]/.test(this.fullContentText);
-        this.contentExpanded = false;
-        const textLength = this.contentIsHtml
-            ? this.extractTextFromHtml(this.fullContentText).length
-            : this.fullContentText.length;
-        this.isContentTruncated = textLength > PostCardComponent.PostContentPreviewLength;
-        this.refreshVisibleContent();
+        this.originalContentText = parsed.text;
+        this.inlineTranslatedContent = null;
+        this.applyActiveContentText();
     }
 
     get content(): string {
@@ -146,6 +141,8 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     contentExpanded = false;
     contentIsHtml = false;
     sharedPost: SharedPostPreview | null = null;
+    inlineTranslatedContent: string | null = null;
+    private originalContentText = '';
     mentionResults: ProfileDto[] = [];
     mentionOpen = false;
     mentionLoading = false;
@@ -222,6 +219,11 @@ export class PostCardComponent implements OnChanges, OnDestroy {
 
     shouldHideSensitiveMedia(): boolean {
         return this.hideSensitiveMedia && this.post?.isSensitive === true && !this.sensitiveMediaRevealed;
+    }
+
+    onTranslationChanged(translatedText: string | null): void {
+        this.inlineTranslatedContent = translatedText?.trim() ? translatedText : null;
+        this.applyActiveContentText();
     }
 
     revealSensitiveMedia(): void {
@@ -1410,6 +1412,19 @@ export class PostCardComponent implements OnChanges, OnDestroy {
 
     get displayAsHtml(): boolean {
         return this.contentIsHtml && (!this.isContentTruncated || this.contentExpanded);
+    }
+
+    private applyActiveContentText(): void {
+        this.fullContentText = this.inlineTranslatedContent ?? this.originalContentText;
+        this.contentIsHtml = !this.inlineTranslatedContent && /<[a-zA-Z]/.test(this.fullContentText);
+
+        const textLength = this.contentIsHtml
+            ? this.extractTextFromHtml(this.fullContentText).length
+            : this.fullContentText.length;
+
+        this.contentExpanded = false;
+        this.isContentTruncated = textLength > PostCardComponent.PostContentPreviewLength;
+        this.refreshVisibleContent();
     }
 
     private refreshVisibleContent(): void {

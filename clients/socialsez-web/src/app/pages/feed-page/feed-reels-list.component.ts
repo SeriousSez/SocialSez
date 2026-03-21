@@ -93,6 +93,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     private readonly expandedReelCaptions = new Set<string>();
     private readonly expandedReelReplyThreadRootsByReelId = new Map<string, Set<string>>();
     private readonly openedReelComments = new Set<string>();
+    private readonly translatedCaptions = new Map<string, string>();
     private readonly reelCommentDraftById = new Map<string, string>();
     private readonly replyingToReelCommentByReelId = new Map<string, string | null>();
     private readonly reelMetadataCache = new Map<string, { source: string; location: string; collaborators: string[]; caption: string; frameZoom: number; frameOffsetX: number; frameOffsetY: number }>();
@@ -867,6 +868,18 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
 
     getReelCaptionText(reel: ReelDto): string {
         return this.parseReelMetadata(reel).caption;
+    }
+
+    getActiveReelCaption(reel: ReelDto): string {
+        return this.translatedCaptions.get(reel.id) ?? this.getReelCaptionText(reel);
+    }
+
+    onReelTranslationChanged(reelId: string, text: string | null): void {
+        if (text) {
+            this.translatedCaptions.set(reelId, text);
+        } else {
+            this.translatedCaptions.delete(reelId);
+        }
     }
 
     getReelFrameTransform(reel: ReelDto): string {

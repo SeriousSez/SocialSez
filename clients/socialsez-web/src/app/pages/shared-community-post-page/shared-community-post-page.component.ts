@@ -78,6 +78,8 @@ export class SharedCommunityPostPageComponent {
     commentActionError = '';
     fullscreenImageUrl: string | null = null;
     fullscreenImageIndex = 0;
+    translatedPostTitle: string | null = null;
+    translatedPostBody: string | null = null;
     postActiveImageIndex = 0;
     postImageSlideDirection: 'next' | 'prev' = 'next';
     postOutgoingImageUrl: string | null = null;
@@ -196,6 +198,26 @@ export class SharedCommunityPostPageComponent {
 
     splitHashtagText(content: string | null | undefined): HashtagTextPart[][] {
         return splitHashtagText(content);
+    }
+
+    onTranslationChanged(text: string | null): void {
+        if (!text) {
+            this.translatedPostTitle = null;
+            this.translatedPostBody = null;
+            this.cdr.detectChanges();
+            return;
+        }
+
+        const sep = text.indexOf('\n\n');
+        if (sep === -1) {
+            this.translatedPostTitle = text;
+            this.translatedPostBody = null;
+        } else {
+            this.translatedPostTitle = text.slice(0, sep);
+            this.translatedPostBody = text.slice(sep + 2) || null;
+        }
+
+        this.cdr.detectChanges();
     }
 
     get postMediaUrls(): string[] {

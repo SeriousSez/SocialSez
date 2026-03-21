@@ -42,6 +42,7 @@ export class BlogsPageComponent {
     private readonly suggestionSeed = new Set<string>(DISCOVERY_TOPICS.map(topic => topic.canonical));
     private queryDebounceTimerId: number | null = null;
     private readonly translate = inject(TranslateService);
+    private readonly translatedBlogs = new Map<string, { title: string; description: string | null }>();
 
     @ViewChild('infiniteSentinel')
     set infiniteSentinel(value: ElementRef<HTMLDivElement> | undefined) {
@@ -200,6 +201,26 @@ export class BlogsPageComponent {
 
     trackBlog(_: number, blog: BlogDto): string {
         return blog.id;
+    }
+
+    getActiveBlogTitle(blog: BlogDto): string {
+        return this.translatedBlogs.get(blog.id)?.title ?? blog.title ?? '';
+    }
+
+    getActiveBlogDescription(blog: BlogDto): string | null {
+        const t = this.translatedBlogs.get(blog.id);
+        return t !== undefined ? t.description : (blog.description || null);
+    }
+
+    onBlogTranslationChanged(blogId: string, text: string | null): void {
+        if (!text) {
+            this.translatedBlogs.delete(blogId);
+        } else {
+            const sep = text.indexOf('\n\n');
+            const title = sep === -1 ? text : text.slice(0, sep);
+            const description = sep === -1 ? null : (text.slice(sep + 2) || null);
+            this.translatedBlogs.set(blogId, { title, description });
+        }
     }
 
     blogCardStyles(blog: BlogDto): Record<string, string> {

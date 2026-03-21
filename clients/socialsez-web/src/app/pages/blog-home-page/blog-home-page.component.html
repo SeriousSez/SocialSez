@@ -24,9 +24,9 @@
 
     <div class="blog" *ngIf="!loading && !error && blog as currentBlog">
         <header class="blog-head blog-header" [class.center]="headerLayoutClass === 'center'">
-            <h1>{{ currentBlog.title }}</h1>
-            <p class="subtitle" *ngIf="currentBlog.description">
-                <ng-container *ngFor="let line of splitHashtagText(currentBlog.description); let isLast = last">
+            <h1>{{ translatedBlogTitle ?? currentBlog.title }}</h1>
+            <p class="subtitle" *ngIf="translatedBlogDescription ?? currentBlog.description">
+                <ng-container *ngFor="let line of splitHashtagText(translatedBlogDescription ?? currentBlog.description); let isLast = last">
                     <ng-container *ngFor="let part of line">
                         <a *ngIf="part.hashtag; else blogDescriptionText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
                         <ng-template #blogDescriptionText>{{ part.text }}</ng-template>
@@ -34,7 +34,7 @@
                     <br *ngIf="!isLast" />
                 </ng-container>
             </p>
-            <app-translate-content [text]="(currentBlog.title || '') + '\n\n' + (currentBlog.description || '')"></app-translate-content>
+            <app-translate-content [text]="(currentBlog.title || '') + '\n\n' + (currentBlog.description || '')" [inlineMode]="true" (translationChanged)="onBlogTranslationChanged($event)"></app-translate-content>
             <div class="head-links">
                 <a [routerLink]="['/blogs', currentBlog.ownerHandle]">{{ 'blogHome.header.moreBy' | translate:{ handle: currentBlog.ownerHandle } }}</a>
                 <a [routerLink]="['/blogs', 'studio']" *ngIf="currentBlog.isOwner">{{ 'blogHome.header.editInStudio' | translate }}</a>
@@ -45,10 +45,10 @@
             <article class="post-card" *ngFor="let post of posts; trackBy: trackPost" role="link" tabindex="0" (click)="openPostAsync(post, $event)" (keydown.enter)="openPostAsync(post, $event)" (keydown.space)="$event.preventDefault(); openPostAsync(post, $event)">
                 <app-lazy-image *ngIf="post.coverImageUrl" class="post-card-cover" [src]="post.coverImageUrl" [alt]="post.title" imgClass="post-cover" skeletonHeight="220px" skeletonRadius="10px"></app-lazy-image>
                 <h2>
-                    <a [routerLink]="['/blogs', currentBlog.ownerHandle, currentBlog.slug, post.slug]">{{ post.title }}</a>
+                    <a [routerLink]="['/blogs', currentBlog.ownerHandle, currentBlog.slug, post.slug]">{{ getActivePostTitle(post) }}</a>
                 </h2>
-                <p *ngIf="post.excerpt">
-                    <ng-container *ngFor="let line of splitHashtagText(post.excerpt); let isLast = last">
+                <p *ngIf="getActivePostExcerpt(post) as excerpt">
+                    <ng-container *ngFor="let line of splitHashtagText(excerpt); let isLast = last">
                         <ng-container *ngFor="let part of line">
                             <a *ngIf="part.hashtag; else postExcerptText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
                             <ng-template #postExcerptText>{{ part.text }}</ng-template>
@@ -56,7 +56,7 @@
                         <br *ngIf="!isLast" />
                     </ng-container>
                 </p>
-                <app-translate-content [text]="(post.title || '') + '\n\n' + (post.excerpt || '')"></app-translate-content>
+                <app-translate-content [text]="(post.title || '') + '\n\n' + (post.excerpt || '')" [inlineMode]="true" (translationChanged)="onPostTranslationChanged(post.id, $event)"></app-translate-content>
                 <div class="meta">
                     <span>{{ (post.publishedAtUtc ?? post.updatedAtUtc) | date:'mediumDate' }}</span>
                     <span *ngIf="!post.isPublished" class="draft">{{ 'blogHome.post.draft' | translate }}</span>

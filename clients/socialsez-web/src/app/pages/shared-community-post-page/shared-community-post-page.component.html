@@ -61,7 +61,7 @@
         </header>
 
         <h1 class="post-title">
-            <ng-container *ngFor="let line of splitHashtagText(postTitle); let isLast = last">
+            <ng-container *ngFor="let line of splitHashtagText(translatedPostTitle ?? postTitle); let isLast = last">
                 <ng-container *ngFor="let part of line">
                     <a *ngIf="part.hashtag; else sharedPostTitleText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
                     <ng-template #sharedPostTitleText>{{ part.text }}</ng-template>
@@ -70,7 +70,7 @@
             </ng-container>
         </h1>
         <a class="post-link" *ngIf="primaryPostLink as link" [href]="link" target="_blank" rel="noopener noreferrer">{{ link }}</a>
-        <p class="content" *ngIf="postBody as body">
+        <p class="content" *ngIf="(translatedPostBody ?? postBody) as body">
             <ng-container *ngFor="let line of splitHashtagText(body); let isLast = last">
                 <ng-container *ngFor="let part of line">
                     <a *ngIf="part.hashtag; else sharedPostBodyText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
@@ -79,7 +79,7 @@
                 <br *ngIf="!isLast" />
             </ng-container>
         </p>
-        <app-translate-content [text]="postTitle + '\n\n' + (postBody || '')"></app-translate-content>
+        <app-translate-content [text]="postTitle + '\n\n' + (postBody || '')" [inlineMode]="true" (translationChanged)="onTranslationChanged($event)"></app-translate-content>
 
         <ng-container *ngIf="activePostMediaUrl as mediaUrl">
             <div class="post-media-carousel" *ngIf="postMediaUrls.length > 1">

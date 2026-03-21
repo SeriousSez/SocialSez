@@ -68,8 +68,34 @@ export class BlogPostPageComponent implements OnDestroy {
         return this.blog?.theme?.customCss ?? '';
     }
 
+    translatedTitle: string | null = null;
+    renderedTranslatedContent: string | null = null;
+
     get renderedPostContent(): string {
         return renderMarkdownToHtml(this.post?.content);
+    }
+
+    get activeTitle(): string {
+        return this.translatedTitle ?? this.post?.title ?? '';
+    }
+
+    get activeRenderedContent(): string {
+        return this.renderedTranslatedContent ?? this.renderedPostContent;
+    }
+
+    onTranslationChanged(text: string | null): void {
+        if (!text) {
+            this.translatedTitle = null;
+            this.renderedTranslatedContent = null;
+            this.cdr.detectChanges();
+            return;
+        }
+
+        const sep = text.indexOf('\n\n');
+        this.translatedTitle = sep === -1 ? text : text.slice(0, sep);
+        const translatedBody = sep === -1 ? '' : text.slice(sep + 2);
+        this.renderedTranslatedContent = renderMarkdownToHtml(translatedBody) || null;
+        this.cdr.detectChanges();
     }
 
     get embedToolsUrl(): string {

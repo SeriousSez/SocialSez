@@ -45,10 +45,10 @@
                     (click)="openCommunityFromCard(community, $event)" (keydown)="onCommunityCardKeydown($event, community)">
                     <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" [alt]="'communities.community.imageAlt' | translate" />
                     <div>
-                        <strong><a [routerLink]="['/c', community.slug]">{{ community.name }}</a></strong>
+                        <strong><a [routerLink]="['/c', community.slug]">{{ getActiveCommunityName(community) }}</a></strong>
                         <p class="meta">/{{ community.slug }} · {{ community.memberCount }} {{ 'communities.community.members' | translate }} · {{ community.isPrivate ? ('communities.visibility.private' | translate) : ('communities.visibility.public' | translate) }}</p>
-                        <p class="meta" *ngIf="community.description">
-                            <ng-container *ngFor="let line of splitHashtagText(community.description); let isLast = last">
+                        <p class="meta" *ngIf="getActiveCommunityDescription(community)">
+                            <ng-container *ngFor="let line of splitHashtagText(getActiveCommunityDescription(community)); let isLast = last">
                                 <ng-container *ngFor="let part of line">
                                     <a *ngIf="part.hashtag; else communityDescriptionText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
                                     <ng-template #communityDescriptionText>{{ part.text }}</ng-template>
@@ -56,7 +56,7 @@
                                 <br *ngIf="!isLast" />
                             </ng-container>
                         </p>
-                        <app-translate-content [text]="(community.name || '') + '\n\n' + (community.description || '')" (click)="$event.stopPropagation()"></app-translate-content>
+                        <app-translate-content [text]="(community.name || '') + '\n\n' + (community.description || '')" [inlineMode]="true" (translationChanged)="onCommunityTranslationChanged(community.id, $event)" (click)="$event.stopPropagation()"></app-translate-content>
                         <a class="meta" [routerLink]="['/users', community.createdByHandle]">{{ 'communities.community.createdBy' | translate:{ handle: community.createdByHandle } }}</a>
                     </div>
                     <div class="actions">
@@ -101,10 +101,10 @@
                     (click)="openCommunityFromCard(community, $event)" (keydown)="onCommunityCardKeydown($event, community)">
                     <img class="community-image" *ngIf="community.imageUrl" [src]="community.imageUrl" [alt]="'communities.community.imageAlt' | translate" />
                     <div>
-                        <strong><a [routerLink]="['/c', community.slug]">{{ community.name }}</a></strong>
+                        <strong><a [routerLink]="['/c', community.slug]">{{ getActiveCommunityName(community) }}</a></strong>
                         <p class="meta">/{{ community.slug }} · {{ community.memberCount }} {{ 'communities.community.members' | translate }} · {{ community.isPrivate ? ('communities.visibility.private' | translate) : ('communities.visibility.public' | translate) }}</p>
-                        <p class="meta" *ngIf="community.description">
-                            <ng-container *ngFor="let line of splitHashtagText(community.description); let isLast = last">
+                        <p class="meta" *ngIf="getActiveCommunityDescription(community)">
+                            <ng-container *ngFor="let line of splitHashtagText(getActiveCommunityDescription(community)); let isLast = last">
                                 <ng-container *ngFor="let part of line">
                                     <a *ngIf="part.hashtag; else discoverCommunityDescriptionText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
                                     <ng-template #discoverCommunityDescriptionText>{{ part.text }}</ng-template>
@@ -112,7 +112,7 @@
                                 <br *ngIf="!isLast" />
                             </ng-container>
                         </p>
-                        <app-translate-content [text]="(community.name || '') + '\n\n' + (community.description || '')" (click)="$event.stopPropagation()"></app-translate-content>
+                        <app-translate-content [text]="(community.name || '') + '\n\n' + (community.description || '')" [inlineMode]="true" (translationChanged)="onCommunityTranslationChanged(community.id, $event)" (click)="$event.stopPropagation()"></app-translate-content>
                         <a class="meta" [routerLink]="['/users', community.createdByHandle]">{{ 'communities.community.createdBy' | translate:{ handle: community.createdByHandle } }}</a>
                     </div>
                     <div class="actions">

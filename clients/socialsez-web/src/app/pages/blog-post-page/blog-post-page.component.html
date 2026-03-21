@@ -30,7 +30,7 @@
         <header class="post-head">
             <a class="back-link" [routerLink]="['/blogs', handle, blogSlug]">{{ 'blogPost.actions.backToBlog' | translate }}</a>
             <h1>
-                <ng-container *ngFor="let line of splitHashtagText(item.title); let isLast = last">
+                <ng-container *ngFor="let line of splitHashtagText(activeTitle); let isLast = last">
                     <ng-container *ngFor="let part of line">
                         <a *ngIf="part.hashtag; else blogPostTitleText" class="hashtag" [routerLink]="['/discover']" [queryParams]="{ q: part.hashtag, type: 'all' }">{{ part.text }}</a>
                         <ng-template #blogPostTitleText>{{ part.text }}</ng-template>
@@ -46,8 +46,8 @@
 
         <img *ngIf="item.coverImageUrl" class="cover-media-img" [src]="item.coverImageUrl" [alt]="item.title" loading="eager" decoding="async" />
 
-        <div class="content" [innerHTML]="renderedPostContent"></div>
-        <app-translate-content [text]="(item.title || '') + '\n\n' + (item.content || '')"></app-translate-content>
+        <div class="content" [innerHTML]="activeRenderedContent"></div>
+        <app-translate-content [text]="(item.title || '') + '\n\n' + (item.content || '')" [inlineMode]="true" (translationChanged)="onTranslationChanged($event)"></app-translate-content>
 
         <section class="blog-actions" *ngIf="allowLikes || allowComments || allowShares || allowEmbeds || canToggleSave">
             <button type="button" class="ghost" *ngIf="allowLikes" disabled [attr.title]="'blogPost.hints.likesSoon' | translate">{{ 'blogPost.actions.like' | translate }}</button>

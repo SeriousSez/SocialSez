@@ -10,6 +10,7 @@ namespace SocialSez.ApplicationService.Services;
 public partial class TranslationService : ITranslationService
 {
     private const int MaxTranslateChars = 4500;
+    private const int MaxTranslateChunkChars = 450;
 
     // One shared client per process – avoids socket exhaustion for a simple proxy.
     private static readonly HttpClient Http = new(new SocketsHttpHandler
@@ -49,16 +50,80 @@ public partial class TranslationService : ITranslationService
         if (!LangMap.TryGetValue(targetLanguage, out var targetCode))
             return null;
 
-        // Strip HTML and markdown formatting so the translation API receives clean prose.
         var cleanText = StripMarkup(text);
         if (string.IsNullOrWhiteSpace(cleanText))
             return null;
 
-        // Enforce character limit.
         if (cleanText.Length > MaxTranslateChars)
             cleanText = cleanText[..MaxTranslateChars];
 
-        var encoded = Uri.EscapeDataString(cleanText);
+        var chunks = SplitIntoChunks(cleanText, MaxTranslateChunkChars);
+        if (chunks.Count == 0)
+            return null;
+
+        var translatedBuilder = new StringBuilder(cleanText.Length + 64);
+
+        foreach (var chunk in chunks)
+        {
+            if (string.IsNullOrWhiteSpace(chunk))
+                continue;
+
+            var translatedChunk = await TranslateChunkAsync(chunk, targetCode, cancellationToken);
+            if (string.IsNullOrWhiteSpace(translatedChunk))
+                return null;
+
+            translatedBuilder.Append(translatedChunk);
+        }
+
+        var translatedText = translatedBuilder.ToString().Trim();
+        return string.IsNullOrWhiteSpace(translatedText) ? null : translatedText;
+    }
+
+    private static List<string> SplitIntoChunks(string text, int maxChunkChars)
+    {
+        var chunks = new List<string>();
+        if (string.IsNullOrEmpty(text))
+            return chunks;
+
+        var index = 0;
+        while (index < text.Length)
+        {
+            var remaining = text.Length - index;
+            if (remaining <= maxChunkChars)
+            {
+                chunks.Add(text[index..]);
+                break;
+            }
+
+            var hardEnd = index + maxChunkChars;
+            var searchStart = index + (maxChunkChars / 2);
+
+            var newlineBreak = text.LastIndexOf('\n', hardEnd - 1, hardEnd - searchStart);
+            if (newlineBreak >= searchStart)
+            {
+                chunks.Add(text[index..(newlineBreak + 1)]);
+                index = newlineBreak + 1;
+                continue;
+            }
+
+            var spaceBreak = text.LastIndexOf(' ', hardEnd - 1, hardEnd - searchStart);
+            if (spaceBreak >= searchStart)
+            {
+                chunks.Add(text[index..(spaceBreak + 1)]);
+                index = spaceBreak + 1;
+                continue;
+            }
+
+            chunks.Add(text[index..hardEnd]);
+            index = hardEnd;
+        }
+
+        return chunks;
+    }
+
+    private static async Task<string?> TranslateChunkAsync(string chunk, string targetCode, CancellationToken cancellationToken)
+    {
+        var encoded = Uri.EscapeDataString(chunk);
         var url = $"get?q={encoded}&langpair=autodetect|{targetCode}";
 
         try
@@ -69,7 +134,14 @@ public partial class TranslationService : ITranslationService
 
             return null;
         }
-        catch (OperationCanceledException) { throw; }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch
         {
             return null;
@@ -78,18 +150,30 @@ public partial class TranslationService : ITranslationService
 
     private static string StripMarkup(string text)
     {
-        // Strip HTML tags.
-        var result = HtmlTagPattern().Replace(text, " ");
-        // Collapse whitespace.
-        result = WhitespacePattern().Replace(result, " ").Trim();
-        return result;
+        // Map block-level elements to newlines so paragraph structure is preserved.
+        var result = BlockElementPattern().Replace(text, "\n");
+        // Strip remaining HTML tags.
+        result = HtmlTagPattern().Replace(result, "");
+        // Collapse horizontal whitespace (not newlines) to a single space per run.
+        result = HorizontalSpacePattern().Replace(result, " ");
+        // Normalise line endings.
+        result = result.Replace("\r\n", "\n").Replace("\r", "\n");
+        // Trim each line and remove runs of more than two consecutive blank lines.
+        result = TooManyNewlinesPattern().Replace(result, "\n\n");
+        return result.Trim();
     }
+
+    [GeneratedRegex(@"<br\s*/?>|</p>|</div>|</li>|</h[1-6]>", RegexOptions.IgnoreCase)]
+    private static partial Regex BlockElementPattern();
 
     [GeneratedRegex("<[^>]+>")]
     private static partial Regex HtmlTagPattern();
 
-    [GeneratedRegex(@"\s{2,}")]
-    private static partial Regex WhitespacePattern();
+    [GeneratedRegex(@"[^\S\n]+")]
+    private static partial Regex HorizontalSpacePattern();
+
+    [GeneratedRegex(@"\n{3,}")]
+    private static partial Regex TooManyNewlinesPattern();
 
     private sealed class MyMemoryResponse
     {
