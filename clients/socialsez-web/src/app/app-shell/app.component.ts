@@ -20,6 +20,7 @@ import { FeedStoryViewerComponent } from '../pages/feed-page/feed-story-viewer.c
 import { CommunityInfoRailComponent } from './community-info-rail.component';
 import { SavedCollectionsRailComponent } from './saved-collections-rail.component';
 import { SaveToCollectionModalComponent } from '../shared/save-to-collection-modal/save-to-collection-modal.component';
+import { FeedRightRailComponent } from './feed-right-rail.component';
 
 interface DockReelModalState {
     reelId?: string;
@@ -54,7 +55,7 @@ interface RoutePreviewMeta {
 
 @Component({
     selector: 'app-root',
-    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, MessagesDockComponent, FeedStoryViewerComponent, CommunityInfoRailComponent, SavedCollectionsRailComponent, SaveToCollectionModalComponent],
+    imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, MessagesDockComponent, FeedStoryViewerComponent, CommunityInfoRailComponent, SavedCollectionsRailComponent, SaveToCollectionModalComponent, FeedRightRailComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
@@ -251,6 +252,11 @@ export class AppComponent implements OnInit, OnDestroy {
     get isSettingsRoute(): boolean {
         const routePath = this.router.url.split('?')[0].split('#')[0].toLowerCase();
         return routePath === '/settings' || routePath.startsWith('/settings/');
+    }
+
+    get isFeedRoute(): boolean {
+        const routePath = this.router.url.split('?')[0].split('#')[0].toLowerCase();
+        return routePath === '/feed' || routePath === '/';
     }
 
     get searchContextLabel(): string {

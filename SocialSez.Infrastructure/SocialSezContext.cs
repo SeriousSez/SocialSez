@@ -101,6 +101,9 @@ public class SocialSezContext(DbContextOptions<SocialSezContext> options) : DbCo
             entity.Property(x => x.MarketingOptIn).HasDefaultValue(false);
             entity.Property(x => x.IsPrivate).HasDefaultValue(false);
             entity.Property(x => x.LastHandleChangeAtUtc);
+            entity.Property(x => x.EngagementStreakCurrentDays).HasDefaultValue(0);
+            entity.Property(x => x.EngagementStreakBestDays).HasDefaultValue(0);
+            entity.Property(x => x.EngagementStreakLastActiveDateUtc);
             entity.HasIndex(x => x.Handle).IsUnique();
         });
 

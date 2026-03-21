@@ -13,6 +13,9 @@ public class UserProfile
     public bool IsPrivate { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? LastHandleChangeAtUtc { get; set; }
+    public int EngagementStreakCurrentDays { get; set; }
+    public int EngagementStreakBestDays { get; set; }
+    public DateTime? EngagementStreakLastActiveDateUtc { get; set; }
 
     public ICollection<Post> Posts { get; set; } = new List<Post>();
     public ICollection<PostReaction> Reactions { get; set; } = new List<PostReaction>();

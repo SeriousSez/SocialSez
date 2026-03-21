@@ -3,7 +3,7 @@
     <p class="sub">{{ subtitle }}</p>
 
     <div class="composer-textarea-wrap">
-        <app-rich-text-editor [placeholder]="'What’s new today?'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="content" (contentChanged)="onEditorContentChanged($event)"></app-rich-text-editor>
+        <app-rich-text-editor [placeholder]="'What’s new today?'" [collapsed]="false" [showActions]="false" [showModeToggle]="true" [editorHeightPx]="250" [initialContent]="content" [initialContentIsHtml]="contentIsHtml" (contentChanged)="onEditorContentChanged($event)"></app-rich-text-editor>
     </div>
     <input #postMediaInput type="file" class="visually-hidden" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" multiple (change)="onPostMediaSelected($event)" [disabled]="uploadingMedia" />
     <section class="upload-picker" aria-label="Post media upload">

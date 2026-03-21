@@ -226,12 +226,12 @@
     <button class="retry" *ngIf="(selectedContentTab === 'posts' && !loading && error) || (selectedContentTab === 'reels' && !reelsLoading && reelsError)" (click)="load()">Retry</button>
 
     <div class="list" *ngIf="selectedContentTab === 'posts' && !loading && !error && feed.length; else postsEmptyState">
-        <app-post-card *ngFor="let post of feed; trackBy: trackPostById" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [reacting]="reactingPostId === post.id" [hideSensitiveMedia]="hideSensitiveMediaEnabled"
+        <app-post-card *ngFor="let post of feed; trackBy: trackPostById" [post]="post" [content]="displayPostContent(post)" [repostCount]="getPostRepostCount(post.id)" [reacting]="reactingPostId === post.id" [hideSensitiveMedia]="hideSensitiveMediaEnabled" [showNotInterestedAction]="true"
             [busy]="reactingPostId === post.id || savingPost || deletingPostId === post.id || sharingPostId === post.id" [viewerProfileId]="currentProfileId" [showActions]="canManagePost(post)" [isEditing]="editingPostId === post.id" [editValue]="editContent" [savingEdit]="savingPost"
             [savedByMe]="isPostSaved(post.id)" [deleting]="deletingPostId === post.id" (editValueChange)="editContent = $event" (startEdit)="startEdit(post)" (saveEdit)="saveEdit(post.id)" (cancelEdit)="cancelEdit()" (deletePost)="requestDeletePost(post.id)" (toggleLike)="toggleLike(post)"
             (setReaction)="setReaction(post, $event)" (clearReaction)="clearReaction(post)" (addComment)="addComment(post, $event)" (updateComment)="updateComment(post, $event.commentId, $event.content)" (deleteComment)="deleteComment(post, $event)"
             (setCommentReaction)="setCommentReaction(post, $event.commentId, $event.reactionType)" (clearCommentReaction)="clearCommentReaction(post, $event)" (shareToFeed)="sharePostToFeed(post)" (shareToChat)="sharePostToChat(post)" (saveToggled)="toggleSavedPost(post)"
-            (reportPost)="openPostReport(post)" (reportComment)="openPostCommentReport(post, $event.id)">
+            (reportPost)="openPostReport(post)" (notInterestedRequested)="requestPostNotInterested(post)" (reportComment)="openPostCommentReport(post, $event.id)">
             <div post-header class="author">
                 <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? ('Open @' + post.authorHandle + ' stories') : 'View author profile'">
                     <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
@@ -248,15 +248,23 @@
     <app-feed-reels-list *ngIf="selectedContentTab === 'reels' && !reelsLoading && !reelsError && reels.length; else reelsEmptyState" [reels]="reels" [activeStoryAuthorHandles]="activeStoryAuthorHandles" [unseenStoryAuthorHandles]="activeUnseenStoryAuthorHandles" [reactingReelId]="reactingReelId"
         [commentingReelId]="commentingReelId" [sharingReelId]="sharingReelId" [savedReelIds]="savedReelIds" [showOwnerActions]="true" [viewerProfileId]="currentProfileId" [deletingReelId]="deletingReelId" [hideSensitiveMedia]="hideSensitiveMediaEnabled"
         (authorAvatarClicked)="openProfileOrStory($event)" (likeToggled)="toggleReelLike($event)" (commentAdded)="addReelComment($event)" (reelCommentLikeToggled)="toggleReelCommentLike($event)" (reelCommentUpdated)="updateReelComment($event)"
-        (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)" (saveToggled)="toggleSavedReel($event)" (reelDeleted)="deleteReel($event)" (reportRequested)="openReelReport($event)" (reelCommentReportRequested)="openReelCommentReport($event)"
-        (playbackProgress)="onReelPlaybackProgress($event)"></app-feed-reels-list>
+        (reelCommentDeleteRequested)="requestDeleteReelComment($event)" (shareRequested)="shareReelToChat($event)" (saveToggled)="toggleSavedReel($event)" (reelDeleted)="deleteReel($event)" (reportRequested)="openReelReport($event)" (notInterestedRequested)="requestReelNotInterested($event)"
+        (reelCommentReportRequested)="openReelCommentReport($event)" (playbackProgress)="onReelPlaybackProgress($event)"></app-feed-reels-list>
 
     <ng-template #postsEmptyState>
         <p class="empty" *ngIf="selectedContentTab === 'posts' && !loading && !error">{{ postsEmptyMessage }}</p>
+        <div class="empty-actions" *ngIf="selectedContentTab === 'posts' && !loading && !error && hasHiddenFeedCreators">
+            <p class="empty-hint">{{ 'homeFeed.tuning.hiddenCreatorsEmptyHint' | translate }}</p>
+            <button type="button" class="ghost" (click)="openHiddenCreatorsSettings()">{{ 'homeFeed.tuning.manageHiddenCreators' | translate }}</button>
+        </div>
     </ng-template>
 
     <ng-template #reelsEmptyState>
         <p class="empty" *ngIf="selectedContentTab === 'reels' && !reelsLoading && !reelsError">{{ reelsEmptyMessage }}</p>
+        <div class="empty-actions" *ngIf="selectedContentTab === 'reels' && !reelsLoading && !reelsError && hasHiddenFeedCreators">
+            <p class="empty-hint">{{ 'homeFeed.tuning.hiddenCreatorsEmptyHint' | translate }}</p>
+            <button type="button" class="ghost" (click)="openHiddenCreatorsSettings()">{{ 'homeFeed.tuning.manageHiddenCreators' | translate }}</button>
+        </div>
     </ng-template>
 </section>
 
@@ -348,6 +356,14 @@
 <app-report-modal [open]="showContentReportModal" [busy]="reportingContent" [profileHandle]="pendingReportTarget?.handle ?? ''" (cancel)="closeContentReportModal()" (submitReport)="submitContentReport($event)"></app-report-modal>
 
 <app-confirm-modal [open]="!!pendingDeletePostId" title="Delete post" message="Delete this post? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingPostId" (cancel)="cancelDeletePost()" (confirm)="confirmDeletePost()">
+</app-confirm-modal>
+
+<app-confirm-modal [open]="!!pendingNotInterestedPost" [title]="'homeFeed.tuning.notInterested' | translate" [message]="('homeFeed.tuning.fewerPostsNotice' | translate: { handle: pendingNotInterestedPost?.authorHandle ?? '' })" [confirmText]="'homeFeed.tuning.notInterested' | translate"
+    cancelText="Cancel" (cancel)="cancelPostNotInterested()" (confirm)="confirmPostNotInterested()">
+</app-confirm-modal>
+
+<app-confirm-modal [open]="!!pendingNotInterestedReel" [title]="'homeFeed.tuning.notInterested' | translate" [message]="('homeFeed.tuning.fewerReelsNotice' | translate: { handle: pendingNotInterestedReel?.authorHandle ?? '' })" [confirmText]="'homeFeed.tuning.notInterested' | translate"
+    cancelText="Cancel" (cancel)="cancelReelNotInterested()" (confirm)="confirmReelNotInterested()">
 </app-confirm-modal>
 
 <app-confirm-modal [open]="!!pendingDeleteReelId" title="Delete reel" message="Delete this reel? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" [busy]="!!deletingReelId" (cancel)="cancelDeleteReel()" (confirm)="confirmDeleteReel()">

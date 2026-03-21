@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ReelCommentDto, ReelDto } from '../../core/api.types';
 import { parseUtcDate, resolveAppLocale } from '../../core/date-time.util';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
@@ -38,7 +39,7 @@ export interface ReelPlaybackProgressEvent {
 @Component({
     selector: 'app-feed-reels-list',
     standalone: true,
-    imports: [CommonModule, RouterLink, CommentsSheetComponent],
+    imports: [CommonModule, RouterLink, TranslatePipe, CommentsSheetComponent],
     templateUrl: './feed-reels-list.component.html',
     styleUrl: './feed-reels-list.component.scss'
 })
@@ -68,6 +69,7 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
     @Output() shareRequested = new EventEmitter<ReelDto>();
     @Output() saveToggled = new EventEmitter<ReelDto>();
     @Output() reportRequested = new EventEmitter<ReelDto>();
+    @Output() notInterestedRequested = new EventEmitter<ReelDto>();
     @Output() reelUpdated = new EventEmitter<{ reel: ReelDto; caption: string }>();
     @Output() reelDeleted = new EventEmitter<ReelDto>();
     @Output() authorAvatarClicked = new EventEmitter<string>();
@@ -242,6 +244,18 @@ export class FeedReelsListComponent implements AfterViewInit, OnChanges, OnDestr
         event.preventDefault();
         event.stopPropagation();
         this.onReportReel(reel);
+        this.closeReelSettingsMenu();
+    }
+
+    markReelNotInterestedFromMenu(reel: ReelDto, event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!this.canReportReel(reel)) {
+            return;
+        }
+
+        this.notInterestedRequested.emit(reel);
         this.closeReelSettingsMenu();
     }
 

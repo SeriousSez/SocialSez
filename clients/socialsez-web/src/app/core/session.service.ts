@@ -33,6 +33,7 @@ import {
     LoginRequest,
     NotificationDto,
     PostDto,
+    EngagementStreakDto,
     ProfileActivitySummaryDto,
     ProfileDto,
     ReelDto,
@@ -82,6 +83,7 @@ export interface OpenReelInModalRequest {
 export interface PendingPostComposerDraft {
     sourceDraftId?: string;
     content: string;
+    contentIsHtml?: boolean;
     markSensitive: boolean;
     scheduledPublishLocal: string;
     mediaFiles?: File[];
@@ -736,6 +738,14 @@ export class SessionService {
 
     async loadProfileActivitySummaryAsync(handle: string): Promise<ProfileActivitySummaryDto> {
         return firstValueFrom(this.api.getProfileActivitySummary(handle));
+    }
+
+    async loadEngagementStreakAsync(): Promise<EngagementStreakDto> {
+        return firstValueFrom(this.api.getMyEngagementStreak());
+    }
+
+    async trackEngagementAsync(localDate?: string): Promise<EngagementStreakDto> {
+        return firstValueFrom(this.api.trackMyEngagement(localDate));
     }
 
     async followAsync(followedId: string): Promise<FollowActionResultDto> {

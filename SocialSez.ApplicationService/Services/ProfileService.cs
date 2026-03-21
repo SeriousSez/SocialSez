@@ -120,6 +120,68 @@ public class ProfileService(SocialSezContext dbContext, IMemoryCache memoryCache
             followingCount);
     }
 
+    public async Task<EngagementStreakDto?> GetEngagementStreakAsync(Guid profileId, CancellationToken cancellationToken = default)
+    {
+        var profile = await dbContext.UserProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == profileId, cancellationToken);
+
+        if (profile is null)
+        {
+            return null;
+        }
+
+        var lastActiveDate = profile.EngagementStreakLastActiveDateUtc.HasValue
+            ? DateOnly.FromDateTime(profile.EngagementStreakLastActiveDateUtc.Value)
+            : (DateOnly?)null;
+
+        return new EngagementStreakDto(
+            Math.Max(0, profile.EngagementStreakCurrentDays),
+            Math.Max(0, profile.EngagementStreakBestDays),
+            lastActiveDate);
+    }
+
+    public async Task<EngagementStreakDto?> TrackEngagementAsync(Guid profileId, TrackEngagementStreakRequest request, CancellationToken cancellationToken = default)
+    {
+        var profile = await dbContext.UserProfiles.FirstOrDefaultAsync(x => x.Id == profileId, cancellationToken);
+        if (profile is null)
+        {
+            return null;
+        }
+
+        var activityDate = request.LocalDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var lastActiveDate = profile.EngagementStreakLastActiveDateUtc.HasValue
+            ? DateOnly.FromDateTime(profile.EngagementStreakLastActiveDateUtc.Value)
+            : (DateOnly?)null;
+
+        if (lastActiveDate == activityDate)
+        {
+            return new EngagementStreakDto(
+                Math.Max(0, profile.EngagementStreakCurrentDays),
+                Math.Max(0, profile.EngagementStreakBestDays),
+                activityDate);
+        }
+
+        if (lastActiveDate == activityDate.AddDays(-1))
+        {
+            profile.EngagementStreakCurrentDays = Math.Max(1, profile.EngagementStreakCurrentDays) + 1;
+        }
+        else
+        {
+            profile.EngagementStreakCurrentDays = 1;
+        }
+
+        profile.EngagementStreakBestDays = Math.Max(profile.EngagementStreakBestDays, profile.EngagementStreakCurrentDays);
+        profile.EngagementStreakLastActiveDateUtc = activityDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return new EngagementStreakDto(
+            Math.Max(0, profile.EngagementStreakCurrentDays),
+            Math.Max(0, profile.EngagementStreakBestDays),
+            activityDate);
+    }
+
     public async Task<IReadOnlyCollection<ProfileDto>> SearchAsync(string query, Guid? viewerId = null, int take = 20, CancellationToken cancellationToken = default)
     {
         var normalizedQuery = DiscoverySearchBackend.NormalizeQuery(query);

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, EventEmitter, HostListener, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { CommentDto, PostDto, PostReactionDetailDto, ProfileDto } from '../../core/api.types';
 import { SharedPostPreview, extractSharedPostFromContent } from '../../core/shared-post.utils';
 import { SessionService } from '../../core/session.service';
@@ -49,7 +50,7 @@ interface ReactionDetailEntry {
 @Component({
     selector: 'app-post-card',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactionPickerComponent, ConfirmModalComponent, CommentsSheetComponent, LazyImageComponent, RichTextEditorComponent],
+    imports: [CommonModule, FormsModule, TranslateModule, ReactionPickerComponent, ConfirmModalComponent, CommentsSheetComponent, LazyImageComponent, RichTextEditorComponent],
     templateUrl: './post-card.component.html',
     styleUrl: './post-card.component.scss'
 })
@@ -93,6 +94,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     @Input() savedItemId: string | null = null;
     @Input() repostCount = 0;
     @Input() hideSensitiveMedia = false;
+    @Input() showNotInterestedAction = false;
 
     @Output() editValueChange = new EventEmitter<string>();
     @Output() toggleLike = new EventEmitter<void>();
@@ -113,6 +115,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     @Output() copyLink = new EventEmitter<void>();
     @Output() reportPost = new EventEmitter<void>();
     @Output() saveToggled = new EventEmitter<void>();
+    @Output() notInterestedRequested = new EventEmitter<void>();
 
     readonly reactionOptions = [
         { type: 'Like', emoji: '👍' },
@@ -153,6 +156,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     mentionTarget: 'post-edit' | 'comment-new' | 'comment-edit' | null = null;
     mentionTargetCommentId: string | null = null;
     copyLinkCopied = false;
+    postOverflowMenuOpen = false;
     fullscreenImageUrl: string | null = null;
     fullscreenImageUrls: string[] = [];
     fullscreenImageIndex = 0;
@@ -1238,12 +1242,92 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         return !!this.viewerProfileId && this.post.authorId !== this.viewerProfileId;
     }
 
+    canMarkPostNotInterested(): boolean {
+        return this.showNotInterestedAction && !!this.viewerProfileId && this.post.authorId !== this.viewerProfileId;
+    }
+
+    canManageOwnPost(): boolean {
+        return this.showActions;
+    }
+
+    hasPostOverflowActions(): boolean {
+        return this.canManageOwnPost() || this.canMarkPostNotInterested() || this.canReportPost();
+    }
+
+    togglePostOverflowMenu(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!this.hasPostOverflowActions()) {
+            this.postOverflowMenuOpen = false;
+            return;
+        }
+
+        this.postOverflowMenuOpen = !this.postOverflowMenuOpen;
+    }
+
+    triggerNotInterestedFromMenu(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.triggerNotInterested();
+        this.postOverflowMenuOpen = false;
+    }
+
+    triggerReportPostFromMenu(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.triggerReportPost();
+        this.postOverflowMenuOpen = false;
+    }
+
+    triggerStartEditFromMenu(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!this.canManageOwnPost()) {
+            return;
+        }
+
+        this.startEdit.emit();
+        this.postOverflowMenuOpen = false;
+    }
+
+    triggerDeletePostFromMenu(event: MouseEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!this.canManageOwnPost() || this.deleting) {
+            return;
+        }
+
+        this.deletePost.emit();
+        this.postOverflowMenuOpen = false;
+    }
+
+    triggerNotInterested(): void {
+        if (!this.canInteract || this.busy || !this.canMarkPostNotInterested()) {
+            return;
+        }
+
+        this.notInterestedRequested.emit();
+    }
+
     triggerReportPost(): void {
         if (!this.canInteract || this.busy || !this.canReportPost()) {
             return;
         }
 
         this.reportPost.emit();
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent): void {
+        const target = event.target;
+        if (target instanceof Element && target.closest('.post-overflow')) {
+            return;
+        }
+
+        this.postOverflowMenuOpen = false;
     }
 
     async triggerCopyLink(): Promise<void> {

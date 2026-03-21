@@ -38,6 +38,32 @@ public class ProfilesController(IProfileService profileService) : ControllerBase
         return summary is null ? NotFound() : Ok(summary);
     }
 
+    [Authorize]
+    [HttpGet("me/engagement-streak")]
+    public async Task<ActionResult<EngagementStreakDto>> GetEngagementStreak(CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var streak = await profileService.GetEngagementStreakAsync(profileId, cancellationToken);
+        return streak is null ? NotFound() : Ok(streak);
+    }
+
+    [Authorize]
+    [HttpPost("me/engagement-streak")]
+    public async Task<ActionResult<EngagementStreakDto>> TrackEngagement([FromBody] TrackEngagementStreakRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryGetProfileId(out var profileId))
+        {
+            return Unauthorized();
+        }
+
+        var streak = await profileService.TrackEngagementAsync(profileId, request, cancellationToken);
+        return streak is null ? NotFound() : Ok(streak);
+    }
+
     [HttpGet("search")]
     public async Task<ActionResult<IReadOnlyCollection<ProfileDto>>> Search([FromQuery] string q, [FromQuery] int take = 20, CancellationToken cancellationToken = default)
     {

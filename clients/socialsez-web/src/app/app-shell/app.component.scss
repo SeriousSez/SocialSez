@@ -239,6 +239,12 @@ h1 {
     gap: 12px;
 }
 
+.right-rail {
+    z-index: 60;
+    isolation: isolate;
+    pointer-events: auto;
+}
+
 .main-column {
     display: grid;
     gap: 12px;

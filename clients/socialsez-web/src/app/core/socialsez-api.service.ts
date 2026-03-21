@@ -21,6 +21,7 @@ import {
     CreateDirectConversationRequest,
     CreateGroupConversationRequest,
     CustomFeedDto,
+    EngagementStreakDto,
     FollowActionResultDto,
     FollowRequestDto,
     FollowedHashtagDto,
@@ -175,6 +176,14 @@ export class SocialSezApiService {
 
     getMe(): Observable<ProfileDto> {
         return this.withAutoRefresh(() => this.http.get<ProfileDto>(`${this.baseUrl}/profiles/me`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    getMyEngagementStreak(): Observable<EngagementStreakDto> {
+        return this.withAutoRefresh(() => this.http.get<EngagementStreakDto>(`${this.baseUrl}/profiles/me/engagement-streak`, { headers: this.authHeaders() }).pipe(timeout(15000)));
+    }
+
+    trackMyEngagement(localDate?: string): Observable<EngagementStreakDto> {
+        return this.withAutoRefresh(() => this.http.post<EngagementStreakDto>(`${this.baseUrl}/profiles/me/engagement-streak`, { localDate }, { headers: this.authHeaders() }).pipe(timeout(15000)));
     }
 
     createPost(content: string, imageFiles?: File[], isSensitive = false, saveAsDraft = false, scheduledPublishAtUtc?: string): Observable<PostDto> {

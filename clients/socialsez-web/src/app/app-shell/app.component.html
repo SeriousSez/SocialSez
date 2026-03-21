@@ -135,6 +135,8 @@
                 </ul>
             </div>
 
+            <app-feed-right-rail *ngIf="isFeedRoute && session.isAuthenticated()"></app-feed-right-rail>
+
             <div class="side-card settings-quick-nav" *ngIf="isSettingsRoute && session.isAuthenticated()">
                 <h3>{{ 'app.shell.settingsQuickNav.title' | translate }}</h3>
                 <nav class="settings-quick-nav-links" [attr.aria-label]="'app.shell.settingsQuickNav.aria' | translate">

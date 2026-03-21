@@ -4,6 +4,7 @@
         <p class="sub" *ngIf="mode === 'login'">{{ 'auth.hero.loginSubtitle' | translate }}</p>
         <p class="sub" *ngIf="mode === 'register' && registerStep === 'account'">{{ 'auth.hero.registerSubtitle' | translate }}</p>
         <p class="sub" *ngIf="mode === 'register' && registerStep === 'interests'">{{ 'auth.hero.interestsSubtitle' | translate }}</p>
+        <p class="sub" *ngIf="mode === 'register' && registerStep === 'people'">{{ 'auth.hero.peopleSubtitle' | translate }}</p>
     </div>
 
     <div class="mode-switch" role="tablist" [attr.aria-label]="'auth.mode.aria' | translate">
@@ -135,6 +136,29 @@
             </ng-template>
         </section>
 
+        <section class="people-step" *ngIf="mode === 'register' && registerStep === 'people'">
+            <h3>{{ 'auth.people.title' | translate }}</h3>
+            <p class="hint">{{ 'auth.people.subtitle' | translate }}</p>
+
+            <div class="people-list" *ngIf="suggestedProfiles.length; else noPeopleTemplate">
+                <button type="button" class="person-card" *ngFor="let profile of suggestedProfiles" [class.selected]="isProfileSelected(profile.id)" (click)="toggleProfileSelection(profile.id)">
+                    <div class="person-avatar" aria-hidden="true">
+                        <img *ngIf="profile.imageUrl; else avatarFallback" [src]="profile.imageUrl" [alt]="profile.displayName" loading="lazy" />
+                        <ng-template #avatarFallback>{{ profile.displayName.charAt(0) || '@' }}</ng-template>
+                    </div>
+                    <div class="person-meta">
+                        <strong>{{ profile.displayName }}</strong>
+                        <span>&#64;{{ profile.handle }}</span>
+                    </div>
+                    <span class="person-action">{{ (isProfileSelected(profile.id) ? 'auth.people.selected' : 'auth.people.select') | translate }}</span>
+                </button>
+            </div>
+
+            <ng-template #noPeopleTemplate>
+                <p class="hint">{{ 'auth.people.unavailable' | translate }}</p>
+            </ng-template>
+        </section>
+
         <div class="actions">
             <button class="auth-submit" type="submit" [disabled]="isSubmitting || (mode === 'register' && registerStep === 'account' && !canSubmitRegistrationAccountStep)">
                 <span class="btn-loader" *ngIf="isSubmitting" aria-hidden="true"></span>
@@ -145,7 +169,7 @@
                 </span>
             </button>
 
-            <button *ngIf="mode === 'register' && registerStep === 'interests'" type="button" class="ghost" [disabled]="isSubmitting" (click)="skipInterests()">{{ 'auth.actions.skipForNow' | translate }}</button>
+            <button *ngIf="mode === 'register' && (registerStep === 'interests' || registerStep === 'people')" type="button" class="ghost" [disabled]="isSubmitting" (click)="skipCurrentOnboardingStep()">{{ 'auth.actions.skipForNow' | translate }}</button>
         </div>
     </form>
 

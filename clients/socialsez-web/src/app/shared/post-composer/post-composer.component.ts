@@ -26,6 +26,7 @@ export class PostComposerComponent implements OnDestroy {
     @Output() canceled = new EventEmitter<void>();
 
     content = '';
+    contentIsHtml = true;
     mediaPreviewUrl = '';
     mediaPreviewUrls: string[] = [];
     status = '';
@@ -72,12 +73,14 @@ export class PostComposerComponent implements OnDestroy {
 
     onEditorContentChanged(value: string): void {
         this.content = this.normalizeContentLength(value ?? '');
+        this.contentIsHtml = true;
         this.persistDraft();
     }
 
     onContentInput(value: string, textarea: HTMLTextAreaElement): void {
         const normalizedValue = this.normalizeContentLength(value);
         this.content = normalizedValue;
+        this.contentIsHtml = false;
         this.persistDraft();
 
         if (normalizedValue !== value) {
@@ -333,6 +336,7 @@ export class PostComposerComponent implements OnDestroy {
 
         localStorage.setItem(this.draftStorageKey, JSON.stringify({
             content: this.content,
+            contentIsHtml: this.contentIsHtml,
             markSensitive: this.markSensitive,
             scheduledPublishLocal: this.scheduledPublishLocal
         }));
@@ -347,11 +351,14 @@ export class PostComposerComponent implements OnDestroy {
         try {
             const parsed = JSON.parse(raw) as {
                 content?: string;
+                contentIsHtml?: boolean;
                 markSensitive?: boolean;
                 scheduledPublishLocal?: string;
             };
 
-            this.content = this.normalizeContentLength(parsed.content ?? '');
+            const rawContent = parsed.content ?? '';
+            this.contentIsHtml = parsed.contentIsHtml !== false;
+            this.content = this.normalizeContentLength(this.normalizeLegacyDraftContent(rawContent, this.contentIsHtml));
             this.markSensitive = parsed.markSensitive === true;
             this.scheduledPublishLocal = parsed.scheduledPublishLocal ?? '';
         } catch {
@@ -365,6 +372,7 @@ export class PostComposerComponent implements OnDestroy {
         }
 
         this.content = this.normalizeContentLength(draft.content ?? '');
+        this.contentIsHtml = draft.contentIsHtml !== false;
         this.markSensitive = draft.markSensitive === true;
         this.scheduledPublishLocal = draft.scheduledPublishLocal ?? '';
 
@@ -425,6 +433,33 @@ export class PostComposerComponent implements OnDestroy {
 
     private clearDraft(): void {
         localStorage.removeItem(this.draftStorageKey);
+    }
+
+    private normalizeLegacyDraftContent(content: string, isHtml: boolean): string {
+        if (!isHtml || !content || !/&amp;(?:amp;)+/i.test(content)) {
+            return content;
+        }
+
+        let value = content;
+        for (let i = 0; i < 4; i++) {
+            const decoded = this.decodeHtmlEntities(value);
+            if (decoded === value) {
+                break;
+            }
+
+            value = decoded;
+            if (!/&amp;(?:amp;)+/i.test(value)) {
+                break;
+            }
+        }
+
+        return value;
+    }
+
+    private decodeHtmlEntities(value: string): string {
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = value;
+        return textarea.value;
     }
 
     private updateMentionSuggestions(value: string, caret: number): void {

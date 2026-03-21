@@ -1,0 +1,103 @@
+<ng-container *ngIf="loading; else loadedRail">
+    <div class="rail-card">
+        <app-skeleton width="65%" height="18px"></app-skeleton>
+        <app-skeleton width="90%" height="12px"></app-skeleton>
+        <app-skeleton width="100%" height="34px" radius="10px"></app-skeleton>
+    </div>
+    <div class="rail-card">
+        <app-skeleton width="55%" height="18px"></app-skeleton>
+        <app-skeleton width="100%" height="12px"></app-skeleton>
+        <app-skeleton width="100%" height="44px" radius="10px"></app-skeleton>
+    </div>
+</ng-container>
+
+<ng-template #loadedRail>
+    <section class="rail-card rail-card-accent" *ngIf="showEngagementStreakCard" [attr.aria-label]="'homeFeed.streak.title' | translate">
+        <div class="rail-copy">
+            <h3>{{ 'homeFeed.streak.title' | translate }}</h3>
+            <p>{{ 'homeFeed.streak.current' | translate:{ count: engagementStreakCurrentDays } }}</p>
+            <p>{{ 'homeFeed.streak.best' | translate:{ count: engagementStreakBestDays } }}</p>
+            <p class="rail-emphasis">{{ (hasEngagementToday ? 'homeFeed.streak.doneToday' : (engagementStreakCurrentDays > 0 ? 'homeFeed.streak.keepGoing' : 'homeFeed.streak.start')) | translate }}</p>
+        </div>
+        <button type="button" class="ghost rail-action" (click)="openEngagementStreakAction()">{{ (hasEngagementToday ? 'homeFeed.streak.actionPostAgain' : 'homeFeed.streak.actionKeepAlive') | translate }}</button>
+    </section>
+
+    <section class="rail-card" *ngIf="showDraftNudgeCard" [attr.aria-label]="'homeFeed.drafts.title' | translate">
+        <div class="rail-copy">
+            <h3>{{ 'homeFeed.drafts.title' | translate }}</h3>
+            <p>{{ 'homeFeed.drafts.description' | translate }}</p>
+        </div>
+        <button type="button" class="ghost rail-action" (click)="openDraftsPage()">{{ 'homeFeed.drafts.action' | translate }}</button>
+    </section>
+
+    <section class="rail-card" *ngIf="showFollowSuggestionsCard" [attr.aria-label]="'discover.sections.peopleYouMayKnow' | translate">
+        <header class="rail-head">
+            <div class="rail-copy">
+                <h3>{{ 'discover.sections.peopleYouMayKnow' | translate }}</h3>
+                <p>{{ 'homeFeed.followSuggestions.description' | translate }}</p>
+            </div>
+            <button type="button" class="ghost rail-dismiss" (click)="dismissFollowSuggestionsCard()">{{ 'homeFeed.profileSetup.dismiss' | translate }}</button>
+        </header>
+
+        <div class="suggestion-list">
+            <article class="suggestion-item" *ngFor="let profile of followSuggestions">
+                <a class="suggestion-link" [routerLink]="['/users', profile.handle]">
+                    <img class="avatar" *ngIf="profile.imageUrl; else followSuggestionInitial" [src]="profile.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [alt]="'discover.profile.imageAlt' | translate" />
+                    <ng-template #followSuggestionInitial>
+                        <div class="avatar">{{ profile.displayName[0] || profile.handle[0] }}</div>
+                    </ng-template>
+                    <span class="suggestion-meta">
+                        <strong>{{ profile.displayName }}</strong>
+                        <span>@{{ profile.handle }}</span>
+                    </span>
+                </a>
+                <button type="button" class="ghost rail-item-action" [class.is-loading]="followingSuggestionProfileId === profile.id" (click)="followSuggestedProfile(profile)" [disabled]="followingSuggestionProfileId === profile.id">{{ 'discover.actions.followUser' | translate }}</button>
+            </article>
+        </div>
+    </section>
+
+    <section class="rail-card" *ngIf="showHashtagSuggestionsCard" [attr.aria-label]="'homeFeed.hashtags.title' | translate">
+        <header class="rail-head">
+            <div class="rail-copy">
+                <h3>{{ 'homeFeed.hashtags.title' | translate }}</h3>
+                <p>{{ 'homeFeed.hashtags.description' | translate }}</p>
+            </div>
+            <button type="button" class="ghost rail-dismiss" (click)="dismissHashtagSuggestionsCard()">{{ 'homeFeed.profileSetup.dismiss' | translate }}</button>
+        </header>
+
+        <div class="chip-list">
+            <div class="chip-row" *ngFor="let hashtag of hashtagSuggestions">
+                <a class="chip-tag" [routerLink]="['/hashtags', hashtag.tag]">#{{ hashtag.tag }}</a>
+                <button type="button" class="ghost rail-chip-action" [class.is-loading]="followingHashtagTag === hashtag.tag.toLowerCase()" (click)="followSuggestedHashtag(hashtag.tag)" [disabled]="followingHashtagTag === hashtag.tag.toLowerCase()">{{ 'discover.actions.follow' | translate
+                    }}</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="rail-card" *ngIf="showProfileSetupCard" [attr.aria-label]="'homeFeed.profileSetup.title' | translate">
+        <header class="rail-head">
+            <div class="rail-copy">
+                <h3>{{ 'homeFeed.profileSetup.title' | translate }}</h3>
+                <p>{{ 'homeFeed.profileSetup.progressLabel' | translate:{ completed: profileSetupCompletedCount, total: profileSetupTotalCount } }}</p>
+            </div>
+            <button type="button" class="ghost rail-dismiss" (click)="dismissProfileSetupCard()">{{ 'homeFeed.profileSetup.dismiss' | translate }}</button>
+        </header>
+
+        <div class="progress" role="progressbar" [attr.aria-valuemin]="0" [attr.aria-valuemax]="100" [attr.aria-valuenow]="profileSetupProgressPercent" [attr.aria-label]="'homeFeed.profileSetup.progressAria' | translate">
+            <span [style.width.%]="profileSetupProgressPercent"></span>
+        </div>
+
+        <ul class="checklist">
+            <li *ngFor="let item of profileSetupChecklist" [class.done]="item.done">
+                <div class="checklist-copy">
+                    <strong>{{ ('homeFeed.profileSetup.items.' + item.key + '.title') | translate }}</strong>
+                    <span>{{ ('homeFeed.profileSetup.items.' + item.key + '.description') | translate }}</span>
+                </div>
+                <button *ngIf="!item.done && item.action === 'settings'" type="button" class="ghost rail-item-action" [routerLink]="['/settings']" fragment="settings-section-profile">{{ ('homeFeed.profileSetup.items.' + item.key + '.action') | translate }}</button>
+                <button *ngIf="!item.done && item.action === 'discover'" type="button" class="ghost rail-item-action" [routerLink]="['/discover']">{{ ('homeFeed.profileSetup.items.' + item.key + '.action') | translate }}</button>
+                <button *ngIf="!item.done && item.action === 'compose'" type="button" class="ghost rail-item-action" [routerLink]="['/feed']" [queryParams]="{ compose: 'post' }" queryParamsHandling="merge">{{ ('homeFeed.profileSetup.items.' + item.key + '.action') | translate }}</button>
+                <span *ngIf="item.done" class="done-label">{{ 'homeFeed.profileSetup.done' | translate }}</span>
+            </li>
+        </ul>
+    </section>
+</ng-template>

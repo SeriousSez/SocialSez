@@ -103,6 +103,7 @@ const settingsSectionByFragment: Record<string, SettingsSectionKey> = {
     styleUrl: './settings-page.component.scss'
 })
 export class SettingsPageComponent implements OnDestroy {
+    hiddenFeedCreatorHandles: string[] = [];
     readonly sectionOpenState: Record<SettingsSectionKey, boolean> = {
         profile: true,
         account: false,
@@ -306,6 +307,7 @@ export class SettingsPageComponent implements OnDestroy {
     private readonly discoveryPrivacyStorageKey = 'socialsez-web-privacy-prefs';
     private readonly notificationStorageKey = 'socialsez-web-notification-prefs';
     private readonly safetyStorageKey = 'socialsez-web-safety-prefs';
+    private readonly mutedFeedAuthorsStorageKey = 'socialsez-web-feed-muted-authors-v1';
     private readonly sectionSavedAtStorageKey = 'socialsez-web-settings-last-saved';
     private readonly avatarCropViewportSize = 280;
     private avatarCropSourceUrl = '';
@@ -343,6 +345,7 @@ export class SettingsPageComponent implements OnDestroy {
         this.loadDiscoveryPrivacyPrefs();
         this.loadNotificationPrefs();
         this.loadSafetyPrefs();
+        this.loadHiddenFeedCreatorHandles();
         this.loadSectionSavedAt();
         void this.loadDeviceSessionsAsync();
 
@@ -694,6 +697,15 @@ export class SettingsPageComponent implements OnDestroy {
         this.openSettingsDropdown = null;
     }
 
+    @HostListener('window:storage', ['$event'])
+    onWindowStorageChanged(event: StorageEvent): void {
+        if (event.key !== this.mutedFeedAuthorsStorageKey) {
+            return;
+        }
+
+        this.loadHiddenFeedCreatorHandles();
+    }
+
     resetPrivacyChanges(): void {
         this.isPrivate = this.initialPrivacy;
     }
@@ -803,6 +815,27 @@ export class SettingsPageComponent implements OnDestroy {
 
     removeMutedHandle(handle: string): void {
         this.safetyPrefs.mutedHandles = this.safetyPrefs.mutedHandles.filter(item => item !== handle);
+    }
+
+    removeHiddenFeedCreator(handle: string): void {
+        const normalized = this.normalizeHandle(handle);
+        if (!normalized) {
+            return;
+        }
+
+        this.hiddenFeedCreatorHandles = this.hiddenFeedCreatorHandles.filter(item => item !== normalized);
+        this.persistHiddenFeedCreatorHandles();
+        this.session.message = this.t('settings.messages.hiddenCreatorsUpdated');
+    }
+
+    clearHiddenFeedCreators(): void {
+        if (!this.hiddenFeedCreatorHandles.length) {
+            return;
+        }
+
+        this.hiddenFeedCreatorHandles = [];
+        this.persistHiddenFeedCreatorHandles();
+        this.session.message = this.t('settings.messages.hiddenCreatorsCleared');
     }
 
     onMutedHandleInputChanged(value: string): void {
@@ -1451,6 +1484,36 @@ export class SettingsPageComponent implements OnDestroy {
             mutedKeywords: [...this.safetyPrefs.mutedKeywords],
             mutedHandles: [...this.safetyPrefs.mutedHandles]
         };
+    }
+
+    private loadHiddenFeedCreatorHandles(): void {
+        try {
+            const stored = localStorage.getItem(this.mutedFeedAuthorsStorageKey);
+            if (!stored) {
+                this.hiddenFeedCreatorHandles = [];
+                return;
+            }
+
+            const parsed = JSON.parse(stored) as string[];
+            if (!Array.isArray(parsed)) {
+                this.hiddenFeedCreatorHandles = [];
+                return;
+            }
+
+            this.hiddenFeedCreatorHandles = parsed
+                .map(value => this.normalizeHandle(value))
+                .filter((value, index, all) => !!value && all.indexOf(value) === index)
+                .sort((left, right) => left.localeCompare(right));
+        } catch {
+            this.hiddenFeedCreatorHandles = [];
+        }
+    }
+
+    private persistHiddenFeedCreatorHandles(): void {
+        try {
+            localStorage.setItem(this.mutedFeedAuthorsStorageKey, JSON.stringify(this.hiddenFeedCreatorHandles));
+        } catch {
+        }
     }
 
     private async loadDeviceSessionsAsync(force = false): Promise<void> {

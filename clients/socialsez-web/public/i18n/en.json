@@ -113,7 +113,8 @@
       "title": "Welcome to Venli",
       "loginSubtitle": "Sign in with your email and password.",
       "registerSubtitle": "Create your account to start posting and following.",
-      "interestsSubtitle": "Pick interests to personalize Discover from day one."
+      "interestsSubtitle": "Pick interests to personalize Discover from day one.",
+      "peopleSubtitle": "Follow a few people to make your feed feel alive immediately."
     },
     "mode": {
       "aria": "Authentication mode"
@@ -170,6 +171,13 @@
       "subtitle": "Select up to 12 hashtags. We'll follow them for you to tune your feed.",
       "unavailable": "Trending interests are unavailable right now. You can skip and configure this later in Discover."
     },
+    "people": {
+      "title": "Follow suggested people",
+      "subtitle": "Select up to 10 profiles. We'll follow them for you so your feed has relevant posts from the start.",
+      "selected": "Selected",
+      "select": "Select",
+      "unavailable": "Suggested profiles are unavailable right now. You can discover people later."
+    },
     "switch": {
       "newHere": "New here?",
       "alreadyHaveAccount": "Already have an account?"
@@ -194,7 +202,8 @@
     "errors": {
       "registerFailed": "Could not register with these details.",
       "invalidCredentials": "Invalid credentials.",
-      "interestsSaveFailed": "We created your account, but could not save interests right now."
+      "interestsSaveFailed": "We created your account, but could not save interests right now.",
+      "peopleSuggestionsSaveFailed": "We created your account, but could not save follows right now."
     }
   },
   "profile": {
@@ -502,6 +511,12 @@
       "searchingUsers": "Searching users...",
       "profileAvatarAlt": "Profile avatar",
       "noMutedUsers": "No muted users in preferences yet.",
+      "hiddenCreators": {
+        "title": "Hidden creators from feed",
+        "description": "These are creators you marked as Not interested in feed and reels.",
+        "empty": "No hidden creators yet.",
+        "clear": "Clear hidden creators"
+      },
       "save": "Save Safety",
       "sensitiveOptions": {
         "standard": "Standard",
@@ -610,6 +625,8 @@
       "profileImageUpdated": "Profile image updated.",
       "imageRemoved": "Image removed. Save profile to apply it.",
       "unblockedHandle": "Unblocked @{{handle}}.",
+      "hiddenCreatorsUpdated": "Hidden creators updated.",
+      "hiddenCreatorsCleared": "Hidden creators cleared.",
       "accessibilitySaved": "Accessibility preferences saved.",
       "preferencesSaved": "Preferences saved."
     }
@@ -1256,6 +1273,66 @@
       "communityAria": "Loading community",
       "feedAria": "Loading community feed",
       "postsAria": "Loading community posts"
+    }
+  },
+  "homeFeed": {
+    "drafts": {
+      "title": "Unfinished drafts",
+      "description": "You have draft content ready. Publish it to reach your audience.",
+      "action": "Open drafts"
+    },
+    "followSuggestions": {
+      "description": "Follow a few more people to improve your feed faster."
+    },
+    "hashtags": {
+      "title": "Trending topics to follow",
+      "description": "Follow a few hashtags to make your feed more relevant."
+    },
+    "tuning": {
+      "notInterested": "Not interested",
+      "fewerPostsNotice": "We'll show fewer posts from @{{handle}}.",
+      "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
+      "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
+      "manageHiddenCreators": "Manage hidden creators"
+    },
+    "streak": {
+      "title": "Daily engagement streak",
+      "current": "Current: {{count}} day(s)",
+      "best": "Best: {{count}} day(s)",
+      "start": "Start your streak with a quick post, like, or comment.",
+      "keepGoing": "Keep it alive with one interaction today.",
+      "doneToday": "Nice. You already kept your streak alive today.",
+      "actionKeepAlive": "Keep streak alive",
+      "actionPostAgain": "Post again"
+    },
+    "profileSetup": {
+      "title": "Finish setting up your profile",
+      "dismiss": "Not now",
+      "done": "Done",
+      "progressLabel": "{{completed}} of {{total}} completed",
+      "progressAria": "Profile setup completion",
+      "items": {
+        "avatar": {
+          "title": "Add a profile photo",
+          "description": "Help people recognize you instantly.",
+          "action": "Add photo"
+        },
+        "bio": {
+          "title": "Write a short bio",
+          "description": "Tell others what you post about.",
+          "action": "Add bio"
+        },
+        "following": {
+          "title": "Follow at least 3 people",
+          "description": "Improve your feed recommendations faster.",
+          "action": "Discover people"
+        },
+        "firstPost": {
+          "title": "Share your first post",
+          "description": "Introduce yourself to your new audience.",
+          "action": "Create post"
+        }
+      }
     }
   },
   "chatPage": {

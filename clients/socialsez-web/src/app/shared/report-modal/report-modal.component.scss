@@ -2,7 +2,8 @@
     position: fixed;
     inset: 0;
     z-index: 2000;
-    background: rgba(15, 23, 42, 0.45);
+    background: color-mix(in srgb, var(--color-text) 26%, transparent);
+    backdrop-filter: blur(2px);
     display: grid;
     place-items: center;
     padding: 16px;
@@ -12,27 +13,29 @@
     width: min(560px, 100%);
     max-height: min(90vh, 680px);
     overflow: auto;
-    background: #fff;
-    border: 1px solid #dbe4f0;
-    border-radius: 24px;
-    box-shadow: 0 24px 48px -28px #0f172a;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    box-shadow: 0 20px 44px -28px color-mix(in srgb, var(--color-text) 34%, transparent);
     display: grid;
+    gap: 10px;
+    padding-bottom: 12px;
 }
 
 .report-header {
-    height: 56px;
+    height: 60px;
     display: grid;
     grid-template-columns: 48px 1fr 48px;
     align-items: center;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 0 6px;
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 10px;
 }
 
 .report-header h3 {
     margin: 0;
     text-align: center;
-    font-size: 1.18rem;
-    color: #0f172a;
+    font-size: 1.24rem;
+    color: var(--color-text);
 }
 
 .spacer {
@@ -44,7 +47,7 @@
     border: 0;
     border-radius: 999px;
     background: transparent;
-    color: #0f172a;
+    color: var(--color-text);
     font-weight: 700;
     font-size: 1.6rem;
     line-height: 1;
@@ -56,13 +59,13 @@
 }
 
 .header-back:hover {
-    background: #f1f5f9;
+    background: var(--color-surface-alt);
 }
 
 .icon-button {
     border: 0;
     background: transparent;
-    color: #0f172a;
+    color: var(--color-text);
     font-size: 1.8rem;
     line-height: 1;
     cursor: pointer;
@@ -76,40 +79,50 @@
 }
 
 .icon-button:hover {
-    background: #f1f5f9;
+    background: var(--color-surface-alt);
 }
 
 .report-title {
     margin: 0;
-    padding: 14px 16px 10px;
-    color: #0f172a;
-    font-size: 1.18rem;
-    font-weight: 650;
+    padding: 2px 18px 0;
+    color: var(--color-text);
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.report-options {
+    padding: 0 14px;
+    display: grid;
+    gap: 8px;
 }
 
 .report-row {
-    border: 0;
-    border-top: 1px solid #e2e8f0;
-    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
     width: 100%;
-    min-height: 48px;
-    padding: 0 16px;
+    min-height: 52px;
+    padding: 0 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #1e293b;
+    color: var(--color-text);
     text-align: left;
-    font-size: 0.95rem;
+    font-size: 0.98rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: border-color 120ms ease, background-color 120ms ease;
 }
 
 .report-row:hover {
-    background: #f8fafc;
+    background: var(--color-surface-alt);
+    border-color: var(--color-border-strong);
     box-shadow: none;
 }
 
 .chevron {
-    color: #94a3b8;
+    color: var(--color-text-muted);
     font-size: 1.2rem;
     line-height: 1;
 }
@@ -117,23 +130,23 @@
 .report-field {
     display: grid;
     gap: 6px;
-    padding: 0 16px 12px;
+    padding: 0 18px 12px;
 }
 
 .report-field span {
-    color: #0f172a;
+    color: var(--color-text);
     font-weight: 700;
     font-size: 0.84rem;
 }
 
 .report-field input,
 .report-field textarea {
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--color-border);
     border-radius: 10px;
     padding: 10px 12px;
     font: inherit;
-    color: #0f172a;
-    background: #fff;
+    color: var(--color-text);
+    background: var(--color-surface);
 }
 
 .report-field textarea {
@@ -145,15 +158,31 @@
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    padding: 4px 16px 16px;
+    padding: 4px 18px 0;
+}
+
+.report-row:disabled,
+.header-back:disabled,
+.icon-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 @media (max-width: 680px) {
     .report-card {
-        border-radius: 20px;
+        border-radius: 16px;
+        gap: 8px;
+        padding-bottom: 10px;
     }
 
     .report-title {
-        font-size: 1.08rem;
+        font-size: 1.06rem;
+        padding-inline: 14px;
+    }
+
+    .report-options,
+    .report-field,
+    .report-actions {
+        padding-inline: 12px;
     }
 }

@@ -11,24 +11,28 @@
 
         <ng-container *ngIf="currentStep === 'root'">
             <p class="report-title">{{ rootHeading }}</p>
-            <button type="button" class="report-row" *ngFor="let option of rootOptions" (click)="chooseRootCategory(option.id)" [disabled]="busy">
-                <span>{{ option.label }}</span>
-                <span class="chevron" aria-hidden="true">›</span>
-            </button>
+            <div class="report-options">
+                <button type="button" class="report-row" *ngFor="let option of rootOptions" (click)="chooseRootCategory(option.id)" [disabled]="busy">
+                    <span>{{ option.label }}</span>
+                    <span class="chevron" aria-hidden="true">›</span>
+                </button>
+            </div>
         </ng-container>
 
         <ng-container *ngIf="currentStep === 'options' && selectedCategoryConfig as category">
             <p class="report-title">{{ category.heading }}</p>
 
-            <button type="button" class="report-row" *ngFor="let option of category.options" (click)="chooseReason(option.value)" [disabled]="busy">
-                <span>{{ option.label }}</span>
-                <span class="chevron" aria-hidden="true">›</span>
-            </button>
+            <div class="report-options">
+                <button type="button" class="report-row" *ngFor="let option of category.options" (click)="chooseReason(option.value)" [disabled]="busy">
+                    <span>{{ option.label }}</span>
+                    <span class="chevron" aria-hidden="true">›</span>
+                </button>
 
-            <button type="button" class="report-row" (click)="openCustomReasonPage()" [disabled]="busy">
-                <span>Something else</span>
-                <span class="chevron" aria-hidden="true">›</span>
-            </button>
+                <button type="button" class="report-row" (click)="openCustomReasonPage()" [disabled]="busy">
+                    <span>Something else</span>
+                    <span class="chevron" aria-hidden="true">›</span>
+                </button>
+            </div>
         </ng-container>
 
         <ng-container *ngIf="currentStep === 'custom'">

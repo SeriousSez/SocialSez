@@ -18,6 +18,16 @@ export interface ProfileActivitySummaryDto {
     followingCount: number;
 }
 
+export interface EngagementStreakDto {
+    currentDays: number;
+    bestDays: number;
+    lastActiveDate?: string;
+}
+
+export interface TrackEngagementStreakRequest {
+    localDate?: string;
+}
+
 export interface CreateProfileRequest {
     handle: string;
     displayName: string;

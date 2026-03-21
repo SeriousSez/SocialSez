@@ -98,6 +98,7 @@ export class DraftsPageComponent implements OnInit {
       this.session.setPendingPostComposerDraft({
         sourceDraftId: post.id,
         content: post.content ?? '',
+        contentIsHtml: true,
         markSensitive: post.isSensitive === true,
         scheduledPublishLocal: this.toLocalDateTimeInputValue(post.scheduledPublishAtUtc),
         mediaFiles

@@ -13,6 +13,8 @@ public sealed record UpdateProfileRequest(
 
 public sealed record UpdateProfilePrivacyRequest(bool IsPrivate);
 
+public sealed record TrackEngagementStreakRequest(DateOnly? LocalDate = null);
+
 public sealed record ProfileDto(
     Guid Id,
     string Handle,
@@ -27,3 +29,5 @@ public sealed record ProfileDto(
     bool MarketingOptIn = false);
 
 public sealed record ProfileActivitySummaryDto(int PostCount, int FollowerCount, int FollowingCount);
+
+public sealed record EngagementStreakDto(int CurrentDays, int BestDays, DateOnly? LastActiveDate = null);

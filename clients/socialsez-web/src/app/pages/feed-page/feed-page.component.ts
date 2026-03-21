@@ -2,8 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { filter, skip } from 'rxjs';
-import { CustomFeedDto, FeedMode, HashtagSearchResultDto, PostDto, ProfileDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
+import { CustomFeedDto, EngagementStreakDto, FeedMode, HashtagSearchResultDto, PostDto, ProfileActivitySummaryDto, ProfileDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
 import { parseUtcDate, resolveAppLocale } from '../../core/date-time.util';
 import { executePostShareAction, executePostShareToChat, executePostShareToFeedAndReload } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
@@ -37,6 +38,18 @@ interface StoryTrimPreviewOption {
     previewUrl: string;
 }
 
+interface ProfileSetupChecklistItem {
+    key: 'avatar' | 'bio' | 'following' | 'firstPost';
+    done: boolean;
+    action: 'settings' | 'discover' | 'compose';
+}
+
+interface EngagementStreakState {
+    current: number;
+    best: number;
+    lastActiveDate: string;
+}
+
 type FeedReportTarget =
     | { kind: 'post'; id: string; handle: string }
     | { kind: 'reel'; id: string; handle: string }
@@ -47,7 +60,7 @@ type FeedReportTarget =
 @Component({
     selector: 'app-feed-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, PostCardComponent, PostComposerComponent, ReelComposerModalComponent, FeedReelsListComponent, FeedStoryViewerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, ConfirmModalComponent, SkeletonComponent, SegmentedTabsComponent, CreateContentMenuComponent, ReportModalComponent],
+    imports: [CommonModule, RouterLink, TranslatePipe, PostCardComponent, PostComposerComponent, ReelComposerModalComponent, FeedReelsListComponent, FeedStoryViewerComponent, SharePostModalComponent, SharePostMessageModalComponent, ShareReelMessageModalComponent, ConfirmModalComponent, SkeletonComponent, SegmentedTabsComponent, CreateContentMenuComponent, ReportModalComponent],
     templateUrl: './feed-page.component.html',
     styleUrl: './feed-page.component.scss'
 })
@@ -87,6 +100,8 @@ export class FeedPageComponent implements OnDestroy {
     editContent = '';
     savingPost = false;
     deletingPostId: string | null = null;
+    pendingNotInterestedPost: PostDto | null = null;
+    pendingNotInterestedReel: ReelDto | null = null;
     pendingDeletePostId: string | null = null;
     deletingReelId: string | null = null;
     pendingDeleteReelId: string | null = null;
@@ -154,6 +169,11 @@ export class FeedPageComponent implements OnDestroy {
     private composerCloseTimerId: number | null = null;
     private storyComposerCloseTimerId: number | null = null;
     private readonly prefsStorageKey = 'socialsez-web-prefs';
+    private readonly profileSetupDismissStorageKey = 'socialsez-web-feed-profile-setup-dismissed-v1';
+    private readonly mutedFeedAuthorsStorageKey = 'socialsez-web-feed-muted-authors-v1';
+    private readonly engagementStreakStorageKey = 'socialsez-web-engagement-streak-v1';
+    private readonly followSuggestionsDismissStorageKey = 'socialsez-web-feed-follow-suggestions-dismissed-v1';
+    private readonly hashtagSuggestionsDismissStorageKey = 'socialsez-web-feed-hashtag-suggestions-dismissed-v1';
     private markingStoryId: string | null = null;
     private loadInFlight = false;
     private reloadQueued = false;
@@ -189,10 +209,29 @@ export class FeedPageComponent implements OnDestroy {
     };
     private readonly destroyRef = inject(DestroyRef);
     private readonly ngZone = inject(NgZone);
+    private readonly translate = inject(TranslateService);
     private pendingStoryHandleFromRoute: string | null = null;
     private hasLoadedAtLeastOnce = false;
     private repostCountSource: PostDto[] | null = null;
     private repostCountsByPostId = new Map<string, number>();
+    private mutedFeedAuthorHandles = new Set<string>();
+    private engagementStreakState: EngagementStreakState = {
+        current: 0,
+        best: 0,
+        lastActiveDate: ''
+    };
+    hasPostDraft = false;
+    hasReelDraft = false;
+    hasStoryDraft = false;
+    followSuggestions: ProfileDto[] = [];
+    followingSuggestionProfileId: string | null = null;
+    followSuggestionsDismissed = false;
+    hashtagSuggestions: HashtagSearchResultDto[] = [];
+    followedHashtagTags: string[] = [];
+    followingHashtagTag: string | null = null;
+    hashtagSuggestionsDismissed = false;
+    profileSetupDismissed = false;
+    profileActivitySummary: ProfileActivitySummaryDto | null = null;
 
     constructor(
         private readonly session: SessionService,
@@ -210,7 +249,30 @@ export class FeedPageComponent implements OnDestroy {
                 skip(1),
                 takeUntilDestroyed(this.destroyRef)
             )
-            .subscribe(() => {
+            .subscribe((change) => {
+                if (change === 'session') {
+                    if (this.session.isAuthenticated()) {
+                        void this.syncEngagementStreakFromApi();
+                        void this.refreshDraftNudgeState();
+                        void this.refreshFollowSuggestionsAsync();
+                        void this.refreshHashtagSuggestionsAsync();
+                    } else {
+                        this.engagementStreakState = { current: 0, best: 0, lastActiveDate: '' };
+                        this.persistEngagementStreakState();
+                        this.hasPostDraft = false;
+                        this.hasReelDraft = false;
+                        this.hasStoryDraft = false;
+                        this.followSuggestions = [];
+                        this.hashtagSuggestions = [];
+                        this.followedHashtagTags = [];
+                    }
+                }
+
+                if (change === 'posts') {
+                    void this.refreshDraftNudgeState();
+                    void this.refreshHashtagSuggestionsAsync();
+                }
+
                 void this.load();
             });
 
@@ -235,7 +297,7 @@ export class FeedPageComponent implements OnDestroy {
 
                     void this.router.navigate([], {
                         relativeTo: this.route,
-                        queryParams: { compose: null },
+                        queryParams: { compose: null, composeRequest: null },
                         queryParamsHandling: 'merge',
                         replaceUrl: true
                     });
@@ -243,6 +305,17 @@ export class FeedPageComponent implements OnDestroy {
             });
 
         this.syncCompactFeedPreference();
+        this.loadProfileSetupDismissPreference();
+        this.loadMutedFeedAuthorsPreference();
+        this.loadEngagementStreakState();
+        this.loadFollowSuggestionsDismissPreference();
+        this.loadHashtagSuggestionsDismissPreference();
+        if (this.session.isAuthenticated()) {
+            void this.syncEngagementStreakFromApi();
+            void this.refreshDraftNudgeState();
+            void this.refreshFollowSuggestionsAsync();
+            void this.refreshHashtagSuggestionsAsync();
+        }
 
         queueMicrotask(() => {
             void this.loadCustomFeeds();
@@ -263,6 +336,85 @@ export class FeedPageComponent implements OnDestroy {
 
     get currentProfileId(): string | null {
         return this.session.profile?.id ?? null;
+    }
+
+    get showEngagementStreakCard(): boolean {
+        return this.session.isAuthenticated();
+    }
+
+    get showDraftNudgeCard(): boolean {
+        return this.session.isAuthenticated() && (this.hasPostDraft || this.hasReelDraft || this.hasStoryDraft);
+    }
+
+    get showFollowSuggestionsCard(): boolean {
+        return this.session.isAuthenticated()
+            && !this.followSuggestionsDismissed
+            && this.followSuggestions.length > 0
+            && this.followingCount < 10;
+    }
+
+    get showHashtagSuggestionsCard(): boolean {
+        return this.session.isAuthenticated()
+            && !this.hashtagSuggestionsDismissed
+            && this.hashtagSuggestions.length > 0
+            && this.followedHashtagTags.length < 5;
+    }
+
+    get engagementStreakCurrentDays(): number {
+        return Math.max(0, this.engagementStreakState.current || 0);
+    }
+
+    get engagementStreakBestDays(): number {
+        return Math.max(this.engagementStreakCurrentDays, this.engagementStreakState.best || 0);
+    }
+
+    get hasEngagementToday(): boolean {
+        return this.engagementStreakState.lastActiveDate === this.getLocalDateKey();
+    }
+
+    get profileSetupChecklist(): readonly ProfileSetupChecklistItem[] {
+        return [
+            { key: 'avatar', done: this.hasProfileAvatar, action: 'settings' },
+            { key: 'bio', done: this.hasProfileBio, action: 'settings' },
+            { key: 'following', done: this.followingCount >= 3, action: 'discover' },
+            { key: 'firstPost', done: this.postCount >= 1, action: 'compose' }
+        ];
+    }
+
+    get profileSetupCompletedCount(): number {
+        return this.profileSetupChecklist.filter(item => item.done).length;
+    }
+
+    get profileSetupTotalCount(): number {
+        return this.profileSetupChecklist.length;
+    }
+
+    get profileSetupProgressPercent(): number {
+        if (this.profileSetupTotalCount === 0) {
+            return 0;
+        }
+
+        return Math.round((this.profileSetupCompletedCount / this.profileSetupTotalCount) * 100);
+    }
+
+    get showProfileSetupCard(): boolean {
+        return !this.profileSetupDismissed && this.profileSetupCompletedCount < this.profileSetupTotalCount;
+    }
+
+    get hasProfileAvatar(): boolean {
+        return !!this.session.profile?.imageUrl?.trim();
+    }
+
+    get hasProfileBio(): boolean {
+        return !!this.session.profile?.bio?.trim();
+    }
+
+    get followingCount(): number {
+        return this.profileActivitySummary?.followingCount ?? 0;
+    }
+
+    get postCount(): number {
+        return this.profileActivitySummary?.postCount ?? 0;
     }
 
     get selectedCustomFeed(): CustomFeedDto | null {
@@ -306,6 +458,10 @@ export class FeedPageComponent implements OnDestroy {
         }
 
         return 'No reels available right now.';
+    }
+
+    get hasHiddenFeedCreators(): boolean {
+        return this.mutedFeedAuthorHandles.size > 0;
     }
 
     get visibleStoryGroups(): StoryGroupDto[] {
@@ -876,6 +1032,9 @@ export class FeedPageComponent implements OnDestroy {
                 const storyThumbnail = await this.buildStoryThumbnailForUpload(uploadStoryMedia);
                 const isSensitive = this.markStorySensitive;
                 await this.session.createStoryAsync(uploadStoryMedia, undefined, isSensitive, storyThumbnail, saveAsDraft, scheduledPublishAtUtc ?? undefined);
+                if (!saveAsDraft) {
+                    await this.recordEngagementActivity();
+                }
                 await this.load();
                 handle.succeed(saveAsDraft ? 'Story draft saved!' : scheduledPublishAtUtc ? 'Story scheduled!' : 'Story published!');
             } catch {
@@ -954,24 +1113,32 @@ export class FeedPageComponent implements OnDestroy {
 
                 const mode = this.selectedFeedMode;
                 const customFeedId = this.selectedCustomFeedId ?? undefined;
-                const [postsResult, reelsResult] = await Promise.allSettled([
+                const profileHandle = (this.session.profile?.handle ?? '').trim();
+                const [postsResult, reelsResult, profileSummaryResult] = await Promise.allSettled([
                     this.session.loadFeedAsync(mode, customFeedId),
-                    this.session.loadReelFeedAsync(20, mode, customFeedId)
+                    this.session.loadReelFeedAsync(20, mode, customFeedId),
+                    profileHandle ? this.session.loadProfileActivitySummaryAsync(profileHandle) : Promise.resolve(null)
                 ]);
 
                 this.ngZone.run(() => {
                     if (postsResult.status === 'fulfilled') {
-                        this.feed = postsResult.value;
+                        this.feed = postsResult.value.filter(post => !this.isFeedAuthorMuted(post.authorHandle));
                     } else {
                         this.feed = [];
                         this.error = 'Could not load your feed right now. Please try again.';
                     }
 
                     if (reelsResult.status === 'fulfilled') {
-                        this.reels = reelsResult.value;
+                        this.reels = reelsResult.value.filter(reel => !this.isFeedAuthorMuted(reel.authorHandle));
                     } else {
                         this.reels = [];
                         this.reelsError = 'Could not load reels right now. Please try again.';
+                    }
+
+                    if (profileSummaryResult.status === 'fulfilled') {
+                        this.profileActivitySummary = profileSummaryResult.value;
+                    } else {
+                        this.profileActivitySummary = null;
                     }
 
                     this.loading = false;
@@ -1239,6 +1406,95 @@ export class FeedPageComponent implements OnDestroy {
         this.selectContentTab(tabId);
     }
 
+    openEngagementStreakAction(): void {
+        this.openComposer();
+    }
+
+    openDraftsPage(): void {
+        void this.router.navigate(['/drafts']);
+    }
+
+    dismissFollowSuggestionsCard(): void {
+        this.followSuggestionsDismissed = true;
+        try {
+            localStorage.setItem(this.followSuggestionsDismissStorageKey, '1');
+        } catch {
+        }
+    }
+
+    dismissHashtagSuggestionsCard(): void {
+        this.hashtagSuggestionsDismissed = true;
+        try {
+            localStorage.setItem(this.hashtagSuggestionsDismissStorageKey, '1');
+        } catch {
+        }
+    }
+
+    async followSuggestedProfile(profile: ProfileDto): Promise<void> {
+        if (!profile?.id || this.followingSuggestionProfileId) {
+            return;
+        }
+
+        this.followingSuggestionProfileId = profile.id;
+        try {
+            await this.session.followAsync(profile.id);
+            this.followSuggestions = this.followSuggestions.filter(item => item.id !== profile.id);
+            this.profileActivitySummary = {
+                postCount: this.profileActivitySummary?.postCount ?? 0,
+                followerCount: this.profileActivitySummary?.followerCount ?? 0,
+                followingCount: (this.profileActivitySummary?.followingCount ?? 0) + 1
+            };
+            void this.refreshFollowSuggestionsAsync();
+        } finally {
+            this.followingSuggestionProfileId = null;
+        }
+    }
+
+    async followSuggestedHashtag(tag: string): Promise<void> {
+        const normalizedTag = (tag ?? '').trim().replace(/^#/, '').toLowerCase();
+        if (!normalizedTag || this.followingHashtagTag) {
+            return;
+        }
+
+        this.followingHashtagTag = normalizedTag;
+        try {
+            const followed = await this.session.followHashtagAsync(normalizedTag);
+            const nextTag = (followed.tag ?? normalizedTag).trim().replace(/^#/, '').toLowerCase();
+            this.followedHashtagTags = [nextTag, ...this.followedHashtagTags.filter(item => item !== nextTag)];
+            this.hashtagSuggestions = this.hashtagSuggestions.filter(item => item.tag.trim().replace(/^#/, '').toLowerCase() !== nextTag);
+            this.session.message = this.translate.instant('discover.status.followingHashtag', { tag: nextTag });
+            void this.refreshHashtagSuggestionsAsync();
+        } finally {
+            this.followingHashtagTag = null;
+        }
+    }
+
+    dismissProfileSetupCard(): void {
+        this.profileSetupDismissed = true;
+        try {
+            localStorage.setItem(this.profileSetupDismissStorageKey, '1');
+        } catch {
+        }
+    }
+
+    runProfileSetupAction(action: ProfileSetupChecklistItem['action']): void {
+        if (action === 'settings') {
+            void this.router.navigate(['/settings'], { fragment: 'settings-section-profile' });
+            return;
+        }
+
+        if (action === 'discover') {
+            void this.router.navigate(['/discover']);
+            return;
+        }
+
+        this.openComposer();
+    }
+
+    openHiddenCreatorsSettings(): void {
+        void this.router.navigate(['/settings'], { fragment: 'settings-section-safety' });
+    }
+
     openStoryGroup(group: StoryGroupDto): void {
         if (!group.stories.length) {
             return;
@@ -1334,6 +1590,241 @@ export class FeedPageComponent implements OnDestroy {
         } catch {
             this.compactFeedEnabled = false;
         }
+    }
+
+    private loadProfileSetupDismissPreference(): void {
+        try {
+            this.profileSetupDismissed = localStorage.getItem(this.profileSetupDismissStorageKey) === '1';
+        } catch {
+            this.profileSetupDismissed = false;
+        }
+    }
+
+    private loadFollowSuggestionsDismissPreference(): void {
+        try {
+            this.followSuggestionsDismissed = localStorage.getItem(this.followSuggestionsDismissStorageKey) === '1';
+        } catch {
+            this.followSuggestionsDismissed = false;
+        }
+    }
+
+    private loadHashtagSuggestionsDismissPreference(): void {
+        try {
+            this.hashtagSuggestionsDismissed = localStorage.getItem(this.hashtagSuggestionsDismissStorageKey) === '1';
+        } catch {
+            this.hashtagSuggestionsDismissed = false;
+        }
+    }
+
+    private isFeedAuthorMuted(handle: string): boolean {
+        const normalizedHandle = this.normalizeFeedHandle(handle);
+        return !!normalizedHandle && this.mutedFeedAuthorHandles.has(normalizedHandle);
+    }
+
+    private normalizeFeedHandle(handle: string): string {
+        return (handle ?? '').trim().toLowerCase();
+    }
+
+    private loadMutedFeedAuthorsPreference(): void {
+        try {
+            const stored = localStorage.getItem(this.mutedFeedAuthorsStorageKey);
+            if (!stored) {
+                this.mutedFeedAuthorHandles = new Set<string>();
+                return;
+            }
+
+            const parsed = JSON.parse(stored) as string[];
+            if (!Array.isArray(parsed)) {
+                this.mutedFeedAuthorHandles = new Set<string>();
+                return;
+            }
+
+            this.mutedFeedAuthorHandles = new Set(parsed
+                .map(value => this.normalizeFeedHandle(value))
+                .filter(value => !!value));
+        } catch {
+            this.mutedFeedAuthorHandles = new Set<string>();
+        }
+    }
+
+    private persistMutedFeedAuthorsPreference(): void {
+        try {
+            localStorage.setItem(this.mutedFeedAuthorsStorageKey, JSON.stringify(Array.from(this.mutedFeedAuthorHandles)));
+        } catch {
+        }
+    }
+
+    private loadEngagementStreakState(): void {
+        try {
+            const stored = localStorage.getItem(this.engagementStreakStorageKey);
+            if (!stored) {
+                this.engagementStreakState = { current: 0, best: 0, lastActiveDate: '' };
+                return;
+            }
+
+            const parsed = JSON.parse(stored) as Partial<EngagementStreakState>;
+            this.engagementStreakState = {
+                current: Math.max(0, Number(parsed.current) || 0),
+                best: Math.max(0, Number(parsed.best) || 0),
+                lastActiveDate: typeof parsed.lastActiveDate === 'string' ? parsed.lastActiveDate : ''
+            };
+        } catch {
+            this.engagementStreakState = { current: 0, best: 0, lastActiveDate: '' };
+        }
+    }
+
+    private persistEngagementStreakState(): void {
+        try {
+            localStorage.setItem(this.engagementStreakStorageKey, JSON.stringify(this.engagementStreakState));
+        } catch {
+        }
+    }
+
+    private applyEngagementStreakDto(dto: EngagementStreakDto): void {
+        this.engagementStreakState = {
+            current: Math.max(0, Number(dto.currentDays) || 0),
+            best: Math.max(0, Number(dto.bestDays) || 0),
+            lastActiveDate: typeof dto.lastActiveDate === 'string' ? dto.lastActiveDate : ''
+        };
+        this.persistEngagementStreakState();
+    }
+
+    private async syncEngagementStreakFromApi(): Promise<void> {
+        if (!this.session.isAuthenticated()) {
+            return;
+        }
+
+        try {
+            const streak = await this.session.loadEngagementStreakAsync();
+            this.applyEngagementStreakDto(streak);
+        } catch {
+        }
+    }
+
+    private async refreshDraftNudgeState(): Promise<void> {
+        if (!this.session.isAuthenticated()) {
+            this.hasPostDraft = false;
+            this.hasReelDraft = false;
+            this.hasStoryDraft = false;
+            return;
+        }
+
+        const [postDraftsResult, reelDraftsResult, storyDraftsResult] = await Promise.allSettled([
+            this.session.loadMyPostDraftsAsync(1),
+            this.session.loadMyReelDraftsAsync(1),
+            this.session.loadMyStoryDraftsAsync(1)
+        ]);
+
+        this.hasPostDraft = postDraftsResult.status === 'fulfilled' && postDraftsResult.value.length > 0;
+        this.hasReelDraft = reelDraftsResult.status === 'fulfilled' && reelDraftsResult.value.length > 0;
+        this.hasStoryDraft = storyDraftsResult.status === 'fulfilled' && storyDraftsResult.value.length > 0;
+    }
+
+    private async refreshFollowSuggestionsAsync(): Promise<void> {
+        if (!this.session.isAuthenticated()) {
+            this.followSuggestions = [];
+            return;
+        }
+
+        try {
+            const suggestions = await this.session.loadFollowSuggestionsAsync(4);
+            const merged = [...suggestions.relevant, ...suggestions.following];
+            const currentProfileId = this.session.profile?.id;
+            const seen = new Set<string>();
+            this.followSuggestions = merged
+                .filter(profile => {
+                    if (!profile.id || profile.id === currentProfileId || seen.has(profile.id)) {
+                        return false;
+                    }
+
+                    seen.add(profile.id);
+                    return true;
+                })
+                .slice(0, 3);
+        } catch {
+            this.followSuggestions = [];
+        }
+    }
+
+    private async refreshHashtagSuggestionsAsync(): Promise<void> {
+        if (!this.session.isAuthenticated()) {
+            this.hashtagSuggestions = [];
+            this.followedHashtagTags = [];
+            return;
+        }
+
+        const [trendingResult, followedResult] = await Promise.allSettled([
+            this.session.loadTrendingHashtagsAsync(8),
+            this.session.loadFollowedHashtagsAsync(20)
+        ]);
+
+        const followedTags = followedResult.status === 'fulfilled'
+            ? followedResult.value
+                .map(item => (item.tag ?? '').trim().replace(/^#/, '').toLowerCase())
+                .filter(tag => !!tag)
+            : [];
+
+        this.followedHashtagTags = followedTags;
+
+        if (trendingResult.status !== 'fulfilled') {
+            this.hashtagSuggestions = [];
+            return;
+        }
+
+        const followedSet = new Set(followedTags);
+        this.hashtagSuggestions = trendingResult.value
+            .filter(item => {
+                const normalizedTag = (item.tag ?? '').trim().replace(/^#/, '').toLowerCase();
+                return !!normalizedTag && !followedSet.has(normalizedTag);
+            })
+            .slice(0, 5);
+    }
+
+    private recordEngagementActivityLocal(today: string): void {
+        if (this.engagementStreakState.lastActiveDate === today) {
+            return;
+        }
+
+        const yesterdayDate = new Date();
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterday = this.getLocalDateKey(yesterdayDate);
+
+        if (this.engagementStreakState.lastActiveDate === yesterday) {
+            this.engagementStreakState.current = Math.max(1, this.engagementStreakState.current) + 1;
+        } else {
+            this.engagementStreakState.current = 1;
+        }
+
+        this.engagementStreakState.lastActiveDate = today;
+        this.engagementStreakState.best = Math.max(this.engagementStreakState.best, this.engagementStreakState.current);
+        this.persistEngagementStreakState();
+    }
+
+    private async recordEngagementActivity(): Promise<void> {
+        const today = this.getLocalDateKey();
+
+        if (!this.session.isAuthenticated()) {
+            this.recordEngagementActivityLocal(today);
+            return;
+        }
+
+        if (this.engagementStreakState.lastActiveDate === today) {
+            return;
+        }
+
+        try {
+            const updated = await this.session.trackEngagementAsync(today);
+            this.applyEngagementStreakDto(updated);
+        } catch {
+            this.recordEngagementActivityLocal(today);
+        }
+    }
+
+    private getLocalDateKey(value = new Date()): string {
+        const year = value.getFullYear();
+        const month = `${value.getMonth() + 1}`.padStart(2, '0');
+        const day = `${value.getDate()}`.padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     toggleStoryLike(story: StoryDto): void {
@@ -1661,6 +2152,86 @@ export class FeedPageComponent implements OnDestroy {
         }
     }
 
+    markPostNotInterested(post: PostDto): void {
+        const normalizedHandle = this.normalizeFeedHandle(post.authorHandle);
+        if (!normalizedHandle) {
+            return;
+        }
+
+        if (!this.mutedFeedAuthorHandles.has(normalizedHandle)) {
+            this.mutedFeedAuthorHandles.add(normalizedHandle);
+            this.persistMutedFeedAuthorsPreference();
+        }
+
+        this.feed = this.feed.filter(item => this.normalizeFeedHandle(item.authorHandle) !== normalizedHandle);
+        this.reels = this.reels.filter(item => this.normalizeFeedHandle(item.authorHandle) !== normalizedHandle);
+        this.storyGroups = this.storyGroups.filter(item => this.normalizeFeedHandle(item.authorHandle) !== normalizedHandle);
+        this.tryOpenPendingStoryHandle();
+        this.session.message = this.translate.instant('homeFeed.tuning.fewerPostsNotice', { handle: post.authorHandle });
+    }
+
+    requestPostNotInterested(post: PostDto): void {
+        if (!post?.id) {
+            return;
+        }
+
+        this.pendingNotInterestedPost = post;
+    }
+
+    cancelPostNotInterested(): void {
+        this.pendingNotInterestedPost = null;
+    }
+
+    confirmPostNotInterested(): void {
+        const post = this.pendingNotInterestedPost;
+        if (!post) {
+            return;
+        }
+
+        this.pendingNotInterestedPost = null;
+        this.markPostNotInterested(post);
+    }
+
+    markReelNotInterested(reel: ReelDto): void {
+        const normalizedHandle = this.normalizeFeedHandle(reel.authorHandle);
+        if (!normalizedHandle) {
+            return;
+        }
+
+        if (!this.mutedFeedAuthorHandles.has(normalizedHandle)) {
+            this.mutedFeedAuthorHandles.add(normalizedHandle);
+            this.persistMutedFeedAuthorsPreference();
+        }
+
+        this.feed = this.feed.filter(item => this.normalizeFeedHandle(item.authorHandle) !== normalizedHandle);
+        this.reels = this.reels.filter(item => this.normalizeFeedHandle(item.authorHandle) !== normalizedHandle);
+        this.storyGroups = this.storyGroups.filter(item => this.normalizeFeedHandle(item.authorHandle) !== normalizedHandle);
+        this.tryOpenPendingStoryHandle();
+        this.session.message = this.translate.instant('homeFeed.tuning.fewerReelsNotice', { handle: reel.authorHandle });
+    }
+
+    requestReelNotInterested(reel: ReelDto): void {
+        if (!reel?.id) {
+            return;
+        }
+
+        this.pendingNotInterestedReel = reel;
+    }
+
+    cancelReelNotInterested(): void {
+        this.pendingNotInterestedReel = null;
+    }
+
+    confirmReelNotInterested(): void {
+        const reel = this.pendingNotInterestedReel;
+        if (!reel) {
+            return;
+        }
+
+        this.pendingNotInterestedReel = null;
+        this.markReelNotInterested(reel);
+    }
+
     async toggleSavedReel(reel: ReelDto): Promise<void> {
         if (!reel?.id) {
             return;
@@ -1714,6 +2285,7 @@ export class FeedPageComponent implements OnDestroy {
         try {
             const updated = await this.reelInteractions.toggleLike(reel.id);
             this.reels = this.reels.map(item => item.id === updated.id ? updated : item);
+            this.recordEngagementActivity();
         } catch {
             this.reelsError = 'Could not update reel like right now.';
         } finally {
@@ -1733,6 +2305,7 @@ export class FeedPageComponent implements OnDestroy {
             const updated = await this.reelInteractions.addComment(reel.id, content, parentCommentId ?? null);
             this.pendingDeleteReelComment = null;
             this.reels = this.reels.map(item => item.id === updated.id ? updated : item);
+            this.recordEngagementActivity();
         } catch {
             this.reelsError = 'Could not add reel comment right now.';
         } finally {
@@ -1804,6 +2377,7 @@ export class FeedPageComponent implements OnDestroy {
         try {
             const updated = await this.reelInteractions.toggleCommentLike(reel.id, commentId);
             this.reels = this.reels.map(item => item.id === updated.id ? updated : item);
+            this.recordEngagementActivity();
         } catch {
             this.reelsError = 'Could not update reel comment like right now.';
         } finally {
@@ -2168,7 +2742,7 @@ export class FeedPageComponent implements OnDestroy {
             const loadedStoryGroups = await this.session.loadStoryFeedAsync(25, mode, customFeedId);
 
             this.ngZone.run(() => {
-                this.storyGroups = loadedStoryGroups;
+                this.storyGroups = loadedStoryGroups.filter(group => !this.isFeedAuthorMuted(group.authorHandle));
                 if (this.activeStoryGroup) {
                     this.activeStoryGroup = this.storyGroups.find(group => group.authorId === this.activeStoryGroup?.authorId) ?? null;
                     if (!this.activeStoryGroup) {
@@ -2571,6 +3145,7 @@ export class FeedPageComponent implements OnDestroy {
         try {
             const updated = await work();
             this.applyPostUpdate(updated);
+            this.recordEngagementActivity();
         } catch {
             this.error = failureMessage;
         } finally {

@@ -225,7 +225,17 @@ label {
     gap: 10px;
 }
 
+.people-step {
+    display: grid;
+    gap: 10px;
+}
+
 .interests-step h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.people-step h3 {
     margin: 0;
     font-size: 1rem;
 }
@@ -249,6 +259,75 @@ label {
     background: #0f172a;
     border-color: #0f172a;
     color: #fff;
+}
+
+.people-list {
+    display: grid;
+    gap: 8px;
+}
+
+.person-card {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    padding: 10px;
+    text-align: left;
+}
+
+.person-card:hover {
+    background: var(--color-surface-alt);
+}
+
+.person-card.selected {
+    border-color: var(--color-primary);
+}
+
+.person-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface-alt);
+    font-weight: 800;
+}
+
+.person-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.person-meta {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.person-meta strong,
+.person-meta span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.person-meta span {
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+}
+
+.person-action {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-primary);
 }
 
 .auth-submit {

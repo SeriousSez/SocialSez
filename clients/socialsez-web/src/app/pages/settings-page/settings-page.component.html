@@ -397,6 +397,18 @@
                     <p class="meta">{{ 'settings.safety.noMutedUsers' | translate }}</p>
                 </ng-template>
 
+                <h4>{{ 'settings.safety.hiddenCreators.title' | translate }}</h4>
+                <p class="meta">{{ 'settings.safety.hiddenCreators.description' | translate }}</p>
+                <div class="chip-list" *ngIf="hiddenFeedCreatorHandles.length; else noHiddenCreators">
+                    <button type="button" class="chip removable" *ngFor="let handle of hiddenFeedCreatorHandles" (click)="removeHiddenFeedCreator(handle)">@{{ handle }} ✕</button>
+                </div>
+                <ng-template #noHiddenCreators>
+                    <p class="meta">{{ 'settings.safety.hiddenCreators.empty' | translate }}</p>
+                </ng-template>
+                <div class="actions">
+                    <button type="button" class="ghost" (click)="clearHiddenFeedCreators()" [disabled]="!hiddenFeedCreatorHandles.length">{{ 'settings.safety.hiddenCreators.clear' | translate }}</button>
+                </div>
+
                 <div class="actions">
                     <button type="button" (click)="saveSafetyPrefs()" [disabled]="!hasSafetyChanges || safetySaving">{{ safetySaving ? ('settings.common.saving' | translate) : ('settings.safety.save' | translate) }}</button>
                     <button type="button" class="ghost" (click)="resetSafetyPrefs()" [disabled]="!hasSafetyChanges || safetySaving">{{ 'settings.common.discard' | translate }}</button>

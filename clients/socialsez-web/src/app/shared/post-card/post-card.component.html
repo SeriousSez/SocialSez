@@ -1,11 +1,17 @@
-<article class="post" [class.has-icon-actions]="showActions && !isEditing">
-    <div class="post-icon-actions" *ngIf="showActions && !isEditing">
-        <button class="icon-btn" type="button" (click)="startEdit.emit()" aria-label="Edit post" title="Edit post">
-            <i class="fa-duotone fa-pen" aria-hidden="true"></i>
-        </button>
-        <button class="icon-btn danger" type="button" (click)="deletePost.emit()" [disabled]="deleting" aria-label="Delete post" title="Delete post">
-            <i class="fa-duotone fa-light fa-trash" aria-hidden="true"></i>
-        </button>
+<article class="post" [class.has-icon-actions]="!isEditing && hasPostOverflowActions()">
+    <div class="post-icon-actions" *ngIf="!isEditing && hasPostOverflowActions()">
+        <div class="post-overflow">
+            <button class="icon-btn" type="button" (click)="togglePostOverflowMenu($event)" [attr.aria-expanded]="postOverflowMenuOpen" [attr.aria-label]="'app.shell.mobileNav.more' | translate" [attr.title]="'app.shell.mobileNav.more' | translate">
+                <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
+            </button>
+
+            <div class="post-overflow-menu" *ngIf="postOverflowMenuOpen" (click)="$event.stopPropagation()">
+                <button type="button" class="post-overflow-menu-item" *ngIf="canManageOwnPost()" (click)="triggerStartEditFromMenu($event)">{{ 'sharedCommunityPost.actions.editPost' | translate }}</button>
+                <button type="button" class="post-overflow-menu-item danger" *ngIf="canManageOwnPost()" (click)="triggerDeletePostFromMenu($event)" [disabled]="deleting">{{ 'sharedCommunityPost.actions.deletePost' | translate }}</button>
+                <button type="button" class="post-overflow-menu-item" *ngIf="canMarkPostNotInterested()" (click)="triggerNotInterestedFromMenu($event)" [disabled]="busy || !canInteract">{{ 'homeFeed.tuning.notInterested' | translate }}</button>
+                <button type="button" class="post-overflow-menu-item" *ngIf="canReportPost()" (click)="triggerReportPostFromMenu($event)" [disabled]="busy || !canInteract">{{ 'profile.safety.report' | translate }}</button>
+            </div>
+        </div>
     </div>
 
     <ng-content select="[post-header]"></ng-content>
@@ -217,10 +223,6 @@
                 <span class="action-label">{{ savedByMe ? 'Saved' : 'Save' }}</span>
             </button>
 
-            <button class="comments-toggle" type="button" *ngIf="canReportPost()" (click)="triggerReportPost()" [disabled]="busy || !canInteract" aria-label="Report post" title="Report post">
-                <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>
-                <span class="action-label">Report</span>
-            </button>
         </div>
 
         <app-comments-sheet [open]="commentsOpen" (close)="toggleComments()">
@@ -304,8 +306,6 @@
             <span>{{ post.comments.length }} comments</span>
         </ng-container>
     </p>
-
-    <ng-content select="[post-footer]"></ng-content>
 
     <app-confirm-modal [open]="!!pendingDeleteCommentId" title="Delete comment" message="Delete this comment? This action cannot be undone." confirmText="Delete" cancelText="Cancel" confirmClass="danger" (cancel)="cancelDeleteComment()" (confirm)="confirmDeleteComment()">
     </app-confirm-modal>

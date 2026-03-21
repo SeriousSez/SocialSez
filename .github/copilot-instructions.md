@@ -29,7 +29,7 @@ SocialSez is a social platform with:
 - Try to reuse existing components and services from `core/` or `shared/` when possible — don't create new ones without checking first.
 - For new components, use the Angular CLI generator: `ng generate component my-component --standalone --skip-tests`.
 - Use confirm modal for deletions and other destructive actions, with clear messaging about what will be deleted and any consequences.
-- Translate user-facing strings with `@ngx-translate/core` and the existing translation files in `assets/i18n/` — never hard-code English strings in templates or components.
+- Translate user-facing strings and the existing translation files in `assets/i18n/`. All of the languages — never hard-code English strings in templates or components.
 
 ```ts
 // Preferred DI pattern

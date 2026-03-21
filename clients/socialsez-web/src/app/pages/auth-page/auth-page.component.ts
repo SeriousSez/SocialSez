@@ -6,7 +6,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AppLanguageService } from '../../core/app-language.service';
 import { StoredLanguagePreference, readStoredLanguagePreference } from '../../core/app-language.util';
 import { SessionService } from '../../core/session.service';
-import { HashtagSearchResultDto } from '../../core/api.types';
+import { HashtagSearchResultDto, ProfileDto } from '../../core/api.types';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor/rich-text-editor.component';
 
 @Component({
@@ -21,7 +21,7 @@ export class AuthPageComponent {
     private readonly prefsStorageKey = 'socialsez-web-prefs';
 
     mode: 'login' | 'register' = 'login';
-    registerStep: 'account' | 'interests' = 'account';
+    registerStep: 'account' | 'interests' | 'people' = 'account';
     isSubmitting = false;
     private readonly minimumSubmitLoadingMs = 450;
 
@@ -45,6 +45,8 @@ export class AuthPageComponent {
     acceptedTerms = false;
     selectedInterests: string[] = [];
     suggestedInterests: HashtagSearchResultDto[] = [];
+    selectedProfiles: string[] = [];
+    suggestedProfiles: ProfileDto[] = [];
     errorMessage = '';
     readonly monthOptions = Array.from({ length: 12 }, (_, index) => `${index + 1}`.padStart(2, '0'));
     readonly dayOptions = Array.from({ length: 31 }, (_, index) => `${index + 1}`.padStart(2, '0'));
@@ -240,6 +242,11 @@ export class AuthPageComponent {
                 return;
             }
 
+            if (this.registerStep === 'people') {
+                await this.completePeopleOnboarding();
+                return;
+            }
+
             if (!this.canSubmitRegistrationAccountStep) {
                 this.errorMessage = this.registrationValidationMessage;
                 return;
@@ -396,13 +403,17 @@ export class AuthPageComponent {
         return !!normalized && this.selectedInterests.includes(normalized);
     }
 
-    async skipInterests(): Promise<void> {
+    async skipCurrentOnboardingStep(): Promise<void> {
         if (this.isSubmitting) {
             return;
         }
 
-        await this.session.refreshSessionAsync(true);
-        await this.router.navigateByUrl('/feed');
+        if (this.registerStep === 'interests') {
+            await this.proceedToPeopleStepAsync();
+            return;
+        }
+
+        await this.finishOnboardingAsync();
     }
 
     private async completeInterestsOnboarding(): Promise<void> {
@@ -416,8 +427,21 @@ export class AuthPageComponent {
             }
         }
 
-        await this.session.refreshSessionAsync(true);
-        await this.router.navigateByUrl('/feed');
+        await this.proceedToPeopleStepAsync();
+    }
+
+    private async completePeopleOnboarding(): Promise<void> {
+        const profileIds = this.selectedProfiles.slice(0, 10);
+        if (profileIds.length > 0) {
+            const results = await Promise.allSettled(profileIds.map(profileId => this.session.followAsync(profileId)));
+            const failedCount = results.filter(result => result.status === 'rejected').length;
+
+            if (failedCount > 0 && failedCount === profileIds.length) {
+                this.errorMessage = this.translate.instant('auth.errors.peopleSuggestionsSaveFailed');
+            }
+        }
+
+        await this.finishOnboardingAsync();
     }
 
     private async loadSuggestedInterests(): Promise<void> {
@@ -427,6 +451,62 @@ export class AuthPageComponent {
         } catch {
             this.suggestedInterests = [];
         }
+    }
+
+    private async loadSuggestedProfiles(): Promise<void> {
+        try {
+            const suggestions = await this.session.loadFollowSuggestionsAsync(8);
+            const merged = [...suggestions.relevant, ...suggestions.following];
+            const currentProfileId = this.session.profile?.id;
+            const seen = new Set<string>();
+            this.suggestedProfiles = merged
+                .filter(profile => {
+                    if (!profile.id || profile.id === currentProfileId || seen.has(profile.id)) {
+                        return false;
+                    }
+
+                    seen.add(profile.id);
+                    return true;
+                })
+                .slice(0, 10);
+        } catch {
+            this.suggestedProfiles = [];
+        }
+    }
+
+    toggleProfileSelection(profileId: string): void {
+        const normalizedId = (profileId ?? '').trim();
+        if (!normalizedId) {
+            return;
+        }
+
+        if (this.selectedProfiles.includes(normalizedId)) {
+            this.selectedProfiles = this.selectedProfiles.filter(item => item !== normalizedId);
+            return;
+        }
+
+        this.selectedProfiles = [...this.selectedProfiles, normalizedId].slice(0, 10);
+    }
+
+    isProfileSelected(profileId: string): boolean {
+        const normalizedId = (profileId ?? '').trim();
+        return !!normalizedId && this.selectedProfiles.includes(normalizedId);
+    }
+
+    private async proceedToPeopleStepAsync(): Promise<void> {
+        await this.loadSuggestedProfiles();
+
+        if (this.suggestedProfiles.length > 0) {
+            this.registerStep = 'people';
+            return;
+        }
+
+        await this.finishOnboardingAsync();
+    }
+
+    private async finishOnboardingAsync(): Promise<void> {
+        await this.session.refreshSessionAsync(true);
+        await this.router.navigateByUrl('/feed');
     }
 
     private normalizeTag(value: string): string {

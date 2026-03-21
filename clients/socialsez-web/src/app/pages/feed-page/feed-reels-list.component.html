@@ -36,6 +36,10 @@
                     <i class="fa-duotone fa-light fa-ellipsis" aria-hidden="true"></i>
                 </button>
                 <div class="reel-frame-menu" *ngIf="isReelSettingsMenuOpen(reel)" (click)="$event.stopPropagation()">
+                    <button type="button" class="reel-frame-menu-item" *ngIf="canReportReel(reel)" (click)="markReelNotInterestedFromMenu(reel, $event)">
+                        <span>{{ 'homeFeed.tuning.notInterested' | translate }}</span>
+                        <i class="fa-duotone fa-light fa-ban" aria-hidden="true"></i>
+                    </button>
                     <button type="button" class="reel-frame-menu-item danger" *ngIf="canReportReel(reel)" (click)="reportReelFromMenu(reel, $event)">
                         <span>Report reel</span>
                         <i class="fa-duotone fa-light fa-flag" aria-hidden="true"></i>

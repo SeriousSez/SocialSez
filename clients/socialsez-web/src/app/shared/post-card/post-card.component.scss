@@ -8,6 +8,10 @@
     position: relative;
 }
 
+.post.has-icon-actions>[post-header] {
+    padding-right: 44px;
+}
+
 .engagement-summary {
     display: flex;
     align-items: center;
@@ -148,6 +152,50 @@
     display: flex;
     gap: 8px;
     z-index: 2;
+}
+
+.post-overflow {
+    position: relative;
+}
+
+.post-overflow-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 170px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    padding: 6px;
+    display: grid;
+    gap: 4px;
+    z-index: 5;
+}
+
+.post-overflow-menu-item {
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: left;
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.post-overflow-menu-item:hover {
+    background: var(--color-surface-alt);
+}
+
+.post-overflow-menu-item:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.post-overflow-menu-item.danger {
+    color: var(--color-danger);
 }
 
 .icon-btn {

@@ -1258,6 +1258,66 @@
       "postsAria": "Caricamento post della community"
     }
   },
+  "homeFeed": {
+    "drafts": {
+      "title": "Unfinished drafts",
+      "description": "You have draft content ready. Publish it to reach your audience.",
+      "action": "Open drafts"
+    },
+    "followSuggestions": {
+      "description": "Follow a few more people to improve your feed faster."
+    },
+    "hashtags": {
+      "title": "Trending topics to follow",
+      "description": "Follow a few hashtags to make your feed more relevant."
+    },
+    "tuning": {
+      "notInterested": "Not interested",
+      "fewerPostsNotice": "We'll show fewer posts from @{{handle}}.",
+      "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
+      "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
+      "manageHiddenCreators": "Manage hidden creators"
+    },
+    "streak": {
+      "title": "Daily engagement streak",
+      "current": "Current: {{count}} day(s)",
+      "best": "Best: {{count}} day(s)",
+      "start": "Start your streak with a quick post, like, or comment.",
+      "keepGoing": "Keep it alive with one interaction today.",
+      "doneToday": "Nice. You already kept your streak alive today.",
+      "actionKeepAlive": "Keep streak alive",
+      "actionPostAgain": "Post again"
+    },
+    "profileSetup": {
+      "title": "Finish setting up your profile",
+      "dismiss": "Not now",
+      "done": "Done",
+      "progressLabel": "{{completed}} of {{total}} completed",
+      "progressAria": "Profile setup completion",
+      "items": {
+        "avatar": {
+          "title": "Add a profile photo",
+          "description": "Help people recognize you instantly.",
+          "action": "Add photo"
+        },
+        "bio": {
+          "title": "Write a short bio",
+          "description": "Tell others what you post about.",
+          "action": "Add bio"
+        },
+        "following": {
+          "title": "Follow at least 3 people",
+          "description": "Improve your feed recommendations faster.",
+          "action": "Discover people"
+        },
+        "firstPost": {
+          "title": "Share your first post",
+          "description": "Introduce yourself to your new audience.",
+          "action": "Create post"
+        }
+      }
+    }
+  },
   "chatPage": {
     "title": "Messaggi",
     "layoutAria": "Layout dei messaggi",
