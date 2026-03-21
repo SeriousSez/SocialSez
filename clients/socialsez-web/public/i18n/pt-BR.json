@@ -153,8 +153,8 @@
     "placeholders": {
       "email": "você@exemplo.com",
       "password": "••••••••",
-      "handle": "diz",
-      "displayName": "Diz",
+      "handle": "sez",
+      "displayName": "Sez",
       "country": "Selecionar país (opcional)",
       "bio": "Construtor"
     },

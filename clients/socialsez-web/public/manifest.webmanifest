@@ -1,0 +1,21 @@
+{
+  "name": "Venli",
+  "short_name": "Venli",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/assets/images/v-purple-close.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/images/v-purple-close.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

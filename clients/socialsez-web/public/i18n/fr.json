@@ -152,9 +152,9 @@
     },
     "placeholders": {
       "email": "vous@exemple.com",
-      "password": null,
+      "password": "••••••••",
       "handle": "sez",
-      "displayName": "Séz",
+      "displayName": "Sez",
       "country": "Sélectionnez le pays (facultatif)",
       "bio": "Créateur"
     },

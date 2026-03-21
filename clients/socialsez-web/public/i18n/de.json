@@ -133,9 +133,9 @@
     },
     "placeholders": {
       "email": "du@beispiel.de",
-      "password": null,
-      "handle": "Sez",
-      "displayName": "Sagt",
+      "password": "••••••••",
+      "handle": "sez",
+      "displayName": "Sez",
       "country": "Land auswählen (optional)",
       "bio": "Entwickler"
     },

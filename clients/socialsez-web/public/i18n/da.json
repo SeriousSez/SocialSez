@@ -133,9 +133,9 @@
     },
     "placeholders": {
       "email": "dig@example.com",
-      "password": null,
-      "handle": "siger",
-      "displayName": "Siger",
+      "password": "••••••••",
+      "handle": "sez",
+      "displayName": "Sez",
       "country": "Vælg land (valgfrit)",
       "bio": "Bygger"
     },
