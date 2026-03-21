@@ -12,7 +12,7 @@
       "skipToContent": "Przejdź do treści",
       "brandSubtitle": "Platforma społecznościowa",
       "nav": {
-        "feed": "Kanał",
+        "feed": "Feed",
         "discover": "Odkrywaj",
         "blogs": "Blogi",
         "communities": "Społeczności",
@@ -1259,6 +1259,23 @@
     }
   },
   "homeFeed": {
+    "title": "Home Feed",
+    "feedModes": {
+      "forYou": "For you",
+      "following": "Following"
+    },
+    "customFeeds": {
+      "aria": "Custom feeds",
+      "all": "All",
+      "newFeed": "New feed"
+    },
+    "stories": {
+      "aria": "Stories",
+      "openYourStory": "Open your story",
+      "yourStoryAlt": "Your story",
+      "yourStory": "Your story"
+    },
+    "contentTabsAria": "Feed content type",
     "drafts": {
       "title": "Unfinished drafts",
       "description": "You have draft content ready. Publish it to reach your audience.",
@@ -1277,6 +1294,10 @@
       "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
       "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
       "manageHiddenCreators": "Manage hidden creators"
+    },
+    "postActions": {
+      "repost": "Repost",
+      "reposts": "reposts"
     },
     "streak": {
       "title": "Daily engagement streak",
@@ -1734,6 +1755,105 @@
       "cancel": "Anuluj",
       "submit": "Wyślij zgłoszenie",
       "submitting": "Wysyłanie..."
+    }
+  },
+  "createMenu": {
+    "aria": "Utwórz treść",
+    "newPost": "Nowy post",
+    "newReel": "Nowy reel",
+    "newStory": "Nowa historia",
+    "blogStudio": "Blog Studio"
+  },
+  "reelComposer": {
+    "ariaDialog": "Utwórz reel",
+    "backToVideoSelection": "Wróć do wyboru wideo",
+    "close": "Zamknij kreator reel",
+    "title": "Nowy Reel",
+    "stepsAria": "Kroki tworzenia reelsa",
+    "stepMedia": "1. Media",
+    "stepEditPublish": "2. Edytuj i opublikuj",
+    "videoUploadAria": "Przesyłanie wideo reelsa",
+    "startTitle": "Zacznij od wybrania swojego filmu",
+    "startSubtitle": "Obsługiwane są formaty MP4, WebM, MOV i podobne.",
+    "selectVideo": "Wybierz film do reelsa",
+    "videoSelected": "Video: {{file}}",
+    "dragFrameAria": "Przeciągnij, aby ustawić kadrowanie reelsa",
+    "dragFrameHint": "Przeciągnij ramkę 9:16, aby ustawić przycięcie.",
+    "resetFraming": "Resetuj kadrowanie",
+    "trimSummary": "Długość oryginału: {{original}}s · Przycięte: {{trimmed}}",
+    "trimThumbnailAlt": "Miniatura przycięcia",
+    "trimStartAria": "Początek przycinania",
+    "trimEndAria": "Koniec przycinania",
+    "trimRange": "Zakres: {{start}}s do {{end}}s",
+    "coverFromFrames": "Wybierz okładkę z klatek wideo",
+    "coverOptionAlt": "Opcja okładki",
+    "coverUploadPrompt": "Chcesz użyć własnego obrazu?",
+    "uploadCustomThumbnail": "Prześlij niestandardową miniaturę",
+    "usingCustomThumbnail": "Używana niestandardowa miniatura: {{file}}",
+    "preparingPreview": "Przygotowywanie podglądu, kontrolek przycinania i sugerowanych miniaturek...",
+    "generatingThumbnails": "Generowanie sugerowanych miniaturek...",
+    "selectedPreviewAria": "Wybrany podgląd reelsa",
+    "preview": "Podgląd",
+    "caption": "Opis",
+    "hashtagPosts": "{{count}} postów",
+    "location": "Lokalizacja",
+    "locationPlaceholder": "Dodaj lokalizację",
+    "collaborators": "Współtwórcy",
+    "collaboratorsPlaceholder": "@handle1, @handle2",
+    "sensitiveToggle": "Oznacz ten reel jako treść wrażliwą",
+    "schedulePublish": "Zaplanuj publikację (opcjonalnie)",
+    "generatedCoverInfo": "Używana jest wybrana wygenerowana klatka okładki.",
+    "actions": {
+      "next": "Dalej",
+      "publish": "Opublikuj reel",
+      "publishing": "Publikowanie..."
+    },
+    "hints": {
+      "locationTypeMore": "Wpisz co najmniej 2 znaki, aby wyszukać lokalizacje.",
+      "locationSearching": "Wyszukiwanie lokalizacji...",
+      "locationFallbackAvailable": "Google Places jest niedostępne. Wyświetlanie zapasowych sugestii lokalizacji.",
+      "locationNoneVerifyGoogle": "Nie znaleziono sugestii lokalizacji. Sprawdź ograniczenia klucza Google lub spróbuj szerszego zapytania.",
+      "locationServicesUnavailable": "Usługi lokalizacji są teraz niedostępne. Sprawdź ograniczenia klucza Google.",
+      "locationSelectSuggestion": "Wybierz lokalizację z sugestii.",
+      "locationNoneCheckApi": "Nie znaleziono sugestii lokalizacji. Sprawdź ograniczenia klucza API, jeśli to wygląda niepoprawnie.",
+      "locationFetchFailed": "Nie udało się pobrać sugestii lokalizacji.",
+      "collaboratorsCommaSeparated": "Współtwórców można oddzielać przecinkami.",
+      "collaboratorsSelectUser": "Wybierz użytkownika, aby dodać go jako współtwórcę.",
+      "collaboratorsNoMatch": "Nie znaleziono pasujących użytkowników.",
+      "collaboratorsSearchFailed": "Nie udało się teraz wyszukać użytkowników."
+    },
+    "errors": {
+      "chooseVideoFirst": "Aby kontynuować, najpierw wybierz wideo.",
+      "videoProcess": "Nie udało się przetworzyć tego wideo. Wybierz inny plik.",
+      "thumbnailProcess": "Nie udało się przetworzyć tej miniatury. Wybierz inny obraz.",
+      "generateSuggestedThumbnails": "Nie udało się wygenerować sugerowanych miniaturek dla tego filmu.",
+      "mediaRecorderUnavailable": "Podgląd przycięcia został zapisany, ale przeglądarka przesłała pełne wideo, ponieważ MediaRecorder jest niedostępny.",
+      "framingAppliedOriginal": "Nie udało się zastosować kadrowania do przyciętego filmu. Zamiast tego przesłano oryginał.",
+      "browserTrimUnsupported": "Podgląd przycięcia został zapisany, ale ta przeglądarka nie obsługuje przesyłania przyciętego filmu.",
+      "processingLimitsOriginal": "Podgląd przycięcia został zapisany, ale z powodu ograniczeń przetwarzania przesłano oryginalny film.",
+      "refreshThumbnails": "Nie udało się odświeżyć miniaturek dla tego kadrowania."
+    },
+    "status": {
+      "uploadingBrowse": "Reel jest przesyłany. Możesz dalej przeglądać, gdy to się kończy.",
+      "savingDraft": "Zapisywanie szkicu reelsa...",
+      "scheduling": "Planowanie reelsa...",
+      "uploading": "Przesyłanie reelsa...",
+      "draftSaved": "Szkic reelsa zapisany!",
+      "scheduled": "Reel zaplanowany!",
+      "uploaded": "Reel przesłany!",
+      "draftSavedMessage": "Szkic reelsa został zapisany pomyślnie.",
+      "scheduledMessage": "Reel został pomyślnie zaplanowany.",
+      "uploadedMessage": "Reel został pomyślnie przesłany.",
+      "draftSaveFailed": "Nie udało się zapisać szkicu reelsa",
+      "scheduleFailed": "Planowanie reelsa nie powiodło się",
+      "uploadFailed": "Przesyłanie reelsa nie powiodło się",
+      "draftSaveFailedMessage": "Nie udało się zapisać szkicu reelsa. Spróbuj ponownie.",
+      "scheduleFailedMessage": "Planowanie reelsa nie powiodło się. Spróbuj ponownie.",
+      "uploadFailedMessage": "Przesyłanie reelsa nie powiodło się. Spróbuj ponownie."
+    },
+    "locationTypes": {
+      "pointOfInterest": "Punkt zainteresowania",
+      "cityCountry": "Miasto / kraj"
     }
   }
 }

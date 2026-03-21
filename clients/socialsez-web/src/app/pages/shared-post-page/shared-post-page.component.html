@@ -1,6 +1,9 @@
 <section class="shared-page">
     <article class="shared-card" *ngIf="loading">
-        <p>Loading post...</p>
+        <app-skeleton [height]="'16px'" [width]="'32%'"></app-skeleton>
+        <app-skeleton [height]="'14px'" [width]="'100%'"></app-skeleton>
+        <app-skeleton [height]="'14px'" [width]="'84%'"></app-skeleton>
+        <app-skeleton [height]="'280px'" [width]="'100%'"></app-skeleton>
     </article>
 
     <article class="shared-card" *ngIf="notFound && !loading">
@@ -16,7 +19,7 @@
     <article *ngIf="post as item">
         <header class="meta-row">
             <div class="author-meta">
-                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
+                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
                 <ng-template #authorInitial>
                     <div class="author-avatar">{{ (item.authorHandle[0] || '?') | uppercase }}</div>
                 </ng-template>
@@ -44,9 +47,9 @@
         </p>
 
         <ng-container *ngIf="item.imageUrl as mediaUrl">
-            <video class="media" *ngIf="isVideoMedia(mediaUrl); else imageMedia" [src]="mediaUrl" controls playsinline preload="auto"></video>
+            <video class="media" *ngIf="isVideoMedia(mediaUrl); else imageMedia" [src]="mediaUrl" controls playsinline preload="metadata"></video>
             <ng-template #imageMedia>
-                <img class="media" [src]="mediaUrl" loading="eager" decoding="async" alt="Shared post media" />
+                <img class="media" [src]="mediaUrl" loading="lazy" decoding="async" alt="Shared post media" />
             </ng-template>
         </ng-container>
     </article>

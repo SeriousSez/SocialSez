@@ -12,7 +12,7 @@
       "skipToContent": "Spring til indhold",
       "brandSubtitle": "Community-platform",
       "nav": {
-        "feed": "Foder",
+        "feed": "Feed",
         "discover": "Opdag",
         "blogs": "Blogs",
         "communities": "Fællesskaber",
@@ -59,9 +59,9 @@
       }
     },
     "search": {
-      "label": "Sog",
-      "buttonAria": "Sog",
-      "scopeMenuAria": "Valg af sogeområde",
+      "label": "Søg",
+      "buttonAria": "Søg",
+      "scopeMenuAria": "Valg af søgeområde",
       "scopePrefix": "Område",
       "scopeAuto": "Bil",
       "removeOverride": "Fjern tilsidesættelse",
@@ -83,28 +83,28 @@
         "communityPosts": "Fællesskabsindlæg",
         "blogs": "Blogs",
         "users": "Brugere",
-        "posts": "Indlæg",
-        "reels": "Hjul",
+        "posts": "Opslag",
+        "reels": "Reels",
         "hashtags": "Hashtags"
       },
       "placeholder": {
-        "communities": "Sog efter fællesskaber, fællesskabsindlæg, brugere og hashtags",
-        "blogs": "Sog efter blogs, fællesskaber, indlæg og hashtags",
-        "profiles": "Sog efter profiler, indlæg, reels og hashtags",
-        "hashtags": "Sog efter hashtags, indlæg og reels",
-        "chat": "Sog efter brugere, indlæg, reels og hashtags",
-        "notifications": "Sog efter brugere, indlæg, reels og hashtags",
-        "discover": "Sog efter brugere, fællesskaber, fællesskabsindlæg, blogs, reels, indlæg og hashtags",
-        "global": "Sog efter brugere, fællesskaber, fællesskabsindlæg, blogs, reels, indlæg og hashtags"
+        "communities": "Søg efter fællesskaber, fællesskabsindlæg, brugere og hashtags",
+        "blogs": "Søg efter blogs, fællesskaber, indlæg og hashtags",
+        "profiles": "Søg efter profiler, indlæg, reels og hashtags",
+        "hashtags": "Søg efter hashtags, indlæg og reels",
+        "chat": "Søg efter brugere, indlæg, reels og hashtags",
+        "notifications": "Søg efter brugere, indlæg, reels og hashtags",
+        "discover": "Søg efter brugere, fællesskaber, fællesskabsindlæg, blogs, reels, indlæg og hashtags",
+        "global": "Søg efter brugere, fællesskaber, fællesskabsindlæg, blogs, reels, indlæg og hashtags"
       },
       "placeholderByScope": {
-        "communities": "Sog fællesskaber efter navn, slug eller beskrivelse",
-        "communityPosts": "Sog fællesskabsindlæg efter titel, indhold eller forfatter",
-        "blogs": "Sog blogs efter titel, handle eller slug",
-        "users": "Sog brugere og profiler",
-        "posts": "Sog indlæg og forfattere",
-        "reels": "Sog reels efter billedtekst, kommentarer eller forfatter",
-        "hashtags": "Sog hashtags"
+        "communities": "Søg fællesskaber efter navn, slug eller beskrivelse",
+        "communityPosts": "Søg fællesskabsindlæg efter titel, indhold eller forfatter",
+        "blogs": "Søg blogs efter titel, handle eller slug",
+        "users": "Søg brugere og profiler",
+        "posts": "Søg indlæg og forfattere",
+        "reels": "Søg reels efter billedtekst, kommentarer eller forfatter",
+        "hashtags": "Søg hashtags"
       }
     }
   },
@@ -217,8 +217,8 @@
       "following": "følger"
     },
     "tabs": {
-      "posts": "Indlæg",
-      "reels": "Hjul",
+      "posts": "Opslag",
+      "reels": "Reels",
       "analytics": "Analyser",
       "aria": "Profilens indholdsfaner"
     },
@@ -252,7 +252,7 @@
     },
     "nickname": {
       "dialogAria": "Sæt kaldenavn",
-      "title": "Kaldenavn til dig",
+      "title": "Dit kaldenavn",
       "close": "Luk kaldenavnseditor",
       "label": "Kaldenavn",
       "placeholder": "Indtast kaldenavn"
@@ -453,8 +453,8 @@
       "mentionsAudience": "Hvem kan nævne eller tagge dig?",
       "messagesAudience": "Hvem kan sende dig beskeder?",
       "storyRepliesAudience": "Hvem kan svare på dine stories?",
-      "showInSearchSuggestions": "Vis konto i sogeforslag",
-      "allowProfileIndexing": "Tillad profilindeksering af sogemaskiner",
+      "showInSearchSuggestions": "Vis konto i søgeforslag",
+      "allowProfileIndexing": "Tillad profilindeksering af søgemaskiner",
       "showActivityStatus": "Vis aktivitetsstatus / sidst set"
     },
     "session": {
@@ -499,7 +499,7 @@
       "noMutedKeywords": "Ingen ignorerede nøgleord endnu.",
       "mutedUsers": "Ignorerede brugere",
       "addHandlePlaceholder": "Tilføj handle (eksempel: @navn)",
-      "searchingUsers": "Soger efter brugere...",
+      "searchingUsers": "Søger efter brugere...",
       "profileAvatarAlt": "Profilavatar",
       "noMutedUsers": "Ingen ignorerede brugere i præferencer endnu.",
       "save": "Gem sikkerhed",
@@ -627,8 +627,8 @@
       "communities": "Fællesskaber",
       "communityPosts": "Fællesskabsindlæg",
       "blogs": "Blogs",
-      "reels": "Hjul",
-      "posts": "Indlæg",
+      "reels": "Reels",
+      "posts": "Opslag",
       "hashtags": "Hashtags",
       "users": "Brugere"
     },
@@ -641,9 +641,9 @@
       "communities": "Fællesskaber",
       "communityPosts": "Fællesskabsindlæg",
       "blogs": "Blogs",
-      "reels": "Hjul",
+      "reels": "Reels",
       "hashtags": "Hashtags",
-      "posts": "Indlæg"
+      "posts": "Opslag"
     },
     "actions": {
       "follow": "Følg",
@@ -1259,61 +1259,82 @@
     }
   },
   "homeFeed": {
+    "title": "Hjemmefeed",
+    "feedModes": {
+      "forYou": "Til dig",
+      "following": "Følger"
+    },
+    "customFeeds": {
+      "aria": "Tilpassede feeds",
+      "all": "Alle",
+      "newFeed": "Ny feed"
+    },
+    "stories": {
+      "aria": "Stories",
+      "openYourStory": "Åbn din story",
+      "yourStoryAlt": "Din story",
+      "yourStory": "Din story"
+    },
+    "contentTabsAria": "Feed-indholdstyper",
     "drafts": {
-      "title": "Unfinished drafts",
-      "description": "You have draft content ready. Publish it to reach your audience.",
-      "action": "Open drafts"
+      "title": "Ufærdige kladder",
+      "description": "Du har kladdeindhold klar. Udgiv det for at nå dit publikum.",
+      "action": "Åbn kladder"
     },
     "followSuggestions": {
-      "description": "Follow a few more people to improve your feed faster."
+      "description": "Følg et par flere personer for hurtigere at forbedre dit feed."
     },
     "hashtags": {
-      "title": "Trending topics to follow",
-      "description": "Follow a few hashtags to make your feed more relevant."
+      "title": "Populære emner at følge",
+      "description": "Følg et par hashtags for at gøre dit feed mere relevant."
     },
     "tuning": {
-      "notInterested": "Not interested",
-      "fewerPostsNotice": "We'll show fewer posts from @{{handle}}.",
-      "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
-      "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
-      "manageHiddenCreators": "Manage hidden creators"
+      "notInterested": "Ikke interesseret",
+      "fewerPostsNotice": "Vi viser færre opslag fra @{{handle}}.",
+      "fewerReelsNotice": "Vi viser færre reels fra @{{handle}}.",
+      "hiddenCreatorsEmptyHint": "Du skjuler muligvis creators fra dit feed.",
+      "manageHiddenCreators": "Administrer skjulte creators"
+    },
+    "postActions": {
+      "repost": "Genopslag",
+      "reposts": "genopslag"
     },
     "streak": {
-      "title": "Daily engagement streak",
-      "current": "Current: {{count}} day(s)",
-      "best": "Best: {{count}} day(s)",
-      "start": "Start your streak with a quick post, like, or comment.",
-      "keepGoing": "Keep it alive with one interaction today.",
-      "doneToday": "Nice. You already kept your streak alive today.",
-      "actionKeepAlive": "Keep streak alive",
-      "actionPostAgain": "Post again"
+      "title": "Daglig engagement-streak",
+      "current": "Nuværende: {{count}} dag(e)",
+      "best": "Bedste: {{count}} dag(e)",
+      "start": "Start din streak med et hurtigt opslag, like eller en kommentar.",
+      "keepGoing": "Hold den i live med én interaktion i dag.",
+      "doneToday": "Fedt. Du har allerede holdt din streak i live i dag.",
+      "actionKeepAlive": "Hold streaken i live",
+      "actionPostAgain": "Slå op igen"
     },
     "profileSetup": {
-      "title": "Finish setting up your profile",
-      "dismiss": "Not now",
-      "done": "Done",
-      "progressLabel": "{{completed}} of {{total}} completed",
-      "progressAria": "Profile setup completion",
+      "title": "Gør din profil færdig",
+      "dismiss": "Ikke nu",
+      "done": "Færdig",
+      "progressLabel": "{{completed}} af {{total}} fuldført",
+      "progressAria": "Færdiggørelse af profilopsætning",
       "items": {
         "avatar": {
-          "title": "Add a profile photo",
-          "description": "Help people recognize you instantly.",
-          "action": "Add photo"
+          "title": "Tilføj et profilbillede",
+          "description": "Hjælp folk med at genkende dig med det samme.",
+          "action": "Tilføj billede"
         },
         "bio": {
-          "title": "Write a short bio",
-          "description": "Tell others what you post about.",
-          "action": "Add bio"
+          "title": "Skriv en kort bio",
+          "description": "Fortæl andre, hvad du slår op om.",
+          "action": "Tilføj bio"
         },
         "following": {
-          "title": "Follow at least 3 people",
-          "description": "Improve your feed recommendations faster.",
-          "action": "Discover people"
+          "title": "Følg mindst 3 personer",
+          "description": "Forbedr dine feedanbefalinger hurtigere.",
+          "action": "Opdag personer"
         },
         "firstPost": {
-          "title": "Share your first post",
-          "description": "Introduce yourself to your new audience.",
-          "action": "Create post"
+          "title": "Del dit første opslag",
+          "description": "Præsenter dig selv for dit nye publikum.",
+          "action": "Opret opslag"
         }
       }
     }
@@ -1734,6 +1755,105 @@
       "cancel": "Annuller",
       "submit": "Indsend anmeldelse",
       "submitting": "Indsender..."
+    }
+  },
+  "createMenu": {
+    "aria": "Opret indhold",
+    "newPost": "Nyt opslag",
+    "newReel": "Ny reel",
+    "newStory": "Ny story",
+    "blogStudio": "Blog Studio"
+  },
+  "reelComposer": {
+    "ariaDialog": "Opret reel",
+    "backToVideoSelection": "Tilbage til videovalg",
+    "close": "Luk reel-editor",
+    "title": "Ny reel",
+    "stepsAria": "Trin til oprettelse af reel",
+    "stepMedia": "1. Medie",
+    "stepEditPublish": "2. Rediger og udgiv",
+    "videoUploadAria": "Upload af reel-video",
+    "startTitle": "Start med at vælge din video",
+    "startSubtitle": "MP4, WebM, MOV og lignende formater understøttes.",
+    "selectVideo": "Vælg reel-video",
+    "videoSelected": "Video: {{file}}",
+    "dragFrameAria": "Træk for at indstille reel-beskæring",
+    "dragFrameHint": "Træk 9:16-rammen for at indstille din beskæring.",
+    "resetFraming": "Nulstil beskæring",
+    "trimSummary": "Original længde: {{original}}s · Beskåret: {{trimmed}}",
+    "trimThumbnailAlt": "Miniature for beskæring",
+    "trimStartAria": "Beskæring start",
+    "trimEndAria": "Beskæring slut",
+    "trimRange": "Interval: {{start}}s til {{end}}s",
+    "coverFromFrames": "Vælg cover fra videobilleder",
+    "coverOptionAlt": "Cover-mulighed",
+    "coverUploadPrompt": "Vil du bruge dit eget billede?",
+    "uploadCustomThumbnail": "Upload brugerdefineret miniature",
+    "usingCustomThumbnail": "Bruger brugerdefineret miniature: {{file}}",
+    "preparingPreview": "Forbereder forhåndsvisning, beskæringskontroller og foreslåede miniaturer...",
+    "generatingThumbnails": "Genererer foreslåede miniaturer...",
+    "selectedPreviewAria": "Valgt reel-forhåndsvisning",
+    "preview": "Forhåndsvisning",
+    "caption": "Tekst",
+    "hashtagPosts": "{{count}} opslag",
+    "location": "Placering",
+    "locationPlaceholder": "Tilføj placering",
+    "collaborators": "Samarbejdspartnere",
+    "collaboratorsPlaceholder": "@handle1, @handle2",
+    "sensitiveToggle": "Markér denne reel som følsomt medie",
+    "schedulePublish": "Planlæg udgivelse (valgfrit)",
+    "generatedCoverInfo": "Bruger den valgte genererede cover-ramme.",
+    "actions": {
+      "next": "Næste",
+      "publish": "Udgiv reel",
+      "publishing": "Udgiver..."
+    },
+    "hints": {
+      "locationTypeMore": "Skriv mindst 2 tegn for at søge efter placeringer.",
+      "locationSearching": "Søger placeringer...",
+      "locationFallbackAvailable": "Google Places er utilgængelig. Viser alternative placeringsforslag.",
+      "locationNoneVerifyGoogle": "Ingen placeringsforslag fundet. Kontrollér begrænsninger for Google-nøglen eller prøv en bredere søgning.",
+      "locationServicesUnavailable": "Placeringstjenester er utilgængelige lige nu. Kontrollér begrænsninger for Google-nøglen.",
+      "locationSelectSuggestion": "Vælg en placering fra forslagene.",
+      "locationNoneCheckApi": "Ingen placeringsforslag fundet. Kontrollér API-nøglens begrænsninger, hvis det virker forkert.",
+      "locationFetchFailed": "Kunne ikke hente placeringsforslag lige nu.",
+      "collaboratorsCommaSeparated": "Samarbejdspartnere kan adskilles med komma.",
+      "collaboratorsSelectUser": "Vælg en bruger for at tilføje vedkommende som samarbejdspartner.",
+      "collaboratorsNoMatch": "Ingen matchende brugere fundet.",
+      "collaboratorsSearchFailed": "Kunne ikke søge efter brugere lige nu."
+    },
+    "errors": {
+      "chooseVideoFirst": "Vælg først en video for at fortsætte.",
+      "videoProcess": "Kunne ikke behandle denne video. Vælg venligst en anden fil.",
+      "thumbnailProcess": "Kunne ikke behandle denne miniature. Vælg venligst et andet billede.",
+      "generateSuggestedThumbnails": "Kunne ikke generere foreslåede miniaturer til denne video.",
+      "mediaRecorderUnavailable": "Beskæringsforhåndsvisning blev gemt, men din browser uploadede hele videoen, fordi MediaRecorder ikke er tilgængelig.",
+      "framingAppliedOriginal": "Kunne ikke anvende beskæring på den trimmede video. Uploadede originalen i stedet.",
+      "browserTrimUnsupported": "Beskæringsforhåndsvisning blev gemt, men denne browser understøtter ikke upload af trimmet video.",
+      "processingLimitsOriginal": "Beskæringsforhåndsvisning blev gemt, men upload brugte original video på grund af behandlingsbegrænsninger.",
+      "refreshThumbnails": "Kunne ikke opdatere miniaturer for denne beskæring."
+    },
+    "status": {
+      "uploadingBrowse": "Reel uploades. Du kan fortsætte med at browse, mens den bliver færdig.",
+      "savingDraft": "Gemmer reelkladde...",
+      "scheduling": "Planlægger reel...",
+      "uploading": "Uploader reel...",
+      "draftSaved": "Reelkladde gemt!",
+      "scheduled": "Reel planlagt!",
+      "uploaded": "Reel uploadet!",
+      "draftSavedMessage": "Reelkladde blev gemt.",
+      "scheduledMessage": "Reel blev planlagt.",
+      "uploadedMessage": "Reel blev uploadet.",
+      "draftSaveFailed": "Kunne ikke gemme reelkladde",
+      "scheduleFailed": "Planlægning af reel mislykkedes",
+      "uploadFailed": "Upload af reel mislykkedes",
+      "draftSaveFailedMessage": "Kunne ikke gemme reelkladde. Prøv igen.",
+      "scheduleFailedMessage": "Planlægning af reel mislykkedes. Prøv igen.",
+      "uploadFailedMessage": "Upload af reel mislykkedes. Prøv igen."
+    },
+    "locationTypes": {
+      "pointOfInterest": "Interessepunkt",
+      "cityCountry": "By / land"
     }
   }
 }

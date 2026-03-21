@@ -12,7 +12,7 @@
       "skipToContent": "Aller au contenu",
       "brandSubtitle": "Plateforme communautaire",
       "nav": {
-        "feed": "Fil",
+        "feed": "Feed",
         "discover": "Découvrir",
         "blogs": "Blogues",
         "communities": "Communautés",
@@ -536,6 +536,23 @@
     }
   },
   "homeFeed": {
+    "title": "Home Feed",
+    "feedModes": {
+      "forYou": "For you",
+      "following": "Following"
+    },
+    "customFeeds": {
+      "aria": "Custom feeds",
+      "all": "All",
+      "newFeed": "New feed"
+    },
+    "stories": {
+      "aria": "Stories",
+      "openYourStory": "Open your story",
+      "yourStoryAlt": "Your story",
+      "yourStory": "Your story"
+    },
+    "contentTabsAria": "Feed content type",
     "drafts": {
       "title": "Unfinished drafts",
       "description": "You have draft content ready. Publish it to reach your audience.",
@@ -554,6 +571,10 @@
       "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
       "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
       "manageHiddenCreators": "Manage hidden creators"
+    },
+    "postActions": {
+      "repost": "Repost",
+      "reposts": "reposts"
     },
     "streak": {
       "title": "Daily engagement streak",
@@ -1734,6 +1755,105 @@
       "cancel": "Annuler",
       "submit": "Envoyer le signalement",
       "submitting": "Envoi..."
+    }
+  },
+  "createMenu": {
+    "aria": "Créer du contenu",
+    "newPost": "Nouvelle publication",
+    "newReel": "Nouveau Reel",
+    "newStory": "Nouvelle Story",
+    "blogStudio": "Blog Studio"
+  },
+  "reelComposer": {
+    "ariaDialog": "Créer un reel",
+    "backToVideoSelection": "Retour à la sélection de la vidéo",
+    "close": "Fermer le créateur de reel",
+    "title": "Nouveau Reel",
+    "stepsAria": "Étapes de création du reel",
+    "stepMedia": "1. Média",
+    "stepEditPublish": "2. Modifier et publier",
+    "videoUploadAria": "Import vidéo du reel",
+    "startTitle": "Commencez par sélectionner votre vidéo",
+    "startSubtitle": "Les formats MP4, WebM, MOV et similaires sont pris en charge.",
+    "selectVideo": "Sélectionner une vidéo reel",
+    "videoSelected": "Video: {{file}}",
+    "dragFrameAria": "Faites glisser pour définir le cadrage du reel",
+    "dragFrameHint": "Faites glisser le cadre 9:16 pour définir votre recadrage.",
+    "resetFraming": "Réinitialiser le cadrage",
+    "trimSummary": "Durée d'origine : {{original}}s · Coupé : {{trimmed}}",
+    "trimThumbnailAlt": "Miniature de découpe",
+    "trimStartAria": "Début de la découpe",
+    "trimEndAria": "Fin de la découpe",
+    "trimRange": "Plage : {{start}}s à {{end}}s",
+    "coverFromFrames": "Choisir la couverture depuis les images de la vidéo",
+    "coverOptionAlt": "Option de couverture",
+    "coverUploadPrompt": "Vous voulez utiliser votre propre image ?",
+    "uploadCustomThumbnail": "Importer une miniature personnalisée",
+    "usingCustomThumbnail": "Miniature personnalisée utilisée : {{file}}",
+    "preparingPreview": "Préparation de l'aperçu, des contrôles de découpe et des miniatures suggérées...",
+    "generatingThumbnails": "Génération des miniatures suggérées...",
+    "selectedPreviewAria": "Aperçu du reel sélectionné",
+    "preview": "Aperçu",
+    "caption": "Légende",
+    "hashtagPosts": "{{count}} publications",
+    "location": "Lieu",
+    "locationPlaceholder": "Ajouter un lieu",
+    "collaborators": "Collaborateurs",
+    "collaboratorsPlaceholder": "@handle1, @handle2",
+    "sensitiveToggle": "Marquer ce reel comme média sensible",
+    "schedulePublish": "Planifier la publication (optionnel)",
+    "generatedCoverInfo": "Utilisation de l'image de couverture générée sélectionnée.",
+    "actions": {
+      "next": "Suivant",
+      "publish": "Publier le reel",
+      "publishing": "Publication..."
+    },
+    "hints": {
+      "locationTypeMore": "Tapez au moins 2 caractères pour rechercher des lieux.",
+      "locationSearching": "Recherche de lieux...",
+      "locationFallbackAvailable": "Google Places indisponible. Affichage de suggestions de lieux de secours.",
+      "locationNoneVerifyGoogle": "Aucune suggestion de lieu trouvée. Vérifiez les restrictions de clé Google ou essayez une recherche plus large.",
+      "locationServicesUnavailable": "Les services de localisation sont indisponibles pour le moment. Vérifiez les restrictions de votre clé Google.",
+      "locationSelectSuggestion": "Sélectionnez un lieu parmi les suggestions.",
+      "locationNoneCheckApi": "Aucune suggestion de lieu trouvée. Vérifiez les restrictions de la clé API si cela semble incorrect.",
+      "locationFetchFailed": "Impossible de récupérer les suggestions de lieu pour le moment.",
+      "collaboratorsCommaSeparated": "Les collaborateurs peuvent être séparés par des virgules.",
+      "collaboratorsSelectUser": "Sélectionnez un utilisateur pour l'ajouter comme collaborateur.",
+      "collaboratorsNoMatch": "Aucun utilisateur correspondant trouvé.",
+      "collaboratorsSearchFailed": "Impossible de rechercher des utilisateurs pour le moment."
+    },
+    "errors": {
+      "chooseVideoFirst": "Choisissez d'abord une vidéo pour continuer.",
+      "videoProcess": "Impossible de traiter cette vidéo. Veuillez choisir un autre fichier.",
+      "thumbnailProcess": "Impossible de traiter cette miniature. Veuillez choisir une autre image.",
+      "generateSuggestedThumbnails": "Impossible de générer des miniatures suggérées pour cette vidéo.",
+      "mediaRecorderUnavailable": "L'aperçu de découpe a été enregistré, mais votre navigateur a importé la vidéo complète car MediaRecorder n'est pas disponible.",
+      "framingAppliedOriginal": "Impossible d'appliquer le cadrage à la vidéo découpée. La vidéo d'origine a été importée à la place.",
+      "browserTrimUnsupported": "L'aperçu de découpe a été enregistré, mais ce navigateur ne prend pas en charge l'import d'une vidéo découpée.",
+      "processingLimitsOriginal": "L'aperçu de découpe a été enregistré, mais l'import a utilisé la vidéo d'origine en raison des limites de traitement.",
+      "refreshThumbnails": "Impossible d'actualiser les miniatures pour ce cadrage."
+    },
+    "status": {
+      "uploadingBrowse": "Le reel est en cours d'import. Vous pouvez continuer à naviguer pendant ce temps.",
+      "savingDraft": "Enregistrement du brouillon du reel...",
+      "scheduling": "Planification du reel...",
+      "uploading": "Import du reel...",
+      "draftSaved": "Brouillon du reel enregistré !",
+      "scheduled": "Reel planifié !",
+      "uploaded": "Reel importé !",
+      "draftSavedMessage": "Le brouillon du reel a bien été enregistré.",
+      "scheduledMessage": "Le reel a bien été planifié.",
+      "uploadedMessage": "Le reel a bien été importé.",
+      "draftSaveFailed": "Échec de l'enregistrement du brouillon du reel",
+      "scheduleFailed": "Échec de la planification du reel",
+      "uploadFailed": "Échec de l'import du reel",
+      "draftSaveFailedMessage": "Échec de l'enregistrement du brouillon du reel. Veuillez réessayer.",
+      "scheduleFailedMessage": "Échec de la planification du reel. Veuillez réessayer.",
+      "uploadFailedMessage": "Échec de l'import du reel. Veuillez réessayer."
+    },
+    "locationTypes": {
+      "pointOfInterest": "Point d'intérêt",
+      "cityCountry": "Ville / pays"
     }
   }
 }

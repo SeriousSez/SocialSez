@@ -1,6 +1,6 @@
 <section class="page" [class.compact-layout]="compactFeedEnabled">
     <header class="page-head">
-        <h2>Home Feed</h2>
+        <h2>{{ 'homeFeed.title' | translate }}</h2>
         <app-create-content-menu [open]="createMenuOpen" (toggle)="toggleCreateMenu($event)" (createPost)="openComposer()" (createReel)="openReelComposer()" (createStory)="openStoryComposer()" (createBlog)="openBlogStudio()"></app-create-content-menu>
     </header>
 
@@ -121,19 +121,19 @@
 
     <app-reel-composer-modal [open]="showReelComposer" (closed)="onReelComposerClosed()" (published)="onReelComposerPublished()" (uploadStatus)="onReelUploadStatusChanged($event)"></app-reel-composer-modal>
 
-    <section class="stories" aria-label="Stories">
+    <section class="stories" [attr.aria-label]="'homeFeed.stories.aria' | translate">
         <div class="stories-tabs">
-            <button type="button" [class.active]="selectedFeedMode === 'for-you'" (click)="selectFeedMode('for-you')">For you</button>
-            <button type="button" [class.active]="selectedFeedMode === 'following'" (click)="selectFeedMode('following')">Following</button>
+            <button type="button" [class.active]="selectedFeedMode === 'for-you'" (click)="selectFeedMode('for-you')">{{ 'homeFeed.feedModes.forYou' | translate }}</button>
+            <button type="button" [class.active]="selectedFeedMode === 'following'" (click)="selectFeedMode('following')">{{ 'homeFeed.feedModes.following' | translate }}</button>
         </div>
 
-        <div class="custom-feeds" aria-label="Custom feeds">
+        <div class="custom-feeds" [attr.aria-label]="'homeFeed.customFeeds.aria' | translate">
             <div class="custom-feeds-scroll">
-                <button type="button" class="custom-feed-chip" [class.active]="!selectedCustomFeedId" (click)="selectCustomFeed(null)">All</button>
+                <button type="button" class="custom-feed-chip" [class.active]="!selectedCustomFeedId" (click)="selectCustomFeed(null)">{{ 'homeFeed.customFeeds.all' | translate }}</button>
                 <button type="button" class="custom-feed-chip" *ngFor="let customFeed of customFeeds" [class.active]="selectedCustomFeedId === customFeed.id" (click)="selectCustomFeed(customFeed.id)">
                     {{ customFeed.name }}
                 </button>
-                <button type="button" class="custom-feed-chip add" (click)="openCreateCustomFeedModal()">+ New feed</button>
+                <button type="button" class="custom-feed-chip add" (click)="openCreateCustomFeedModal()">+ {{ 'homeFeed.customFeeds.newFeed' | translate }}</button>
             </div>
 
             <div class="custom-feed-actions" *ngIf="selectedCustomFeed as customFeed">
@@ -146,7 +146,7 @@
         </div>
 
         <div class="visually-hidden" aria-hidden="true" *ngIf="firstStoryToPreload as firstStoryMedia">
-            <video *ngIf="isLikelyVideoStoryMedia(firstStoryMedia.mediaUrl); else firstStoryImagePreload" [src]="firstStoryMedia.mediaUrl" muted playsinline preload="auto"></video>
+            <video *ngIf="isLikelyVideoStoryMedia(firstStoryMedia.mediaUrl); else firstStoryImagePreload" [src]="firstStoryMedia.mediaUrl" muted playsinline preload="metadata"></video>
             <ng-template #firstStoryImagePreload>
                 <img [src]="firstStoryMedia.mediaUrl" alt="" fetchpriority="high" loading="eager" decoding="async" />
             </ng-template>
@@ -162,16 +162,16 @@
         <p class="stories-error" *ngIf="!storiesLoading && storiesError">{{ storiesError }}</p>
 
         <div class="stories-rail" *ngIf="!storiesLoading && !storiesError && (visibleStoryGroups.length || storyUploadInProgress || !!currentProfileHandle)">
-            <button type="button" class="story-item story-button" [class.is-uploading]="storyUploadInProgress" [disabled]="storyUploadInProgress" (click)="onOwnStoryItemClicked()" aria-label="Open your story">
+            <button type="button" class="story-item story-button" [class.is-uploading]="storyUploadInProgress" [disabled]="storyUploadInProgress" (click)="onOwnStoryItemClicked()" [attr.aria-label]="'homeFeed.stories.openYourStory' | translate">
                 <span class="story-ring" [class.seen]="!!ownVisibleStoryGroup && !ownVisibleStoryGroup.hasUnseenStories" [class.is-uploading]="storyUploadInProgress" [class.is-uploading-pending]="storyUploadInProgress && !ownVisibleStoryGroup"
                     [class.is-empty]="!ownVisibleStoryGroup && !storyUploadInProgress" aria-hidden="true">
                     <span class="story-upload-spinner" *ngIf="storyUploadInProgress"></span>
-                    <img *ngIf="currentProfileImageUrl; else uploadingStoryInitial" [src]="currentProfileImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Your story" />
+                    <img *ngIf="currentProfileImageUrl; else uploadingStoryInitial" [src]="currentProfileImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" [attr.alt]="'homeFeed.stories.yourStoryAlt' | translate" />
                     <ng-template #uploadingStoryInitial>
                         <span class="story-initial">{{ currentProfileHandle ? currentProfileHandle[0] : 'Y' }}</span>
                     </ng-template>
                 </span>
-                <span class="story-handle">Your story</span>
+                <span class="story-handle">{{ 'homeFeed.stories.yourStory' | translate }}</span>
             </button>
 
             <button type="button" class="story-item story-button" *ngFor="let group of nonOwnVisibleStoryGroups" (click)="openStoryGroup(group)" [attr.aria-label]="'Open stories from @' + group.authorHandle">
@@ -190,7 +190,7 @@
         </p>
     </section>
 
-    <app-segmented-tabs class="content-tabs" [tabs]="contentTabs" [activeTab]="selectedContentTab" ariaLabel="Feed content type" [fullWidthOnMobile]="true" (activeTabChange)="onContentTabChanged($event)"></app-segmented-tabs>
+    <app-segmented-tabs class="content-tabs" [tabs]="contentTabs" [activeTab]="selectedContentTab" [ariaLabel]="'homeFeed.contentTabsAria' | translate" [fullWidthOnMobile]="true" (activeTabChange)="onContentTabChanged($event)"></app-segmented-tabs>
 
     <section class="feed-skeleton" *ngIf="selectedContentTab === 'posts' && loading" aria-label="Loading feed">
         <article class="feed-skeleton-card" *ngFor="let _ of [1, 2]">

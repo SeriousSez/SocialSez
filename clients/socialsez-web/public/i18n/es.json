@@ -12,7 +12,7 @@
       "skipToContent": "Saltar al contenido",
       "brandSubtitle": "Plataforma comunitaria",
       "nav": {
-        "feed": "Inicio",
+        "feed": "Feed",
         "discover": "Explorar",
         "blogs": "Blogs",
         "communities": "Comunidades",
@@ -1259,6 +1259,23 @@
     }
   },
   "homeFeed": {
+    "title": "Home Feed",
+    "feedModes": {
+      "forYou": "For you",
+      "following": "Following"
+    },
+    "customFeeds": {
+      "aria": "Custom feeds",
+      "all": "All",
+      "newFeed": "New feed"
+    },
+    "stories": {
+      "aria": "Stories",
+      "openYourStory": "Open your story",
+      "yourStoryAlt": "Your story",
+      "yourStory": "Your story"
+    },
+    "contentTabsAria": "Feed content type",
     "drafts": {
       "title": "Unfinished drafts",
       "description": "You have draft content ready. Publish it to reach your audience.",
@@ -1277,6 +1294,10 @@
       "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
       "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
       "manageHiddenCreators": "Manage hidden creators"
+    },
+    "postActions": {
+      "repost": "Repost",
+      "reposts": "reposts"
     },
     "streak": {
       "title": "Daily engagement streak",
@@ -1734,6 +1755,105 @@
       "cancel": "Cancelar",
       "submit": "Enviar denuncia",
       "submitting": "Enviando..."
+    }
+  },
+  "createMenu": {
+    "aria": "Crear contenido",
+    "newPost": "Nueva publicación",
+    "newReel": "Nuevo Reel",
+    "newStory": "Nueva historia",
+    "blogStudio": "Blog Studio"
+  },
+  "reelComposer": {
+    "ariaDialog": "Crear reel",
+    "backToVideoSelection": "Volver a la selección de video",
+    "close": "Cerrar creador de reels",
+    "title": "Nuevo Reel",
+    "stepsAria": "Pasos de creación del reel",
+    "stepMedia": "1. Medios",
+    "stepEditPublish": "2. Editar y publicar",
+    "videoUploadAria": "Carga de video para reel",
+    "startTitle": "Empieza seleccionando tu video",
+    "startSubtitle": "Se admiten MP4, WebM, MOV y formatos similares.",
+    "selectVideo": "Seleccionar video de reel",
+    "videoSelected": "Video: {{file}}",
+    "dragFrameAria": "Arrastra para ajustar el encuadre del reel",
+    "dragFrameHint": "Arrastra el marco 9:16 para definir el recorte.",
+    "resetFraming": "Restablecer encuadre",
+    "trimSummary": "Duración original: {{original}}s · Recortado: {{trimmed}}",
+    "trimThumbnailAlt": "Miniatura de recorte",
+    "trimStartAria": "Inicio del recorte",
+    "trimEndAria": "Fin del recorte",
+    "trimRange": "Rango: {{start}}s a {{end}}s",
+    "coverFromFrames": "Elige portada desde fotogramas del video",
+    "coverOptionAlt": "Opción de portada",
+    "coverUploadPrompt": "¿Quieres usar tu propia imagen?",
+    "uploadCustomThumbnail": "Subir miniatura personalizada",
+    "usingCustomThumbnail": "Usando miniatura personalizada: {{file}}",
+    "preparingPreview": "Preparando vista previa, controles de recorte y miniaturas sugeridas...",
+    "generatingThumbnails": "Generando miniaturas sugeridas...",
+    "selectedPreviewAria": "Vista previa de reel seleccionada",
+    "preview": "Vista previa",
+    "caption": "Descripción",
+    "hashtagPosts": "{{count}} publicaciones",
+    "location": "Ubicación",
+    "locationPlaceholder": "Agregar ubicación",
+    "collaborators": "Colaboradores",
+    "collaboratorsPlaceholder": "@handle1, @handle2",
+    "sensitiveToggle": "Marcar este reel como contenido sensible",
+    "schedulePublish": "Programar publicación (opcional)",
+    "generatedCoverInfo": "Usando el fotograma de portada generado seleccionado.",
+    "actions": {
+      "next": "Siguiente",
+      "publish": "Publicar reel",
+      "publishing": "Publicando..."
+    },
+    "hints": {
+      "locationTypeMore": "Escribe al menos 2 caracteres para buscar ubicaciones.",
+      "locationSearching": "Buscando ubicaciones...",
+      "locationFallbackAvailable": "Google Places no está disponible. Mostrando sugerencias de ubicación alternativas.",
+      "locationNoneVerifyGoogle": "No se encontraron sugerencias de ubicación. Verifica las restricciones de la clave de Google o prueba una búsqueda más amplia.",
+      "locationServicesUnavailable": "Los servicios de ubicación no están disponibles en este momento. Revisa las restricciones de tu clave de Google.",
+      "locationSelectSuggestion": "Selecciona una ubicación de las sugerencias.",
+      "locationNoneCheckApi": "No se encontraron sugerencias de ubicación. Revisa las restricciones de la clave API si esto parece incorrecto.",
+      "locationFetchFailed": "No se pudieron obtener sugerencias de ubicación ahora mismo.",
+      "collaboratorsCommaSeparated": "Los colaboradores pueden separarse por comas.",
+      "collaboratorsSelectUser": "Selecciona un usuario para añadirlo como colaborador.",
+      "collaboratorsNoMatch": "No se encontraron usuarios coincidentes.",
+      "collaboratorsSearchFailed": "No se pudieron buscar usuarios ahora mismo."
+    },
+    "errors": {
+      "chooseVideoFirst": "Primero elige un video para continuar.",
+      "videoProcess": "No se pudo procesar este video. Elige un archivo diferente.",
+      "thumbnailProcess": "No se pudo procesar esta miniatura. Elige una imagen diferente.",
+      "generateSuggestedThumbnails": "No se pudieron generar miniaturas sugeridas para este video.",
+      "mediaRecorderUnavailable": "La vista previa del recorte se guardó, pero tu navegador subió el video completo porque MediaRecorder no está disponible.",
+      "framingAppliedOriginal": "No se pudo aplicar el encuadre al video recortado. Se subió el original en su lugar.",
+      "browserTrimUnsupported": "La vista previa del recorte se guardó, pero este navegador no admite subir video recortado.",
+      "processingLimitsOriginal": "La vista previa del recorte se guardó, pero la subida usó el video original por límites de procesamiento.",
+      "refreshThumbnails": "No se pudieron actualizar las miniaturas para este encuadre."
+    },
+    "status": {
+      "uploadingBrowse": "El reel se está subiendo. Puedes seguir navegando mientras termina.",
+      "savingDraft": "Guardando borrador del reel...",
+      "scheduling": "Programando reel...",
+      "uploading": "Subiendo reel...",
+      "draftSaved": "¡Borrador del reel guardado!",
+      "scheduled": "¡Reel programado!",
+      "uploaded": "¡Reel subido!",
+      "draftSavedMessage": "El borrador del reel se guardó correctamente.",
+      "scheduledMessage": "El reel se programó correctamente.",
+      "uploadedMessage": "El reel se subió correctamente.",
+      "draftSaveFailed": "Error al guardar el borrador del reel",
+      "scheduleFailed": "Error al programar el reel",
+      "uploadFailed": "Error al subir el reel",
+      "draftSaveFailedMessage": "Error al guardar el borrador del reel. Inténtalo de nuevo.",
+      "scheduleFailedMessage": "Error al programar el reel. Inténtalo de nuevo.",
+      "uploadFailedMessage": "Error al subir el reel. Inténtalo de nuevo."
+    },
+    "locationTypes": {
+      "pointOfInterest": "Punto de interés",
+      "cityCountry": "Ciudad / país"
     }
   }
 }

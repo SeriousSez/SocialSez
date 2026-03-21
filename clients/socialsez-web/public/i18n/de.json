@@ -12,7 +12,7 @@
       "skipToContent": "Zum Inhalt springen",
       "brandSubtitle": "Community-Plattform",
       "nav": {
-        "feed": "Startseite",
+        "feed": "Feed",
         "discover": "Entdecken",
         "blogs": "Blogs",
         "communities": "Gemeinschaften",
@@ -1259,6 +1259,23 @@
     }
   },
   "homeFeed": {
+    "title": "Home Feed",
+    "feedModes": {
+      "forYou": "For you",
+      "following": "Following"
+    },
+    "customFeeds": {
+      "aria": "Custom feeds",
+      "all": "All",
+      "newFeed": "New feed"
+    },
+    "stories": {
+      "aria": "Stories",
+      "openYourStory": "Open your story",
+      "yourStoryAlt": "Your story",
+      "yourStory": "Your story"
+    },
+    "contentTabsAria": "Feed content type",
     "drafts": {
       "title": "Unfinished drafts",
       "description": "You have draft content ready. Publish it to reach your audience.",
@@ -1277,6 +1294,10 @@
       "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
       "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
       "manageHiddenCreators": "Manage hidden creators"
+    },
+    "postActions": {
+      "repost": "Repost",
+      "reposts": "reposts"
     },
     "streak": {
       "title": "Daily engagement streak",
@@ -1734,6 +1755,105 @@
       "cancel": "Abbrechen",
       "submit": "Meldung senden",
       "submitting": "Wird gesendet..."
+    }
+  },
+  "createMenu": {
+    "aria": "Inhalt erstellen",
+    "newPost": "Neuer Beitrag",
+    "newReel": "Neues Reel",
+    "newStory": "Neue Story",
+    "blogStudio": "Blog Studio"
+  },
+  "reelComposer": {
+    "ariaDialog": "Reel erstellen",
+    "backToVideoSelection": "Zurück zur Videoauswahl",
+    "close": "Reel-Composer schließen",
+    "title": "Neues Reel",
+    "stepsAria": "Schritte zur Reel-Erstellung",
+    "stepMedia": "1. Medien",
+    "stepEditPublish": "2. Bearbeiten & Veröffentlichen",
+    "videoUploadAria": "Reel-Video-Upload",
+    "startTitle": "Beginne mit der Auswahl deines Videos",
+    "startSubtitle": "MP4, WebM, MOV und ähnliche Formate werden unterstützt.",
+    "selectVideo": "Reel-Video auswählen",
+    "videoSelected": "Video: {{file}}",
+    "dragFrameAria": "Ziehen, um den Reel-Ausschnitt festzulegen",
+    "dragFrameHint": "Ziehe den 9:16-Rahmen, um deinen Zuschnitt festzulegen.",
+    "resetFraming": "Ausschnitt zurücksetzen",
+    "trimSummary": "Originallänge: {{original}}s · Gekürzt: {{trimmed}}",
+    "trimThumbnailAlt": "Schnitt-Miniatur",
+    "trimStartAria": "Schnittbeginn",
+    "trimEndAria": "Schnittende",
+    "trimRange": "Bereich: {{start}}s bis {{end}}s",
+    "coverFromFrames": "Cover aus Videoframes wählen",
+    "coverOptionAlt": "Cover-Option",
+    "coverUploadPrompt": "Eigenes Bild verwenden?",
+    "uploadCustomThumbnail": "Eigenes Vorschaubild hochladen",
+    "usingCustomThumbnail": "Eigenes Vorschaubild in Verwendung: {{file}}",
+    "preparingPreview": "Vorschau, Schnittsteuerung und empfohlene Vorschaubilder werden vorbereitet...",
+    "generatingThumbnails": "Empfohlene Vorschaubilder werden erzeugt...",
+    "selectedPreviewAria": "Ausgewählte Reel-Vorschau",
+    "preview": "Vorschau",
+    "caption": "Beschriftung",
+    "hashtagPosts": "{{count}} Beiträge",
+    "location": "Ort",
+    "locationPlaceholder": "Ort hinzufügen",
+    "collaborators": "Mitwirkende",
+    "collaboratorsPlaceholder": "@handle1, @handle2",
+    "sensitiveToggle": "Dieses Reel als sensible Medien markieren",
+    "schedulePublish": "Veröffentlichung planen (optional)",
+    "generatedCoverInfo": "Verwende den ausgewählten generierten Cover-Frame.",
+    "actions": {
+      "next": "Weiter",
+      "publish": "Reel veröffentlichen",
+      "publishing": "Wird veröffentlicht..."
+    },
+    "hints": {
+      "locationTypeMore": "Gib mindestens 2 Zeichen ein, um Orte zu suchen.",
+      "locationSearching": "Orte werden gesucht...",
+      "locationFallbackAvailable": "Google Places nicht verfügbar. Fallback-Ortvorschläge werden angezeigt.",
+      "locationNoneVerifyGoogle": "Keine Ortsvorschläge gefunden. Prüfe die Google-Schlüsselbeschränkungen oder versuche eine breitere Suche.",
+      "locationServicesUnavailable": "Ortungsdienste sind derzeit nicht verfügbar. Prüfe die Google-Schlüsselbeschränkungen.",
+      "locationSelectSuggestion": "Wähle einen Ort aus den Vorschlägen.",
+      "locationNoneCheckApi": "Keine Ortsvorschläge gefunden. Prüfe API-Schlüsselbeschränkungen, falls das unerwartet ist.",
+      "locationFetchFailed": "Ortvorschläge konnten derzeit nicht geladen werden.",
+      "collaboratorsCommaSeparated": "Mitwirkende können durch Kommas getrennt werden.",
+      "collaboratorsSelectUser": "Wähle einen Benutzer, um ihn als Mitwirkenden hinzuzufügen.",
+      "collaboratorsNoMatch": "Keine passenden Benutzer gefunden.",
+      "collaboratorsSearchFailed": "Benutzer konnten derzeit nicht gesucht werden."
+    },
+    "errors": {
+      "chooseVideoFirst": "Wähle zuerst ein Video, um fortzufahren.",
+      "videoProcess": "Dieses Video konnte nicht verarbeitet werden. Bitte wähle eine andere Datei.",
+      "thumbnailProcess": "Dieses Vorschaubild konnte nicht verarbeitet werden. Bitte wähle ein anderes Bild.",
+      "generateSuggestedThumbnails": "Empfohlene Vorschaubilder für dieses Video konnten nicht erzeugt werden.",
+      "mediaRecorderUnavailable": "Schnittvorschau gespeichert, aber dein Browser hat das vollständige Video hochgeladen, weil MediaRecorder nicht verfügbar ist.",
+      "framingAppliedOriginal": "Der Ausschnitt konnte nicht auf das geschnittene Video angewendet werden. Stattdessen wurde das Original hochgeladen.",
+      "browserTrimUnsupported": "Schnittvorschau gespeichert, aber dieser Browser unterstützt keinen Upload geschnittener Videos.",
+      "processingLimitsOriginal": "Schnittvorschau gespeichert, aber wegen Verarbeitungsgrenzen wurde das Originalvideo hochgeladen.",
+      "refreshThumbnails": "Vorschaubilder für diesen Ausschnitt konnten nicht aktualisiert werden."
+    },
+    "status": {
+      "uploadingBrowse": "Reel wird hochgeladen. Du kannst währenddessen weiter surfen.",
+      "savingDraft": "Reel-Entwurf wird gespeichert...",
+      "scheduling": "Reel wird geplant...",
+      "uploading": "Reel wird hochgeladen...",
+      "draftSaved": "Reel-Entwurf gespeichert!",
+      "scheduled": "Reel geplant!",
+      "uploaded": "Reel hochgeladen!",
+      "draftSavedMessage": "Reel-Entwurf erfolgreich gespeichert.",
+      "scheduledMessage": "Reel erfolgreich geplant.",
+      "uploadedMessage": "Reel erfolgreich hochgeladen.",
+      "draftSaveFailed": "Speichern des Reel-Entwurfs fehlgeschlagen",
+      "scheduleFailed": "Planung des Reels fehlgeschlagen",
+      "uploadFailed": "Reel-Upload fehlgeschlagen",
+      "draftSaveFailedMessage": "Speichern des Reel-Entwurfs fehlgeschlagen. Bitte versuche es erneut.",
+      "scheduleFailedMessage": "Planung des Reels fehlgeschlagen. Bitte versuche es erneut.",
+      "uploadFailedMessage": "Reel-Upload fehlgeschlagen. Bitte versuche es erneut."
+    },
+    "locationTypes": {
+      "pointOfInterest": "Sehenswürdigkeit",
+      "cityCountry": "Stadt / Land"
     }
   }
 }

@@ -2,7 +2,7 @@ import { APP_INITIALIZER, ApplicationConfig, LOCALE_ID, provideBrowserGlobalErro
 import { HttpInterceptorFn, HttpResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
-import { provideRouter } from '@angular/router';
+import { PreloadAllModules, provideRouter, withPreloading } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { map } from 'rxjs';
 import { AppLanguageService } from './core/app-language.service';
@@ -40,7 +40,7 @@ export const appConfig: ApplicationConfig = {
       provide: LOCALE_ID,
       useFactory: resolveAppLocale
     },
-    provideRouter(routes),
+    provideRouter(routes, withPreloading(PreloadAllModules)),
     provideServiceWorker('sw.js', {
       enabled: environment.production,
       registrationStrategy: 'registerWhenStable:30000'

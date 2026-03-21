@@ -3,15 +3,22 @@ import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FollowRequestDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 @Component({
     selector: 'app-notification-requests-page',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, SkeletonComponent],
     templateUrl: './notification-requests-page.component.html',
     styleUrl: './notification-requests-page.component.scss'
 })
 export class NotificationRequestsPageComponent {
+    readonly loadingSkeletonRows = [
+        { handleWidth: '140px', dateWidth: '120px' },
+        { handleWidth: '156px', dateWidth: '132px' },
+        { handleWidth: '148px', dateWidth: '110px' }
+    ] as const;
+
     requests: FollowRequestDto[] = [];
     loading = false;
     status = '';

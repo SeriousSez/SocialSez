@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, inject, Input, NgZone, OnDestroy, Output, ViewChild } from '@angular/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HashtagSearchResultDto, ProfileDto } from '../../core/api.types';
 import { environment } from '../../../environments/environment';
 import { PendingReelComposerDraft, SessionService } from '../../core/session.service';
@@ -38,7 +39,7 @@ export interface ReelUploadStatusEvent {
 @Component({
     selector: 'app-reel-composer-modal',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, TranslateModule],
     templateUrl: './reel-composer-modal.component.html',
     styleUrl: './reel-composer-modal.component.scss'
 })
@@ -52,6 +53,7 @@ export class ReelComposerModalComponent implements OnDestroy {
     private static readonly ReelOutputWidth = 540;
     private static readonly ReelOutputFps = 24;
     private readonly draftStorageKey = 'socialsez.reel-composer.draft.v1';
+    private readonly translate = inject(TranslateService);
 
     @Input()
     set open(value: boolean) {
@@ -116,10 +118,10 @@ export class ReelComposerModalComponent implements OnDestroy {
     locationSuggestions: LocationSuggestion[] = [];
     showLocationSuggestions = false;
     loadingLocationSuggestions = false;
-    locationHint = 'Type at least 2 characters to search locations.';
+    locationHint = '';
     collaboratorSuggestions: ProfileDto[] = [];
     showCollaboratorSuggestions = false;
-    collaboratorsHint = 'Collaborators can be separated by commas.';
+    collaboratorsHint = '';
     hashtagSuggestions: HashtagSearchResultDto[] = [];
     showHashtagSuggestions = false;
     private draggingTrimPart: 'start' | 'end' | 'range' | null = null;
@@ -162,7 +164,9 @@ export class ReelComposerModalComponent implements OnDestroy {
         private readonly session: SessionService,
         private readonly ngZone: NgZone,
         private readonly uploadProgress: UploadProgressService
-    ) { }
+    ) {
+        this.resetInlineHints();
+    }
 
     ngOnDestroy(): void {
         this.clearReelComposerMedia();
@@ -214,7 +218,7 @@ export class ReelComposerModalComponent implements OnDestroy {
 
     goToStep(step: 1 | 2): void {
         if (step === 2 && !this.reelVideoFile) {
-            this.reelComposerError = 'Choose video first to continue.';
+            this.reelComposerError = this.t('reelComposer.errors.chooseVideoFirst');
             return;
         }
 
@@ -286,7 +290,7 @@ export class ReelComposerModalComponent implements OnDestroy {
             this.reelTrimStartSeconds = 0;
             this.reelTrimEndSeconds = Math.min(this.reelVideoDurationSeconds, ReelComposerModalComponent.MaxTrimDurationSeconds);
         } catch {
-            this.reelComposerError = 'Could not process this video. Please pick a different file.';
+            this.reelComposerError = this.t('reelComposer.errors.videoProcess');
             this.clearReelVideoSelection();
         }
 
@@ -315,7 +319,7 @@ export class ReelComposerModalComponent implements OnDestroy {
         try {
             this.reelThumbnailFile = await this.normalizeCustomThumbnailFile(file);
         } catch {
-            this.reelComposerError = 'Could not process this thumbnail. Please choose a different image.';
+            this.reelComposerError = this.t('reelComposer.errors.thumbnailProcess');
             this.reelThumbnailFile = null;
         }
 
@@ -446,7 +450,7 @@ export class ReelComposerModalComponent implements OnDestroy {
         this.generatingReelCovers = true;
         void this.generateReelCoverOptions(this.reelVideoFile, this.reelVideoDurationSeconds)
             .catch(() => {
-                this.reelComposerError = 'Could not generate suggested thumbnails for this video.';
+                this.reelComposerError = this.t('reelComposer.errors.generateSuggestedThumbnails');
             })
             .finally(() => {
                 this.generatingReelCovers = false;
@@ -593,11 +597,11 @@ export class ReelComposerModalComponent implements OnDestroy {
         // Close immediately and continue processing/upload in the background.
         this.uploadStatus.emit({
             state: 'uploading',
-            message: 'Reel is uploading. You can keep browsing while it finishes.'
+            message: this.t('reelComposer.status.uploadingBrowse')
         });
         this.closed.emit();
 
-        const handle = this.uploadProgress.begin(saveAsDraft ? 'Saving reel draft...' : scheduledPublishAtUtc ? 'Scheduling reel...' : 'Uploading reel...');
+        const handle = this.uploadProgress.begin(this.getUploadProgressMessage(saveAsDraft, !!scheduledPublishAtUtc));
         const session = this.session;
         const uploadStatus = this.uploadStatus;
         const published = this.published;
@@ -621,20 +625,16 @@ export class ReelComposerModalComponent implements OnDestroy {
                     this.clearDraft();
                 }
                 published.emit();
-                handle.succeed(saveAsDraft ? 'Reel draft saved!' : scheduledPublishAtUtc ? 'Reel scheduled!' : 'Reel uploaded!');
+                handle.succeed(this.getUploadSuccessMessage(saveAsDraft, !!scheduledPublishAtUtc));
                 uploadStatus.emit({
                     state: 'success',
-                    message: saveAsDraft
-                        ? 'Reel draft saved successfully.'
-                        : scheduledPublishAtUtc
-                            ? 'Reel scheduled successfully.'
-                            : 'Reel uploaded successfully.'
+                    message: this.getUploadSuccessNotice(saveAsDraft, !!scheduledPublishAtUtc)
                 });
             } catch {
-                handle.fail(saveAsDraft ? 'Reel draft save failed' : 'Reel upload failed');
+                handle.fail(this.getUploadFailureMessage(saveAsDraft, !!scheduledPublishAtUtc));
                 uploadStatus.emit({
                     state: 'failed',
-                    message: saveAsDraft ? 'Reel draft save failed. Please try again.' : 'Reel upload failed. Please try again.'
+                    message: this.getUploadFailureNotice(saveAsDraft, !!scheduledPublishAtUtc)
                 });
             } finally {
                 this.postingReel = false;
@@ -701,9 +701,8 @@ export class ReelComposerModalComponent implements OnDestroy {
         this.markSensitive = false;
         this.scheduledPublishLocal = '';
         this.reelComposerStep = 1;
-        this.locationHint = 'Type at least 2 characters to search locations.';
+        this.resetInlineHints();
         this.loadingLocationSuggestions = false;
-        this.collaboratorsHint = 'Collaborators can be separated by commas.';
         this.clearReelComposerMedia();
         this.closeLocationSuggestions();
         this.closeCollaboratorSuggestions();
@@ -858,7 +857,7 @@ export class ReelComposerModalComponent implements OnDestroy {
                 const duration = Number.isFinite(video.duration) ? Math.round(video.duration) : 0;
                 cleanup();
                 if (duration <= 0) {
-                    reject(new Error('Invalid video duration.'));
+                    reject(new Error(this.t('reelComposer.errors.videoProcess')));
                     return;
                 }
 
@@ -867,7 +866,7 @@ export class ReelComposerModalComponent implements OnDestroy {
 
             video.onerror = () => {
                 cleanup();
-                reject(new Error('Could not read video metadata.'));
+                reject(new Error(this.t('reelComposer.errors.videoProcess')));
             };
         });
     }
@@ -935,7 +934,7 @@ export class ReelComposerModalComponent implements OnDestroy {
                 const context = canvas.getContext('2d');
                 if (!context) {
                     cleanup();
-                    reject(new Error('Could not capture frame context.'));
+                    reject(new Error(this.t('reelComposer.errors.videoProcess')));
                     return;
                 }
 
@@ -943,7 +942,7 @@ export class ReelComposerModalComponent implements OnDestroy {
                 canvas.toBlob(blob => {
                     cleanup();
                     if (!blob) {
-                        reject(new Error('Could not capture frame image.'));
+                        reject(new Error(this.t('reelComposer.errors.videoProcess')));
                         return;
                     }
 
@@ -953,7 +952,7 @@ export class ReelComposerModalComponent implements OnDestroy {
 
             video.onerror = () => {
                 cleanup();
-                reject(new Error('Could not load video for frame capture.'));
+                reject(new Error(this.t('reelComposer.errors.videoProcess')));
             };
         });
     }
@@ -969,7 +968,7 @@ export class ReelComposerModalComponent implements OnDestroy {
         }
 
         if (!('MediaRecorder' in window)) {
-            this.reelComposerError = 'Trim preview saved, but your browser uploaded the full video because MediaRecorder is not available.';
+            this.reelComposerError = this.t('reelComposer.errors.mediaRecorderUnavailable');
             return file;
         }
 
@@ -995,14 +994,13 @@ export class ReelComposerModalComponent implements OnDestroy {
                     const crop = this.getFrameCropForSource(sourceWidth, sourceHeight);
                     const outputWidth = ReelComposerModalComponent.ReelOutputWidth;
                     const outputHeight = Math.max(1, Math.round(outputWidth / ReelComposerModalComponent.ReelOutputAspect));
-
                     const canvas = document.createElement('canvas');
                     canvas.width = outputWidth;
                     canvas.height = outputHeight;
 
                     const context = canvas.getContext('2d');
                     if (!context) {
-                        this.reelComposerError = 'Could not apply framing to trimmed video. Uploaded original instead.';
+                        this.reelComposerError = this.t('reelComposer.errors.framingAppliedOriginal');
                         cleanup();
                         resolve(file);
                         return;
@@ -1010,7 +1008,7 @@ export class ReelComposerModalComponent implements OnDestroy {
 
                     const stream = (canvas as HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }).captureStream?.(ReelComposerModalComponent.ReelOutputFps);
                     if (!stream) {
-                        this.reelComposerError = 'Trim preview saved, but this browser does not support video trimming upload.';
+                        this.reelComposerError = this.t('reelComposer.errors.browserTrimUnsupported');
                         cleanup();
                         resolve(file);
                         return;
@@ -1079,7 +1077,7 @@ export class ReelComposerModalComponent implements OnDestroy {
                     video.currentTime = trimStart;
                 } catch {
                     cleanup();
-                    this.reelComposerError = 'Trim preview saved, but upload used original video due to processing limits.';
+                    this.reelComposerError = this.t('reelComposer.errors.processingLimitsOriginal');
                     resolve(file);
                 }
             };
@@ -1120,12 +1118,12 @@ export class ReelComposerModalComponent implements OnDestroy {
         const query = rawValue.trim();
         if (query.length < 2) {
             this.closeLocationSuggestions();
-            this.locationHint = 'Type at least 2 characters to search locations.';
+            this.locationHint = this.t('reelComposer.hints.locationTypeMore');
             return;
         }
 
         this.loadingLocationSuggestions = true;
-        this.locationHint = 'Searching locations...';
+        this.locationHint = this.t('reelComposer.hints.locationSearching');
 
         if (this.locationSearchDebounceId !== null) {
             window.clearTimeout(this.locationSearchDebounceId);
@@ -1153,8 +1151,8 @@ export class ReelComposerModalComponent implements OnDestroy {
                         this.locationSuggestions = fallbackSuggestions;
                         this.showLocationSuggestions = fallbackSuggestions.length > 0;
                         this.locationHint = fallbackSuggestions.length
-                            ? 'Google Places unavailable. Showing fallback location suggestions.'
-                            : 'No location suggestions found. Verify Google key restrictions or try a broader query.';
+                            ? this.t('reelComposer.hints.locationFallbackAvailable')
+                            : this.t('reelComposer.hints.locationNoneVerifyGoogle');
                     });
                     return;
                 } catch {
@@ -1166,7 +1164,7 @@ export class ReelComposerModalComponent implements OnDestroy {
                         this.loadingLocationSuggestions = false;
                         this.locationSuggestions = [];
                         this.showLocationSuggestions = false;
-                        this.locationHint = 'Location services are unavailable right now. Check your Google key restrictions.';
+                        this.locationHint = this.t('reelComposer.hints.locationServicesUnavailable');
                     });
                     return;
                 }
@@ -1183,8 +1181,8 @@ export class ReelComposerModalComponent implements OnDestroy {
                     this.locationSuggestions = suggestions;
                     this.showLocationSuggestions = suggestions.length > 0;
                     this.locationHint = suggestions.length
-                        ? 'Select a location from suggestions.'
-                        : 'No location suggestions found. Check API key restrictions if this seems wrong.';
+                        ? this.t('reelComposer.hints.locationSelectSuggestion')
+                        : this.t('reelComposer.hints.locationNoneCheckApi');
                 });
             } catch {
                 if (token !== this.locationSearchToken) {
@@ -1195,7 +1193,7 @@ export class ReelComposerModalComponent implements OnDestroy {
                     this.loadingLocationSuggestions = false;
                     this.locationSuggestions = [];
                     this.showLocationSuggestions = false;
-                    this.locationHint = 'Could not fetch location suggestions right now.';
+                    this.locationHint = this.t('reelComposer.hints.locationFetchFailed');
                 });
             }
         }, immediate ? 0 : 220);
@@ -1299,14 +1297,12 @@ export class ReelComposerModalComponent implements OnDestroy {
             .at(-1) ?? '';
         const isPoi = this.isGooglePoi(types);
 
-        const description = isPoi
-            ? (country ? `${mainText}, ${country}` : mainText)
-            : (country ? `${mainText}, ${country}` : mainText);
+        const description = country ? `${mainText}, ${country}` : mainText;
 
         return {
             placeId: prediction.place_id,
             description,
-            secondaryText: isPoi ? 'Point of interest' : 'City / country'
+            secondaryText: isPoi ? this.t('reelComposer.locationTypes.pointOfInterest') : this.t('reelComposer.locationTypes.cityCountry')
         };
     }
 
@@ -1349,7 +1345,7 @@ export class ReelComposerModalComponent implements OnDestroy {
         return {
             placeId: `${item.place_id ?? item.display_name}`,
             description: country && main ? `${main}, ${country}` : (main || displayName),
-            secondaryText: isPoi ? 'Point of interest' : 'City / country'
+            secondaryText: isPoi ? this.t('reelComposer.locationTypes.pointOfInterest') : this.t('reelComposer.locationTypes.cityCountry')
         };
     }
 
@@ -1444,8 +1440,8 @@ export class ReelComposerModalComponent implements OnDestroy {
                 this.collaboratorSuggestions = options;
                 this.showCollaboratorSuggestions = options.length > 0;
                 this.collaboratorsHint = options.length
-                    ? 'Select a user to add them as a collaborator.'
-                    : 'No matching users found.';
+                    ? this.t('reelComposer.hints.collaboratorsSelectUser')
+                    : this.t('reelComposer.hints.collaboratorsNoMatch');
             } catch {
                 if (token !== this.collaboratorSearchToken) {
                     return;
@@ -1453,7 +1449,7 @@ export class ReelComposerModalComponent implements OnDestroy {
 
                 this.collaboratorSuggestions = [];
                 this.showCollaboratorSuggestions = false;
-                this.collaboratorsHint = 'Could not search users right now.';
+                this.collaboratorsHint = this.t('reelComposer.hints.collaboratorsSearchFailed');
             }
         }, immediate ? 0 : 220);
     }
@@ -1702,12 +1698,71 @@ export class ReelComposerModalComponent implements OnDestroy {
         try {
             await this.generateReelCoverOptions(this.reelVideoFile, this.reelVideoDurationSeconds);
         } catch {
-            this.reelComposerError = 'Could not refresh thumbnails for this framing.';
+            this.reelComposerError = this.t('reelComposer.errors.refreshThumbnails');
         } finally {
             if (token === this.frameCoverRefreshToken) {
                 this.generatingReelCovers = false;
             }
         }
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
+    }
+
+    private resetInlineHints(): void {
+        this.locationHint = this.t('reelComposer.hints.locationTypeMore');
+        this.collaboratorsHint = this.t('reelComposer.hints.collaboratorsCommaSeparated');
+    }
+
+    private getUploadProgressMessage(saveAsDraft: boolean, isScheduled: boolean): string {
+        if (saveAsDraft) {
+            return this.t('reelComposer.status.savingDraft');
+        }
+
+        return isScheduled
+            ? this.t('reelComposer.status.scheduling')
+            : this.t('reelComposer.status.uploading');
+    }
+
+    private getUploadSuccessMessage(saveAsDraft: boolean, isScheduled: boolean): string {
+        if (saveAsDraft) {
+            return this.t('reelComposer.status.draftSaved');
+        }
+
+        return isScheduled
+            ? this.t('reelComposer.status.scheduled')
+            : this.t('reelComposer.status.uploaded');
+    }
+
+    private getUploadSuccessNotice(saveAsDraft: boolean, isScheduled: boolean): string {
+        if (saveAsDraft) {
+            return this.t('reelComposer.status.draftSavedMessage');
+        }
+
+        return isScheduled
+            ? this.t('reelComposer.status.scheduledMessage')
+            : this.t('reelComposer.status.uploadedMessage');
+    }
+
+    private getUploadFailureMessage(saveAsDraft: boolean, isScheduled: boolean): string {
+        if (saveAsDraft) {
+            return this.t('reelComposer.status.draftSaveFailed');
+        }
+
+        return isScheduled
+            ? this.t('reelComposer.status.scheduleFailed')
+            : this.t('reelComposer.status.uploadFailed');
+    }
+
+    private getUploadFailureNotice(saveAsDraft: boolean, isScheduled: boolean): string {
+        if (saveAsDraft) {
+            return this.t('reelComposer.status.draftSaveFailedMessage');
+        }
+
+        return isScheduled
+            ? this.t('reelComposer.status.scheduleFailedMessage')
+            : this.t('reelComposer.status.uploadFailedMessage');
     }
 
     private async normalizeCustomThumbnailFile(file: File): Promise<File> {

@@ -12,7 +12,7 @@
       "skipToContent": "Hopp til innhold",
       "brandSubtitle": "Fellesskapsplattform",
       "nav": {
-        "feed": "Hovedstrøm",
+        "feed": "Feed",
         "discover": "Utforsk",
         "blogs": "Blogger",
         "communities": "Fellesskap",
@@ -994,6 +994,23 @@
     }
   },
   "homeFeed": {
+    "title": "Home Feed",
+    "feedModes": {
+      "forYou": "For you",
+      "following": "Following"
+    },
+    "customFeeds": {
+      "aria": "Custom feeds",
+      "all": "All",
+      "newFeed": "New feed"
+    },
+    "stories": {
+      "aria": "Stories",
+      "openYourStory": "Open your story",
+      "yourStoryAlt": "Your story",
+      "yourStory": "Your story"
+    },
+    "contentTabsAria": "Feed content type",
     "drafts": {
       "title": "Unfinished drafts",
       "description": "You have draft content ready. Publish it to reach your audience.",
@@ -1012,6 +1029,10 @@
       "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
       "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
       "manageHiddenCreators": "Manage hidden creators"
+    },
+    "postActions": {
+      "repost": "Repost",
+      "reposts": "reposts"
     },
     "streak": {
       "title": "Daily engagement streak",
@@ -1734,6 +1755,105 @@
       "cancel": "Avbryt",
       "submit": "Send rapport",
       "submitting": "Sender..."
+    }
+  },
+  "createMenu": {
+    "aria": "Opprett innhold",
+    "newPost": "Nytt innlegg",
+    "newReel": "Ny reel",
+    "newStory": "Ny story",
+    "blogStudio": "Blog Studio"
+  },
+  "reelComposer": {
+    "ariaDialog": "Opprett reel",
+    "backToVideoSelection": "Tilbake til videovalg",
+    "close": "Lukk reel-oppretter",
+    "title": "Ny reel",
+    "stepsAria": "Trinn for reel-opprettelse",
+    "stepMedia": "1. Medie",
+    "stepEditPublish": "2. Rediger og publiser",
+    "videoUploadAria": "Opplasting av reel-video",
+    "startTitle": "Start med å velge videoen din",
+    "startSubtitle": "MP4, WebM, MOV og lignende formater støttes.",
+    "selectVideo": "Velg reel-video",
+    "videoSelected": "Video: {{file}}",
+    "dragFrameAria": "Dra for å sette innramming av reel",
+    "dragFrameHint": "Dra 9:16-rammen for å angi beskjæring.",
+    "resetFraming": "Tilbakestill innramming",
+    "trimSummary": "Original lengde: {{original}}s · Trimmet: {{trimmed}}",
+    "trimThumbnailAlt": "Trim-miniatur",
+    "trimStartAria": "Trim-start",
+    "trimEndAria": "Trim-slutt",
+    "trimRange": "Område: {{start}}s til {{end}}s",
+    "coverFromFrames": "Velg cover fra videobilder",
+    "coverOptionAlt": "Cover-alternativ",
+    "coverUploadPrompt": "Vil du bruke ditt eget bilde?",
+    "uploadCustomThumbnail": "Last opp egendefinert miniatyr",
+    "usingCustomThumbnail": "Bruker egendefinert miniatyr: {{file}}",
+    "preparingPreview": "Forbereder forhåndsvisning, trimkontroller og foreslåtte miniatyrbilder...",
+    "generatingThumbnails": "Genererer foreslåtte miniatyrbilder...",
+    "selectedPreviewAria": "Valgt reel-forhåndsvisning",
+    "preview": "Forhåndsvisning",
+    "caption": "Bildetekst",
+    "hashtagPosts": "{{count}} innlegg",
+    "location": "Sted",
+    "locationPlaceholder": "Legg til sted",
+    "collaborators": "Samarbeidspartnere",
+    "collaboratorsPlaceholder": "@handle1, @handle2",
+    "sensitiveToggle": "Marker denne reelen som sensitivt innhold",
+    "schedulePublish": "Planlegg publisering (valgfritt)",
+    "generatedCoverInfo": "Bruker valgt generert cover-ramme.",
+    "actions": {
+      "next": "Neste",
+      "publish": "Publiser reel",
+      "publishing": "Publiserer..."
+    },
+    "hints": {
+      "locationTypeMore": "Skriv minst 2 tegn for å søke etter steder.",
+      "locationSearching": "Søker etter steder...",
+      "locationFallbackAvailable": "Google Places er utilgjengelig. Viser alternative stedsforslag.",
+      "locationNoneVerifyGoogle": "Fant ingen stedsforslag. Kontroller begrensninger for Google-nøkkel eller prøv et bredere søk.",
+      "locationServicesUnavailable": "Stedstjenester er utilgjengelige akkurat nå. Kontroller begrensningene for Google-nøkkelen din.",
+      "locationSelectSuggestion": "Velg et sted fra forslagene.",
+      "locationNoneCheckApi": "Fant ingen stedsforslag. Kontroller API-nøkkelbegrensninger hvis dette virker feil.",
+      "locationFetchFailed": "Kunne ikke hente stedsforslag akkurat nå.",
+      "collaboratorsCommaSeparated": "Samarbeidspartnere kan skilles med komma.",
+      "collaboratorsSelectUser": "Velg en bruker for å legge dem til som samarbeidspartner.",
+      "collaboratorsNoMatch": "Fant ingen samsvarende brukere.",
+      "collaboratorsSearchFailed": "Kunne ikke søke etter brukere akkurat nå."
+    },
+    "errors": {
+      "chooseVideoFirst": "Velg først en video for å fortsette.",
+      "videoProcess": "Kunne ikke behandle denne videoen. Velg en annen fil.",
+      "thumbnailProcess": "Kunne ikke behandle dette miniatyrbildet. Velg et annet bilde.",
+      "generateSuggestedThumbnails": "Kunne ikke generere foreslåtte miniatyrbilder for denne videoen.",
+      "mediaRecorderUnavailable": "Trim-forhåndsvisning ble lagret, men nettleseren lastet opp hele videoen fordi MediaRecorder ikke er tilgjengelig.",
+      "framingAppliedOriginal": "Kunne ikke bruke innramming på trimmet video. Lastet opp originalen i stedet.",
+      "browserTrimUnsupported": "Trim-forhåndsvisning ble lagret, men denne nettleseren støtter ikke opplasting av trimmet video.",
+      "processingLimitsOriginal": "Trim-forhåndsvisning ble lagret, men opplastingen brukte originalvideo på grunn av behandlingsgrenser.",
+      "refreshThumbnails": "Kunne ikke oppdatere miniatyrbilder for denne innrammingen."
+    },
+    "status": {
+      "uploadingBrowse": "Reel lastes opp. Du kan fortsette å bla mens den fullføres.",
+      "savingDraft": "Lagrer reel-utkast...",
+      "scheduling": "Planlegger reel...",
+      "uploading": "Laster opp reel...",
+      "draftSaved": "Reel-utkast lagret!",
+      "scheduled": "Reel planlagt!",
+      "uploaded": "Reel lastet opp!",
+      "draftSavedMessage": "Reel-utkast lagret.",
+      "scheduledMessage": "Reel planlagt.",
+      "uploadedMessage": "Reel lastet opp.",
+      "draftSaveFailed": "Lagring av reel-utkast mislyktes",
+      "scheduleFailed": "Planlegging av reel mislyktes",
+      "uploadFailed": "Opplasting av reel mislyktes",
+      "draftSaveFailedMessage": "Lagring av reel-utkast mislyktes. Prøv igjen.",
+      "scheduleFailedMessage": "Planlegging av reel mislyktes. Prøv igjen.",
+      "uploadFailedMessage": "Opplasting av reel mislyktes. Prøv igjen."
+    },
+    "locationTypes": {
+      "pointOfInterest": "Interessepunkt",
+      "cityCountry": "By / land"
     }
   }
 }

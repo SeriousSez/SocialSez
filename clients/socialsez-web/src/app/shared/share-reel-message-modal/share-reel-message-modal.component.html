@@ -20,7 +20,7 @@
                 <img class="reel-preview-thumbnail" *ngIf="previewThumbnailUrl as thumbnail; else noReelThumbnail" [src]="thumbnail" alt="Shared reel thumbnail" />
                 <ng-template #noReelThumbnail>
                     <ng-template #noPreviewMedia>
-                        <video class="reel-preview-thumbnail story-static-preview" *ngIf="contentKind === 'story' && isVideoMediaUrl(currentReel.videoUrl); else noStaticMedia" [src]="currentReel.videoUrl" muted playsinline preload="auto" aria-label="Shared story preview"></video>
+                        <video class="reel-preview-thumbnail story-static-preview" *ngIf="contentKind === 'story' && isVideoMediaUrl(currentReel.videoUrl); else noStaticMedia" [src]="currentReel.videoUrl" muted playsinline preload="metadata" aria-label="Shared story preview"></video>
                         <ng-template #noStaticMedia>
                             <div class="reel-preview-thumbnail fallback" aria-label="No reel thumbnail available">
                                 <span>{{ contentKind === 'story' ? 'Story preview unavailable' : 'Reel thumbnail unavailable' }}</span>

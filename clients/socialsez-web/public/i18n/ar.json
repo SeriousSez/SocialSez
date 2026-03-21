@@ -12,7 +12,7 @@
       "skipToContent": "الانتقال إلى المحتوى",
       "brandSubtitle": "منصة مجتمعية",
       "nav": {
-        "feed": "الخلاصة",
+        "feed": "Feed",
         "discover": "اكتشف",
         "blogs": "المدونات",
         "communities": "المجتمعات",
@@ -1259,6 +1259,23 @@
     }
   },
   "homeFeed": {
+    "title": "Home Feed",
+    "feedModes": {
+      "forYou": "For you",
+      "following": "Following"
+    },
+    "customFeeds": {
+      "aria": "Custom feeds",
+      "all": "All",
+      "newFeed": "New feed"
+    },
+    "stories": {
+      "aria": "Stories",
+      "openYourStory": "Open your story",
+      "yourStoryAlt": "Your story",
+      "yourStory": "Your story"
+    },
+    "contentTabsAria": "Feed content type",
     "drafts": {
       "title": "Unfinished drafts",
       "description": "You have draft content ready. Publish it to reach your audience.",
@@ -1277,6 +1294,10 @@
       "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
       "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
       "manageHiddenCreators": "Manage hidden creators"
+    },
+    "postActions": {
+      "repost": "Repost",
+      "reposts": "reposts"
     },
     "streak": {
       "title": "Daily engagement streak",
@@ -1734,6 +1755,105 @@
       "cancel": "إلغاء",
       "submit": "إرسال البلاغ",
       "submitting": "جارٍ الإرسال..."
+    }
+  },
+  "createMenu": {
+    "aria": "إنشاء محتوى",
+    "newPost": "منشور جديد",
+    "newReel": "ريل جديد",
+    "newStory": "قصة جديدة",
+    "blogStudio": "Blog Studio"
+  },
+  "reelComposer": {
+    "ariaDialog": "إنشاء ريل",
+    "backToVideoSelection": "العودة إلى اختيار الفيديو",
+    "close": "إغلاق منشئ الريل",
+    "title": "ريل جديد",
+    "stepsAria": "خطوات إنشاء الريل",
+    "stepMedia": "1. الوسائط",
+    "stepEditPublish": "2. التحرير والنشر",
+    "videoUploadAria": "رفع فيديو الريل",
+    "startTitle": "ابدأ باختيار الفيديو الخاص بك",
+    "startSubtitle": "يتم دعم MP4 وWebM وMOV والصيغ المشابهة.",
+    "selectVideo": "اختيار فيديو الريل",
+    "videoSelected": "Video: {{file}}",
+    "dragFrameAria": "اسحب لتحديد إطار الريل",
+    "dragFrameHint": "اسحب إطار 9:16 لتحديد الاقتصاص.",
+    "resetFraming": "إعادة ضبط الإطار",
+    "trimSummary": "المدة الأصلية: {{original}}ث · بعد القص: {{trimmed}}",
+    "trimThumbnailAlt": "صورة مصغرة للقص",
+    "trimStartAria": "بداية القص",
+    "trimEndAria": "نهاية القص",
+    "trimRange": "النطاق: من {{start}}ث إلى {{end}}ث",
+    "coverFromFrames": "اختر الغلاف من لقطات الفيديو",
+    "coverOptionAlt": "خيار الغلاف",
+    "coverUploadPrompt": "هل تريد استخدام صورتك الخاصة؟",
+    "uploadCustomThumbnail": "رفع صورة مصغرة مخصصة",
+    "usingCustomThumbnail": "الصورة المصغرة المخصصة المستخدمة: {{file}}",
+    "preparingPreview": "جارٍ إعداد المعاينة وعناصر التحكم بالقص والصور المصغرة المقترحة...",
+    "generatingThumbnails": "جارٍ إنشاء الصور المصغرة المقترحة...",
+    "selectedPreviewAria": "معاينة الريل المحددة",
+    "preview": "معاينة",
+    "caption": "الوصف",
+    "hashtagPosts": "{{count}} منشور",
+    "location": "الموقع",
+    "locationPlaceholder": "إضافة موقع",
+    "collaborators": "المتعاونون",
+    "collaboratorsPlaceholder": "@handle1, @handle2",
+    "sensitiveToggle": "تحديد هذا الريل كوسائط حساسة",
+    "schedulePublish": "جدولة النشر (اختياري)",
+    "generatedCoverInfo": "يتم استخدام إطار الغلاف المُنشأ المحدد.",
+    "actions": {
+      "next": "التالي",
+      "publish": "نشر الريل",
+      "publishing": "جارٍ النشر..."
+    },
+    "hints": {
+      "locationTypeMore": "اكتب حرفين على الأقل للبحث عن المواقع.",
+      "locationSearching": "جارٍ البحث عن المواقع...",
+      "locationFallbackAvailable": "خدمة Google Places غير متاحة. يتم عرض اقتراحات مواقع بديلة.",
+      "locationNoneVerifyGoogle": "لم يتم العثور على اقتراحات مواقع. تحقق من قيود مفتاح Google أو جرّب بحثًا أوسع.",
+      "locationServicesUnavailable": "خدمات الموقع غير متاحة حاليًا. تحقق من قيود مفتاح Google.",
+      "locationSelectSuggestion": "اختر موقعًا من الاقتراحات.",
+      "locationNoneCheckApi": "لم يتم العثور على اقتراحات مواقع. تحقق من قيود مفتاح API إذا بدا ذلك غير صحيح.",
+      "locationFetchFailed": "تعذّر جلب اقتراحات المواقع الآن.",
+      "collaboratorsCommaSeparated": "يمكن فصل المتعاونين بفواصل.",
+      "collaboratorsSelectUser": "اختر مستخدمًا لإضافته كمتعاون.",
+      "collaboratorsNoMatch": "لم يتم العثور على مستخدمين مطابقين.",
+      "collaboratorsSearchFailed": "تعذّر البحث عن المستخدمين الآن."
+    },
+    "errors": {
+      "chooseVideoFirst": "اختر فيديو أولاً للمتابعة.",
+      "videoProcess": "تعذّرت معالجة هذا الفيديو. يرجى اختيار ملف مختلف.",
+      "thumbnailProcess": "تعذّرت معالجة هذه الصورة المصغرة. يرجى اختيار صورة مختلفة.",
+      "generateSuggestedThumbnails": "تعذّر إنشاء صور مصغرة مقترحة لهذا الفيديو.",
+      "mediaRecorderUnavailable": "تم حفظ معاينة القص، لكن متصفحك رفع الفيديو كاملًا لأن MediaRecorder غير متاح.",
+      "framingAppliedOriginal": "تعذّر تطبيق الإطار على الفيديو المقصوص. تم رفع الفيديو الأصلي بدلًا من ذلك.",
+      "browserTrimUnsupported": "تم حفظ معاينة القص، لكن هذا المتصفح لا يدعم رفع الفيديو بعد قصّه.",
+      "processingLimitsOriginal": "تم حفظ معاينة القص، لكن الرفع استخدم الفيديو الأصلي بسبب قيود المعالجة.",
+      "refreshThumbnails": "تعذّر تحديث الصور المصغرة لهذا الإطار."
+    },
+    "status": {
+      "uploadingBrowse": "يتم رفع الريل الآن. يمكنك متابعة التصفح أثناء اكتمال العملية.",
+      "savingDraft": "جارٍ حفظ مسودة الريل...",
+      "scheduling": "جارٍ جدولة الريل...",
+      "uploading": "جارٍ رفع الريل...",
+      "draftSaved": "تم حفظ مسودة الريل!",
+      "scheduled": "تمت جدولة الريل!",
+      "uploaded": "تم رفع الريل!",
+      "draftSavedMessage": "تم حفظ مسودة الريل بنجاح.",
+      "scheduledMessage": "تمت جدولة الريل بنجاح.",
+      "uploadedMessage": "تم رفع الريل بنجاح.",
+      "draftSaveFailed": "فشل حفظ مسودة الريل",
+      "scheduleFailed": "فشلت جدولة الريل",
+      "uploadFailed": "فشل رفع الريل",
+      "draftSaveFailedMessage": "فشل حفظ مسودة الريل. حاول مرة أخرى.",
+      "scheduleFailedMessage": "فشلت جدولة الريل. حاول مرة أخرى.",
+      "uploadFailedMessage": "فشل رفع الريل. حاول مرة أخرى."
+    },
+    "locationTypes": {
+      "pointOfInterest": "نقطة اهتمام",
+      "cityCountry": "مدينة / دولة"
     }
   }
 }

@@ -1,12 +1,12 @@
 <section class="report-overlay" *ngIf="open" (click)="onBackdropClick($event)">
-    <article class="report-card" role="dialog" aria-modal="true" [attr.aria-label]="'reportModal.title' | translate">
+    <article #reportCard class="report-card" role="dialog" aria-modal="true" [attr.aria-label]="'reportModal.title' | translate">
         <header class="report-header">
             <button type="button" class="header-back" *ngIf="currentStep !== 'root'; else headerSpacer" (click)="goBack()" [disabled]="busy" [attr.aria-label]="'reportModal.aria.back' | translate">←</button>
             <ng-template #headerSpacer>
                 <span class="spacer" aria-hidden="true"></span>
             </ng-template>
             <h3>{{ 'reportModal.title' | translate }}</h3>
-            <button type="button" class="icon-button" (click)="cancel.emit()" [disabled]="busy" [attr.aria-label]="'reportModal.aria.close' | translate">✕</button>
+            <button #closeButton type="button" class="icon-button" (click)="cancel.emit()" [disabled]="busy" [attr.aria-label]="'reportModal.aria.close' | translate">✕</button>
         </header>
 
         <ng-container *ngIf="currentStep === 'root'">

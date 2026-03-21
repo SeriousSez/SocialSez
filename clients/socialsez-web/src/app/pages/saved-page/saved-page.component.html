@@ -31,9 +31,24 @@
         </app-segmented-tabs>
 
         @if (isLoading) {
-        <div class="loading-state">
-            <i class="fa-duotone fa-light fa-spinner fa-spin"></i>
-            <span>Loading...</span>
+        <div class="saved-loading-skeleton" aria-label="Loading saved items">
+            <div class="saved-loading-row">
+                <app-skeleton width="200px" height="22px" radius="8px"></app-skeleton>
+                <app-skeleton width="90px" height="18px" radius="8px"></app-skeleton>
+            </div>
+            <div class="saved-loading-cards">
+                @for (_ of [1, 2, 3, 4]; track $index) {
+                <article class="saved-loading-card">
+                    <div class="saved-loading-card-head">
+                        <app-skeleton width="34px" height="34px" radius="999px"></app-skeleton>
+                        <app-skeleton width="160px" height="14px" radius="6px"></app-skeleton>
+                    </div>
+                    <app-skeleton width="92%" height="12px" radius="6px"></app-skeleton>
+                    <app-skeleton width="84%" height="12px" radius="6px"></app-skeleton>
+                    <app-skeleton width="120px" height="12px" radius="6px"></app-skeleton>
+                </article>
+                }
+            </div>
         </div>
         } @else if (activeContentTab === 'community-posts' && filteredCommunityPosts.length === 0) {
         <div class="empty-state compact">

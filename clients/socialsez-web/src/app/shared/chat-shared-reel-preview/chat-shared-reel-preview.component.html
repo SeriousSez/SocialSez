@@ -3,7 +3,7 @@
         <div class="shared-reel-frame">
             <img class="shared-reel-thumbnail" *ngIf="sharedReel.thumbnailUrl as thumbnail; else sharedReelNoThumb" [src]="thumbnail" alt="Shared reel thumbnail" />
             <ng-template #sharedReelNoThumb>
-                <video class="shared-reel-thumbnail" *ngIf="isVideoMedia(sharedReel.videoUrl); else sharedReelNoVideoThumb" [src]="sharedReel.videoUrl" muted playsinline preload="auto" aria-label="Shared reel preview"></video>
+                <video class="shared-reel-thumbnail" *ngIf="isVideoMedia(sharedReel.videoUrl); else sharedReelNoVideoThumb" [src]="sharedReel.videoUrl" muted playsinline preload="metadata" aria-label="Shared reel preview"></video>
                 <ng-template #sharedReelNoVideoThumb>
                     <div class="shared-reel-thumbnail-fallback" aria-label="Shared reel thumbnail unavailable">
                         <i class="fa-duotone fa-solid fa-clapperboard-play" aria-hidden="true"></i>

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BlogPostDto, CommunityPostDto, ReelDto, SavedCollectionDto, SavedItemDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 import { SegmentedTabItem, SegmentedTabsComponent } from '../../shared/segmented-tabs/segmented-tabs.component';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 type SavedView = 'all' | { collectionId: string; name: string };
 
@@ -17,7 +18,7 @@ interface SavedPostContentPart {
 @Component({
     selector: 'app-saved-page',
     standalone: true,
-    imports: [CommonModule, RouterLink, SegmentedTabsComponent],
+    imports: [CommonModule, RouterLink, SegmentedTabsComponent, SkeletonComponent],
     templateUrl: './saved-page.component.html',
     styleUrl: './saved-page.component.scss'
 })

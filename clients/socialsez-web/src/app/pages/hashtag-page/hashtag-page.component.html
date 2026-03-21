@@ -22,7 +22,7 @@
                     <div post-header class="author">
                         <a [attr.href]="'/users/' + post.authorHandle" (click)="openProfileOrStory(post.authorHandle, $event)" [attr.aria-label]="hasActiveStoryForHandle(post.authorHandle) ? ('Open @' + post.authorHandle + ' stories') : ('View @' + post.authorHandle + ' profile')">
                             <img class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)" *ngIf="post.authorImageUrl; else authorInitial" [src]="post.authorImageUrl"
-                                onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Author image" />
+                                loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Author image" />
                         </a>
                         <ng-template #authorInitial>
                             <div class="avatar" [class.story-active]="hasActiveStoryForHandle(post.authorHandle)" [class.story-seen]="hasActiveStoryForHandle(post.authorHandle) && !hasUnseenStoryForHandle(post.authorHandle)">{{ post.authorHandle[0] }}</div>
@@ -37,7 +37,7 @@
             <h3>Reels</h3>
             <div class="mini-list">
                 <a class="mini-item" *ngFor="let reel of reels" [routerLink]="['/reel', reel.id]">
-                    <img class="mini-thumb" *ngIf="reel.thumbnailUrl" [src]="reel.thumbnailUrl" alt="Reel thumbnail" />
+                    <img class="mini-thumb" *ngIf="reel.thumbnailUrl" [src]="reel.thumbnailUrl" loading="lazy" decoding="async" alt="Reel thumbnail" />
                     <div>
                         <p class="mini-title">{{ reel.caption || 'Reel by @' + reel.authorHandle }}</p>
                         <p class="mini-meta">@{{ reel.authorHandle }} · {{ reel.createdAtUtc | date:'short' }}</p>
@@ -50,7 +50,7 @@
             <h3>Communities</h3>
             <div class="mini-list">
                 <a class="mini-item" *ngFor="let community of communities" [routerLink]="['/c', community.slug]">
-                    <img class="mini-thumb" *ngIf="community.imageUrl" [src]="community.imageUrl" alt="Community image" />
+                    <img class="mini-thumb" *ngIf="community.imageUrl" [src]="community.imageUrl" loading="lazy" decoding="async" alt="Community image" />
                     <div>
                         <p class="mini-title">{{ community.name }}</p>
                         <p class="mini-meta">{{ community.memberCount }} members</p>
@@ -89,7 +89,7 @@
             <h3>Blog Posts</h3>
             <div class="mini-list">
                 <a class="mini-item" *ngFor="let post of blogPosts" [routerLink]="['/blogs', post.authorHandle, post.blogSlug, post.slug]">
-                    <img class="mini-thumb" *ngIf="post.coverImageUrl" [src]="post.coverImageUrl" alt="Blog post cover image" />
+                    <img class="mini-thumb" *ngIf="post.coverImageUrl" [src]="post.coverImageUrl" loading="lazy" decoding="async" alt="Blog post cover image" />
                     <div>
                         <p class="mini-title">{{ post.title }}</p>
                         <p class="mini-copy" *ngIf="getBlogPostPreview(post)">{{ getBlogPostPreview(post) }}</p>

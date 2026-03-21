@@ -1,12 +1,12 @@
 <div class="hero-create-menu" (click)="$event.stopPropagation()">
-    <button type="button" class="hero-icon-button" (pointerdown)="onTogglePointerDown($event)" (click)="onToggleClick($event)" aria-label="Create content">
+    <button type="button" class="hero-icon-button" (pointerdown)="onTogglePointerDown($event)" (click)="onToggleClick($event)" [attr.aria-label]="'createMenu.aria' | translate">
         <i class="fa-duotone fa-light fa-plus" aria-hidden="true"></i>
     </button>
 
     <div class="hero-create-dropdown" *ngIf="open">
-        <button type="button" (click)="onCreatePost()">New Post</button>
-        <button type="button" (click)="onCreateReel()">New Reel</button>
-        <button type="button" (click)="onCreateStory()">New Story</button>
-        <button type="button" (click)="onCreateBlog()">Blog Studio</button>
+        <button type="button" (click)="onCreatePost()">{{ 'createMenu.newPost' | translate }}</button>
+        <button type="button" (click)="onCreateReel()">{{ 'createMenu.newReel' | translate }}</button>
+        <button type="button" (click)="onCreateStory()">{{ 'createMenu.newStory' | translate }}</button>
+        <button type="button" (click)="onCreateBlog()">{{ 'createMenu.blogStudio' | translate }}</button>
     </div>
 </div>

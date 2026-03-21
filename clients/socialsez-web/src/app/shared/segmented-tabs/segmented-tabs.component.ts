@@ -21,6 +21,10 @@ export class SegmentedTabsComponent {
 
     @Output() activeTabChange = new EventEmitter<string>();
 
+    trackByTabId(_index: number, tab: SegmentedTabItem): string {
+        return tab.id;
+    }
+
     onTabSelected(tabId: string): void {
         this.activeTabChange.emit(tabId);
     }

@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { filter, skip } from 'rxjs';
 import { CustomFeedDto, EngagementStreakDto, FeedMode, HashtagSearchResultDto, PostDto, ProfileActivitySummaryDto, ProfileDto, ReelDto, StoryDto, StoryGroupDto } from '../../core/api.types';
-import { parseUtcDate, resolveAppLocale } from '../../core/date-time.util';
+import { formatRelativeFeedDateTime } from '../../core/date-time.util';
 import { executePostShareAction, executePostShareToChat, executePostShareToFeedAndReload } from '../../core/post-share-execution.utils';
 import { PostInteractionsService } from '../../core/post-interactions.service';
 import { cancelPostShareModal, openPostShareModal } from '../../core/post-share-modal-state.utils';
@@ -83,10 +83,14 @@ export class FeedPageComponent implements OnDestroy {
     selectedFeedMode: FeedMode = 'for-you';
     selectedCustomFeedId: string | null = null;
     selectedContentTab: 'posts' | 'reels' = 'posts';
-    readonly contentTabs: readonly SegmentedTabItem[] = [
-        { id: 'posts', label: 'Posts' },
-        { id: 'reels', label: 'Reels' }
-    ];
+
+    get contentTabs(): readonly SegmentedTabItem[] {
+        return [
+            { id: 'posts', label: this.translate.instant('profile.tabs.posts') },
+            { id: 'reels', label: this.translate.instant('profile.tabs.reels') }
+        ];
+    }
+
     activeStoryGroup: StoryGroupDto | null = null;
     activeStoryIndex = 0;
     loading = true;
@@ -2448,44 +2452,7 @@ export class FeedPageComponent implements OnDestroy {
     }
 
     formatFeedTimestamp(utcValue: string): string {
-        const createdAt = parseUtcDate(utcValue);
-        if (Number.isNaN(createdAt.getTime())) {
-            return utcValue;
-        }
-
-        const now = Date.now();
-        const diffMs = Math.max(0, now - createdAt.getTime());
-        const minuteMs = 60 * 1000;
-        const hourMs = 60 * 60 * 1000;
-        const dayMs = 24 * hourMs;
-        const weekMs = 7 * dayMs;
-        const monthMs = 30 * dayMs;
-
-        if (diffMs < hourMs) {
-            const minutes = Math.max(1, Math.floor(diffMs / minuteMs));
-            return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
-        }
-
-        if (diffMs < dayMs) {
-            const hours = Math.max(1, Math.floor(diffMs / hourMs));
-            return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
-        }
-
-        if (diffMs < weekMs * 2) {
-            const days = Math.max(1, Math.floor(diffMs / dayMs));
-            return `${days} ${days === 1 ? 'day' : 'days'} ago`;
-        }
-
-        if (diffMs < monthMs) {
-            const weeks = Math.max(1, Math.floor(diffMs / weekMs));
-            return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
-        }
-
-        return new Intl.DateTimeFormat(resolveAppLocale(), {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        }).format(createdAt);
+        return formatRelativeFeedDateTime(utcValue);
     }
 
     private removeStoryFromCollections(storyId: string): void {

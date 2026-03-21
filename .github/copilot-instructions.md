@@ -29,7 +29,10 @@ SocialSez is a social platform with:
 - Try to reuse existing components and services from `core/` or `shared/` when possible — don't create new ones without checking first.
 - For new components, use the Angular CLI generator: `ng generate component my-component --standalone --skip-tests`.
 - Use confirm modal for deletions and other destructive actions, with clear messaging about what will be deleted and any consequences.
-- Translate user-facing strings and the existing translation files in `assets/i18n/`. All of the languages — never hard-code English strings in templates or components.
+- Translate all user-facing strings via the existing translation files in `public/i18n/` — never hard-code English strings in templates, components, services, notices, validation, placeholders, aria labels, modal copy, or runtime status/error messages.
+- When adding or changing a translation key, update every supported locale file, not just English. Do not leave new keys in English in non-English locale files.
+- If a feature uses runtime translation keys, verify the exact keys used in the component/template match the locale JSON entries before finishing.
+- Treat localization as part of the feature work: anything you touch that is user-visible must be translated in every language file before the task is complete.
 
 ```ts
 // Preferred DI pattern
@@ -118,4 +121,5 @@ private readonly destroyRef = inject(DestroyRef);
 - **No duplicate logic**: if a utility already exists in `core/` (Angular) or a service already exists (API), use it — don't reimplement it inline.
 - **No console.log / Debug.WriteLine** left in committed code.
 - **Security**: sanitize user-supplied strings before storing; never interpolate raw input into HTML; auth checks happen in controllers, not services.
+- **Localization must be complete**: for any user-facing copy you add or modify, update all supported language files and validate that the UI is wired to those translation keys instead of relying on fallback English.
 - **Build must pass**: after any change, run `npm run build` (web) or `dotnet build` (API) and fix all errors before finishing.

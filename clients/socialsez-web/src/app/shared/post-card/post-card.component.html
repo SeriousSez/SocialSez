@@ -75,7 +75,7 @@
 
                             <div class="post-image-frame">
                                 <div class="post-image-stack">
-                                    <img class="post-image post-image-layer post-image-current" [src]="activeImageUrl" alt="Post image" (click)="openImageFullscreen(mediaUrls, activeImageUrl, $event)" />
+                                    <img class="post-image post-image-layer post-image-current" [src]="activeImageUrl" alt="Post image" loading="lazy" decoding="async" (click)="openImageFullscreen(mediaUrls, activeImageUrl, $event)" />
                                 </div>
                             </div>
 
@@ -86,13 +86,13 @@
 
                         <div class="post-image-frame" *ngIf="mediaUrls.length <= 1">
                             <div class="post-image-stack">
-                                <img class="post-image post-image-layer post-image-current" [src]="activeImageUrl" alt="Post image" (click)="openImageFullscreen(mediaUrls, activeImageUrl, $event)" />
+                                <img class="post-image post-image-layer post-image-current" [src]="activeImageUrl" alt="Post image" loading="lazy" decoding="async" (click)="openImageFullscreen(mediaUrls, activeImageUrl, $event)" />
                             </div>
                         </div>
 
                         <div class="post-image-thumbs" *ngIf="mediaUrls.length > 1">
                             <button type="button" class="post-image-thumb" *ngFor="let previewUrl of mediaUrls; index as i" [class.active]="i === getPostActiveImageIndex(mediaUrls)" (click)="setActivePostImage(mediaUrls, i, $event)">
-                                <img [src]="previewUrl" [alt]="'Image ' + (i + 1)" />
+                                <img [src]="previewUrl" [alt]="'Image ' + (i + 1)" loading="lazy" decoding="async" />
                             </button>
                         </div>
                     </ng-container>
@@ -139,17 +139,17 @@
             </div>
 
             <div class="summary-counts">
-                <span>{{ post.comments.length | number }} comments</span>
+                <span>{{ post.comments.length | number }} {{ 'sharedCommunityPost.actions.comments' | translate }}</span>
                 <span>·</span>
-                <span>{{ repostCount | number }} reposts</span>
+                <span>{{ repostCount | number }} {{ 'homeFeed.postActions.reposts' | translate }}</span>
             </div>
         </div>
 
         <div class="reactions-modal-backdrop" *ngIf="reactionsModalOpen || reactionsModalClosing" [class.closing]="reactionsModalClosing" (click)="closeReactionsModal()">
-            <section class="reactions-modal" [class.closing]="reactionsModalClosing" role="dialog" aria-modal="true" aria-label="Reactions" (click)="$event.stopPropagation()">
+            <section class="reactions-modal" [class.closing]="reactionsModalClosing" role="dialog" aria-modal="true" [attr.aria-label]="'chatPage.reactions.title' | translate" (click)="$event.stopPropagation()">
                 <header class="reactions-modal-header">
-                    <h3>Reactions</h3>
-                    <button type="button" class="reactions-modal-close" (click)="closeReactionsModal()" aria-label="Close reactions">
+                    <h3>{{ 'chatPage.reactions.title' | translate }}</h3>
+                    <button type="button" class="reactions-modal-close" (click)="closeReactionsModal()" [attr.aria-label]="'chatPage.reactions.close' | translate">
                         <i class="fa-duotone fa-light fa-xmark" aria-hidden="true"></i>
                     </button>
                 </header>
@@ -157,7 +157,7 @@
                 <div class="reactions-modal-tabs">
                     <button type="button" class="reaction-tab" *ngFor="let filter of reactionModalFilters" [class.active]="selectedReactionFilter === filter.key" (mousedown)="onReactionTabMouseDown(filter.key, $event)" (click)="onReactionTabClick(filter.key, $event)">
                         <ng-container *ngIf="filter.key === 'all'; else reactionFilterIcon">
-                            <span class="reaction-tab-label">All</span>
+                            <span class="reaction-tab-label">{{ 'chatPage.reactions.all' | translate }}</span>
                         </ng-container>
                         <ng-template #reactionFilterIcon>
                             <span class="summary-reaction-emoji" [ngClass]="reactionBadgeClass(filter.type)">
@@ -170,7 +170,7 @@
 
                 <div class="reactions-modal-list" #reactionsModalList [class.animating-height]="reactionsModalAnimatingHeight" [style.height.px]="reactionsModalListHeight" *ngIf="visibleReactionDetails.length; else reactionsModalEmpty">
                     <article class="reaction-person" *ngFor="let item of visibleReactionDetails">
-                        <img class="reaction-person-avatar" *ngIf="item.imageUrl; else reactionPersonInitial" [src]="item.imageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reaction author image" />
+                        <img class="reaction-person-avatar" *ngIf="item.imageUrl; else reactionPersonInitial" [src]="item.imageUrl" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Reaction author image" />
                         <ng-template #reactionPersonInitial>
                             <div class="reaction-person-avatar fallback">{{ (item.displayName || item.handle || '?').charAt(0).toUpperCase() }}</div>
                         </ng-template>
@@ -199,28 +199,29 @@
 
             <button class="comments-toggle" type="button" (click)="toggleComments()" [attr.aria-expanded]="commentsOpen">
                 <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
-                <span class="action-label">Comments</span>
+                <span class="action-label">{{ 'sharedCommunityPost.actions.comments' | translate }}</span>
                 <span class="action-count">{{ post.comments.length }}</span>
             </button>
 
-            <button class="comments-toggle" type="button" (click)="triggerShareToFeed()" [disabled]="busy || !canInteract" aria-label="Repost to feed" title="Repost to feed">
+            <button class="comments-toggle" type="button" (click)="triggerShareToFeed()" [disabled]="busy || !canInteract" [attr.aria-label]="'homeFeed.postActions.repost' | translate" [attr.title]="'homeFeed.postActions.repost' | translate">
                 <i class="fa-duotone fa-light fa-repeat" aria-hidden="true"></i>
-                <span class="action-label">Repost</span>
+                <span class="action-label">{{ 'homeFeed.postActions.repost' | translate }}</span>
             </button>
 
-            <button class="comments-toggle" type="button" (click)="triggerShareToChat()" [disabled]="busy || !canInteract" aria-label="Send to chat" title="Send to chat">
+            <button class="comments-toggle" type="button" (click)="triggerShareToChat()" [disabled]="busy || !canInteract" [attr.aria-label]="'chatPage.composer.send' | translate" [attr.title]="'chatPage.composer.send' | translate">
                 <i class="fa-duotone fa-light fa-paper-plane" aria-hidden="true"></i>
-                <span class="action-label">Send</span>
+                <span class="action-label">{{ 'chatPage.composer.send' | translate }}</span>
             </button>
 
-            <button class="comments-toggle" type="button" (click)="triggerCopyLink()" [disabled]="busy" aria-label="Copy share link" title="Copy share link">
+            <button class="comments-toggle" type="button" (click)="triggerCopyLink()" [disabled]="busy" [attr.aria-label]="'sharedCommunityPost.actions.copyPostLinkAria' | translate" [attr.title]="'sharedCommunityPost.actions.copyLink' | translate">
                 <i class="fa-duotone" [class.fa-light]="!copyLinkCopied" [class.fa-solid]="copyLinkCopied" [class.fa-link]="!copyLinkCopied" [class.fa-check]="copyLinkCopied" aria-hidden="true"></i>
-                <span class="action-label">{{ copyLinkCopied ? 'Copied' : 'Copy link' }}</span>
+                <span class="action-label">{{ (copyLinkCopied ? 'sharedCommunityPost.actions.copied' : 'sharedCommunityPost.actions.copyLink') | translate }}</span>
             </button>
 
-            <button class="comments-toggle" type="button" (click)="saveToggled.emit()" [disabled]="busy || !canInteract" [attr.aria-label]="savedByMe ? 'Unsave post' : 'Save post'" [attr.title]="savedByMe ? 'Unsave post' : 'Save post'">
+            <button class="comments-toggle" type="button" (click)="saveToggled.emit()" [disabled]="busy || !canInteract" [attr.aria-label]="(savedByMe ? 'sharedCommunityPost.actions.unsavePost' : 'sharedCommunityPost.actions.savePost') | translate"
+                [attr.title]="(savedByMe ? 'sharedCommunityPost.actions.unsavePost' : 'sharedCommunityPost.actions.savePost') | translate">
                 <i class="fa-duotone" [class.fa-solid]="savedByMe" [class.fa-light]="!savedByMe" [class.fa-bookmark]="true" aria-hidden="true"></i>
-                <span class="action-label">{{ savedByMe ? 'Saved' : 'Save' }}</span>
+                <span class="action-label">{{ (savedByMe ? 'sharedCommunityPost.actions.saved' : 'sharedCommunityPost.actions.save') | translate }}</span>
             </button>
 
         </div>
@@ -230,7 +231,7 @@
                 <p class="comments-empty" *ngIf="!orderedComments.length">Be the first to comment.</p>
                 <div class="comment" *ngFor="let item of orderedComments" [class.reply-comment]="item.depth > 0">
                     <ng-container *ngIf="item.comment as comment">
-                        <img class="comment-avatar" *ngIf="comment.authorImageUrl; else commentInitial" [src]="comment.authorImageUrl" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
+                        <img class="comment-avatar" *ngIf="comment.authorImageUrl; else commentInitial" [src]="comment.authorImageUrl" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Comment author image" />
                         <ng-template #commentInitial>
                             <div class="comment-avatar">{{ comment.authorHandle[0] }}</div>
                         </ng-template>
@@ -282,7 +283,7 @@
                     <p class="mention-hint" *ngIf="mentionLoading">Searching users...</p>
                     <button type="button" *ngFor="let profile of mentionResults" (mousedown)="$event.preventDefault()" (click)="selectMention(profile)">
                         <span class="mention-avatar fallback" *ngIf="!profile.imageUrl">{{ (profile.displayName || profile.handle).charAt(0).toUpperCase() }}</span>
-                        <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
+                        <img class="mention-avatar" *ngIf="profile.imageUrl as avatar" [src]="avatar" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Profile avatar" />
                         <span class="mention-meta">
                             <span class="mention-name">{{ profile.displayName }}</span>
                             <span class="mention-subline">{{ profile.bio || ('@' + profile.handle) }}</span>
@@ -315,7 +316,7 @@
         <button type="button" class="image-lightbox-nav prev" *ngIf="fullscreenImageUrls.length > 1" [disabled]="!canMoveFullscreenImageBack" aria-label="Previous image" title="Previous image" (click)="showPreviousFullscreenImage($event)">
             <i class="fa-duotone fa-light fa-chevron-left" aria-hidden="true"></i>
         </button>
-        <img [src]="imageUrl" alt="Fullscreen post image" (click)="$event.stopPropagation()" />
+        <img [src]="imageUrl" alt="Fullscreen post image" loading="eager" decoding="async" (click)="$event.stopPropagation()" />
         <button type="button" class="image-lightbox-nav next" *ngIf="fullscreenImageUrls.length > 1" [disabled]="!canMoveFullscreenImageForward" aria-label="Next image" title="Next image" (click)="showNextFullscreenImage($event)">
             <i class="fa-duotone fa-light fa-chevron-right" aria-hidden="true"></i>
         </button>

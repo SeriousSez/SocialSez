@@ -12,7 +12,7 @@
       "skipToContent": "Ga naar inhoud",
       "brandSubtitle": "Communityplatform",
       "nav": {
-        "feed": "Voeden",
+        "feed": "Feed",
         "discover": "Ontdekken",
         "blogs": "Blogs",
         "communities": "Community's",
@@ -536,6 +536,23 @@
     }
   },
   "homeFeed": {
+    "title": "Home Feed",
+    "feedModes": {
+      "forYou": "For you",
+      "following": "Following"
+    },
+    "customFeeds": {
+      "aria": "Custom feeds",
+      "all": "All",
+      "newFeed": "New feed"
+    },
+    "stories": {
+      "aria": "Stories",
+      "openYourStory": "Open your story",
+      "yourStoryAlt": "Your story",
+      "yourStory": "Your story"
+    },
+    "contentTabsAria": "Feed content type",
     "drafts": {
       "title": "Unfinished drafts",
       "description": "You have draft content ready. Publish it to reach your audience.",
@@ -554,6 +571,10 @@
       "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
       "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
       "manageHiddenCreators": "Manage hidden creators"
+    },
+    "postActions": {
+      "repost": "Repost",
+      "reposts": "reposts"
     },
     "streak": {
       "title": "Daily engagement streak",
@@ -1734,6 +1755,105 @@
       "cancel": "Annuleren",
       "submit": "Melding verzenden",
       "submitting": "Verzenden..."
+    }
+  },
+  "createMenu": {
+    "aria": "Inhoud aanmaken",
+    "newPost": "Nieuw bericht",
+    "newReel": "Nieuwe reel",
+    "newStory": "Nieuw verhaal",
+    "blogStudio": "Blog Studio"
+  },
+  "reelComposer": {
+    "ariaDialog": "Reel maken",
+    "backToVideoSelection": "Terug naar videoselectie",
+    "close": "Reelmaker sluiten",
+    "title": "Nieuwe Reel",
+    "stepsAria": "Stappen voor reel maken",
+    "stepMedia": "1. Media",
+    "stepEditPublish": "2. Bewerken en publiceren",
+    "videoUploadAria": "Reel-video uploaden",
+    "startTitle": "Begin met het selecteren van je video",
+    "startSubtitle": "MP4, WebM, MOV en vergelijkbare formaten worden ondersteund.",
+    "selectVideo": "Reel-video selecteren",
+    "videoSelected": "Video: {{file}}",
+    "dragFrameAria": "Sleep om de reel-kadering in te stellen",
+    "dragFrameHint": "Sleep het 9:16-kader om je uitsnede in te stellen.",
+    "resetFraming": "Kadering resetten",
+    "trimSummary": "Originele lengte: {{original}}s · Bijgesneden: {{trimmed}}",
+    "trimThumbnailAlt": "Miniatuur van uitsnede",
+    "trimStartAria": "Start uitsnede",
+    "trimEndAria": "Einde uitsnede",
+    "trimRange": "Bereik: {{start}}s tot {{end}}s",
+    "coverFromFrames": "Kies omslag uit videoframes",
+    "coverOptionAlt": "Omslagoptie",
+    "coverUploadPrompt": "Je eigen afbeelding gebruiken?",
+    "uploadCustomThumbnail": "Aangepaste miniatuur uploaden",
+    "usingCustomThumbnail": "Aangepaste miniatuur in gebruik: {{file}}",
+    "preparingPreview": "Voorbeeld, uitsnede-instellingen en voorgestelde miniaturen worden voorbereid...",
+    "generatingThumbnails": "Voorgestelde miniaturen worden gegenereerd...",
+    "selectedPreviewAria": "Geselecteerde reel-voorbeeld",
+    "preview": "Voorbeeld",
+    "caption": "Bijschrift",
+    "hashtagPosts": "{{count}} berichten",
+    "location": "Locatie",
+    "locationPlaceholder": "Locatie toevoegen",
+    "collaborators": "Samenwerkers",
+    "collaboratorsPlaceholder": "@handle1, @handle2",
+    "sensitiveToggle": "Markeer deze reel als gevoelige media",
+    "schedulePublish": "Publicatie plannen (optioneel)",
+    "generatedCoverInfo": "Geselecteerde gegenereerde omslagframe wordt gebruikt.",
+    "actions": {
+      "next": "Volgende",
+      "publish": "Reel publiceren",
+      "publishing": "Publiceren..."
+    },
+    "hints": {
+      "locationTypeMore": "Typ minstens 2 tekens om locaties te zoeken.",
+      "locationSearching": "Locaties zoeken...",
+      "locationFallbackAvailable": "Google Places niet beschikbaar. Alternatieve locatiesuggesties worden getoond.",
+      "locationNoneVerifyGoogle": "Geen locatiesuggesties gevonden. Controleer Google-sleutelbeperkingen of probeer een bredere zoekopdracht.",
+      "locationServicesUnavailable": "Locatiediensten zijn momenteel niet beschikbaar. Controleer je Google-sleutelbeperkingen.",
+      "locationSelectSuggestion": "Selecteer een locatie uit de suggesties.",
+      "locationNoneCheckApi": "Geen locatiesuggesties gevonden. Controleer API-sleutelbeperkingen als dit onjuist lijkt.",
+      "locationFetchFailed": "Kon nu geen locatiesuggesties ophalen.",
+      "collaboratorsCommaSeparated": "Samenwerkers kunnen gescheiden worden door komma's.",
+      "collaboratorsSelectUser": "Selecteer een gebruiker om als samenwerker toe te voegen.",
+      "collaboratorsNoMatch": "Geen overeenkomende gebruikers gevonden.",
+      "collaboratorsSearchFailed": "Kon nu geen gebruikers zoeken."
+    },
+    "errors": {
+      "chooseVideoFirst": "Kies eerst een video om door te gaan.",
+      "videoProcess": "Kon deze video niet verwerken. Kies een ander bestand.",
+      "thumbnailProcess": "Kon deze miniatuur niet verwerken. Kies een andere afbeelding.",
+      "generateSuggestedThumbnails": "Kon geen voorgestelde miniaturen voor deze video genereren.",
+      "mediaRecorderUnavailable": "Uitsnedevoorbeeld is opgeslagen, maar je browser heeft de volledige video geüpload omdat MediaRecorder niet beschikbaar is.",
+      "framingAppliedOriginal": "Kon kadering niet toepassen op de bijgesneden video. Origineel is in plaats daarvan geüpload.",
+      "browserTrimUnsupported": "Uitsnedevoorbeeld is opgeslagen, maar deze browser ondersteunt geen upload van bijgesneden video.",
+      "processingLimitsOriginal": "Uitsnedevoorbeeld is opgeslagen, maar upload gebruikte de originele video vanwege verwerkingslimieten.",
+      "refreshThumbnails": "Kon miniaturen voor deze kadering niet vernieuwen."
+    },
+    "status": {
+      "uploadingBrowse": "Reel wordt geüpload. Je kunt blijven browsen terwijl dit wordt afgerond.",
+      "savingDraft": "Reel-concept opslaan...",
+      "scheduling": "Reel plannen...",
+      "uploading": "Reel uploaden...",
+      "draftSaved": "Reel-concept opgeslagen!",
+      "scheduled": "Reel gepland!",
+      "uploaded": "Reel geüpload!",
+      "draftSavedMessage": "Reel-concept succesvol opgeslagen.",
+      "scheduledMessage": "Reel succesvol gepland.",
+      "uploadedMessage": "Reel succesvol geüpload.",
+      "draftSaveFailed": "Opslaan van reel-concept mislukt",
+      "scheduleFailed": "Plannen van reel mislukt",
+      "uploadFailed": "Upload van reel mislukt",
+      "draftSaveFailedMessage": "Opslaan van reel-concept mislukt. Probeer opnieuw.",
+      "scheduleFailedMessage": "Plannen van reel mislukt. Probeer opnieuw.",
+      "uploadFailedMessage": "Upload van reel mislukt. Probeer opnieuw."
+    },
+    "locationTypes": {
+      "pointOfInterest": "Bezienswaardigheid",
+      "cityCountry": "Stad / land"
     }
   }
 }

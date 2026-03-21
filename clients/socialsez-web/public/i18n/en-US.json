@@ -1274,6 +1274,23 @@
     }
   },
   "homeFeed": {
+    "title": "Home Feed",
+    "feedModes": {
+      "forYou": "For you",
+      "following": "Following"
+    },
+    "customFeeds": {
+      "aria": "Custom feeds",
+      "all": "All",
+      "newFeed": "New feed"
+    },
+    "stories": {
+      "aria": "Stories",
+      "openYourStory": "Open your story",
+      "yourStoryAlt": "Your story",
+      "yourStory": "Your story"
+    },
+    "contentTabsAria": "Feed content type",
     "drafts": {
       "title": "Unfinished drafts",
       "description": "You have draft content ready. Publish it to reach your audience.",
@@ -1292,6 +1309,10 @@
       "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
       "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
       "manageHiddenCreators": "Manage hidden creators"
+    },
+    "postActions": {
+      "repost": "Repost",
+      "reposts": "reposts"
     },
     "streak": {
       "title": "Daily engagement streak",
@@ -1749,6 +1770,105 @@
       "cancel": "Cancel",
       "submit": "Submit report",
       "submitting": "Submitting..."
+    }
+  },
+  "createMenu": {
+    "aria": "Create content",
+    "newPost": "New Post",
+    "newReel": "New Reel",
+    "newStory": "New Story",
+    "blogStudio": "Blog Studio"
+  },
+  "reelComposer": {
+    "ariaDialog": "Create reel",
+    "backToVideoSelection": "Back to video selection",
+    "close": "Close reel composer",
+    "title": "New Reel",
+    "stepsAria": "Reel creation steps",
+    "stepMedia": "1. Media",
+    "stepEditPublish": "2. Edit & Publish",
+    "videoUploadAria": "Reel video upload",
+    "startTitle": "Start by selecting your video",
+    "startSubtitle": "MP4, WebM, MOV and similar formats are supported.",
+    "selectVideo": "Select Reel Video",
+    "videoSelected": "Video: {{file}}",
+    "dragFrameAria": "Drag to set reel framing",
+    "dragFrameHint": "Drag the 9:16 frame to set your crop.",
+    "resetFraming": "Reset framing",
+    "trimSummary": "Original length: {{original}}s · Trimmed: {{trimmed}}",
+    "trimThumbnailAlt": "Trim thumbnail",
+    "trimStartAria": "Trim start",
+    "trimEndAria": "Trim end",
+    "trimRange": "Range: {{start}}s to {{end}}s",
+    "coverFromFrames": "Pick cover from video frames",
+    "coverOptionAlt": "Cover option",
+    "coverUploadPrompt": "Want your own image?",
+    "uploadCustomThumbnail": "Upload custom thumbnail",
+    "usingCustomThumbnail": "Using custom thumbnail: {{file}}",
+    "preparingPreview": "Preparing preview, trim controls, and suggested thumbnails...",
+    "generatingThumbnails": "Generating suggested thumbnails...",
+    "selectedPreviewAria": "Selected reel preview",
+    "preview": "Preview",
+    "caption": "Caption",
+    "hashtagPosts": "{{count}} posts",
+    "location": "Location",
+    "locationPlaceholder": "Add location",
+    "collaborators": "Collaborators",
+    "collaboratorsPlaceholder": "@handle1, @handle2",
+    "sensitiveToggle": "Mark this reel as sensitive media",
+    "schedulePublish": "Schedule publish (optional)",
+    "generatedCoverInfo": "Using selected generated cover frame.",
+    "actions": {
+      "next": "Next",
+      "publish": "Publish Reel",
+      "publishing": "Publishing..."
+    },
+    "hints": {
+      "locationTypeMore": "Type at least 2 characters to search locations.",
+      "locationSearching": "Searching locations...",
+      "locationFallbackAvailable": "Google Places unavailable. Showing fallback location suggestions.",
+      "locationNoneVerifyGoogle": "No location suggestions found. Verify Google key restrictions or try a broader query.",
+      "locationServicesUnavailable": "Location services are unavailable right now. Check your Google key restrictions.",
+      "locationSelectSuggestion": "Select a location from suggestions.",
+      "locationNoneCheckApi": "No location suggestions found. Check API key restrictions if this seems wrong.",
+      "locationFetchFailed": "Could not fetch location suggestions right now.",
+      "collaboratorsCommaSeparated": "Collaborators can be separated by commas.",
+      "collaboratorsSelectUser": "Select a user to add them as a collaborator.",
+      "collaboratorsNoMatch": "No matching users found.",
+      "collaboratorsSearchFailed": "Could not search users right now."
+    },
+    "errors": {
+      "chooseVideoFirst": "Choose video first to continue.",
+      "videoProcess": "Could not process this video. Please pick a different file.",
+      "thumbnailProcess": "Could not process this thumbnail. Please choose a different image.",
+      "generateSuggestedThumbnails": "Could not generate suggested thumbnails for this video.",
+      "mediaRecorderUnavailable": "Trim preview saved, but your browser uploaded the full video because MediaRecorder is not available.",
+      "framingAppliedOriginal": "Could not apply framing to trimmed video. Uploaded original instead.",
+      "browserTrimUnsupported": "Trim preview saved, but this browser does not support video trimming upload.",
+      "processingLimitsOriginal": "Trim preview saved, but upload used original video due to processing limits.",
+      "refreshThumbnails": "Could not refresh thumbnails for this framing."
+    },
+    "status": {
+      "uploadingBrowse": "Reel is uploading. You can keep browsing while it finishes.",
+      "savingDraft": "Saving reel draft...",
+      "scheduling": "Scheduling reel...",
+      "uploading": "Uploading reel...",
+      "draftSaved": "Reel draft saved!",
+      "scheduled": "Reel scheduled!",
+      "uploaded": "Reel uploaded!",
+      "draftSavedMessage": "Reel draft saved successfully.",
+      "scheduledMessage": "Reel scheduled successfully.",
+      "uploadedMessage": "Reel uploaded successfully.",
+      "draftSaveFailed": "Reel draft save failed",
+      "scheduleFailed": "Reel scheduling failed",
+      "uploadFailed": "Reel upload failed",
+      "draftSaveFailedMessage": "Reel draft save failed. Please try again.",
+      "scheduleFailedMessage": "Reel scheduling failed. Please try again.",
+      "uploadFailedMessage": "Reel upload failed. Please try again."
+    },
+    "locationTypes": {
+      "pointOfInterest": "Point of interest",
+      "cityCountry": "City / country"
     }
   }
 }

@@ -5,6 +5,7 @@ import { NgZone } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { StoryDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
 interface SharedContentPart {
@@ -15,7 +16,7 @@ interface SharedContentPart {
 @Component({
     selector: 'app-shared-story-page',
     standalone: true,
-    imports: [CommonModule, TranslateModule],
+    imports: [CommonModule, TranslateModule, SkeletonComponent],
     templateUrl: './shared-story-page.component.html',
     styleUrl: './shared-story-page.component.scss'
 })

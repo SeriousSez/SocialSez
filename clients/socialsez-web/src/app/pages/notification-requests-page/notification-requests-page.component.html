@@ -13,8 +13,21 @@
     </header>
 
     <section class="card">
-        <p class="meta" *ngIf="loading">Loading follow requests...</p>
-        <p class="meta" *ngIf="!loading && !requests.length">No pending follow requests.</p>
+        @if (loading) {
+        @for (row of loadingSkeletonRows; track $index) {
+        <div class="request request-skeleton" [attr.aria-label]="$index === 0 ? 'Loading follow requests' : null" [attr.aria-hidden]="$index === 0 ? null : 'true'">
+            <div class="request-skeleton-meta">
+                <app-skeleton [height]="'16px'" [width]="row.handleWidth"></app-skeleton>
+                <app-skeleton [height]="'12px'" [width]="row.dateWidth"></app-skeleton>
+            </div>
+            <div class="request-skeleton-actions">
+                <app-skeleton [height]="'34px'" [width]="'96px'" [radius]="'10px'"></app-skeleton>
+                <app-skeleton [height]="'34px'" [width]="'96px'" [radius]="'10px'"></app-skeleton>
+            </div>
+        </div>
+        }
+        } @else {
+        <p class="meta" *ngIf="!requests.length">No pending follow requests.</p>
 
         <article class="request" *ngFor="let request of requests">
             <div>
@@ -26,6 +39,7 @@
                 <button class="ghost" type="button" (click)="declineRequest(request.followerId)">Decline</button>
             </div>
         </article>
+        }
     </section>
 
     <p class="status" [class.is-success]="statusTone === 'success'" *ngIf="status">{{ status }}</p>

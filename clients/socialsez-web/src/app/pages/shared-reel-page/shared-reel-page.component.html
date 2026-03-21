@@ -1,6 +1,9 @@
 <section class="shared-page">
     <article class="shared-card" *ngIf="loading">
-        <p>Loading reel...</p>
+        <app-skeleton [height]="'16px'" [width]="'32%'"></app-skeleton>
+        <app-skeleton [height]="'14px'" [width]="'100%'"></app-skeleton>
+        <app-skeleton [height]="'14px'" [width]="'84%'"></app-skeleton>
+        <app-skeleton [height]="'380px'" [width]="'100%'"></app-skeleton>
     </article>
 
     <article class="shared-card" *ngIf="notFound && !loading">
@@ -16,7 +19,7 @@
     <article *ngIf="reel as item">
         <header class="meta-row">
             <div class="author-meta">
-                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
+                <img class="author-avatar" *ngIf="item.authorImageUrl; else authorInitial" [src]="item.authorImageUrl" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/assets/images/avatar-fallback.svg';" alt="Creator image" />
                 <ng-template #authorInitial>
                     <div class="author-avatar">{{ (item.authorHandle[0] || '?') | uppercase }}</div>
                 </ng-template>
@@ -43,6 +46,6 @@
             </ng-container>
         </p>
 
-        <video class="media" [poster]="item.thumbnailUrl || null" [src]="item.videoUrl" controls autoplay muted loop playsinline preload="auto"></video>
+        <video class="media" [poster]="item.thumbnailUrl || null" [src]="item.videoUrl" controls autoplay muted loop playsinline preload="metadata"></video>
     </article>
 </section>

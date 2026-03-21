@@ -12,7 +12,7 @@
       "skipToContent": "Hoppa till innehåll",
       "brandSubtitle": "Communityplattform",
       "nav": {
-        "feed": "Flöde",
+        "feed": "Feed",
         "discover": "Upptäck",
         "blogs": "Bloggar",
         "communities": "Gemenskaper",
@@ -804,6 +804,23 @@
     }
   },
   "homeFeed": {
+    "title": "Home Feed",
+    "feedModes": {
+      "forYou": "For you",
+      "following": "Following"
+    },
+    "customFeeds": {
+      "aria": "Custom feeds",
+      "all": "All",
+      "newFeed": "New feed"
+    },
+    "stories": {
+      "aria": "Stories",
+      "openYourStory": "Open your story",
+      "yourStoryAlt": "Your story",
+      "yourStory": "Your story"
+    },
+    "contentTabsAria": "Feed content type",
     "drafts": {
       "title": "Unfinished drafts",
       "description": "You have draft content ready. Publish it to reach your audience.",
@@ -822,6 +839,10 @@
       "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
       "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
       "manageHiddenCreators": "Manage hidden creators"
+    },
+    "postActions": {
+      "repost": "Repost",
+      "reposts": "reposts"
     },
     "streak": {
       "title": "Daily engagement streak",
@@ -1734,6 +1755,105 @@
       "cancel": "Avbryt",
       "submit": "Skicka rapport",
       "submitting": "Skickar..."
+    }
+  },
+  "createMenu": {
+    "aria": "Skapa innehåll",
+    "newPost": "Nytt inlägg",
+    "newReel": "Ny reel",
+    "newStory": "Ny story",
+    "blogStudio": "Blog Studio"
+  },
+  "reelComposer": {
+    "ariaDialog": "Skapa reel",
+    "backToVideoSelection": "Tillbaka till videoval",
+    "close": "Stäng reel-skaparen",
+    "title": "Ny Reel",
+    "stepsAria": "Steg för att skapa reel",
+    "stepMedia": "1. Media",
+    "stepEditPublish": "2. Redigera och publicera",
+    "videoUploadAria": "Uppladdning av reel-video",
+    "startTitle": "Börja med att välja din video",
+    "startSubtitle": "MP4, WebM, MOV och liknande format stöds.",
+    "selectVideo": "Välj reel-video",
+    "videoSelected": "Video: {{file}}",
+    "dragFrameAria": "Dra för att ställa in inramning av reel",
+    "dragFrameHint": "Dra 9:16-ramen för att ställa in beskärning.",
+    "resetFraming": "Återställ inramning",
+    "trimSummary": "Original längd: {{original}}s · Trimmad: {{trimmed}}",
+    "trimThumbnailAlt": "Trimningsminiatyr",
+    "trimStartAria": "Trimningsstart",
+    "trimEndAria": "Trimningsslut",
+    "trimRange": "Intervall: {{start}}s till {{end}}s",
+    "coverFromFrames": "Välj omslag från videoramar",
+    "coverOptionAlt": "Omslagsalternativ",
+    "coverUploadPrompt": "Vill du använda din egen bild?",
+    "uploadCustomThumbnail": "Ladda upp anpassad miniatyr",
+    "usingCustomThumbnail": "Använder anpassad miniatyr: {{file}}",
+    "preparingPreview": "Förbereder förhandsvisning, trimningskontroller och föreslagna miniatyrer...",
+    "generatingThumbnails": "Genererar föreslagna miniatyrer...",
+    "selectedPreviewAria": "Vald reel-förhandsvisning",
+    "preview": "Förhandsvisning",
+    "caption": "Bildtext",
+    "hashtagPosts": "{{count}} inlägg",
+    "location": "Plats",
+    "locationPlaceholder": "Lägg till plats",
+    "collaborators": "Samarbetspartners",
+    "collaboratorsPlaceholder": "@handle1, @handle2",
+    "sensitiveToggle": "Markera denna reel som känsligt innehåll",
+    "schedulePublish": "Schemalägg publicering (valfritt)",
+    "generatedCoverInfo": "Använder vald genererad omslagsruta.",
+    "actions": {
+      "next": "Nästa",
+      "publish": "Publicera reel",
+      "publishing": "Publicerar..."
+    },
+    "hints": {
+      "locationTypeMore": "Skriv minst 2 tecken för att söka efter platser.",
+      "locationSearching": "Söker platser...",
+      "locationFallbackAvailable": "Google Places är inte tillgängligt. Visar reservförslag för platser.",
+      "locationNoneVerifyGoogle": "Inga platsförslag hittades. Kontrollera begränsningar för Google-nyckeln eller prova en bredare sökning.",
+      "locationServicesUnavailable": "Platstjänster är inte tillgängliga just nu. Kontrollera begränsningar för din Google-nyckel.",
+      "locationSelectSuggestion": "Välj en plats från förslagen.",
+      "locationNoneCheckApi": "Inga platsförslag hittades. Kontrollera API-nyckelns begränsningar om det verkar fel.",
+      "locationFetchFailed": "Kunde inte hämta platsförslag just nu.",
+      "collaboratorsCommaSeparated": "Samarbetspartners kan separeras med kommatecken.",
+      "collaboratorsSelectUser": "Välj en användare för att lägga till som samarbetspartner.",
+      "collaboratorsNoMatch": "Inga matchande användare hittades.",
+      "collaboratorsSearchFailed": "Kunde inte söka efter användare just nu."
+    },
+    "errors": {
+      "chooseVideoFirst": "Välj först en video för att fortsätta.",
+      "videoProcess": "Kunde inte bearbeta den här videon. Välj en annan fil.",
+      "thumbnailProcess": "Kunde inte bearbeta den här miniatyren. Välj en annan bild.",
+      "generateSuggestedThumbnails": "Kunde inte generera föreslagna miniatyrer för den här videon.",
+      "mediaRecorderUnavailable": "Trimningsförhandsvisning sparades, men webbläsaren laddade upp hela videon eftersom MediaRecorder inte är tillgänglig.",
+      "framingAppliedOriginal": "Kunde inte tillämpa inramning på trimmad video. Originalet laddades upp i stället.",
+      "browserTrimUnsupported": "Trimningsförhandsvisning sparades, men den här webbläsaren stöder inte uppladdning av trimmad video.",
+      "processingLimitsOriginal": "Trimningsförhandsvisning sparades, men uppladdningen använde originalvideon på grund av bearbetningsbegränsningar.",
+      "refreshThumbnails": "Kunde inte uppdatera miniatyrer för den här inramningen."
+    },
+    "status": {
+      "uploadingBrowse": "Reel laddas upp. Du kan fortsätta att bläddra medan den blir klar.",
+      "savingDraft": "Sparar reel-utkast...",
+      "scheduling": "Schemalägger reel...",
+      "uploading": "Laddar upp reel...",
+      "draftSaved": "Reel-utkast sparat!",
+      "scheduled": "Reel schemalagd!",
+      "uploaded": "Reel uppladdad!",
+      "draftSavedMessage": "Reel-utkast sparades.",
+      "scheduledMessage": "Reel schemalades.",
+      "uploadedMessage": "Reel laddades upp.",
+      "draftSaveFailed": "Det gick inte att spara reel-utkast",
+      "scheduleFailed": "Schemaläggning av reel misslyckades",
+      "uploadFailed": "Uppladdning av reel misslyckades",
+      "draftSaveFailedMessage": "Det gick inte att spara reel-utkast. Försök igen.",
+      "scheduleFailedMessage": "Schemaläggning av reel misslyckades. Försök igen.",
+      "uploadFailedMessage": "Uppladdning av reel misslyckades. Försök igen."
+    },
+    "locationTypes": {
+      "pointOfInterest": "Intressant plats",
+      "cityCountry": "Stad / land"
     }
   }
 }

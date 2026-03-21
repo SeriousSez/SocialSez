@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { NgZone } from '@angular/core';
 import { PostDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
 interface SharedContentPart {
@@ -14,7 +15,7 @@ interface SharedContentPart {
 @Component({
     selector: 'app-shared-post-page',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, SkeletonComponent],
     templateUrl: './shared-post-page.component.html',
     styleUrl: './shared-post-page.component.scss'
 })

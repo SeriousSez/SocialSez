@@ -1,59 +1,59 @@
-<div class="reel-modal" [class.closing]="isClosing" *ngIf="isRendered" (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-label="Create reel">
-    <section class="media-composer reel-modal-card" aria-label="Create reel">
+<div class="reel-modal" [class.closing]="isClosing" *ngIf="isRendered" (click)="onBackdropClick($event)" role="dialog" aria-modal="true" [attr.aria-label]="'reelComposer.ariaDialog' | translate">
+    <section class="media-composer reel-modal-card" [attr.aria-label]="'reelComposer.ariaDialog' | translate">
         <header class="reel-modal-head">
             <div class="reel-modal-title">
-                <button type="button" class="icon-btn" *ngIf="reelComposerStep === 1 && reelVideoFile" (click)="goBackToVideoSelection()" [disabled]="postingReel" aria-label="Back to video selection">
+                <button type="button" class="icon-btn" *ngIf="reelComposerStep === 1 && reelVideoFile" (click)="goBackToVideoSelection()" [disabled]="postingReel" [attr.aria-label]="'reelComposer.backToVideoSelection' | translate">
                     <i class="fa-duotone fa-light fa-arrow-left" aria-hidden="true"></i>
                 </button>
-                <h3>New Reel</h3>
+                <h3>{{ 'reelComposer.title' | translate }}</h3>
             </div>
-            <button type="button" class="close" (click)="close()" [disabled]="postingReel" aria-label="Close reel composer">✕</button>
+            <button type="button" class="close" (click)="close()" [disabled]="postingReel" [attr.aria-label]="'reelComposer.close' | translate">✕</button>
         </header>
-        <div class="composer-steps" aria-label="Reel creation steps">
-            <span [class.active]="reelComposerStep === 1">1. Media</span>
-            <span [class.active]="reelComposerStep === 2">2. Edit & Publish</span>
+        <div class="composer-steps" [attr.aria-label]="'reelComposer.stepsAria' | translate">
+            <span [class.active]="reelComposerStep === 1">{{ 'reelComposer.stepMedia' | translate }}</span>
+            <span [class.active]="reelComposerStep === 2">{{ 'reelComposer.stepEditPublish' | translate }}</span>
         </div>
 
         <ng-container *ngIf="reelComposerStep === 1; else reelStepTwo">
             <input #reelVideoInput type="file" class="visually-hidden" accept="video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onVideoSelected($event)" [disabled]="postingReel" />
             <input #reelThumbnailInput type="file" class="visually-hidden" accept="image/jpeg,image/png,image/webp" (change)="onThumbnailSelected($event)" [disabled]="postingReel" />
 
-            <section class="upload-picker" *ngIf="!reelVideoFile" aria-label="Video upload">
+            <section class="upload-picker" *ngIf="!reelVideoFile" [attr.aria-label]="'reelComposer.videoUploadAria' | translate">
                 <span class="upload-icon" aria-hidden="true">🎬</span>
-                <p class="upload-title">Start by selecting your video</p>
-                <p class="upload-subtitle">MP4, WebM, MOV and similar formats are supported.</p>
-                <button type="button" class="upload-button" (click)="openVideoPicker()" [disabled]="postingReel">Select Reel Video</button>
+                <p class="upload-title">{{ 'reelComposer.startTitle' | translate }}</p>
+                <p class="upload-subtitle">{{ 'reelComposer.startSubtitle' | translate }}</p>
+                <button type="button" class="upload-button" (click)="openVideoPicker()" [disabled]="postingReel">{{ 'reelComposer.selectVideo' | translate }}</button>
             </section>
 
             <div class="selected-video-head" *ngIf="reelVideoFile">
-                <p class="media-file">Video: {{ reelVideoFile.name }}</p>
+                <p class="media-file">{{ 'reelComposer.videoSelected' | translate:{ file: reelVideoFile.name } }}</p>
             </div>
             <div class="reel-editor" *ngIf="reelVideoFile">
                 <div class="reel-frame-editor">
                     <div #reelFrameViewport class="reel-editor-frame" [class.dragging]="isFrameDragging">
                         <video #reelPreviewVideo class="reel-editor-preview" [src]="reelVideoPreviewUrl" muted autoplay playsinline preload="metadata" (loadedmetadata)="onPreviewLoadedMetadata()" (play)="onPreviewPlay()" (seeking)="onPreviewSeeking()" (timeupdate)="onPreviewTimeUpdate()"></video>
 
-                        <div class="reel-crop-frame" [class.dragging]="isFrameDragging" [ngStyle]="reelCropFrameStyle" (pointerdown)="onFramePointerDown($event, reelFrameViewport)" role="button" aria-label="Drag to set reel framing"></div>
+                        <div class="reel-crop-frame" [class.dragging]="isFrameDragging" [ngStyle]="reelCropFrameStyle" (pointerdown)="onFramePointerDown($event, reelFrameViewport)" role="button" [attr.aria-label]="'reelComposer.dragFrameAria' | translate"></div>
                     </div>
                     <div class="frame-controls">
-                        <span class="frame-controls-hint">Drag the 9:16 frame to set your crop.</span>
-                        <button type="button" class="ghost" (click)="resetFramePosition()">Reset framing</button>
+                        <span class="frame-controls-hint">{{ 'reelComposer.dragFrameHint' | translate }}</span>
+                        <button type="button" class="ghost" (click)="resetFramePosition()">{{ 'reelComposer.resetFraming' | translate }}</button>
                     </div>
                 </div>
 
                 <div class="reel-trim-panel" *ngIf="reelVideoDurationSeconds > 0">
-                    <p class="media-file">Original length: {{ reelVideoDurationSeconds }}s · Trimmed: {{ reelTrimmedDurationLabel }}</p>
+                    <p class="media-file">{{ 'reelComposer.trimSummary' | translate:{ original: reelVideoDurationSeconds, trimmed: reelTrimmedDurationLabel } }}</p>
                     <div class="trim-track" #trimTrack>
                         <div class="trim-thumbs">
-                            <img *ngFor="let option of reelTrimPreviewOptions" [src]="option.previewUrl" alt="Trim thumbnail" />
+                            <img *ngFor="let option of reelTrimPreviewOptions" [src]="option.previewUrl" [alt]="'reelComposer.trimThumbnailAlt' | translate" />
                         </div>
 
                         <div class="trim-mask left" [style.width.%]="trimStartPercent"></div>
                         <div class="trim-mask right" [style.left.%]="trimEndPercent"></div>
 
                         <div class="trim-selection" [style.left.%]="trimStartPercent" [style.width.%]="trimEndPercent - trimStartPercent" (pointerdown)="onTrimRangePointerDown($event, trimTrack)">
-                            <button type="button" class="trim-handle start" (pointerdown)="onTrimHandlePointerDown($event, 'start', trimTrack)" aria-label="Trim start"></button>
-                            <button type="button" class="trim-handle end" (pointerdown)="onTrimHandlePointerDown($event, 'end', trimTrack)" aria-label="Trim end"></button>
+                            <button type="button" class="trim-handle start" (pointerdown)="onTrimHandlePointerDown($event, 'start', trimTrack)" [attr.aria-label]="'reelComposer.trimStartAria' | translate"></button>
+                            <button type="button" class="trim-handle end" (pointerdown)="onTrimHandlePointerDown($event, 'end', trimTrack)" [attr.aria-label]="'reelComposer.trimEndAria' | translate"></button>
                         </div>
                     </div>
 
@@ -62,55 +62,55 @@
                         <span>{{ reelVideoDurationSeconds >= 2 ? (reelVideoDurationSeconds / 2 | number:'1.0-0') : 1 }}s</span>
                         <span>{{ reelVideoDurationSeconds }}s</span>
                     </div>
-                    <p class="media-file">Range: {{ reelTrimStartSeconds }}s to {{ reelTrimEndSeconds }}s</p>
+                    <p class="media-file">{{ 'reelComposer.trimRange' | translate:{ start: reelTrimStartSeconds, end: reelTrimEndSeconds } }}</p>
                 </div>
 
                 <div class="reel-cover-panel" *ngIf="reelCoverOptions.length">
-                    <p class="media-file">Pick cover from video frames</p>
+                    <p class="media-file">{{ 'reelComposer.coverFromFrames' | translate }}</p>
                     <div class="reel-cover-grid">
                         <button type="button" class="reel-cover-option" *ngFor="let option of reelCoverOptions" [class.active]="selectedReelCoverIndex === option.index && !reelThumbnailFile" (click)="chooseGeneratedCover(option.index)">
-                            <img [src]="option.previewUrl" alt="Cover option" />
+                            <img [src]="option.previewUrl" [alt]="'reelComposer.coverOptionAlt' | translate" />
                             <span>{{ option.timeSeconds | number:'1.0-0' }}s</span>
                         </button>
                     </div>
                     <p class="cover-upload-note">
-                        Want your own image?
-                        <button type="button" class="cover-upload-link" (click)="openThumbnailPicker()" [disabled]="postingReel">Upload custom thumbnail</button>
+                        {{ 'reelComposer.coverUploadPrompt' | translate }}
+                        <button type="button" class="cover-upload-link" (click)="openThumbnailPicker()" [disabled]="postingReel">{{ 'reelComposer.uploadCustomThumbnail' | translate }}</button>
                     </p>
-                    <p class="media-file" *ngIf="reelThumbnailFile; else generatedCoverInfo">Using custom thumbnail: {{ reelThumbnailFile.name }}</p>
+                    <p class="media-file" *ngIf="reelThumbnailFile; else generatedCoverInfo">{{ 'reelComposer.usingCustomThumbnail' | translate:{ file: reelThumbnailFile.name } }}</p>
                 </div>
 
-                <p class="media-file" *ngIf="reelVideoFile && !reelPreviewReady">Preparing preview, trim controls, and suggested thumbnails...</p>
-                <p class="media-file" *ngIf="reelPreviewReady && generatingReelCovers">Generating suggested thumbnails...</p>
+                <p class="media-file" *ngIf="reelVideoFile && !reelPreviewReady">{{ 'reelComposer.preparingPreview' | translate }}</p>
+                <p class="media-file" *ngIf="reelPreviewReady && generatingReelCovers">{{ 'reelComposer.generatingThumbnails' | translate }}</p>
             </div>
         </ng-container>
 
         <ng-template #reelStepTwo>
             <section class="reel-publish-step" *ngIf="reelVideoFile">
-                <aside class="reel-publish-preview" aria-label="Selected reel preview">
-                    <p class="media-file">Preview</p>
+                <aside class="reel-publish-preview" [attr.aria-label]="'reelComposer.selectedPreviewAria' | translate">
+                    <p class="media-file">{{ 'reelComposer.preview' | translate }}</p>
                     <div class="reel-publish-preview-frame">
                         <video class="reel-publish-preview-video" [src]="reelVideoPreviewUrl" [ngStyle]="reelPublishPreviewVideoStyle" muted playsinline preload="metadata"></video>
                     </div>
                 </aside>
 
                 <div class="reel-publish-form">
-                    <label>Caption
+                    <label>{{ 'reelComposer.caption' | translate }}
                         <div class="autocomplete-field">
                             <textarea rows="3" [value]="reelCaption" (input)="onCaptionInput($any($event.target).value)" (focus)="onCaptionFocus()" (blur)="onCaptionBlur()"></textarea>
                             <ul class="autocomplete-list" *ngIf="showHashtagSuggestions && hashtagSuggestions.length">
                                 <li *ngFor="let hashtag of hashtagSuggestions">
                                     <button type="button" class="autocomplete-item" (mousedown)="$event.preventDefault()" (click)="selectHashtagSuggestion(hashtag)">
                                         <span class="autocomplete-main">#{{ hashtag.tag }}</span>
-                                        <span class="autocomplete-sub">{{ hashtag.count }} posts</span>
+                                        <span class="autocomplete-sub">{{ 'reelComposer.hashtagPosts' | translate:{ count: hashtag.count } }}</span>
                                     </button>
                                 </li>
                             </ul>
                         </div>
                     </label>
-                    <label>Location
+                    <label>{{ 'reelComposer.location' | translate }}
                         <div class="autocomplete-field">
-                            <input type="text" [value]="reelLocation" (input)="onLocationInput($any($event.target).value)" (focus)="onLocationFocus()" (blur)="onLocationBlur()" placeholder="Add location" />
+                            <input type="text" [value]="reelLocation" (input)="onLocationInput($any($event.target).value)" (focus)="onLocationFocus()" (blur)="onLocationBlur()" [placeholder]="'reelComposer.locationPlaceholder' | translate" />
                             <ul class="autocomplete-list" *ngIf="showLocationSuggestions && locationSuggestions.length">
                                 <li *ngFor="let suggestion of locationSuggestions">
                                     <button type="button" class="autocomplete-item" (mousedown)="$event.preventDefault()" (click)="selectLocationSuggestion(suggestion)">
@@ -122,9 +122,9 @@
                         </div>
                     </label>
                     <p class="media-file">{{ locationHint }}</p>
-                    <label>Collaborators
+                    <label>{{ 'reelComposer.collaborators' | translate }}
                         <div class="autocomplete-field">
-                            <input type="text" [value]="reelCollaborators" (input)="onCollaboratorsInput($any($event.target).value)" (focus)="onCollaboratorsFocus()" (blur)="onCollaboratorsBlur()" placeholder="@handle1, @handle2" />
+                            <input type="text" [value]="reelCollaborators" (input)="onCollaboratorsInput($any($event.target).value)" (focus)="onCollaboratorsFocus()" (blur)="onCollaboratorsBlur()" [placeholder]="'reelComposer.collaboratorsPlaceholder' | translate" />
                             <ul class="autocomplete-list" *ngIf="showCollaboratorSuggestions && collaboratorSuggestions.length">
                                 <li *ngFor="let profile of collaboratorSuggestions">
                                     <button type="button" class="autocomplete-item" (mousedown)="$event.preventDefault()" (click)="selectCollaboratorSuggestion(profile)">
@@ -139,10 +139,10 @@
 
                     <label class="sensitive-toggle">
                         <input type="checkbox" [checked]="markSensitive" (change)="onSensitiveToggleChanged($any($event.target).checked)" />
-                        <span>Mark this reel as sensitive media</span>
+                        <span>{{ 'reelComposer.sensitiveToggle' | translate }}</span>
                     </label>
 
-                    <label>Schedule publish (optional)
+                    <label>{{ 'reelComposer.schedulePublish' | translate }}
                         <input type="datetime-local" [value]="scheduledPublishLocal" (input)="onScheduledPublishChanged($any($event.target).value)" />
                     </label>
                 </div>
@@ -150,15 +150,15 @@
         </ng-template>
 
         <ng-template #generatedCoverInfo>
-            <p class="media-file" *ngIf="reelCoverOptions.length">Using selected generated cover frame.</p>
+            <p class="media-file" *ngIf="reelCoverOptions.length">{{ 'reelComposer.generatedCoverInfo' | translate }}</p>
         </ng-template>
         <p class="error" *ngIf="reelComposerError">{{ reelComposerError }}</p>
         <div class="media-actions">
-            <button type="button" class="ghost" (click)="cancel()" [disabled]="postingReel">Cancel</button>
-            <button type="button" class="ghost" *ngIf="reelComposerStep === 2" (click)="goToStep(1)" [disabled]="postingReel">Back</button>
-            <button type="button" *ngIf="reelComposerStep === 1" (click)="goToStep(2)" [disabled]="!reelVideoFile || !reelPreviewReady || postingReel">Next</button>
-            <button type="button" class="ghost" *ngIf="reelComposerStep === 2" (click)="saveDraft()" [disabled]="!reelVideoFile || postingReel">Save Draft</button>
-            <button type="button" *ngIf="reelComposerStep === 2" (click)="publish()" [disabled]="!reelVideoFile || postingReel">{{ postingReel ? 'Publishing...' : 'Publish Reel' }}</button>
+            <button type="button" class="ghost" (click)="cancel()" [disabled]="postingReel">{{ 'profile.common.cancel' | translate }}</button>
+            <button type="button" class="ghost" *ngIf="reelComposerStep === 2" (click)="goToStep(1)" [disabled]="postingReel">{{ 'profile.common.back' | translate }}</button>
+            <button type="button" *ngIf="reelComposerStep === 1" (click)="goToStep(2)" [disabled]="!reelVideoFile || !reelPreviewReady || postingReel">{{ 'reelComposer.actions.next' | translate }}</button>
+            <button type="button" class="ghost" *ngIf="reelComposerStep === 2" (click)="saveDraft()" [disabled]="!reelVideoFile || postingReel">{{ 'profile.compose.saveDraft' | translate }}</button>
+            <button type="button" *ngIf="reelComposerStep === 2" (click)="publish()" [disabled]="!reelVideoFile || postingReel">{{ postingReel ? ('reelComposer.actions.publishing' | translate) : ('reelComposer.actions.publish' | translate) }}</button>
         </div>
     </section>
 </div>

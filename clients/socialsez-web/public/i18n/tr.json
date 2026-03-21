@@ -12,7 +12,7 @@
       "skipToContent": "İçeriğe geç",
       "brandSubtitle": "Topluluk Platformu",
       "nav": {
-        "feed": "Akış",
+        "feed": "Feed",
         "discover": "Keşfet",
         "blogs": "Bloglar",
         "communities": "Topluluklar",
@@ -1259,6 +1259,23 @@
     }
   },
   "homeFeed": {
+    "title": "Home Feed",
+    "feedModes": {
+      "forYou": "For you",
+      "following": "Following"
+    },
+    "customFeeds": {
+      "aria": "Custom feeds",
+      "all": "All",
+      "newFeed": "New feed"
+    },
+    "stories": {
+      "aria": "Stories",
+      "openYourStory": "Open your story",
+      "yourStoryAlt": "Your story",
+      "yourStory": "Your story"
+    },
+    "contentTabsAria": "Feed content type",
     "drafts": {
       "title": "Unfinished drafts",
       "description": "You have draft content ready. Publish it to reach your audience.",
@@ -1277,6 +1294,10 @@
       "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
       "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
       "manageHiddenCreators": "Manage hidden creators"
+    },
+    "postActions": {
+      "repost": "Repost",
+      "reposts": "reposts"
     },
     "streak": {
       "title": "Daily engagement streak",
@@ -1734,6 +1755,105 @@
       "cancel": "İptal",
       "submit": "Bildirimi gönder",
       "submitting": "Gönderiliyor..."
+    }
+  },
+  "createMenu": {
+    "aria": "İçerik oluştur",
+    "newPost": "Yeni gönderi",
+    "newReel": "Yeni Reel",
+    "newStory": "Yeni Story",
+    "blogStudio": "Blog Studio"
+  },
+  "reelComposer": {
+    "ariaDialog": "Reel oluştur",
+    "backToVideoSelection": "Video seçimine geri dön",
+    "close": "Reel oluşturucuyu kapat",
+    "title": "Yeni Reel",
+    "stepsAria": "Reel oluşturma adımları",
+    "stepMedia": "1. Medya",
+    "stepEditPublish": "2. Düzenle ve Yayınla",
+    "videoUploadAria": "Reel video yükleme",
+    "startTitle": "Videonu seçerek başla",
+    "startSubtitle": "MP4, WebM, MOV ve benzeri biçimler desteklenir.",
+    "selectVideo": "Reel Videosu Seç",
+    "videoSelected": "Video: {{file}}",
+    "dragFrameAria": "Reel kadrajını ayarlamak için sürükle",
+    "dragFrameHint": "Kırpmayı ayarlamak için 9:16 çerçeveyi sürükle.",
+    "resetFraming": "Kadrajı sıfırla",
+    "trimSummary": "Orijinal süre: {{original}} sn · Kırpılmış: {{trimmed}}",
+    "trimThumbnailAlt": "Kırpma küçük resmi",
+    "trimStartAria": "Kırpma başlangıcı",
+    "trimEndAria": "Kırpma bitişi",
+    "trimRange": "Aralık: {{start}} sn - {{end}} sn",
+    "coverFromFrames": "Video karelerinden kapak seç",
+    "coverOptionAlt": "Kapak seçeneği",
+    "coverUploadPrompt": "Kendi görselini mi kullanmak istiyorsun?",
+    "uploadCustomThumbnail": "Özel küçük resim yükle",
+    "usingCustomThumbnail": "Kullanılan özel küçük resim: {{file}}",
+    "preparingPreview": "Önizleme, kırpma kontrolleri ve önerilen küçük resimler hazırlanıyor...",
+    "generatingThumbnails": "Önerilen küçük resimler oluşturuluyor...",
+    "selectedPreviewAria": "Seçili reel önizlemesi",
+    "preview": "Önizleme",
+    "caption": "Açıklama",
+    "hashtagPosts": "{{count}} gönderi",
+    "location": "Konum",
+    "locationPlaceholder": "Konum ekle",
+    "collaborators": "İş birlikçileri",
+    "collaboratorsPlaceholder": "@handle1, @handle2",
+    "sensitiveToggle": "Bu reel'i hassas medya olarak işaretle",
+    "schedulePublish": "Yayın zamanla (isteğe bağlı)",
+    "generatedCoverInfo": "Seçilen oluşturulmuş kapak karesi kullanılıyor.",
+    "actions": {
+      "next": "İleri",
+      "publish": "Reel'i Yayınla",
+      "publishing": "Yayınlanıyor..."
+    },
+    "hints": {
+      "locationTypeMore": "Konum aramak için en az 2 karakter yazın.",
+      "locationSearching": "Konumlar aranıyor...",
+      "locationFallbackAvailable": "Google Places kullanılamıyor. Yedek konum önerileri gösteriliyor.",
+      "locationNoneVerifyGoogle": "Konum önerisi bulunamadı. Google anahtar kısıtlamalarını doğrulayın veya daha geniş bir sorgu deneyin.",
+      "locationServicesUnavailable": "Konum hizmetleri şu anda kullanılamıyor. Google anahtar kısıtlamalarını kontrol edin.",
+      "locationSelectSuggestion": "Önerilerden bir konum seçin.",
+      "locationNoneCheckApi": "Konum önerisi bulunamadı. Bu yanlış görünüyorsa API anahtar kısıtlamalarını kontrol edin.",
+      "locationFetchFailed": "Konum önerileri şu anda getirilemedi.",
+      "collaboratorsCommaSeparated": "İş birlikçileri virgülle ayrılabilir.",
+      "collaboratorsSelectUser": "İş birlikçisi olarak eklemek için bir kullanıcı seçin.",
+      "collaboratorsNoMatch": "Eşleşen kullanıcı bulunamadı.",
+      "collaboratorsSearchFailed": "Kullanıcılar şu anda aranamadı."
+    },
+    "errors": {
+      "chooseVideoFirst": "Devam etmek için önce video seçin.",
+      "videoProcess": "Bu video işlenemedi. Lütfen farklı bir dosya seçin.",
+      "thumbnailProcess": "Bu küçük resim işlenemedi. Lütfen farklı bir görsel seçin.",
+      "generateSuggestedThumbnails": "Bu video için önerilen küçük resimler oluşturulamadı.",
+      "mediaRecorderUnavailable": "Kırpma önizlemesi kaydedildi ancak MediaRecorder kullanılamadığı için tarayıcınız videonun tamamını yükledi.",
+      "framingAppliedOriginal": "Kırpılmış videoya kadraj uygulanamadı. Bunun yerine orijinal video yüklendi.",
+      "browserTrimUnsupported": "Kırpma önizlemesi kaydedildi ancak bu tarayıcı kırpılmış video yüklemeyi desteklemiyor.",
+      "processingLimitsOriginal": "Kırpma önizlemesi kaydedildi ancak işlem sınırları nedeniyle yüklemede orijinal video kullanıldı.",
+      "refreshThumbnails": "Bu kadraj için küçük resimler yenilenemedi."
+    },
+    "status": {
+      "uploadingBrowse": "Reel yükleniyor. Tamamlanırken gezinmeye devam edebilirsiniz.",
+      "savingDraft": "Reel taslağı kaydediliyor...",
+      "scheduling": "Reel zamanlanıyor...",
+      "uploading": "Reel yükleniyor...",
+      "draftSaved": "Reel taslağı kaydedildi!",
+      "scheduled": "Reel zamanlandı!",
+      "uploaded": "Reel yüklendi!",
+      "draftSavedMessage": "Reel taslağı başarıyla kaydedildi.",
+      "scheduledMessage": "Reel başarıyla zamanlandı.",
+      "uploadedMessage": "Reel başarıyla yüklendi.",
+      "draftSaveFailed": "Reel taslağı kaydedilemedi",
+      "scheduleFailed": "Reel zamanlanamadı",
+      "uploadFailed": "Reel yükleme başarısız",
+      "draftSaveFailedMessage": "Reel taslağı kaydedilemedi. Lütfen tekrar deneyin.",
+      "scheduleFailedMessage": "Reel zamanlanamadı. Lütfen tekrar deneyin.",
+      "uploadFailedMessage": "Reel yükleme başarısız oldu. Lütfen tekrar deneyin."
+    },
+    "locationTypes": {
+      "pointOfInterest": "İlgi noktası",
+      "cityCountry": "Şehir / ülke"
     }
   }
 }

@@ -829,6 +829,7 @@ export class ProfilePageComponent implements OnDestroy {
 
     setActiveTab(tab: 'posts' | 'reels' | 'analytics'): void {
         this.activeTab = tab;
+        this.cdr.detectChanges();
     }
 
     onActiveTabChanged(tabId: string): void {
