@@ -1679,5 +1679,61 @@
         "postReply": "Impossible de poster une réponse pour le moment."
       }
     }
+  },
+  "reportModal": {
+    "title": "Signaler",
+    "aria": {
+      "back": "Retour",
+      "close": "Fermer la fenêtre de signalement"
+    },
+    "rootHeadingWithHandle": "Pourquoi signalez-vous @{{handle}} ?",
+    "rootHeadingDefault": "Pourquoi signalez-vous ce compte ?",
+    "rootOptions": {
+      "content": "Signaler une publication, un message ou un commentaire",
+      "account": "Signaler un compte",
+      "unlawful": "Signaler comme illégal"
+    },
+    "categoryHeadings": {
+      "content": "Quel est le problème avec ce contenu ?",
+      "account": "Pourquoi signalez-vous ce compte ?",
+      "unlawful": "Quel problème illégal signalez-vous ?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam ou arnaque",
+        "harassment": "Harcèlement ou intimidation",
+        "hateSpeech": "Discours haineux",
+        "violence": "Violence ou actes dangereux",
+        "nudity": "Nudité ou contenu sexuel",
+        "falseInfo": "Fausse information"
+      },
+      "account": {
+        "impersonation": "Usurpation d'identité",
+        "fake": "Faux compte",
+        "spam": "Compte spam",
+        "harassment": "Harcèlement ou intimidation",
+        "hateSpeech": "Discours haineux"
+      },
+      "unlawful": {
+        "fraud": "Fraude ou arnaque",
+        "threats": "Menaces de violence",
+        "illegalGoods": "Biens ou services illégaux",
+        "extortion": "Extorsion ou chantage",
+        "other": "Autre violation légale"
+      }
+    },
+    "somethingElse": "Autre motif",
+    "custom": {
+      "title": "Ajouter des détails personnalisés",
+      "reasonLabel": "Motif",
+      "reasonPlaceholder": "Motif court",
+      "detailsLabel": "Détails (facultatif)",
+      "detailsPlaceholder": "Ajoutez du contexte supplémentaire"
+    },
+    "actions": {
+      "cancel": "Annuler",
+      "submit": "Envoyer le signalement",
+      "submitting": "Envoi..."
+    }
   }
 }

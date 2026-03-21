@@ -1679,5 +1679,61 @@
         "postReply": "No se pudo publicar la respuesta ahora mismo."
       }
     }
+  },
+  "reportModal": {
+    "title": "Denunciar",
+    "aria": {
+      "back": "Volver",
+      "close": "Cerrar modal de denuncia"
+    },
+    "rootHeadingWithHandle": "¿Por qué denuncias a @{{handle}}?",
+    "rootHeadingDefault": "¿Por qué denuncias esta cuenta?",
+    "rootOptions": {
+      "content": "Denunciar publicación, mensaje o comentario",
+      "account": "Denunciar cuenta",
+      "unlawful": "Denunciar como ilegal"
+    },
+    "categoryHeadings": {
+      "content": "¿Cuál es el problema con el contenido?",
+      "account": "¿Por qué denuncias esta cuenta?",
+      "unlawful": "¿Qué problema legal estás denunciando?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam o estafa",
+        "harassment": "Acoso o bullying",
+        "hateSpeech": "Discurso de odio",
+        "violence": "Violencia o actos peligrosos",
+        "nudity": "Desnudez o contenido sexual",
+        "falseInfo": "Información falsa"
+      },
+      "account": {
+        "impersonation": "Suplantación de identidad",
+        "fake": "Cuenta falsa",
+        "spam": "Cuenta de spam",
+        "harassment": "Acoso o bullying",
+        "hateSpeech": "Discurso de odio"
+      },
+      "unlawful": {
+        "fraud": "Fraude o estafa",
+        "threats": "Amenazas de violencia",
+        "illegalGoods": "Bienes o servicios ilegales",
+        "extortion": "Extorsión o chantaje",
+        "other": "Otra infracción legal"
+      }
+    },
+    "somethingElse": "Otra cosa",
+    "custom": {
+      "title": "Agregar detalles personalizados de la denuncia",
+      "reasonLabel": "Motivo",
+      "reasonPlaceholder": "Motivo breve",
+      "detailsLabel": "Detalles (opcional)",
+      "detailsPlaceholder": "Agrega contexto adicional"
+    },
+    "actions": {
+      "cancel": "Cancelar",
+      "submit": "Enviar denuncia",
+      "submitting": "Enviando..."
+    }
   }
 }

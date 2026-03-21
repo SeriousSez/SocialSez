@@ -1679,5 +1679,61 @@
     "media": {
       "alt": "Delat storymedia"
     }
+  },
+  "reportModal": {
+    "title": "Rapportera",
+    "aria": {
+      "back": "Gå tillbaka",
+      "close": "Stäng rapportdialog"
+    },
+    "rootHeadingWithHandle": "Varför rapporterar du @{{handle}}?",
+    "rootHeadingDefault": "Varför rapporterar du det här kontot?",
+    "rootOptions": {
+      "content": "Rapportera inlägg, meddelande eller kommentar",
+      "account": "Rapportera konto",
+      "unlawful": "Rapportera som olagligt"
+    },
+    "categoryHeadings": {
+      "content": "Vad är problemet med innehållet?",
+      "account": "Varför rapporterar du det här kontot?",
+      "unlawful": "Vilket olagligt problem rapporterar du?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam eller bedrägeri",
+        "harassment": "Trakasserier eller mobbning",
+        "hateSpeech": "Hatpropaganda",
+        "violence": "Våld eller farliga handlingar",
+        "nudity": "Nakenhet eller sexuellt innehåll",
+        "falseInfo": "Falsk information"
+      },
+      "account": {
+        "impersonation": "Utger sig för att vara någon annan",
+        "fake": "Falskt konto",
+        "spam": "Spamkonto",
+        "harassment": "Trakasserier eller mobbning",
+        "hateSpeech": "Hatpropaganda"
+      },
+      "unlawful": {
+        "fraud": "Bedrägeri eller bluff",
+        "threats": "Våldshot",
+        "illegalGoods": "Olagliga varor eller tjänster",
+        "extortion": "Utpressning eller utpressningshot",
+        "other": "Annan rättslig överträdelse"
+      }
+    },
+    "somethingElse": "Något annat",
+    "custom": {
+      "title": "Lägg till egna rapportdetaljer",
+      "reasonLabel": "Orsak",
+      "reasonPlaceholder": "Kort orsak",
+      "detailsLabel": "Detaljer (valfritt)",
+      "detailsPlaceholder": "Lägg till extra sammanhang"
+    },
+    "actions": {
+      "cancel": "Avbryt",
+      "submit": "Skicka rapport",
+      "submitting": "Skickar..."
+    }
   }
 }

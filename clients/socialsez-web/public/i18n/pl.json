@@ -1679,5 +1679,61 @@
         "postReply": "Nie udało się teraz opublikować odpowiedzi."
       }
     }
+  },
+  "reportModal": {
+    "title": "Zgłoś",
+    "aria": {
+      "back": "Wróć",
+      "close": "Zamknij okno zgłoszenia"
+    },
+    "rootHeadingWithHandle": "Dlaczego zgłaszasz @{{handle}}?",
+    "rootHeadingDefault": "Dlaczego zgłaszasz to konto?",
+    "rootOptions": {
+      "content": "Zgłoś post, wiadomość lub komentarz",
+      "account": "Zgłoś konto",
+      "unlawful": "Zgłoś jako naruszenie prawa"
+    },
+    "categoryHeadings": {
+      "content": "Jaki jest problem z tą treścią?",
+      "account": "Dlaczego zgłaszasz to konto?",
+      "unlawful": "Jakie naruszenie prawa zgłaszasz?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam lub oszustwo",
+        "harassment": "Nękanie lub bullying",
+        "hateSpeech": "Mowa nienawiści",
+        "violence": "Przemoc lub niebezpieczne działania",
+        "nudity": "Nagość lub treści seksualne",
+        "falseInfo": "Fałszywe informacje"
+      },
+      "account": {
+        "impersonation": "Podszywanie się pod inną osobę",
+        "fake": "Fałszywe konto",
+        "spam": "Konto spamowe",
+        "harassment": "Nękanie lub bullying",
+        "hateSpeech": "Mowa nienawiści"
+      },
+      "unlawful": {
+        "fraud": "Oszustwo lub wyłudzenie",
+        "threats": "Groźby przemocy",
+        "illegalGoods": "Nielegalne towary lub usługi",
+        "extortion": "Wymuszenie lub szantaż",
+        "other": "Inne naruszenie prawa"
+      }
+    },
+    "somethingElse": "Coś innego",
+    "custom": {
+      "title": "Dodaj własne szczegóły zgłoszenia",
+      "reasonLabel": "Powód",
+      "reasonPlaceholder": "Krótki powód",
+      "detailsLabel": "Szczegóły (opcjonalnie)",
+      "detailsPlaceholder": "Dodaj dodatkowy kontekst"
+    },
+    "actions": {
+      "cancel": "Anuluj",
+      "submit": "Wyślij zgłoszenie",
+      "submitting": "Wysyłanie..."
+    }
   }
 }

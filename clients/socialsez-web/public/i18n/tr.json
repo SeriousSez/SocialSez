@@ -1679,5 +1679,61 @@
         "postReply": "Şu anda yanıt gönderme yapılamadı."
       }
     }
+  },
+  "reportModal": {
+    "title": "Bildir",
+    "aria": {
+      "back": "Geri git",
+      "close": "Bildirim penceresini kapat"
+    },
+    "rootHeadingWithHandle": "@{{handle}} hesabını neden bildiriyorsunuz?",
+    "rootHeadingDefault": "Bu hesabı neden bildiriyorsunuz?",
+    "rootOptions": {
+      "content": "Gönderi, mesaj veya yorumu bildir",
+      "account": "Hesabı bildir",
+      "unlawful": "Yasa dışı olarak bildir"
+    },
+    "categoryHeadings": {
+      "content": "İçerikle ilgili sorun nedir?",
+      "account": "Bu hesabı neden bildiriyorsunuz?",
+      "unlawful": "Hangi yasa dışı durumu bildiriyorsunuz?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam veya dolandırıcılık",
+        "harassment": "Taciz veya zorbalık",
+        "hateSpeech": "Nefret söylemi",
+        "violence": "Şiddet veya tehlikeli eylemler",
+        "nudity": "Çıplaklık veya cinsel içerik",
+        "falseInfo": "Yanlış bilgi"
+      },
+      "account": {
+        "impersonation": "Başkasını taklit etme",
+        "fake": "Sahte hesap",
+        "spam": "Spam hesap",
+        "harassment": "Taciz veya zorbalık",
+        "hateSpeech": "Nefret söylemi"
+      },
+      "unlawful": {
+        "fraud": "Sahtekarlık veya dolandırıcılık",
+        "threats": "Şiddet tehdidi",
+        "illegalGoods": "Yasa dışı ürün veya hizmetler",
+        "extortion": "Gasp veya şantaj",
+        "other": "Diğer yasal ihlal"
+      }
+    },
+    "somethingElse": "Başka bir neden",
+    "custom": {
+      "title": "Özel bildirim detayları ekle",
+      "reasonLabel": "Neden",
+      "reasonPlaceholder": "Kısa neden",
+      "detailsLabel": "Detaylar (isteğe bağlı)",
+      "detailsPlaceholder": "Ek bağlam ekleyin"
+    },
+    "actions": {
+      "cancel": "İptal",
+      "submit": "Bildirimi gönder",
+      "submitting": "Gönderiliyor..."
+    }
   }
 }

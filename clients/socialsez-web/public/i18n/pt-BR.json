@@ -1679,5 +1679,61 @@
         "postReply": "Não é possível postar resposta agora."
       }
     }
+  },
+  "reportModal": {
+    "title": "Denunciar",
+    "aria": {
+      "back": "Voltar",
+      "close": "Fechar modal de denúncia"
+    },
+    "rootHeadingWithHandle": "Por que você está denunciando @{{handle}}?",
+    "rootHeadingDefault": "Por que você está denunciando esta conta?",
+    "rootOptions": {
+      "content": "Denunciar post, mensagem ou comentário",
+      "account": "Denunciar conta",
+      "unlawful": "Denunciar como ilegal"
+    },
+    "categoryHeadings": {
+      "content": "Qual é o problema com o conteúdo?",
+      "account": "Por que você está denunciando esta conta?",
+      "unlawful": "Qual problema ilegal você está denunciando?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam ou golpe",
+        "harassment": "Assédio ou bullying",
+        "hateSpeech": "Discurso de ódio",
+        "violence": "Violência ou atos perigosos",
+        "nudity": "Nudez ou conteúdo sexual",
+        "falseInfo": "Informação falsa"
+      },
+      "account": {
+        "impersonation": "Fingindo ser outra pessoa",
+        "fake": "Conta falsa",
+        "spam": "Conta de spam",
+        "harassment": "Assédio ou bullying",
+        "hateSpeech": "Discurso de ódio"
+      },
+      "unlawful": {
+        "fraud": "Fraude ou golpe",
+        "threats": "Ameaças de violência",
+        "illegalGoods": "Bens ou serviços ilegais",
+        "extortion": "Extorsão ou chantagem",
+        "other": "Outra violação legal"
+      }
+    },
+    "somethingElse": "Outro motivo",
+    "custom": {
+      "title": "Adicionar detalhes personalizados da denúncia",
+      "reasonLabel": "Motivo",
+      "reasonPlaceholder": "Motivo curto",
+      "detailsLabel": "Detalhes (opcional)",
+      "detailsPlaceholder": "Adicione contexto extra"
+    },
+    "actions": {
+      "cancel": "Cancelar",
+      "submit": "Enviar denúncia",
+      "submitting": "Enviando..."
+    }
   }
 }

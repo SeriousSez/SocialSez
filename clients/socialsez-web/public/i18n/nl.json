@@ -1679,5 +1679,61 @@
         "postReply": "Kan momenteel geen reactie plaatsen."
       }
     }
+  },
+  "reportModal": {
+    "title": "Melden",
+    "aria": {
+      "back": "Ga terug",
+      "close": "Meldvenster sluiten"
+    },
+    "rootHeadingWithHandle": "Waarom meld je @{{handle}}?",
+    "rootHeadingDefault": "Waarom meld je dit account?",
+    "rootOptions": {
+      "content": "Bericht, berichtje of reactie melden",
+      "account": "Account melden",
+      "unlawful": "Als onwettig melden"
+    },
+    "categoryHeadings": {
+      "content": "Wat is het probleem met de inhoud?",
+      "account": "Waarom meld je dit account?",
+      "unlawful": "Welke onwettige kwestie meld je?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam of oplichting",
+        "harassment": "Pesten of intimidatie",
+        "hateSpeech": "Haatzaaien",
+        "violence": "Geweld of gevaarlijke handelingen",
+        "nudity": "Naaktheid of seksuele inhoud",
+        "falseInfo": "Onjuiste informatie"
+      },
+      "account": {
+        "impersonation": "Doet zich voor als iemand anders",
+        "fake": "Nepaccount",
+        "spam": "Spamaccount",
+        "harassment": "Pesten of intimidatie",
+        "hateSpeech": "Haatzaaien"
+      },
+      "unlawful": {
+        "fraud": "Fraude of oplichting",
+        "threats": "Bedreiging met geweld",
+        "illegalGoods": "Illegale goederen of diensten",
+        "extortion": "Afpersing of chantage",
+        "other": "Andere juridische overtreding"
+      }
+    },
+    "somethingElse": "Iets anders",
+    "custom": {
+      "title": "Aangepaste melddetails toevoegen",
+      "reasonLabel": "Reden",
+      "reasonPlaceholder": "Korte reden",
+      "detailsLabel": "Details (optioneel)",
+      "detailsPlaceholder": "Voeg extra context toe"
+    },
+    "actions": {
+      "cancel": "Annuleren",
+      "submit": "Melding verzenden",
+      "submitting": "Verzenden..."
+    }
   }
 }

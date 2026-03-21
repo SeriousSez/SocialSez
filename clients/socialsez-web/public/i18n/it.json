@@ -1679,5 +1679,61 @@
         "postReply": "Impossibile pubblicare la risposta in questo momento."
       }
     }
+  },
+  "reportModal": {
+    "title": "Segnala",
+    "aria": {
+      "back": "Indietro",
+      "close": "Chiudi finestra di segnalazione"
+    },
+    "rootHeadingWithHandle": "Perché stai segnalando @{{handle}}?",
+    "rootHeadingDefault": "Perché stai segnalando questo account?",
+    "rootOptions": {
+      "content": "Segnala post, messaggio o commento",
+      "account": "Segnala account",
+      "unlawful": "Segnala come illecito"
+    },
+    "categoryHeadings": {
+      "content": "Qual è il problema con il contenuto?",
+      "account": "Perché stai segnalando questo account?",
+      "unlawful": "Quale problema illecito stai segnalando?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam o truffa",
+        "harassment": "Molestie o bullismo",
+        "hateSpeech": "Discorso d'odio",
+        "violence": "Violenza o atti pericolosi",
+        "nudity": "Nudità o contenuto sessuale",
+        "falseInfo": "Informazioni false"
+      },
+      "account": {
+        "impersonation": "Si spaccia per qualcun altro",
+        "fake": "Account falso",
+        "spam": "Account spam",
+        "harassment": "Molestie o bullismo",
+        "hateSpeech": "Discorso d'odio"
+      },
+      "unlawful": {
+        "fraud": "Frode o truffa",
+        "threats": "Minacce di violenza",
+        "illegalGoods": "Beni o servizi illegali",
+        "extortion": "Estorsione o ricatto",
+        "other": "Altra violazione legale"
+      }
+    },
+    "somethingElse": "Altro motivo",
+    "custom": {
+      "title": "Aggiungi dettagli personalizzati alla segnalazione",
+      "reasonLabel": "Motivo",
+      "reasonPlaceholder": "Motivo breve",
+      "detailsLabel": "Dettagli (facoltativo)",
+      "detailsPlaceholder": "Aggiungi contesto aggiuntivo"
+    },
+    "actions": {
+      "cancel": "Annulla",
+      "submit": "Invia segnalazione",
+      "submitting": "Invio..."
+    }
   }
 }

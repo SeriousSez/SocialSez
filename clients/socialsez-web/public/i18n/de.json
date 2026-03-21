@@ -1679,5 +1679,61 @@
         "postReply": "Antwort konnte gerade nicht veröffentlicht werden."
       }
     }
+  },
+  "reportModal": {
+    "title": "Melden",
+    "aria": {
+      "back": "Zurück",
+      "close": "Meldedialog schließen"
+    },
+    "rootHeadingWithHandle": "Warum meldest du @{{handle}}?",
+    "rootHeadingDefault": "Warum meldest du dieses Konto?",
+    "rootOptions": {
+      "content": "Beitrag, Nachricht oder Kommentar melden",
+      "account": "Konto melden",
+      "unlawful": "Als rechtswidrig melden"
+    },
+    "categoryHeadings": {
+      "content": "Was ist das Problem mit dem Inhalt?",
+      "account": "Warum meldest du dieses Konto?",
+      "unlawful": "Welchen rechtswidrigen Verstoß meldest du?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam oder Betrug",
+        "harassment": "Belästigung oder Mobbing",
+        "hateSpeech": "Hassrede",
+        "violence": "Gewalt oder gefährliche Handlungen",
+        "nudity": "Nacktheit oder sexuelle Inhalte",
+        "falseInfo": "Falsche Informationen"
+      },
+      "account": {
+        "impersonation": "Gibt sich als jemand anderes aus",
+        "fake": "Fake-Konto",
+        "spam": "Spam-Konto",
+        "harassment": "Belästigung oder Mobbing",
+        "hateSpeech": "Hassrede"
+      },
+      "unlawful": {
+        "fraud": "Betrug oder Täuschung",
+        "threats": "Gewaltdrohungen",
+        "illegalGoods": "Illegale Waren oder Dienstleistungen",
+        "extortion": "Erpressung oder Nötigung",
+        "other": "Anderer Rechtsverstoß"
+      }
+    },
+    "somethingElse": "Etwas anderes",
+    "custom": {
+      "title": "Eigene Meldedetails hinzufügen",
+      "reasonLabel": "Grund",
+      "reasonPlaceholder": "Kurzer Grund",
+      "detailsLabel": "Details (optional)",
+      "detailsPlaceholder": "Zusätzlichen Kontext hinzufügen"
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "submit": "Meldung senden",
+      "submitting": "Wird gesendet..."
+    }
   }
 }

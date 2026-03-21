@@ -1696,5 +1696,61 @@
         "postReply": "Unable to post reply right now."
       }
     }
+  },
+  "reportModal": {
+    "title": "Report",
+    "aria": {
+      "back": "Go back",
+      "close": "Close report modal"
+    },
+    "rootHeadingWithHandle": "Why are you reporting @{{handle}}?",
+    "rootHeadingDefault": "Why are you reporting this account?",
+    "rootOptions": {
+      "content": "Report Post, Message or Comment",
+      "account": "Report Account",
+      "unlawful": "Report as unlawful"
+    },
+    "categoryHeadings": {
+      "content": "What is the problem with the content?",
+      "account": "Why are you reporting this account?",
+      "unlawful": "What unlawful issue are you reporting?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam or scam",
+        "harassment": "Harassment or bullying",
+        "hateSpeech": "Hate speech",
+        "violence": "Violence or dangerous acts",
+        "nudity": "Nudity or sexual content",
+        "falseInfo": "False information"
+      },
+      "account": {
+        "impersonation": "Pretending to be someone else",
+        "fake": "Fake account",
+        "spam": "Spam account",
+        "harassment": "Harassment or bullying",
+        "hateSpeech": "Hate speech"
+      },
+      "unlawful": {
+        "fraud": "Fraud or scam",
+        "threats": "Threats of violence",
+        "illegalGoods": "Illegal goods or services",
+        "extortion": "Extortion or blackmail",
+        "other": "Other legal violation"
+      }
+    },
+    "somethingElse": "Something else",
+    "custom": {
+      "title": "Add custom report details",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "Short reason",
+      "detailsLabel": "Details (optional)",
+      "detailsPlaceholder": "Add extra context"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "submit": "Submit report",
+      "submitting": "Submitting..."
+    }
   }
 }

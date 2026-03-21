@@ -1679,5 +1679,61 @@
         "postReply": "تعذر نشر الرد الآن."
       }
     }
+  },
+  "reportModal": {
+    "title": "إبلاغ",
+    "aria": {
+      "back": "رجوع",
+      "close": "إغلاق نافذة الإبلاغ"
+    },
+    "rootHeadingWithHandle": "لماذا تُبلّغ عن @{{handle}}؟",
+    "rootHeadingDefault": "لماذا تُبلّغ عن هذا الحساب؟",
+    "rootOptions": {
+      "content": "الإبلاغ عن منشور أو رسالة أو تعليق",
+      "account": "الإبلاغ عن الحساب",
+      "unlawful": "الإبلاغ كمخالفة قانونية"
+    },
+    "categoryHeadings": {
+      "content": "ما المشكلة في هذا المحتوى؟",
+      "account": "لماذا تُبلّغ عن هذا الحساب؟",
+      "unlawful": "ما المخالفة القانونية التي تُبلّغ عنها؟"
+    },
+    "reasons": {
+      "content": {
+        "spam": "رسائل مزعجة أو احتيال",
+        "harassment": "مضايقة أو تنمّر",
+        "hateSpeech": "خطاب كراهية",
+        "violence": "عنف أو أفعال خطيرة",
+        "nudity": "عري أو محتوى جنسي",
+        "falseInfo": "معلومات مضللة"
+      },
+      "account": {
+        "impersonation": "انتحال شخصية شخص آخر",
+        "fake": "حساب مزيف",
+        "spam": "حساب مزعج",
+        "harassment": "مضايقة أو تنمّر",
+        "hateSpeech": "خطاب كراهية"
+      },
+      "unlawful": {
+        "fraud": "احتيال أو خداع",
+        "threats": "تهديدات بالعنف",
+        "illegalGoods": "سلع أو خدمات غير قانونية",
+        "extortion": "ابتزاز أو تهديد",
+        "other": "مخالفة قانونية أخرى"
+      }
+    },
+    "somethingElse": "سبب آخر",
+    "custom": {
+      "title": "أضف تفاصيل إضافية للإبلاغ",
+      "reasonLabel": "السبب",
+      "reasonPlaceholder": "سبب مختصر",
+      "detailsLabel": "التفاصيل (اختياري)",
+      "detailsPlaceholder": "أضف سياقًا إضافيًا"
+    },
+    "actions": {
+      "cancel": "إلغاء",
+      "submit": "إرسال البلاغ",
+      "submitting": "جارٍ الإرسال..."
+    }
   }
 }

@@ -1679,5 +1679,61 @@
         "postReply": "Kunne ikke publicere svar lige nu."
       }
     }
+  },
+  "reportModal": {
+    "title": "Anmeld",
+    "aria": {
+      "back": "Gå tilbage",
+      "close": "Luk anmeldelsesdialog"
+    },
+    "rootHeadingWithHandle": "Hvorfor anmelder du @{{handle}}?",
+    "rootHeadingDefault": "Hvorfor anmelder du denne konto?",
+    "rootOptions": {
+      "content": "Anmeld opslag, besked eller kommentar",
+      "account": "Anmeld konto",
+      "unlawful": "Anmeld som ulovligt"
+    },
+    "categoryHeadings": {
+      "content": "Hvad er problemet med indholdet?",
+      "account": "Hvorfor anmelder du denne konto?",
+      "unlawful": "Hvilket ulovligt forhold anmelder du?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam eller svindel",
+        "harassment": "Chikane eller mobning",
+        "hateSpeech": "Hadtale",
+        "violence": "Vold eller farlige handlinger",
+        "nudity": "Nøgenhed eller seksuelt indhold",
+        "falseInfo": "Falske oplysninger"
+      },
+      "account": {
+        "impersonation": "Udgiver sig for at være en anden",
+        "fake": "Falsk konto",
+        "spam": "Spamkonto",
+        "harassment": "Chikane eller mobning",
+        "hateSpeech": "Hadtale"
+      },
+      "unlawful": {
+        "fraud": "Bedrageri eller svindel",
+        "threats": "Trusler om vold",
+        "illegalGoods": "Ulovlige varer eller tjenester",
+        "extortion": "Afpresning eller afpresning med trusler",
+        "other": "Anden juridisk overtrædelse"
+      }
+    },
+    "somethingElse": "Noget andet",
+    "custom": {
+      "title": "Tilføj egne anmeldelsesdetaljer",
+      "reasonLabel": "Årsag",
+      "reasonPlaceholder": "Kort årsag",
+      "detailsLabel": "Detaljer (valgfrit)",
+      "detailsPlaceholder": "Tilføj ekstra kontekst"
+    },
+    "actions": {
+      "cancel": "Annuller",
+      "submit": "Indsend anmeldelse",
+      "submitting": "Indsender..."
+    }
   }
 }

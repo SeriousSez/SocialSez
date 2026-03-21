@@ -1,56 +1,56 @@
 <section class="report-overlay" *ngIf="open" (click)="onBackdropClick($event)">
-    <article class="report-card" role="dialog" aria-modal="true" aria-label="Report account">
+    <article class="report-card" role="dialog" aria-modal="true" [attr.aria-label]="'reportModal.title' | translate">
         <header class="report-header">
-            <button type="button" class="header-back" *ngIf="currentStep !== 'root'; else headerSpacer" (click)="goBack()" [disabled]="busy" aria-label="Go back">←</button>
+            <button type="button" class="header-back" *ngIf="currentStep !== 'root'; else headerSpacer" (click)="goBack()" [disabled]="busy" [attr.aria-label]="'reportModal.aria.back' | translate">←</button>
             <ng-template #headerSpacer>
                 <span class="spacer" aria-hidden="true"></span>
             </ng-template>
-            <h3>Report</h3>
-            <button type="button" class="icon-button" (click)="cancel.emit()" [disabled]="busy" aria-label="Close report modal">✕</button>
+            <h3>{{ 'reportModal.title' | translate }}</h3>
+            <button type="button" class="icon-button" (click)="cancel.emit()" [disabled]="busy" [attr.aria-label]="'reportModal.aria.close' | translate">✕</button>
         </header>
 
         <ng-container *ngIf="currentStep === 'root'">
-            <p class="report-title">{{ rootHeading }}</p>
+            <p class="report-title">{{ profileHandle.trim() ? ('reportModal.rootHeadingWithHandle' | translate:{ handle: profileHandle.trim() }) : ('reportModal.rootHeadingDefault' | translate) }}</p>
             <div class="report-options">
                 <button type="button" class="report-row" *ngFor="let option of rootOptions" (click)="chooseRootCategory(option.id)" [disabled]="busy">
-                    <span>{{ option.label }}</span>
+                    <span>{{ option.labelKey | translate }}</span>
                     <span class="chevron" aria-hidden="true">›</span>
                 </button>
             </div>
         </ng-container>
 
         <ng-container *ngIf="currentStep === 'options' && selectedCategoryConfig as category">
-            <p class="report-title">{{ category.heading }}</p>
+            <p class="report-title">{{ category.headingKey | translate }}</p>
 
             <div class="report-options">
                 <button type="button" class="report-row" *ngFor="let option of category.options" (click)="chooseReason(option.value)" [disabled]="busy">
-                    <span>{{ option.label }}</span>
+                    <span>{{ option.labelKey | translate }}</span>
                     <span class="chevron" aria-hidden="true">›</span>
                 </button>
 
                 <button type="button" class="report-row" (click)="openCustomReasonPage()" [disabled]="busy">
-                    <span>Something else</span>
+                    <span>{{ 'reportModal.somethingElse' | translate }}</span>
                     <span class="chevron" aria-hidden="true">›</span>
                 </button>
             </div>
         </ng-container>
 
         <ng-container *ngIf="currentStep === 'custom'">
-            <p class="report-title">Add custom report details</p>
+            <p class="report-title">{{ 'reportModal.custom.title' | translate }}</p>
 
             <label class="report-field">
-                <span>Reason</span>
-                <input type="text" [(ngModel)]="customReason" maxlength="100" [disabled]="busy" placeholder="Short reason" />
+                <span>{{ 'reportModal.custom.reasonLabel' | translate }}</span>
+                <input type="text" [(ngModel)]="customReason" maxlength="100" [disabled]="busy" [placeholder]="'reportModal.custom.reasonPlaceholder' | translate" />
             </label>
 
             <label class="report-field">
-                <span>Details (optional)</span>
-                <textarea [(ngModel)]="customDetails" maxlength="1000" rows="4" [disabled]="busy" placeholder="Add extra context"></textarea>
+                <span>{{ 'reportModal.custom.detailsLabel' | translate }}</span>
+                <textarea [(ngModel)]="customDetails" maxlength="1000" rows="4" [disabled]="busy" [placeholder]="'reportModal.custom.detailsPlaceholder' | translate"></textarea>
             </label>
 
             <div class="report-actions">
-                <button type="button" class="ghost" (click)="cancel.emit()" [disabled]="busy">Cancel</button>
-                <button type="button" (click)="submitCustomReason()" [disabled]="!canSubmitCustom">{{ busy ? 'Submitting...' : 'Submit report' }}</button>
+                <button type="button" class="ghost" (click)="cancel.emit()" [disabled]="busy">{{ 'reportModal.actions.cancel' | translate }}</button>
+                <button type="button" (click)="submitCustomReason()" [disabled]="!canSubmitCustom">{{ busy ? ('reportModal.actions.submitting' | translate) : ('reportModal.actions.submit' | translate) }}</button>
             </div>
         </ng-container>
     </article>

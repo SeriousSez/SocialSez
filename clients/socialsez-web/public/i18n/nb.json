@@ -1679,5 +1679,61 @@
     "media": {
       "alt": "Media i delt story"
     }
+  },
+  "reportModal": {
+    "title": "Rapporter",
+    "aria": {
+      "back": "Gå tilbake",
+      "close": "Lukk rapportvindu"
+    },
+    "rootHeadingWithHandle": "Hvorfor rapporterer du @{{handle}}?",
+    "rootHeadingDefault": "Hvorfor rapporterer du denne kontoen?",
+    "rootOptions": {
+      "content": "Rapporter innlegg, melding eller kommentar",
+      "account": "Rapporter konto",
+      "unlawful": "Rapporter som ulovlig"
+    },
+    "categoryHeadings": {
+      "content": "Hva er problemet med innholdet?",
+      "account": "Hvorfor rapporterer du denne kontoen?",
+      "unlawful": "Hvilket ulovlig forhold rapporterer du?"
+    },
+    "reasons": {
+      "content": {
+        "spam": "Spam eller svindel",
+        "harassment": "Trakassering eller mobbing",
+        "hateSpeech": "Hatprat",
+        "violence": "Vold eller farlige handlinger",
+        "nudity": "Nakenhet eller seksuelt innhold",
+        "falseInfo": "Feilinformasjon"
+      },
+      "account": {
+        "impersonation": "Utgir seg for å være noen andre",
+        "fake": "Falsk konto",
+        "spam": "Spamkonto",
+        "harassment": "Trakassering eller mobbing",
+        "hateSpeech": "Hatprat"
+      },
+      "unlawful": {
+        "fraud": "Bedrageri eller svindel",
+        "threats": "Trusler om vold",
+        "illegalGoods": "Ulovlige varer eller tjenester",
+        "extortion": "Utpressing eller press",
+        "other": "Annet lovbrudd"
+      }
+    },
+    "somethingElse": "Noe annet",
+    "custom": {
+      "title": "Legg til egendefinerte rapportdetaljer",
+      "reasonLabel": "Årsak",
+      "reasonPlaceholder": "Kort årsak",
+      "detailsLabel": "Detaljer (valgfritt)",
+      "detailsPlaceholder": "Legg til ekstra kontekst"
+    },
+    "actions": {
+      "cancel": "Avbryt",
+      "submit": "Send rapport",
+      "submitting": "Sender..."
+    }
   }
 }
