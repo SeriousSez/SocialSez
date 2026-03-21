@@ -411,16 +411,17 @@
         <div class="poll-editor" *ngIf="isEditPostTab('poll')">
             <label>
                 {{ 'communityDetail.editPost.fields.question' | translate }}
-                <input [(ngModel)]="editPollQuestion" [placeholder]="'communityDetail.editPost.placeholders.askCommunity' | translate" maxlength="280" [disabled]="updatingPost" />
+                <input [(ngModel)]="editPollQuestion" [placeholder]="'communityDetail.editPost.placeholders.askCommunity' | translate" maxlength="280" [disabled]="updatingPost || isEditPollLocked" />
             </label>
             <label *ngFor="let option of editPollOptions; index as i; trackBy: trackByIndex">
                 {{ 'communityDetail.editPost.fields.option' | translate:{ index: i + 1 } }}
                 <div class="poll-option-row">
-                    <input [(ngModel)]="editPollOptions[i]" maxlength="160" [placeholder]="'communityDetail.editPost.placeholders.optionText' | translate" [disabled]="updatingPost" />
-                    <button type="button" class="ghost" (click)="removeEditPollOption(i)" [disabled]="updatingPost || editPollOptions.length <= 2">{{ 'communityDetail.editPost.remove' | translate }}</button>
+                    <input [(ngModel)]="editPollOptions[i]" maxlength="160" [placeholder]="'communityDetail.editPost.placeholders.optionText' | translate" [disabled]="updatingPost || isEditPollLocked" />
+                    <button type="button" class="ghost" (click)="removeEditPollOption(i)" [disabled]="updatingPost || isEditPollLocked || editPollOptions.length <= 2">{{ 'communityDetail.editPost.remove' | translate }}</button>
                 </div>
             </label>
-            <button type="button" class="ghost" (click)="addEditPollOption()" [disabled]="updatingPost || editPollOptions.length >= 6">{{ 'communityDetail.editPost.addOption' | translate }}</button>
+            <button type="button" class="ghost" (click)="addEditPollOption()" [disabled]="updatingPost || isEditPollLocked || editPollOptions.length >= 6">{{ 'communityDetail.editPost.addOption' | translate }}</button>
+            <p class="meta" *ngIf="isEditPollLocked">{{ 'communityDetail.editPost.lockedPollHelp' | translate }}</p>
         </div>
 
         <div class="actions">

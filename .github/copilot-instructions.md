@@ -33,6 +33,7 @@ SocialSez is a social platform with:
 - When adding or changing a translation key, update every supported locale file, not just English. Do not leave new keys in English in non-English locale files.
 - If a feature uses runtime translation keys, verify the exact keys used in the component/template match the locale JSON entries before finishing.
 - Treat localization as part of the feature work: anything you touch that is user-visible must be translated in every language file before the task is complete.
+- Never use the native dropdown `<select>` element for multi-select filters — use the existing `MultiSelectDropdownComponent` for consistency and accessibility.
 
 ```ts
 // Preferred DI pattern

@@ -1359,6 +1359,7 @@
       "removeCurrent": "Eliminar actual",
       "remove": "Eliminar",
       "addOption": "Añadir opción",
+      "lockedPollHelp": "Esta encuesta ya tiene votos, por lo que no se pueden cambiar la pregunta ni las opciones.",
       "saving": "Guardando…",
       "saveChanges": "Guardar cambios"
     },

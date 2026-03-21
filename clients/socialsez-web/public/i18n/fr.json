@@ -1524,6 +1524,7 @@
       "removeCurrent": "Supprimer le courant",
       "remove": "Retirer",
       "addOption": "Ajouter une option",
+      "lockedPollHelp": "Ce sondage a déjà reçu des votes, donc la question et les options ne peuvent plus être modifiées.",
       "saving": "Économie…",
       "saveChanges": "Enregistrer les modifications"
     },

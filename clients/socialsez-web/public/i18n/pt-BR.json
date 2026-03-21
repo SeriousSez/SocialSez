@@ -1524,6 +1524,7 @@
       "removeCurrent": "Remover atual",
       "remove": "Remover",
       "addOption": "Adicionar opção",
+      "lockedPollHelp": "Esta enquete já recebeu votos, então a pergunta e as opções não podem mais ser alteradas.",
       "saving": "Salvando…",
       "saveChanges": "Salvar alterações"
     },

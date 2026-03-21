@@ -106,6 +106,8 @@ export class CommunityDetailPageComponent {
     editPostActiveImageIndex = 0;
     editPollQuestion = '';
     editPollOptions: string[] = ['', ''];
+    editInitialPollQuestion: string | null = null;
+    editInitialPollOptions: string[] = [];
     private readonly postImageIndexByPostId = new Map<string, number>();
     private readonly postImageDirectionByPostId = new Map<string, 'next' | 'prev'>();
     private readonly postImageOutgoingByPostId = new Map<string, string>();
@@ -748,8 +750,13 @@ export class CommunityDetailPageComponent {
         }
     }
 
+    get isEditPollLocked(): boolean {
+        const editingPost = this.editingPostId ? this.posts.find(item => item.id === this.editingPostId) : null;
+        return (editingPost?.poll?.totalVotes ?? 0) > 0;
+    }
+
     addEditPollOption(): void {
-        if (this.editPollOptions.length >= 6) {
+        if (this.isEditPollLocked || this.editPollOptions.length >= 6) {
             return;
         }
 
@@ -757,7 +764,7 @@ export class CommunityDetailPageComponent {
     }
 
     removeEditPollOption(index: number): void {
-        if (this.editPollOptions.length <= 2) {
+        if (this.isEditPollLocked || this.editPollOptions.length <= 2) {
             return;
         }
 
@@ -1680,6 +1687,8 @@ export class CommunityDetailPageComponent {
         this.editPostMediaContent = post.mediaContent ?? post.content ?? '';
         this.editPollQuestion = '';
         this.editPollOptions = ['', ''];
+        this.editInitialPollQuestion = null;
+        this.editInitialPollOptions = [];
 
         const existingImageUrls = (post.imageUrls ?? []).filter(url => !!url);
         this.editPostImageEntries = existingImageUrls.map(url => ({
@@ -1693,6 +1702,8 @@ export class CommunityDetailPageComponent {
             this.editPostTab = 'poll';
             this.editPollQuestion = post.poll.question;
             this.editPollOptions = post.poll.options.map(option => option.text).slice(0, 6);
+            this.editInitialPollQuestion = post.poll.question.trim() || null;
+            this.editInitialPollOptions = post.poll.options.map(option => option.text.trim()).filter(option => !!option);
             while (this.editPollOptions.length < 2) {
                 this.editPollOptions.push('');
             }
@@ -1733,11 +1744,14 @@ export class CommunityDetailPageComponent {
         const content = this.resolveEditPostTextContent();
         const mediaContent = this.resolveEditPostMediaContent();
         const linkUrl = this.editPostTab === 'link' ? this.editPostLinkUrl.trim() || null : null;
-        const pollQuestion = this.editPostTab === 'poll' ? this.editPollQuestion.trim() || null : null;
-        const pollOptions = this.editPostTab === 'poll'
-            ? this.editPollOptions.map(option => option.trim()).filter(option => !!option)
-            : null;
-        const clearPoll = this.editPostTab !== 'poll';
+        const normalizedPollQuestion = this.editPollQuestion.trim() || null;
+        const normalizedPollOptions = this.editPollOptions.map(option => option.trim()).filter(option => !!option);
+        const isExistingPollUnchanged = !!post.poll
+            && normalizedPollQuestion === this.editInitialPollQuestion
+            && this.haveSamePollOptions(normalizedPollOptions, this.editInitialPollOptions);
+        const pollQuestion = this.editPostTab === 'poll' && !isExistingPollUnchanged ? normalizedPollQuestion : null;
+        const pollOptions = this.editPostTab === 'poll' && !isExistingPollUnchanged ? normalizedPollOptions : null;
+        const clearPoll = false;
 
         if (!title) {
             this.status = this.t('communityDetail.errors.titleRequired');
@@ -1746,8 +1760,9 @@ export class CommunityDetailPageComponent {
         }
 
         const hasImages = this.editPostTab === 'media' && this.editPostImageEntries.length > 0;
+        const preservesExistingPoll = !!post.poll && !pollQuestion && !clearPoll;
 
-        if (!content && !mediaContent && !linkUrl && !hasImages && !pollQuestion) {
+        if (!content && !mediaContent && !linkUrl && !hasImages && !pollQuestion && !preservesExistingPoll) {
             this.status = this.t('communityDetail.errors.addContentBeforeSaving');
             this.statusTone = 'neutral';
             return;
@@ -2036,6 +2051,10 @@ export class CommunityDetailPageComponent {
 
     private resolveEditPostMediaContent(): string | null {
         return this.editPostMediaContent.trim() || null;
+    }
+
+    private haveSamePollOptions(left: string[], right: string[]): boolean {
+        return left.length === right.length && left.every((option, index) => option === right[index]);
     }
 
     private async resolveEditPostImageUrlsAsync(): Promise<string[]> {

@@ -50,7 +50,13 @@ export class BlogsPageComponent {
         this.refreshInfiniteObserver();
     }
 
+    @ViewChild('sortDropdown')
+    set sortDropdown(value: ElementRef<HTMLDivElement> | undefined) {
+        this.sortDropdownRef = value;
+    }
+
     private sentinelRef?: ElementRef<HTMLDivElement>;
+    private sortDropdownRef?: ElementRef<HTMLDivElement>;
     private infiniteObserver: IntersectionObserver | null = null;
 
     get sortOptions(): ReadonlyArray<{ value: BlogSort; label: string }> {
@@ -139,13 +145,13 @@ export class BlogsPageComponent {
         this.scheduleObserverRefresh();
     }
 
-    toggleSortMenu(event: MouseEvent): void {
+    toggleSortMenu(event: PointerEvent): void {
         event.preventDefault();
         event.stopPropagation();
         this.sortMenuOpen = !this.sortMenuOpen;
     }
 
-    selectSort(value: BlogSort, event: MouseEvent): void {
+    selectSort(value: BlogSort, event: PointerEvent): void {
         event.preventDefault();
         event.stopPropagation();
         if (this.sortBy !== value) {
@@ -306,8 +312,17 @@ export class BlogsPageComponent {
         }
     }
 
-    @HostListener('document:click')
-    onDocumentClick(): void {
+    @HostListener('document:pointerdown', ['$event'])
+    onDocumentPointerDown(event: PointerEvent): void {
+        if (!this.sortMenuOpen) {
+            return;
+        }
+
+        const target = event.target as Node | null;
+        if (target && this.sortDropdownRef?.nativeElement.contains(target)) {
+            return;
+        }
+
         this.sortMenuOpen = false;
     }
 

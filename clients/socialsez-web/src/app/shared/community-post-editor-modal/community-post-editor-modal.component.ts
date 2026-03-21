@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { CommunityPostDto } from '../../core/api.types';
 import { SessionService } from '../../core/session.service';
 import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.component';
@@ -25,7 +26,7 @@ export interface CommunityPostEditorSavePayload {
 @Component({
     selector: 'app-community-post-editor-modal, app-community-post-edit-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, RichTextEditorComponent],
+    imports: [CommonModule, FormsModule, TranslateModule, RichTextEditorComponent],
     templateUrl: './community-post-editor-modal.component.html',
     styleUrl: './community-post-editor-modal.component.scss'
 })
@@ -49,6 +50,8 @@ export class CommunityPostEditorModalComponent implements OnChanges, OnDestroy {
     editPostActiveImageIndex = 0;
     validationError = '';
     private uploadingImages = false;
+    private initialPollQuestion: string | null = null;
+    private initialPollOptions: string[] = [];
 
     constructor(private readonly session: SessionService) { }
 
@@ -165,8 +168,12 @@ export class CommunityPostEditorModalComponent implements OnChanges, OnDestroy {
         return this.busy || this.uploadingImages;
     }
 
+    get isPollEditingLocked(): boolean {
+        return (this.post?.poll?.totalVotes ?? 0) > 0;
+    }
+
     addPollOption(): void {
-        if (this.pollOptions.length >= 6) {
+        if (this.isPollEditingLocked || this.pollOptions.length >= 6) {
             return;
         }
 
@@ -174,7 +181,7 @@ export class CommunityPostEditorModalComponent implements OnChanges, OnDestroy {
     }
 
     removePollOption(index: number): void {
-        if (this.pollOptions.length <= 2) {
+        if (this.isPollEditingLocked || this.pollOptions.length <= 2) {
             return;
         }
 
@@ -204,18 +211,22 @@ export class CommunityPostEditorModalComponent implements OnChanges, OnDestroy {
         }
 
         const linkUrl = this.tab === 'link' ? normalizedLink.value : null;
-        const pollQuestion = this.tab === 'poll' ? this.pollQuestion.trim() || null : null;
-        const pollOptions = this.tab === 'poll'
-            ? this.pollOptions.map(option => option.trim()).filter(option => !!option)
-            : null;
-        const clearPoll = this.tab !== 'poll';
+        const normalizedPollQuestion = this.pollQuestion.trim() || null;
+        const normalizedPollOptions = this.pollOptions.map(option => option.trim()).filter(option => !!option);
+        const isExistingPollUnchanged = !!this.post.poll
+            && normalizedPollQuestion === this.initialPollQuestion
+            && this.haveSamePollOptions(normalizedPollOptions, this.initialPollOptions);
+        const pollQuestion = this.tab === 'poll' && !isExistingPollUnchanged ? normalizedPollQuestion : null;
+        const pollOptions = this.tab === 'poll' && !isExistingPollUnchanged ? normalizedPollOptions : null;
+        const clearPoll = false;
         const hasImages = this.tab === 'media' && this.editPostImageEntries.length > 0;
+        const preservesExistingPoll = !!this.post.poll && !pollQuestion && !clearPoll;
         if (!title) {
             this.validationError = 'Title is required.';
             return;
         }
 
-        if (!content && !mediaContent && !linkUrl && !hasImages && !pollQuestion) {
+        if (!content && !mediaContent && !linkUrl && !hasImages && !pollQuestion && !preservesExistingPoll) {
             this.validationError = 'Add text, image, link, or poll before saving.';
             return;
         }
@@ -255,6 +266,8 @@ export class CommunityPostEditorModalComponent implements OnChanges, OnDestroy {
         this.mediaContent = post.mediaContent ?? post.content ?? '';
         this.pollQuestion = '';
         this.pollOptions = ['', ''];
+        this.initialPollQuestion = null;
+        this.initialPollOptions = [];
         this.editPostImageEntries = (post.imageUrls ?? [])
             .filter(url => !!url)
             .map(url => ({
@@ -270,6 +283,8 @@ export class CommunityPostEditorModalComponent implements OnChanges, OnDestroy {
             this.tab = 'poll';
             this.pollQuestion = post.poll.question;
             this.pollOptions = post.poll.options.map(option => option.text).slice(0, 6);
+            this.initialPollQuestion = post.poll.question.trim() || null;
+            this.initialPollOptions = post.poll.options.map(option => option.text.trim()).filter(option => !!option);
             while (this.pollOptions.length < 2) {
                 this.pollOptions.push('');
             }
@@ -295,6 +310,10 @@ export class CommunityPostEditorModalComponent implements OnChanges, OnDestroy {
 
     private resolveMediaContent(): string | null {
         return this.mediaContent.trim() || null;
+    }
+
+    private haveSamePollOptions(left: string[], right: string[]): boolean {
+        return left.length === right.length && left.every((option, index) => option === right[index]);
     }
 
     private async resolveEditPostImageUrlsAsync(): Promise<string[]> {

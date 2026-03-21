@@ -1201,6 +1201,7 @@
       "removeCurrent": "Geçerli olanı kaldır",
       "remove": "Kaldır",
       "addOption": "Seçenek ekle",
+      "lockedPollHelp": "Bu ankette zaten oy var, bu yüzden soru ve seçenekler değiştirilemez.",
       "saving": "Kaydediliyor…",
       "saveChanges": "Değişiklikleri kaydet"
     },

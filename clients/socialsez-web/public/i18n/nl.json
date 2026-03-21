@@ -1524,6 +1524,7 @@
       "removeCurrent": "Huidige verwijderen",
       "remove": "Verwijderen",
       "addOption": "Optie toevoegen",
+      "lockedPollHelp": "Deze peiling heeft al stemmen, dus de vraag en opties kunnen niet meer worden gewijzigd.",
       "saving": "Bezig met opslaan…",
       "saveChanges": "Wijzigingen opslaan"
     },

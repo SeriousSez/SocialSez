@@ -1201,6 +1201,7 @@
       "removeCurrent": "Usuń bieżący",
       "remove": "Usuń",
       "addOption": "Dodaj opcję",
+      "lockedPollHelp": "Ta ankieta ma już oddane głosy, więc nie można już zmieniać pytania ani opcji.",
       "saving": "Zapisywanie…",
       "saveChanges": "Zapisz zmiany"
     },

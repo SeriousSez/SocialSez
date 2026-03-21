@@ -359,6 +359,12 @@
     cursor: pointer;
 }
 
+.sort-menu button:hover,
+.sort-menu button.active {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
 .sort-menu button:hover {
     transform: none;
     box-shadow: none;

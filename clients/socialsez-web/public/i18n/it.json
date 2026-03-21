@@ -1359,6 +1359,7 @@
       "removeCurrent": "Rimuovi corrente",
       "remove": "Rimuovi",
       "addOption": "Aggiungi opzione",
+      "lockedPollHelp": "Questo sondaggio ha già ricevuto voti, quindi la domanda e le opzioni non possono più essere modificate.",
       "saving": "Salvataggio…",
       "saveChanges": "Salva modifiche"
     },

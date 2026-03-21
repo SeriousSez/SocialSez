@@ -936,6 +936,7 @@
       "removeCurrent": "Fjern gjeldende",
       "remove": "Fjern",
       "addOption": "Legg til alternativ",
+      "lockedPollHelp": "Denne avstemningen har allerede stemmer, så spørsmålet og alternativene kan ikke endres.",
       "saving": "Lagrer…",
       "saveChanges": "Lagre endringer"
     },

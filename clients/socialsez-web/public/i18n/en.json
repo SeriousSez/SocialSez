@@ -1218,6 +1218,7 @@
       "removeCurrent": "Remove current",
       "remove": "Remove",
       "addOption": "Add option",
+      "lockedPollHelp": "This poll already has votes, so its question and options can't be changed.",
       "saving": "Saving…",
       "saveChanges": "Save changes"
     },

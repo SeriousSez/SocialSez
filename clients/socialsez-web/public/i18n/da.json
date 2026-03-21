@@ -1359,6 +1359,7 @@
       "removeCurrent": "Fjern nuværende",
       "remove": "Fjern",
       "addOption": "Tilføj valgmulighed",
+      "lockedPollHelp": "Denne afstemning har allerede stemmer, så spørgsmålet og valgmulighederne kan ikke ændres.",
       "saving": "Gemmer…",
       "saveChanges": "Gem ændringer"
     },

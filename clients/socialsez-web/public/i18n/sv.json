@@ -746,6 +746,7 @@
       "removeCurrent": "Ta bort aktuell",
       "remove": "Ta bort",
       "addOption": "Lägg till alternativ",
+      "lockedPollHelp": "Den här omröstningen har redan röster, så frågan och alternativen kan inte ändras.",
       "saving": "Sparar…",
       "saveChanges": "Spara ändringar"
     },

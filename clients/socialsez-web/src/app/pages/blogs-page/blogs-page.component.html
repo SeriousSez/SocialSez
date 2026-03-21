@@ -26,14 +26,14 @@
 
         <div class="controls-row">
             <label>{{ 'blogs.sort.label' | translate }}</label>
-            <div class="sort-dropdown" (click)="$event.stopPropagation()">
-                <button type="button" class="sort-toggle" [attr.aria-expanded]="sortMenuOpen" aria-haspopup="menu" (click)="toggleSortMenu($event)">
+            <div class="sort-dropdown" #sortDropdown>
+                <button type="button" class="sort-toggle" [attr.aria-expanded]="sortMenuOpen" aria-haspopup="menu" (pointerdown)="toggleSortMenu($event)">
                     <span>{{ currentSortLabel }}</span>
                     <i class="fa-duotone fa-light fa-chevron-down" aria-hidden="true"></i>
                 </button>
 
                 <div class="sort-menu" *ngIf="sortMenuOpen" role="menu" [attr.aria-label]="'blogs.sort.menuAria' | translate">
-                    <button type="button" role="menuitemradio" *ngFor="let option of sortOptions" [attr.aria-checked]="sortBy === option.value" [class.active]="sortBy === option.value" (click)="selectSort(option.value, $event)">
+                    <button type="button" role="menuitemradio" *ngFor="let option of sortOptions" [attr.aria-checked]="sortBy === option.value" [class.active]="sortBy === option.value" (pointerdown)="selectSort(option.value, $event)">
                         {{ option.label }}
                     </button>
                 </div>

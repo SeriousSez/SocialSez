@@ -1201,6 +1201,7 @@
       "removeCurrent": "Aktuelles entfernen",
       "remove": "Entfernen",
       "addOption": "Option hinzufügen",
+      "lockedPollHelp": "Diese Umfrage hat bereits Stimmen, daher können Frage und Optionen nicht mehr geändert werden.",
       "saving": "Wird gespeichert…",
       "saveChanges": "Änderungen speichern"
     },

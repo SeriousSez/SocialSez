@@ -48,18 +48,19 @@
         </section>
 
         <div class="poll-editor" *ngIf="tab === 'poll'">
+            <p class="meta" *ngIf="isPollEditingLocked">{{ 'communityDetail.editPost.lockedPollHelp' | translate }}</p>
             <label>
                 Question
-                <input [(ngModel)]="pollQuestion" placeholder="Ask the community..." maxlength="280" [disabled]="isBusy" />
+                <input [(ngModel)]="pollQuestion" placeholder="Ask the community..." maxlength="280" [disabled]="isBusy || isPollEditingLocked" />
             </label>
             <label *ngFor="let option of pollOptions; index as i; trackBy: trackByIndex">
                 Option {{ i + 1 }}
                 <div class="poll-option-row">
-                    <input [(ngModel)]="pollOptions[i]" maxlength="160" placeholder="Option text" [disabled]="isBusy" />
-                    <button type="button" class="ghost" (click)="removePollOption(i)" [disabled]="isBusy || pollOptions.length <= 2">Remove</button>
+                    <input [(ngModel)]="pollOptions[i]" maxlength="160" placeholder="Option text" [disabled]="isBusy || isPollEditingLocked" />
+                    <button type="button" class="ghost" (click)="removePollOption(i)" [disabled]="isBusy || isPollEditingLocked || pollOptions.length <= 2">Remove</button>
                 </div>
             </label>
-            <button type="button" class="ghost add-options-button" (click)="addPollOption()" [disabled]="isBusy || pollOptions.length >= 6">Add option</button>
+            <button type="button" class="ghost add-options-button" (click)="addPollOption()" [disabled]="isBusy || isPollEditingLocked || pollOptions.length >= 6">Add option</button>
         </div>
 
         <p class="meta error" *ngIf="validationError">{{ validationError }}</p>
