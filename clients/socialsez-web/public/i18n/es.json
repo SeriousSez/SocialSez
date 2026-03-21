@@ -197,6 +197,164 @@
       "interestsSaveFailed": "Creamos tu cuenta, pero no se pudieron guardar los intereses ahora mismo."
     }
   },
+  "blogStudioPage": {
+    "header": {
+      "title": "Estudio de blogs",
+      "subtitle": "Crea y personaliza tu blog, y luego publica entradas.",
+      "backToBlogs": "Volver a Blogs"
+    },
+    "loading": {
+      "studioAria": "Cargando estudio de blogs",
+      "postsAria": "Cargando entradas del blog"
+    },
+    "library": {
+      "title": "Tus blogs",
+      "subtitle": "Elige uno para editar o empieza un blog nuevo.",
+      "newBlog": "+ Nuevo blog",
+      "empty": "Aún no hay blogs. Crea el primero."
+    },
+    "editorTabs": {
+      "blog": "Editar blog",
+      "posts": "Entradas"
+    },
+    "common": {
+      "close": "Cerrar",
+      "cancel": "Cancelar",
+      "write": "Escribir",
+      "preview": "Vista previa"
+    },
+    "blogEditor": {
+      "editTitle": "Editar blog",
+      "createTitle": "Crear blog",
+      "titleLabel": "Título",
+      "titlePlaceholder": "Mis notas de diseño",
+      "descriptionLabel": "Descripción",
+      "descriptionModeAria": "Modo de descripción",
+      "descriptionMarkdownToolsAria": "Herramientas Markdown de la descripción",
+      "descriptionPlaceholder": "De qué trata este blog",
+      "slugLabel": "Slug",
+      "slugPlaceholder": "design-notes",
+      "publicBlog": "Blog público",
+      "engagementTitle": "Interacción y uso compartido",
+      "allowLikes": "Permitir me gusta",
+      "allowComments": "Permitir comentarios",
+      "allowShares": "Permitir compartir",
+      "allowEmbeds": "Permitir incrustación en sitios externos",
+      "themeTitle": "Tema",
+      "fontFamilyLabel": "Familia tipográfica",
+      "fontFamilyPlaceholder": "p. ej. ui-serif, Cambria, serif",
+      "accentColorLabel": "Color de acento",
+      "accentColorPlaceholder": "#ea580c o var(--accent)",
+      "backgroundColorLabel": "Color de fondo",
+      "backgroundColorPlaceholder": "#fff7ed o var(--background)",
+      "surfaceColorLabel": "Color de superficie",
+      "surfaceColorPlaceholder": "#ffffff o var(--surface)",
+      "darkThemeTitle": "Tema oscuro",
+      "darkAccentColorLabel": "Color de acento oscuro",
+      "darkAccentColorPlaceholder": "#818cf8 (opcional)",
+      "darkBackgroundColorLabel": "Color de fondo oscuro",
+      "darkBackgroundColorPlaceholder": "#0b1022 (opcional)",
+      "darkSurfaceColorLabel": "Color de superficie oscuro",
+      "darkSurfaceColorPlaceholder": "#11142a (opcional)",
+      "headerLayoutLabel": "Diseño del encabezado",
+      "headerLayoutPlaceholder": "p. ej. hero-split",
+      "postListLayoutLabel": "Diseño de la lista de entradas",
+      "postListLayoutPlaceholder": "p. ej. timeline",
+      "customCssLabel": "CSS personalizado",
+      "customCssGuideAria": "Guía de CSS personalizado",
+      "customCssGuideIntro": "Úsalo para dar estilo a las páginas de tu blog.",
+      "customCssGuideSelectors": "Selectores admitidos: .blog-shell contenedor de página, .blog-header tarjeta de encabezado, .subtitle subtítulo/texto meta, .post-card tarjetas de entrada, .content cuerpo de la entrada.",
+      "customCssGuideVariables": "Variables del tema que puedes sobrescribir: --accent, --background, --background2, --surface, --dark-accent, --dark-background, --dark-surface, --font-family.",
+      "customCssGuideExample": "Ejemplo: .blog-shell { --accent:#ff5c72; --background:#f4f7f9; --background2:#e8eff5; --surface:#ffffff; }",
+      "customCssPlaceholder": ".post-card { border-radius: 20px; }",
+      "saveBlog": "Guardar blog",
+      "savingBlog": "Guardando...",
+      "deleteBlog": "Eliminar blog",
+      "deletingBlog": "Eliminando..."
+    },
+    "posts": {
+      "title": "Entradas de {{title}}",
+      "newPost": "+ Nueva entrada",
+      "statusPublished": "Publicado",
+      "statusDraft": "Borrador",
+      "thisPost": "esta entrada",
+      "postTitleLabel": "Título de la entrada",
+      "postTitlePlaceholder": "Cómo rediseñé mi página de perfil",
+      "postSlugLabel": "Slug de la entrada",
+      "postSlugPlaceholder": "profile-redesign",
+      "excerptLabel": "Extracto",
+      "excerptPlaceholder": "Un adelanto breve para los listados",
+      "coverImageLabel": "URL de la imagen de portada",
+      "coverImagePlaceholder": "/uploads/images/post-cover.jpg",
+      "uploadImage": "Subir imagen",
+      "uploadingImage": "Subiendo...",
+      "tagsLabel": "Etiquetas (separadas por comas)",
+      "tagsPlaceholder": "ui, angular, personal",
+      "contentLabel": "Contenido",
+      "markdownHelp": "Markdown compatible: # título, **negrita**, *cursiva*, `code`, [enlace](https://example.com), listas y bloques de código.",
+      "contentModeAria": "Modo del contenido de la entrada",
+      "markdownToolsAria": "Herramientas Markdown",
+      "contentPlaceholder": "Escribe aquí el contenido de tu artículo",
+      "published": "Publicado",
+      "updatePost": "Actualizar entrada",
+      "createPost": "Crear entrada",
+      "savingPost": "Guardando...",
+      "deletePost": "Eliminar entrada",
+      "deletingPost": "Eliminando..."
+    },
+    "markdownTools": {
+      "h2": "H2",
+      "bold": "Negrita",
+      "italic": "Cursiva",
+      "link": "Enlace",
+      "bulletList": "Lista con viñetas",
+      "numberedList": "Lista numerada",
+      "quote": "Cita",
+      "inlineCode": "Código en línea",
+      "codeBlock": "Bloque de código"
+    },
+    "themeOptions": {
+      "custom": "Personalizado",
+      "headerLeft": "Izquierda",
+      "headerCenter": "Centro",
+      "headerSplit": "Dividido",
+      "headerMinimal": "Minimalista",
+      "layoutGrid": "Cuadrícula",
+      "layoutStack": "Apilado",
+      "layoutMagazine": "Revista"
+    },
+    "confirm": {
+      "deleteBlogTitle": "Eliminar blog",
+      "deleteBlogMessage": "¿Eliminar el blog \"{{title}}\" y todas sus entradas? Esta acción no se puede deshacer.",
+      "deletePostTitle": "Eliminar entrada",
+      "deletePostMessage": "¿Eliminar \"{{title}}\"? Esta acción no se puede deshacer.",
+      "confirmDelete": "Eliminar"
+    },
+    "errors": {
+      "loadBlogs": "No se pudieron cargar tus blogs.",
+      "saveBlog": "No se pudo guardar el blog. Asegúrate de que el título esté definido.",
+      "deleteBlog": "No se pudo eliminar este blog.",
+      "uploadCover": "No se pudo subir la imagen de portada.",
+      "savePost": "No se pudo guardar la entrada del blog. Asegúrate de que el título y el contenido estén definidos.",
+      "deletePost": "No se pudo eliminar esta entrada.",
+      "loadPosts": "No se pudieron cargar las entradas de este blog."
+    },
+    "status": {
+      "savingPostProgress": "Guardando entrada del blog...",
+      "postSaved": "Entrada del blog guardada.",
+      "postSaveFailed": "No se pudo guardar la entrada del blog"
+    },
+    "insertions": {
+      "heading": "Encabezado",
+      "boldText": "texto en negrita",
+      "italicText": "texto en cursiva",
+      "code": "código",
+      "linkText": "texto del enlace",
+      "listItem": "elemento de lista",
+      "quote": "cita",
+      "codeHere": "código aquí"
+    }
+  },
   "profile": {
     "hero": {
       "noBio": "Sin biografía todavía.",

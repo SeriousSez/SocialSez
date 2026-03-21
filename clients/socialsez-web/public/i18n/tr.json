@@ -51,7 +51,7 @@
       },
       "mobileNav": {
         "aria": "Birincil mobil gezinme",
-        "openMore": "more navigation aç",
+        "openMore": "Daha fazla gezinmeyi aç",
         "more": "Daha fazla",
         "moreAria": "Daha fazla gezinme",
         "groups": "Gruplar",
@@ -202,7 +202,7 @@
       "noBio": "Henüz bio yok.",
       "bioHidden": "Bu profil engellendiği için biyografi gizlendi.",
       "joined": "{{date}} tarihinde katıldı",
-      "openStoriesAria": "@{{handle}} stories aç",
+      "openStoriesAria": "@{{handle}} hikâyelerini aç",
       "viewProfileAria": "@{{handle}} profile görüntüle",
       "avatarAlt": "{{name}} avatarı",
       "authorImageAlt": "Yazar görseli",
@@ -233,15 +233,15 @@
       "unfollow": "Takibi Bırak",
       "follow": "Takip Et",
       "message": "Mesaj",
-      "requestMessage": "Request Mesaj",
+      "requestMessage": "Mesaj İste",
       "profileLinkCopied": "Profil bağlantısı kopyalandı",
       "copyProfileLink": "Profil bağlantısını kopyala",
       "copied": "Kopyalandı",
       "signInToFollow": "Takip etmek için giriş yap"
     },
     "safety": {
-      "openMenu": "profile safety options aç",
-      "moreOptions": "Daha fazla options",
+      "openMenu": "Profil güvenlik seçeneklerini aç",
+      "moreOptions": "Daha fazla seçenek",
       "nickname": "Takma ad",
       "mute": "Sessize al",
       "unmute": "Sessizi aç",
@@ -253,7 +253,7 @@
     "nickname": {
       "dialogAria": "Takma ad ayarla",
       "title": "Senin için takma ad",
-      "close": "nickname editor kapat",
+      "close": "Takma ad düzenleyiciyi kapat",
       "label": "Takma ad",
       "placeholder": "Takma ad gir"
     },
@@ -306,12 +306,12 @@
       "rowAria": "Hikâye koleksiyonları",
       "createAria": "Hikâye koleksiyonu oluştur",
       "new": "Yeni",
-      "openAria": "story collection {{name}} aç",
+      "openAria": "{{name}} hikâye koleksiyonunu aç",
       "coverAlt": "Hikâye koleksiyonu kapağı",
       "manageAria": "{{name}} hikâye koleksiyonunu yönet",
       "createDialogAria": "Hikâye koleksiyonu oluştur",
-      "newCollectionTitle": "New Hikâye Collection",
-      "closeCreateDialog": "story collection modal kapat",
+      "newCollectionTitle": "Yeni Hikâye Koleksiyonu",
+      "closeCreateDialog": "Hikâye koleksiyonu modalını kapat",
       "collectionName": "Koleksiyon adı",
       "collectionPlaceholder": "ör. Yaz 2024",
       "collectionNameAria": "Hikâye koleksiyonu adı",
@@ -753,7 +753,7 @@
       "titleAz": "Başlık A-Z"
     },
     "actions": {
-      "openStudio": "Blog Studio aç",
+      "openStudio": "Blog Studio'yu Aç",
       "clear": "Temizle"
     },
     "visibility": {
@@ -772,7 +772,7 @@
       "more": "Daha fazla blog için kaydırın..."
     },
     "empty": {
-      "noBlogsForTab": "Henüz blogs found for this tab yok."
+      "noBlogsForTab": "Bu sekmede henüz blog bulunamadı."
     },
     "errors": {
       "signInToViewTab": "Bu sekmeyi görmek için giriş yap.",
@@ -864,7 +864,7 @@
       "aria": "Blog yükleniyor"
     },
     "header": {
-      "moreBy": "Daha fazla by @{{handle}}",
+      "moreBy": "@{{handle}} tarafından daha fazla",
       "editInStudio": "Stüdyoda Düzenle"
     },
     "post": {
@@ -923,7 +923,7 @@
     },
     "aria": {
       "loading": "Blog gömüsü yükleniyor",
-      "openFullPost": "full blog post aç"
+      "openFullPost": "Tam blog gönderisini aç"
     },
     "errors": {
       "couldNotLoad": "Gömülü içerik yüklenemedi.",
@@ -935,7 +935,7 @@
   "blogEmbedTools": {
     "loading": {
       "aria": "Gömme araçları yükleniyor",
-      "message": "Embed tools yükleniyor..."
+      "message": "Gömme araçları yükleniyor..."
     },
     "header": {
       "kicker": "Gömme Araçları",
@@ -952,7 +952,7 @@
     "actions": {
       "copyCode": "Kodu kopyala",
       "copied": "Kopyalandı",
-      "openRaw": "raw embed page aç",
+      "openRaw": "Ham gömme sayfasını aç",
       "backToPost": "Gönderiye dön"
     },
     "embed": {
@@ -962,7 +962,7 @@
       "notFound": "Blog gönderisi bulunamadı.",
       "notFoundOrPrivate": "Blog gönderisi bulunamadı veya gizli.",
       "embeddingDisabled": "Gömme özelliği blog sahibi tarafından devre dışı bırakıldı.",
-      "loadNow": "Şu anda load embed tools for this post yapılamadı."
+      "loadNow": "Şu anda bu gönderi için gömme araçları yüklenemiyor."
     }
   },
   "sharedStory": {
@@ -970,7 +970,7 @@
       "story": "Hikâye yükleniyor..."
     },
     "notFound": {
-      "title": "Hikâye unavailable",
+      "title": "Hikâye kullanılamıyor",
       "message": "Bu hikâye süresi dolmuş, kaldırılmış veya bağlantı geçersiz."
     },
     "errors": {
@@ -1120,7 +1120,7 @@
       "upvote": "Artı oy ver",
       "downvotePost": "Gönderiye eksi oy ver",
       "downvote": "Eksi oy ver",
-      "openComments": "comments aç",
+      "openComments": "Yorumları aç",
       "savePost": "Gönderiyi kaydet",
       "unsavePost": "Gönderi kaydını kaldır",
       "save": "Kaydet",
@@ -1178,9 +1178,9 @@
       "poll": "Anket"
     },
     "editPost": {
-      "modalAria": "Topluluğu düzenle post",
+      "modalAria": "Topluluk gönderisini düzenle",
       "title": "Gönderiyi düzenle",
-      "closeAria": "edit post modal kapat",
+      "closeAria": "Gönderi düzenleme modalını kapat",
       "typeAria": "Gönderi türünü düzenle",
       "fields": {
         "title": "Başlık",
@@ -1193,11 +1193,11 @@
         "title": "Bir başlık ekle",
         "updatePost": "Gönderinizi güncelleyin...",
         "linkUrl": "https://example.com",
-        "optionalBody": "Seçenek ekleal body text...",
+        "optionalBody": "İsteğe bağlı içerik metni...",
         "askCommunity": "Topluluğa sor...",
         "optionText": "Seçenek metni"
       },
-      "previewAlt": "Seçili edit image preview",
+      "previewAlt": "Seçili görsel düzenleme önizlemesi",
       "removeCurrent": "Geçerli olanı kaldır",
       "remove": "Kaldır",
       "addOption": "Seçenek ekle",
@@ -1207,7 +1207,7 @@
     "editCommunity": {
       "modalAria": "Topluluğu düzenle",
       "title": "Topluluğu düzenle",
-      "closeAria": "edit community modal kapat",
+      "closeAria": "Topluluk düzenleme modalını kapat",
       "fields": {
         "name": "Ad",
         "information": "Bilgi",
@@ -1226,7 +1226,7 @@
     "createPost": {
       "modalAria": "Topluluk gönderisi oluştur",
       "title": "Gönderi oluştur",
-      "closeAria": "create post modal kapat",
+      "closeAria": "Gönderi oluşturma modalını kapat",
       "typeAria": "Gönderi türü",
       "fields": {
         "title": "Başlık",
@@ -1239,13 +1239,13 @@
         "title": "Bir başlık ekle",
         "shareThoughts": "Düşüncelerini paylaş...",
         "linkUrl": "https://example.com",
-        "optionalBody": "Seçenek ekleal body text...",
+        "optionalBody": "İsteğe bağlı içerik metni...",
         "askCommunity": "Topluluğa sor...",
         "optionText": "Seçenek metni"
       },
-      "previewAlt": "Seçili post image preview",
+      "previewAlt": "Seçili gönderi görsel önizlemesi",
       "removeCurrent": "Geçerli olanı kaldır",
-      "imagesAttachedInTab": "{{count}} image(s) attached in Görseller ve Video tab.",
+      "imagesAttachedInTab": "{{count}} görsel Görseller ve Video sekmesine eklendi.",
       "linkAttachedInTab": "Bağlantı, Bağlantı sekmesine eklendi.",
       "remove": "Kaldır",
       "addOption": "Seçenek ekle",
@@ -1259,89 +1259,89 @@
     }
   },
   "homeFeed": {
-    "title": "Home Feed",
+    "title": "Ana Akış",
     "feedModes": {
-      "forYou": "For you",
-      "following": "Following"
+      "forYou": "Senin için",
+      "following": "Takip edilenler"
     },
     "customFeeds": {
-      "aria": "Custom feeds",
-      "all": "All",
-      "newFeed": "New feed"
+      "aria": "Özel akışlar",
+      "all": "Tümü",
+      "newFeed": "Yeni akış"
     },
     "stories": {
-      "aria": "Stories",
-      "openYourStory": "Open your story",
-      "yourStoryAlt": "Your story",
-      "yourStory": "Your story"
+      "aria": "Hikâyeler",
+      "openYourStory": "Hikâyeni aç",
+      "yourStoryAlt": "Senin hikâyen",
+      "yourStory": "Senin hikâyen"
     },
-    "contentTabsAria": "Feed content type",
+    "contentTabsAria": "Akış içerik türü",
     "drafts": {
-      "title": "Unfinished drafts",
-      "description": "You have draft content ready. Publish it to reach your audience.",
-      "action": "Open drafts"
+      "title": "Bitmemiş taslaklar",
+      "description": "Yayınlamaya hazır taslak içeriğiniz var. Kitlenize ulaşmak için yayınlayın.",
+      "action": "Taslakları aç"
     },
     "followSuggestions": {
-      "description": "Follow a few more people to improve your feed faster."
+      "description": "Akışınızı daha hızlı iyileştirmek için birkaç kişi daha takip edin."
     },
     "hashtags": {
-      "title": "Trending topics to follow",
-      "description": "Follow a few hashtags to make your feed more relevant."
+      "title": "Takip edilecek trend konular",
+      "description": "Akışınızı daha alakalı kılmak için birkaç hashtag takip edin."
     },
     "tuning": {
-      "notInterested": "Not interested",
-      "fewerPostsNotice": "We'll show fewer posts from @{{handle}}.",
-      "fewerReelsNotice": "We'll show fewer reels from @{{handle}}.",
-      "hiddenCreatorsEmptyHint": "You may be hiding creators from your feed.",
-      "manageHiddenCreators": "Manage hidden creators"
+      "notInterested": "İlgilenmiyorum",
+      "fewerPostsNotice": "@{{handle}} kullanıcısından daha az gönderi göstereceğiz.",
+      "fewerReelsNotice": "@{{handle}} kullanıcısından daha az reel göstereceğiz.",
+      "hiddenCreatorsEmptyHint": "Akışınızdan içerik üreticilerini gizliyor olabilirsiniz.",
+      "manageHiddenCreators": "Gizli içerik üreticilerini yönet"
     },
     "postActions": {
-      "repost": "Repost",
-      "reposts": "reposts"
+      "repost": "Yeniden paylaş",
+      "reposts": "yeniden paylaşımlar"
     },
     "streak": {
-      "title": "Daily engagement streak",
-      "current": "Current: {{count}} day(s)",
-      "best": "Best: {{count}} day(s)",
-      "start": "Start your streak with a quick post, like, or comment.",
-      "keepGoing": "Keep it alive with one interaction today.",
-      "doneToday": "Nice. You already kept your streak alive today.",
-      "actionKeepAlive": "Keep streak alive",
-      "actionPostAgain": "Post again"
+      "title": "Günlük etkileşim serisi",
+      "current": "Mevcut: {{count}} gün",
+      "best": "En iyi: {{count}} gün",
+      "start": "Hızlı bir gönderi, beğeni veya yorum ile serinize başlayın.",
+      "keepGoing": "Bugün bir etkileşimle serinizi devam ettirin.",
+      "doneToday": "Harika. Serinizi bugün zaten devam ettirdiniz.",
+      "actionKeepAlive": "Seriyi devam ettir",
+      "actionPostAgain": "Tekrar paylaş"
     },
     "profileSetup": {
-      "title": "Finish setting up your profile",
-      "dismiss": "Not now",
-      "done": "Done",
-      "progressLabel": "{{completed}} of {{total}} completed",
-      "progressAria": "Profile setup completion",
+      "title": "Profilinizi tamamlayın",
+      "dismiss": "Şimdi değil",
+      "done": "Tamam",
+      "progressLabel": "{{completed}} / {{total}} tamamlandı",
+      "progressAria": "Profil kurulum tamamlanması",
       "items": {
         "avatar": {
-          "title": "Add a profile photo",
-          "description": "Help people recognize you instantly.",
-          "action": "Add photo"
+          "title": "Profil fotoğrafı ekleyin",
+          "description": "İnsanların sizi anında tanımasına yardımcı olun.",
+          "action": "Fotoğraf ekle"
         },
         "bio": {
-          "title": "Write a short bio",
-          "description": "Tell others what you post about.",
-          "action": "Add bio"
+          "title": "Kısa bir bio yazın",
+          "description": "Diğerlerine ne paylaştığınızı anlatın.",
+          "action": "Bio ekle"
         },
         "following": {
-          "title": "Follow at least 3 people",
-          "description": "Improve your feed recommendations faster.",
-          "action": "Discover people"
+          "title": "En az 3 kişiyi takip edin",
+          "description": "Akış önerilerinizi daha hızlı iyileştirin.",
+          "action": "Kişileri keşfet"
         },
         "firstPost": {
-          "title": "Share your first post",
-          "description": "Introduce yourself to your new audience.",
-          "action": "Create post"
+          "title": "İlk gönderinizi paylaşın",
+          "description": "Kendinizi yeni kitlenize tanıtın.",
+          "action": "Gönderi oluştur"
         }
       }
     }
   },
   "chatPage": {
     "title": "Mesajlar",
-    "layoutAria": "Mesajs layout",
+    "layoutAria": "Mesajlar düzeni",
     "common": {
       "you": "Sen",
       "youLowercase": "sen",
@@ -1372,8 +1372,8 @@
       "avatarAlt": "Konuşma avatarı"
     },
     "empty": {
-      "noChatsFound": "chats bulunamadı.",
-      "noActiveChats": "Henüz active chats yok.",
+      "noChatsFound": "Sohbet bulunamadı.",
+      "noActiveChats": "Henüz aktif sohbet yok.",
       "firstMessageTitle": "Bu sohbet ilk mesajını bekliyor",
       "firstMessageDescription": "Sessizliği boz ve kısa bir selam gönder 👋",
       "noMessagesFoundTitle": "Mesaj bulunamadı",
@@ -1394,15 +1394,15 @@
       "backToChat": "Sohbete dön",
       "placeholder": "Mesajlarda ara",
       "clear": "Mesaj aramasını temizle",
-      "avatarAlt": "Mesaj author avatar",
-      "noResults": "Mesaj bulunamadı for that search.",
+      "avatarAlt": "Mesaj yazarı avatarı",
+      "noResults": "Bu arama için mesaj bulunamadı.",
       "idleTitle": "Bu sohbette ara",
       "idleDescription": "Bu konuşmada mesajları, medya etiketlerini ve @kullanıcıadlarını bul."
     },
     "messages": {
       "fetchingOlder": "Eski mesajlar getiriliyor…",
       "noOlder": "Daha eski mesaj yok",
-      "senderAvatarAlt": "Mesaj sender avatar",
+      "senderAvatarAlt": "Mesaj gönderen avatarı",
       "replyMediaPreviewAlt": "Yanıtlanan mesaj önizlemesi",
       "sentImageAlt": "Gönderilen görsel",
       "sentGifAlt": "Gönderilen GIF",
@@ -1417,7 +1417,7 @@
     "reactions": {
       "show": "Tepkileri göster",
       "title": "Tepkiler",
-      "close": "reactions kapat",
+      "close": "Tepkileri kapat",
       "all": "Tümü",
       "authorAvatarAlt": "Tepki yazarı görseli"
     },
@@ -1442,7 +1442,7 @@
     "sharedReel": {
       "viewerAria": "Paylaşılan reel görüntüleyicisi",
       "settings": "Reel ayarları",
-      "closeViewer": "reel viewer kapat",
+      "closeViewer": "Reel görüntüleyiciyi kapat",
       "unmute": "Reel sesini aç",
       "mute": "Reel'i sessize al",
       "report": "Reel'i bildir",
@@ -1451,29 +1451,29 @@
       "delete": "Reel'i sil",
       "authorAvatarAlt": "Reel yazarı avatarı",
       "like": "Reel'i beğen",
-      "openComments": "reel comments aç",
+      "openComments": "Reel yorumlarını aç",
       "share": "Reel'i paylaş",
       "replyToChatPlaceholder": "Sohbete yanıt ver...",
       "sendingShort": "...",
       "commentsAria": "Reel yorumları",
       "comments": "Yorumlar",
-      "closeComments": "comments kapat",
+      "closeComments": "Yorumları kapat",
       "close": "Kapat",
       "commentAuthorAlt": "Yorum yazarı görseli",
       "hideReplies": "Yanıtları gizle",
-      "viewReplies": "replies ({{count}}) görüntüle",
+      "viewReplies": "yanıtları ({{count}}) görüntüle",
       "unlikeComment": "Yorum beğenisini kaldır",
       "likeComment": "Yorumu beğen",
       "reply": "Yanıtla",
       "reportComment": "Yorumu bildir",
-      "noCommentsYet": "Henüz comments yok.",
+      "noCommentsYet": "Henüz yorum yok.",
       "addCommentPlaceholder": "Bir yorum ekle...",
       "post": "Gönderi",
-      "editCaptionPlaceholder": "Reel'i düzenle caption...",
+      "editCaptionPlaceholder": "Reel açıklamasını düzenle...",
       "saving": "Kaydediliyor…",
-      "loadingDetails": "Reel details yükleniyor...",
+      "loadingDetails": "Reel ayrıntıları yükleniyor...",
       "forYou": "Senin için",
-      "replyingToComment": "Yanıtlaing to comment",
+      "replyingToComment": "Yoruma yanıt veriliyor",
       "posting": "Paylaşılıyor..."
     },
     "noConversation": {
@@ -1499,7 +1499,7 @@
     },
     "unfurl": {
       "previewUnavailable": "Bağlantı önizlemesi kullanılamıyor. Paylaşılan bağlantıyı açın.",
-      "openSharedLink": "shared link aç"
+      "openSharedLink": "Paylaşılan bağlantıyı aç"
     },
     "status": {
       "loadConversationsFailed": "Konuşmalar yüklenemedi.",
@@ -1507,9 +1507,9 @@
       "startGroupChatFailed": "Grup sohbeti başlatılamadı.",
       "loadMessagesFailed": "Mesajlar yüklenemedi.",
       "liveUpdatesUnavailable": "Canlı güncellemeler geçici olarak kullanılamıyor.",
-      "messageCopied": "Mesaj copied.",
+      "messageCopied": "Mesaj kopyalandı.",
       "copyMessageFailed": "Mesaj kopyalanamadı.",
-      "messageContentRequired": "Mesaj content is required.",
+      "messageContentRequired": "Mesaj içeriği gereklidir.",
       "updateMessageFailed": "Mesaj güncellenemedi.",
       "sendMessageFailed": "Mesaj gönderilemedi.",
       "loadGifsFailed": "Giphy’den GIF’ler yüklenemedi.",
@@ -1673,8 +1673,8 @@
         "aria": "Yorumlarda ara"
       },
       "empty": {
-        "noneYet": "Henüz comments yok.",
-        "noSearchMatch": "Aramanızla eşleşen comments yok."
+        "noneYet": "Henüz yorum yok.",
+        "noSearchMatch": "Aramanızla eşleşen yorum yok."
       },
       "actions": {
         "upvote": "Artı oy ver",
@@ -1682,10 +1682,10 @@
         "reply": "Yanıtla",
         "shareComment": "Yorumu paylaş",
         "share": "Paylaş",
-        "commentLinkCopiedAria": "Yorum link copied",
-        "openCommentActions": "comment actions aç",
-        "moreActions": "Daha fazla actions",
-        "commentActions": "Yorum actions",
+        "commentLinkCopiedAria": "Yorum bağlantısı kopyalandı",
+        "openCommentActions": "Yorum eylemlerini aç",
+        "moreActions": "Daha fazla eylem",
+        "commentActions": "Yorum eylemleri",
         "edit": "Düzenle",
         "cancelEdit": "Düzenlemeyi iptal et",
         "delete": "Sil",
@@ -1694,7 +1694,7 @@
       "errors": {
         "timedOut": "{{until}} tarihine kadar bu toplulukta kısıtlandınız.",
         "postComment": "Şu anda yorum gönderme yapılamadı.",
-        "contentRequired": "Yorum content is required.",
+        "contentRequired": "Yorum içeriği gereklidir.",
         "updateComment": "Şu anda yorumu güncelleme yapılamadı.",
         "deleteComment": "Şu anda yorumu silme yapılamadı.",
         "postReply": "Şu anda yanıt gönderme yapılamadı."
@@ -1755,6 +1755,164 @@
       "cancel": "İptal",
       "submit": "Bildirimi gönder",
       "submitting": "Gönderiliyor..."
+    }
+  },
+  "blogStudioPage": {
+    "header": {
+      "title": "Blog stüdyosu",
+      "subtitle": "Blogunu oluşturup özelleştir, ardından yazılar yayımla.",
+      "backToBlogs": "Bloglara dön"
+    },
+    "loading": {
+      "studioAria": "Blog stüdyosu yükleniyor",
+      "postsAria": "Blog yazıları yükleniyor"
+    },
+    "library": {
+      "title": "Blogların",
+      "subtitle": "Düzenlemek için birini seç veya yeni bir blog başlat.",
+      "newBlog": "+ Yeni blog",
+      "empty": "Henüz blog yok. İlkini oluştur."
+    },
+    "editorTabs": {
+      "blog": "Blogu düzenle",
+      "posts": "Yazılar"
+    },
+    "common": {
+      "close": "Kapat",
+      "cancel": "İptal",
+      "write": "Yaz",
+      "preview": "Önizleme"
+    },
+    "blogEditor": {
+      "editTitle": "Blogu düzenle",
+      "createTitle": "Blog oluştur",
+      "titleLabel": "Başlık",
+      "titlePlaceholder": "Tasarım notlarım",
+      "descriptionLabel": "Açıklama",
+      "descriptionModeAria": "Açıklama modu",
+      "descriptionMarkdownToolsAria": "Açıklama Markdown araçları",
+      "descriptionPlaceholder": "Bu blogun konusu",
+      "slugLabel": "Slug",
+      "slugPlaceholder": "design-notes",
+      "publicBlog": "Herkese açık blog",
+      "engagementTitle": "Etkileşim ve paylaşım",
+      "allowLikes": "Beğenilere izin ver",
+      "allowComments": "Yorumlara izin ver",
+      "allowShares": "Paylaşıma izin ver",
+      "allowEmbeds": "Harici sitelerde gömülmeye izin ver",
+      "themeTitle": "Tema",
+      "fontFamilyLabel": "Yazı tipi ailesi",
+      "fontFamilyPlaceholder": "ör. ui-serif, Cambria, serif",
+      "accentColorLabel": "Vurgu rengi",
+      "accentColorPlaceholder": "#ea580c veya var(--accent)",
+      "backgroundColorLabel": "Arka plan rengi",
+      "backgroundColorPlaceholder": "#fff7ed veya var(--background)",
+      "surfaceColorLabel": "Yüzey rengi",
+      "surfaceColorPlaceholder": "#ffffff veya var(--surface)",
+      "darkThemeTitle": "Koyu tema",
+      "darkAccentColorLabel": "Koyu vurgu rengi",
+      "darkAccentColorPlaceholder": "#818cf8 (isteğe bağlı)",
+      "darkBackgroundColorLabel": "Koyu arka plan rengi",
+      "darkBackgroundColorPlaceholder": "#0b1022 (isteğe bağlı)",
+      "darkSurfaceColorLabel": "Koyu yüzey rengi",
+      "darkSurfaceColorPlaceholder": "#11142a (isteğe bağlı)",
+      "headerLayoutLabel": "Üst bilgi düzeni",
+      "headerLayoutPlaceholder": "ör. hero-split",
+      "postListLayoutLabel": "Yazı listesi düzeni",
+      "postListLayoutPlaceholder": "ör. timeline",
+      "customCssLabel": "Özel CSS",
+      "customCssGuideAria": "Özel CSS kılavuzu",
+      "customCssGuideIntro": "Blog sayfalarını biçimlendirmek için bunu kullan.",
+      "customCssGuideSelectors": "Desteklenen seçiciler: .blog-shell sayfa sarmalayıcısı, .blog-header üst bilgi kartı, .subtitle alt başlık/meta metni, .post-card yazı kartları, .content yazı gövdesi.",
+      "customCssGuideVariables": "Geçersiz kılabileceğin tema değişkenleri: --accent, --background, --background2, --surface, --dark-accent, --dark-background, --dark-surface, --font-family.",
+      "customCssGuideExample": "Örnek: .blog-shell { --accent:#ff5c72; --background:#f4f7f9; --background2:#e8eff5; --surface:#ffffff; }",
+      "customCssPlaceholder": ".post-card { border-radius: 20px; }",
+      "saveBlog": "Blogu kaydet",
+      "savingBlog": "Kaydediliyor...",
+      "deleteBlog": "Blogu sil",
+      "deletingBlog": "Siliniyor..."
+    },
+    "posts": {
+      "title": "{{title}} için yazılar",
+      "newPost": "+ Yeni yazı",
+      "statusPublished": "Yayımlandı",
+      "statusDraft": "Taslak",
+      "thisPost": "bu yazı",
+      "postTitleLabel": "Yazı başlığı",
+      "postTitlePlaceholder": "Profil sayfamı nasıl yeniden tasarladım",
+      "postSlugLabel": "Yazı slug'ı",
+      "postSlugPlaceholder": "profile-redesign",
+      "excerptLabel": "Özet",
+      "excerptPlaceholder": "Listeler için kısa bir tanıtım",
+      "coverImageLabel": "Kapak görseli URL'si",
+      "coverImagePlaceholder": "/uploads/images/post-cover.jpg",
+      "uploadImage": "Görsel yükle",
+      "uploadingImage": "Yükleniyor...",
+      "tagsLabel": "Etiketler (virgülle ayrılmış)",
+      "tagsPlaceholder": "ui, angular, kişisel",
+      "contentLabel": "İçerik",
+      "markdownHelp": "Desteklenen Markdown: # başlık, **kalın**, *italik*, `code`, [bağlantı](https://example.com), listeler ve kod blokları.",
+      "contentModeAria": "Yazı içerik modu",
+      "markdownToolsAria": "Markdown araçları",
+      "contentPlaceholder": "Makale içeriğini buraya yaz",
+      "published": "Yayımlandı",
+      "updatePost": "Yazıyı güncelle",
+      "createPost": "Yazı oluştur",
+      "savingPost": "Kaydediliyor...",
+      "deletePost": "Yazıyı sil",
+      "deletingPost": "Siliniyor..."
+    },
+    "markdownTools": {
+      "h2": "H2",
+      "bold": "Kalın",
+      "italic": "İtalik",
+      "link": "Bağlantı",
+      "bulletList": "Madde listesi",
+      "numberedList": "Numaralı liste",
+      "quote": "Alıntı",
+      "inlineCode": "Satır içi kod",
+      "codeBlock": "Kod bloğu"
+    },
+    "themeOptions": {
+      "custom": "Özel",
+      "headerLeft": "Sol",
+      "headerCenter": "Orta",
+      "headerSplit": "Bölünmüş",
+      "headerMinimal": "Minimal",
+      "layoutGrid": "Izgara",
+      "layoutStack": "Yığın",
+      "layoutMagazine": "Dergi"
+    },
+    "confirm": {
+      "deleteBlogTitle": "Blogu sil",
+      "deleteBlogMessage": "\"{{title}}\" blogu ve tüm yazıları silinsin mi? Bu işlem geri alınamaz.",
+      "deletePostTitle": "Yazıyı sil",
+      "deletePostMessage": "\"{{title}}\" silinsin mi? Bu işlem geri alınamaz.",
+      "confirmDelete": "Sil"
+    },
+    "errors": {
+      "loadBlogs": "Blogların yüklenemedi.",
+      "saveBlog": "Blog kaydedilemedi. Başlığın ayarlı olduğundan emin ol.",
+      "deleteBlog": "Bu blog silinemedi.",
+      "uploadCover": "Kapak görseli yüklenemedi.",
+      "savePost": "Blog yazısı kaydedilemedi. Başlık ve içeriğin ayarlı olduğundan emin ol.",
+      "deletePost": "Bu yazı silinemedi.",
+      "loadPosts": "Bu blogun yazıları yüklenemedi."
+    },
+    "status": {
+      "savingPostProgress": "Blog yazısı kaydediliyor...",
+      "postSaved": "Blog yazısı kaydedildi!",
+      "postSaveFailed": "Blog yazısı kaydetme başarısız oldu"
+    },
+    "insertions": {
+      "heading": "Başlık",
+      "boldText": "kalın metin",
+      "italicText": "italik metin",
+      "code": "kod",
+      "linkText": "bağlantı metni",
+      "listItem": "liste öğesi",
+      "quote": "alıntı",
+      "codeHere": "kodu buraya yaz"
     }
   },
   "createMenu": {

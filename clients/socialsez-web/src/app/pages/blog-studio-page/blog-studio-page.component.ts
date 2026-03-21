@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { RouterLink } from '@angular/router';
 import { BlogDto, BlogPostDto, BlogThemeConfigDto } from '../../core/api.types';
 import { renderMarkdownToHtml } from '../../core/markdown.util';
 import { SessionService } from '../../core/session.service';
 import { UploadProgressService } from '../../core/upload-progress.service';
+import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 interface BlogFormState {
@@ -54,11 +56,16 @@ type BlogEditorSection = 'blog' | 'posts';
 @Component({
     selector: 'app-blog-studio-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, SkeletonComponent],
+    imports: [CommonModule, FormsModule, RouterLink, TranslateModule, SkeletonComponent, ConfirmModalComponent],
     templateUrl: './blog-studio-page.component.html',
     styleUrl: './blog-studio-page.component.scss'
 })
 export class BlogStudioPageComponent {
+    private readonly session = inject(SessionService);
+    private readonly uploadProgress = inject(UploadProgressService);
+    private readonly translate = inject(TranslateService);
+    private readonly cdr = inject(ChangeDetectorRef);
+
     @ViewChild('contentEditor') contentEditor?: ElementRef<HTMLTextAreaElement>;
     @ViewChild('descriptionEditor') descriptionEditor?: ElementRef<HTMLTextAreaElement>;
     @ViewChild('coverImageInput') coverImageInput?: ElementRef<HTMLInputElement>;
@@ -78,6 +85,8 @@ export class BlogStudioPageComponent {
     posts: BlogPostDto[] = [];
     selectedBlogId: string | null = null;
     editingPostId: string | null = null;
+    pendingDeleteBlogId: string | null = null;
+    pendingDeletePostId: string | null = null;
     showBlogEditor = false;
     activeEditorSection: BlogEditorSection = 'blog';
     activePostComposerView: PostComposerView = 'write';
@@ -89,34 +98,61 @@ export class BlogStudioPageComponent {
     headerLayoutSelection = CUSTOM_THEME_OPTION;
     postListLayoutSelection = CUSTOM_THEME_OPTION;
 
-    readonly fontFamilyOptions: ReadonlyArray<{ value: string; label: string }> = [
-        { value: 'Georgia, serif', label: 'Georgia' },
-        { value: 'Inter, system-ui, sans-serif', label: 'Inter' },
-        { value: 'Merriweather, Georgia, serif', label: 'Merriweather' },
-        { value: 'Lora, Georgia, serif', label: 'Lora' },
-        { value: 'Source Sans 3, Inter, sans-serif', label: 'Source Sans 3' },
-        { value: CUSTOM_THEME_OPTION, label: 'Custom' }
-    ];
+    get fontFamilyOptions(): ReadonlyArray<{ value: string; label: string }> {
+        return [
+            { value: 'Georgia, serif', label: 'Georgia' },
+            { value: 'Inter, system-ui, sans-serif', label: 'Inter' },
+            { value: 'Merriweather, Georgia, serif', label: 'Merriweather' },
+            { value: 'Lora, Georgia, serif', label: 'Lora' },
+            { value: 'Source Sans 3, Inter, sans-serif', label: 'Source Sans 3' },
+            { value: CUSTOM_THEME_OPTION, label: this.t('blogStudioPage.themeOptions.custom') }
+        ];
+    }
 
-    readonly headerLayoutOptions: ReadonlyArray<{ value: string; label: string }> = [
-        { value: 'left', label: 'Left' },
-        { value: 'center', label: 'Center' },
-        { value: 'split', label: 'Split' },
-        { value: 'minimal', label: 'Minimal' },
-        { value: CUSTOM_THEME_OPTION, label: 'Custom' }
-    ];
+    get headerLayoutOptions(): ReadonlyArray<{ value: string; label: string }> {
+        return [
+            { value: 'left', label: this.t('blogStudioPage.themeOptions.headerLeft') },
+            { value: 'center', label: this.t('blogStudioPage.themeOptions.headerCenter') },
+            { value: 'split', label: this.t('blogStudioPage.themeOptions.headerSplit') },
+            { value: 'minimal', label: this.t('blogStudioPage.themeOptions.headerMinimal') },
+            { value: CUSTOM_THEME_OPTION, label: this.t('blogStudioPage.themeOptions.custom') }
+        ];
+    }
 
-    readonly postListLayoutOptions: ReadonlyArray<{ value: string; label: string }> = [
-        { value: 'grid', label: 'Grid' },
-        { value: 'stack', label: 'Stack' },
-        { value: 'magazine', label: 'Magazine' },
-        { value: CUSTOM_THEME_OPTION, label: 'Custom' }
-    ];
+    get postListLayoutOptions(): ReadonlyArray<{ value: string; label: string }> {
+        return [
+            { value: 'grid', label: this.t('blogStudioPage.themeOptions.layoutGrid') },
+            { value: 'stack', label: this.t('blogStudioPage.themeOptions.layoutStack') },
+            { value: 'magazine', label: this.t('blogStudioPage.themeOptions.layoutMagazine') },
+            { value: CUSTOM_THEME_OPTION, label: this.t('blogStudioPage.themeOptions.custom') }
+        ];
+    }
 
-    constructor(
-        private readonly session: SessionService,
-        private readonly uploadProgress: UploadProgressService
-    ) {
+    get pendingDeleteBlog(): BlogDto | null {
+        if (!this.pendingDeleteBlogId) {
+            return null;
+        }
+
+        return this.blogs.find(blog => blog.id === this.pendingDeleteBlogId) ?? null;
+    }
+
+    get pendingDeletePost(): BlogPostDto | null {
+        if (!this.pendingDeletePostId) {
+            return null;
+        }
+
+        return this.posts.find(post => post.id === this.pendingDeletePostId) ?? null;
+    }
+
+    get deleteBlogModalMessage(): string {
+        return this.t('blogStudioPage.confirm.deleteBlogMessage', { title: this.pendingDeleteBlog?.title ?? '' });
+    }
+
+    get deletePostModalMessage(): string {
+        return this.t('blogStudioPage.confirm.deletePostMessage', { title: this.pendingDeletePost?.title ?? this.t('blogStudioPage.posts.thisPost') });
+    }
+
+    constructor() {
         void this.loadAsync();
     }
 
@@ -198,9 +234,10 @@ export class BlogStudioPageComponent {
                 this.closeBlogEditor();
             }
         } catch {
-            this.error = 'Could not load your blogs.';
+            this.error = this.t('blogStudioPage.errors.loadBlogs');
         } finally {
             this.loading = false;
+            this.cdr.detectChanges();
         }
     }
 
@@ -213,6 +250,8 @@ export class BlogStudioPageComponent {
         this.showBlogEditor = true;
         this.activeEditorSection = 'blog';
         this.selectedBlogId = blog.id;
+        this.pendingDeleteBlogId = null;
+        this.pendingDeletePostId = null;
         this.editingPostId = null;
         this.assignBlogForm(blog);
         this.resetPostForm();
@@ -223,6 +262,8 @@ export class BlogStudioPageComponent {
         this.showBlogEditor = true;
         this.activeEditorSection = 'blog';
         this.selectedBlogId = null;
+        this.pendingDeleteBlogId = null;
+        this.pendingDeletePostId = null;
         this.editingPostId = null;
         this.posts = [];
         this.postError = '';
@@ -234,6 +275,8 @@ export class BlogStudioPageComponent {
         this.showBlogEditor = false;
         this.activeEditorSection = 'blog';
         this.selectedBlogId = null;
+        this.pendingDeleteBlogId = null;
+        this.pendingDeletePostId = null;
         this.editingPostId = null;
         this.posts = [];
         this.postError = '';
@@ -266,20 +309,33 @@ export class BlogStudioPageComponent {
 
             await this.selectBlogAsync(blog.id);
         } catch {
-            this.error = 'Could not save blog. Make sure title is set.';
+            this.error = this.t('blogStudioPage.errors.saveBlog');
         } finally {
             this.savingBlog = false;
+            this.cdr.detectChanges();
         }
     }
 
-    async deleteSelectedBlogAsync(): Promise<void> {
+    requestDeleteSelectedBlog(): void {
         const selectedBlog = this.selectedBlog;
         if (!selectedBlog || this.deletingBlog || this.savingBlog || this.savingPost || this.deletingPost) {
             return;
         }
 
-        const confirmed = window.confirm(`Delete blog "${selectedBlog.title}" and all posts? This cannot be undone.`);
-        if (!confirmed) {
+        this.pendingDeleteBlogId = selectedBlog.id;
+    }
+
+    cancelDeleteSelectedBlog(): void {
+        if (this.deletingBlog) {
+            return;
+        }
+
+        this.pendingDeleteBlogId = null;
+    }
+
+    async confirmDeleteSelectedBlog(): Promise<void> {
+        const pendingBlog = this.pendingDeleteBlog;
+        if (!pendingBlog || this.deletingBlog || this.savingBlog || this.savingPost || this.deletingPost) {
             return;
         }
 
@@ -287,13 +343,15 @@ export class BlogStudioPageComponent {
         this.error = '';
 
         try {
-            await this.session.deleteBlogAsync(selectedBlog.id);
-            this.blogs = this.blogs.filter(blog => blog.id !== selectedBlog.id);
+            await this.session.deleteBlogAsync(pendingBlog.id);
+            this.blogs = this.blogs.filter(blog => blog.id !== pendingBlog.id);
             this.closeBlogEditor();
         } catch {
-            this.error = 'Could not delete this blog.';
+            this.error = this.t('blogStudioPage.errors.deleteBlog');
         } finally {
+            this.pendingDeleteBlogId = null;
             this.deletingBlog = false;
+            this.cdr.detectChanges();
         }
     }
 
@@ -373,12 +431,14 @@ export class BlogStudioPageComponent {
         try {
             this.postForm.coverImageUrl = await this.session.uploadImageAsync(file);
         } catch {
-            this.postError = 'Could not upload cover image.';
+            this.postError = this.t('blogStudioPage.errors.uploadCover');
         } finally {
             this.uploadingPostCoverImage = false;
             if (target) {
                 target.value = '';
             }
+
+            this.cdr.detectChanges();
         }
     }
 
@@ -390,7 +450,7 @@ export class BlogStudioPageComponent {
 
         this.savingPost = true;
         this.postError = '';
-        const handle = this.uploadProgress.begin('Saving blog post...');
+        const handle = this.uploadProgress.begin(this.t('blogStudioPage.status.savingPostProgress'));
 
         try {
             const title = this.postForm.title.trim();
@@ -409,27 +469,37 @@ export class BlogStudioPageComponent {
                 this.posts = [saved, ...this.posts];
             }
 
-            handle.succeed('Blog post saved!');
+            handle.succeed(this.t('blogStudioPage.status.postSaved'));
             this.editPost(saved);
         } catch {
-            this.postError = 'Could not save blog post. Make sure title and content are set.';
-            handle.fail('Blog post save failed');
+            this.postError = this.t('blogStudioPage.errors.savePost');
+            handle.fail(this.t('blogStudioPage.status.postSaveFailed'));
         } finally {
             this.savingPost = false;
+            this.cdr.detectChanges();
         }
     }
 
-    async deleteEditingPostAsync(): Promise<void> {
-        const selectedBlog = this.selectedBlog;
-        const postId = this.editingPostId;
-        if (!selectedBlog || !postId || this.deletingPost || this.savingPost || this.deletingBlog) {
+    requestDeleteEditingPost(): void {
+        if (!this.selectedBlog || !this.editingPostId || this.deletingPost || this.savingPost || this.deletingBlog) {
             return;
         }
 
-        const post = this.posts.find(item => item.id === postId);
-        const postTitle = post?.title ?? 'this post';
-        const confirmed = window.confirm(`Delete "${postTitle}"? This cannot be undone.`);
-        if (!confirmed) {
+        this.pendingDeletePostId = this.editingPostId;
+    }
+
+    cancelDeleteEditingPost(): void {
+        if (this.deletingPost) {
+            return;
+        }
+
+        this.pendingDeletePostId = null;
+    }
+
+    async confirmDeleteEditingPost(): Promise<void> {
+        const selectedBlog = this.selectedBlog;
+        const postId = this.pendingDeletePostId;
+        if (!selectedBlog || !postId || this.deletingPost || this.savingPost || this.deletingBlog) {
             return;
         }
 
@@ -441,10 +511,18 @@ export class BlogStudioPageComponent {
             this.posts = this.posts.filter(item => item.id !== postId);
             this.startNewPost();
         } catch {
-            this.postError = 'Could not delete this post.';
+            this.postError = this.t('blogStudioPage.errors.deletePost');
         } finally {
+            this.pendingDeletePostId = null;
             this.deletingPost = false;
+            this.cdr.detectChanges();
         }
+    }
+
+    postStatusLabel(post: BlogPostDto): string {
+        return post.isPublished
+            ? this.t('blogStudioPage.posts.statusPublished')
+            : this.t('blogStudioPage.posts.statusDraft');
     }
 
     trackBlog(_: number, blog: BlogDto): string {
@@ -566,9 +644,10 @@ export class BlogStudioPageComponent {
             this.posts = await this.session.loadBlogPostsAsync(blog.ownerHandle, blog.slug);
         } catch {
             this.posts = [];
-            this.postError = 'Could not load posts for this blog.';
+            this.postError = this.t('blogStudioPage.errors.loadPosts');
         } finally {
             this.loadingPosts = false;
+            this.cdr.detectChanges();
         }
     }
 
@@ -577,7 +656,7 @@ export class BlogStudioPageComponent {
 
         switch (action) {
             case 'h2': {
-                const label = hasSelection ? selected : 'Heading';
+                const label = hasSelection ? selected : this.t('blogStudioPage.insertions.heading');
                 const text = `## ${label}`;
                 return {
                     text,
@@ -586,7 +665,7 @@ export class BlogStudioPageComponent {
                 };
             }
             case 'bold': {
-                const label = hasSelection ? selected : 'bold text';
+                const label = hasSelection ? selected : this.t('blogStudioPage.insertions.boldText');
                 const text = `**${label}**`;
                 return {
                     text,
@@ -595,7 +674,7 @@ export class BlogStudioPageComponent {
                 };
             }
             case 'italic': {
-                const label = hasSelection ? selected : 'italic text';
+                const label = hasSelection ? selected : this.t('blogStudioPage.insertions.italicText');
                 const text = `*${label}*`;
                 return {
                     text,
@@ -604,7 +683,7 @@ export class BlogStudioPageComponent {
                 };
             }
             case 'inlineCode': {
-                const label = hasSelection ? selected : 'code';
+                const label = hasSelection ? selected : this.t('blogStudioPage.insertions.code');
                 const text = `\`${label}\``;
                 return {
                     text,
@@ -613,7 +692,7 @@ export class BlogStudioPageComponent {
                 };
             }
             case 'link': {
-                const label = hasSelection ? selected : 'link text';
+                const label = hasSelection ? selected : this.t('blogStudioPage.insertions.linkText');
                 const text = `[${label}](https://example.com)`;
                 const selectStart = text.indexOf('https://example.com');
                 return {
@@ -623,7 +702,7 @@ export class BlogStudioPageComponent {
                 };
             }
             case 'ul': {
-                const base = hasSelection ? selected : 'list item';
+                const base = hasSelection ? selected : this.t('blogStudioPage.insertions.listItem');
                 const text = base
                     .split('\n')
                     .map(line => `- ${line}`)
@@ -631,7 +710,7 @@ export class BlogStudioPageComponent {
                 return { text, selectStart: text.length, selectEnd: text.length };
             }
             case 'ol': {
-                const base = hasSelection ? selected : 'list item';
+                const base = hasSelection ? selected : this.t('blogStudioPage.insertions.listItem');
                 const text = base
                     .split('\n')
                     .map((line, index) => `${index + 1}. ${line}`)
@@ -639,7 +718,7 @@ export class BlogStudioPageComponent {
                 return { text, selectStart: text.length, selectEnd: text.length };
             }
             case 'quote': {
-                const base = hasSelection ? selected : 'quote';
+                const base = hasSelection ? selected : this.t('blogStudioPage.insertions.quote');
                 const text = base
                     .split('\n')
                     .map(line => `> ${line}`)
@@ -647,7 +726,7 @@ export class BlogStudioPageComponent {
                 return { text, selectStart: text.length, selectEnd: text.length };
             }
             case 'codeBlock': {
-                const label = hasSelection ? selected : 'code here';
+                const label = hasSelection ? selected : this.t('blogStudioPage.insertions.codeHere');
                 const text = `\`\`\`\n${label}\n\`\`\``;
                 const selectStart = hasSelection ? text.length : 4;
                 const selectEnd = hasSelection ? text.length : 4 + label.length;
@@ -796,5 +875,9 @@ export class BlogStudioPageComponent {
 
     private normalizeSlugInput(value: string): string {
         return (value ?? '').replace(/\s+/g, '-');
+    }
+
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.translate.instant(key, params);
     }
 }

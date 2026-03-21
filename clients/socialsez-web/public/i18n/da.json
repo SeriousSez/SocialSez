@@ -45,7 +45,7 @@
         "notifications": "Notifikationer",
         "safety": "Sikkerhed",
         "security": "Sikring",
-          "data": "Datakontroller",
+        "data": "Datakontroller",
         "blocked": "Blokerede brugere",
         "logout": "Log ud"
       },
@@ -195,6 +195,164 @@
       "registerFailed": "Kunne ikke registrere med disse oplysninger.",
       "invalidCredentials": "Ugyldige loginoplysninger.",
       "interestsSaveFailed": "Vi oprettede din konto, men kunne ikke gemme interesser lige nu."
+    }
+  },
+  "blogStudioPage": {
+    "header": {
+      "title": "Blogstudio",
+      "subtitle": "Byg og tilpas din blog, og udgiv derefter indlæg.",
+      "backToBlogs": "Tilbage til blogs"
+    },
+    "loading": {
+      "studioAria": "Indlæser blogstudio",
+      "postsAria": "Indlæser blogindlæg"
+    },
+    "library": {
+      "title": "Dine blogs",
+      "subtitle": "Vælg en at redigere, eller start en ny blog.",
+      "newBlog": "+ Ny blog",
+      "empty": "Ingen blogs endnu. Opret din første."
+    },
+    "editorTabs": {
+      "blog": "Rediger blog",
+      "posts": "Indlæg"
+    },
+    "common": {
+      "close": "Luk",
+      "cancel": "Annuller",
+      "write": "Skriv",
+      "preview": "Forhåndsvis"
+    },
+    "blogEditor": {
+      "editTitle": "Rediger blog",
+      "createTitle": "Opret blog",
+      "titleLabel": "Titel",
+      "titlePlaceholder": "Mine designnoter",
+      "descriptionLabel": "Beskrivelse",
+      "descriptionModeAria": "Beskrivelsestilstand",
+      "descriptionMarkdownToolsAria": "Markdown-værktøjer til beskrivelse",
+      "descriptionPlaceholder": "Hvad denne blog handler om",
+      "slugLabel": "Slug",
+      "slugPlaceholder": "design-notes",
+      "publicBlog": "Offentlig blog",
+      "engagementTitle": "Engagement og deling",
+      "allowLikes": "Tillad likes",
+      "allowComments": "Tillad kommentarer",
+      "allowShares": "Tillad deling",
+      "allowEmbeds": "Tillad indlejring på eksterne websites",
+      "themeTitle": "Tema",
+      "fontFamilyLabel": "Skrifttypefamilie",
+      "fontFamilyPlaceholder": "f.eks. ui-serif, Cambria, serif",
+      "accentColorLabel": "Accentfarve",
+      "accentColorPlaceholder": "#ea580c eller var(--accent)",
+      "backgroundColorLabel": "Baggrundsfarve",
+      "backgroundColorPlaceholder": "#fff7ed eller var(--background)",
+      "surfaceColorLabel": "Overfladefarve",
+      "surfaceColorPlaceholder": "#ffffff eller var(--surface)",
+      "darkThemeTitle": "Mørkt tema",
+      "darkAccentColorLabel": "Mørk accentfarve",
+      "darkAccentColorPlaceholder": "#818cf8 (valgfrit)",
+      "darkBackgroundColorLabel": "Mørk baggrundsfarve",
+      "darkBackgroundColorPlaceholder": "#0b1022 (valgfrit)",
+      "darkSurfaceColorLabel": "Mørk overfladefarve",
+      "darkSurfaceColorPlaceholder": "#11142a (valgfrit)",
+      "headerLayoutLabel": "Headerlayout",
+      "headerLayoutPlaceholder": "f.eks. hero-split",
+      "postListLayoutLabel": "Indlægslayout",
+      "postListLayoutPlaceholder": "f.eks. timeline",
+      "customCssLabel": "Brugerdefineret CSS",
+      "customCssGuideAria": "Guide til brugerdefineret CSS",
+      "customCssGuideIntro": "Brug dette til at style dine blogsider.",
+      "customCssGuideSelectors": "Understøttede selektorer: .blog-shell sidewrapper, .blog-header headerkort, .subtitle undertekst/metatekst, .post-card indlægskort, .content indhold for indlæg.",
+      "customCssGuideVariables": "Tema-variabler, du kan tilsidesætte: --accent, --background, --background2, --surface, --dark-accent, --dark-background, --dark-surface, --font-family.",
+      "customCssGuideExample": "Eksempel: .blog-shell { --accent:#ff5c72; --background:#f4f7f9; --background2:#e8eff5; --surface:#ffffff; }",
+      "customCssPlaceholder": ".post-card { border-radius: 20px; }",
+      "saveBlog": "Gem blog",
+      "savingBlog": "Gemmer...",
+      "deleteBlog": "Slet blog",
+      "deletingBlog": "Sletter..."
+    },
+    "posts": {
+      "title": "Indlæg til {{title}}",
+      "newPost": "+ Nyt indlæg",
+      "statusPublished": "Udgivet",
+      "statusDraft": "Kladde",
+      "thisPost": "dette indlæg",
+      "postTitleLabel": "Indlægstitel",
+      "postTitlePlaceholder": "Sådan redesignede jeg min profilside",
+      "postSlugLabel": "Indlægs-slug",
+      "postSlugPlaceholder": "profile-redesign",
+      "excerptLabel": "Uddrag",
+      "excerptPlaceholder": "En kort teaser til lister",
+      "coverImageLabel": "URL til forsidebillede",
+      "coverImagePlaceholder": "/uploads/images/post-cover.jpg",
+      "uploadImage": "Upload billede",
+      "uploadingImage": "Uploader...",
+      "tagsLabel": "Tags (kommasepareret)",
+      "tagsPlaceholder": "ui, angular, personlig",
+      "contentLabel": "Indhold",
+      "markdownHelp": "Markdown understøttes: # overskrift, **fed**, *kursiv*, `kode`, [link](https://example.com), lister og indhegnede kodeblokke.",
+      "contentModeAria": "Tilstand for indholdsredigering",
+      "markdownToolsAria": "Markdown-værktøjer",
+      "contentPlaceholder": "Skriv indholdet til din artikel her",
+      "published": "Udgivet",
+      "updatePost": "Opdater indlæg",
+      "createPost": "Opret indlæg",
+      "savingPost": "Gemmer...",
+      "deletePost": "Slet indlæg",
+      "deletingPost": "Sletter..."
+    },
+    "markdownTools": {
+      "h2": "H2",
+      "bold": "Fed",
+      "italic": "Kursiv",
+      "link": "Link",
+      "bulletList": "Punktliste",
+      "numberedList": "Nummereret liste",
+      "quote": "Citat",
+      "inlineCode": "Inline-kode",
+      "codeBlock": "Kodeblok"
+    },
+    "themeOptions": {
+      "custom": "Brugerdefineret",
+      "headerLeft": "Venstre",
+      "headerCenter": "Center",
+      "headerSplit": "Delt",
+      "headerMinimal": "Minimal",
+      "layoutGrid": "Gitter",
+      "layoutStack": "Stak",
+      "layoutMagazine": "Magasin"
+    },
+    "confirm": {
+      "deleteBlogTitle": "Slet blog",
+      "deleteBlogMessage": "Slet bloggen \"{{title}}\" og alle indlæg? Handlingen kan ikke fortrydes.",
+      "deletePostTitle": "Slet indlæg",
+      "deletePostMessage": "Slet \"{{title}}\"? Handlingen kan ikke fortrydes.",
+      "confirmDelete": "Slet"
+    },
+    "errors": {
+      "loadBlogs": "Kunne ikke indlæse dine blogs.",
+      "saveBlog": "Kunne ikke gemme bloggen. Sørg for, at titlen er udfyldt.",
+      "deleteBlog": "Kunne ikke slette denne blog.",
+      "uploadCover": "Kunne ikke uploade forsidebillede.",
+      "savePost": "Kunne ikke gemme blogindlægget. Sørg for, at titel og indhold er udfyldt.",
+      "deletePost": "Kunne ikke slette dette indlæg.",
+      "loadPosts": "Kunne ikke indlæse indlæg til denne blog."
+    },
+    "status": {
+      "savingPostProgress": "Gemmer blogindlæg...",
+      "postSaved": "Blogindlæg gemt!",
+      "postSaveFailed": "Kunne ikke gemme blogindlæg"
+    },
+    "insertions": {
+      "heading": "Overskrift",
+      "boldText": "fed tekst",
+      "italicText": "kursiv tekst",
+      "code": "kode",
+      "linkText": "linktekst",
+      "listItem": "listepunkt",
+      "quote": "citat",
+      "codeHere": "kode her"
     }
   },
   "profile": {
