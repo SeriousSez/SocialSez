@@ -12,6 +12,9 @@ public partial class TranslationService : ITranslationService
 {
     private const int MaxTranslateChars = 4500;
     private const int MaxTranslateChunkChars = 450;
+    private const string NewlineToken = "\uE000SSZNL\uE001";
+    private const char HtmlTagTokenStart = '\uE002';
+    private const char HtmlTagTokenEnd = '\uE003';
 
     // One shared client per process – avoids socket exhaustion for a simple proxy.
     private static readonly HttpClient Http = new(new SocketsHttpHandler
@@ -60,34 +63,89 @@ public partial class TranslationService : ITranslationService
         if (!TryResolveTargetCode(targetLanguage, out var targetCode))
             return null;
 
-        var (protectedText, preservedTags) = ProtectMarkup(text);
-        if (string.IsNullOrWhiteSpace(protectedText))
-            return null;
+        var protectedText = ProtectHtmlTags(text, out var preservedTags);
+        var (translatedProtected, _) = await TranslateTextSegmentAsync(protectedText, targetCode, cancellationToken, MaxTranslateChars);
+        if (!string.IsNullOrWhiteSpace(translatedProtected))
+        {
+            var restored = RestoreHtmlTags(translatedProtected, preservedTags, out var hasUnrestoredTokens);
+            if (!hasUnrestoredTokens)
+            {
+                var translatedText = restored.Trim();
+                return string.IsNullOrWhiteSpace(translatedText) ? null : translatedText;
+            }
+        }
 
-        if (protectedText.Length > MaxTranslateChars)
-            protectedText = protectedText[..MaxTranslateChars];
+        return await TranslateByHtmlSegmentsAsync(text, targetCode, cancellationToken);
+    }
 
-        var chunks = SplitIntoChunks(protectedText, MaxTranslateChunkChars);
+    private async Task<string?> TranslateByHtmlSegmentsAsync(string text, string targetCode, CancellationToken cancellationToken)
+    {
+
+        var translatedBuilder = new StringBuilder(text.Length + 64);
+        var remainingChars = MaxTranslateChars;
+        var cursor = 0;
+
+        foreach (Match tagMatch in HtmlTagPattern().Matches(text))
+        {
+            if (tagMatch.Index > cursor)
+            {
+                var segment = text[cursor..tagMatch.Index];
+                var (translatedSegment, consumedChars) = await TranslateTextSegmentAsync(segment, targetCode, cancellationToken, remainingChars);
+                remainingChars = Math.Max(0, remainingChars - consumedChars);
+                translatedBuilder.Append(translatedSegment);
+            }
+
+            translatedBuilder.Append(tagMatch.Value);
+            cursor = tagMatch.Index + tagMatch.Length;
+        }
+
+        if (cursor < text.Length)
+        {
+            var tailSegment = text[cursor..];
+            var (translatedTail, consumedChars) = await TranslateTextSegmentAsync(tailSegment, targetCode, cancellationToken, remainingChars);
+            remainingChars = Math.Max(0, remainingChars - consumedChars);
+            translatedBuilder.Append(translatedTail);
+        }
+
+        var translatedText = translatedBuilder.ToString().Trim();
+        return string.IsNullOrWhiteSpace(translatedText) ? null : translatedText;
+    }
+
+    private static async Task<(string TranslatedText, int ConsumedChars)> TranslateTextSegmentAsync(string textSegment, string targetCode, CancellationToken cancellationToken, int remainingChars)
+    {
+        if (string.IsNullOrEmpty(textSegment))
+            return (textSegment, 0);
+
+        if (remainingChars <= 0 || string.IsNullOrWhiteSpace(textSegment))
+            return (textSegment, 0);
+
+        var translatableLength = Math.Min(textSegment.Length, remainingChars);
+        var translatableSegment = textSegment[..translatableLength];
+        var nonTranslatedRemainder = textSegment.Length > translatableLength ? textSegment[translatableLength..] : string.Empty;
+
+        var protectedLineBreaks = ProtectLineBreaks(translatableSegment);
+        var chunks = SplitIntoChunks(protectedLineBreaks, MaxTranslateChunkChars);
         if (chunks.Count == 0)
-            return null;
+            return (textSegment, 0);
 
-        var translatedBuilder = new StringBuilder(protectedText.Length + 64);
-
+        var translatedBuilder = new StringBuilder(protectedLineBreaks.Length + 32);
         foreach (var chunk in chunks)
         {
             if (string.IsNullOrWhiteSpace(chunk))
+            {
+                translatedBuilder.Append(chunk);
                 continue;
+            }
 
             var translatedChunk = await TranslateChunkAsync(chunk, targetCode, cancellationToken);
             if (string.IsNullOrWhiteSpace(translatedChunk))
-                return null;
+                return (textSegment, 0);
 
             translatedBuilder.Append(translatedChunk);
         }
 
-        var translatedText = translatedBuilder.ToString();
-        translatedText = RestoreMarkup(translatedText, preservedTags).Trim();
-        return string.IsNullOrWhiteSpace(translatedText) ? null : translatedText;
+        var restored = RestoreLineBreaks(translatedBuilder.ToString());
+        return (restored + nonTranslatedRemainder, translatableLength);
     }
 
     private static List<string> SplitIntoChunks(string text, int maxChunkChars)
@@ -134,11 +192,11 @@ public partial class TranslationService : ITranslationService
 
     private static async Task<string?> TranslateChunkAsync(string chunk, string targetCode, CancellationToken cancellationToken)
     {
-        var translatedViaMyMemory = await TranslateChunkViaMyMemoryAsync(chunk, targetCode, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(translatedViaMyMemory))
-            return translatedViaMyMemory;
+        var translatedViaGoogle = await TranslateChunkViaGoogleAsync(chunk, targetCode, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(translatedViaGoogle))
+            return translatedViaGoogle;
 
-        return await TranslateChunkViaGoogleAsync(chunk, targetCode, cancellationToken);
+        return await TranslateChunkViaMyMemoryAsync(chunk, targetCode, cancellationToken);
     }
 
     private static async Task<string?> TranslateChunkViaMyMemoryAsync(string chunk, string targetCode, CancellationToken cancellationToken)
@@ -224,43 +282,73 @@ public partial class TranslationService : ITranslationService
         }
     }
 
-    private static (string ProtectedText, IReadOnlyList<string> PreservedTags) ProtectMarkup(string text)
+    private static string ProtectLineBreaks(string value)
     {
-        var tags = new List<string>();
-        var protectedText = HtmlTagPattern().Replace(text, match =>
-        {
-            tags.Add(match.Value);
-            return BuildTagToken(tags.Count - 1);
-        });
+        if (string.IsNullOrEmpty(value))
+            return value;
 
-        return (protectedText, tags);
+        return value
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace("\r", "\n", StringComparison.Ordinal)
+            .Replace("\n", NewlineToken, StringComparison.Ordinal);
     }
 
-    private static string RestoreMarkup(string translatedText, IReadOnlyList<string> preservedTags)
+    private static string RestoreLineBreaks(string value)
     {
-        if (preservedTags.Count == 0 || string.IsNullOrEmpty(translatedText))
-            return translatedText;
+        if (string.IsNullOrEmpty(value))
+            return value;
 
-        var restored = translatedText;
-        for (var index = 0; index < preservedTags.Count; index++)
-            restored = restored.Replace(BuildTagToken(index), preservedTags[index], StringComparison.Ordinal);
+        return value.Replace(NewlineToken, "\n", StringComparison.Ordinal);
+    }
 
-        var byIndex = new Dictionary<int, string>(preservedTags.Count);
-        for (var index = 0; index < preservedTags.Count; index++)
-            byIndex[index] = preservedTags[index];
+    private static string ProtectHtmlTags(string value, out List<string> preservedTags)
+    {
+        preservedTags = [];
+        if (string.IsNullOrEmpty(value))
+            return value;
 
-        restored = MutatedTagTokenPattern().Replace(restored, match =>
+        var protectedBuilder = new StringBuilder(value.Length + 32);
+        var cursor = 0;
+
+        foreach (Match tagMatch in HtmlTagPattern().Matches(value))
         {
-            if (!int.TryParse(match.Groups["index"].Value, out var tokenIndex))
-                return match.Value;
+            if (tagMatch.Index > cursor)
+                protectedBuilder.Append(value[cursor..tagMatch.Index]);
 
-            return byIndex.TryGetValue(tokenIndex, out var tag) ? tag : match.Value;
-        });
+            preservedTags.Add(tagMatch.Value);
+            protectedBuilder.Append(BuildHtmlTagToken(preservedTags.Count - 1));
+            cursor = tagMatch.Index + tagMatch.Length;
+        }
 
+        if (cursor < value.Length)
+            protectedBuilder.Append(value[cursor..]);
+
+        return protectedBuilder.ToString();
+    }
+
+    private static string RestoreHtmlTags(string value, IReadOnlyList<string> preservedTags, out bool hasUnrestoredTokens)
+    {
+        if (string.IsNullOrEmpty(value) || preservedTags.Count == 0)
+        {
+            hasUnrestoredTokens = false;
+            return value;
+        }
+
+        var restored = value;
+        for (var index = 0; index < preservedTags.Count; index++)
+        {
+            restored = restored.Replace(
+                BuildHtmlTagToken(index),
+                preservedTags[index],
+                StringComparison.Ordinal);
+        }
+
+        hasUnrestoredTokens = restored.IndexOf(HtmlTagTokenStart) >= 0 || restored.IndexOf(HtmlTagTokenEnd) >= 0;
         return restored;
     }
 
-    private static string BuildTagToken(int index) => $"__SSZ_TAG_{index}__";
+    private static string BuildHtmlTagToken(int index)
+        => string.Concat(HtmlTagTokenStart, index.ToString(), HtmlTagTokenEnd);
 
     private static bool IsMyMemoryWarning(string text)
         => text.StartsWith("MYMEMORY WARNING", StringComparison.OrdinalIgnoreCase);
@@ -285,9 +373,6 @@ public partial class TranslationService : ITranslationService
 
     [GeneratedRegex("<[^>]+>")]
     private static partial Regex HtmlTagPattern();
-
-    [GeneratedRegex(@"__\s*SSZ\s*[_\-\s]*TAG\s*[_\-\s]*(?<index>\d+)\s*__", RegexOptions.IgnoreCase)]
-    private static partial Regex MutatedTagTokenPattern();
 
     private sealed class MyMemoryResponse
     {
