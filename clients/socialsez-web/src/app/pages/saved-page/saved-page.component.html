@@ -36,19 +36,42 @@
                 <app-skeleton width="200px" height="22px" radius="8px"></app-skeleton>
                 <app-skeleton width="90px" height="18px" radius="8px"></app-skeleton>
             </div>
+            @if (activeContentTab === 'reels') {
+            <div class="saved-loading-reels">
+                @for (_ of [1, 2, 3, 4, 5, 6]; track $index) {
+                <div class="saved-loading-reel">
+                    <app-skeleton width="100%" height="100%" radius="4px"></app-skeleton>
+                    <div class="saved-loading-reel-badge">
+                        <app-skeleton width="28px" height="28px" radius="999px"></app-skeleton>
+                    </div>
+                </div>
+                }
+            </div>
+            } @else {
             <div class="saved-loading-cards">
                 @for (_ of [1, 2, 3, 4]; track $index) {
                 <article class="saved-loading-card">
                     <div class="saved-loading-card-head">
-                        <app-skeleton width="34px" height="34px" radius="999px"></app-skeleton>
-                        <app-skeleton width="160px" height="14px" radius="6px"></app-skeleton>
+                        <div class="saved-loading-card-author">
+                            <app-skeleton width="34px" height="34px" radius="999px"></app-skeleton>
+                            <app-skeleton width="150px" height="14px" radius="6px"></app-skeleton>
+                        </div>
+                        <app-skeleton width="44px" height="14px" radius="6px"></app-skeleton>
                     </div>
-                    <app-skeleton width="92%" height="12px" radius="6px"></app-skeleton>
-                    <app-skeleton width="84%" height="12px" radius="6px"></app-skeleton>
-                    <app-skeleton width="120px" height="12px" radius="6px"></app-skeleton>
+                    <app-skeleton width="96%" height="13px" radius="6px"></app-skeleton>
+                    <app-skeleton width="88%" height="13px" radius="6px"></app-skeleton>
+                    <app-skeleton width="58%" height="13px" radius="6px"></app-skeleton>
+                    <div class="saved-loading-card-meta">
+                        <app-skeleton width="130px" height="12px" radius="6px"></app-skeleton>
+                        <app-skeleton width="120px" height="12px" radius="6px"></app-skeleton>
+                    </div>
+                    <div class="saved-loading-card-actions">
+                        <app-skeleton width="88px" height="30px" radius="999px"></app-skeleton>
+                    </div>
                 </article>
                 }
             </div>
+            }
         </div>
         } @else if (activeContentTab === 'community-posts' && filteredCommunityPosts.length === 0) {
         <div class="empty-state compact">
@@ -107,7 +130,11 @@
                     <a class="saved-simple-card-link" [href]="'/cp/' + post.id">Open</a>
                 </header>
                 @if (post.content) {
-                <p class="saved-simple-card-content">{{ post.content }}</p>
+                @if (isSavedContentHtml(post.content)) {
+                <div class="saved-simple-card-content saved-simple-card-content--html" [innerHTML]="renderSavedContentHtml(post.content)" (click)="onSavedContentClick($event)"></div>
+                } @else {
+                <p class="saved-simple-card-content">{{ renderSavedContentText(post.content) }}</p>
+                }
                 }
                 <div class="saved-simple-card-meta">
                     <span>@{{ post.authorHandle }}</span>
@@ -166,6 +193,9 @@
                         <a class="saved-simple-card-link" [href]="'/post/' + item.post.id">Open</a>
                     </header>
                     @if (item.post.content) {
+                    @if (isSavedContentHtml(item.post.content)) {
+                    <div class="saved-simple-card-content saved-simple-card-content--html" [innerHTML]="renderSavedContentHtml(item.post.content)" (click)="onSavedContentClick($event)"></div>
+                    } @else {
                     <div class="saved-simple-card-content">
                         @for (line of postContentLines(item.post.content); track $index; let isLastLine = $last) {
                         <ng-container>
@@ -184,6 +214,7 @@
                         </ng-container>
                         }
                     </div>
+                    }
                     }
                     <div class="saved-simple-card-meta">
                         <span>{{ item.post.comments.length }} comments</span>

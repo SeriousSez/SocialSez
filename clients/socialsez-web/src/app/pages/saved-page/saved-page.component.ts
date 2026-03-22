@@ -27,6 +27,7 @@ export class SavedPageComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly linkedHtmlCache = new Map<string, string>();
 
     isLoading = true;
     isCreatingCollection = false;
@@ -316,9 +317,62 @@ export class SavedPageComponent implements OnInit {
     }
 
     postContentLines(content: string): SavedPostContentPart[][] {
-        return content
+        const normalized = this.normalizeSavedContent(content);
+        return normalized
             .split(/\r?\n/)
             .map(line => this.parseLineParts(line));
+    }
+
+    isSavedContentHtml(content: string): boolean {
+        return /<[a-zA-Z]/.test(content ?? '');
+    }
+
+    renderSavedContentHtml(content: string): string {
+        const source = content ?? '';
+        const cached = this.linkedHtmlCache.get(source);
+        if (cached !== undefined) {
+            return cached;
+        }
+
+        const linked = this.linkifyInlineTokensInHtml(source);
+        this.linkedHtmlCache.set(source, linked);
+        return linked;
+    }
+
+    onSavedContentClick(event: MouseEvent): void {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+
+        const anchor = target.closest('a');
+        if (!(anchor instanceof HTMLAnchorElement)) {
+            return;
+        }
+
+        const href = anchor.getAttribute('href')?.trim() ?? '';
+        if (href.startsWith('/hashtags/')) {
+            event.preventDefault();
+            event.stopPropagation();
+            const hashtag = href.slice('/hashtags/'.length);
+            if (hashtag) {
+                void this.router.navigate(['/hashtags', decodeURIComponent(hashtag)]);
+            }
+            return;
+        }
+
+        if (href.startsWith('/users/')) {
+            event.preventDefault();
+            event.stopPropagation();
+            const handle = href.slice('/users/'.length);
+            if (handle) {
+                void this.router.navigate(['/users', decodeURIComponent(handle)]);
+            }
+        }
+    }
+
+    renderSavedContentText(content: string): string {
+        return this.normalizeSavedContent(content);
     }
 
     private parseLineParts(line: string): SavedPostContentPart[] {
@@ -356,6 +410,92 @@ export class SavedPageComponent implements OnInit {
         }
 
         return parts;
+    }
+
+    private normalizeSavedContent(content: string): string {
+        const source = content ?? '';
+        if (!source.trim()) {
+            return '';
+        }
+
+        if (!/<[a-zA-Z][^>]*>|&[a-zA-Z#0-9]+;/.test(source)) {
+            return source;
+        }
+
+        const container = document.createElement('div');
+        container.innerHTML = source
+            .replace(/<br\s*\/?\s*>/gi, '\n')
+            .replace(/<\/div\s*>/gi, '\n')
+            .replace(/<\/p\s*>/gi, '\n')
+            .replace(/<\/li\s*>/gi, '\n');
+
+        return (container.textContent ?? '')
+            .replace(/\u00A0/g, ' ')
+            .replace(/\r\n?/g, '\n')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    }
+
+    private linkifyInlineTokensInHtml(html: string): string {
+        const container = document.createElement('div');
+        container.innerHTML = html;
+        const tokenRegex = /#[\p{L}\p{N}_]+|\B@[\p{L}\p{N}_]+/gu;
+
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+        const textNodes: Text[] = [];
+
+        let currentNode = walker.nextNode();
+        while (currentNode) {
+            if (currentNode instanceof Text) {
+                const parent = currentNode.parentElement;
+                const nodeValue = currentNode.nodeValue ?? '';
+                if (parent && !parent.closest('a, code, pre') && tokenRegex.test(nodeValue)) {
+                    textNodes.push(currentNode);
+                }
+            }
+
+            currentNode = walker.nextNode();
+        }
+
+        for (const node of textNodes) {
+            const source = node.nodeValue ?? '';
+            tokenRegex.lastIndex = 0;
+
+            const fragment = document.createDocumentFragment();
+            let cursor = 0;
+
+            for (const match of source.matchAll(tokenRegex)) {
+                const token = match[0] ?? '';
+                const start = match.index ?? -1;
+                if (start < 0) {
+                    continue;
+                }
+
+                if (start > cursor) {
+                    fragment.append(document.createTextNode(source.slice(cursor, start)));
+                }
+
+                const anchor = document.createElement('a');
+                if (token.startsWith('#')) {
+                    anchor.className = 'hashtag';
+                    anchor.href = `/hashtags/${encodeURIComponent(token.slice(1))}`;
+                } else {
+                    anchor.className = 'mention';
+                    anchor.href = `/users/${encodeURIComponent(token.slice(1))}`;
+                }
+                anchor.textContent = token;
+                fragment.append(anchor);
+                cursor = start + token.length;
+            }
+
+            if (cursor < source.length) {
+                fragment.append(document.createTextNode(source.slice(cursor)));
+            }
+
+            node.replaceWith(fragment);
+        }
+
+        return container.innerHTML;
     }
 
     private async loadSavedCommunityPostsAsync(): Promise<void> {
