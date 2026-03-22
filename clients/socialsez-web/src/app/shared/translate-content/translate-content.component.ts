@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, DestroyRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
-import { readStoredLanguagePreference } from '../../core/app-language.util';
+import { readStoredLanguagePreference, resolveTranslationLanguage } from '../../core/app-language.util';
 import { SocialSezApiService } from '../../core/socialsez-api.service';
 
 @Component({
@@ -44,7 +44,7 @@ export class TranslateContentComponent implements OnChanges {
         if (!this.hasContent || this.translating) return;
 
         const pref = readStoredLanguagePreference();
-        const targetLanguage = pref === 'system' ? 'en-US' : pref;
+        const targetLanguage = resolveTranslationLanguage(pref);
 
         this.translating = true;
         this.failed = false;
