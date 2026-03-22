@@ -36,10 +36,18 @@ jobs:
           filters: |
             api:
               - 'SocialSez.API/**'
+              - 'SocialSez.ApplicationService/**'
+              - 'SocialSez.Infrastructure/**'
+              - 'SocialSez.Domain/**'
+              - 'Directory.Build.props'
+              - 'SocialSez.slnx'
               - '.github/workflows/deploy-to-simply.yml'
             web:
               - 'clients/socialsez-web/**'
               - '!SocialSez.API/**'
+              - '!SocialSez.ApplicationService/**'
+              - '!SocialSez.Infrastructure/**'
+              - '!SocialSez.Domain/**'
 
   build-api:
     needs: detect-changes

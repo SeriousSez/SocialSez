@@ -763,6 +763,8 @@ public class ReelService(SocialSezContext dbContext, ICustomFeedService customFe
 
         var followedSet = followedIds.ToHashSet();
 
+        Console.WriteLine("test");
+
         if (mode == FeedMode.Following)
         {
             var followingLoadTake = customFeed is null ? take : Math.Clamp(take * 8, take, 400);
