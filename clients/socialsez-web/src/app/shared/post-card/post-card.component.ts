@@ -1416,7 +1416,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
 
     private applyActiveContentText(): void {
         this.fullContentText = this.inlineTranslatedContent ?? this.originalContentText;
-        this.contentIsHtml = !this.inlineTranslatedContent && /<[a-zA-Z]/.test(this.fullContentText);
+        this.contentIsHtml = /<[a-zA-Z]/.test(this.fullContentText);
 
         const textLength = this.contentIsHtml
             ? this.extractTextFromHtml(this.fullContentText).length

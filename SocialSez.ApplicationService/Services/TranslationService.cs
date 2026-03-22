@@ -50,18 +50,18 @@ public partial class TranslationService : ITranslationService
         if (!LangMap.TryGetValue(targetLanguage, out var targetCode))
             return null;
 
-        var cleanText = StripMarkup(text);
-        if (string.IsNullOrWhiteSpace(cleanText))
+        var (protectedText, preservedTags) = ProtectMarkup(text);
+        if (string.IsNullOrWhiteSpace(protectedText))
             return null;
 
-        if (cleanText.Length > MaxTranslateChars)
-            cleanText = cleanText[..MaxTranslateChars];
+        if (protectedText.Length > MaxTranslateChars)
+            protectedText = protectedText[..MaxTranslateChars];
 
-        var chunks = SplitIntoChunks(cleanText, MaxTranslateChunkChars);
+        var chunks = SplitIntoChunks(protectedText, MaxTranslateChunkChars);
         if (chunks.Count == 0)
             return null;
 
-        var translatedBuilder = new StringBuilder(cleanText.Length + 64);
+        var translatedBuilder = new StringBuilder(protectedText.Length + 64);
 
         foreach (var chunk in chunks)
         {
@@ -75,7 +75,8 @@ public partial class TranslationService : ITranslationService
             translatedBuilder.Append(translatedChunk);
         }
 
-        var translatedText = translatedBuilder.ToString().Trim();
+        var translatedText = translatedBuilder.ToString();
+        translatedText = RestoreMarkup(translatedText, preservedTags).Trim();
         return string.IsNullOrWhiteSpace(translatedText) ? null : translatedText;
     }
 
@@ -148,32 +149,34 @@ public partial class TranslationService : ITranslationService
         }
     }
 
-    private static string StripMarkup(string text)
+    private static (string ProtectedText, IReadOnlyList<string> PreservedTags) ProtectMarkup(string text)
     {
-        // Map block-level elements to newlines so paragraph structure is preserved.
-        var result = BlockElementPattern().Replace(text, "\n");
-        // Strip remaining HTML tags.
-        result = HtmlTagPattern().Replace(result, "");
-        // Collapse horizontal whitespace (not newlines) to a single space per run.
-        result = HorizontalSpacePattern().Replace(result, " ");
-        // Normalise line endings.
-        result = result.Replace("\r\n", "\n").Replace("\r", "\n");
-        // Trim each line and remove runs of more than two consecutive blank lines.
-        result = TooManyNewlinesPattern().Replace(result, "\n\n");
-        return result.Trim();
+        var tags = new List<string>();
+        var protectedText = HtmlTagPattern().Replace(text, match =>
+        {
+            tags.Add(match.Value);
+            return BuildTagToken(tags.Count - 1);
+        });
+
+        return (protectedText, tags);
     }
 
-    [GeneratedRegex(@"<br\s*/?>|</p>|</div>|</li>|</h[1-6]>", RegexOptions.IgnoreCase)]
-    private static partial Regex BlockElementPattern();
+    private static string RestoreMarkup(string translatedText, IReadOnlyList<string> preservedTags)
+    {
+        if (preservedTags.Count == 0 || string.IsNullOrEmpty(translatedText))
+            return translatedText;
+
+        var restored = translatedText;
+        for (var index = 0; index < preservedTags.Count; index++)
+            restored = restored.Replace(BuildTagToken(index), preservedTags[index], StringComparison.Ordinal);
+
+        return restored;
+    }
+
+    private static string BuildTagToken(int index) => $"__SSZ_TAG_{index}__";
 
     [GeneratedRegex("<[^>]+>")]
     private static partial Regex HtmlTagPattern();
-
-    [GeneratedRegex(@"[^\S\n]+")]
-    private static partial Regex HorizontalSpacePattern();
-
-    [GeneratedRegex(@"\n{3,}")]
-    private static partial Regex TooManyNewlinesPattern();
 
     private sealed class MyMemoryResponse
     {
