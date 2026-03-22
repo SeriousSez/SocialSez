@@ -254,7 +254,84 @@ jobs:
         shell: pwsh
         run: Start-Sleep -Seconds 3
 
-      - name: Deploy API using FTP
+      - name: Deploy API using FTP (primary)
+        id: deploy_api_primary
+        continue-on-error: true
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ${{ env.PUBLISH_PATH }}/
+          server-dir: /venli.api/
+          dangerous-clean-slate: false
+          exclude: |
+            **/wwwroot/uploads/**
+            **/uploads/**
+            **/logs/**
+
+      - name: Deploy API using FTP (retry while offline)
+        if: env.API_USE_APP_OFFLINE == 'true' && steps.deploy_api_primary.outcome == 'failure'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ${{ env.PUBLISH_PATH }}/
+          server-dir: /venli.api/
+          dangerous-clean-slate: false
+          exclude: |
+            **/wwwroot/uploads/**
+            **/uploads/**
+            **/logs/**
+
+      - name: Create app_offline.htm (fallback)
+        if: env.API_USE_APP_OFFLINE != 'true' && steps.deploy_api_primary.outcome == 'failure'
+        shell: pwsh
+        run: |
+          $content = @"
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Application Offline</title>
+          </head>
+          <body>
+              <h1>Application Offline</h1>
+              <p>The application is currently offline for maintenance.</p>
+          </body>
+          </html>
+          "@
+          Set-Content -Path "${{ env.PUBLISH_PATH }}/app_offline.htm" -Value $content
+
+      - name: Prepare app_offline payload (fallback)
+        if: env.API_USE_APP_OFFLINE != 'true' && steps.deploy_api_primary.outcome == 'failure'
+        shell: pwsh
+        run: |
+          $offlinePayloadDir = "./app-offline-payload"
+          if (Test-Path $offlinePayloadDir) {
+            Remove-Item -Path $offlinePayloadDir -Recurse -Force
+          }
+          New-Item -ItemType Directory -Path $offlinePayloadDir | Out-Null
+          Copy-Item -Path "${{ env.PUBLISH_PATH }}/app_offline.htm" -Destination "$offlinePayloadDir/app_offline.htm" -Force
+
+      - name: Deploy app_offline.htm to take app offline (fallback)
+        if: env.API_USE_APP_OFFLINE != 'true' && steps.deploy_api_primary.outcome == 'failure'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./app-offline-payload/
+          server-dir: /venli.api/
+          dangerous-clean-slate: false
+
+      - name: Wait for app to go offline (fallback)
+        if: env.API_USE_APP_OFFLINE != 'true' && steps.deploy_api_primary.outcome == 'failure'
+        shell: pwsh
+        run: Start-Sleep -Seconds 3
+
+      - name: Deploy API using FTP (fallback retry)
+        if: env.API_USE_APP_OFFLINE != 'true' && steps.deploy_api_primary.outcome == 'failure'
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -269,7 +346,7 @@ jobs:
             **/logs/**
 
       - name: Remove app_offline.htm from server
-        if: env.API_USE_APP_OFFLINE == 'true'
+        if: env.API_USE_APP_OFFLINE == 'true' || (env.API_USE_APP_OFFLINE != 'true' && steps.deploy_api_primary.outcome == 'failure')
         shell: pwsh
         run: |
           $server = "${{ secrets.FTP_SERVER }}"
