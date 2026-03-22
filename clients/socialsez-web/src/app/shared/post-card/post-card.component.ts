@@ -137,6 +137,7 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     pendingDeleteCommentId: string | null = null;
     contentLines: PostContentPart[][] = [];
     fullContentText = '';
+    linkedHtmlContent = '';
     isContentTruncated = false;
     contentExpanded = false;
     contentIsHtml = false;
@@ -1210,6 +1211,34 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         void this.router.navigate(['/users', handle]);
     }
 
+    onHtmlContentClick(event: MouseEvent): void {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+
+        const anchor = target.closest('a');
+        if (!(anchor instanceof HTMLAnchorElement)) {
+            return;
+        }
+
+        const href = anchor.getAttribute('href')?.trim() ?? '';
+        if (href.startsWith('/hashtags/')) {
+            const hashtag = href.slice('/hashtags/'.length);
+            if (hashtag) {
+                this.navigateToHashtag(decodeURIComponent(hashtag), event);
+            }
+            return;
+        }
+
+        if (href.startsWith('/users/')) {
+            const handle = href.slice('/users/'.length);
+            if (handle) {
+                this.navigateToMention(decodeURIComponent(handle), event);
+            }
+        }
+    }
+
     openSharedPost(shared: SharedPostPreview, event: Event): void {
         event.preventDefault();
         event.stopPropagation();
@@ -1417,6 +1446,9 @@ export class PostCardComponent implements OnChanges, OnDestroy {
     private applyActiveContentText(): void {
         this.fullContentText = this.inlineTranslatedContent ?? this.originalContentText;
         this.contentIsHtml = /<[a-zA-Z]/.test(this.fullContentText);
+        this.linkedHtmlContent = this.contentIsHtml
+            ? this.linkifyInlineTokensInHtml(this.fullContentText)
+            : '';
 
         const textLength = this.contentIsHtml
             ? this.extractTextFromHtml(this.fullContentText).length
@@ -1452,6 +1484,70 @@ export class PostCardComponent implements OnChanges, OnDestroy {
         const div = document.createElement('div');
         div.innerHTML = html;
         return (div.textContent ?? '').replace(/\u00A0/g, ' ').trim();
+    }
+
+    private linkifyInlineTokensInHtml(html: string): string {
+        const container = document.createElement('div');
+        container.innerHTML = html;
+        const tokenRegex = /#[\p{L}\p{N}_]+|\B@[\p{L}\p{N}_]+/gu;
+
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+        const textNodes: Text[] = [];
+
+        let currentNode = walker.nextNode();
+        while (currentNode) {
+            if (currentNode instanceof Text) {
+                const parent = currentNode.parentElement;
+                const nodeValue = currentNode.nodeValue ?? '';
+                if (parent && !parent.closest('a, code, pre') && tokenRegex.test(nodeValue)) {
+                    textNodes.push(currentNode);
+                }
+            }
+
+            currentNode = walker.nextNode();
+        }
+
+        for (const node of textNodes) {
+            const source = node.nodeValue ?? '';
+            tokenRegex.lastIndex = 0;
+
+            const fragment = document.createDocumentFragment();
+            let cursor = 0;
+
+            for (const match of source.matchAll(tokenRegex)) {
+                const token = match[0] ?? '';
+                const start = match.index ?? -1;
+                if (start < 0) {
+                    continue;
+                }
+
+                if (start > cursor) {
+                    fragment.append(document.createTextNode(source.slice(cursor, start)));
+                }
+
+                const anchor = document.createElement('a');
+                if (token.startsWith('#')) {
+                    const hashtag = token.slice(1);
+                    anchor.className = 'hashtag';
+                    anchor.href = `/hashtags/${encodeURIComponent(hashtag)}`;
+                } else {
+                    const handle = token.slice(1);
+                    anchor.className = 'mention';
+                    anchor.href = `/users/${encodeURIComponent(handle)}`;
+                }
+                anchor.textContent = token;
+                fragment.append(anchor);
+                cursor = start + token.length;
+            }
+
+            if (cursor < source.length) {
+                fragment.append(document.createTextNode(source.slice(cursor)));
+            }
+
+            node.replaceWith(fragment);
+        }
+
+        return container.innerHTML;
     }
 
     private normalizePostContentLength(value: string): string {

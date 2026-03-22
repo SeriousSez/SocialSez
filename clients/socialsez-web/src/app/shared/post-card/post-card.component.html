@@ -22,7 +22,7 @@
     </ng-container>
 
     <ng-container *ngIf="!isEditing">
-        <div class="content content--html" *ngIf="content && displayAsHtml" [innerHTML]="fullContentText"></div>
+        <div class="content content--html" *ngIf="content && displayAsHtml" [innerHTML]="linkedHtmlContent" (click)="onHtmlContentClick($event)"></div>
         <div class="content" *ngIf="content && !displayAsHtml">
             <ng-container *ngFor="let line of contentLines; let isLastLine = last">
                 <ng-container *ngFor="let part of line">
