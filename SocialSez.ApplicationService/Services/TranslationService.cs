@@ -70,7 +70,7 @@ public partial class TranslationService : ITranslationService
             var restored = RestoreHtmlTags(translatedProtected, preservedTags, out var hasUnrestoredTokens);
             if (!hasUnrestoredTokens)
             {
-                var translatedText = restored.Trim();
+                var translatedText = NormalizeTranslationArtifacts(restored.Trim(), targetCode);
                 return string.IsNullOrWhiteSpace(translatedText) ? null : translatedText;
             }
         }
@@ -107,7 +107,7 @@ public partial class TranslationService : ITranslationService
             translatedBuilder.Append(translatedTail);
         }
 
-        var translatedText = translatedBuilder.ToString().Trim();
+        var translatedText = NormalizeTranslationArtifacts(translatedBuilder.ToString().Trim(), targetCode);
         return string.IsNullOrWhiteSpace(translatedText) ? null : translatedText;
     }
 
@@ -353,6 +353,17 @@ public partial class TranslationService : ITranslationService
     private static bool IsMyMemoryWarning(string text)
         => text.StartsWith("MYMEMORY WARNING", StringComparison.OrdinalIgnoreCase);
 
+    private static string NormalizeTranslationArtifacts(string text, string targetCode)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return text;
+
+        if (string.Equals(targetCode, "da", StringComparison.OrdinalIgnoreCase))
+            return DanishLinkKlPattern().Replace(text, "hos");
+
+        return text;
+    }
+
     private static bool TryResolveTargetCode(string targetLanguage, out string targetCode)
     {
         var normalized = targetLanguage.Trim();
@@ -373,6 +384,9 @@ public partial class TranslationService : ITranslationService
 
     [GeneratedRegex("<[^>]+>")]
     private static partial Regex HtmlTagPattern();
+
+    [GeneratedRegex(@"\bkl(?=\s*<a\b)", RegexOptions.IgnoreCase)]
+    private static partial Regex DanishLinkKlPattern();
 
     private sealed class MyMemoryResponse
     {
