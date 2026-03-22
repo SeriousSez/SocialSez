@@ -907,12 +907,28 @@ export class SocialSezApiService {
                 return this.refreshSession().pipe(
                     switchMap(() => requestFactory()),
                     catchError(inner => {
-                        this.clearToken();
+                        if (this.shouldClearAuthOnRefreshFailure(inner)) {
+                            this.clearToken();
+                        }
                         return throwError(() => inner);
                     })
                 );
             })
         );
+    }
+
+    private shouldClearAuthOnRefreshFailure(error: { status?: number } | null | undefined): boolean {
+        const status = error?.status ?? 0;
+
+        if (status === 0) {
+            return false;
+        }
+
+        if (status >= 500) {
+            return false;
+        }
+
+        return true;
     }
 
     private authHeaders(): HttpHeaders {

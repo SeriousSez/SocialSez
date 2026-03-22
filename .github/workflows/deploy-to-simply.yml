@@ -18,6 +18,7 @@ env:
   WEB_SERVER_DIR: "/venli/"
   API_HEALTH_URL: "https://venli.api.sezginsahin.dk/api/health/ping"
   WEB_HEALTH_URL: "https://venli.sezginsahin.dk/"
+  API_USE_APP_OFFLINE: "false"
 
 jobs:
   detect-changes:
@@ -209,6 +210,7 @@ jobs:
           path: ${{ env.PUBLISH_PATH }}/
 
       - name: Create app_offline.htm
+        if: env.API_USE_APP_OFFLINE == 'true'
         shell: pwsh
         run: |
           $content = @"
@@ -226,6 +228,7 @@ jobs:
           Set-Content -Path "${{ env.PUBLISH_PATH }}/app_offline.htm" -Value $content
 
       - name: Prepare app_offline payload
+        if: env.API_USE_APP_OFFLINE == 'true'
         shell: pwsh
         run: |
           $offlinePayloadDir = "./app-offline-payload"
@@ -236,6 +239,7 @@ jobs:
           Copy-Item -Path "${{ env.PUBLISH_PATH }}/app_offline.htm" -Destination "$offlinePayloadDir/app_offline.htm" -Force
 
       - name: Deploy app_offline.htm to take app offline
+        if: env.API_USE_APP_OFFLINE == 'true'
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -246,6 +250,7 @@ jobs:
           dangerous-clean-slate: false
 
       - name: Wait for app to go offline
+        if: env.API_USE_APP_OFFLINE == 'true'
         shell: pwsh
         run: Start-Sleep -Seconds 3
 
@@ -264,6 +269,7 @@ jobs:
             **/logs/**
 
       - name: Remove app_offline.htm from server
+        if: env.API_USE_APP_OFFLINE == 'true'
         shell: pwsh
         run: |
           $server = "${{ secrets.FTP_SERVER }}"
@@ -296,7 +302,7 @@ jobs:
 
       - name: Wait for app to restart
         shell: pwsh
-        run: Start-Sleep -Seconds 15
+        run: Start-Sleep -Seconds 8
 
       # - name: Health check API
       #   id: health_check
