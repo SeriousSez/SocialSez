@@ -42,11 +42,16 @@
 
         <div class="story-media-wrap">
             <ng-container *ngIf="!shouldHideSensitiveStory(); else hiddenStoryMedia">
-                <video #storyVideoEl *ngIf="isVideoStory(story.mediaUrl) && !videoPlaybackError; else imageStory" [src]="story.mediaUrl" [attr.poster]="story.thumbnailUrl || null" autoplay [muted]="storyMuted" playsinline preload="auto" (loadedmetadata)="onVideoLoadedMetadata(storyVideoEl)"
+                <video #storyVideoEl *ngIf="isVideoStory(story.mediaUrl) && !videoPlaybackError; else imageStory" [src]="story.mediaUrl" [attr.poster]="story.thumbnailUrl || null" autoplay [muted]="storyMuted" playsinline preload="auto" (loadeddata)="onVideoLoadedData(storyVideoEl)"
                     (play)="onVideoPlay()" (pause)="onVideoPause()" (timeupdate)="onVideoTimeUpdate(storyVideoEl)" (ended)="onVideoEnded()" (error)="onVideoError()"></video>
                 <ng-template #imageStory>
-                    <img [src]="getStoryImageUrl(story)" alt="Story" (error)="onImageError()" />
+                    <img [src]="getStoryImageUrl(story)" alt="Story" (load)="onImageLoad()" (error)="onImageError()" />
                 </ng-template>
+
+                <div class="story-media-loader" *ngIf="mediaLoading" aria-hidden="true">
+                    <app-skeleton width="100%" height="100%" radius="0"></app-skeleton>
+                    <span class="story-media-loader-dot"></span>
+                </div>
             </ng-container>
 
             <ng-template #hiddenStoryMedia>

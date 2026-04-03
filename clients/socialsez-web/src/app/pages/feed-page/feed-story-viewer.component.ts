@@ -2,12 +2,13 @@ import { CommonModule } from '@angular/common';
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { StoryDto, StoryGroupDto } from '../../core/api.types';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { buildUnfurlShareUrl } from '../../core/unfurl-link.util';
 
 @Component({
     selector: 'app-feed-story-viewer',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, SkeletonComponent],
     templateUrl: './feed-story-viewer.component.html',
     styleUrl: './feed-story-viewer.component.scss'
 })
@@ -54,6 +55,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     isClosing = false;
     copyLinkCopied = false;
     videoPlaybackError = false;
+    mediaLoading = false;
     sensitiveMediaRevealed = false;
     private readonly nonVideoStoryUrls = new Set<string>();
     private readonly confirmedVideoStoryUrls = new Set<string>();
@@ -181,7 +183,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         }
     }
 
-    onVideoLoadedMetadata(video: HTMLVideoElement): void {
+    onVideoLoadedData(video: HTMLVideoElement): void {
         if (!this.activeStory || !this.isVideoStory(this.activeStory.mediaUrl)) {
             return;
         }
@@ -190,6 +192,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         this.confirmedVideoStoryUrls.add(normalizedUrl);
         this.nonVideoStoryUrls.delete(normalizedUrl);
         this.videoPlaybackError = false;
+        this.mediaLoading = false;
         this.currentStoryProgress = 0;
         this.paused = false;
         video.muted = this.storyMuted;
@@ -228,6 +231,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         const story = this.activeStory;
         if (!story) {
             this.videoPlaybackError = true;
+            this.mediaLoading = false;
             this.paused = true;
             this.stopVideoProgressLoop();
             return;
@@ -246,27 +250,39 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         }
 
         this.videoPlaybackError = true;
+        this.mediaLoading = Boolean(story.thumbnailUrl?.trim());
         this.stopVideoProgressLoop();
 
         if (story.thumbnailUrl?.trim()) {
             this.paused = false;
             this.currentStoryProgress = 0;
             this.imageProgressElapsedBeforePause = 0;
-            this.resumeImageProgress();
             return;
         }
 
+        this.mediaLoading = false;
         this.paused = true;
+    }
+
+    onImageLoad(): void {
+        if (!this.activeStory || this.isVideoStory(this.activeStory.mediaUrl)) {
+            return;
+        }
+
+        this.mediaLoading = false;
+        this.resumeImageProgress();
     }
 
     onImageError(): void {
         const story = this.activeStory;
         if (!story) {
+            this.mediaLoading = false;
             return;
         }
 
         const normalizedUrl = this.normalizeMediaUrl(story.mediaUrl);
         if (this.isKnownImageExtension(normalizedUrl)) {
+            this.mediaLoading = false;
             return;
         }
 
@@ -484,6 +500,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
         this.currentStoryProgress = 0;
         this.paused = false;
         this.imageProgressElapsedBeforePause = 0;
+        this.mediaLoading = false;
 
         const story = this.activeStory;
         if (!story) {
@@ -494,22 +511,11 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
             return;
         }
 
+        this.mediaLoading = true;
+
         if (!this.isVideoStory(story.mediaUrl)) {
-            this.resumeImageProgress();
             return;
         }
-
-        window.setTimeout(() => {
-            const video = this.storyVideoRef?.nativeElement;
-            if (!video || this.activeStory?.id !== story.id) {
-                return;
-            }
-
-            video.currentTime = 0;
-            video.muted = this.storyMuted;
-            this.paused = false;
-            void this.playVideoWithAutoplayFallback(video);
-        }, 0);
     }
 
     private async playVideoWithAutoplayFallback(video: HTMLVideoElement): Promise<void> {
@@ -549,7 +555,7 @@ export class FeedStoryViewerComponent implements AfterViewInit, OnChanges, OnDes
     }
 
     private resumeImageProgress(): void {
-        if (!this.activeStory || this.isVideoStory(this.activeStory.mediaUrl)) {
+        if (!this.activeStory || this.isVideoStory(this.activeStory.mediaUrl) || this.mediaLoading) {
             return;
         }
 
