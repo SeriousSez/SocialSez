@@ -8,12 +8,6 @@
         <a class="studio-link" *ngIf="session.isAuthenticated()" href="/blogs/studio">{{ 'blogs.actions.openStudio' | translate }}</a>
     </header>
 
-    <div class="blogs-toolbar">
-        <div class="tabs" role="tablist" [attr.aria-label]="'blogs.tabs.aria' | translate">
-            <button type="button" *ngFor="let tab of tabs" [class.active]="activeTab === tab.key" [attr.aria-selected]="activeTab === tab.key" (click)="selectTabAsync(tab.key)">{{ tab.label }}</button>
-        </div>
-    </div>
-
     <div class="blog-grid" *ngIf="!loading && !error && blogs.length">
         <article class="blog-card" *ngFor="let blog of visibleBlogs; trackBy: trackBlog" [ngStyle]="blogCardStyles(blog)">
             <a class="blog-card-overlay" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]" tabindex="-1" aria-hidden="true"></a>
