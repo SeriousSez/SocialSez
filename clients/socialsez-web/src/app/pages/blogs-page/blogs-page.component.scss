@@ -51,6 +51,10 @@
     box-shadow: 0 8px 20px -18px #0f172a;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .blogs-toolbar {
@@ -74,6 +78,7 @@
     background: var(--color-surface);
     color: var(--color-text-subtle);
     padding: 8px 14px;
+    min-height: 40px;
     font-weight: 700;
     cursor: pointer;
     transition: 140ms ease;
@@ -107,7 +112,8 @@
     min-width: 160px;
     flex: 1;
     border: 0;
-    padding: 8px 2px;
+    padding: 10px 2px;
+    min-height: 40px;
     font: inherit;
     background: transparent;
     touch-action: manipulation;

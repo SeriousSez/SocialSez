@@ -110,6 +110,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private appUpdateVersionLabel = '';
     private reloadingForUpdate = false;
     private readonly seenRealtimeNotificationIds = new Set<string>();
+    private lastMobileFooterTouchNavigateAt = 0;
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly cdr = inject(ChangeDetectorRef);
@@ -570,6 +571,24 @@ export class AppComponent implements OnInit, OnDestroy {
 
     toggleMobileFooterMenu(): void {
         this.mobileFooterMenuOpen = !this.mobileFooterMenuOpen;
+    }
+
+    async navigateMobileFooterAsync(route: string, event?: Event): Promise<void> {
+        if (event?.type === 'click' && Date.now() - this.lastMobileFooterTouchNavigateAt < 700) {
+            return;
+        }
+
+        if (event?.type === 'touchend') {
+            this.lastMobileFooterTouchNavigateAt = Date.now();
+        }
+
+        this.mobileFooterMenuOpen = false;
+        await this.router.navigateByUrl(route);
+    }
+
+    isMobileFooterRouteActive(route: string): boolean {
+        const baseUrl = this.router.url.split('?')[0]?.split('#')[0] ?? '';
+        return baseUrl === route || baseUrl.startsWith(`${route}/`);
     }
 
     closeMobileFooterMenu(): void {

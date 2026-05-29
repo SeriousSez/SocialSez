@@ -162,22 +162,22 @@
 </main>
 
 <nav class="mobile-footer-tabs" [class.hidden-on-chat]="isChatThreadRoute" [attr.aria-label]="'app.shell.mobileNav.aria' | translate" *ngIf="!isEmbedRoute">
-    <a class="mobile-footer-tab" routerLink="/feed" routerLinkActive="active">
+    <button type="button" class="mobile-footer-tab" data-route="/feed" [class.active]="isMobileFooterRouteActive('/feed')" (click)="navigateMobileFooterAsync('/feed', $event)" (touchend)="navigateMobileFooterAsync('/feed', $event)">
         <i class="fa-duotone fa-light fa-house" aria-hidden="true"></i>
         <span>{{ 'app.shell.nav.feed' | translate }}</span>
-    </a>
-    <a class="mobile-footer-tab" routerLink="/discover" routerLinkActive="active">
+    </button>
+    <button type="button" class="mobile-footer-tab" data-route="/discover" [class.active]="isMobileFooterRouteActive('/discover')" (click)="navigateMobileFooterAsync('/discover', $event)" (touchend)="navigateMobileFooterAsync('/discover', $event)">
         <i class="fa-duotone fa-light fa-compass" aria-hidden="true"></i>
         <span>{{ 'app.shell.nav.discover' | translate }}</span>
-    </a>
-    <a class="mobile-footer-tab" routerLink="/blogs" routerLinkActive="active">
+    </button>
+    <button type="button" class="mobile-footer-tab" data-route="/blogs" [class.active]="isMobileFooterRouteActive('/blogs')" (click)="navigateMobileFooterAsync('/blogs', $event)" (touchend)="navigateMobileFooterAsync('/blogs', $event)">
         <i class="fa-duotone fa-light fa-blog" aria-hidden="true"></i>
         <span>{{ 'app.shell.nav.blogs' | translate }}</span>
-    </a>
-    <a class="mobile-footer-tab" routerLink="/chat" routerLinkActive="active" *ngIf="session.isAuthenticated()">
+    </button>
+    <button type="button" class="mobile-footer-tab" data-route="/chat" [class.active]="isMobileFooterRouteActive('/chat')" (click)="navigateMobileFooterAsync('/chat', $event)" (touchend)="navigateMobileFooterAsync('/chat', $event)" *ngIf="session.isAuthenticated()">
         <i class="fa-duotone fa-light fa-comments" aria-hidden="true"></i>
         <span>{{ 'app.shell.nav.chat' | translate }}</span>
-    </a>
+    </button>
 
     <div class="mobile-footer-more" [class.open]="mobileFooterMenuOpen">
         <button type="button" class="mobile-footer-tab mobile-footer-more-trigger" [class.active]="mobileFooterMenuOpen" (click)="toggleMobileFooterMenu()" [attr.aria-expanded]="mobileFooterMenuOpen" aria-haspopup="menu" [attr.aria-label]="'app.shell.mobileNav.openMore' | translate">

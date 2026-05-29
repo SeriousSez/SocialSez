@@ -916,6 +916,7 @@ label {
     .mobile-footer-tab {
         min-width: 64px;
         flex: 1 0 64px;
+        min-height: 44px;
         display: grid;
         justify-items: center;
         align-content: center;

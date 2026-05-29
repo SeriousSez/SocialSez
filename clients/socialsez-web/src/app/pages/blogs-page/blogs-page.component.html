@@ -5,7 +5,7 @@
             <h2>{{ 'blogs.page.title' | translate }}</h2>
             <p>{{ tabSubtitle }}</p>
         </div>
-        <a class="studio-link" routerLink="/blogs/studio" *ngIf="session.isAuthenticated()">{{ 'blogs.actions.openStudio' | translate }}</a>
+        <a class="studio-link" *ngIf="session.isAuthenticated()" href="/blogs/studio">{{ 'blogs.actions.openStudio' | translate }}</a>
     </header>
 
     <div class="blogs-toolbar">

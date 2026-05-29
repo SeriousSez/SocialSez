@@ -186,7 +186,7 @@ test.describe('Interactive navigation flows', () => {
         test.skip(!isMobile, 'Mobile footer navigation only applies to mobile project.');
 
         await page.goto('/discover', { waitUntil: 'domcontentloaded' });
-        const blogsTab = page.locator('.mobile-footer-tabs .mobile-footer-tab[routerlink="/blogs"]');
+        const blogsTab = page.locator('.mobile-footer-tabs .mobile-footer-tab[data-route="/blogs"]');
         await expect(blogsTab).toBeVisible();
 
         await blogsTab.tap();
@@ -202,7 +202,7 @@ test.describe('Interactive navigation flows', () => {
 
         await page.goto('/blogs', { waitUntil: 'domcontentloaded' });
 
-        const discoverTab = page.locator('.mobile-footer-tabs .mobile-footer-tab[routerlink="/discover"]');
+        const discoverTab = page.locator('.mobile-footer-tabs .mobile-footer-tab[data-route="/discover"]');
         await expect(discoverTab).toBeVisible();
 
         await discoverTab.tap();
@@ -280,6 +280,38 @@ test.describe('Interactive navigation flows', () => {
 
         await expect.poll(() => new URL(page.url()).pathname).toBe(`/blogs/${mockBlogOwnerHandle}`);
         await expect(page.locator('.grid .card')).toHaveCount(1);
+    });
+
+    test('mobile: open blog studio button tap opens /blogs/studio', async ({ page, isMobile }) => {
+        test.skip(!isMobile, 'Studio button tap is mobile-specific regression coverage.');
+
+        await mockSignedInBlogsSessionAsync(page);
+
+        await page.goto('/blogs', { waitUntil: 'domcontentloaded' });
+
+        const openStudioButton = page.locator('.blogs-head .studio-link');
+        await expect(openStudioButton).toBeVisible();
+        await openStudioButton.tap();
+
+        await expect.poll(() => new URL(page.url()).pathname).toBe('/blogs/studio');
+        await expect(page.locator('app-blog-studio-page')).toBeVisible();
+    });
+
+    test('mobile: search input can receive focus and typing', async ({ page, isMobile }) => {
+        test.skip(!isMobile, 'Search input focus behavior is mobile-specific regression coverage.');
+
+        await mockBlogsDiscoveryAsync(page);
+
+        await page.goto('/blogs', { waitUntil: 'domcontentloaded' });
+
+        const searchInput = page.locator('.blogs-toolbar .search-row input');
+        await expect(searchInput).toBeVisible();
+
+        await searchInput.tap();
+        await expect(searchInput).toBeFocused();
+
+        await searchInput.fill('dungeon');
+        await expect(searchInput).toHaveValue('dungeon');
     });
 
     test('mobile: update alert action button is tappable', async ({ page, isMobile }) => {
