@@ -95,4 +95,20 @@ test.describe('Interactive navigation flows', () => {
         await expect.poll(() => new URL(page.url()).pathname).toBe('/communities');
         await expect(page.locator('body')).toBeVisible();
     });
+
+    test('mobile: update alert action button is tappable', async ({ page, isMobile }) => {
+        test.skip(!isMobile, 'Update alert tap behavior is mobile-specific regression coverage.');
+
+        await page.goto('/blogs?e2eShowUpdateNotice=1&e2eNoReload=1', { waitUntil: 'domcontentloaded' });
+
+        const updateActionButton = page.locator('.top-notice .top-notice-action');
+        await expect(updateActionButton).toBeVisible();
+        const initialLabel = (await updateActionButton.innerText()).trim();
+        expect(initialLabel.length, 'Update action should have a non-empty initial label.').toBeGreaterThan(0);
+        await updateActionButton.tap();
+        await expect.poll(async () => {
+            const nextLabel = (await updateActionButton.innerText()).trim();
+            return nextLabel !== initialLabel;
+        }).toBe(true);
+    });
 });

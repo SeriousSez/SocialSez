@@ -383,6 +383,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.applyThemePreference();
+        this.applyE2EUpdateNoticeOverrides();
         this.initializeVersionUpdates();
         void this.updateRouteMetaAsync(this.router.url);
         void this.syncNotificationsRealtimeConnectionAsync();
@@ -1160,6 +1161,12 @@ export class AppComponent implements OnInit, OnDestroy {
         }
 
         this.reloadingForUpdate = true;
+
+        if (this.shouldSkipHardReloadForE2E()) {
+            this.cdr.detectChanges();
+            return;
+        }
+
         try {
             if (this.swUpdate.isEnabled) {
                 await this.swUpdate.activateUpdate();
@@ -1169,6 +1176,30 @@ export class AppComponent implements OnInit, OnDestroy {
         }
 
         window.location.reload();
+    }
+
+    private applyE2EUpdateNoticeOverrides(): void {
+        if (!isDevMode() || typeof window === 'undefined') {
+            return;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('e2eShowUpdateNotice') !== '1') {
+            return;
+        }
+
+        this.appUpdateAvailable = true;
+        this.appUpdateVersionLabel = 'build e2e';
+        this.session.message = this.updateNoticeMessage;
+    }
+
+    private shouldSkipHardReloadForE2E(): boolean {
+        if (!isDevMode() || typeof window === 'undefined') {
+            return false;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        return params.get('e2eNoReload') === '1';
     }
 
     shouldRenderProfileChipImage(imageUrl?: string | null): boolean {
