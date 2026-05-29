@@ -58,6 +58,8 @@ export class BlogsPageComponent {
     private sentinelRef?: ElementRef<HTMLDivElement>;
     private sortDropdownRef?: ElementRef<HTMLDivElement>;
     private infiniteObserver: IntersectionObserver | null = null;
+    private lastTouchNavigateAt = 0;
+    private touchStartPoint: { x: number; y: number; startedAt: number } | null = null;
 
     get sortOptions(): ReadonlyArray<{ value: BlogSort; label: string }> {
         return [
@@ -76,6 +78,10 @@ export class BlogsPageComponent {
     }
 
     async openBlogAsync(blog: BlogDto, event?: Event): Promise<void> {
+        if (event?.type === 'click' && Date.now() - this.lastTouchNavigateAt < 700) {
+            return;
+        }
+
         if (event) {
             const rawTarget = event.target;
             const target = rawTarget instanceof Element ? rawTarget : null;
@@ -85,6 +91,40 @@ export class BlogsPageComponent {
         }
 
         await this.router.navigate(['/blogs', blog.ownerHandle, blog.slug]);
+    }
+
+    onBlogTouchStart(event: TouchEvent): void {
+        const touch = event.changedTouches.item(0);
+        if (!touch) {
+            this.touchStartPoint = null;
+            return;
+        }
+
+        this.touchStartPoint = {
+            x: touch.clientX,
+            y: touch.clientY,
+            startedAt: Date.now()
+        };
+    }
+
+    async onBlogTouchEndAsync(blog: BlogDto, event: TouchEvent): Promise<void> {
+        const touch = event.changedTouches.item(0);
+        const start = this.touchStartPoint;
+        this.touchStartPoint = null;
+
+        if (!touch || !start) {
+            return;
+        }
+
+        const travel = Math.hypot(touch.clientX - start.x, touch.clientY - start.y);
+        const elapsed = Date.now() - start.startedAt;
+
+        if (travel > 12 || elapsed > 700) {
+            return;
+        }
+
+        this.lastTouchNavigateAt = Date.now();
+        await this.openBlogAsync(blog, event);
     }
 
     async selectTabAsync(tab: BlogsTab): Promise<void> {
