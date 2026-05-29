@@ -67,13 +67,13 @@
     padding: 12px;
 }
 
-.tabs {
+.blog-tabs {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
 }
 
-.tabs button {
+.blog-tab-button {
     border: 1px solid var(--color-border-input);
     border-radius: 999px;
     background: var(--color-surface);
@@ -87,7 +87,7 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-.tabs button.active {
+.blog-tab-button.active {
     background: var(--gradient-primary);
     border-color: var(--color-primary);
     color: var(--color-text-on-dark);

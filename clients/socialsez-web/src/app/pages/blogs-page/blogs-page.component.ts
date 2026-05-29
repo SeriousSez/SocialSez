@@ -20,13 +20,11 @@ type BlogSort = 'updated' | 'created' | 'title';
     styleUrl: './blogs-page.component.scss'
 })
 export class BlogsPageComponent {
-    get tabs(): ReadonlyArray<{ key: BlogsTab; label: string }> {
-        return [
-            { key: 'all', label: this.t('blogs.tabs.all') },
-            { key: 'following', label: this.t('blogs.tabs.following') },
-            { key: 'mine', label: this.t('blogs.tabs.mine') }
-        ];
-    }
+    readonly tabs: ReadonlyArray<{ key: BlogsTab; labelKey: string }> = [
+        { key: 'all', labelKey: 'blogs.tabs.all' },
+        { key: 'following', labelKey: 'blogs.tabs.following' },
+        { key: 'mine', labelKey: 'blogs.tabs.mine' }
+    ];
 
     activeTab: BlogsTab = 'all';
     sortBy: BlogSort = 'updated';
@@ -195,6 +193,10 @@ export class BlogsPageComponent {
 
     trackBlog(_: number, blog: BlogDto): string {
         return blog.id;
+    }
+
+    trackTab(_: number, tab: { key: BlogsTab }): BlogsTab {
+        return tab.key;
     }
 
     getActiveBlogTitle(blog: BlogDto): string {
