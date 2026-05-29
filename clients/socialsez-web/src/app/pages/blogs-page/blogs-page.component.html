@@ -60,7 +60,7 @@
         </article>
     </section>
 
-    <div class="blog-grid" *ngIf="!loading && !error && blogs.length; else emptyState">
+    <div class="blog-grid" *ngIf="!loading && !error && blogs.length">
         <article class="blog-card" *ngFor="let blog of visibleBlogs; trackBy: trackBlog" [ngStyle]="blogCardStyles(blog)">
             <a class="blog-card-overlay" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]" tabindex="-1" aria-hidden="true"></a>
 
