@@ -77,7 +77,8 @@ export class BlogsPageComponent {
 
     async openBlogAsync(blog: BlogDto, event?: Event): Promise<void> {
         if (event) {
-            const target = event.target as HTMLElement | null;
+            const rawTarget = event.target;
+            const target = rawTarget instanceof Element ? rawTarget : null;
             if (target?.closest('a,button,input,textarea,select,label')) {
                 return;
             }
