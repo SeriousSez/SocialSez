@@ -256,6 +256,32 @@ test.describe('Interactive navigation flows', () => {
         await expect(page.locator('body')).toBeVisible();
     });
 
+    test('mobile: blog card title and author links tap through', async ({ page, isMobile }) => {
+        test.skip(!isMobile, 'Tap interaction test is scoped to mobile project.');
+
+        await mockBlogsDiscoveryAsync(page);
+        await mockBlogDetailAsync(page);
+        await mockBlogAuthorAsync(page);
+
+        await page.goto('/blogs', { waitUntil: 'domcontentloaded' });
+
+        const titleLink = page.locator('.blog-grid .blog-card .blog-title').first();
+        await expect(titleLink).toBeVisible();
+        await titleLink.tap();
+
+        await expect.poll(() => new URL(page.url()).pathname).toBe(`/blogs/${mockBlogOwnerHandle}/${mockBlogSlug}`);
+
+        await page.goBack({ waitUntil: 'domcontentloaded' });
+        await expect(page.locator('.blogs-page')).toBeVisible();
+
+        const authorLink = page.locator('.blog-grid .blog-card .blog-meta a').first();
+        await expect(authorLink).toBeVisible();
+        await authorLink.tap();
+
+        await expect.poll(() => new URL(page.url()).pathname).toBe(`/blogs/${mockBlogOwnerHandle}`);
+        await expect(page.locator('.grid .card')).toHaveCount(1);
+    });
+
     test('mobile: update alert action button is tappable', async ({ page, isMobile }) => {
         test.skip(!isMobile, 'Update alert tap behavior is mobile-specific regression coverage.');
 

@@ -10,18 +10,18 @@
 
     <div class="blogs-toolbar">
         <div class="tabs" role="tablist" [attr.aria-label]="'blogs.tabs.aria' | translate">
-            <button type="button" *ngFor="let tab of tabs" [class.active]="activeTab === tab.key" [attr.aria-selected]="activeTab === tab.key" (click)="selectTabAsync(tab.key)">{{ tab.label }}</button>
+            <button type="button" *ngFor="let tab of tabs" [class.active]="activeTab === tab.key" [attr.aria-selected]="activeTab === tab.key" (pointerdown)="selectTabAsync(tab.key)">{{ tab.label }}</button>
         </div>
 
         <div class="search-row">
             <i class="fa-duotone fa-light fa-magnifying-glass" aria-hidden="true"></i>
             <input type="text" [(ngModel)]="searchText" [placeholder]="'blogs.search.placeholder' | translate" (input)="onSearchInput()" />
-            <button type="button" class="clear-btn" (click)="clearSearchAsync()" *ngIf="searchText.trim().length">{{ 'blogs.actions.clear' | translate }}</button>
+            <button type="button" class="clear-btn" (pointerdown)="clearSearchAsync()" *ngIf="searchText.trim().length">{{ 'blogs.actions.clear' | translate }}</button>
         </div>
 
         <div class="suggestions-row" *ngIf="suggestions.length">
             <span class="suggestions-label">{{ 'blogs.search.try' | translate }}</span>
-            <button type="button" class="suggestion-pill" *ngFor="let suggestion of suggestions" (click)="applySuggestionAsync(suggestion)">#{{ suggestion }}</button>
+            <button type="button" class="suggestion-pill" *ngFor="let suggestion of suggestions" (pointerdown)="applySuggestionAsync(suggestion)">#{{ suggestion }}</button>
         </div>
 
         <div class="controls-row">

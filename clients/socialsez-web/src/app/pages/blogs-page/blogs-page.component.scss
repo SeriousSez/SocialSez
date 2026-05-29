@@ -49,6 +49,8 @@
     color: #0f172a;
     font-weight: 700;
     box-shadow: 0 8px 20px -18px #0f172a;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .blogs-toolbar {
@@ -75,6 +77,8 @@
     font-weight: 700;
     cursor: pointer;
     transition: 140ms ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .tabs button.active {
@@ -106,6 +110,7 @@
     padding: 8px 2px;
     font: inherit;
     background: transparent;
+    touch-action: manipulation;
 }
 
 .search-row input:focus {
@@ -125,6 +130,8 @@
     background: #e2e8f0;
     color: #334155;
     border-color: #cbd5e1;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .suggestions-row {
@@ -149,6 +156,8 @@
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .suggestion-pill:hover {
@@ -214,6 +223,8 @@
     color: #0f172a;
     text-decoration: none;
     line-height: 1.3;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .blog-title:hover {
@@ -239,6 +250,8 @@
     color: var(--blog-card-accent);
     text-decoration: none;
     font-weight: 700;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .blog-state-row {
@@ -321,6 +334,8 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .sort-toggle i {
@@ -359,6 +374,8 @@
     font-size: 0.86rem;
     font-weight: 700;
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .sort-menu button:hover,

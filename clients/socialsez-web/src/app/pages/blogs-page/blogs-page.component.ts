@@ -82,12 +82,8 @@ export class BlogsPageComponent {
             return;
         }
 
-        if (event) {
-            const rawTarget = event.target;
-            const target = rawTarget instanceof Element ? rawTarget : null;
-            if (target?.closest('a,button,input,textarea,select,label')) {
-                return;
-            }
+        if (this.isInteractiveBlogCardTarget(event?.target ?? null)) {
+            return;
         }
 
         await this.navigateToBlogAsync(blog);
@@ -108,6 +104,10 @@ export class BlogsPageComponent {
     }
 
     async onBlogTouchEndAsync(blog: BlogDto, event: TouchEvent): Promise<void> {
+        if (this.isInteractiveBlogCardTarget(event.target)) {
+            return;
+        }
+
         const touch = event.changedTouches.item(0);
         const start = this.touchStartPoint;
         this.touchStartPoint = null;
@@ -419,6 +419,11 @@ export class BlogsPageComponent {
         }
 
         return '#0ea5e9';
+    }
+
+    private isInteractiveBlogCardTarget(target: EventTarget | null): boolean {
+        return target instanceof Element
+            && !!target.closest('a,button,input,textarea,select,label,[role="button"],[role="link"]');
     }
 
     private rankAndFilterBlogs(blogs: ReadonlyArray<BlogDto>, query: string): BlogDto[] {
