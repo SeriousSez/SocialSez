@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BlogDto } from '../../core/api.types';
 import { buildDiscoverySuggestions, DISCOVERY_TOPICS, rankByDiscoveryQuery, scoreDiscoveryFields } from '../../core/discovery-search.util';
@@ -58,8 +58,6 @@ export class BlogsPageComponent {
     private sentinelRef?: ElementRef<HTMLDivElement>;
     private sortDropdownRef?: ElementRef<HTMLDivElement>;
     private infiniteObserver: IntersectionObserver | null = null;
-    private lastTouchNavigateAt = 0;
-    private touchStartPoint: { x: number; y: number; startedAt: number } | null = null;
 
     get sortOptions(): ReadonlyArray<{ value: BlogSort; label: string }> {
         return [
@@ -71,60 +69,9 @@ export class BlogsPageComponent {
 
     constructor(
         public readonly session: SessionService,
-        private readonly ngZone: NgZone,
-        private readonly router: Router
+        private readonly ngZone: NgZone
     ) {
         void this.loadAsync();
-    }
-
-    async openBlogAsync(blog: BlogDto, event?: Event): Promise<void> {
-        if (event?.type === 'click' && Date.now() - this.lastTouchNavigateAt < 700) {
-            return;
-        }
-
-        if (this.isInteractiveBlogCardTarget(event?.target ?? null)) {
-            return;
-        }
-
-        await this.navigateToBlogAsync(blog);
-    }
-
-    onBlogTouchStart(event: TouchEvent): void {
-        const touch = event.changedTouches.item(0);
-        if (!touch) {
-            this.touchStartPoint = null;
-            return;
-        }
-
-        this.touchStartPoint = {
-            x: touch.clientX,
-            y: touch.clientY,
-            startedAt: Date.now()
-        };
-    }
-
-    async onBlogTouchEndAsync(blog: BlogDto, event: TouchEvent): Promise<void> {
-        if (this.isInteractiveBlogCardTarget(event.target)) {
-            return;
-        }
-
-        const touch = event.changedTouches.item(0);
-        const start = this.touchStartPoint;
-        this.touchStartPoint = null;
-
-        if (!touch || !start) {
-            return;
-        }
-
-        const travel = Math.hypot(touch.clientX - start.x, touch.clientY - start.y);
-        const elapsed = Date.now() - start.startedAt;
-
-        if (travel > 12 || elapsed > 700) {
-            return;
-        }
-
-        this.lastTouchNavigateAt = Date.now();
-        await this.navigateToBlogAsync(blog, true);
     }
 
     async selectTabAsync(tab: BlogsTab): Promise<void> {
@@ -421,11 +368,6 @@ export class BlogsPageComponent {
         return '#0ea5e9';
     }
 
-    private isInteractiveBlogCardTarget(target: EventTarget | null): boolean {
-        return target instanceof Element
-            && !!target.closest('a,button,input,textarea,select,label,[role="button"]');
-    }
-
     private rankAndFilterBlogs(blogs: ReadonlyArray<BlogDto>, query: string): BlogDto[] {
         return rankByDiscoveryQuery(blogs, {
             query,
@@ -478,23 +420,4 @@ export class BlogsPageComponent {
         return this.translate.instant(key, params);
     }
 
-    private async navigateToBlogAsync(blog: BlogDto, preferHardNavigation = false): Promise<void> {
-        const targetUrl = this.router.serializeUrl(this.router.createUrlTree(['/blogs', blog.ownerHandle, blog.slug]));
-
-        if (preferHardNavigation && typeof window !== 'undefined') {
-            window.location.assign(targetUrl);
-            return;
-        }
-
-        try {
-            const navigated = await this.router.navigateByUrl(targetUrl);
-            if (!navigated && typeof window !== 'undefined') {
-                window.location.assign(targetUrl);
-            }
-        } catch {
-            if (typeof window !== 'undefined') {
-                window.location.assign(targetUrl);
-            }
-        }
-    }
 }

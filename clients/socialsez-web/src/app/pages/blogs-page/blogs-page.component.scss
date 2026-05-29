@@ -193,6 +193,24 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+.blog-card-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+}
+
+.blog-card-content {
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.blog-card-interactive {
+    position: relative;
+    z-index: 3;
+}
+
 .blog-card::before {
     content: '';
     position: absolute;
@@ -203,6 +221,7 @@
     border-radius: 14px 0 0 14px;
     background: var(--blog-card-accent);
     background: linear-gradient(180deg, var(--blog-card-accent), color-mix(in srgb, var(--blog-card-accent) 62%, #ffffff 38%));
+    z-index: 0;
 }
 
 .blog-card:hover {
@@ -232,6 +251,9 @@
     line-height: 1.3;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    pointer-events: auto;
+    position: relative;
+    z-index: 3;
 }
 
 .blog-title:hover {
@@ -259,6 +281,8 @@
     font-weight: 700;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    position: relative;
+    z-index: 3;
 }
 
 .blog-state-row {
