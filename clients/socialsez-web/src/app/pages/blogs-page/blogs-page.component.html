@@ -60,28 +60,7 @@
         </article>
     </section>
 
-    <div class="blog-grid" *ngIf="!loading && !error && blogs.length; else emptyState">
-        <article class="blog-card" *ngFor="let blog of visibleBlogs; trackBy: trackBlog" [ngStyle]="blogCardStyles(blog)">
-            <a class="blog-card-overlay" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]" tabindex="-1" aria-hidden="true"></a>
 
-            <header class="blog-card-head blog-card-content">
-                <a class="blog-title" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">{{ getActiveBlogTitle(blog) }}</a>
-                <div class="blog-state-row">
-                    <span class="state-pill" [class.private]="!blog.isPublic">{{ blog.isPublic ? ('blogs.visibility.public' | translate) : ('blogs.visibility.private' | translate) }}</span>
-                    <span class="state-pill owner" *ngIf="blog.isOwner">{{ 'blogs.visibility.owner' | translate }}</span>
-                </div>
-            </header>
-
-            <p class="blog-description blog-card-content" *ngIf="getActiveBlogDescription(blog) as desc">{{ desc }}</p>
-            <!-- <app-translate-content class="blog-card-interactive" [text]="(blog.title || '') + '\n\n' + (blog.description || '')" [inlineMode]="true" (translationChanged)="onBlogTranslationChanged(blog.id, $event)"></app-translate-content> -->
-
-            <!-- <div class="blog-meta blog-card-interactive">
-                <a [routerLink]="['/blogs', blog.ownerHandle]">@{{ blog.ownerHandle }}</a>
-                <span>·</span>
-                <time [attr.datetime]="blog.updatedAtUtc">{{ 'blogs.meta.updated' | translate:{ date: (blog.updatedAtUtc | date:'mediumDate') } }}</time>
-            </div> -->
-        </article>
-    </div>
 
     <div class="infinite-status" *ngIf="!loading && !error && hasMoreBlogs">
         <span>{{ 'blogs.infinite.more' | translate }}</span>
