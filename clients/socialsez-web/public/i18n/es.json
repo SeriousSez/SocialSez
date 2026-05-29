@@ -1159,6 +1159,33 @@
       "working": "Trabajando…"
     },
     "status": {
+      "blogAuthor": {
+        "page": {
+          "title": "Blogs de @{{handle}}",
+          "subtitle": "Explora más blogs de este autor."
+        },
+        "actions": {
+          "feed": "Feed",
+          "blogStudio": "Blog Studio"
+        },
+        "loading": {
+          "aria": "Cargando blogs del autor"
+        },
+        "visibility": {
+          "public": "Público",
+          "private": "Privado"
+        },
+        "meta": {
+          "updated": "Actualizado {{date}}"
+        },
+        "empty": {
+          "noVisibleBlogs": "Todavía no hay blogs visibles."
+        },
+        "errors": {
+          "notFound": "Autor no encontrado.",
+          "loadNow": "No se pudieron cargar los blogs ahora mismo."
+        }
+      },
       "memberPromoted": "Miembro promovido a moderador.",
       "moderatorRemoved": "Rol de moderador eliminado.",
       "memberBanned": "@{{handle}} ha sido baneado.",

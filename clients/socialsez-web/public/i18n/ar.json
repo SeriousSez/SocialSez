@@ -1001,6 +1001,33 @@
       "working": "جارٍ العمل…"
     },
     "status": {
+      "blogAuthor": {
+        "page": {
+          "title": "مدونات @{{handle}}",
+          "subtitle": "تصفح المزيد من المدونات لهذا الكاتب."
+        },
+        "actions": {
+          "feed": "الخلاصة",
+          "blogStudio": "استوديو المدونات"
+        },
+        "loading": {
+          "aria": "جارٍ تحميل مدونات الكاتب"
+        },
+        "visibility": {
+          "public": "عام",
+          "private": "خاص"
+        },
+        "meta": {
+          "updated": "تم التحديث {{date}}"
+        },
+        "empty": {
+          "noVisibleBlogs": "لا توجد مدونات مرئية بعد."
+        },
+        "errors": {
+          "notFound": "الكاتب غير موجود.",
+          "loadNow": "تعذر تحميل المدونات الآن."
+        }
+      },
       "memberPromoted": "تمت ترقية العضو إلى مشرف.",
       "moderatorRemoved": "تمت إزالة دور المشرف.",
       "memberBanned": "تم حظر @{{handle}}.",

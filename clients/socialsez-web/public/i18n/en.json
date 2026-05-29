@@ -1901,6 +1901,33 @@
       "layoutStack": "Stack",
       "layoutMagazine": "Magazine"
     },
+    "blogAuthor": {
+      "page": {
+        "title": "Blogs by @{{handle}}",
+        "subtitle": "Browse more blogs from this author."
+      },
+      "actions": {
+        "feed": "Feed",
+        "blogStudio": "Blog Studio"
+      },
+      "loading": {
+        "aria": "Loading blogs by author"
+      },
+      "visibility": {
+        "public": "Public",
+        "private": "Private"
+      },
+      "meta": {
+        "updated": "Updated {{date}}"
+      },
+      "empty": {
+        "noVisibleBlogs": "No visible blogs yet."
+      },
+      "errors": {
+        "notFound": "Author not found.",
+        "loadNow": "Could not load blogs right now."
+      }
+    },
     "confirm": {
       "deleteBlogTitle": "Delete blog",
       "deleteBlogMessage": "Delete blog \"{{title}}\" and all posts? This action cannot be undone.",

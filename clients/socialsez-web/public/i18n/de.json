@@ -1884,6 +1884,33 @@
       "layoutStack": "Stapel",
       "layoutMagazine": "Magazin"
     },
+    "blogAuthor": {
+      "page": {
+        "title": "Blogs von @{{handle}}",
+        "subtitle": "Weitere Blogs dieses Autors durchsuchen."
+      },
+      "actions": {
+        "feed": "Feed",
+        "blogStudio": "Blog-Studio"
+      },
+      "loading": {
+        "aria": "Blogs des Autors werden geladen"
+      },
+      "visibility": {
+        "public": "Öffentlich",
+        "private": "Privat"
+      },
+      "meta": {
+        "updated": "Aktualisiert {{date}}"
+      },
+      "empty": {
+        "noVisibleBlogs": "Noch keine sichtbaren Blogs."
+      },
+      "errors": {
+        "notFound": "Autor nicht gefunden.",
+        "loadNow": "Blogs konnten gerade nicht geladen werden."
+      }
+    },
     "confirm": {
       "deleteBlogTitle": "Blog löschen",
       "deleteBlogMessage": "Blog \"{{title}}\" und alle Beiträge löschen? Diese Aktion kann nicht rückgängig gemacht werden.",

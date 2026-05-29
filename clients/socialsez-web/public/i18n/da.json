@@ -1159,6 +1159,33 @@
       "working": "Arbejder…"
     },
     "status": {
+      "blogAuthor": {
+        "page": {
+          "title": "Blogs af @{{handle}}",
+          "subtitle": "Se flere blogs fra denne forfatter."
+        },
+        "actions": {
+          "feed": "Feed",
+          "blogStudio": "Blogstudio"
+        },
+        "loading": {
+          "aria": "Indlæser blogs efter forfatter"
+        },
+        "visibility": {
+          "public": "Offentlig",
+          "private": "Privat"
+        },
+        "meta": {
+          "updated": "Opdateret {{date}}"
+        },
+        "empty": {
+          "noVisibleBlogs": "Ingen synlige blogs endnu."
+        },
+        "errors": {
+          "notFound": "Forfatteren blev ikke fundet.",
+          "loadNow": "Kunne ikke indlæse blogs lige nu."
+        }
+      },
       "memberPromoted": "Medlem gjort til moderator.",
       "moderatorRemoved": "Moderatorrolle fjernet.",
       "memberBanned": "@{{handle}} er blevet bannet.",

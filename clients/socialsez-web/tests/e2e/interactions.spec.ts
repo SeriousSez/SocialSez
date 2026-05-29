@@ -78,14 +78,18 @@ async function mockSignedInBlogsSessionAsync(page: Page): Promise<void> {
         localStorage.setItem('socialsez.refreshToken', 'playwright-refresh-token');
     });
 
-    await page.route('**/auth/refresh', (route: Route) => route.fulfill({ json: mockAuthResponse }));
-    await page.route('**/blogs/mine**', (route: Route) => route.fulfill({ json: [mockBlog] }));
+    await page.route('**/api/auth/refresh', (route: Route) => route.fulfill({ json: mockAuthResponse }));
+    await page.route('**/api/blogs/mine**', (route: Route) => route.fulfill({ json: [mockBlog] }));
     await mockBlogsDiscoveryAsync(page);
 }
 
 async function mockBlogDetailAsync(page: Page): Promise<void> {
-    await page.route(`**/blogs/${mockBlogOwnerHandle}/${mockBlogSlug}`, (route: Route) => route.fulfill({ json: mockBlog }));
-    await page.route(`**/blogs/${mockBlogOwnerHandle}/${mockBlogSlug}/posts`, (route: Route) => route.fulfill({ json: [mockBlogPost] }));
+    await page.route(`**/api/blogs/${mockBlogOwnerHandle}/${mockBlogSlug}**`, (route: Route) => route.fulfill({ json: mockBlog }));
+    await page.route(`**/api/blogs/${mockBlogOwnerHandle}/${mockBlogSlug}/posts**`, (route: Route) => route.fulfill({ json: [mockBlogPost] }));
+}
+
+async function mockBlogAuthorAsync(page: Page): Promise<void> {
+    await page.route(`**/api/blogs/by-author/${mockBlogOwnerHandle}**`, (route: Route) => route.fulfill({ json: [mockBlog] }));
 }
 
 test.describe('Interactive navigation flows', () => {
@@ -135,6 +139,23 @@ test.describe('Interactive navigation flows', () => {
 
         await expect.poll(() => new URL(page.url()).pathname).toBe('/blogs/studio');
         await expect(page.locator('app-blog-studio-page')).toBeVisible();
+    });
+
+    test('desktop: more by author link opens author page', async ({ page, isMobile }) => {
+        test.skip(isMobile, 'Desktop-only behavior check.');
+
+        await mockBlogDetailAsync(page);
+        await mockBlogAuthorAsync(page);
+
+        await page.goto(`/blogs/${mockBlogOwnerHandle}/${mockBlogSlug}`, { waitUntil: 'domcontentloaded' });
+
+        const moreByLink = page.locator('.head-links a').first();
+        await expect(moreByLink).toBeVisible();
+
+        await moreByLink.click();
+
+        await expect.poll(() => new URL(page.url()).pathname).toBe('/blogs/dungeonmaster');
+        await expect(page.locator('.grid .card')).toHaveCount(1);
     });
 
     test('desktop: sort dropdown button click changes sort option', async ({ page, isMobile }) => {

@@ -1324,6 +1324,33 @@
       "working": "Bezig…"
     },
     "status": {
+      "blogAuthor": {
+        "page": {
+          "title": "Blogs van @{{handle}}",
+          "subtitle": "Bekijk meer blogs van deze auteur."
+        },
+        "actions": {
+          "feed": "Feed",
+          "blogStudio": "Blogstudio"
+        },
+        "loading": {
+          "aria": "Blogs van auteur laden"
+        },
+        "visibility": {
+          "public": "Openbaar",
+          "private": "Privé"
+        },
+        "meta": {
+          "updated": "Bijgewerkt {{date}}"
+        },
+        "empty": {
+          "noVisibleBlogs": "Nog geen zichtbare blogs."
+        },
+        "errors": {
+          "notFound": "Auteur niet gevonden.",
+          "loadNow": "Blogs kunnen op dit moment niet worden geladen."
+        }
+      },
       "memberPromoted": "Lid gepromoveerd tot moderator.",
       "moderatorRemoved": "Moderatorrol verwijderd.",
       "memberBanned": "@{{handle}} is verbannen.",

@@ -546,6 +546,33 @@
       "working": "Arbetar…"
     },
     "status": {
+      "blogAuthor": {
+        "page": {
+          "title": "Bloggar av @{{handle}}",
+          "subtitle": "Bläddra bland fler bloggar från den här författaren."
+        },
+        "actions": {
+          "feed": "Flöde",
+          "blogStudio": "Bloggstudio"
+        },
+        "loading": {
+          "aria": "Laddar författarens bloggar"
+        },
+        "visibility": {
+          "public": "Offentlig",
+          "private": "Privat"
+        },
+        "meta": {
+          "updated": "Uppdaterad {{date}}"
+        },
+        "empty": {
+          "noVisibleBlogs": "Inga synliga bloggar än."
+        },
+        "errors": {
+          "notFound": "Författaren hittades inte.",
+          "loadNow": "Det gick inte att ladda bloggar just nu."
+        }
+      },
       "memberPromoted": "Medlem befordrad till moderator.",
       "moderatorRemoved": "Moderatorrollen togs bort.",
       "memberBanned": "@{{handle}} har blivit avstängd.",

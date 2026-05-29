@@ -736,6 +736,33 @@
       "working": "Jobber…"
     },
     "status": {
+      "blogAuthor": {
+        "page": {
+          "title": "Blogger av @{{handle}}",
+          "subtitle": "Bla gjennom flere blogger fra denne forfatteren."
+        },
+        "actions": {
+          "feed": "Feed",
+          "blogStudio": "Bloggstudio"
+        },
+        "loading": {
+          "aria": "Laster blogger av forfatter"
+        },
+        "visibility": {
+          "public": "Offentlig",
+          "private": "Privat"
+        },
+        "meta": {
+          "updated": "Oppdatert {{date}}"
+        },
+        "empty": {
+          "noVisibleBlogs": "Ingen synlige blogger ennå."
+        },
+        "errors": {
+          "notFound": "Fant ikke forfatter.",
+          "loadNow": "Kunne ikke laste blogger akkurat nå."
+        }
+      },
       "memberPromoted": "Medlem forfremmet til moderator.",
       "moderatorRemoved": "Moderatorrollen ble fjernet.",
       "memberBanned": "@{{handle}} har blitt utestengt.",

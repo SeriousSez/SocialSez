@@ -1001,6 +1001,33 @@
       "working": "Çalışıyor…"
     },
     "status": {
+      "blogAuthor": {
+        "page": {
+          "title": "@{{handle}} tarafından bloglar",
+          "subtitle": "Bu yazardan daha fazla bloga göz atın."
+        },
+        "actions": {
+          "feed": "Akış",
+          "blogStudio": "Blog Stüdyosu"
+        },
+        "loading": {
+          "aria": "Yazarın blogları yükleniyor"
+        },
+        "visibility": {
+          "public": "Herkese açık",
+          "private": "Özel"
+        },
+        "meta": {
+          "updated": "Güncellendi {{date}}"
+        },
+        "empty": {
+          "noVisibleBlogs": "Henüz görünür blog yok."
+        },
+        "errors": {
+          "notFound": "Yazar bulunamadı.",
+          "loadNow": "Bloglar şu anda yüklenemedi."
+        }
+      },
       "memberPromoted": "Üye moderatör yapıldı.",
       "moderatorRemoved": "Moderatör rolü kaldırıldı.",
       "memberBanned": "@{{handle}} yasaklandı.",
