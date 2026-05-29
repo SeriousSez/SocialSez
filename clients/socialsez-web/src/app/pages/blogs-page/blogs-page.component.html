@@ -73,7 +73,7 @@
             </header>
 
             <p class="blog-description blog-card-content" *ngIf="getActiveBlogDescription(blog) as desc">{{ desc }}</p>
-            <app-translate-content class="blog-card-interactive" [text]="(blog.title || '') + '\n\n' + (blog.description || '')" [inlineMode]="true" (translationChanged)="onBlogTranslationChanged(blog.id, $event)"></app-translate-content>
+            <!-- <app-translate-content class="blog-card-interactive" [text]="(blog.title || '') + '\n\n' + (blog.description || '')" [inlineMode]="true" (translationChanged)="onBlogTranslationChanged(blog.id, $event)"></app-translate-content> -->
 
             <!-- <div class="blog-meta blog-card-interactive">
                 <a [routerLink]="['/blogs', blog.ownerHandle]">@{{ blog.ownerHandle }}</a>
