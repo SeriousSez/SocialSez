@@ -10,15 +10,7 @@
 
     <div class="blogs-toolbar">
         <div class="blog-tabs" role="tablist" [attr.aria-label]="'blogs.tabs.aria' | translate">
-            <button
-                type="button"
-                class="blog-tab-button"
-                *ngFor="let tab of tabs; trackBy: trackTab"
-                role="tab"
-                [id]="'blogs-tab-' + tab.key"
-                [attr.aria-controls]="'blogs-panel-' + tab.key"
-                [attr.aria-selected]="activeTab === tab.key"
-                [class.active]="activeTab === tab.key"
+            <button type="button" class="blog-tab-button" *ngFor="let tab of tabs; trackBy: trackTab" role="tab" [id]="'blogs-tab-' + tab.key" [attr.aria-controls]="'blogs-panel-' + tab.key" [attr.aria-selected]="activeTab === tab.key" [class.active]="activeTab === tab.key"
                 (click)="selectTabAsync(tab.key)">
                 {{ tab.labelKey | translate }}
             </button>
