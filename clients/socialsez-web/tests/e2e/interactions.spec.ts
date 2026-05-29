@@ -1,4 +1,66 @@
-import { expect, test } from '@playwright/test';
+import { expect, Page, Route, test } from '@playwright/test';
+
+const mockBlogOwnerHandle = 'dungeonmaster';
+const mockBlogSlug = 'dungeonkeep';
+const mockBlogPostSlug = 'first-post';
+
+const mockBlog = {
+    id: 'blog-1',
+    ownerProfileId: 'profile-1',
+    ownerHandle: mockBlogOwnerHandle,
+    slug: mockBlogSlug,
+    title: 'DungeonKeep',
+    description: 'A campaign companion for tabletop adventures.',
+    isPublic: true,
+    allowLikes: true,
+    allowComments: true,
+    allowShares: true,
+    allowEmbeds: true,
+    theme: {
+        fontFamily: 'Cinzel, Georgia, serif',
+        accentColor: '#c86f1a',
+        backgroundColor: '#f6f1e7',
+        surfaceColor: '#fffaf2',
+        darkAccentColor: '#ffb36b',
+        darkBackgroundColor: '#0f1222',
+        darkSurfaceColor: '#161b31',
+        headerLayout: 'hero-split',
+        postListLayout: 'timeline',
+        customCss: ''
+    },
+    createdAtUtc: '2026-05-29T00:00:00Z',
+    updatedAtUtc: '2026-05-29T00:00:00Z',
+    isOwner: false
+};
+
+const mockBlogPost = {
+    id: 'post-1',
+    blogId: 'blog-1',
+    blogSlug: mockBlogSlug,
+    authorProfileId: 'profile-1',
+    authorHandle: mockBlogOwnerHandle,
+    slug: mockBlogPostSlug,
+    title: 'Welcome to DungeonKeep',
+    content: '# Welcome\n\nThis is a test post.',
+    excerpt: 'This is a test post.',
+    coverImageUrl: null,
+    tags: ['dungeonkeep'],
+    isPublished: true,
+    createdAtUtc: '2026-05-29T00:00:00Z',
+    updatedAtUtc: '2026-05-29T00:00:00Z',
+    publishedAtUtc: '2026-05-29T00:00:00Z',
+    isOwner: false,
+    isSavedByMe: false
+};
+
+async function mockBlogsDiscoveryAsync(page: Page): Promise<void> {
+    await page.route('**/blogs/discover**', (route: Route) => route.fulfill({ json: [mockBlog] }));
+}
+
+async function mockBlogDetailAsync(page: Page): Promise<void> {
+    await page.route(`**/blogs/${mockBlogOwnerHandle}/${mockBlogSlug}`, (route: Route) => route.fulfill({ json: mockBlog }));
+    await page.route(`**/blogs/${mockBlogOwnerHandle}/${mockBlogSlug}/posts`, (route: Route) => route.fulfill({ json: [mockBlogPost] }));
+}
 
 test.describe('Interactive navigation flows', () => {
     test('desktop: left rail blogs nav click opens /blogs', async ({ page, isMobile }) => {
@@ -46,22 +108,33 @@ test.describe('Interactive navigation flows', () => {
         await expect(page.locator('.blogs-page')).toBeVisible();
     });
 
-    test('mobile: tapping blog card container opens blog page', async ({ page, isMobile }) => {
-        test.skip(!isMobile, 'Tap interaction test is scoped to mobile project.');
+    test('mobile: footer discover tab tap works from /blogs', async ({ page, isMobile }) => {
+        test.skip(!isMobile, 'Mobile footer navigation only applies to mobile project.');
+
+        await mockBlogsDiscoveryAsync(page);
 
         await page.goto('/blogs', { waitUntil: 'domcontentloaded' });
 
-        const loadingGrid = page.locator('section.blog-grid[aria-label]');
-        if (await loadingGrid.count()) {
-            await expect(loadingGrid).toBeHidden({ timeout: 15000 });
-        }
+        const discoverTab = page.locator('.mobile-footer-tabs .mobile-footer-tab[routerlink="/discover"]');
+        await expect(discoverTab).toBeVisible();
+
+        await discoverTab.tap();
+
+        await expect.poll(() => new URL(page.url()).pathname).toBe('/discover');
+        await expect(page.locator('body')).toBeVisible();
+    });
+
+    test('mobile: tapping blog card container opens blog page', async ({ page, isMobile }) => {
+        test.skip(!isMobile, 'Tap interaction test is scoped to mobile project.');
+
+        await mockBlogsDiscoveryAsync(page);
+        await mockBlogDetailAsync(page);
+
+        await page.goto('/blogs', { waitUntil: 'domcontentloaded' });
 
         const titleLinks = page.locator('.blog-grid .blog-card .blog-title');
-        const linkCount = await titleLinks.count();
-        test.skip(linkCount === 0, 'No published blog cards available in test environment for tap-to-open check.');
-
+        await expect(titleLinks.first()).toBeVisible();
         const titleLink = titleLinks.first();
-        await expect(titleLink).toBeVisible();
 
         const href = await titleLink.getAttribute('href');
         expect(href, 'Blog title link must have an href').toBeTruthy();
@@ -71,7 +144,7 @@ test.describe('Interactive navigation flows', () => {
 
         await blogCard.tap({ position: { x: 20, y: 20 } });
 
-        const expectedPath = new URL(href ?? '', 'http://localhost').pathname;
+        const expectedPath = new URL(href ?? '', page.url()).pathname;
         await expect.poll(() => new URL(page.url()).pathname).toBe(expectedPath);
         await expect(page.locator('body')).toBeVisible();
     });

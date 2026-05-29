@@ -90,7 +90,7 @@ export class BlogsPageComponent {
             }
         }
 
-        await this.router.navigate(['/blogs', blog.ownerHandle, blog.slug]);
+        await this.navigateToBlogAsync(blog);
     }
 
     onBlogTouchStart(event: TouchEvent): void {
@@ -124,7 +124,7 @@ export class BlogsPageComponent {
         }
 
         this.lastTouchNavigateAt = Date.now();
-        await this.openBlogAsync(blog, event);
+        await this.navigateToBlogAsync(blog, true);
     }
 
     async selectTabAsync(tab: BlogsTab): Promise<void> {
@@ -471,5 +471,25 @@ export class BlogsPageComponent {
 
     private t(key: string, params?: Record<string, unknown>): string {
         return this.translate.instant(key, params);
+    }
+
+    private async navigateToBlogAsync(blog: BlogDto, preferHardNavigation = false): Promise<void> {
+        const targetUrl = this.router.serializeUrl(this.router.createUrlTree(['/blogs', blog.ownerHandle, blog.slug]));
+
+        if (preferHardNavigation && typeof window !== 'undefined') {
+            window.location.assign(targetUrl);
+            return;
+        }
+
+        try {
+            const navigated = await this.router.navigateByUrl(targetUrl);
+            if (!navigated && typeof window !== 'undefined') {
+                window.location.assign(targetUrl);
+            }
+        } catch {
+            if (typeof window !== 'undefined') {
+                window.location.assign(targetUrl);
+            }
+        }
     }
 }

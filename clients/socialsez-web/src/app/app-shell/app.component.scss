@@ -906,7 +906,7 @@ label {
         height: calc(var(--mobile-footer-nav-height) + env(safe-area-inset-bottom));
         box-sizing: border-box;
         overflow: visible;
-        pointer-events: none;
+        pointer-events: auto;
     }
 
     .mobile-footer-tabs.hidden-on-chat {
@@ -931,6 +931,8 @@ label {
         opacity: 0.82;
         position: relative;
         pointer-events: auto;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .mobile-footer-tab i {
@@ -978,6 +980,7 @@ label {
 
     .mobile-footer-more-trigger {
         width: 100%;
+        touch-action: manipulation;
     }
 
     .mobile-footer-more-menu {

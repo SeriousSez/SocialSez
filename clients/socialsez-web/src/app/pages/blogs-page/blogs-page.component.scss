@@ -173,6 +173,8 @@
     box-shadow: 0 14px 34px -30px #0f172a;
     transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .blog-card::before {
