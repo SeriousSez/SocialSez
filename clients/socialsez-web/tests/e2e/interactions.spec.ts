@@ -53,8 +53,34 @@ const mockBlogPost = {
     isSavedByMe: false
 };
 
+const mockAuthResponse = {
+    token: 'playwright-access-token',
+    expiresAtUtc: '2026-06-29T00:00:00Z',
+    refreshToken: 'playwright-refresh-token',
+    refreshTokenExpiresAtUtc: '2026-06-29T00:00:00Z',
+    profile: {
+        id: 'profile-1',
+        handle: mockBlogOwnerHandle,
+        displayName: 'Dungeon Master',
+        bio: '',
+        isPrivate: false,
+        createdAtUtc: '2026-05-29T00:00:00Z'
+    }
+};
+
 async function mockBlogsDiscoveryAsync(page: Page): Promise<void> {
     await page.route('**/blogs/discover**', (route: Route) => route.fulfill({ json: [mockBlog] }));
+}
+
+async function mockSignedInBlogsSessionAsync(page: Page): Promise<void> {
+    await page.addInitScript(() => {
+        localStorage.setItem('socialsez.accessToken', 'playwright-access-token');
+        localStorage.setItem('socialsez.refreshToken', 'playwright-refresh-token');
+    });
+
+    await page.route('**/auth/refresh', (route: Route) => route.fulfill({ json: mockAuthResponse }));
+    await page.route('**/blogs/mine**', (route: Route) => route.fulfill({ json: [mockBlog] }));
+    await mockBlogsDiscoveryAsync(page);
 }
 
 async function mockBlogDetailAsync(page: Page): Promise<void> {
@@ -93,6 +119,46 @@ test.describe('Interactive navigation flows', () => {
 
         await firstTab.click();
         await expect(firstTab).toHaveClass(/active/);
+    });
+
+    test('desktop: open blog studio button click opens /blogs/studio', async ({ page, isMobile }) => {
+        test.skip(isMobile, 'Desktop-only behavior check.');
+
+        await mockSignedInBlogsSessionAsync(page);
+
+        await page.goto('/blogs', { waitUntil: 'domcontentloaded' });
+
+        const openStudioLink = page.locator('.blogs-head .studio-link');
+        await expect(openStudioLink).toBeVisible();
+
+        await openStudioLink.click();
+
+        await expect.poll(() => new URL(page.url()).pathname).toBe('/blogs/studio');
+        await expect(page.locator('app-blog-studio-page')).toBeVisible();
+    });
+
+    test('desktop: sort dropdown button click changes sort option', async ({ page, isMobile }) => {
+        test.skip(isMobile, 'Desktop-only behavior check.');
+
+        await mockBlogsDiscoveryAsync(page);
+        await page.goto('/blogs', { waitUntil: 'domcontentloaded' });
+
+        const sortToggle = page.locator('.sort-toggle');
+        await expect(sortToggle).toBeVisible();
+
+        const initialLabel = (await sortToggle.innerText()).trim();
+        await sortToggle.click();
+
+        const sortMenu = page.locator('.sort-menu');
+        await expect(sortMenu).toBeVisible();
+
+        const sortOptions = sortMenu.locator('button');
+        await expect(sortOptions).toHaveCount(3);
+
+        await sortOptions.nth(2).click();
+
+        await expect.poll(async () => (await sortToggle.innerText()).trim()).not.toBe(initialLabel);
+        await expect(sortMenu).toBeHidden();
     });
 
     test('mobile: footer blogs tab tap opens /blogs', async ({ page, isMobile }) => {
