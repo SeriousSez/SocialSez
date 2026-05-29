@@ -186,13 +186,13 @@ export class BlogsPageComponent {
         this.scheduleObserverRefresh();
     }
 
-    toggleSortMenu(event: PointerEvent): void {
+    toggleSortMenu(event: MouseEvent): void {
         event.preventDefault();
         event.stopPropagation();
         this.sortMenuOpen = !this.sortMenuOpen;
     }
 
-    selectSort(value: BlogSort, event: PointerEvent): void {
+    selectSort(value: BlogSort, event: MouseEvent): void {
         event.preventDefault();
         event.stopPropagation();
         if (this.sortBy !== value) {
@@ -423,7 +423,7 @@ export class BlogsPageComponent {
 
     private isInteractiveBlogCardTarget(target: EventTarget | null): boolean {
         return target instanceof Element
-            && !!target.closest('a,button,input,textarea,select,label,[role="button"],[role="link"]');
+            && !!target.closest('a,button,input,textarea,select,label,[role="button"]');
     }
 
     private rankAndFilterBlogs(blogs: ReadonlyArray<BlogDto>, query: string): BlogDto[] {

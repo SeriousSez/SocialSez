@@ -55,6 +55,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    pointer-events: auto;
 }
 
 .blogs-toolbar {
@@ -116,7 +117,7 @@
     min-height: 40px;
     font: inherit;
     background: transparent;
-    touch-action: manipulation;
+    pointer-events: auto;
 }
 
 .search-row input:focus {
