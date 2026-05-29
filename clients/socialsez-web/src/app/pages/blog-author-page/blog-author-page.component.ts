@@ -37,7 +37,7 @@ export class BlogAuthorPageComponent {
 
     async loadAsync(): Promise<void> {
         if (!this.handle) {
-            this.error = this.t('blogAuthor.errors.notFound');
+            this.error = this.t('blogs.blogAuthor.errors.notFound');
             this.loading = false;
             return;
         }
@@ -49,7 +49,7 @@ export class BlogAuthorPageComponent {
             await this.session.bootstrapAsync();
             this.blogs = await this.session.loadBlogsByAuthorHandleAsync(this.handle);
         } catch {
-            this.error = this.t('blogAuthor.errors.loadNow');
+            this.error = this.t('blogs.blogAuthor.errors.loadNow');
         } finally {
             this.loading = false;
         }

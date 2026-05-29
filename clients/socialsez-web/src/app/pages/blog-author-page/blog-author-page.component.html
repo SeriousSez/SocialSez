@@ -1,17 +1,17 @@
 <section class="page">
     <header class="head">
         <div>
-            <h2>{{ 'blogAuthor.page.title' | translate:{ handle: handle } }}</h2>
-            <p>{{ 'blogAuthor.page.subtitle' | translate }}</p>
+            <h2>{{ 'blogs.blogAuthor.page.title' | translate:{ handle: handle } }}</h2>
+            <p>{{ 'blogs.blogAuthor.page.subtitle' | translate }}</p>
         </div>
         <div class="actions">
-            <a class="link-btn" routerLink="/feed">{{ 'blogAuthor.actions.feed' | translate }}</a>
-            <a class="link-btn" routerLink="/blogs/studio" *ngIf="isCurrentViewer">{{ 'blogAuthor.actions.blogStudio' | translate }}</a>
+            <a class="link-btn" routerLink="/feed">{{ 'blogs.blogAuthor.actions.feed' | translate }}</a>
+            <a class="link-btn" routerLink="/blogs/studio" *ngIf="isCurrentViewer">{{ 'blogs.blogAuthor.actions.blogStudio' | translate }}</a>
         </div>
     </header>
 
     <p class="error" *ngIf="!loading && error">{{ error }}</p>
-    <div class="grid" *ngIf="loading" [attr.aria-label]="'blogAuthor.loading.aria' | translate">
+    <div class="grid" *ngIf="loading" [attr.aria-label]="'blogs.blogAuthor.loading.aria' | translate">
         <article class="card" *ngFor="let _ of [1, 2, 3, 4]">
             <app-skeleton width="58%" height="18px"></app-skeleton>
             <app-skeleton width="96%" height="13px"></app-skeleton>
@@ -24,11 +24,11 @@
         <a class="card" *ngFor="let blog of blogs; trackBy: trackBlog" [routerLink]="['/blogs', blog.ownerHandle, blog.slug]">
             <h3>{{ blog.title }}</h3>
             <p *ngIf="blog.description">{{ blog.description }}</p>
-            <small>{{ blog.isPublic ? ('blogAuthor.visibility.public' | translate) : ('blogAuthor.visibility.private' | translate) }} · {{ 'blogAuthor.meta.updated' | translate:{ date: (blog.updatedAtUtc | date:'mediumDate') } }}</small>
+            <small>{{ blog.isPublic ? ('blogs.blogAuthor.visibility.public' | translate) : ('blogs.blogAuthor.visibility.private' | translate) }} · {{ 'blogs.blogAuthor.meta.updated' | translate:{ date: (blog.updatedAtUtc | date:'mediumDate') } }}</small>
         </a>
     </div>
 
     <ng-template #emptyState>
-        <p class="muted" *ngIf="!loading && !error">{{ 'blogAuthor.empty.noVisibleBlogs' | translate }}</p>
+        <p class="muted" *ngIf="!loading && !error">{{ 'blogs.blogAuthor.empty.noVisibleBlogs' | translate }}</p>
     </ng-template>
 </section>
