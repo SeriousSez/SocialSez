@@ -366,7 +366,8 @@
       "saveDraft": "Taslağı kaydet",
       "publishing": "Yayınlama...",
       "publishStory": "Publish Hikâye",
-      "storyUploadFailed": "Hikayen yüklenemedi. Lütfen tekrar dene."
+      "storyUploadFailed": "Hikayen yüklenemedi. Lütfen tekrar dene.",
+      "storyMediaUnreadable": "Seçilen dosya okunamadı. Dosyayı yeniden seçip tekrar dene."
     },
     "analytics": {
       "title": "Üretici Analitiği",

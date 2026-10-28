@@ -366,7 +366,8 @@
       "saveDraft": "Entwurf speichern",
       "publishing": "Wird veröffentlicht...",
       "publishStory": "Story veröffentlichen",
-      "storyUploadFailed": "Deine Story konnte nicht hochgeladen werden. Bitte versuche es erneut."
+      "storyUploadFailed": "Deine Story konnte nicht hochgeladen werden. Bitte versuche es erneut.",
+      "storyMediaUnreadable": "Die ausgewählte Mediendatei konnte nicht gelesen werden. Wähle die Datei erneut aus und versuche es noch einmal."
     },
     "analytics": {
       "title": "Creator-Analysen",

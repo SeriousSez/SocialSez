@@ -1443,7 +1443,8 @@
       "saveDraft": "Spara utkast",
       "publishing": "Publicerar...",
       "publishStory": "Publicera Story",
-      "storyUploadFailed": "Det gick inte att ladda upp din story. Försök igen."
+      "storyUploadFailed": "Det gick inte att ladda upp din story. Försök igen.",
+      "storyMediaUnreadable": "Det gick inte att läsa den valda filen. Välj filen igen och försök på nytt."
     },
     "analytics": {
       "title": "Skaparanalys",

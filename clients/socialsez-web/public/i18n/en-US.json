@@ -375,7 +375,8 @@
       "saveDraft": "Save Draft",
       "publishing": "Publishing...",
       "publishStory": "Publish Story",
-      "storyUploadFailed": "Could not upload your story. Please try again."
+      "storyUploadFailed": "Could not upload your story. Please try again.",
+      "storyMediaUnreadable": "Could not read the selected media. Select the file again and retry."
     },
     "analytics": {
       "title": "Creator Analytics",

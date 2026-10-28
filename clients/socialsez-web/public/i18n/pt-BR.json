@@ -1027,7 +1027,8 @@
       "saveDraft": "Salvar Rascunho",
       "publishing": "Publicando...",
       "publishStory": "Publicar História",
-      "storyUploadFailed": "Não foi possível enviar seu story. Tente novamente."
+      "storyUploadFailed": "Não foi possível enviar seu story. Tente novamente.",
+      "storyMediaUnreadable": "Não foi possível ler o arquivo selecionado. Selecione-o novamente e tente de novo."
     },
     "analytics": {
       "title": "Análise de Criadores",

@@ -524,7 +524,8 @@
       "saveDraft": "Gem kladde",
       "publishing": "Udgiver...",
       "publishStory": "Udgiv story",
-      "storyUploadFailed": "Din historie kunne ikke uploades. Prøv igen."
+      "storyUploadFailed": "Din historie kunne ikke uploades. Prøv igen.",
+      "storyMediaUnreadable": "Det valgte medie kunne ikke læses. Vælg filen igen, og prøv igen."
     },
     "analytics": {
       "title": "Creator-analyser",

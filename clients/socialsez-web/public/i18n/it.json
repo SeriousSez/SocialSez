@@ -524,7 +524,8 @@
       "saveDraft": "Salva bozza",
       "publishing": "Pubblicazione...",
       "publishStory": "Pubblica storia",
-      "storyUploadFailed": "Impossibile caricare la tua storia. Riprova."
+      "storyUploadFailed": "Impossibile caricare la tua storia. Riprova.",
+      "storyMediaUnreadable": "Impossibile leggere il file selezionato. Selezionalo di nuovo e riprova."
     },
     "analytics": {
       "title": "Analisi creator",

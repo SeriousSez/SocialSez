@@ -366,7 +366,8 @@
       "saveDraft": "Lagre utkast",
       "publishing": "Publiserer...",
       "publishStory": "Publiser story",
-      "storyUploadFailed": "Historien din kunne ikke lastes opp. Prøv igjen."
+      "storyUploadFailed": "Historien din kunne ikke lastes opp. Prøv igjen.",
+      "storyMediaUnreadable": "Det valgte mediet kunne ikke leses. Velg filen på nytt og prøv igjen."
     },
     "analytics": {
       "title": "Skaperanalyse",

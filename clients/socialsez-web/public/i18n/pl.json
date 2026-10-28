@@ -366,7 +366,8 @@
       "saveDraft": "Zapisz szkic",
       "publishing": "Publikowanie...",
       "publishStory": "Opublikuj relację",
-      "storyUploadFailed": "Nie udało się przesłać Twojej relacji. Spróbuj ponownie."
+      "storyUploadFailed": "Nie udało się przesłać Twojej relacji. Spróbuj ponownie.",
+      "storyMediaUnreadable": "Nie udało się odczytać wybranego pliku. Wybierz go ponownie i spróbuj jeszcze raz."
     },
     "analytics": {
       "title": "Analityka twórcy",

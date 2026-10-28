@@ -1,6 +1,8 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable, catchError, of, switchMap, tap, throwError, timeout } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Observable, catchError, defer, of, switchMap, tap, throwError, timeout } from 'rxjs';
+import { readStoryUploadBlob } from './story-upload.utils';
 import { environment } from '../../environments/environment';
 import {
     AuthSessionDto,
@@ -64,6 +66,7 @@ import { clearSessionTokens, hasLocalSessionTokens, hasSessionStorageTokens, rea
 
 @Injectable({ providedIn: 'root' })
 export class SocialSezApiService {
+    private readonly translate = inject(TranslateService);
     private readonly baseUrl = environment.apiBaseUrl;
     private token = '';
     private refreshToken = '';
@@ -206,24 +209,30 @@ export class SocialSezApiService {
     }
 
     createStory(mediaFile: File, caption?: string, isSensitive = false, thumbnailFile?: File, saveAsDraft = false, scheduledPublishAtUtc?: string): Observable<StoryDto> {
-        const formData = new FormData();
-        formData.append('media', mediaFile);
-        formData.append('isSensitive', `${isSensitive}`);
-        formData.append('saveAsDraft', `${saveAsDraft}`);
+        return defer(async () => {
+            const unreadableMessage = this.translate.instant('profile.compose.storyMediaUnreadable');
+            const media = await readStoryUploadBlob(mediaFile, unreadableMessage);
+            const thumbnail = thumbnailFile ? await readStoryUploadBlob(thumbnailFile, unreadableMessage) : undefined;
+            const formData = new FormData();
+            formData.append('media', media, mediaFile.name);
+            formData.append('isSensitive', `${isSensitive}`);
+            formData.append('saveAsDraft', `${saveAsDraft}`);
 
-        if (scheduledPublishAtUtc) {
-            formData.append('scheduledPublishAtUtc', scheduledPublishAtUtc);
-        }
+            if (scheduledPublishAtUtc) {
+                formData.append('scheduledPublishAtUtc', scheduledPublishAtUtc);
+            }
 
-        if (caption?.trim()) {
-            formData.append('caption', caption.trim());
-        }
+            if (caption?.trim()) {
+                formData.append('caption', caption.trim());
+            }
 
-        if (thumbnailFile) {
-            formData.append('thumbnail', thumbnailFile);
-        }
+            if (thumbnail && thumbnailFile) {
+                formData.append('thumbnail', thumbnail, thumbnailFile.name);
+            }
 
-        return this.withAutoRefresh(() => this.http.post<StoryDto>(`${this.baseUrl}/stories`, formData, { headers: this.authHeaders() }));
+            return formData;
+        }).pipe(switchMap(formData => this.withAutoRefresh(() =>
+            this.http.post<StoryDto>(`${this.baseUrl}/stories`, formData, { headers: this.authHeaders() }))));
     }
 
     deleteStory(storyId: string): Observable<void> {

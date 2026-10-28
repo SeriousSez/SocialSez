@@ -1027,7 +1027,8 @@
       "saveDraft": "Concept opslaan",
       "publishing": "Bezig met publiceren...",
       "publishStory": "Verhaal publiceren",
-      "storyUploadFailed": "Je verhaal kon niet worden geüpload. Probeer het opnieuw."
+      "storyUploadFailed": "Je verhaal kon niet worden geüpload. Probeer het opnieuw.",
+      "storyMediaUnreadable": "Het geselecteerde bestand kon niet worden gelezen. Selecteer het opnieuw en probeer het nogmaals."
     },
     "analytics": {
       "title": "Makeranalyse",

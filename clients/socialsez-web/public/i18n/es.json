@@ -524,7 +524,8 @@
       "saveDraft": "Guardar borrador",
       "publishing": "Publicando...",
       "publishStory": "Publicar historia",
-      "storyUploadFailed": "No se pudo subir tu historia. Inténtalo de nuevo."
+      "storyUploadFailed": "No se pudo subir tu historia. Inténtalo de nuevo.",
+      "storyMediaUnreadable": "No se pudo leer el archivo seleccionado. Selecciónalo de nuevo y vuelve a intentarlo."
     },
     "analytics": {
       "title": "Analítica de creador",

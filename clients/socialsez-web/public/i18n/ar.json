@@ -366,7 +366,8 @@
       "saveDraft": "حفظ المسودة",
       "publishing": "جارٍ النشر...",
       "publishStory": "نشر القصة",
-      "storyUploadFailed": "تعذر رفع قصتك. يرجى المحاولة مرة أخرى."
+      "storyUploadFailed": "تعذر رفع قصتك. يرجى المحاولة مرة أخرى.",
+      "storyMediaUnreadable": "تعذرت قراءة الملف المحدد. حدد الملف مجددًا وحاول مرة أخرى."
     },
     "analytics": {
       "title": "تحليلات صانع المحتوى",
