@@ -53,4 +53,32 @@ describe.each([FeedPageComponent, ProfilePageComponent])('%s story uploads', com
         expect(state.storyComposerStep).toBe(1);
         expect(handle.fail).not.toHaveBeenCalled();
     });
+
+    it('retains the native file selection while advancing to the editor', async () => {
+        const { state, file } = createComposer();
+        const input = { files: [file], value: 'C:\\fakepath\\screenshot.png' };
+        const createUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:story-photo');
+        try {
+            await component.prototype.onStoryMediaSelected.call(
+                state as unknown as FeedPageComponent & ProfilePageComponent,
+                { target: input } as unknown as Event
+            );
+            expect(state.clearStoryMediaSelection).toHaveBeenCalledWith(false);
+            expect(input.value).toBe('C:\\fakepath\\screenshot.png');
+            expect(state.storyMediaFile).toBe(file);
+            expect(state.storyComposerStep).toBe(2);
+        } finally {
+            createUrl.mockRestore();
+        }
+    });
+
+    it('keeps the previous selection if the picker returns no file', async () => {
+        const { state, file } = createComposer();
+        await component.prototype.onStoryMediaSelected.call(
+            state as unknown as FeedPageComponent & ProfilePageComponent,
+            { target: { files: [], value: '' } } as unknown as Event
+        );
+        expect(state.clearStoryMediaSelection).not.toHaveBeenCalled();
+        expect(state.storyMediaFile).toBe(file);
+    });
 });

@@ -72,6 +72,7 @@ export class FeedPageComponent implements OnDestroy {
     private static readonly StoryMaxTrimDurationSeconds = 60;
     private static readonly ComposerCloseAnimationDurationMs = 180;
 
+    @ViewChild('storyMediaInput') private readonly storyMediaInputRef?: ElementRef<HTMLInputElement>;
     @ViewChild('storyPreviewVideo') private readonly storyPreviewVideoRef?: ElementRef<HTMLVideoElement>;
 
     feed: PostDto[] = [];
@@ -811,7 +812,11 @@ export class FeedPageComponent implements OnDestroy {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0] ?? null;
 
-        this.clearStoryMediaSelection();
+        if (!file) {
+            return;
+        }
+
+        this.clearStoryMediaSelection(false);
 
         if (file) {
             this.storyMediaFile = file;
@@ -838,9 +843,6 @@ export class FeedPageComponent implements OnDestroy {
             }
         }
 
-        if (input) {
-            input.value = '';
-        }
     }
 
     onStoryPreviewLoadedMetadata(): void {
@@ -3132,7 +3134,12 @@ export class FeedPageComponent implements OnDestroy {
         }
     }
 
-    private clearStoryMediaSelection(): void {
+    private clearStoryMediaSelection(resetInput = true): void {
+        // Clearing a native picker before upload can invalidate Safari's backing file.
+        if (resetInput && this.storyMediaInputRef) {
+            this.storyMediaInputRef.nativeElement.value = '';
+        }
+
         this.stopStoryFrameDragging();
         this.stopStoryTrimDragging();
         this.clearStoryTrimPreviewOptions();

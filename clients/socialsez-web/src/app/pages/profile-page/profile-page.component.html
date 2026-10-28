@@ -1,4 +1,6 @@
 <section class="page">
+    <!-- Keep the native file selection alive through editing and background upload. -->
+    <input #storyMediaInput type="file" class="visually-hidden" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onStoryMediaSelected($event)" [disabled]="postingStory" />
     <ng-container *ngIf="profile as profile; else noProfileState">
         <ng-container *ngIf="!loading; else profileOverviewSkeleton">
             <header class="profile-hero">
@@ -291,7 +293,6 @@
                 </div>
 
                 <ng-container *ngIf="storyComposerStep === 1">
-                    <input #storyMediaInput type="file" class="visually-hidden" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onStoryMediaSelected($event)" [disabled]="postingStory" />
                     <section class="upload-picker" [attr.aria-label]="'profile.compose.storyMediaUploadAria' | translate">
                         <span class="upload-icon" aria-hidden="true">📸</span>
                         <p class="upload-title">{{ 'profile.compose.selectStoryMediaTitle' | translate }}</p>

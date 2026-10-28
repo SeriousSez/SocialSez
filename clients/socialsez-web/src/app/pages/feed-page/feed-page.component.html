@@ -1,4 +1,6 @@
 <section class="page" [class.compact-layout]="compactFeedEnabled">
+    <!-- Keep the native file selection alive through editing and background upload. -->
+    <input #storyMediaInput type="file" class="visually-hidden" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onStoryMediaSelected($event)" [disabled]="postingStory" />
     <header class="page-head">
         <h2>{{ 'homeFeed.title' | translate }}</h2>
         <app-create-content-menu [open]="createMenuOpen" (toggle)="toggleCreateMenu($event)" (createPost)="openComposer()" (createReel)="openReelComposer()" (createStory)="openStoryComposer()" (createBlog)="openBlogStudio()"></app-create-content-menu>
@@ -32,7 +34,6 @@
             </div>
 
             <ng-container *ngIf="storyComposerStep === 1">
-                <input #storyMediaInput type="file" class="visually-hidden" accept="image/*,video/mp4,video/webm,video/quicktime,video/x-m4v,video/ogg" (change)="onStoryMediaSelected($event)" [disabled]="postingStory" />
                 <section class="upload-picker" aria-label="Story media upload">
                     <span class="upload-icon" aria-hidden="true">📸</span>
                     <p class="upload-title">Start by selecting your story media</p>
