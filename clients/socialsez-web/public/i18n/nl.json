@@ -1026,7 +1026,8 @@
       "schedulePublish": "Publicatie plannen (optioneel)",
       "saveDraft": "Concept opslaan",
       "publishing": "Bezig met publiceren...",
-      "publishStory": "Verhaal publiceren"
+      "publishStory": "Verhaal publiceren",
+      "storyUploadFailed": "Je verhaal kon niet worden geüpload. Probeer het opnieuw."
     },
     "analytics": {
       "title": "Makeranalyse",

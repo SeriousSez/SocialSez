@@ -365,7 +365,8 @@
       "schedulePublish": "Planlegg publisering (valgfritt)",
       "saveDraft": "Lagre utkast",
       "publishing": "Publiserer...",
-      "publishStory": "Publiser story"
+      "publishStory": "Publiser story",
+      "storyUploadFailed": "Historien din kunne ikke lastes opp. Prøv igjen."
     },
     "analytics": {
       "title": "Skaperanalyse",

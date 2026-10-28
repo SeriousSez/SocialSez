@@ -365,7 +365,8 @@
       "schedulePublish": "Zaplanuj publikację (opcjonalnie)",
       "saveDraft": "Zapisz szkic",
       "publishing": "Publikowanie...",
-      "publishStory": "Opublikuj relację"
+      "publishStory": "Opublikuj relację",
+      "storyUploadFailed": "Nie udało się przesłać Twojej relacji. Spróbuj ponownie."
     },
     "analytics": {
       "title": "Analityka twórcy",

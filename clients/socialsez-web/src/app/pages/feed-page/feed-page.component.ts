@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
+import { toUserErrorMessage } from '../../core/user-error.utils';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -212,6 +213,7 @@ export class FeedPageComponent implements OnDestroy {
         this.stopStoryFrameDragging();
     };
     private readonly destroyRef = inject(DestroyRef);
+    private readonly cdr = inject(ChangeDetectorRef);
     private readonly ngZone = inject(NgZone);
     private readonly translate = inject(TranslateService);
     private pendingStoryHandleFromRoute: string | null = null;
@@ -1031,24 +1033,34 @@ export class FeedPageComponent implements OnDestroy {
         this.detachStoryTrimDragListeners();
 
         void (async () => {
+            let uploaded = false;
             try {
                 const uploadStoryMedia = await this.buildProcessedStoryMedia(this.storyMediaFile!);
                 const storyThumbnail = await this.buildStoryThumbnailForUpload(uploadStoryMedia);
                 const isSensitive = this.markStorySensitive;
                 await this.session.createStoryAsync(uploadStoryMedia, undefined, isSensitive, storyThumbnail, saveAsDraft, scheduledPublishAtUtc ?? undefined);
+                uploaded = true;
                 if (!saveAsDraft) {
                     await this.recordEngagementActivity();
                 }
                 await this.load();
                 handle.succeed(saveAsDraft ? 'Story draft saved!' : scheduledPublishAtUtc ? 'Story scheduled!' : 'Story published!');
-            } catch {
-                this.error = saveAsDraft ? 'Could not save story draft right now.' : 'Could not publish story right now.';
-                handle.fail(saveAsDraft ? 'Story draft save failed' : 'Story upload failed');
+            } catch (error) {
+                this.error = toUserErrorMessage(error, this.translate.instant('profile.compose.storyUploadFailed'));
+                handle.fail(this.error);
             } finally {
                 this.postingStory = false;
-                this.storyComposerStep = 1;
-                this.storyComposerError = '';
-                this.clearStoryMediaSelection();
+                if (uploaded) {
+                    this.storyComposerStep = 1;
+                    this.storyComposerError = '';
+                    this.clearStoryMediaSelection();
+                } else {
+                    this.storyComposerError = this.error;
+                    this.showStoryComposer = true;
+                }
+                if (!this.destroyRef.destroyed) {
+                    this.cdr.detectChanges();
+                }
             }
         })();
     }

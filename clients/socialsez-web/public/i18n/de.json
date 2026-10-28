@@ -365,7 +365,8 @@
       "schedulePublish": "Veröffentlichung planen (optional)",
       "saveDraft": "Entwurf speichern",
       "publishing": "Wird veröffentlicht...",
-      "publishStory": "Story veröffentlichen"
+      "publishStory": "Story veröffentlichen",
+      "storyUploadFailed": "Deine Story konnte nicht hochgeladen werden. Bitte versuche es erneut."
     },
     "analytics": {
       "title": "Creator-Analysen",

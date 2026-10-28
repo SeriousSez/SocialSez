@@ -523,7 +523,8 @@
       "schedulePublish": "Planlæg udgivelse (valgfrit)",
       "saveDraft": "Gem kladde",
       "publishing": "Udgiver...",
-      "publishStory": "Udgiv story"
+      "publishStory": "Udgiv story",
+      "storyUploadFailed": "Din historie kunne ikke uploades. Prøv igen."
     },
     "analytics": {
       "title": "Creator-analyser",

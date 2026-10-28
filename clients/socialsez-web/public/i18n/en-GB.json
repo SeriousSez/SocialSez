@@ -365,7 +365,8 @@
       "schedulePublish": "Schedule publish (optional)",
       "saveDraft": "Save Draft",
       "publishing": "Publishing...",
-      "publishStory": "Publish Story"
+      "publishStory": "Publish Story",
+      "storyUploadFailed": "Could not upload your story. Please try again."
     },
     "analytics": {
       "title": "Creator Analytics",

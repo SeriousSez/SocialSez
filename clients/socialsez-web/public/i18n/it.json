@@ -523,7 +523,8 @@
       "schedulePublish": "Programma pubblicazione (opzionale)",
       "saveDraft": "Salva bozza",
       "publishing": "Pubblicazione...",
-      "publishStory": "Pubblica storia"
+      "publishStory": "Pubblica storia",
+      "storyUploadFailed": "Impossibile caricare la tua storia. Riprova."
     },
     "analytics": {
       "title": "Analisi creator",

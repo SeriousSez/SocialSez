@@ -1442,7 +1442,8 @@
       "schedulePublish": "Schemalägg publicering (valfritt)",
       "saveDraft": "Spara utkast",
       "publishing": "Publicerar...",
-      "publishStory": "Publicera Story"
+      "publishStory": "Publicera Story",
+      "storyUploadFailed": "Det gick inte att ladda upp din story. Försök igen."
     },
     "analytics": {
       "title": "Skaparanalys",

@@ -1026,7 +1026,8 @@
       "schedulePublish": "Agendar publicação (opcional)",
       "saveDraft": "Salvar Rascunho",
       "publishing": "Publicando...",
-      "publishStory": "Publicar História"
+      "publishStory": "Publicar História",
+      "storyUploadFailed": "Não foi possível enviar seu story. Tente novamente."
     },
     "analytics": {
       "title": "Análise de Criadores",

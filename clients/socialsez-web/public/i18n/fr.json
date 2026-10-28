@@ -1026,7 +1026,8 @@
       "schedulePublish": "Planifier la publication (facultatif)",
       "saveDraft": "Enregistrer le brouillon",
       "publishing": "Édition...",
-      "publishStory": "Publier une histoire"
+      "publishStory": "Publier une histoire",
+      "storyUploadFailed": "Impossible de téléverser votre story. Veuillez réessayer."
     },
     "analytics": {
       "title": "Analyse des créateurs",

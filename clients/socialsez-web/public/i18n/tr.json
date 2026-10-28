@@ -365,7 +365,8 @@
       "schedulePublish": "Yayın zamanla (isteğe bağlı)",
       "saveDraft": "Taslağı kaydet",
       "publishing": "Yayınlama...",
-      "publishStory": "Publish Hikâye"
+      "publishStory": "Publish Hikâye",
+      "storyUploadFailed": "Hikayen yüklenemedi. Lütfen tekrar dene."
     },
     "analytics": {
       "title": "Üretici Analitiği",

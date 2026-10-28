@@ -365,7 +365,8 @@
       "schedulePublish": "جدولة النشر (اختياري)",
       "saveDraft": "حفظ المسودة",
       "publishing": "جارٍ النشر...",
-      "publishStory": "نشر القصة"
+      "publishStory": "نشر القصة",
+      "storyUploadFailed": "تعذر رفع قصتك. يرجى المحاولة مرة أخرى."
     },
     "analytics": {
       "title": "تحليلات صانع المحتوى",

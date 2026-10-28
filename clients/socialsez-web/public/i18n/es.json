@@ -523,7 +523,8 @@
       "schedulePublish": "Programar publicación (opcional)",
       "saveDraft": "Guardar borrador",
       "publishing": "Publicando...",
-      "publishStory": "Publicar historia"
+      "publishStory": "Publicar historia",
+      "storyUploadFailed": "No se pudo subir tu historia. Inténtalo de nuevo."
     },
     "analytics": {
       "title": "Analítica de creador",
